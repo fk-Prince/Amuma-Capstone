@@ -2,10 +2,12 @@
 import { ref, reactive, computed, watch } from "vue";
 import { FileText, Plus, Stethoscope, UploadCloud } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import { patientService } from "~/api/patient/PatientService";
 import { useToast } from "~/composables/useToast";
 import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
+import { patientDiagnosisSchema } from "~/schema/patient-schema";
 import {
     LIFE_SYSTEM_ACTIVITIES,
     activityLabel,
@@ -50,7 +52,6 @@ const diagnoses = computed<any[]>(() => {
 const route = useRoute();
 const { success, error } = useToast();
 
-const todayStr = new Date().toISOString().split("T")[0];
 
 const adding = ref(false);
 const saving = ref(false);
@@ -102,18 +103,48 @@ function cancelAdd() {
     draft.diagnosis_date = "";
     draft.diagnosis_notes = "";
     draft.diagnosis_file = null;
-    delete draftErrors.diagnosis;
-    delete draftErrors.diagnosis_date;
-    delete draftErrors.diagnosis_file;
+    DIAGNOSIS_FIELDS.forEach((field) => delete draftErrors[field]);
+}
+
+const DIAGNOSIS_FIELDS = [
+    "diagnosis",
+    "diagnosis_date",
+    "diagnosis_notes",
+    "diagnosis_file",
+] as const;
+
+function clearDraftError(field: (typeof DIAGNOSIS_FIELDS)[number]) {
+    delete draftErrors[field];
 }
 
 async function submitDiagnosis() {
-    delete draftErrors.diagnosis;
+    DIAGNOSIS_FIELDS.forEach((field) => delete draftErrors[field]);
 
-    if (!draft.diagnosis.trim()) {
-        draftErrors.diagnosis = "Primary diagnosis is required.";
-        return;
+    const result = patientDiagnosisSchema.safeParse({
+        diagnosis: draft.diagnosis,
+        diagnosis_date: draft.diagnosis_date,
+        diagnosis_notes: draft.diagnosis_notes,
+        diagnosis_file: draft.diagnosis_file ?? undefined,
+    });
+
+    if (!result.success) {
+        const formatted = result.error.format() as any;
+
+        DIAGNOSIS_FIELDS.forEach((field) => {
+            const message = formatted[field]?._errors?.[0];
+            if (message) draftErrors[field] = message;
+        });
     }
+
+    if (!draft.diagnosis.trim() && !draftErrors.diagnosis) {
+        draftErrors.diagnosis = "Primary Diagnosis is required";
+    }
+
+    if (!draft.diagnosis_date && !draftErrors.diagnosis_date) {
+        draftErrors.diagnosis_date = "Date Diagnosed is required";
+    }
+
+    if (DIAGNOSIS_FIELDS.some((field) => draftErrors[field])) return;
 
     saving.value = true;
 
@@ -189,15 +220,19 @@ const activeAssessment = computed(
                     v-model="draft.diagnosis"
                     label="Primary Diagnosis"
                     placeholder="e.g. Type 2 Diabetes"
+                    required
                     :error="draftErrors.diagnosis"
+                    @update:model-value="clearDraftError('diagnosis')"
                 />
 
-                <BaseInput
+                <DatePickerField
                     v-model="draft.diagnosis_date"
                     label="Date Diagnosed"
-                    mode="date"
-                    :max="todayStr"
+                    placeholder="Select date diagnosed"
+                    required
+                    :default-to-today="false"
                     :error="draftErrors.diagnosis_date"
+                    @update:model-value="clearDraftError('diagnosis_date')"
                 />
             </div>
 
@@ -205,6 +240,8 @@ const activeAssessment = computed(
                 v-model="draft.diagnosis_notes"
                 label="Diagnosis Notes"
                 placeholder="Additional details"
+                :error="draftErrors.diagnosis_notes"
+                @update:model-value="clearDraftError('diagnosis_notes')"
             />
 
             <div class="flex flex-col gap-1.5">

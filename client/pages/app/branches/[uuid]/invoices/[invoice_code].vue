@@ -592,7 +592,7 @@
                                     :value="
                                         formatPhone(
                                             invoice.patient.phone_number,
-                                        )
+                                        ) || '—'
                                     "
                                 />
                                 <Field

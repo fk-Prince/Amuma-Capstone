@@ -55,11 +55,11 @@
                 >
                     <div class="space-y-6 p-6 md:overflow-y-auto">
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <BaseInput
+                            <DatePickerField
                                 :model-value="form.date"
                                 label="Select Schedule Date"
-                                mode="date"
                                 :min="todayStr"
+                                placeholder="Select schedule date"
                                 required
                                 @update:model-value="form.date = $event"
                             />
@@ -448,6 +448,7 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService";
 import { serviceService } from "~/api/service/ServiceService";
 import { useToast } from "~/composables/useToast";
@@ -492,7 +493,7 @@ const form = reactive({
 });
 
 const availableTimeSlots = computed(() =>
-    generateAvailableAmPmTimes(form.date),
+    generateAvailableAmPmTimes(form.date, 30),
 );
 
 const displayTime = computed(() =>
@@ -641,4 +642,13 @@ watch(
         load();
     },
 );
+
+watch(availableTimeSlots, (slots) => {
+    if (
+        form.preferred_time &&
+        !slots.some((slot) => slot.value === form.preferred_time)
+    ) {
+        form.preferred_time = "";
+    }
+});
 </script>

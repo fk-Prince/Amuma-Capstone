@@ -70,7 +70,7 @@ class AuthService
         $exists = $this->userRepository->findByField('email', $payload['email']);
 
         if ($exists) {
-            throw new Exception(__('Email already exists.'), 409);
+            throw new Exception(__('An account with this email already exists.'), 409);
         }
 
         $user = $this->userRepository->create([

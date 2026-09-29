@@ -5,13 +5,8 @@ export const PermissionAction = {
     Create: "can_create",
     Update: "can_update",
     Export: "can_export",
-    Approve: "can_approve",
-    Reject: "can_reject",
     Assign: "can_assign",
-    Admit: "can_admit",
-    Discharge: "can_discharge",
     ForceDischarge: "can_force_discharge",
-    ApproveWithdrawal: "can_approve_withdrawal",
     Renew: "can_renew",
 } as const;
 
@@ -19,11 +14,7 @@ export type PermissionActionKey =
     (typeof PermissionAction)[keyof typeof PermissionAction];
 
 export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
-    [Modules.Bookings]: [
-        PermissionAction.Read,
-        PermissionAction.Approve,
-        PermissionAction.Reject,
-    ],
+    [Modules.Bookings]: [PermissionAction.Read, PermissionAction.Update],
     [Modules.Patients]: [
         PermissionAction.Read,
         PermissionAction.Create,
@@ -32,15 +23,13 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
     ],
     [Modules.Schedules]: [
         PermissionAction.Read,
-        PermissionAction.Assign,
         PermissionAction.Update,
+        PermissionAction.Assign,
     ],
     [Modules.Admissions]: [
         PermissionAction.Read,
         PermissionAction.Create,
         PermissionAction.Update,
-        PermissionAction.Admit,
-        PermissionAction.Discharge,
         PermissionAction.ForceDischarge,
     ],
     [Modules.RoomsAndBeds]: [
@@ -68,11 +57,16 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Read,
         PermissionAction.Create,
         PermissionAction.Update,
-        PermissionAction.ApproveWithdrawal,
+        PermissionAction.Export,
     ],
-    [Modules.ManageBranches]: [PermissionAction.Read, PermissionAction.Create],
+    [Modules.ManageBranches]: [
+        PermissionAction.Read,
+        PermissionAction.Create,
+        PermissionAction.Update,
+    ],
     [Modules.BranchSettings]: [
         PermissionAction.Read,
+        PermissionAction.Create,
         PermissionAction.Update,
         PermissionAction.Renew,
     ],
@@ -96,11 +90,11 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
     [Modules.EmployeeManagement]:
         "Add staff to the branch, issue their accounts, and manage their details, roles, permissions and status.",
     [Modules.BillingAndInvoices]:
-        "Issue invoices, record payments and receipts, adjust or void invoices, and decide on families' requests to withdraw credit.",
+        "Issue invoices, record payments and receipts, adjust or void invoices, decide on families' requests to withdraw credit, and print balance statements.",
     [Modules.ManageBranches]:
-        "See the branches on this account with their subscription status, and open new ones.",
+        "See the branches on this account with their subscription status, open new ones, and resubmit rejected ones.",
     [Modules.BranchSettings]:
-        "View and change branch details such as address, hours, currency and policies, and renew the branch's subscription.",
+        "View and change branch details such as address, hours, currency and policies, upload branch photos, and renew the branch's subscription.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -108,13 +102,8 @@ export const ACTION_LABELS: Record<PermissionActionKey, string> = {
     [PermissionAction.Create]: "Create",
     [PermissionAction.Update]: "Update",
     [PermissionAction.Export]: "Export",
-    [PermissionAction.Approve]: "Approve",
-    [PermissionAction.Reject]: "Reject",
     [PermissionAction.Assign]: "Assign",
-    [PermissionAction.Admit]: "Admit",
-    [PermissionAction.Discharge]: "Discharge",
     [PermissionAction.ForceDischarge]: "Force discharge",
-    [PermissionAction.ApproveWithdrawal]: "Approve withdrawal requests",
     [PermissionAction.Renew]: "Renew",
 };
 
@@ -124,10 +113,8 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     [Modules.Bookings]: {
         [PermissionAction.Read]:
             "See booking requests from families, including the service, dates and who sent them.",
-        [PermissionAction.Approve]:
-            "Accept a request, which turns it into a schedule or admission and bills the family.",
-        [PermissionAction.Reject]:
-            "Decline a request so it never becomes a visit or admission.",
+        [PermissionAction.Update]:
+            "Accept a request, which turns it into a schedule or admission and bills the family, or decline it so it never becomes one.",
     },
     [Modules.Patients]: {
         [PermissionAction.Read]:
@@ -142,10 +129,10 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     [Modules.Schedules]: {
         [PermissionAction.Read]:
             "View the visit calendar and the details of each visit.",
-        [PermissionAction.Assign]:
-            "Choose which nurse or caregiver handles a visit, and reassign it later.",
         [PermissionAction.Update]:
             "Move, edit or cancel visits and the services attached to them.",
+        [PermissionAction.Assign]:
+            "Choose which nurse or caregiver handles a visit, and reassign it later.",
     },
     [Modules.Admissions]: {
         [PermissionAction.Read]:
@@ -153,11 +140,7 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Create]:
             "Start an admission for a resident: contract, accommodation and dates.",
         [PermissionAction.Update]:
-            "Change an admission's details, such as its rate, room or billing period.",
-        [PermissionAction.Admit]:
-            "Confirm the resident into their bed and start billing.",
-        [PermissionAction.Discharge]:
-            "Close an admission once everything owed has been settled.",
+            "Change an admission's details such as its rate, room or billing period, admit the resident into their bed to start billing, and discharge them once everything owed is settled.",
         [PermissionAction.ForceDischarge]:
             "Discharge despite an unpaid balance or an unfinished billing period.",
     },
@@ -197,21 +180,24 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Read]:
             "Open invoices, receipts and payment history, and see a resident's outstanding balance and credit on account.",
         [PermissionAction.Create]:
-            "Issue invoices and record payments taken at the branch, which produces the receipt.",
+            "Record payments taken at the branch (which produces the receipt), take payment for a stay extension, pay out a resident's credit, and approve or decline a family's request to withdraw it.",
         [PermissionAction.Update]:
-            "Adjust or void an invoice, which is what turns an overpayment into credit on the resident's account.",
-        [PermissionAction.ApproveWithdrawal]:
-            "Approve a family's request to withdraw their credit, which releases the payout, or reject it and leave the credit on the account.",
+            "Adjust an invoice or issue a refund as credit on the resident's account, void an invoice, or write off what can't be collected.",
+        [PermissionAction.Export]:
+            "Print a patient's statement of the balances still to be paid.",
     },
     [Modules.ManageBranches]: {
         [PermissionAction.Read]:
             "See the branches under this account and their status.",
         [PermissionAction.Create]:
             "Open a new branch, which starts a subscription for it.",
+        [PermissionAction.Update]:
+            "Fix and resubmit a rejected branch or agency for review, paying again when its subscription was refunded or is full.",
     },
     [Modules.BranchSettings]: {
         [PermissionAction.Read]:
             "View branch details: address, opening hours, currency and policies.",
+        [PermissionAction.Create]: "Upload photos of the branch and its rooms.",
         [PermissionAction.Update]: "Change those branch details.",
         [PermissionAction.Renew]:
             "Renew the branch's subscription and pay for it.",

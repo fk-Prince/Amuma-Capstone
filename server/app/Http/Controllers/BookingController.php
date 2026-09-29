@@ -49,19 +49,19 @@ class BookingController extends Controller
         if ($request->action === 'total') {
             return $this->bookingHelper->getTotal($request->all());
         } else if ($request->action === 'approve') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
             $request->merge([
                 'user' => $request->user(),
             ]);
             return $this->bookingService->bookingAction($request->all());
         } else if ($request->action === 'accept') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Approve);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
             $request->merge([
                 'user' => $request->user(),
             ]);
             return $this->bookingService->accept($request->all());
         } else if ($request->action === 'reject') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Reject);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
             $request->merge([
                 'user' => $request->user(),
             ]);

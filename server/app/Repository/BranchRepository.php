@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
@@ -44,7 +45,13 @@ class BranchRepository
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
             ->withAvg('reviews', 'rate')
-            ->orderByDesc('reviews_avg_rate')
+            ->withCount([
+                'bookings' => fn($query) => $query->where('status', Booking::STATUS_APPROVED),
+                'patients',
+            ])
+            ->orderByRaw('reviews_avg_rate DESC NULLS LAST')
+            ->orderByDesc('bookings_count')
+            ->orderByDesc('patients_count')
             ->latest()
             ->paginate($perPage);
     }

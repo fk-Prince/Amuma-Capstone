@@ -109,12 +109,12 @@
                     <div
                         v-if="
                             canViewDischarge(admission) ||
-                            isCurrentAdmission(admission)
+                            (canExtend && isCurrentAdmission(admission))
                         "
                         class="mt-5 flex flex-wrap justify-end gap-2"
                     >
                         <button
-                            v-if="isCurrentAdmission(admission)"
+                            v-if="canExtend && isCurrentAdmission(admission)"
                             type="button"
                             class="inline-flex items-center gap-2 rounded-xl border border-primary-200 px-4 py-2.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
                             @click="
@@ -199,6 +199,7 @@ import type { DischargeCalculation, PatientAdmission } from "~/types/invoice";
 const props = defineProps<{
     admissions: PatientAdmission[];
     dischargeCalculation?: DischargeCalculation | null;
+    canExtend?: boolean;
 }>();
 
 const emit = defineEmits<{

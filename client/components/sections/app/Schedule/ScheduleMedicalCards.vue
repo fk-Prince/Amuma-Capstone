@@ -158,13 +158,6 @@
                                 </span>
                             </li>
                         </ul>
-
-                        <p
-                            v-if="schedule.note"
-                            class="line-clamp-2 text-[11px] text-slate-400 dark:text-gray-500"
-                        >
-                            Note: {{ schedule.note }}
-                        </p>
                     </div>
 
                     <div

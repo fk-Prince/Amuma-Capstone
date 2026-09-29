@@ -39,10 +39,15 @@
                             :items="statusOptions"
                         />
 
-                        <button
-                            type="button"
-                            :disabled="addDisabled"
-                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+                        <ActionButton
+                            variant="primary"
+                            extra-class="!rounded-xl !px-5 !py-2.5"
+                            :disabled="addDisabled || !canAddBranch"
+                            :tooltip="
+                                canAddBranch
+                                    ? ''
+                                    : 'You need permission to create in Manage Branches to add a branch.'
+                            "
                             @click="openAddBranch"
                         >
                             <svg
@@ -61,7 +66,7 @@
                             </svg>
 
                             <span>Add New Branch</span>
-                        </button>
+                        </ActionButton>
 
                         <span
                             v-if="statsData.branch_capacity?.capacity"
@@ -279,6 +284,7 @@
                         :key="branch.branch_id"
                         :branch="branch"
                         :active="branch.uuid === route.params.uuid"
+                        :can-resubmit="canResubmit"
                         @resubmit="onResubmitBranch"
                     />
                 </div>
@@ -338,6 +344,7 @@ import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
@@ -346,6 +353,8 @@ import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
 import { useToast } from "~/composables/useToast";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { useRoute } from "vue-router";
 import logo from "~/assets/logo/logo.png";
 
@@ -357,6 +366,10 @@ useHead({ title: "Branches" });
 
 const route = useRoute();
 const { error } = useToast();
+const { canCreate, canUpdate } = usePermissions();
+
+const canResubmit = computed(() => canUpdate(Modules.ManageBranches));
+const canAddBranch = computed(() => canCreate(Modules.ManageBranches));
 
 const resubmitTarget = ref<{
     branch: FullBranch;
@@ -381,6 +394,8 @@ const purchaseReasonFor = (branch: Branch): string | null => {
 };
 
 function onResubmitBranch(branch: Branch) {
+    if (!canResubmit.value) return;
+
     const full = branchStore.branches.find((b) => b.uuid === branch.uuid);
 
     if (!full) {

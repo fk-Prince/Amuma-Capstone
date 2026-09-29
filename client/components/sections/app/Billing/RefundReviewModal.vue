@@ -127,6 +127,7 @@
                         </p>
 
                         <div
+                            v-if="canDecide"
                             class="flex items-center justify-end gap-2 border-t border-primary-100 px-4 py-2.5 dark:border-white/10"
                         >
                             <button
@@ -179,6 +180,7 @@ const props = defineProps<{
     credit: number;
     processing: boolean;
     errorMessage?: string;
+    canDecide?: boolean;
 }>();
 
 const emit = defineEmits<{

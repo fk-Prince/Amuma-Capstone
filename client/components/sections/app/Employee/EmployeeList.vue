@@ -119,9 +119,9 @@ const formatStatus = (status: string | null | undefined) => {
 </script>
 
 <template>
-    <div class="flex-1 min-h-0 overflow-visible">
+    <div class="flex-1 min-h-0 flex flex-col overflow-visible">
         <DataTable
-            class="rounded-t-none rounded-b-xl border-none h-full"
+            class="flex-1 rounded-t-none rounded-b-xl border-none h-full"
             :columns="columns"
             :rows="rows"
             :pagination="pagination"

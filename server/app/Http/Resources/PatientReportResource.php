@@ -33,10 +33,12 @@ class PatientReportResource extends JsonResource
                 'height' => $patient->height,
                 'weight' => $patient->weight,
                 'allergies' => $patient->allergies,
+                'avatar' => $patient->avatar,
                 'branch_name' => $patient->branch?->name,
             ],
             'branch' => [
                 'name' => $patient->branch?->name,
+                'image' => $patient->branch?->image,
                 'address' => $patient->branch?->location?->full_address,
                 'contact_number' => $patient->branch?->contact_number,
                 'email' => $patient->branch?->email,

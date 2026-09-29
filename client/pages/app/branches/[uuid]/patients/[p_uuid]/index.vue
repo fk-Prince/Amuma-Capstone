@@ -17,7 +17,7 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import PatientPrintModal from "~/components/sections/app/Patient/PatientPrintModal.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
-import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
@@ -927,23 +927,25 @@ onMounted(async () => {
                                         </button>
                                     </div>
 
-                                    <div class="flex items-center gap-2">
-                                        <BaseInput
+                                    <div
+                                        class="flex w-full items-center gap-2 xl:w-auto"
+                                    >
+                                        <DatePickerField
                                             v-model="scheduleFrom"
-                                            mode="date"
-                                            class-name="w-full sm:max-w-[170px]"
-                                            box-class="ring-1 ring-slate-200 dark:ring-white/10"
+                                            class-name="min-w-0 flex-1 xl:w-[160px] xl:flex-none"
+                                            placeholder="From"
+                                            :default-to-today="false"
                                         />
 
                                         <ChevronRight
                                             class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
                                         />
 
-                                        <BaseInput
+                                        <DatePickerField
                                             v-model="scheduleTo"
-                                            mode="date"
-                                            class-name="w-full sm:max-w-[170px]"
-                                            box-class="ring-1 ring-slate-200 dark:ring-white/10"
+                                            class-name="min-w-0 flex-1 xl:w-[160px] xl:flex-none"
+                                            placeholder="To"
+                                            :default-to-today="false"
                                         />
                                     </div>
                                 </div>

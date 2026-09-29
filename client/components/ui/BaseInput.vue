@@ -49,7 +49,9 @@
                 :maxlength="inputType === 'number' ? undefined : textMax"
                 :min="min || undefined"
                 :max="max || undefined"
+                :step="step || undefined"
                 :placeholder="placeholder"
+                @keydown="blockSignKeys"
                 class="flex-1 min-w-0 px-3.5 py-2.5 text-sm text-slate-800 dark:text-white bg-transparent outline-none placeholder:text-slate-400 dark:placeholder:text-gray-500"
                 :class="[
                     hasPrefix ? 'pl-2' : '',
@@ -137,6 +139,10 @@ const props = defineProps({
         type: String,
         default: "",
     },
+    step: {
+        type: String,
+        default: "",
+    },
     boxClass: {
         type: String,
         default: "border-[1.5px] focus-within:ring-2",
@@ -197,6 +203,14 @@ const value = computed({
         }
     },
 });
+
+function blockSignKeys(event: KeyboardEvent) {
+    const nonNegative = props.min !== "" && Number(props.min) >= 0;
+
+    if (inputType.value === "number" && nonNegative && ["-", "+", "e", "E"].includes(event.key)) {
+        event.preventDefault();
+    }
+}
 
 const slots = useSlots();
 

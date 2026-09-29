@@ -106,14 +106,17 @@
                 </div>
 
                 <template v-if="agencyRejected">
-                    <button
-                        type="button"
-                        class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+                    <ActionButton
+                        variant="primary"
+                        class="mt-5 w-full"
+                        extra-class="w-full !rounded-xl !py-3 font-semibold"
+                        :disabled="!canReapply"
+                        tooltip="You need permission to update Manage Branches to reapply."
                         @click="showReapply = true"
                     >
                         <RotateCw class="h-4 w-4" />
                         Fix details & reapply
-                    </button>
+                    </ActionButton>
 
                     <p
                         v-if="branch?.resubmit_requires_payment"
@@ -238,8 +241,14 @@ import { computed, ref } from "vue";
 import { RotateCw } from "lucide-vue-next";
 import { useBranchStore } from "@/stores/branch";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
+import ActionButton from "~/components/ui/ActionButton.vue";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 
 const branchStore = useBranchStore();
+
+const { canUpdate } = usePermissions();
+const canReapply = computed(() => canUpdate(Modules.ManageBranches));
 
 const branch = computed(() => branchStore.activeBranch);
 

@@ -3,7 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Utils\MedicationPresenter;
+use App\Utils\PortalHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PatientAccessResource extends JsonResource
@@ -114,6 +116,12 @@ class PatientAccessResource extends JsonResource
             );
         }
 
+        $homecare = PortalHelper::currentHomecareSchedules($this->resource);
+
+        if ($homecare->isNotEmpty()) {
+            return $this->formatHomecareContext($homecare);
+        }
+
         if ($this->resource->latestAdmission) {
             return $this->formatAdmissionContext(
                 $this->resource->latestAdmission,
@@ -123,7 +131,7 @@ class PatientAccessResource extends JsonResource
         }
 
         if ($this->resource->relationLoaded('schedules') && $this->resource->schedules->isNotEmpty()) {
-            return $this->formatHomecareContext();
+            return $this->formatHomecareContext($this->resource->schedules);
         }
 
         return [
@@ -156,10 +164,10 @@ class PatientAccessResource extends JsonResource
         ];
     }
 
-    private function formatHomecareContext(): array
+    private function formatHomecareContext(Collection $schedules): array
     {
-        $adlSchedule = $this->getScheduleByType('adl');
-        $medicalSchedule = $this->getScheduleByType('medical');
+        $adlSchedule = $this->getScheduleByType($schedules, 'adl');
+        $medicalSchedule = $this->getScheduleByType($schedules, 'medical');
 
         return [
             'type' => 'homecare',
@@ -169,13 +177,9 @@ class PatientAccessResource extends JsonResource
         ];
     }
 
-    private function getScheduleByType(string $type): mixed
+    private function getScheduleByType(Collection $schedules, string $type): mixed
     {
-        if (!$this->resource->relationLoaded('schedules')) {
-            return null;
-        }
-
-        return $this->resource->schedules->first(function ($schedule) use ($type) {
+        return $schedules->first(function ($schedule) use ($type) {
             if ($type === 'adl') {
                 return $schedule->scheduleServices->contains(
                     fn($service) => $service->type === 'ADL'
@@ -386,8 +390,8 @@ class PatientAccessResource extends JsonResource
             ];
         }
 
-        $adlSchedule = $this->getScheduleByType('adl');
-        $medicalSchedule = $this->getScheduleByType('medical');
+        $adlSchedule = $this->getScheduleByType($this->resource->schedules, 'adl');
+        $medicalSchedule = $this->getScheduleByType($this->resource->schedules, 'medical');
 
         return [
             'adl' => $adlSchedule ? $this->formatSchedulePayload($adlSchedule) : null,

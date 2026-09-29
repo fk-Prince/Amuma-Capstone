@@ -13,6 +13,7 @@ use App\Models\EmployeeBranch;
 use App\Models\Invoice;
 use App\Models\Location;
 use App\Models\Medication;
+use App\Models\MedicationSchedule;
 use App\Models\Patient;
 use App\Models\PatientAccess;
 use App\Models\PatientActivity;
@@ -108,15 +109,66 @@ class PatientSeeder extends Seeder
 
     private function createMedications(Patient $patient, array $medications): void
     {
+        $markedBy = $this->medicationMarker($patient->branch_id);
+
         foreach ($medications as $medication) {
-            Medication::create($medication + [
+            $record = Medication::create($medication + [
                 'patient_id' => $patient->patient_id,
                 'duration' => '30',
                 'frequency' => 'everyday',
                 'start_date' => now()->subDays(14)->toDateString(),
                 'recorded_at' => now()->subDays(14),
             ]);
+
+            $this->createTakenDoses($record, $markedBy);
         }
+    }
+
+    private function createTakenDoses(Medication $medication, ?int $markedBy): void
+    {
+        if ($medication->kind !== 'Scheduled' || empty($medication->times)) {
+            return;
+        }
+
+        $interval = [
+            'every_2_days' => 2,
+            'every_3_days' => 3,
+            'every_week' => 7,
+        ][$medication->frequency] ?? 1;
+
+        $doses = [];
+
+        for ($day = 0; $day < (int) $medication->duration; $day += $interval) {
+            $date = $medication->start_date->copy()->addDays($day)->toDateString();
+
+            foreach ($medication->times as $time) {
+                $dueAt = Carbon::parse("{$date} {$time}");
+
+                if ($dueAt->isFuture()) {
+                    continue;
+                }
+
+                $doses[] = [
+                    'date' => $date,
+                    'time' => $time,
+                    'status' => MedicationSchedule::STATUS_TAKEN,
+                    'marked_by' => $markedBy,
+                    'recorded_at' => $dueAt->copy()->addMinutes(10),
+                ];
+            }
+        }
+
+        $medication->schedules()->createMany($doses);
+    }
+
+    private function medicationMarker(int $branchId): ?int
+    {
+        return EmployeeBranch::query()
+            ->join('employees', 'employees.employee_id', '=', 'employee_branches.employee_id')
+            ->where('employee_branches.branch_id', $branchId)
+            ->whereIn('employee_branches.role_name', [RoleEnum::Nurse->value, RoleEnum::Caregiver->value])
+            ->orderByRaw('employee_branches.role_name = ? desc', [RoleEnum::Nurse->value])
+            ->value('employees.user_id');
     }
 
     private function createVitals(Patient $patient, array $baseline): void

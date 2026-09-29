@@ -47,15 +47,17 @@
         <nav
             class="sidebar-scroll flex-1 px-3.5 mt-5 flex flex-col gap-4 lg:gap-1.5 lg:group-hover:gap-4 overflow-y-auto overflow-x-hidden"
         >
-            <SidebarNavGroup
-                v-for="group in groupedMenus"
-                :key="group.label"
-                :label="group.label"
-                :items="group.items"
-                :show-label="groupedMenus.length > 1"
-                storage-key="dashboard"
-                @navigate="emit('close')"
-            />
+            <ClientOnly>
+                <SidebarNavGroup
+                    v-for="group in groupedMenus"
+                    :key="group.label"
+                    :label="group.label"
+                    :items="group.items"
+                    :show-label="groupedMenus.length > 1"
+                    storage-key="dashboard"
+                    @navigate="emit('close')"
+                />
+            </ClientOnly>
         </nav>
 
         <div

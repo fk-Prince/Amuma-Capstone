@@ -271,14 +271,6 @@
                                     >
                                         {{ bedLabel(schedule) }}
                                     </p>
-
-                                    <p
-                                        v-if="schedule.note"
-                                        class="mt-0.5 truncate text-[11px] text-slate-400 dark:text-gray-500"
-                                        :title="schedule.note"
-                                    >
-                                        Note: {{ schedule.note }}
-                                    </p>
                                 </div>
 
                                 <div class="flex gap-1.5">

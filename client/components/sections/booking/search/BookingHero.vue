@@ -20,7 +20,7 @@
                 <div class="max-w-xl">
                     <div class="flex items-center gap-2.5">
                         <span
-                            class="w-1.5 h-1.5 rounded-full bg-accent-400"
+                            class="w-1.5 h-1.5 rounded-full bg-primary"
                         ></span>
                         <span
                             class="text-xs font-medium tracking-[0.16em] uppercase text-white/60"
@@ -91,7 +91,7 @@
                     <div class="mb-5 xl:mb-6">
                         <div class="flex items-center gap-2">
                             <span
-                                class="w-1.5 h-1.5 rounded-full bg-accent"
+                                class="w-1.5 h-1.5 rounded-full bg-primary"
                             ></span>
                             <span
                                 class="text-xs font-medium tracking-[0.14em] uppercase text-muted dark:text-gray-400"
@@ -184,12 +184,12 @@
                     </BaseButton>
 
                     <div
-                        class="mt-6 border-t border-muted-light pt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted dark:text-gray-400 dark:border-white/10"
+                        class="mt-6 border-t border-muted-light pt-5 flex flex-wrap gap-x-3 gap-y-2 text-xs text-muted sm:flex-nowrap sm:justify-between dark:text-gray-400 dark:border-white/10"
                     >
                         <span
                             v-for="trust in trustPoints"
                             :key="trust"
-                            class="flex items-center gap-1.5"
+                            class="flex items-center gap-1.5 whitespace-nowrap"
                         >
                             <svg
                                 width="13"

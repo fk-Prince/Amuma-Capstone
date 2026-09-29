@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { Check, Clock, LoaderCircle, Pill, Plus, X } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { medicationSchema } from "~/types/medication";
 import { getLocalDateStr } from "~/utils/time";
@@ -248,11 +249,12 @@ function close() {
                                 <div
                                     class="grid grid-cols-1 gap-4 sm:grid-cols-3"
                                 >
-                                    <BaseInput
+                                    <DatePickerField
                                         v-model="form.startDate"
-                                        mode="date"
                                         :min="getLocalDateStr(new Date())"
                                         label="Start Date"
+                                        placeholder="Select start date"
+                                        :default-to-today="false"
                                         :error="errors.startDate"
                                         @update:modelValue="
                                             clearError('startDate')

@@ -126,4 +126,19 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     html:has(body.printing-slip) {
         height: auto !important;
     }
+
+    body.printing-statement > *:not(.print-statement-sheet) {
+        display: none !important;
+    }
+
+    body.printing-statement {
+        background: #ffffff !important;
+        height: auto !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    html:has(body.printing-statement) {
+        height: auto !important;
+    }
 }

@@ -1,6 +1,6 @@
 <template>
     <div class="w-full mx-auto space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm py-6 dark:bg-secondary">
+        <div class="bg-white rounded-2xl shadow-sm p-6 dark:bg-secondary">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div

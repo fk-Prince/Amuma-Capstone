@@ -85,6 +85,18 @@ class DischargeCalculator
             'period_days' => $plan['period_days'],
             'period_start' => $plan['period_start'],
             'period_end' => $plan['period_end'],
+            'period_chain' => $plan['chain']
+                ->map(fn(AdmissionPeriod $link) => [
+                    'admission_period_id' => $link->admission_period_id,
+                    'reason' => $link->reason,
+                    'accommodation_type' => $link->branchContract?->accommodation_type,
+                    'billing_cycle' => $link->branchContract?->billing_cycle,
+                    'start_date' => $link->start_date,
+                    'end_date' => $link->end_date,
+                    'is_current' => $link->admission_period_id === $period->admission_period_id,
+                ])
+                ->values()
+                ->all(),
             'daily_rate' => $plan['daily_rate'],
             'period_price' => $plan['period_price'],
             'invoice_total' => $plan['period_price'],
@@ -270,6 +282,7 @@ class DischargeCalculator
             'retained_half' => $retainedHalf,
             'days_stayed_amount' => $daysStayedAmount,
             'consumed_days' => $consumedDays,
+            'chain' => $chain,
             'invoices' => $invoices,
             'entries' => $entries->map(fn(array $entry) => $entry + $shares[$entry['line']->invoice_admission_id])->values(),
         ];
@@ -340,8 +353,8 @@ class DischargeCalculator
         if ($billingCycle === 'MONTHLY') {
             return [
                 'No refund',
-                'Monthly plan',
-                'A monthly plan is charged in full for the month, whenever the resident leaves. The days stayed are not worked out and no refund applies.',
+                'Outside refund window',
+                'Discharged 2 weeks or more into the month. The half-retention window has passed, so the full month is charged and no refund applies.',
             ];
         }
 

@@ -180,12 +180,12 @@
                         <div
                             class="flex flex-col gap-2 sm:flex-row sm:items-center"
                         >
-                            <input
-                                v-model="filters.date_from"
-                                type="date"
-                                aria-label="From"
-                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
-                                @change="emitChange(true)"
+                            <DatePickerField
+                                :model-value="filters.date_from"
+                                class-name="w-full min-w-0 sm:w-44"
+                                placeholder="From"
+                                :default-to-today="false"
+                                @update:model-value="setDate('date_from', $event)"
                             />
 
                             <span
@@ -194,12 +194,12 @@
                                 to
                             </span>
 
-                            <input
-                                v-model="filters.date_to"
-                                type="date"
-                                aria-label="To"
-                                class="w-full min-w-0 rounded-xl border border-muted-light bg-muted-light/40 px-3 py-2.5 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 sm:w-44 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
-                                @change="emitChange(true)"
+                            <DatePickerField
+                                :model-value="filters.date_to"
+                                class-name="w-full min-w-0 sm:w-44"
+                                placeholder="To"
+                                :default-to-today="false"
+                                @update:model-value="setDate('date_to', $event)"
                             />
                         </div>
                     </div>
@@ -306,6 +306,7 @@ import {
     PanelRightClose,
     PanelRightOpen,
 } from "lucide-vue-next";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 
 export type ScheduleView = "timeline" | "cards";
 export type ScheduleTypeFilter = "medical" | "homecare";
@@ -548,6 +549,11 @@ const toggleStatus = (value: string) => {
 
 const toggleType = (value: string) => {
     filters.type = [value];
+    emitChange(true);
+};
+
+const setDate = (key: "date_from" | "date_to", value: string) => {
+    filters[key] = value;
     emitChange(true);
 };
 

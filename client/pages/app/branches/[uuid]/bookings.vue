@@ -515,7 +515,7 @@
                                         type="button"
                                         variant="primary"
                                         :loading="isApproving"
-                                        :disabled="isApproving"
+                                        :disabled="isReviewing"
                                         extra-class="w-full"
                                         :tooltip="
                                             !isApproving && !canApproveBooking
@@ -551,7 +551,7 @@
                                         type="button"
                                         variant="danger"
                                         :loading="isRejecting"
-                                        :disabled="isRejecting"
+                                        :disabled="isReviewing"
                                         extra-class="w-full"
                                         :tooltip="
                                             selectedBooking.payment
@@ -772,6 +772,7 @@ const {
 const isSubmitting = ref(false);
 const isApproving = ref(false);
 const isRejecting = ref(false);
+const isReviewing = computed(() => isApproving.value || isRejecting.value);
 const isLoadingSelected = ref(true);
 
 const selectedBooking = ref<any | null>(null);
@@ -936,6 +937,7 @@ function syncBookingStatus(
         reason?: string;
         reviewed_by?: string | null;
         reviewed_at?: string | null;
+        patient?: any;
     },
 ) {
     const previous = String(booking.status ?? "").toLowerCase();
@@ -976,7 +978,7 @@ const rejectWillRefund = computed(
 );
 
 const openRejectModal = (booking: any) => {
-    if (!booking?.booking_id) return;
+    if (!booking?.booking_id || isReviewing.value) return;
 
     rejectTarget.value = booking;
 };
@@ -1021,7 +1023,7 @@ const rejectBooking = async (reason: string) => {
 };
 
 const confirmBooking = async (booking: any) => {
-    if (!booking?.reference_id || isApproving.value) return;
+    if (!booking?.reference_id || isReviewing.value) return;
 
     isApproving.value = true;
 
@@ -1047,6 +1049,7 @@ const confirmBooking = async (booking: any) => {
             status: res.data?.status ?? "approved",
             reviewed_by: res.data?.reviewed_by,
             reviewed_at: res.data?.reviewed_at,
+            ...(res.data?.patient ? { patient: res.data.patient } : {}),
         });
     } catch (err: any) {
         error(err?.message ?? "Failed to approve booking.");

@@ -442,12 +442,13 @@
                     </div>
 
                     <div class="mt-4" v-if="requireAdmissionDate">
-                        <BaseInput
+                        <DatePickerField
                             label="Admission Date"
-                            mode="date"
                             v-model="admittedAt"
+                            placeholder="Select admission date"
                             :max="maxDateStr"
                             :min="todayStr"
+                            :default-to-today="false"
                         />
                     </div>
                 </div>
@@ -544,7 +545,7 @@ import { computed, ref, watch } from "vue";
 import type { Room } from "~/types/room";
 import type { RoomContract, Reserved } from "~/types/contract";
 import type { Bed } from "~/types/bed";
-import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import { toLocalDateString } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 

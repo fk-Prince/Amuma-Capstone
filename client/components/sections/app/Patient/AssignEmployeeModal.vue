@@ -512,7 +512,7 @@
                                 <div
                                     v-for="employee in filteredEmployees"
                                     :key="employee.employee_id"
-                                    class="rounded-2xl border bg-white transition dark:bg-secondary dark:border-white/10"
+                                    class="overflow-hidden rounded-2xl border bg-white transition dark:bg-secondary dark:border-white/10"
                                     :class="[
                                         isSelected(employee.employee_id)
                                             ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
@@ -686,7 +686,8 @@
                                     <span
                                         v-else-if="
                                             !employee.is_assigned &&
-                                            !isActiveServiceAdl
+                                            !isActiveServiceAdl &&
+                                            !isAssistant(employee, activeService)
                                         "
                                         class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                     >
@@ -709,20 +710,20 @@
                                             employee.employee_id,
                                         ) && employee.conflict_schedules?.length
                                     "
-                                    class="space-y-2 border-t border-slate-100 bg-slate-50/50 p-3 dark:border-white/10 dark:bg-white/5"
+                                    class="space-y-2.5 border-t border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/[0.03]"
                                 >
                                     <div
                                         v-for="(
                                             conflict, idx
                                         ) in employee.conflict_schedules"
                                         :key="idx"
-                                        class="rounded-lg border border-amber-100 bg-white p-2.5 text-xs dark:border-amber-500/20 dark:bg-secondary"
+                                        class="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2.5 text-xs dark:border-amber-500/20 dark:bg-amber-500/[0.06]"
                                     >
                                         <div
-                                            class="flex items-center justify-between"
+                                            class="flex items-center justify-between gap-2"
                                         >
                                             <span
-                                                class="font-semibold text-slate-700 dark:text-gray-400"
+                                                class="font-semibold text-slate-800 dark:text-white"
                                             >
                                                 {{ conflict.schedule_code }}
                                             </span>
@@ -744,44 +745,54 @@
                                             </span>
                                         </div>
 
-                                        <p
-                                            class="mt-1 text-slate-500 dark:text-gray-400"
+                                        <div
+                                            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500 dark:text-gray-400"
                                         >
-                                            {{
-                                                formatDate(
-                                                    conflict.scheduled_at,
-                                                )
-                                            }}
-                                            •
-                                            {{
-                                                formatTime(
-                                                    conflict.scheduled_at,
-                                                )
-                                            }}
                                             <span
-                                                v-if="
-                                                    conflict.duration_minutes
-                                                "
+                                                class="flex items-center gap-1"
                                             >
-                                                ({{
-                                                    formatDuration(
-                                                        conflict.duration_minutes /
-                                                            60,
+                                                <CalendarDays
+                                                    class="h-3.5 w-3.5 shrink-0"
+                                                />
+                                                {{
+                                                    formatDate(
+                                                        conflict.scheduled_at,
                                                     )
-                                                }})
+                                                }}
+                                                ·
+                                                {{
+                                                    formatTime(
+                                                        conflict.scheduled_at,
+                                                    )
+                                                }}
+                                                <template
+                                                    v-if="
+                                                        conflict.duration_minutes
+                                                    "
+                                                >
+                                                    ({{
+                                                        formatDuration(
+                                                            conflict.duration_minutes /
+                                                                60,
+                                                        )
+                                                    }})
+                                                </template>
                                             </span>
-                                        </p>
 
-                                        <p
-                                            class="mt-1 capitalize text-slate-400 dark:text-gray-500"
-                                        >
-                                            {{ conflict.status }}
-                                        </p>
+                                            <span
+                                                class="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600 ring-1 ring-slate-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
+                                            >
+                                                {{ conflict.status }}
+                                            </span>
+                                        </div>
 
                                         <p
                                             v-if="conflict.estimated_end"
-                                            class="mt-1 font-medium text-amber-700 dark:text-amber-300"
+                                            class="mt-2 flex items-center gap-1.5 border-t border-amber-200/60 pt-2 font-medium text-amber-700 dark:border-amber-500/15 dark:text-amber-300"
                                         >
+                                            <Clock
+                                                class="h-3.5 w-3.5 shrink-0"
+                                            />
                                             Est. free
                                             {{
                                                 formatDate(
@@ -794,20 +805,6 @@
                                                     conflict.estimated_end,
                                                 )
                                             }}
-                                            <span
-                                                v-if="
-                                                    conflict.remaining_minutes
-                                                "
-                                            >
-                                                ·
-                                                {{
-                                                    formatDuration(
-                                                        conflict.remaining_minutes /
-                                                            60,
-                                                    )
-                                                }}
-                                                remaining
-                                            </span>
                                         </p>
                                     </div>
                                 </div>

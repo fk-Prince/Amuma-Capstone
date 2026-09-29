@@ -43,7 +43,7 @@
             </div>
         </section>
 
-        <section v-if="hasDiagnoses">
+        <section>
             <h3
                 class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300"
             >
@@ -51,7 +51,14 @@
                 Diagnosis
             </h3>
 
-            <div class="space-y-6">
+            <p
+                v-if="!hasDiagnoses"
+                class="text-sm text-slate-500 dark:text-gray-400"
+            >
+                No diagnosis provided.
+            </p>
+
+            <div v-else class="space-y-6">
                 <div
                     v-for="(entry, index) in diagnoses"
                     :key="index"
@@ -275,14 +282,22 @@ const hasAssessment = computed(() => assessments.value.length > 0);
 
 // Diagnoses moved out of the assessment; older bookings still carry them
 // inside it, so those are read back as a single-entry list.
+const hasDiagnosisContent = (entry: any) =>
+    !!(
+        entry?.diagnosis ||
+        entry?.diagnosis_notes ||
+        entry?.diagnosis_date ||
+        entry?.diagnosis_file
+    );
+
 const diagnoses = computed<any[]>(() => {
     const provided = (props.booking as any)?.diagnoses;
 
-    if (Array.isArray(provided) && provided.length) return provided;
+    if (Array.isArray(provided) && provided.length) {
+        return provided.filter(hasDiagnosisContent);
+    }
 
-    return assessments.value.filter(
-        (entry) => entry?.diagnosis || entry?.diagnosis_notes,
-    );
+    return assessments.value.filter(hasDiagnosisContent);
 });
 
 const hasDiagnoses = computed(() => diagnoses.value.length > 0);

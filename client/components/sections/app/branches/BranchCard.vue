@@ -213,15 +213,18 @@
         </div>
 
         <div class="mt-auto flex items-center gap-2 pt-4">
-            <button
+            <ActionButton
                 v-if="isRejected"
-                type="button"
-                class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-primary-600"
-                @click.stop="emit('resubmit', branch)"
+                variant="primary"
+                class="flex-1"
+                extra-class="w-full !px-3 !text-xs"
+                :disabled="!canResubmit"
+                tooltip="You need permission to update Manage Branches to resubmit a branch."
+                @click="emit('resubmit', branch)"
             >
                 <RotateCw class="h-3.5 w-3.5" />
                 Resubmit
-            </button>
+            </ActionButton>
 
             <button
                 v-else
@@ -247,6 +250,7 @@
 import { ref } from "vue";
 import { RotateCw, Star } from "lucide-vue-next";
 import BranchReviewsModal from "./BranchReviewsModal.vue";
+import ActionButton from "~/components/ui/ActionButton.vue";
 
 interface BranchCardData {
     branch_id: number;
@@ -264,10 +268,14 @@ interface BranchCardData {
     image: string;
 }
 
-const props = defineProps<{
-    branch: BranchCardData;
-    active?: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        branch: BranchCardData;
+        active?: boolean;
+        canResubmit?: boolean;
+    }>(),
+    { canResubmit: true },
+);
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
 const reviewsOpen = ref(false);

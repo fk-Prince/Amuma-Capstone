@@ -6,29 +6,70 @@
             class="print-page"
         >
             <header class="print-header">
-                <div class="print-header-left">
-                    <p class="print-brand">
-                        {{ report.branch?.name ?? "Amuma Care" }}
-                    </p>
+                <div class="print-branch">
+                    <img
+                        v-if="report.branch?.image"
+                        :src="report.branch.image"
+                        :alt="report.branch?.name"
+                        class="print-branch-logo"
+                    />
+                    <div v-else class="print-branch-logo print-branch-initials">
+                        {{ initials(report.branch?.name ?? "Amuma Care") }}
+                    </div>
 
-                    <p v-if="report.branch?.agency_name" class="print-branch">
-                        {{ report.branch.agency_name }}
-                    </p>
+                    <div class="print-branch-info">
+                        <p class="print-brand">
+                            {{ report.branch?.name ?? "Amuma Care" }}
+                        </p>
+                        <p
+                            v-if="report.branch?.agency_name"
+                            class="print-agency"
+                        >
+                            {{ report.branch.agency_name }}
+                        </p>
 
-                    <p v-if="report.branch?.address" class="print-branch-line">
-                        {{ report.branch.address }}
-                    </p>
-
-                    <p v-if="branchContactLine" class="print-branch-line">
-                        {{ branchContactLine }}
-                    </p>
-
-                    <p v-if="report.branch?.tin" class="print-branch-line">
-                        TIN {{ report.branch.tin }}
-                    </p>
+                        <p
+                            v-if="report.branch?.address"
+                            class="print-branch-line"
+                        >
+                            <MapPin class="print-icon" />
+                            <span>{{ report.branch.address }}</span>
+                        </p>
+                        <p
+                            v-if="
+                                report.branch?.contact_number ||
+                                report.branch?.email
+                            "
+                            class="print-branch-line"
+                        >
+                            <template v-if="report.branch?.contact_number">
+                                <Phone class="print-icon" />
+                                <span>{{
+                                    formatPhone(report.branch.contact_number)
+                                }}</span>
+                            </template>
+                            <template v-if="report.branch?.email">
+                                <Mail class="print-icon print-icon-gap" />
+                                <span>{{ report.branch.email }}</span>
+                            </template>
+                        </p>
+                        <p v-if="report.branch?.tin" class="print-branch-line">
+                            <Hash class="print-icon" />
+                            <span>TIN {{ report.branch.tin }}</span>
+                        </p>
+                    </div>
                 </div>
 
-                <div class="print-header-right">
+                <div class="print-heading">
+                    <div class="print-title-row">
+                        <span class="print-title-icon">
+                            <component
+                                :is="sectionIcon(section)"
+                                class="print-icon"
+                            />
+                        </span>
+                        <h1 class="print-title">{{ sectionLabel(section) }}</h1>
+                    </div>
                     <p class="print-doc-type">Medical Record</p>
                     <p class="print-doc-ref">
                         Ref. {{ shortRef }} · Page {{ pageNumber(section) }} of
@@ -37,60 +78,35 @@
                 </div>
             </header>
 
-            <h1 class="print-title">{{ sectionLabel(section) }}</h1>
+            <div class="print-patient">
+                <img
+                    v-if="report.patient.avatar"
+                    :src="report.patient.avatar"
+                    :alt="report.patient.full_name"
+                    class="print-photo"
+                />
+                <!-- <div v-else class="print-photo print-photo-initials">
+                    {{ initials(report.patient.full_name) }}
+                </div> -->
 
-            <table class="print-identity">
-                <tbody>
-                    <tr>
-                        <th>Patient</th>
-                        <td class="print-identity-name">
-                            {{ report.patient.full_name }}
-                        </td>
-                        <th>Date of Birth</th>
-                        <td>{{ birthLine }}</td>
-                    </tr>
-                    <tr>
-                        <th>Gender</th>
-                        <td>{{ report.patient.gender ?? "—" }}</td>
-                        <th>Contact</th>
-                        <td>
-                            {{
-                                formatPhone(report.patient.phone_number) || "—"
-                            }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Address</th>
-                        <td colspan="3">{{ report.patient.address ?? "—" }}</td>
-                    </tr>
-                </tbody>
-            </table>
+                <dl class="print-lines">
+                    <template
+                        v-for="line in patientLines(section)"
+                        :key="line.label"
+                    >
+                        <dt>{{ line.label }}</dt>
+                        <dd :class="{ 'print-strong': line.strong }">
+                            {{ line.value }}
+                        </dd>
+                    </template>
+                </dl>
+            </div>
 
             <template v-if="section === 'profile'">
-                <table class="print-table">
-                    <tbody>
-                        <tr>
-                            <th>Blood Type</th>
-                            <td>{{ report.patient.blood_type ?? "—" }}</td>
-                            <th>Citizenship</th>
-                            <td>{{ report.patient.citizenship ?? "—" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Height</th>
-                            <td>{{ measure(report.patient.height, "cm") }}</td>
-                            <th>Weight</th>
-                            <td>{{ measure(report.patient.weight, "kg") }}</td>
-                        </tr>
-                        <tr>
-                            <th>Allergies</th>
-                            <td colspan="3">
-                                {{ allergyList || "None recorded" }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h2 class="print-subhead">Diagnoses</h2>
+                <h2 class="print-subhead">
+                    <Stethoscope class="print-icon" />
+                    Diagnoses
+                </h2>
 
                 <p v-if="!diagnoses.length" class="print-empty">
                     No diagnosis recorded.
@@ -115,7 +131,10 @@
                     </tbody>
                 </table>
 
-                <h2 class="print-subhead">Assessment</h2>
+                <h2 class="print-subhead">
+                    <ClipboardCheck class="print-icon" />
+                    Assessment
+                </h2>
 
                 <p v-if="!assessments.length" class="print-empty">
                     No assessment recorded.
@@ -127,26 +146,25 @@
                         :key="index"
                         class="print-assessment"
                     >
-                        <p
-                            v-if="assessments.length > 1"
-                            class="print-caption"
-                        >
+                        <p v-if="assessments.length > 1" class="print-caption">
                             Assessment {{ index + 1 }}
                         </p>
 
-                        <table class="print-table">
-                            <tbody>
-                                <tr
-                                    v-for="pair in assessment.fields"
-                                    :key="pair[0].label"
+                        <div class="print-pairs">
+                            <template
+                                v-for="pair in assessment.fields"
+                                :key="pair[0]?.label"
+                            >
+                                <div
+                                    v-for="field in pair"
+                                    :key="field.label"
+                                    class="print-pair"
                                 >
-                                    <template v-for="field in pair" :key="field.label">
-                                        <th>{{ field.label }}</th>
-                                        <td>{{ field.value }}</td>
-                                    </template>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    <p class="print-label">{{ field.label }}</p>
+                                    <p class="print-value">{{ field.value }}</p>
+                                </div>
+                            </template>
+                        </div>
 
                         <table
                             v-if="assessment.lifeSystem.length"
@@ -154,9 +172,9 @@
                         >
                             <thead>
                                 <tr>
-                                    <th>Daily Activity</th>
+                                    <th>Daily activity</th>
                                     <th class="print-col-score">Score</th>
-                                    <th>Level of Independence</th>
+                                    <th>Level of independence</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -176,7 +194,10 @@
                 </template>
 
                 <template v-if="guardians.length">
-                    <h2 class="print-subhead">Family &amp; Guardians</h2>
+                    <h2 class="print-subhead">
+                        <Users class="print-icon" />
+                        Family &amp; Guardians
+                    </h2>
 
                     <table class="print-table">
                         <thead>
@@ -216,64 +237,77 @@
                     No admission records.
                 </p>
 
-                <template v-else>
-                    <table class="print-table">
-                        <thead>
+                <table v-else class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Admitted</th>
+                            <th>Covered until</th>
+                            <th>Accommodation</th>
+                            <th>Room / Bed</th>
+                            <th class="right">Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-for="(row, i) in report.admission" :key="i">
                             <tr>
-                                <th>Status</th>
-                                <th>Admitted</th>
-                                <th>Covered Until</th>
-                                <th>Accommodation</th>
-                                <th>Room / Bed</th>
-                                <th class="right">Rate</th>
+                                <td>
+                                    {{ statusLabel(row.status) }}
+                                </td>
+                                <td>{{ formatDate(row.admitted_at) }}</td>
+                                <td>{{ formatDate(row.end_date) }}</td>
+                                <td>{{ accommodationLabel(row) }}</td>
+                                <td>{{ roomLabel(row) }}</td>
+                                <td class="right">
+                                    {{
+                                        row.rate != null ? money(row.rate) : "—"
+                                    }}
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <template
-                                v-for="(row, i) in report.admission"
-                                :key="i"
-                            >
-                                <tr>
-                                    <td>{{ statusLabel(row.status) }}</td>
-                                    <td>{{ formatDate(row.admitted_at) }}</td>
-                                    <td>{{ formatDate(row.end_date) }}</td>
-                                    <td>{{ accommodationLabel(row) }}</td>
-                                    <td>{{ roomLabel(row) }}</td>
-                                    <td class="right">
-                                        {{ row.rate != null ? money(row.rate) : "—" }}
-                                    </td>
-                                </tr>
-                                <tr v-if="row.note" class="print-note-row">
-                                    <td colspan="6">
-                                        <span class="print-subtle">Note:</span>
-                                        {{ row.note }}
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
+                            <tr v-if="row.note" class="print-note-row">
+                                <td colspan="6">
+                                    <span class="print-subtle">Note:</span>
+                                    {{ row.note }}
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </template>
 
             <template v-else-if="section === 'billing'">
-                <div class="print-summary">
-                    <div>
-                        <p class="print-summary-label">Total Paid</p>
-                        <p class="print-summary-value">
-                            {{ money(report.billing?.summary?.total_paid) }}
-                        </p>
+                <div class="print-stats">
+                    <div class="print-stat">
+                        <Wallet class="print-icon" />
+                        <div>
+                            <p class="print-label">Total paid</p>
+                            <p class="print-value print-strong">
+                                {{ money(report.billing?.summary?.total_paid) }}
+                            </p>
+                        </div>
                     </div>
-                    <div v-if="Number(report.billing?.summary?.refundable) > 0">
-                        <p class="print-summary-label">Credit</p>
-                        <p class="print-summary-value">
-                            {{ money(report.billing?.summary?.refundable) }}
-                        </p>
+                    <div
+                        v-if="Number(report.billing?.summary?.refundable) > 0"
+                        class="print-stat"
+                    >
+                        <PiggyBank class="print-icon" />
+                        <div>
+                            <p class="print-label">Credit</p>
+                            <p class="print-value print-strong">
+                                {{ money(report.billing?.summary?.refundable) }}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="print-summary-label">Balance</p>
-                        <p class="print-summary-value">
-                            {{ money(report.billing?.summary?.balance_due) }}
-                        </p>
+                    <div class="print-stat">
+                        <Scale class="print-icon" />
+                        <div>
+                            <p class="print-label">Balance</p>
+                            <p class="print-value print-strong">
+                                {{
+                                    money(report.billing?.summary?.balance_due)
+                                }}
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -306,18 +340,23 @@
                             <td v-if="hasRefunds" class="right">
                                 {{ money(row.refunded_amount) }}
                             </td>
-                            <td class="right">{{ money(row.balance_due) }}</td>
+                            <td class="right print-strong">
+                                {{ money(row.balance_due) }}
+                            </td>
                         </tr>
                     </tbody>
                 </table>
 
                 <template v-if="billingPayments.length">
-                    <h2 class="print-subtitle">Payments Received</h2>
+                    <h2 class="print-subhead">
+                        <Receipt class="print-icon" />
+                        Payments received
+                    </h2>
 
                     <table class="print-table">
                         <thead>
                             <tr>
-                                <th>Receipt No.</th>
+                                <th>Receipt no.</th>
                                 <th>Invoice</th>
                                 <th>Date</th>
                                 <th>Method</th>
@@ -362,9 +401,9 @@
                             <td>{{ formatDateTime(row.scheduled_at) }}</td>
                             <td>{{ statusLabel(row.status) }}</td>
                             <td>
-                                <span v-if="row.category" class="print-subtle">
-                                    {{ row.category }} ·
-                                </span>
+                                <span v-if="row.category" class="print-subtle"
+                                    >{{ row.category }} ·</span
+                                >
                                 {{ serviceSummary(row.services) }}
                             </td>
                             <td>{{ row.address ?? "—" }}</td>
@@ -404,7 +443,11 @@
                                 </span>
                             </td>
                             <td>{{ dosage(row) }}</td>
-                            <td>{{ ROUTE_LABELS[row.route] ?? row.route ?? "—" }}</td>
+                            <td>
+                                {{
+                                    ROUTE_LABELS[row.route] ?? row.route ?? "—"
+                                }}
+                            </td>
                             <td>{{ medicationSchedule(row) }}</td>
                             <td>
                                 {{ formatDate(row.start_date) }}
@@ -476,9 +519,9 @@
                             <td>{{ statusLabel(row.type) }}</td>
                             <td>
                                 {{ row.title ?? "—" }}
-                                <span v-if="row.subtitle" class="print-subtle">
-                                    — {{ row.subtitle }}
-                                </span>
+                                <span v-if="row.subtitle" class="print-subtle"
+                                    >— {{ row.subtitle }}</span
+                                >
                             </td>
                             <td>{{ row.description ?? "—" }}</td>
                         </tr>
@@ -490,24 +533,25 @@
                 <div v-if="isLastSection(section)" class="print-signature">
                     <div class="print-sign-block">
                         <span class="print-sign-line" />
-                        <p class="print-sign-label">Prepared by</p>
+                        <p class="print-label">Prepared by</p>
                     </div>
                     <div class="print-sign-block">
                         <span class="print-sign-line" />
-                        <p class="print-sign-label">Reviewed by</p>
+                        <p class="print-label">Reviewed by</p>
                     </div>
                     <div class="print-sign-block">
                         <span class="print-sign-line" />
-                        <p class="print-sign-label">Date</p>
+                        <p class="print-label">Date</p>
                     </div>
                 </div>
 
                 <footer class="print-footer">
-                    <span>
-                        {{ report.patient.full_name }} ·
-                        {{ sectionLabel(section) }}
-                    </span>
-                    <span>
+                    <span
+                        >{{ report.patient.full_name }} ·
+                        {{ sectionLabel(section) }}</span
+                    >
+                    <span class="print-footer-right">
+                        <ShieldCheck class="print-icon" />
                         Generated {{ formatDateTime(report.generated_at) }} ·
                         Confidential
                     </span>
@@ -518,7 +562,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, type Component } from "vue";
+import {
+    Activity,
+    BedDouble,
+    CalendarClock,
+    ClipboardCheck,
+    Hash,
+    HeartPulse,
+    Mail,
+    MapPin,
+    Phone,
+    PiggyBank,
+    Pill,
+    Receipt,
+    Scale,
+    ShieldCheck,
+    Stethoscope,
+    UserRound,
+    Users,
+    Wallet,
+} from "lucide-vue-next";
 import { formatAmount } from "~/utils/currency";
 import { formatPhone } from "~/utils/phone";
 import { formatDate, formatTime } from "~/utils/time";
@@ -550,6 +614,16 @@ const SECTION_LABELS: Record<string, string> = {
     medication: "Medication Records",
     vitals: "Vital Signs",
     activity: "Activity Log",
+};
+
+const SECTION_ICONS: Record<string, Component> = {
+    profile: UserRound,
+    admission: BedDouble,
+    billing: Receipt,
+    schedule: CalendarClock,
+    medication: Pill,
+    vitals: HeartPulse,
+    activity: Activity,
 };
 
 const orderedSections = computed(() => {
@@ -588,11 +662,12 @@ const assessments = computed(() => {
     return entries
         .filter((entry) => entry && typeof entry === "object")
         .map((entry) => {
-            const fields = ASSESSMENT_FIELDS.filter(([key]) => entry[key])
-                .map(([key, label]) => ({
+            const fields = ASSESSMENT_FIELDS.filter(([key]) => entry[key]).map(
+                ([key, label]) => ({
                     label,
                     value: assessmentLabel(entry[key]),
-                }));
+                }),
+            );
 
             const pairs = [];
             for (let i = 0; i < fields.length; i += 2) {
@@ -601,13 +676,16 @@ const assessments = computed(() => {
 
             const profile = entry.life_system_profile ?? {};
             const lifeSystem = LIFE_SYSTEM_ACTIVITIES.filter(
-                (activity) => profile[activity] !== undefined && profile[activity] !== null,
+                (activity) =>
+                    profile[activity] !== undefined &&
+                    profile[activity] !== null,
             ).map((activity) => ({
                 activity: activityLabel(activity),
                 score: profile[activity],
                 meaning:
-                    LIFE_SYSTEM_SCALE.find((step) => step.value === Number(profile[activity]))
-                        ?.label ?? "—",
+                    LIFE_SYSTEM_SCALE.find(
+                        (step) => step.value === Number(profile[activity]),
+                    )?.label ?? "—",
             }));
 
             return { fields: pairs, lifeSystem };
@@ -630,7 +708,8 @@ const birthLine = computed(() => {
     let age = today.getFullYear() - birth.getFullYear();
     const beforeBirthday =
         today.getMonth() < birth.getMonth() ||
-        (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate());
+        (today.getMonth() === birth.getMonth() &&
+            today.getDate() < birth.getDate());
     if (beforeBirthday) age -= 1;
 
     return `${formatDate(dob)} (${age} yrs)`;
@@ -642,9 +721,52 @@ const hasRefunds = computed(() =>
     ),
 );
 
+function patientLines(section: string) {
+    const patient = props.report?.patient ?? {};
+
+    const lines: { label: string; value: string; strong?: boolean }[] = [
+        { label: "Name", value: patient.full_name || "—", strong: true },
+        { label: "Patient ID", value: shortRef.value },
+        { label: "Date of birth", value: birthLine.value },
+        { label: "Gender", value: statusLabel(patient.gender) },
+        { label: "Contact", value: formatPhone(patient.phone_number) || "—" },
+        { label: "Address", value: patient.address ?? "—" },
+    ];
+
+    if (section === "profile") {
+        lines.push(
+            { label: "Blood type", value: patient.blood_type ?? "—" },
+            { label: "Citizenship", value: patient.citizenship ?? "—" },
+            { label: "Height", value: measure(patient.height, "cm") },
+            { label: "Weight", value: measure(patient.weight, "kg") },
+            { label: "Allergies", value: allergyList.value || "None recorded" },
+        );
+    }
+
+    return lines;
+}
+
+function initials(name?: string | null) {
+    return (name ?? "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]!.toUpperCase())
+        .join("");
+}
+
+function sectionIcon(key: string) {
+    return SECTION_ICONS[key] ?? ClipboardCheck;
+}
+
 function measure(value: unknown, unit: string) {
     const amount = Number(value);
-    if (value === null || value === undefined || value === "" || !Number.isFinite(amount)) {
+    if (
+        value === null ||
+        value === undefined ||
+        value === "" ||
+        !Number.isFinite(amount)
+    ) {
         return "—";
     }
     return `${Number(amount.toFixed(1))} ${unit}`;
@@ -662,7 +784,9 @@ function accommodationLabel(row: any) {
     const plan = row.accommodation ?? row.room_type;
     if (!plan) return "—";
     const name = plan.toUpperCase() === "VIP" ? "VIP" : statusLabel(plan);
-    return row.billing_cycle ? `${name} · ${statusLabel(row.billing_cycle)}` : name;
+    return row.billing_cycle
+        ? `${name} · ${statusLabel(row.billing_cycle)}`
+        : name;
 }
 
 function roomLabel(row: any) {
@@ -676,8 +800,11 @@ function roomLabel(row: any) {
 
 function medicationSchedule(row: any) {
     if (row.kind === "PRN") return "As needed (PRN)";
-    const frequency = FREQUENCY_LABELS[row.frequency] ?? statusLabel(row.frequency);
-    const times = (row.times ?? []).map((time: string) => formatTime(time)).filter(Boolean);
+    const frequency =
+        FREQUENCY_LABELS[row.frequency] ?? statusLabel(row.frequency);
+    const times = (row.times ?? [])
+        .map((time: string) => formatTime(time))
+        .filter(Boolean);
     return times.length ? `${frequency} · ${times.join(", ")}` : frequency;
 }
 
@@ -703,12 +830,6 @@ function isLastSection(key: string) {
     return orderedSections.value[orderedSections.value.length - 1] === key;
 }
 
-const branchContactLine = computed(() =>
-    [props.report?.branch?.contact_number, props.report?.branch?.email]
-        .filter(Boolean)
-        .join(" · "),
-);
-
 const billingPayments = computed(() => {
     const invoices = props.report?.billing?.invoices ?? [];
 
@@ -722,7 +843,7 @@ const billingPayments = computed(() => {
 
 function money(value: unknown) {
     const amount = Number(value ?? 0);
-    return `PHP ${formatAmount(Number.isFinite(amount) ? amount : 0)}`;
+    return `₱${formatAmount(Number.isFinite(amount) ? amount : 0)}`;
 }
 
 function dosage(row: any) {
@@ -773,17 +894,21 @@ function formatDateTime(value?: string) {
     .patient-print-report {
         display: block;
         font-family: ui-sans-serif, system-ui, sans-serif;
-        color: #16302e;
+        color: #000000;
+        background: #ffffff;
     }
 
-    /* Fills the printable area (A4 height less the @page margins) so the
-       footer can be pushed to the bottom edge on short sections. */
+    .patient-print-report * {
+        color: #000000 !important;
+        background: transparent !important;
+    }
+
     .print-page {
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
         min-height: 297mm;
-        padding: 15mm;
+        padding: 13mm 14mm;
         break-after: page;
         page-break-after: always;
     }
@@ -793,159 +918,214 @@ function formatDateTime(value?: string) {
         page-break-after: auto;
     }
 
+    .print-icon {
+        width: 3mm;
+        height: 3mm;
+        flex-shrink: 0;
+    }
+
+    .print-icon-gap {
+        margin-left: 2.5mm;
+    }
+
     .print-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-end;
-        gap: 12mm;
-        border-bottom: 2pt solid #16302e;
-        padding-bottom: 2.5mm;
-    }
-
-    .print-brand {
-        font-size: 13pt;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        color: #16302e;
-        margin: 0;
+        align-items: flex-start;
+        gap: 10mm;
+        padding-bottom: 4mm;
+        border-bottom: 1pt solid #000000;
     }
 
     .print-branch {
-        font-size: 8pt;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #6b8a87;
-        margin: 0.8mm 0 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 3.5mm;
+        min-width: 0;
     }
 
-    .print-branch-line {
-        font-size: 7.5pt;
-        color: #6b8a87;
-        margin: 0.6mm 0 0;
+    .print-branch-logo {
+        width: 12mm;
+        height: 12mm;
+        flex-shrink: 0;
+        object-fit: cover;
     }
 
-    .print-header-right {
-        text-align: right;
+    .print-branch-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9pt;
+        font-weight: 700;
     }
 
-    .print-doc-type {
-        font-size: 8pt;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: #6b8a87;
+    .print-branch-info {
+        min-width: 0;
+    }
+
+    .print-brand {
+        font-size: 11pt;
+        font-weight: 700;
         margin: 0;
     }
 
-    .print-doc-ref {
-        font-size: 8pt;
-        color: #4a5f5d;
-        margin: 0.8mm 0 0;
+    .print-agency {
+        font-size: 6.5pt;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0.4mm 0 1mm;
+    }
+
+    .print-branch-line {
+        display: flex;
+        align-items: center;
+        gap: 1.2mm;
+        font-size: 7pt;
+        margin: 0.7mm 0 0;
+    }
+
+    .print-heading {
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .print-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 1.8mm;
+    }
+
+    .print-title-icon {
+        display: inline-flex;
+    }
+
+    .print-title-icon .print-icon {
+        width: 3.8mm;
+        height: 3.8mm;
     }
 
     .print-title {
-        font-size: 14pt;
+        font-size: 12pt;
         font-weight: 700;
-        letter-spacing: 0.01em;
-        margin: 5mm 0 3mm;
-        padding-bottom: 1.5mm;
-        border-bottom: 0.5pt solid #dcebe9;
+        margin: 0;
     }
 
-    .print-subtitle {
-        font-size: 10pt;
-        font-weight: 700;
-        margin: 4mm 0 2mm;
-        page-break-after: avoid;
-    }
-
-    .print-identity {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 8.5pt;
-        margin-bottom: 5mm;
-    }
-
-    .print-identity th,
-    .print-identity td {
-        border: 0.5pt solid #dcebe9;
-        padding: 1.6mm 2mm;
-        text-align: left;
-        vertical-align: top;
-    }
-
-    .print-identity th {
-        background: #f6faf9;
-        width: 22mm;
+    .print-doc-type {
+        font-size: 6.5pt;
         font-weight: 600;
-        font-size: 7.5pt;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #6b8a87;
+        margin: 1.5mm 0 0;
     }
 
-    .print-identity-name {
+    .print-doc-ref {
+        font-size: 7pt;
+        margin: 0.5mm 0 0;
+    }
+
+    .print-patient {
+        margin: 5mm 0 4mm;
+    }
+
+    .print-photo {
+        display: block;
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+
+    .print-photo-initials {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18pt;
         font-weight: 700;
-        color: #16302e;
+    }
+
+    .print-lines {
+        display: grid;
+        grid-template-columns: 26mm minmax(0, 1fr) 26mm minmax(0, 1fr);
+        column-gap: 3mm;
+        row-gap: 1.8mm;
+        margin: 4mm 0 0;
+        font-size: 8pt;
+    }
+
+    .print-lines dt {
+        font-weight: 600;
+    }
+
+    .print-lines dd {
+        margin: 0;
+    }
+
+    .print-label {
+        font-size: 6pt;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin: 0;
+    }
+
+    .print-value {
+        font-size: 7.5pt;
+        margin: 0.4mm 0 0;
+    }
+
+    .print-stats {
+        display: flex;
+        gap: 8mm;
+        margin-bottom: 4mm;
+    }
+
+    .print-stat {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.8mm;
+    }
+
+    .print-stat .print-icon {
+        margin-top: 0.4mm;
     }
 
     .print-subhead {
-        font-size: 10pt;
+        display: flex;
+        align-items: center;
+        gap: 1.8mm;
+        font-size: 8.5pt;
         font-weight: 700;
-        margin: 6mm 0 2.5mm;
-        padding-bottom: 1mm;
-        border-bottom: 0.5pt solid #dcebe9;
+        margin: 5mm 0 2mm;
+        page-break-after: avoid;
     }
 
     .print-assessment {
-        margin-bottom: 4mm;
+        margin-bottom: 3mm;
         break-inside: avoid;
         page-break-inside: avoid;
     }
 
     .print-caption {
-        font-size: 8pt;
+        font-size: 7pt;
         font-weight: 600;
-        color: #6b8a87;
         margin: 0 0 1.5mm;
     }
 
-    .print-assessment tbody th {
-        width: 34mm;
+    .print-pairs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2.5mm 4mm;
     }
 
     .print-life-system {
         margin-top: 3mm;
     }
 
-    .print-col-date {
-        width: 26mm;
-    }
-
-    .print-col-score {
-        width: 18mm;
-        text-align: center;
-    }
-
-    .print-note-row td {
-        font-size: 8pt;
-        background: #fbfdfc;
-    }
-
-    .print-strong {
-        font-weight: 600;
-        color: #16302e;
-    }
-
-    .print-block {
-        display: block;
-        font-size: 7.5pt;
-        margin-top: 0.5mm;
-    }
-
     .print-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 8.5pt;
+        font-size: 7.5pt;
     }
 
     .print-table thead {
@@ -959,64 +1139,57 @@ function formatDateTime(value?: string) {
 
     .print-table th,
     .print-table td {
-        border: 0.5pt solid #dcebe9;
-        padding: 1.8mm 2mm;
+        padding: 1.6mm 2mm 1.6mm 0;
         text-align: left;
         vertical-align: top;
     }
 
     .print-table th {
-        background: #f0f7f6;
-        font-weight: 600;
-        font-size: 8pt;
+        font-size: 6.5pt;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #4a5f5d;
+        border-bottom: 0.75pt solid #000000;
     }
 
     .print-table .right {
+        padding-right: 0;
         text-align: right;
     }
 
-    .print-summary {
-        display: flex;
-        gap: 3mm;
-        margin-bottom: 4mm;
+    .print-col-date {
+        width: 24mm;
     }
 
-    .print-summary > div {
-        flex: 1;
-        border: 0.5pt solid #dcebe9;
-        border-radius: 2mm;
-        padding: 2.5mm 3mm;
+    .print-col-score {
+        width: 16mm;
+        text-align: center;
     }
 
-    .print-summary-label {
-        font-size: 7.5pt;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #6b8a87;
-        margin: 0;
+    .print-note-row td {
+        font-size: 7pt;
+        font-style: italic;
     }
 
-    .print-summary-value {
-        font-size: 11pt;
-        font-weight: 700;
-        margin: 1mm 0 0;
+    .print-strong {
+        font-weight: 600;
+    }
+
+    .print-block {
+        display: block;
+        font-size: 6.5pt;
+        margin-top: 0.5mm;
     }
 
     .print-empty {
-        font-size: 9pt;
-        color: #6b8a87;
+        font-size: 7.5pt;
         font-style: italic;
-        padding: 6mm 0;
-        text-align: center;
-        border: 0.5pt dashed #dcebe9;
-        border-radius: 2mm;
+        padding: 4mm 0;
+        margin: 0;
     }
 
-    .print-subtle {
-        color: #6b8a87;
+    .print-page-bottom {
+        margin-top: auto;
     }
 
     .print-signature {
@@ -1033,35 +1206,31 @@ function formatDateTime(value?: string) {
 
     .print-sign-line {
         display: block;
-        border-bottom: 0.5pt solid #16302e;
-        height: 10mm;
-    }
-
-    .print-sign-label {
-        font-size: 7.5pt;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #6b8a87;
-        margin: 1.5mm 0 0;
-    }
-
-    .print-page-bottom {
-        margin-top: auto;
+        height: 9mm;
+        margin-bottom: 1.2mm;
+        border-bottom: 0.5pt solid #000000;
     }
 
     .print-footer {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         gap: 6mm;
         margin-top: 6mm;
         padding-top: 2mm;
-        border-top: 0.5pt solid #dcebe9;
-        font-size: 7.5pt;
-        color: #8aa3a1;
+        border-top: 0.5pt solid #000000;
+        font-size: 6.5pt;
     }
 
-    .capitalize {
-        text-transform: capitalize;
+    .print-footer-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 1mm;
+    }
+
+    .print-footer-right .print-icon {
+        width: 2.6mm;
+        height: 2.6mm;
     }
 }
 </style>

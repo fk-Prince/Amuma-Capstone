@@ -213,10 +213,11 @@
                                     <div
                                         class="flex flex-wrap sm:flex-nowrap items-center gap-2"
                                     >
-                                        <BaseInput
+                                        <DatePickerField
                                             v-model="localDateFrom"
-                                            mode="date"
-                                            class-name="w-full min-w-0 sm:w-[140px]"
+                                            class-name="w-full min-w-0 sm:w-[160px]"
+                                            placeholder="From"
+                                            :default-to-today="false"
                                             @update:modelValue="
                                                 activePreset = null
                                             "
@@ -228,10 +229,11 @@
                                             to
                                         </span>
 
-                                        <BaseInput
+                                        <DatePickerField
                                             v-model="localDateTo"
-                                            mode="date"
-                                            class-name="w-full min-w-0 sm:w-[140px]"
+                                            class-name="w-full min-w-0 sm:w-[160px]"
+                                            placeholder="To"
+                                            :default-to-today="false"
                                             @update:modelValue="
                                                 activePreset = null
                                             "
@@ -284,6 +286,7 @@ import {
     UserCheck,
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 
 const props = defineProps<{
     search: string;

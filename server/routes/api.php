@@ -17,6 +17,7 @@ use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnlineScheduleController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientAccessController;
 use App\Http\Controllers\CaregiverShiftController;
 use App\Http\Controllers\PatientAdmissionController;
@@ -56,6 +57,10 @@ Route::prefix('auth')->group(function () {
         Route::post('/send', [OtpController::class, 'send']);
         Route::post('/verify', [OtpController::class, 'verify']);
     });
+
+    Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
+    Route::post('/reset-password/check', [PasswordResetController::class, 'check'])->middleware('throttle:20,1');
+    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 });
 Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch']);
 

@@ -20,12 +20,10 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         selectedInterval: "monthly",
         payment_method: "CREDIT-CARD",
 
-
-
         // branch: {
         //     name: "AMUMA Davao City",
         //     contact_number: "9000000000",
-        //     image: undefined as any,
+        //     image: null,
         //     description:
         //         "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
         //     location: {
@@ -37,16 +35,15 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         //         longitude: 125.4553,
         //     },
         //     email: "davao@amuma.com",
-        //     status: "active",
-        //     document: ""
+        //     status: "pending",
+        //     document: "",
         // } as Branch,
 
-        // branch: {
-        //     name: "AMUMA Davao City",
-        //     contact_number: "9000000000",
-        //     image: undefined as any,
+        // agency: {
+        //     agency_id: undefined,
+        //     name: "AMUMA Incorporation",
         //     description:
-        //         "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
+        //         "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
         //     location: {
         //         street: "J.P. Laurel Avenue",
         //         city: "Davao City",
@@ -55,49 +52,42 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         //         latitude: 7.1907,
         //         longitude: 125.4553,
         //     },
-        //     email: "davao@amuma.com",
-        //     status: "active",
-        //     document: ""
-        // } as Branch,
+        //     email: "info@amuma.com",
+        //     image: null,
+        //     status: "pending",
+        // } as Agency,
+
 
         branch: {
-            name: "AMUMA Davao City",
-            contact_number: "9000000000",
+            name: "",
+            contact_number: "",
             image: null,
-            description:
-                "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
+            description: "",
             location: {
-                street: "J.P. Laurel Avenue",
-                city: "Davao City",
-                province: "Davao del Sur",
-                country: "Philippines",
-                latitude: 7.1907,
-                longitude: 125.4553,
+                street: "",
+                city: "",
+                province: "",
+                country: "",
             },
-            email: "davao@amuma.com",
+            email: "",
             status: "pending",
             document: "",
         } as Branch,
 
         agency: {
             agency_id: undefined,
-            name: "AMUMA Incorporation",
-            description:
-                "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
+            name: "",
+            description: "",
             location: {
-                street: "J.P. Laurel Avenue",
-                city: "Davao City",
-                province: "Davao del Sur",
-                country: "Philippines",
-                latitude: 7.1907,
-                longitude: 125.4553,
+                street: "",
+                city: "",
+                province: "",
+                country: "",
             },
-            email: "info@amuma.com",
+            email: "",
             image: null,
             status: "pending",
         } as Agency,
-
-
 
         settings: {
             opening: "00:00",
@@ -120,10 +110,6 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
     }),
 
     getters: {
-        // The TIN is typed on the branch step but the API carries it inside
-        // branch_settings, so every payload has to merge it in. Built here
-        // rather than at each call site, which is how it went missing from the
-        // submit while the validate step still sent it.
         branchSettingsPayload: (state) => ({
             ...state.settings,
             tin: (state.branch as any)?.tin || null,
@@ -201,7 +187,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
             this.settings = {
                 opening: "00:00",
-                closing: "00:00",
+                closing: "23:59",
                 currency: "PHP",
                 time_zone: "Asia/Manila",
                 reserved_walkin_slots: 0,

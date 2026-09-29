@@ -284,7 +284,7 @@ class ScheduleResource extends JsonResource
                         'type' => $scheduleService->type,
 
                         'assignees' => $scheduleService->relationLoaded('assigned')
-                            ? $scheduleService->assigned->map(function ($assignment) {
+                            ? $scheduleService->assigned->where('is_active', true)->values()->map(function ($assignment) {
 
                                 $employee = $assignment->employee?->employees;
 

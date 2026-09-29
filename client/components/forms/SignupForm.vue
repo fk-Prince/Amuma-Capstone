@@ -47,6 +47,8 @@ const loading = ref(false);
 const otpLoading = ref(false);
 const showOtpDialog = ref(false);
 const otpExpiresIn = ref(300);
+const otpKey = ref<string | null>(null);
+const otpResending = ref(false);
 const otpErrorMessage = ref<string | null>(null);
 
 watch(
@@ -113,6 +115,8 @@ async function handleSignUp() {
 
     if (!signupData.value.password) {
         errors.value.password = "Password is required.";
+    } else if (signupData.value.password.length < 6) {
+        errors.value.password = "Password must be at least 6 characters.";
     }
 
     if (!signupData.value.confirmPassword) {
@@ -152,12 +156,13 @@ async function handleSignUp() {
 
         if (res?.otp_key) {
             localStorage.setItem("otp_key", res.otp_key);
+            otpKey.value = res.otp_key;
         }
 
         otpExpiresIn.value = res?.expires_in ?? 300;
         showOtpDialog.value = true;
         otpErrorMessage.value = null;
-        success("OTP sent to your email.");
+        success(res?.message || "We sent a 6-digit code to your email.");
     } catch (err: any) {
         const validationErrors = err?.data?.errors;
 
@@ -165,14 +170,19 @@ async function handleSignUp() {
             errors.value = {
                 ...errors.value,
                 ...Object.fromEntries(
-                    Object.entries(validationErrors).map(([key, value]: any) => [
-                        key,
-                        Array.isArray(value) ? value[0] : value,
-                    ]),
+                    Object.entries(validationErrors).map(
+                        ([key, value]: any) => [
+                            key,
+                            Array.isArray(value) ? value[0] : value,
+                        ],
+                    ),
                 ),
             };
         } else {
-            error(err?.message || "Failed to send OTP.");
+            error(
+                err?.message ||
+                    "We couldn't send the verification code. Please try again.",
+            );
         }
     } finally {
         loading.value = false;
@@ -188,7 +198,8 @@ async function verifyOtp(code: string) {
 
         if (!otp_key) {
             otpLoading.value = false;
-            error("OTP session expired. Please try again.");
+            otpErrorMessage.value =
+                "Your verification session has ended. Request a new code.";
             return;
         }
 
@@ -211,13 +222,20 @@ async function verifyOtp(code: string) {
 
         await navigateTo("/auth/signin");
     } catch (err: any) {
-        otpErrorMessage.value = err?.message || "Invalid OTP.";
+        const firstError = Object.values(err?.errors ?? {}).flat()[0];
+
+        otpErrorMessage.value =
+            (typeof firstError === "string" && firstError) ||
+            err?.message ||
+            "We couldn't verify the code. Please try again.";
     } finally {
         otpLoading.value = false;
     }
 }
 
 async function resendOtp() {
+    otpResending.value = true;
+
     try {
         const res = await otpService.createOtp({
             email: signupData.value.email,
@@ -225,13 +243,22 @@ async function resendOtp() {
 
         if (res?.otp_key) {
             localStorage.setItem("otp_key", res.otp_key);
+            otpKey.value = res.otp_key;
         }
 
         otpExpiresIn.value = res?.expires_in ?? 300;
         otpErrorMessage.value = null;
-        success("OTP resent.");
+        success("A new code was sent to your email.");
     } catch (err: any) {
-        error(err?.message || "Failed to resend OTP.");
+        const firstError = Object.values(err?.errors ?? {}).flat()[0];
+
+        error(
+            (typeof firstError === "string" && firstError) ||
+                err?.message ||
+                "We couldn't send a new code. Please try again.",
+        );
+    } finally {
+        otpResending.value = false;
     }
 }
 </script>
@@ -244,6 +271,8 @@ async function resendOtp() {
             :loading="otpLoading"
             :error="otpErrorMessage"
             :expires-in-seconds="otpExpiresIn"
+            :code-key="otpKey"
+            :resending="otpResending"
             @verify="verifyOtp"
             @resend="resendOtp"
             @close="showOtpDialog = false"
@@ -312,7 +341,7 @@ async function resendOtp() {
             <BaseInput
                 v-model="signupData.password"
                 label="Password"
-                placeholder="Create a password"
+                placeholder="Enter your password"
                 :mode="showPassword ? 'text' : 'password'"
                 :error="errors.password"
             >
@@ -338,7 +367,8 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                        tabindex="-1"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md"
                         @click="showPassword = !showPassword"
                     >
                         <svg
@@ -403,7 +433,8 @@ async function resendOtp() {
                 <template #suffix>
                     <button
                         type="button"
-                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md focus-visible:ring-2 focus-visible:ring-primary-500/40"
+                        tabindex="-1"
+                        class="flex items-center px-3 text-slate-400 dark:text-gray-500 hover:text-blue-500 transition-colors outline-none rounded-md"
                         @click="showPassword = !showPassword"
                     >
                         <svg

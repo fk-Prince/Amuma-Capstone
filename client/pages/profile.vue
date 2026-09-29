@@ -234,13 +234,14 @@
                                         "
                                     />
 
-                                    <BaseInput
+                                    <DatePickerField
                                         v-if="roles.is_employee"
                                         v-model="form.birth_date"
                                         label="Birth date"
-                                        mode="date"
                                         class-name="sm:col-span-3"
+                                        placeholder="Select birth date"
                                         :max="today"
+                                        :default-to-today="false"
                                         :error="errors.birth_date"
                                         @update:modelValue="
                                             clearError('birth_date')
@@ -791,6 +792,7 @@ import {
 } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import { userService } from "~/api/user/UserService";

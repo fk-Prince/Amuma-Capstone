@@ -33,15 +33,13 @@ class PatientAdmissionController extends Controller
     public function action(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
-        $action = match ($request->action) {
-            'admit' => PermissionAction::Admit,
-            'new_admission' => PermissionAction::Create,
-            'discharge' => $request->boolean('force')
-                ? PermissionAction::ForceDischarge
-                : PermissionAction::Discharge,
-            default => PermissionAction::Update,
+        [$module, $action] = match (true) {
+            $request->action === 'extend' && $request->boolean('require_payment') => [ModuleEnum::BillingAndInvoices, PermissionAction::Create],
+            $request->action === 'new_admission' => [ModuleEnum::Admissions, PermissionAction::Create],
+            $request->action === 'discharge' && $request->boolean('force') => [ModuleEnum::Admissions, PermissionAction::ForceDischarge],
+            default => [ModuleEnum::Admissions, PermissionAction::Update],
         };
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, $action);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, $module, $action);
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['user' => $request->user()]);
         return $this->patientAdmissionService->action($request->all());

@@ -1,5 +1,10 @@
 import BaseService from '~/api/BaseService';
-import type { SigninRequest } from '~/types/auth';
+import type {
+    ForgotPasswordRequest,
+    ResetLinkRequest,
+    ResetPasswordRequest,
+    SigninRequest,
+} from '~/types/auth';
 
 class AuthService extends BaseService {
     private static instance: AuthService;
@@ -29,6 +34,18 @@ class AuthService extends BaseService {
 
     async googleUrl(): Promise<any> {
         return await this.request(this.resource + '/google/url', 'POST', {});
+    }
+
+    async forgotPassword(payload: ForgotPasswordRequest): Promise<any> {
+        return await this.request(this.resource + '/forgot-password', 'POST', payload);
+    }
+
+    async checkResetLink(payload: ResetLinkRequest): Promise<any> {
+        return await this.request(this.resource + '/reset-password/check', 'POST', payload);
+    }
+
+    async resetPassword(payload: ResetPasswordRequest): Promise<any> {
+        return await this.request(this.resource + '/reset-password', 'POST', payload);
     }
 
     private get resource(): string {

@@ -75,8 +75,19 @@ async function handleSignIn() {
 
     alert.value.show = false;
 
-    if (!signinData.value.email || !signinData.value.password) {
-        showAlert(alert, "error", "Invalid credentials", 0);
+    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!signinData.value.email) {
+        errors.value.email = "Email is required.";
+    } else if (!EMAIL_PATTERN.test(signinData.value.email)) {
+        errors.value.email = "Please enter a valid email address.";
+    }
+
+    if (!signinData.value.password) {
+        errors.value.password = "Password is required.";
+    }
+
+    if (errors.value.email || errors.value.password) {
         return;
     }
 
@@ -137,7 +148,7 @@ async function googleUrl() {
             class="mb-4"
         />
 
-        <form @submit.prevent="handleSignIn">
+        <form novalidate @submit.prevent="handleSignIn">
             <label for="signin-email" :class="labelClass">Email</label>
 
             <div class="relative">
@@ -152,6 +163,7 @@ async function googleUrl() {
                     autocomplete="email"
                     placeholder="Enter your email address"
                     :class="[fieldClass, borderClass(errors.email)]"
+                    @input="errors.email = ''"
                 />
             </div>
 
@@ -175,11 +187,13 @@ async function googleUrl() {
                     autocomplete="current-password"
                     placeholder="Enter your password"
                     :class="[fieldClass, borderClass(errors.password), 'pr-11']"
+                    @input="errors.password = ''"
                 />
 
                 <button
                     type="button"
-                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 outline-none transition-colors hover:text-blue-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-gray-500"
+                    tabindex="-1"
+                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 outline-none transition-colors hover:text-blue-500 dark:text-gray-500"
                     :aria-label="
                         showPassword ? 'Hide password' : 'Show password'
                     "
@@ -199,7 +213,7 @@ async function googleUrl() {
 
             <div class="mt-3.5 flex justify-end">
                 <NuxtLink
-                    to="/forgot-password"
+                    to="/auth/forgot-password"
                     class="rounded text-xs font-medium text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Forgot Password?

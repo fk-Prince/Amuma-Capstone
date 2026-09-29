@@ -25,6 +25,7 @@ export const createPatientSchema = (category: "homecare" | "facility" | "") =>
             z.coerce
                 .number()
                 .positive("Height must be greater than 0")
+                .multipleOf(0.01, "Height can have at most 2 decimal places")
                 .optional(),
         ),
 
@@ -33,6 +34,7 @@ export const createPatientSchema = (category: "homecare" | "facility" | "") =>
             z.coerce
                 .number()
                 .positive("Weight must be greater than 0")
+                .multipleOf(0.01, "Weight can have at most 2 decimal places")
                 .optional(),
         ),
         blood_type: z.string().optional(),
@@ -60,10 +62,12 @@ const dateStringSchema = z
     .string()
     .refine((val) => val === "" || !isNaN(Date.parse(val)), {
         message: "Enter a valid date",
-    })
-    .refine((val) => val === "" || new Date(val) <= new Date(), {
-        message: "Diagnosis date cannot be in the future",
     });
+
+const pastDateStringSchema = dateStringSchema.refine(
+    (val) => val === "" || new Date(val) <= new Date(),
+    { message: "Diagnosis date cannot be in the future" },
+);
 
 const FILE_TYPE_MESSAGE = "Upload a PDF, PNG, or JPG file.";
 
@@ -83,53 +87,57 @@ const diagnosisFileSchema = z
             message: "File must be a PDF, PNG, or JPG",
         },
     );
-export const assessmentSchema = z
-    .object({
-        diagnosis: z
-            .string()
-            .trim()
-            .max(
-                MAX_DIAGNOSIS_LENGTH,
-                `Diagnosis must be ${MAX_DIAGNOSIS_LENGTH} characters or fewer`,
-            ),
-        diagnosis_date: dateStringSchema,
-        diagnosis_notes: z
-            .string()
-            .trim()
-            .max(
-                MAX_NOTES_LENGTH,
-                `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
-            ),
-        diagnosis_file: diagnosisFileSchema,
-        diagnosis_file_name: z.string().optional(),
-    })
-    .superRefine((data, ctx) => {
-        const anyFieldFilled =
-            data.diagnosis.length > 0 ||
-            !!data.diagnosis_date ||
-            data.diagnosis_notes.trim().length > 0 ||
-            !!data.diagnosis_file;
+const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
+    z
+        .object({
+            diagnosis: z
+                .string()
+                .trim()
+                .max(
+                    MAX_DIAGNOSIS_LENGTH,
+                    `Diagnosis must be ${MAX_DIAGNOSIS_LENGTH} characters or fewer`,
+                ),
+            diagnosis_date: diagnosisDateSchema,
+            diagnosis_notes: z
+                .string()
+                .trim()
+                .max(
+                    MAX_NOTES_LENGTH,
+                    `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
+                ),
+            diagnosis_file: diagnosisFileSchema,
+            diagnosis_file_name: z.string().optional(),
+        })
+        .superRefine((data, ctx) => {
+            const anyFieldFilled =
+                data.diagnosis.length > 0 ||
+                !!data.diagnosis_date ||
+                data.diagnosis_notes.trim().length > 0 ||
+                !!data.diagnosis_file;
 
-        if (!anyFieldFilled) return;
+            if (!anyFieldFilled) return;
 
-        if (data.diagnosis.length === 0) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message:
-                    "Primary Diagnosis is required if other diagnosis fields are filled in",
-                path: ["diagnosis"],
-            });
-        }
+            if (data.diagnosis.length === 0) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message:
+                        "Primary Diagnosis is required if other diagnosis fields are filled in",
+                    path: ["diagnosis"],
+                });
+            }
 
-        if (!data.diagnosis_date) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message:
-                    "Date Diagnosed is required if other diagnosis fields are filled in",
-                path: ["diagnosis_date"],
-            });
-        }
-    });
+            if (data.diagnosis.length > 0 && !data.diagnosis_date) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Date Diagnosed is required",
+                    path: ["diagnosis_date"],
+                });
+            }
+        });
+
+export const assessmentSchema = buildDiagnosisSchema(pastDateStringSchema);
+
+export const patientDiagnosisSchema = buildDiagnosisSchema(dateStringSchema);
 
 export type DiagnosisInput = z.infer<typeof assessmentSchema>;
 

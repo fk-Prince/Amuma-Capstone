@@ -142,6 +142,8 @@
                     :model-value="model.height"
                     @update:model-value="update('height', $event)"
                     mode="number"
+                    step="0.01"
+                    min="0"
                     input-class="text-center"
                     :error="errors?.height"
                 />
@@ -150,6 +152,8 @@
                     :model-value="model.weight"
                     @update:model-value="update('weight', $event)"
                     mode="number"
+                    step="0.01"
+                    min="0"
                     input-class="text-center"
                     :error="errors?.weight"
                 />

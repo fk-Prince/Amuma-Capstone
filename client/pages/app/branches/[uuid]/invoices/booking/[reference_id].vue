@@ -1,6 +1,6 @@
 <template>
     <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-5 pb-8">
-        <div class="flex flex-wrap items-center justify-between gap-3 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <button
                 type="button"
                 @click="goBack"
@@ -17,64 +17,6 @@
                 </svg>
                 Back
             </button>
-
-            <button
-                type="button"
-                @click="handlePrint"
-                class="inline-flex items-center gap-2 rounded-full border border-[#DDECEC] bg-white px-4 py-2 text-sm font-medium text-[#0E7C7B] shadow-sm transition hover:border-[#0E7C7B] hover:text-[#0A5A58] dark:text-accent-300 dark:hover:text-accent-200 dark:border-white/10 dark:hover:border-accent-500/40 dark:bg-secondary"
-            >
-                <svg
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M6 9V3h12v6" />
-                    <path
-                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"
-                    />
-                    <path d="M8 14h8v6H8z" />
-                </svg>
-                Print
-            </button>
-        </div>
-
-        <div
-            class="hidden print:block rounded-2xl border border-[#EDF4F3] bg-white p-5 dark:border-white/10 dark:bg-secondary"
-        >
-            <div
-                class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-[#16302E] dark:text-white"
-            >
-                <div>
-                    <p
-                        class="font-semibold uppercase tracking-[0.2em] text-[#6B8A87] text-[11px] dark:text-gray-400"
-                    >
-                        Booking
-                    </p>
-                    <p class="mt-1 text-base font-semibold">
-                        {{ booking?.reference_id ?? "—" }}
-                    </p>
-                    <p class="text-[#6B8A87] dark:text-gray-400">
-                        {{ booking?.patient?.full_name ?? "—" }}
-                    </p>
-                </div>
-                <div class="text-right">
-                    <p
-                        class="font-semibold uppercase tracking-[0.2em] text-[#6B8A87] text-[11px] dark:text-gray-400"
-                    >
-                        Status
-                    </p>
-                    <p class="mt-1 text-base font-semibold">
-                        {{ booking?.status ?? "—" }}
-                    </p>
-                    <p class="text-[#6B8A87] dark:text-gray-400">
-                        {{ booking?.payment?.paid ? "Paid" : "Unpaid" }}
-                    </p>
-                </div>
-            </div>
         </div>
 
         <div
@@ -330,7 +272,7 @@
                         />
                         <Field
                             label="Phone"
-                            :value="formatPhone(booking.patient.phone_number)"
+                            :value="formatPhone(booking.patient.phone_number) || '—'"
                         />
                         <Field
                             label="Citizenship"
@@ -528,12 +470,6 @@ async function handleCashPay(cash: number) {
         processingPayment.value = false;
     }
 }
-function handlePrint() {
-    if (typeof window !== "undefined") {
-        window.print();
-    }
-}
-
 function goBack() {
     router.back();
 }
@@ -589,44 +525,3 @@ function paymentStatusClasses(paid: boolean | undefined) {
     return paid ? "bg-[#E4F4EE] text-[#1F7A4D] dark:text-emerald-300 dark:bg-emerald-500/15" : "bg-[#FBE8E6] text-[#B3402F] dark:text-rose-300 dark:bg-rose-500/15";
 }
 </script>
-
-<style scoped>
-@media print {
-    :global(html),
-    :global(body) {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #ffffff !important;
-    }
-
-    .no-print,
-    .print-hidden {
-        display: none !important;
-    }
-
-    .print\:hidden {
-        display: none !important;
-    }
-
-    .rounded-2xl {
-        border-radius: 0 !important;
-    }
-
-    .shadow-sm,
-    .shadow,
-    .shadow-md {
-        box-shadow: none !important;
-    }
-
-    .ring-1,
-    .ring-black\/5,
-    .ring {
-        box-shadow: none !important;
-    }
-
-    @page {
-        size: A4 landscape;
-        margin: 10mm;
-    }
-}
-</style>

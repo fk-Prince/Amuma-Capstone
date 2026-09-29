@@ -3,7 +3,7 @@
         <div class="max-w-6xl mx-auto px-6">
             <div class="text-center mb-14">
                 <div class="flex items-center justify-center gap-2.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
                     <span
                         class="text-xs font-medium tracking-[0.16em] uppercase text-muted dark:text-gray-400"
                     >

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
 import { MailCheck, Clock, TimerReset } from "lucide-vue-next";
 import BaseButton from "../ui/BaseButton.vue";
 
@@ -9,12 +9,16 @@ const props = withDefaults(
         error?: string | null;
         resendCooldownSeconds?: number;
         expiresInSeconds?: number;
+        codeKey?: string | null;
+        resending?: boolean;
     }>(),
     {
         loading: false,
+        resending: false,
         error: null,
         resendCooldownSeconds: 60,
         expiresInSeconds: 300,
+        codeKey: null,
     },
 );
 
@@ -121,7 +125,7 @@ function startResendCooldown() {
 }
 
 function handleResend() {
-    if (!canResend.value) return;
+    if (!canResend.value || props.resending) return;
 
     emit("resend");
     startResendCooldown();
@@ -154,7 +158,14 @@ function startExpiryCountdown() {
     }, 1000);
 }
 
-watch(() => props.expiresInSeconds, startExpiryCountdown);
+watch(
+    [() => props.expiresInSeconds, () => props.codeKey],
+    () => {
+        otp.value = ["", "", "", "", "", ""];
+        startExpiryCountdown();
+        nextTick(() => focusInput(0));
+    },
+);
 
 onMounted(() => {
     startResendCooldown();
@@ -167,115 +178,123 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4 dark:bg-white/10"
-    >
-        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
-            <div class="text-center">
-                <div
-                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary"
-                >
-                    <MailCheck class="h-7 w-7" />
+    <Teleport to="body">
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4 dark:bg-white/10"
+        >
+            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
+                <div class="text-center">
+                    <div
+                        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary"
+                    >
+                        <MailCheck class="h-7 w-7" />
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-secondary dark:text-white">Verify Email</h2>
+
+                    <p class="mt-2 text-sm text-muted dark:text-gray-400">
+                        Enter the 6-digit verification code sent to your email
+                        address.
+                    </p>
+
+                    <p
+                        v-if="resending"
+                        class="mt-3 text-sm font-medium text-primary"
+                    >
+                        Sending a new code to your email…
+                    </p>
+                    <p
+                        v-else-if="isExpired"
+                        class="mt-3 text-sm font-medium text-red-500"
+                    >
+                        Your code has expired. Click Resend Code to get a new one.
+                    </p>
+                    <div
+                        v-else
+                        class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium"
+                        :class="
+                            expirySecondsLeft <= 30 ? 'text-red-500' : 'text-muted dark:text-gray-400'
+                        "
+                    >
+                        <TimerReset class="h-3.5 w-3.5" />
+                        Code expires in {{ expiryCountdownLabel }}
+                    </div>
                 </div>
 
-                <h2 class="text-2xl font-bold text-secondary dark:text-white">Verify Email</h2>
-
-                <p class="mt-2 text-sm text-muted dark:text-gray-400">
-                    Enter the 6-digit verification code sent to your email
-                    address.
-                </p>
-
-                <p
-                    v-if="isExpired"
-                    class="mt-3 text-sm font-medium text-red-500"
-                >
-                    This code has expired. Resend to get a new one.
-                </p>
-                <div
-                    v-else
-                    class="mt-3 inline-flex items-center gap-1.5 text-xs font-medium"
-                    :class="
-                        expirySecondsLeft <= 30 ? 'text-red-500' : 'text-muted dark:text-gray-400'
-                    "
-                >
-                    <TimerReset class="h-3.5 w-3.5" />
-                    Code expires in {{ expiryCountdownLabel }}
+                <div class="mt-8 flex justify-center gap-2" @paste="handlePaste">
+                    <input
+                        v-for="(_, index) in otp"
+                        :key="index"
+                        :id="`otp-${index}`"
+                        :value="otp[index]"
+                        maxlength="1"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        type="text"
+                        :disabled="loading || isExpired"
+                        class="h-12 w-12 rounded-xl border-[1.5px] bg-transparent text-center text-lg font-semibold text-slate-800 outline-none transition focus:ring-2 disabled:opacity-50 dark:text-white"
+                        :class="
+                            error
+                                ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+                                : 'border-slate-200 dark:border-white/10 focus:border-primary focus:ring-primary-100 dark:focus:ring-primary-500/20'
+                        "
+                        @input="handleInput(index, $event)"
+                        @keydown="handleBackspace(index, $event)"
+                    />
                 </div>
-            </div>
 
-            <div class="mt-8 flex justify-center gap-2" @paste="handlePaste">
-                <input
-                    v-for="(_, index) in otp"
-                    :key="index"
-                    :id="`otp-${index}`"
-                    :value="otp[index]"
-                    maxlength="1"
-                    inputmode="numeric"
-                    autocomplete="one-time-code"
-                    type="text"
-                    :disabled="loading || isExpired"
-                    class="h-12 w-12 rounded-xl border-[1.5px] bg-transparent text-center text-lg font-semibold text-slate-800 outline-none transition focus:ring-2 disabled:opacity-50 dark:text-white"
-                    :class="
-                        error
-                            ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
-                            : 'border-slate-200 dark:border-white/10 focus:border-primary focus:ring-primary-100 dark:focus:ring-primary-500/20'
-                    "
-                    @input="handleInput(index, $event)"
-                    @keydown="handleBackspace(index, $event)"
-                />
-            </div>
+                <p v-if="error" class="mt-3 text-center text-xs text-red-500">
+                    {{ error }}
+                </p>
 
-            <p v-if="error" class="mt-3 text-center text-xs text-red-500">
-                {{ error }}
-            </p>
+                <div class="mt-8 space-y-3">
+                    <BaseButton
+                        variant="primary"
+                        size="lg"
+                        :full="true"
+                        :loading="loading"
+                        :disabled="isExpired"
+                        @click="verifyOtp"
+                    >
+                        {{ loading ? "Verifying..." : "Verify Code" }}
+                    </BaseButton>
 
-            <div class="mt-8 space-y-3">
-                <BaseButton
-                    variant="primary"
-                    size="lg"
-                    :full="true"
-                    :loading="loading"
-                    :disabled="isExpired"
-                    @click="verifyOtp"
-                >
-                    {{ loading ? "Verifying..." : "Verify Code" }}
-                </BaseButton>
+                    <div class="flex items-center justify-center gap-2 text-sm">
+                        <span class="text-muted dark:text-gray-400">Didn't get the code?</span>
 
-                <div class="flex items-center justify-center gap-2 text-sm">
-                    <span class="text-muted dark:text-gray-400">Didn't get the code?</span>
+                        <button
+                            type="button"
+                            class="font-semibold transition"
+                            :class="
+                                canResend && !resending
+                                    ? 'text-primary hover:underline'
+                                    : 'cursor-not-allowed text-muted dark:text-gray-400'
+                            "
+                            :disabled="!canResend || resending"
+                            @click="handleResend"
+                        >
+                            {{ resending ? "Sending…" : "Resend Code" }}
+                        </button>
+
+                        <span
+                            v-if="!canResend && !resending"
+                            class="inline-flex items-center gap-1 rounded-full bg-light dark:bg-primary-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary"
+                        >
+                            <Clock class="h-3 w-3" />
+                            {{ resendCountdownLabel }}
+                        </span>
+                    </div>
 
                     <button
                         type="button"
-                        class="font-semibold transition"
-                        :class="
-                            canResend
-                                ? 'text-primary hover:underline'
-                                : 'cursor-not-allowed text-muted dark:text-gray-400'
-                        "
-                        :disabled="!canResend"
-                        @click="handleResend"
+                        class="w-full text-sm text-muted dark:text-gray-400 transition hover:text-secondary dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="loading"
+                        @click="emit('close')"
                     >
-                        Resend Code
+                        Cancel
                     </button>
-
-                    <span
-                        v-if="!canResend"
-                        class="inline-flex items-center gap-1 rounded-full bg-light dark:bg-primary-500/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary"
-                    >
-                        <Clock class="h-3 w-3" />
-                        {{ resendCountdownLabel }}
-                    </span>
                 </div>
-
-                <button
-                    type="button"
-                    class="w-full text-sm text-muted dark:text-gray-400 transition hover:text-secondary dark:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="loading"
-                    @click="emit('close')"
-                >
-                    Cancel
-                </button>
             </div>
         </div>
-    </div>
+    </Teleport>
 </template>

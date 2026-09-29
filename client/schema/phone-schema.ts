@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// The +63 prefix is rendered by the input, so the stored value excludes it.
 export const PH_MOBILE_PATTERN = /^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/;
 
 export const PH_MOBILE_MESSAGE =

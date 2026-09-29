@@ -4,11 +4,13 @@
         v-else
         class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
     >
-        <AuthTransitionScreen
-            v-if="!authReady"
-            title="Setting things up"
-            subtitle=""
-        />
+        <ClientOnly>
+            <AuthTransitionScreen
+                v-if="!authReady"
+                title="Setting things up"
+                subtitle=""
+            />
+        </ClientOnly>
 
         <div
             class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden print:hidden"

@@ -1,6 +1,6 @@
 <template>
     <footer class="bg-[#0f1623] text-white">
-        <div class="mx-auto max-w-7xl px-6 py-16">
+        <div :class="[container, 'py-16']">
             <div class="grid grid-cols-1 gap-x-12 gap-y-10 md:grid-cols-4">
                 <div class="flex flex-col gap-4">
                     <div class="flex h-8 items-center">
@@ -103,7 +103,7 @@
         </div>
 
         <div class="border-t border-white/10">
-            <div class="mx-auto max-w-7xl px-6 py-6">
+            <div :class="[container, 'py-6']">
                 <p class="text-sm leading-6 text-gray-500">
                     © {{ currentYear }} AMUMA. All rights reserved.
                 </p>
@@ -115,9 +115,25 @@
 <script setup lang="ts">
 import logoAmuma from "~/assets/logo/logoAmuma.png";
 import { computed } from "vue";
+import { useRoute } from "vue-router";
 import { navList } from "~/config/publicMenu";
 
+const route = useRoute();
+
 const currentYear = computed(() => new Date().getFullYear());
+
+const container = computed(() => {
+    const variant = route.meta.navVariant ?? 1;
+
+    if (variant === 2 || variant === 3)
+        return "mx-auto w-[88%] max-w-[1600px] px-4 sm:px-10";
+    if (variant === 1 || variant === 4) return "mx-auto max-w-[100rem] px-6";
+    if (variant === 5 || variant === 6)
+        return "mx-auto w-[94%] max-w-[1400px] px-6";
+    if (variant === 7) return "mx-auto max-w-[100rem] px-6 sm:px-10";
+
+    return "px-6";
+});
 
 const headingClass =
     "flex h-8 items-center text-xs font-semibold uppercase tracking-widest text-white";

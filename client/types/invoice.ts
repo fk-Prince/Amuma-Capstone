@@ -263,6 +263,7 @@ export interface DischargeCalculation {
     period_days: number;
     period_start: string | null;
     period_end: string | null;
+    period_chain?: DischargeChainPeriod[];
     daily_rate: number;
     period_price: number;
     invoice_total: number;
@@ -285,6 +286,16 @@ export interface DischargeCalculation {
     // Everything the patient still owes across admissions and schedules, not
     // only the stay being discharged.
     outstanding?: DischargeOutstanding | null;
+}
+
+export interface DischargeChainPeriod {
+    admission_period_id: number;
+    reason: string | null;
+    accommodation_type: string | null;
+    billing_cycle: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    is_current: boolean;
 }
 
 export interface DischargeFuturePeriod {

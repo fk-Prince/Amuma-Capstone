@@ -464,11 +464,11 @@
                         :class="leftColClass"
                     >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <BaseInput
+                            <DatePickerField
                                 :model-value="form.date"
                                 label="Select Schedule Date"
-                                mode="date"
                                 :min="todayStr"
+                                placeholder="Select schedule date"
                                 :error="errors.date"
                                 required
                                 @update:model-value="update('date', $event)"
@@ -861,6 +861,17 @@
 
                                                             <template
                                                                 v-if="
+                                                                    isAssistant(
+                                                                        service,
+                                                                        employee,
+                                                                    )
+                                                                "
+                                                            >
+                                                                · Assistant
+                                                            </template>
+
+                                                            <template
+                                                                v-if="
                                                                     employee.formatted_assignment_type
                                                                 "
                                                             >
@@ -881,7 +892,9 @@
                                                                 class="h-3 w-3 shrink-0"
                                                             />
                                                             {{
-                                                                employee.phone_number
+                                                                formatPhone(
+                                                                    employee.phone_number,
+                                                                )
                                                             }}
                                                         </span>
 
@@ -913,21 +926,13 @@
 
                                                     <span
                                                         v-else-if="
-                                                            isAssistant(
+                                                            !employee.is_assigned &&
+                                                            service.type !==
+                                                                'ADL' &&
+                                                            !isAssistant(
                                                                 service,
                                                                 employee,
                                                             )
-                                                        "
-                                                        class="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-[11px] font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
-                                                    >
-                                                        Assistant
-                                                    </span>
-
-                                                    <span
-                                                        v-else-if="
-                                                            !employee.is_assigned &&
-                                                            service.type !==
-                                                                'ADL'
                                                         "
                                                         class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                                     >
@@ -1251,6 +1256,7 @@ import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { ref, computed, watch } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import {
@@ -1774,6 +1780,16 @@ function cancelEdit() {
 function update(key: keyof typeof form.value, value: string) {
     form.value[key] = value;
     delete errors.value[key];
+
+    if (
+        key === "date" &&
+        form.value.preferred_time &&
+        !availableTimeSlots.value.some(
+            (slot) => slot.value === form.value.preferred_time,
+        )
+    ) {
+        form.value.preferred_time = "";
+    }
 
     if (
         (key === "date" || key === "preferred_time") &&

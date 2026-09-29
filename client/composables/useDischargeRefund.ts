@@ -165,12 +165,12 @@ export function useDischargeRefund(admission: Ref<Admission | undefined>) {
 
         if (!isWithinRefundWindow.value) {
             return currentBillingCycle.value === "MONTHLY"
-                ? "A monthly plan is charged in full for the month, so the days stayed are not worked out and nothing is refunded."
+                ? "The full month is charged because the patient is being discharged 2 weeks or more into the month."
                 : "The whole period is charged because the patient is being discharged after 6 months.";
         }
 
         if (currentBillingCycle.value === "MONTHLY") {
-            return "The stay so far plus half of this month. The other half of the month is refunded, whatever the days stayed.";
+            return "Half of this month is retained. The other half is refunded, whatever the days stayed.";
         }
 
         const stayed = consumedDays.value;

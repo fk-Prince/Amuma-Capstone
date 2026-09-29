@@ -19,13 +19,8 @@ class EmployeePermission extends Model
         'can_create',
         'can_update',
         'can_export',
-        'can_approve',
-        'can_reject',
         'can_assign',
-        'can_admit',
-        'can_discharge',
         'can_force_discharge',
-        'can_approve_withdrawal',
         'can_renew',
     ];
 
@@ -34,13 +29,8 @@ class EmployeePermission extends Model
         'can_create' => 'boolean',
         'can_update' => 'boolean',
         'can_export' => 'boolean',
-        'can_approve' => 'boolean',
-        'can_reject' => 'boolean',
         'can_assign' => 'boolean',
-        'can_admit' => 'boolean',
-        'can_discharge' => 'boolean',
         'can_force_discharge' => 'boolean',
-        'can_approve_withdrawal' => 'boolean',
         'can_renew' => 'boolean',
     ];
 

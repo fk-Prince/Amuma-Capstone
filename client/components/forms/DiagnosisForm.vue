@@ -109,14 +109,15 @@
                         placeholder="e.g. Type 2 Diabetes"
                     />
 
-                    <BaseInput
+                    <DatePickerField
                         label="Date Diagnosed"
                         :model-value="activeDiagnosis.diagnosis_date"
                         @update:model-value="
                             update(activeIndex, 'diagnosis_date', $event)
                         "
-                        mode="date"
+                        placeholder="Select date diagnosed"
                         :max="todayStr"
+                        :default-to-today="false"
                         :error="errors?.[`diagnosis_date.${activeIndex}`]"
                     />
                 </div>
@@ -222,6 +223,7 @@ import {
     X as XIcon,
 } from "lucide-vue-next";
 import BaseInput from "../ui/BaseInput.vue";
+import DatePickerField from "../ui/DatePickerField.vue";
 import type { Diagnosis } from "~/types/patient";
 
 const props = defineProps<{

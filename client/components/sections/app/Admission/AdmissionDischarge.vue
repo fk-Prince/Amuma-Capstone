@@ -92,6 +92,32 @@
                                                 billing
                                             </p>
 
+                                            <button
+                                                v-if="
+                                                    periodStart &&
+                                                    periodEnd &&
+                                                    hasPeriodChanges
+                                                "
+                                                type="button"
+                                                class="mt-1 inline-flex items-center gap-1 text-xs text-primary underline decoration-dotted underline-offset-2 transition hover:opacity-80 dark:text-primary-300"
+                                                @click="periodChainOpen = true"
+                                            >
+                                                {{ formatDate(periodStart) }}
+                                                →
+                                                {{ formatDate(periodEnd) }}
+                                            </button>
+
+                                            <p
+                                                v-else-if="
+                                                    periodStart && periodEnd
+                                                "
+                                                class="mt-1 text-xs text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{ formatDate(periodStart) }}
+                                                →
+                                                {{ formatDate(periodEnd) }}
+                                            </p>
+
                                             <!-- <p
                                                 v-if="invoiceCoversMorePeriods"
                                                 class="mt-1 text-[11px] text-slate-400 dark:text-gray-500"
@@ -949,6 +975,12 @@
             @confirm="confirmDischargeNow"
             @cancel="confirming = false"
         />
+
+        <PeriodChainModal
+            :open="periodChainOpen"
+            :periods="periodChain"
+            @close="periodChainOpen = false"
+        />
     </Teleport>
 </template>
 
@@ -966,6 +998,7 @@ import { useDischargeRefund } from "~/composables/useDischargeRefund";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import PeriodChainModal from "./PeriodChainModal.vue";
 
 const props = withDefaults(
     defineProps<{
@@ -1052,6 +1085,14 @@ const futureRows = computed(
 );
 
 const futureInvoiceCount = computed(() => futureRows.value.length);
+
+const periodChain = computed(
+    () => props.admission?.discharge_calculation?.period_chain ?? [],
+);
+
+const hasPeriodChanges = computed(() => periodChain.value.length > 1);
+
+const periodChainOpen = ref(false);
 
 const futurePaidAmount = computed(
     () =>

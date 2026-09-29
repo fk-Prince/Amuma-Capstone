@@ -95,6 +95,29 @@ class PortalHelper
         ];
     }
 
+    public static function currentHomecareSchedules(object $patient): Collection
+    {
+        if (!$patient->relationLoaded('schedules')) {
+            return collect();
+        }
+
+        $homecare = $patient->schedules
+            ->filter(fn($schedule) => $schedule->category === Schedule::CATEGORYHOMECARE)
+            ->values();
+
+        $admission = $patient->latestAdmission;
+
+        if ($homecare->isEmpty() || !$admission) {
+            return $homecare;
+        }
+
+        $admissionStart = $admission->admitted_at ?? $admission->created_at;
+
+        return $homecare->contains(fn($schedule) => $schedule->scheduled_at?->gte($admissionStart))
+            ? $homecare
+            : collect();
+    }
+
     public function pickSchedules(Collection $schedules): array
     {
         return [
@@ -555,6 +578,19 @@ class PortalHelper
                 'facility',
                 'admitted'
             );
+        }
+
+        $homecare = self::currentHomecareSchedules($patient);
+
+        if ($homecare->isNotEmpty()) {
+            ['adl' => $adl, 'medical' => $medical] = self::pickSchedules($homecare);
+
+            if ($adl || $medical) {
+                return [
+                    'type' => 'homecare',
+                    'status' => $adl?->status ?? $medical?->status,
+                ];
+            }
         }
 
         if ($patient->latestAdmission) {

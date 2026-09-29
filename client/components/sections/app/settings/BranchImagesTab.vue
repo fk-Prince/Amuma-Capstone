@@ -37,6 +37,7 @@
             </div>
 
             <button
+                v-if="canAddImage"
                 type="button"
                 @click="openModal = true"
                 class="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition"
@@ -79,6 +80,7 @@
             </div>
 
             <button
+                v-if="canAddImage"
                 type="button"
                 @click="openModal = true"
                 class="aspect-square rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50 flex flex-col items-center justify-center text-primary hover:bg-primary-100 transition dark:border-primary-500/20 dark:bg-primary-500/10 dark:hover:bg-primary-500/15"
@@ -102,6 +104,7 @@
             <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No images uploaded yet.</p>
 
             <button
+                v-if="canAddImage"
                 type="button"
                 @click="openModal = true"
                 class="mt-4 flex items-center gap-2 text-sm font-medium text-primary"
@@ -237,7 +240,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { branchSettingService } from "~/api/branch-setting/BranchSettingService";
 import type { BranchImageRetrieve } from "~/types/branch-utils";
 import BaseInput from "~/components/ui/BaseInput.vue";
@@ -261,6 +266,9 @@ const { success, error } = useToast();
 const props = defineProps<{
     uuid?: string;
 }>();
+
+const { canCreate } = usePermissions();
+const canAddImage = computed(() => canCreate(Modules.BranchSettings));
 
 const images = ref<BranchImageRetrieve[]>([]);
 

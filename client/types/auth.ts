@@ -5,6 +5,20 @@ export interface SigninRequest {
     password: string;
 }
 
+export interface ForgotPasswordRequest {
+    email: string;
+}
+
+export interface ResetLinkRequest {
+    token: string;
+    user: string;
+}
+
+export interface ResetPasswordRequest extends ResetLinkRequest {
+    password: string;
+    password_confirmation: string;
+}
+
 export interface SignupRequest {
     first_name: String,
     last_name: String,

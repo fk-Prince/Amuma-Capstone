@@ -195,7 +195,7 @@
                                                 class="flex flex-wrap items-center gap-2"
                                             >
                                                 <button
-                                                    v-if="!isClosedStatus(invoice)"
+                                                    v-if="canManage && !isClosedStatus(invoice)"
                                                     type="button"
                                                     class="rounded-lg border border-primary/30 px-3 py-1.5 text-[12px] font-semibold text-primary transition hover:bg-primary/10"
                                                     @click="
@@ -214,6 +214,7 @@
 
                                                 <button
                                                     v-if="
+                                                        canManage &&
                                                         !isClosedStatus(
                                                             invoice,
                                                         ) &&
@@ -233,6 +234,7 @@
 
                                                 <button
                                                     v-if="
+                                                        canManage &&
                                                         !isClosedStatus(
                                                             invoice,
                                                         ) &&
@@ -255,6 +257,7 @@
 
                                             <button
                                                 v-if="
+                                                    canPay &&
                                                     Number(
                                                         invoice.balance_due,
                                                     ) > 0
@@ -425,6 +428,8 @@ const props = defineProps<{
     loading: boolean;
     // Receipt number currently being fetched, so its row can show a spinner.
     loadingReceipt?: string | null;
+    canPay?: boolean;
+    canManage?: boolean;
 }>();
 
 const emit = defineEmits<{

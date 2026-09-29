@@ -9,6 +9,8 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class OtpService
 {
@@ -26,7 +28,9 @@ class OtpService
     public function send(array $payload)
     {
         if ($this->userRepository->findByField('email', $payload['email'])) {
-            throw new Exception(__('Email already exists.'), 409);
+            throw ValidationException::withMessages([
+                'email' => __('An account with this email already exists.'),
+            ]);
         }
 
         $otp = rand(100000, 999999);
@@ -42,16 +46,27 @@ class OtpService
             now()->addMinutes(self::OTP_TTL_MINUTES)
         );
 
-        Mail::to($payload['email'])->send(
-            new OtpMailer(
-                $otp,
-                $payload['email']
-            )
-        );
+        try {
+            Mail::to($payload['email'])->send(
+                new OtpMailer(
+                    $otp,
+                    self::OTP_TTL_MINUTES
+                )
+            );
+        } catch (Throwable) {
+            Cache::forget("otp:{$key}");
+
+            throw new Exception(
+                __("We couldn't send the code to this email right now. Please try again in a moment."),
+                503
+            );
+        }
 
         return response()->json([
             'status' => true,
-            'message' => __('OTP sent to your email.'),
+            'message' => __('We sent a 6-digit code to your email. It expires in :minutes minutes.', [
+                'minutes' => self::OTP_TTL_MINUTES,
+            ]),
             'otp_key' => $key,
             'expires_in' => self::OTP_TTL_MINUTES * 60,
         ]);
@@ -63,14 +78,21 @@ class OtpService
 
         if (!$data) {
             throw new Exception(
-                __('OTP expired or invalid.'),
+                __('Your code has expired. Click Resend Code to get a new one.'),
+                422
+            );
+        }
+
+        if (strcasecmp($data['email'], $payload['user']['email']) !== 0) {
+            throw new Exception(
+                __('This code was sent to a different email address. Request a new code.'),
                 422
             );
         }
 
         if ($data['otp'] != $payload['otp_value']) {
             throw new Exception(
-                __('Invalid OTP.'),
+                __('Incorrect code. Please try again.'),
                 422
             );
         }
@@ -81,7 +103,7 @@ class OtpService
 
         return response()->json([
             'status' => true,
-            'message' => __('Registration successful.'),
+            'message' => __('Account created successfully!'),
             'user' => $user,
         ]);
     }

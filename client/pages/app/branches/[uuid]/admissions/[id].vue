@@ -862,12 +862,13 @@
                     </p>
 
                     <div class="space-y-4">
-                        <BaseInput
+                        <DatePickerField
                             label="Admission Date"
-                            mode="date"
                             v-model="admitDate"
+                            placeholder="Select admission date"
                             :min="todayStr"
                             :max="todayStr"
+                            :default-to-today="false"
                         />
                     </div>
 
@@ -1047,7 +1048,7 @@ import { admissionService } from "~/api/admission/AdmissionService";
 import { useToast } from "~/composables/useToast";
 import { toLocalDateString } from "~/utils/time";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
-import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import BillingCycleModal from "~/components/sections/app/Patient/BillingCycleModal.vue";
 import type { Room } from "~/types/room";
 import type { Bed } from "~/types/bed";
@@ -1216,15 +1217,14 @@ const unavailableWhileNotAdmitted = computed(() => {
 
 const { hasFacilityPlan } = useBranchPlan();
 const facilityLocked = computed(() => !hasFacilityPlan.value);
-const { hasModule, canCreate, canAdmit, canUpdate, canDischarge, canAssign } =
-    usePermissions();
+const { hasModule, canCreate, canUpdate, canAssign } = usePermissions();
 const canViewPatient = computed(() => hasModule(Modules.Patients));
 const addServiceModalOpen = ref(false);
 
 const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
-const canAdmitAdmission = computed(() => canAdmit(Modules.Admissions));
+const canAdmitAdmission = computed(() => canUpdate(Modules.Admissions));
 const canUpdateAdmission = computed(() => canUpdate(Modules.Admissions));
-const canDischargeAdmission = computed(() => canDischarge(Modules.Admissions));
+const canDischargeAdmission = computed(() => canUpdate(Modules.Admissions));
 const canAddService = computed(() => canAssign(Modules.Schedules));
 const canViewCaregiver = computed(() =>
     hasModule(Modules.Admissions, Modules.Schedules),

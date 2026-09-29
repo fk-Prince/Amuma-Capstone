@@ -434,7 +434,7 @@
                                 <p
                                     class="text-xs text-gray-400 break-words dark:text-gray-500"
                                 >
-                                    {{ lovedOne.age }} years old ·
+                                    {{ lovedOne.age }} ·
                                     {{ lovedOne.gender }}
                                 </p>
                             </div>
@@ -918,6 +918,7 @@ import CaregiverShiftTimelineModal from "~/components/portal/CaregiverShiftTimel
 import type { PortalAssessment, PortalDiagnosis } from "~/types/patient";
 import type { CaregiverShift } from "~/types/caregiver-shift";
 import EmptyState from "~/components/ui/EmptyState.vue";
+import { calculateAge } from "~/utils/user";
 import {
     Pencil,
     Crown,
@@ -991,7 +992,7 @@ interface LovedOne {
     roomType: string | null;
     roomFloor: string | null;
     birthdate: string;
-    age: number;
+    age: string;
     gender: string;
     bloodType: string;
     contactNumber: string;
@@ -1037,7 +1038,7 @@ function fallbackLovedOne(): LovedOne {
         roomType: null,
         roomFloor: null,
         birthdate: "N/A",
-        age: 0,
+        age: "N/A",
         gender: "N/A",
         bloodType: "N/A",
         contactNumber: "N/A",
@@ -1204,26 +1205,6 @@ watch(selectedIndex, () => {
     showAssessmentModal.value = false;
 });
 
-function calcAge(dob: string | null | undefined): number {
-    if (!dob) return 0;
-
-    const birth = new Date(dob);
-
-    if (Number.isNaN(birth.getTime())) return 0;
-
-    const now = new Date();
-
-    let age = now.getFullYear() - birth.getFullYear();
-
-    const monthDiff = now.getMonth() - birth.getMonth();
-
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        age--;
-    }
-
-    return Math.max(0, age);
-}
-
 function formatDate(
     value: string | null | undefined,
     fallback = "N/A",
@@ -1361,7 +1342,7 @@ function mapPatientRecord(item: any): LovedOne {
         birthdate: patient.date_of_birth
             ? formatDate(patient.date_of_birth)
             : "N/A",
-        age: calcAge(patient.date_of_birth),
+        age: calculateAge(patient.date_of_birth, false),
         gender: patient.gender || "N/A",
         bloodType: patient.blood_type || "N/A",
         contactNumber: patient.phone_number || "N/A",

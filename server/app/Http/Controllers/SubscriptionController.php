@@ -91,7 +91,7 @@ class SubscriptionController extends Controller
             $request->user(),
             $branch->branch_id,
             ModuleEnum::ManageBranches,
-            PermissionAction::Create
+            PermissionAction::Update
         );
 
         $data = $request->validated();

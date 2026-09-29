@@ -202,7 +202,6 @@ class PatientRepository
             'admissions.currentPeriod.invoiceAdmissionLines.invoice.invoiceAdjustments',
             'admissions.latestPeriod.branchContract',
 
-            // formatFuturePeriods() reads periods, not futurePeriods.
             'admissions.periods.branchContract',
             'admissions.periods.invoiceAdmissionLines.invoice',
             'admissions.periods.invoiceAdmissionLines.admissionPeriod.branchContract',

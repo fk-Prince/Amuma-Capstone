@@ -31,4 +31,19 @@ class OtpRequest extends FormRequest
             'otp_value' => ['required', 'digits:6'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'otp_key.required' => __('Your verification session has ended. Request a new code.'),
+            'otp_value.required' => __('Enter the 6-digit code from your email.'),
+            'otp_value.digits' => __('The code must be exactly 6 digits.'),
+            'user.first_name.required' => __('Enter your first name.'),
+            'user.last_name.required' => __('Enter your last name.'),
+            'user.email.required' => __('Enter your email address.'),
+            'user.email.email' => __('Enter a valid email address.'),
+            'user.password.required' => __('Enter a password.'),
+            'user.password.min' => __('Password must be at least 6 characters.'),
+        ];
+    }
 }

@@ -2,7 +2,7 @@
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 
-const AUTH_ROUTES = ["/auth/signin", "/auth/signup"];
+const AUTH_ROUTES = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
 
 export default defineNuxtRouteMiddleware(async (to) => {
     const user = useAuthUser();

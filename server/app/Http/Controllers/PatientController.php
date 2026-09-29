@@ -66,7 +66,7 @@ class PatientController extends Controller
 
         $validated = $request->validate([
             'diagnosis' => ['required', 'string', 'max:200'],
-            'diagnosis_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'diagnosis_date' => ['required', 'date'],
             'diagnosis_notes' => ['nullable', 'string', 'max:1000'],
             'diagnosis_file' => [
                 'nullable',
@@ -74,6 +74,9 @@ class PatientController extends Controller
                 'mimes:pdf,png,jpg,jpeg',
                 'max:10240',
             ],
+        ], [
+            'diagnosis.required' => 'Primary Diagnosis is required',
+            'diagnosis_date.required' => 'Date Diagnosed is required',
         ]);
 
         $validated['diagnosis_file'] = $request->file('diagnosis_file');

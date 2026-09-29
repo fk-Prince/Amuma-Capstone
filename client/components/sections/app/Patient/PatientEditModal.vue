@@ -143,6 +143,8 @@
                         <BaseInput
                             label="Height (cm)"
                             mode="number"
+                            step="0.01"
+                            min="0"
                             input-class="text-center"
                             :model-value="form.height"
                             :error="errors.height"
@@ -151,6 +153,8 @@
                         <BaseInput
                             label="Weight (kg)"
                             mode="number"
+                            step="0.01"
+                            min="0"
                             input-class="text-center"
                             :model-value="form.weight"
                             :error="errors.weight"

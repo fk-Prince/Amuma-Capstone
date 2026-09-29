@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { Activity, Check, LoaderCircle, X } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
     vitalSchema,
     type VitalFormData,
@@ -381,10 +382,11 @@ const bloodPressureDisplay = computed(() => {
                                 <div
                                     class="grid grid-cols-1 gap-4 sm:grid-cols-2"
                                 >
-                                    <BaseInput
+                                    <DatePickerField
                                         v-model="form.recordedDate"
-                                        mode="date"
                                         label="Date"
+                                        placeholder="Select date"
+                                        :default-to-today="false"
                                         :error="errors.recordedDate"
                                         @update:modelValue="
                                             clearError('recordedDate')

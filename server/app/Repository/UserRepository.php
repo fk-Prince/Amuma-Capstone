@@ -112,4 +112,12 @@ class UserRepository
     {
         return User::where('user_id', $user_id)->update($payload);
     }
+
+    public function resetPassword(User $user, string $password): User
+    {
+        $user->forceFill(['password' => Hash::make($password)])->save();
+        $user->tokens()->delete();
+
+        return $user;
+    }
 }

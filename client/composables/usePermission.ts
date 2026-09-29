@@ -35,29 +35,14 @@ export const usePermissions = () => {
     const canUpdate = (module_name: string) =>
         can(module_name, PermissionAction.Update);
 
-    const canApprove = (module_name: string) =>
-        can(module_name, PermissionAction.Approve);
-
-    const canReject = (module_name: string) =>
-        can(module_name, PermissionAction.Reject);
-
     const canAssign = (module_name: string) =>
         can(module_name, PermissionAction.Assign);
 
     const canExport = (module_name: string) =>
         can(module_name, PermissionAction.Export);
 
-    const canAdmit = (module_name: string) =>
-        can(module_name, PermissionAction.Admit);
-
-    const canDischarge = (module_name: string) =>
-        can(module_name, PermissionAction.Discharge);
-
     const canForceDischarge = (module_name: string) =>
         can(module_name, PermissionAction.ForceDischarge);
-
-    const canApproveWithdrawal = (module_name: string) =>
-        can(module_name, PermissionAction.ApproveWithdrawal);
 
     const canRenew = (module_name: string) =>
         can(module_name, PermissionAction.Renew);
@@ -85,14 +70,9 @@ export const usePermissions = () => {
         hasModule,
         canCreate,
         canUpdate,
-        canApprove,
-        canReject,
         canAssign,
         canExport,
-        canAdmit,
-        canDischarge,
         canForceDischarge,
-        canApproveWithdrawal,
         canRenew,
         role,
         hasRole,

@@ -16,6 +16,9 @@ class OtpController extends Controller
     {
         $validated = $request->validate([
             'email' => ['required', 'email'],
+        ], [
+            'email.required' => __('Enter your email address.'),
+            'email.email' => __('Enter a valid email address.'),
         ]);
         return $this->otpService->send($validated);
     }

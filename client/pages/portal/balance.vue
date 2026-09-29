@@ -62,7 +62,7 @@ interface LovedOne {
     photo: string | null;
     branch_name: string | null;
     branch_address: string | null;
-    status: "Active" | "Discharged" | "On Leave";
+    status: string | null;
     room_label: string;
     room_type: string | null;
     refundable_amount: number;
@@ -376,13 +376,31 @@ function mapResidentStatus(
     }
 }
 
+function admissionStatusLabel(status?: string | null): string | null {
+    switch ((status || "").toLowerCase()) {
+        case "admitted":
+            return "Admitted";
+        case "waiting":
+            return "Waiting to Admit";
+        case "discharged":
+            return "Discharged";
+        case "cancelled":
+            return "Cancelled";
+        default:
+            return null;
+    }
+}
+
 function lovedOneStatusClasses(status: string) {
     const map: Record<string, string> = {
-        active: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
+        admitted:
+            "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
+        "waiting to admit":
+            "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
         discharged:
             "bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200 dark:bg-white/10 dark:text-gray-400 dark:ring-white/10",
-        "on leave":
-            "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
+        cancelled:
+            "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20",
     };
 
     return (
@@ -601,7 +619,7 @@ function mapPatientRecord(item: any): LovedOne {
         photo: patient.avatar ?? patient.photo ?? null,
         branch_name: org.name ?? null,
         branch_address: org.full_address ?? null,
-        status: mapResidentStatus(ctx.status),
+        status: admissionStatusLabel(ctx.admission?.status),
         room_label: ctx.room?.room_no ? `Room ${ctx.room.room_no}` : "",
         room_type: ctx.room?.room_type ?? null,
         refundable_amount: Number(item.patient_refundable ?? 0),
@@ -1707,6 +1725,7 @@ async function openReceipt(receiptNo?: string | null) {
                                                 class="mt-2 flex flex-wrap items-center justify-center gap-2"
                                             >
                                                 <span
+                                                    v-if="lo.status"
                                                     class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                                     :class="
                                                         lovedOneStatusClasses(

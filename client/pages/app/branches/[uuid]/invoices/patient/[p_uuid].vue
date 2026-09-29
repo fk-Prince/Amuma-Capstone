@@ -20,7 +20,35 @@
                     </svg>
                     Back
                 </button>
+
+                <button
+                    v-if="canPrintStatement"
+                    type="button"
+                    :disabled="preparingStatement"
+                    class="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-white px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary-50 disabled:cursor-wait disabled:opacity-70 dark:border-primary-500/30 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
+                    @click="printStatement"
+                >
+                    <Loader2 v-if="preparingStatement" class="h-4 w-4 animate-spin" />
+                    <Printer v-else class="h-4 w-4" />
+                    {{ preparingStatement ? "Preparing…" : "Print statement" }}
+                </button>
             </div>
+
+            <Teleport to="body">
+                <div
+                    v-if="canPrintStatement"
+                    class="print-statement-sheet hidden print:block"
+                >
+                    <BalanceStatementSheet
+                        :branch="statementBranch"
+                        :patient-name="summary?.patient?.full_name ?? 'Patient'"
+                        :lines="statementLines"
+                        :total="statementTotal"
+                        :issued-by="issuedBy"
+                        :issued-on="statementIssuedOn"
+                    />
+                </div>
+            </Teleport>
 
             <div
                 v-if="loading"
@@ -274,7 +302,7 @@
                                     variant="refunded"
                                     :hint="creditHint"
                                     :hint-action-label="
-                                        hasRefundable
+                                        hasRefundable && canRecordPayment
                                             ? issuingRefund
                                                 ? 'Withdrawing…'
                                                 : 'Withdraw'
@@ -343,7 +371,7 @@
                                         :value="
                                             formatPhone(
                                                 summary.patient.phone_number,
-                                            )
+                                            ) || '—'
                                         "
                                     />
 
@@ -715,6 +743,7 @@
                                         @view-discharge-termination="
                                             viewDischargeTermination
                                         "
+                                        :can-extend="canRecordPayment"
                                         @extend-stay="openExtendModal"
                                     />
                                 </div>
@@ -969,6 +998,7 @@
                                                     >
                                                         <button
                                                             v-if="
+                                                                canManageInvoices &&
                                                                 !isClosedStatus(
                                                                     invoice.status,
                                                                 )
@@ -992,6 +1022,7 @@
 
                                                         <button
                                                             v-if="
+                                                                canManageInvoices &&
                                                                 !isClosedStatus(
                                                                     invoice.status,
                                                                 ) &&
@@ -1012,6 +1043,7 @@
 
                                                         <button
                                                             v-if="
+                                                                canManageInvoices &&
                                                                 !isClosedStatus(
                                                                     invoice.status,
                                                                 ) &&
@@ -1033,6 +1065,7 @@
 
                                                     <button
                                                         v-if="
+                                                            canRecordPayment &&
                                                             Number(
                                                                 invoice.balance_due,
                                                             ) > 0
@@ -1263,7 +1296,7 @@
 
                     <aside class="xl:sticky xl:top-6 print:hidden">
                         <div
-                            v-if="showPayment"
+                            v-if="showPayment && canRecordPayment"
                             class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
@@ -1501,6 +1534,25 @@
                                     @cash-pay="handleCashPay"
                                 />
                             </div>
+                        </div>
+
+                        <div
+                            v-else-if="showPayment"
+                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                        >
+                            <p
+                                class="text-sm font-semibold text-secondary dark:text-white"
+                            >
+                                ₱{{ formatMoney(summary?.total_balance ?? 0) }}
+                                still due
+                            </p>
+
+                            <p
+                                class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                            >
+                                You don't have permission to record payments
+                                for this branch.
+                            </p>
                         </div>
 
                         <div
@@ -1750,6 +1802,7 @@
             :credit="creditOnAccount"
             :processing="processingRefund"
             :error-message="refundError"
+            :can-decide="canRecordPayment"
             @approve="approveRefundRequest"
             @decline="declineRefundRequest"
             @close="closeRefundReview"
@@ -1777,6 +1830,8 @@
             :loading-receipt="loadingReceipt"
             @view-invoice="viewInvoice"
             @view-receipt="openReceiptByNo"
+            :can-pay="canRecordPayment"
+            :can-manage="canManageInvoices"
             @pay-invoice="payFromEntity"
             @adjust-invoice="openAdjustModal"
             @void-invoice="openVoidModal"
@@ -1847,8 +1902,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, onMounted, ref } from "vue";
-import { Loader2, Receipt, Undo2 } from "lucide-vue-next";
+import { computed, h, nextTick, onMounted, ref, watch } from "vue";
+import { Loader2, Printer, Receipt, Undo2 } from "lucide-vue-next";
+import BalanceStatementSheet from "~/components/sections/app/Billing/BalanceStatementSheet.vue";
+import { useBranchStore } from "~/stores/branch";
+import { useAuthUser } from "~/composables/useAuthUser";
+import { stringToDateTime } from "~/utils/time";
 import { useRoute, useRouter } from "vue-router";
 import { admissionService } from "~/api/admission/AdmissionService";
 import { invoiceService } from "~/api/invoice/InvoiceService";
@@ -1875,6 +1934,8 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import { useToast } from "~/composables/useToast";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { calculateAge } from "~/utils/user";
 
 import type {
@@ -1897,6 +1958,104 @@ const route = useRoute();
 const router = useRouter();
 
 const { success, error } = useToast();
+const { canCreate, canUpdate, canExport } = usePermissions();
+const canRecordPayment = computed(() => canCreate(Modules.BillingAndInvoices));
+const canManageInvoices = computed(() => canUpdate(Modules.BillingAndInvoices));
+
+const branchStore = useBranchStore();
+const authUser = useAuthUser();
+const statementIssuedOn = ref("");
+
+const statementBranch = computed(() => {
+    const branch = branchStore.activeBranch;
+
+    return {
+        name: branch?.name ?? "",
+        image: typeof branch?.image === "string" ? branch.image : null,
+        address: branch?.location?.address ?? branch?.location?.full_address ?? null,
+        contact: branch?.contact_number ?? null,
+    };
+});
+
+const statementLines = computed(() =>
+    payableInvoices.value.map((invoice) => ({
+        description: invoice.description?.trim() || "Charges",
+        amount: Number(invoice.balance_due ?? 0),
+    })),
+);
+
+const statementTotal = computed(() =>
+    statementLines.value.reduce((sum, line) => sum + line.amount, 0),
+);
+
+const issuedBy = computed(() => {
+    const user = authUser.value;
+    const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ");
+
+    return name || user?.email || "";
+});
+
+const canPrintStatement = computed(
+    () =>
+        canExport(Modules.BillingAndInvoices) &&
+        Number(summary.value?.total_balance ?? 0) > 0,
+);
+
+const preparingStatement = ref(false);
+
+onMounted(() => {
+    watch(
+        canPrintStatement,
+        (allowed) => {
+            if (allowed) loadSection("invoices");
+        },
+        { immediate: true },
+    );
+});
+
+async function ensureInvoicesLoaded() {
+    await loadSection("invoices");
+
+    while (pendingSections.value.has("invoices")) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+}
+
+async function printStatement() {
+    if (preparingStatement.value) return;
+
+    preparingStatement.value = true;
+
+    try {
+        await ensureInvoicesLoaded();
+
+        if (!statementLines.value.length) {
+            error("There are no balances to print for this patient.");
+            return;
+        }
+
+        statementIssuedOn.value = stringToDateTime(new Date());
+        document.body.classList.add("printing-statement");
+        document.head.appendChild(statementPageStyle);
+
+        await nextTick();
+        await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+        );
+
+        window.print();
+    } finally {
+        statementPageStyle.remove();
+        document.body.classList.remove("printing-statement");
+        preparingStatement.value = false;
+    }
+}
+
+const statementPageStyle = import.meta.client
+    ? Object.assign(document.createElement("style"), {
+          textContent: "@page { size: A4 portrait; margin: 12mm; }",
+      })
+    : (null as unknown as HTMLStyleElement);
 
 const uuid = computed(() => route.params.uuid as string);
 const patientUuid = computed(() => route.params.p_uuid as string);

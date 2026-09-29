@@ -21,8 +21,7 @@ enum ModuleEnum: string
         return match ($this) {
             self::Bookings => [
                 PermissionAction::Read,
-                PermissionAction::Approve,
-                PermissionAction::Reject,
+                PermissionAction::Update,
             ],
             self::Patients => [
                 PermissionAction::Read,
@@ -32,15 +31,13 @@ enum ModuleEnum: string
             ],
             self::Schedules => [
                 PermissionAction::Read,
-                PermissionAction::Assign,
                 PermissionAction::Update,
+                PermissionAction::Assign,
             ],
             self::Admissions => [
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,
-                PermissionAction::Admit,
-                PermissionAction::Discharge,
                 PermissionAction::ForceDischarge,
             ],
             self::RoomsAndBeds, self::Contracts, self::EmployeeManagement => [
@@ -58,14 +55,16 @@ enum ModuleEnum: string
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,
-                PermissionAction::ApproveWithdrawal,
+                PermissionAction::Export,
             ],
             self::ManageBranches => [
                 PermissionAction::Read,
                 PermissionAction::Create,
+                PermissionAction::Update,
             ],
             self::BranchSettings => [
                 PermissionAction::Read,
+                PermissionAction::Create,
                 PermissionAction::Update,
                 PermissionAction::Renew,
             ],

@@ -18,7 +18,7 @@ class BranchSettingController extends Controller
     public function store(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Create);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Create);
         BranchGuard::mergeRequest($request, $branch);
         return $this->branchService->action($request->all());
     }

@@ -26,9 +26,7 @@ class AuthGuard
     {
         $user = self::requireUser($user);
 
-        if (!$user->relationLoaded('employee')) {
-            $user->load('employee.permissions.modules');
-        }
+        $user->loadMissing('employee.permissions.modules');
 
         $employee = $user->employee;
 

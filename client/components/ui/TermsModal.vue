@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
                             yourself and tell us at once if you believe someone
                             else has access. Accounts are personal: staff
                             accounts belong to the individual caregiver or
-                            administrator, not to the branch, and may not be
+                            branch manager, not to the branch, and may not be
                             shared.
                         </p>
                     </section>
@@ -122,7 +122,7 @@ onBeforeUnmount(() => {
                         </h3>
                         <p>
                             What you can see and do depends on the role granted
-                            to you. Agency owners and branch administrators
+                            to you. Agency owners and branch managers
                             manage branches, employees, and settings; employees
                             receive only the module permissions their branch
                             assigns them; family members and guardians see the
