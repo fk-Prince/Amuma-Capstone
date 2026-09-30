@@ -5,7 +5,9 @@ namespace App\Service;
 use App\Events\QrScanned;
 use App\Models\Employee;
 use App\Models\OnlineSchedule;
+use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
+use App\Models\ScheduleService;
 use App\Repository\OnlineScheduleRepository;
 use Exception;
 use Illuminate\Support\Facades\Cache;
@@ -59,6 +61,7 @@ class OnlineScheduleService
         $scheduleServicesId = $payload['schedule_services_id'];
 
         $this->guardHasActiveAssignment($scheduleServicesId);
+        $this->guardAdlIsOngoing($scheduleServicesId);
 
         $activeSession = $this->activeSessionFor($scheduleServicesId);
 
@@ -105,6 +108,8 @@ class OnlineScheduleService
         if (!$assigned) {
             throw new Exception('You are not assigned to this schedule.', 403);
         }
+
+        $this->guardAdlIsOngoing($assigned->schedule_services_id);
 
         return DB::transaction(function () use ($payload, $assigned) {
             $activeSession = OnlineSchedule::whereHas(
@@ -225,6 +230,18 @@ class OnlineScheduleService
 
         if (!$exists) {
             throw new Exception('No active caregiver is assigned to this schedule.', 404);
+        }
+    }
+
+    private function guardAdlIsOngoing(int $scheduleServicesId): void
+    {
+        $scheduleService = ScheduleService::with('schedule')->find($scheduleServicesId);
+
+        if (
+            $scheduleService?->type === ScheduleService::TYPE_ADL
+            && strtolower((string) $scheduleService->schedule?->status) !== Schedule::STATUS_ONGOING
+        ) {
+            throw new Exception('Time in is only available once this ADL schedule is ongoing.', 422);
         }
     }
 }

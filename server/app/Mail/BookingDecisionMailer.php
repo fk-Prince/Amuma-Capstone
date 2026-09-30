@@ -43,6 +43,12 @@ class BookingDecisionMailer extends Mailable
             ? "Good news — your booking with <strong style='color:{$accent};'>{$this->branchName}</strong> has been approved."
             : "Your booking with <strong style='color:{$accent};'>{$this->branchName}</strong> could not be accepted.";
 
+        $logoUrl = config('mail.logo_url');
+
+        $logo = $logoUrl
+            ? "<img src='{$logoUrl}' width='160' alt='AMUMA' style='display:block;width:160px;max-width:160px;height:auto;border:0;outline:none;text-decoration:none;font-size:22px;font-weight:800;color:#3182ED;'>"
+            : "<p style='margin:0;font-size:22px;font-weight:800;letter-spacing:1px;color:#3182ED;'>AMUMA</p>";
+
         $followUp = $approved
             ? 'The branch will be in touch with the next steps. You can view the details anytime from your AMUMA portal.'
             : 'If a payment was made, a refund has been requested and will be processed back to your original payment method.';
@@ -83,7 +89,7 @@ class BookingDecisionMailer extends Mailable
 
                             <tr>
                                 <td align='center' style='padding-bottom:28px;'>
-                                    <p style='margin:0;font-size:11px;color:#94a3b8;letter-spacing:6px;text-transform:uppercase;'>AMUMA</p>
+                                    {$logo}
                                 </td>
                             </tr>
 

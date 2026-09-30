@@ -220,6 +220,24 @@
                             </div>
                         </div>
                     </div>
+
+                    <div
+                        v-if="isReviewable(schedule)"
+                        class="border-t border-gray-100 p-3 dark:border-white/10"
+                    >
+                        <button
+                            type="button"
+                            :disabled="
+                                !canRequestReview(schedule) ||
+                                sendingReview === schedule.schedule_id
+                            "
+                            class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-gray-100 disabled:bg-transparent disabled:text-gray-400 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20 dark:disabled:border-white/10 dark:disabled:bg-transparent dark:disabled:text-gray-500"
+                            @click="requestScheduleReview(schedule)"
+                        >
+                            <Bell class="h-3.5 w-3.5 shrink-0" />
+                            <span>{{ reviewButtonLabel(schedule) }}</span>
+                        </button>
+                    </div>
                 </article>
             </section>
         </div>
@@ -227,10 +245,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { Stethoscope, UserRound, CalendarClock, Clock } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import {
+    Bell,
+    Stethoscope,
+    UserRound,
+    CalendarClock,
+    Clock,
+} from "lucide-vue-next";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";
+import { useToast } from "~/composables/useToast";
+import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 import { formatDurationShort } from "~/utils/time";
 
 const props = withDefaults(
@@ -328,6 +354,101 @@ function initials(name?: string | null) {
         .slice(0, 2)
         .join("")
         .toUpperCase();
+}
+
+const { success, error } = useToast();
+
+const REVIEW_NOTIFY_COOLDOWN_MS = 10 * 60 * 1000;
+
+const reviewNotifyTick = ref(0);
+const sendingReview = ref<number | null>(null);
+const secondsTick = ref(0);
+let secondsTickInterval: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+    secondsTickInterval = setInterval(() => {
+        secondsTick.value++;
+    }, 1000);
+});
+
+onUnmounted(() => {
+    if (secondsTickInterval) clearInterval(secondsTickInterval);
+});
+
+function isReviewable(schedule: ScheduleItem): boolean {
+    return ["pending", "ongoing"].includes(
+        (schedule.status ?? "").toLowerCase(),
+    );
+}
+
+function reviewNotifyKey(schedule: ScheduleItem) {
+    return `medical-review-notify:${schedule.schedule_id}`;
+}
+
+function lastReviewNotifyAt(schedule: ScheduleItem): number {
+    try {
+        const raw = window.localStorage.getItem(reviewNotifyKey(schedule));
+        return raw ? Number(raw) || 0 : 0;
+    } catch {
+        return 0;
+    }
+}
+
+function canRequestReview(schedule: ScheduleItem): boolean {
+    reviewNotifyTick.value;
+    secondsTick.value;
+
+    return (
+        Date.now() - lastReviewNotifyAt(schedule) >= REVIEW_NOTIFY_COOLDOWN_MS
+    );
+}
+
+function reviewButtonLabel(schedule: ScheduleItem): string {
+    if (canRequestReview(schedule)) return "Notify Admission Staff";
+
+    const waitMs =
+        REVIEW_NOTIFY_COOLDOWN_MS -
+        (Date.now() - lastReviewNotifyAt(schedule));
+    const totalSeconds = Math.max(0, Math.ceil(waitMs / 1000));
+
+    return `Available in ${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
+async function requestScheduleReview(schedule: ScheduleItem) {
+    if (
+        !canRequestReview(schedule) ||
+        sendingReview.value === schedule.schedule_id
+    ) {
+        return;
+    }
+
+    sendingReview.value = schedule.schedule_id;
+
+    try {
+        await patientAccessService.executeAction({
+            action: "request_schedule_review",
+            patient_id: (schedule as any).patient?.patient_id ?? schedule.patient_id,
+            schedule_id: schedule.schedule_id,
+        });
+
+        try {
+            window.localStorage.setItem(
+                reviewNotifyKey(schedule),
+                String(Date.now()),
+            );
+        } catch {}
+
+        reviewNotifyTick.value++;
+        success("Admission staff have been notified to review this schedule.");
+    } catch (err: any) {
+        error(
+            err?.data?.message ||
+                err?.message ||
+                "Failed to send the notification.",
+        );
+    } finally {
+        sendingReview.value = null;
+    }
 }
 
 function formatTimestamp(value?: string | null) {

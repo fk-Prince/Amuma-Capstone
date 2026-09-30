@@ -771,6 +771,15 @@ class PatientAdmissionService
                         'booking_data' => $bookingData,
                     ]);
 
+                    if ($booking->branch) {
+                        $this->notificationService->notifyBookingDecision(
+                            $booking->branch,
+                            $booking->fresh(),
+                            Booking::STATUS_APPROVED,
+                            $user
+                        );
+                    }
+
                     return [
                         'message' => 'Pre-admission created successfully.',
                         'data' => $booking->fresh(),

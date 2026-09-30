@@ -46,7 +46,13 @@ export const Field = (
             h(
                 "span",
                 { class: "text-[#16302E] font-medium dark:text-white" },
-                slots.value ? slots.value() : (fieldProps.value ?? "—"),
+                slots.value
+                    ? slots.value()
+                    : fieldProps.value === null ||
+                        fieldProps.value === undefined ||
+                        fieldProps.value === ""
+                      ? "—"
+                      : fieldProps.value,
             ),
         ],
     );

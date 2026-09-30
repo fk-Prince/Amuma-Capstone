@@ -64,6 +64,9 @@
                                 :loading="isFetching || isLoading"
                                 :searchable="false"
                                 :row-key="(row) => row.booking_id"
+                                :on-row-click="
+                                    (row) => selectBooking(row.reference_id)
+                                "
                                 empty-title="No bookings yet"
                                 :empty-description="emptyStateSubtitle"
                                 @page-change="handlePageChange"

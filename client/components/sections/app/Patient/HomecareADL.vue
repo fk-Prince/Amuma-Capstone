@@ -264,6 +264,12 @@
                                 class="order-2"
                                 extra-class="w-full !py-1.5 !text-xs"
                                 :loading="generatingQr"
+                                :disabled="!isOngoing(log)"
+                                :tooltip="
+                                    isOngoing(log)
+                                        ? ''
+                                        : 'Time in opens once this ADL schedule is ongoing.'
+                                "
                                 @click="generateQr('in', log)"
                                 variant="primary"
                             >
@@ -300,6 +306,7 @@
                                     </div>
 
                                     <button
+                                        v-if="isReviewable(log)"
                                         type="button"
                                         :disabled="
                                             !canRequestReview(log) ||
@@ -1116,6 +1123,10 @@ function shiftEnded(log: AuditRow, note?: string | null): boolean {
     return hour < start || hour >= end;
 }
 
+function isReviewable(log: AuditRow): boolean {
+    return ["pending", "ongoing"].includes((log.status ?? "").toLowerCase());
+}
+
 function reviewNotifyKey(log: AuditRow) {
     return `adl-review-notify:${log.schedule_id}`;
 }
@@ -1388,6 +1399,10 @@ const logGroups = computed(() => {
 });
 
 const QR_GENERATION_BLOCKED_STATUSES = ["cancelled", "completed", "missed"];
+
+function isOngoing(log: AuditRow): boolean {
+    return (log.status ?? "").toLowerCase() === "ongoing";
+}
 
 function canGenerateQr(log: AuditRow): boolean {
     return (

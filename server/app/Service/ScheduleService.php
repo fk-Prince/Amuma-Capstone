@@ -23,6 +23,7 @@ use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Schedule;
+use App\Models\ScheduleService as ScheduleServiceModel;
 use Exception;
 
 class ScheduleService
@@ -192,6 +193,38 @@ class ScheduleService
             ->map(fn($id) => (int) $id);
     }
 
+    private function assertAssignmentType(Schedule $schedule, $employeeIds, $branchId): void
+    {
+        $employeeIds = collect($employeeIds);
+
+        if ($employeeIds->isEmpty()) {
+            return;
+        }
+
+        $isFacility = $schedule->category === Schedule::CATEGORYFACILITY;
+
+        $allowed = $isFacility
+            ? ['facility', 'inhouse facility', 'both', 'homecare + inhouse facility']
+            : ['online', 'homecare', 'both', 'homecare + inhouse facility'];
+
+        $types = EmployeeBranch::whereIn('employee_id', $employeeIds->all())
+            ->where('branch_id', $branchId)
+            ->pluck('assignment_type', 'employee_id');
+
+        foreach ($employeeIds as $employeeId) {
+            $type = $types[$employeeId] ?? null;
+
+            if ($type !== null && !in_array(strtolower($type), $allowed, true)) {
+                throw new Exception(
+                    $isFacility
+                        ? 'Only facility staff can be assigned to a facility schedule.'
+                        : 'Only homecare staff can be assigned to a homecare schedule.',
+                    422
+                );
+            }
+        }
+    }
+
     private function assertStaffing(?string $type, $employeeIds, $branchId): void
     {
         $employeeIds = collect($employeeIds);
@@ -312,6 +345,17 @@ class ScheduleService
 
                 if (!$isFinalizing) {
                     $this->assertStaffing($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
+
+                    $activeIds = $scheduleService->assigned()
+                        ->where('is_active', true)
+                        ->pluck('employee_id')
+                        ->map(fn($id) => (int) $id);
+
+                    $this->assertAssignmentType(
+                        $schedule,
+                        $rowEmployeeIds->diff($activeIds),
+                        $branch->branch_id
+                    );
                 }
 
                 $assisting = $this->assistingIds($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
@@ -397,6 +441,15 @@ class ScheduleService
                 $targetStart
             );
 
+            $when = $targetStart->format('M j, Y \a\t g:i A');
+
+            $this->notifyFamily($user, $schedule, match (true) {
+                $newStatus === Schedule::STATUS_CANCELLED => "was cancelled",
+                $newStatus === Schedule::STATUS_COMPLETED => "was completed",
+                !$isDateTimeUnchanged => "was moved to {$when}",
+                default => "on {$when} was updated",
+            });
+
             return response()->json([
                 'message' => 'Schedule updated successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
@@ -463,6 +516,28 @@ class ScheduleService
                 null,
             ));
         }
+    }
+
+    private function notifyFamily(?User $user, Schedule $schedule, string $change): void
+    {
+        $schedule->loadMissing('patient', 'scheduleServices');
+
+        $patient = $schedule->patient;
+
+        if (!$patient) {
+            return;
+        }
+
+        $kind = $schedule->scheduleServices->contains('type', ScheduleServiceModel::TYPE_ADL)
+            ? 'daily care (ADL)'
+            : 'medical';
+
+        $this->notificationService->notifyPatientAccess(
+            $patient,
+            "{$patient->first_name} {$patient->last_name}'s {$kind} schedule {$schedule->schedule_code} {$change}.",
+            'Schedule',
+            $user
+        );
     }
 
     private function cancelledSchedule(User $user, Schedule $schedule)
@@ -650,6 +725,8 @@ class ScheduleService
             $assignmentsByService = collect($payload['assignments'] ?? [])
                 ->groupBy('schedule_services_id');
 
+            $careTeamChanged = false;
+
             foreach ($assignmentsByService as $scheduleServicesId => $assignments) {
                 $scheduleService = $schedule->scheduleServices()
                     ->where('schedule_services_id', $scheduleServicesId)
@@ -689,6 +766,12 @@ class ScheduleService
 
                 $this->assertStaffing($scheduleService->type, $desiredEmployeeIds, $branchId);
 
+                $this->assertAssignmentType(
+                    $schedule,
+                    $desiredEmployeeIds->diff($currentlyActiveIds),
+                    $branchId
+                );
+
                 $assisting = $this->assistingIds($scheduleService->type, $desiredEmployeeIds, $branchId);
 
                 foreach ($desiredEmployeeIds as $employeeId) {
@@ -715,6 +798,7 @@ class ScheduleService
                     }
 
                     $currentAssigned->update(['is_active' => false]);
+                    $careTeamChanged = true;
                 }
 
 
@@ -738,6 +822,8 @@ class ScheduleService
                         continue;
                     }
 
+                    $careTeamChanged = true;
+
                     $existingRow = $scheduleService->assigned()
                         ->where('employee_id', $employeeId)
                         ->first();
@@ -755,6 +841,14 @@ class ScheduleService
                         ]);
                     }
                 }
+            }
+
+            if ($careTeamChanged) {
+                $this->notifyFamily(
+                    $payload['user'] ?? request()->user(),
+                    $schedule,
+                    'on ' . $targetStart->format('M j, Y \a\t g:i A') . ' has an updated care team'
+                );
             }
 
             return response()->json([

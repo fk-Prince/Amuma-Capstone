@@ -159,6 +159,10 @@ class PatientAccessService
             ->where('patient_id', $patient->patient_id)
             ->firstOrFail();
 
+        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
+            throw new Exception('Only pending or ongoing schedules can be sent for review.', 422);
+        }
+
         $patientName = trim("{$patient->first_name} {$patient->last_name}");
 
         $message = ($patientName !== '' ? "{$patientName}'s family" : 'A family member')

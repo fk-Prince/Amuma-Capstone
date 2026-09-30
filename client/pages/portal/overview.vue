@@ -610,7 +610,7 @@
                         </div>
                     </div>
 
-                    <div v-else class="grid grid-cols-3 gap-2">
+                    <div v-else class="grid grid-cols-2 gap-2">
                         <div
                             class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
                         >
@@ -629,36 +629,9 @@
                                     class="text-xs font-semibold text-gray-800 truncate dark:text-white"
                                 >
                                     {{
-                                        formatDuration(
-                                            (service.duration_minutes ?? 0) /
-                                                60,
-                                        ) || "0 hrs"
-                                    }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 dark:bg-secondary"
-                        >
-                            <span
-                                class="w-6 h-6 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 shrink-0 dark:bg-white/5 dark:text-gray-500"
-                            >
-                                <Timer class="w-3 h-3" />
-                            </span>
-                            <div class="min-w-0">
-                                <p
-                                    class="text-[10px] uppercase text-gray-400 truncate dark:text-gray-500"
-                                >
-                                    Worked
-                                </p>
-                                <p
-                                    class="text-xs font-semibold text-gray-800 truncate dark:text-white"
-                                >
-                                    {{
-                                        formatDuration(
-                                            serviceElapsedMinutes(service) / 60,
-                                        ) || "0 hrs"
+                                        durationWithHours(
+                                            service.duration_minutes ?? 0,
+                                        )
                                     }}
                                 </p>
                             </div>
@@ -682,10 +655,9 @@
                                     class="text-xs font-semibold text-gray-800 truncate dark:text-white"
                                 >
                                     {{
-                                        formatDuration(
-                                            serviceRemainingMinutes(service) /
-                                                60,
-                                        ) || "0 hrs"
+                                        durationWithHours(
+                                            serviceRemainingMinutes(service),
+                                        )
                                     }}
                                 </p>
                             </div>
@@ -752,14 +724,17 @@
                     <p
                         class="mb-2.5 text-[11px] text-gray-400 dark:text-gray-500"
                     >
-                        Show a code to the caregiver to scan on arrival or
-                        before they leave.
+                        {{
+                            canTimeIn
+                                ? "Show a code to the caregiver to scan on arrival or before they leave."
+                                : "Time-in opens once this visit is ongoing."
+                        }}
                     </p>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <button
                             @click="generateAttendanceQr('in')"
-                            :disabled="isGeneratingQr"
+                            :disabled="isGeneratingQr || !canTimeIn"
                             class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-300"
                         >
                             <QrCode class="h-3.5 w-3.5" />
@@ -1177,7 +1152,6 @@ import {
     ChevronRight,
     Home,
     Clock,
-    Timer,
     Hourglass,
     QrCode,
     Stethoscope,
@@ -1308,6 +1282,10 @@ const isMedicalVisit = computed(
         Boolean(primaryLovedOne.value?.schedule.medical),
 );
 
+const canTimeIn = computed(
+    () => attendanceVisit.value?.status?.toLowerCase() === "ongoing",
+);
+
 const adlServices = computed(() => attendanceVisit.value?.services ?? []);
 
 const adlVisitSubtitle = computed(() => {
@@ -1374,6 +1352,18 @@ function serviceRemainingMinutes(service: ScheduleServiceItem) {
         (service.duration_minutes ?? 0) - serviceElapsedMinutes(service),
         0,
     );
+}
+
+function durationWithHours(minutes: number) {
+    const hours = minutes / 60;
+    const label = formatDuration(hours);
+
+    if (!label) return "0 hrs";
+    if (hours < 24) return label;
+
+    const totalHours = Number.isInteger(hours) ? hours : Number(hours.toFixed(1));
+
+    return `${label} (${totalHours} hrs)`;
 }
 
 function servicePercent(service: ScheduleServiceItem) {

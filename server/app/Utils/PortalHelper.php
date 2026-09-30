@@ -714,6 +714,7 @@ class PortalHelper
             'type' => $scheduleService->type,
 
             'assignees' => $scheduleService->assigned
+                ->where('is_active', true)
                 ->map(fn($assignment) => self::assigneePayload($assignment, $patient))
                 ->values()
                 ->toArray(),

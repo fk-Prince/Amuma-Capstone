@@ -926,6 +926,24 @@
 
                                                     <span
                                                         v-else-if="
+                                                            isAssignmentTypeMismatch(
+                                                                employee,
+                                                            )
+                                                        "
+                                                        class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
+                                                    >
+                                                        <CircleHelp
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        {{
+                                                            assignmentTypeLabel(
+                                                                employee,
+                                                            )
+                                                        }}
+                                                    </span>
+
+                                                    <span
+                                                        v-else-if="
                                                             !employee.is_assigned &&
                                                             service.type !==
                                                                 'ADL' &&
@@ -1587,13 +1605,27 @@ function isPickDisabled(service: ScheduleServiceItem, employee: Employee) {
         return false;
     }
 
-    if (employee.is_busy) return true;
+    if (employee.is_busy || isAssignmentTypeMismatch(employee)) return true;
 
     return (
         service.type !== "ADL" &&
         !isAssistant(service, employee) &&
         !employee.is_assigned
     );
+}
+
+function isAssignmentTypeMismatch(employee: Employee): boolean {
+    const type = employee.assignment_type;
+
+    if (!type || type === "both") return false;
+
+    return type !== (props.schedule?.category === "Facility" ? "facility" : "online");
+}
+
+function assignmentTypeLabel(employee: Employee): string {
+    return employee.assignment_type === "facility"
+        ? "Facility only"
+        : "Homecare only";
 }
 
 const conflictLines = computed(() => [
