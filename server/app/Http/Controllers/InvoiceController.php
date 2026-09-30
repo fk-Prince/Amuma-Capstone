@@ -18,6 +18,13 @@ class InvoiceController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
+        $request->validate([
+            'period' => ['nullable', 'in:month,date,all'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
         BranchGuard::mergeRequest($request, $branch);
         return $this->invoiceService->overview($request->all());
     }

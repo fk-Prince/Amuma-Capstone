@@ -31,6 +31,7 @@ use App\Repository\LocationRepository;
 use App\Repository\ModuleRepository;
 use App\Service\External\SupabaseService;
 use App\Service\External\XenditService;
+use App\Utils\MoneyWords;
 use App\Service\Geo\NominatimService;
 use Exception;
 use Illuminate\Support\Facades\Auth;
@@ -1313,6 +1314,60 @@ class SubscriptionService
                 'data' => $link->fresh(['branch.agencies', 'subscription.plans']),
             ]);
         });
+    }
+
+    public function paymentInvoice(string $reference, ?int $agencyId = null): array
+    {
+        $payment = $this->subscriptionRepository->findPaymentByReference($reference);
+
+        if (!$payment || ($agencyId !== null && (int) $payment->subscription?->agency_id !== $agencyId)) {
+            throw new Exception('Payment not found.', 404);
+        }
+
+        $details = [
+            'plan' => $payment->plan?->name,
+            'type' => $payment->type,
+            'billing_interval' => $payment->billing_interval,
+        ];
+
+        $invoice = XenditService::invoice($payment->xendit_invoice_id);
+
+        if ($invoice) {
+            return [
+                'receipt' => [
+                    ...$details,
+                    'method' => 'GCASH',
+                    'xendit_id' => $invoice['id'] ?? $payment->xendit_invoice_id,
+                    'status' => $invoice['status'] ?? null,
+                    'amount' => (float) ($invoice['paid_amount'] ?? $invoice['amount'] ?? $payment->price),
+                    'currency' => $invoice['currency'] ?? 'PHP',
+                    'reference_id' => $invoice['external_id'] ?? $payment->payment_reference_id,
+                    'paid_at' => $invoice['paid_at'] ?? $payment->created_at?->toIso8601String(),
+                ],
+            ];
+        }
+
+        $charge = XenditService::cardCharge($payment->xendit_invoice_id);
+
+        if (!$charge) {
+            throw new Exception('Xendit has no invoice for this payment.', 404);
+        }
+
+        return [
+            'receipt' => [
+                ...$details,
+                'method' => 'CREDIT-CARD',
+                'xendit_id' => $charge['id'] ?? $payment->xendit_invoice_id,
+                'status' => $charge['status'] ?? null,
+                'amount' => (float) ($charge['capture_amount'] ?? $charge['authorized_amount'] ?? $payment->price),
+                'currency' => $charge['currency'] ?? 'PHP',
+                'card_brand' => $charge['card_brand'] ?? null,
+                'card_type' => $charge['card_type'] ?? null,
+                'masked_card_number' => $charge['masked_card_number'] ?? $payment->masked_card_number,
+                'reference_id' => $charge['external_id'] ?? $payment->payment_reference_id,
+                'paid_at' => $charge['created'] ?? $payment->created_at?->toIso8601String(),
+            ],
+        ];
     }
 
     public function verificationLogs(array $payload)

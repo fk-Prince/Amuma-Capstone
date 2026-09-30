@@ -20,6 +20,11 @@ class SubscriptionPayment extends Model
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class, 'subscription_id', 'subscription_id');
+    }
+
     public function historyRow(): array
     {
         return [

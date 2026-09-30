@@ -39,6 +39,13 @@ class SubscriptionRepository
     }
 
 
+    public function findPaymentByReference(string $reference): ?SubscriptionPayment
+    {
+        return SubscriptionPayment::with('plan', 'subscription.agency')
+            ->where('payment_reference_id', $reference)
+            ->first();
+    }
+
     public function findLatestForBranch(string $branchId)
     {
         return Subscription::with(['plans', 'latestPayment'])

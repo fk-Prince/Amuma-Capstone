@@ -641,7 +641,7 @@
                                         'Type',
                                         'Cycle',
                                         'Method',
-                                        'Card',
+                                        'Account',
                                         'Amount',
                                         'Date',
                                         'Status',
@@ -665,7 +665,27 @@
                                 <td
                                     class="px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-gray-300"
                                 >
-                                    {{ payment.xendit_invoice_id ?? "—" }}
+                                    <a
+                                        v-if="payment.payment_reference_id"
+                                        :href="
+                                            subscriptionInvoiceLink(
+                                                payment.payment_reference_id,
+                                                props.uuid,
+                                            )
+                                        "
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-primary hover:underline dark:text-primary-300"
+                                    >
+                                        {{
+                                            payment.xendit_invoice_id ??
+                                            payment.payment_reference_id
+                                        }}
+                                    </a>
+
+                                    <span v-else>
+                                        {{ payment.xendit_invoice_id ?? "—" }}
+                                    </span>
                                 </td>
                                 <td
                                     class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
@@ -701,7 +721,7 @@
                                 <td
                                     class="px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
                                 >
-                                    {{ payment.masked_card_number ?? "—" }}
+                                    {{ paymentAccount(payment) }}
                                 </td>
                                 <td
                                     class="whitespace-nowrap px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-white"
@@ -730,6 +750,7 @@
         <SubscriptionPaymentsModal
             :open="showAllPayments"
             :payments="payments"
+            :branch-uuid="props.uuid"
             @close="showAllPayments = false"
         />
 
@@ -819,6 +840,10 @@ import {
 
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
+import {
+    paymentAccount,
+    subscriptionInvoiceLink,
+} from "~/utils/subscriptionInvoice";
 import { formatAmount } from "~/utils/currency";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { planService } from "~/api/plan/PlanService";

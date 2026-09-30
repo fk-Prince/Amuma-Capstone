@@ -794,15 +794,15 @@ class InvoiceRepository
 
     private function refundsIssuedBetween(
         mixed $branchId,
-        Carbon $from,
-        Carbon $to
+        ?Carbon $from,
+        ?Carbon $to
     ): float {
         return round(
             (float) Transaction::query()
                 ->where('branch_id', $branchId)
                 ->where('type', Transaction::TYPE_WITHDRAW)
                 ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereBetween('created_at', [$from, $to])
+                ->when($from && $to, fn($query) => $query->whereBetween('created_at', [$from, $to]))
                 ->sum('amount'),
             2
         );
@@ -1211,258 +1211,229 @@ class InvoiceRepository
 
     public function overview(array $payload): array
     {
-        $branchId =
-            $payload['branch_id'] ?? null;
+        $branchId = $payload['branch_id'] ?? null;
+        $period = $this->overviewPeriod($payload);
+        $compare = $period['from'] !== null;
 
-        $month =
-            $payload['month'] ?? now()->month;
+        $invoices = $this->invoicesIssued($branchId, $period['from'], $period['to']);
+        $billed = $this->billedTotal($invoices);
+        $paid = $this->paidTotal($invoices);
+        $refunds = $this->refundsIssuedBetween($branchId, $period['from'], $period['to']);
 
-        $year =
-            $payload['year'] ?? now()->year;
-
-        $currentDate = Carbon::create(
-            $year,
-            $month,
-            1
+        $unpaid = $invoices->filter(
+            fn(Invoice $invoice) => in_array($invoice->status, [Invoice::STATUS_PENDING, Invoice::STATUS_PARTIAL], true)
+                && $invoice->balance_due > 0
         );
 
-        $currentMonthStart =
-            $currentDate->copy()->startOfMonth();
+        $receivable = round((float) $unpaid->sum('balance_due'), 2);
 
-        $currentMonthEnd =
-            $currentDate->copy()->endOfMonth();
+        $previousInvoices = $compare
+            ? $this->invoicesIssued($branchId, $period['previous_from'], $period['previous_to'])
+            : null;
 
-        $lastMonthStart =
-            $currentDate
-            ->copy()
-            ->subMonth()
-            ->startOfMonth();
+        $previousBilled = $previousInvoices ? $this->billedTotal($previousInvoices) : null;
+        $previousPaid = $previousInvoices ? $this->paidTotal($previousInvoices) : null;
 
-        $lastMonthEnd =
-            $currentDate
-            ->copy()
-            ->subMonth()
-            ->endOfMonth();
-
-        $invoiceQuery = Invoice::query()
-            ->where('branch_id', $branchId)
-            ->where(
-                'status',
-                '!=',
-                Invoice::STATUS_VOID
-            );
-
-
-        $paymentQuery = Payment::query()
-            ->join(
-                'transactions',
-                'transactions.transaction_id',
-                '=',
-                'payments.transaction_id'
-            )
-            ->where('transactions.method', '!=', Payment::METHOD_CREDIT)
-            ->whereHas('invoices', function ($query) use ($branchId) {
-                $query
-                    ->where('branch_id', $branchId)
-                    ->where(
-                        'status',
-                        '!=',
-                        Invoice::STATUS_VOID
-                    );
-            });
-
-        $totalRevenue = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $currentMonthStart,
-                $currentMonthEnd,
-            ])
-            ->get()
-            ->sum('adjusted_total');
-
-        $paymentsReceived = (clone $paymentQuery)
-            ->whereBetween('payments.created_at', [
-                $currentMonthStart,
-                $currentMonthEnd,
-            ])
-            ->sum('transactions.amount');
-
-        $refundsIssued = $this->refundsIssuedBetween(
-            $branchId,
-            $currentMonthStart,
-            $currentMonthEnd
-        );
-
-        $outstandingBalance = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $currentMonthStart,
-                $currentMonthEnd,
-            ])
-            ->get()
-            ->sum
-            ->balance_due;
-
-        $lastRevenue = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $lastMonthStart,
-                $lastMonthEnd,
-            ])
-            ->get()
-            ->sum('adjusted_total');
-
-        $lastPayments = (clone $paymentQuery)
-            ->whereBetween('payments.created_at', [
-                $lastMonthStart,
-                $lastMonthEnd,
-            ])
-            ->sum('transactions.amount');
-
-        $lastRefunds = $this->refundsIssuedBetween(
-            $branchId,
-            $lastMonthStart,
-            $lastMonthEnd
-        );
-
-        $lastOutstanding = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $lastMonthStart,
-                $lastMonthEnd,
-            ])
-            ->get()
-            ->sum
-            ->balance_due;
-
-        $upcomingPayments = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $currentMonthStart,
-                $currentMonthEnd,
-            ])
-            ->get()
-            ->filter(
-                fn($invoice) =>
-                $invoice->balance_due > 0
-            )
-            ->sum('balance_due');
-
-        $lastUpcoming = (clone $invoiceQuery)
-            ->whereBetween('created_at', [
-                $lastMonthStart,
-                $lastMonthEnd,
-            ])
-            ->get()
-            ->filter(
-                fn($invoice) =>
-                $invoice->balance_due > 0
-            )
-            ->sum('balance_due');
+        $previousRefunds = $compare
+            ? $this->refundsIssuedBetween($branchId, $period['previous_from'], $period['previous_to'])
+            : null;
 
         return [
+            'period' => $period['label'],
+            'chart' => $this->overviewChart($branchId, $period, $invoices),
+
             'total_revenue' => [
-                'value' => $totalRevenue,
-
-                'secondary' => $this->formatChange(
-                    $this->percentageChange(
-                        $totalRevenue,
-                        $lastRevenue
-                    ),
-                    'vs last month'
-                ),
-
-                'trend' =>
-                $totalRevenue >= $lastRevenue
-                    ? 'up'
-                    : 'down',
+                'value' => $billed,
+                'secondary' => $compare
+                    ? $this->changeLabel($billed, $previousBilled, $period['previous'])
+                    : $this->countLabel($invoices->count(), 'invoice'),
+                'trend' => $compare && $billed < $previousBilled ? 'down' : 'up',
             ],
 
             'payments_received' => [
-                'value' => $paymentsReceived,
-
-                'secondary' => $this->formatChange(
-                    $this->percentageChange(
-                        $paymentsReceived,
-                        $lastPayments
+                'value' => $paid,
+                'secondary' => $compare
+                    ? $this->changeLabel($paid, $previousPaid, $period['previous'])
+                    : $this->countLabel(
+                        $invoices->filter(fn(Invoice $invoice) => $invoice->net_paid_amount > 0)->count(),
+                        'paid invoice'
                     ),
-                    'vs last month'
-                ),
-
-                'trend' =>
-                $paymentsReceived >= $lastPayments
-                    ? 'up'
-                    : 'down',
+                'trend' => $compare && $paid < $previousPaid ? 'down' : 'up',
             ],
 
             'refunds_issued' => [
-                'value' => $refundsIssued,
-
-                'secondary' => $this->formatChange(
-                    $this->percentageChange(
-                        $refundsIssued,
-                        $lastRefunds
-                    ),
-                    'vs last month'
-                ),
-
-                'trend' =>
-                $refundsIssued <= $lastRefunds
-                    ? 'up'
-                    : 'warning',
+                'value' => $refunds,
+                'secondary' => $compare
+                    ? $this->changeLabel($refunds, $previousRefunds, $period['previous'])
+                    : null,
+                'trend' => $compare && $refunds > $previousRefunds ? 'warning' : 'up',
             ],
 
             'outstanding_balance' => [
-                'value' => $outstandingBalance,
-
-                'secondary' => $this->formatChange(
-                    $this->percentageChange(
-                        $outstandingBalance,
-                        $lastOutstanding
-                    ),
-                    'vs last month'
-                ),
-
-                'trend' =>
-                $outstandingBalance <= $lastOutstanding
-                    ? 'up'
-                    : 'down',
-            ],
-
-            'upcoming_payments' => [
-                'value' => $upcomingPayments,
-
-                'secondary' => $this->formatChange(
-                    $this->percentageChange(
-                        $upcomingPayments,
-                        $lastUpcoming
-                    ),
-                    'vs last month'
-                ),
-
-                'trend' =>
-                $upcomingPayments <= $lastUpcoming
-                    ? 'up'
-                    : 'down',
+                'value' => $receivable,
+                'secondary' => $unpaid->isEmpty()
+                    ? 'Nothing owed'
+                    : $this->countLabel($unpaid->count(), 'unpaid invoice'),
+                'trend' => $receivable > 0 ? 'down' : 'up',
             ],
         ];
     }
 
-    private function percentageChange(
-        float $current,
-        float $previous
-    ) {
-        if ($previous == 0) {
-            return $current > 0 ? 100 : 0;
+    private function overviewPeriod(array $payload): array
+    {
+        $mode = $payload['period'] ?? 'month';
+
+        if ($mode === 'all') {
+            return [
+                'mode' => 'all',
+                'from' => null,
+                'to' => null,
+                'previous_from' => null,
+                'previous_to' => null,
+                'previous' => null,
+                'label' => 'All time',
+            ];
         }
 
-        return round(
-            (($current - $previous) / $previous) * 100,
+        if ($mode === 'date') {
+            $from = Carbon::parse($payload['from'] ?? now()->toDateString())->startOfDay();
+            $to = Carbon::parse($payload['to'] ?? $from->toDateString())->endOfDay();
+
+            if ($to->lt($from)) {
+                [$from, $to] = [$to->copy()->startOfDay(), $from->copy()->endOfDay()];
+            }
+
+            $days = (int) $from->diffInDays($to->copy()->startOfDay()) + 1;
+
+            return [
+                'mode' => 'date',
+                'from' => $from,
+                'to' => $to,
+                'previous_from' => $from->copy()->subDays($days),
+                'previous_to' => $from->copy()->subDay()->endOfDay(),
+                'previous' => $days === 1 ? 'the previous day' : "the previous {$days} days",
+                'label' => $days === 1
+                    ? $from->format('M j, Y')
+                    : $from->format('M j, Y') . ' – ' . $to->format('M j, Y'),
+            ];
+        }
+
+        $from = Carbon::create(
+            $payload['year'] ?? now()->year,
+            $payload['month'] ?? now()->month,
             1
+        )->startOfMonth();
+
+        return [
+            'mode' => 'month',
+            'from' => $from,
+            'to' => $from->copy()->endOfMonth(),
+            'previous_from' => $from->copy()->subMonth()->startOfMonth(),
+            'previous_to' => $from->copy()->subMonth()->endOfMonth(),
+            'previous' => 'last month',
+            'label' => $from->format('F Y'),
+        ];
+    }
+
+    private function overviewChart(mixed $branchId, array $period, $invoices): array
+    {
+        if ($period['mode'] === 'all') {
+            $first = $invoices->min('created_at');
+            $start = Carbon::parse($first ?? now())->startOfMonth();
+            $end = now()->startOfMonth();
+
+            if ($start->diffInMonths($end) < 24) {
+                $byMonth = $invoices->groupBy(fn(Invoice $invoice) => Carbon::parse($invoice->created_at)->format('Y-m'));
+                $months = collect(Carbon::parse($start)->monthsUntil($end))->map(fn(Carbon $month) => $month->copy());
+
+                return [
+                    'title' => 'Revenue over time',
+                    'labels' => $months->map(fn(Carbon $month) => $month->format('M Y'))->all(),
+                    'revenue' => $months->map(fn(Carbon $month) => $this->billedTotal($byMonth->get($month->format('Y-m'), collect())))->all(),
+                    'highlight' => [],
+                ];
+            }
+
+            $byYear = $invoices->groupBy(fn(Invoice $invoice) => (int) Carbon::parse($invoice->created_at)->year);
+            $years = range($start->year, $end->year);
+
+            return [
+                'title' => 'Revenue by year',
+                'labels' => array_map('strval', $years),
+                'revenue' => array_map(fn($year) => $this->billedTotal($byYear->get($year, collect())), $years),
+                'highlight' => [],
+            ];
+        }
+
+        $year = $period['from']->year;
+
+        $byMonth = $this->invoicesIssued(
+            $branchId,
+            Carbon::create($year, 1, 1)->startOfYear(),
+            Carbon::create($year, 12, 31)->endOfYear()
+        )->groupBy(fn(Invoice $invoice) => (int) Carbon::parse($invoice->created_at)->month);
+
+        $months = range(1, 12);
+
+        $highlight = array_values(array_filter(
+            $months,
+            fn($month) => Carbon::create($year, $month, 1)->startOfMonth()->lte($period['to'])
+                && Carbon::create($year, $month, 1)->endOfMonth()->gte($period['from'])
+        ));
+
+        return [
+            'title' => "Revenue in {$year}",
+            'labels' => array_map(fn($month) => Carbon::create($year, $month, 1)->format('M'), $months),
+            'revenue' => array_map(fn($month) => $this->billedTotal($byMonth->get($month, collect())), $months),
+            'highlight' => array_map(fn($month) => $month - 1, $highlight),
+        ];
+    }
+
+    private function invoicesIssued(mixed $branchId, ?Carbon $from, ?Carbon $to)
+    {
+        return Invoice::query()
+            ->with('invoiceAdjustments', 'allocations.refundAllocations')
+            ->where('branch_id', $branchId)
+            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->when($from && $to, fn($query) => $query->whereBetween('created_at', [$from, $to]))
+            ->get();
+    }
+
+    private function billedTotal($invoices): float
+    {
+        return round(
+            (float) $invoices->sum(
+                fn(Invoice $invoice) => $invoice->status === Invoice::STATUS_WRITTEN_OFF
+                    ? min($invoice->net_paid_amount, $invoice->adjusted_total)
+                    : $invoice->adjusted_total
+            ),
+            2
         );
     }
 
-    private function formatChange(
-        float $change,
-        string $suffix
-    ) {
-        $sign = $change > 0 ? '+' : '';
+    private function paidTotal($invoices): float
+    {
+        return round(
+            (float) $invoices->sum(
+                fn(Invoice $invoice) => min($invoice->net_paid_amount, $invoice->adjusted_total)
+            ),
+            2
+        );
+    }
 
-        return "{$sign}{$change}% {$suffix}";
+    private function countLabel(int $count, string $noun): string
+    {
+        return $count . ' ' . $noun . ($count === 1 ? '' : 's');
+    }
+
+    private function changeLabel(float $current, float $previous, string $previousLabel): string
+    {
+        if ($previous == 0) {
+            return $current == 0 ? "0% vs {$previousLabel}" : "Up from ₱0 {$previousLabel}";
+        }
+
+        $change = round((($current - $previous) / $previous) * 100, 1);
+
+        return ($change > 0 ? '+' : '') . $change . "% vs {$previousLabel}";
     }
 }

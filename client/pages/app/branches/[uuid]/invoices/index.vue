@@ -4,7 +4,7 @@
     >
         <InvoiceOverview
             :overview="overview"
-            @month-change="onMonthChange"
+            @filter-change="onOverviewFilter"
             :loading="overviewLoading"
         />
 
@@ -683,32 +683,49 @@ function formatDateTime(value: string | null | undefined) {
     });
 }
 
+interface OverviewFilter {
+    period: "month" | "date" | "all";
+    month?: number;
+    year?: number;
+    from?: string;
+    to?: string;
+}
+
 const overview = ref(null);
 const now = new Date();
-const currentMonthIndex = ref(now.getMonth());
-const currentYear = ref(now.getFullYear());
+const overviewFilter = ref<OverviewFilter>({
+    period: "month",
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+});
 const overviewLoading = ref(true);
+let overviewRequest = 0;
 
 async function fetchOverview() {
+    const request = ++overviewRequest;
+
     overviewLoading.value = true;
+
     try {
         const overviewData = await invoiceService.overview({
             branch_uuid: uuid.value,
-            month: currentMonthIndex.value + 1,
-            year: currentYear.value,
+            ...overviewFilter.value,
         });
 
-        overview.value = overviewData.data ?? overviewData;
+        if (request === overviewRequest) {
+            overview.value = overviewData.data ?? overviewData;
+        }
     } catch (err) {
         console.error("Failed loading billing overview:", err);
     } finally {
-        overviewLoading.value = false;
+        if (request === overviewRequest) {
+            overviewLoading.value = false;
+        }
     }
 }
 
-function onMonthChange({ month, year }: { month: number; year: number }) {
-    currentMonthIndex.value = month - 1;
-    currentYear.value = year;
+function onOverviewFilter(filter: OverviewFilter) {
+    overviewFilter.value = filter;
 
     fetchOverview();
 }

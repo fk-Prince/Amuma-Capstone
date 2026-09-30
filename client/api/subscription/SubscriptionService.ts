@@ -57,6 +57,14 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '/action', 'POST', payload);
     }
 
+    async paymentInvoice(reference: string, branchUuid?: string | null): Promise<{ receipt?: any }> {
+        return await this.request(
+            `${this.resource}/payments/${encodeURIComponent(reference)}/invoice`,
+            'GET',
+            branchUuid ? { branch_uuid: branchUuid } : {},
+        );
+    }
+
     private get resource(): string {
         const config = useRuntimeConfig();
         return `${config.public.backendApi}/api/subscriptions`;

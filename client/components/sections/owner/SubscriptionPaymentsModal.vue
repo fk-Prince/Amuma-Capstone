@@ -50,7 +50,7 @@
                                             'Type',
                                             'Cycle',
                                             'Method',
-                                            'Card',
+                                            'Account',
                                             'Amount',
                                             'Date',
                                             'Status',
@@ -74,7 +74,27 @@
                                     <td
                                         class="px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-gray-300"
                                     >
-                                        {{ payment.xendit_invoice_id ?? "—" }}
+                                        <a
+                                            v-if="payment.payment_reference_id"
+                                            :href="
+                                                subscriptionInvoiceLink(
+                                                    payment.payment_reference_id,
+                                                    branchUuid,
+                                                )
+                                            "
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="text-primary hover:underline dark:text-primary-300"
+                                        >
+                                            {{
+                                                payment.xendit_invoice_id ??
+                                                payment.payment_reference_id
+                                            }}
+                                        </a>
+
+                                        <span v-else>
+                                            {{ payment.xendit_invoice_id ?? "—" }}
+                                        </span>
                                     </td>
 
                                     <td
@@ -115,7 +135,7 @@
                                     <td
                                         class="px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
                                     >
-                                        {{ payment.masked_card_number ?? "—" }}
+                                        {{ paymentAccount(payment) }}
                                     </td>
 
                                     <td
@@ -180,12 +200,17 @@ import AppIcon from "~/components/ui/AppIcon.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
+import {
+    paymentAccount,
+    subscriptionInvoiceLink,
+} from "~/utils/subscriptionInvoice";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
 
 const props = defineProps<{
     open: boolean;
     agencyName?: string | null;
     payments: SubscriptionPaymentRecord[];
+    branchUuid?: string | null;
 }>();
 
 const emit = defineEmits<{

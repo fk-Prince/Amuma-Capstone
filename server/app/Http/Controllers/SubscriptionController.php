@@ -162,6 +162,30 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->applyPendingPlan($request->all());
     }
 
+    public function paymentInvoice(Request $request, string $reference)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        if ($user->isSystemOwner) {
+            return $this->subscriptionService->paymentInvoice($reference);
+        }
+
+        $validated = $request->validate([
+            'branch_uuid' => ['required', 'uuid'],
+        ]);
+
+        $branch = BranchGuard::resolveBranch($validated['branch_uuid']);
+
+        AuthGuard::requireModule(
+            $user,
+            $branch->branch_id,
+            ModuleEnum::BranchSettings,
+            PermissionAction::Read
+        );
+
+        return $this->subscriptionService->paymentInvoice($reference, (int) $branch->agency_id);
+    }
+
     public function action(Request $request)
     {
         if ($request->action === 'overview' || $request->action === 'overview_subscription') {

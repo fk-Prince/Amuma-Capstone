@@ -54,6 +54,32 @@ class XenditService
         return $invoice['metadata'];
     }
 
+    public static function invoice(?string $invoiceId): ?array
+    {
+        if (!$invoiceId) {
+            return null;
+        }
+
+        $response = Http::withOptions(['verify' => false])
+            ->withBasicAuth(config('services.xendit.secret_key'), '')
+            ->get("https://api.xendit.co/v2/invoices/{$invoiceId}");
+
+        return $response->successful() ? $response->json() : null;
+    }
+
+    public static function cardCharge(?string $chargeId): ?array
+    {
+        if (!$chargeId) {
+            return null;
+        }
+
+        $response = Http::withOptions(['verify' => false])
+            ->withBasicAuth(config('services.xendit.secret_key'), '')
+            ->get("https://api.xendit.co/credit_card_charges/{$chargeId}");
+
+        return $response->successful() ? $response->json() : null;
+    }
+
     public static function refundXenditPayment(string $id, float $amount, bool $isCardCharge = false): bool
     {
         try {

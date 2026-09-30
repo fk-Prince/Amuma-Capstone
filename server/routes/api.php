@@ -143,6 +143,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-branch-resubmit', [SubscriptionController::class, 'resubmitBranch']);
     Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
     Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
+    Route::get('/subscriptions/payments/{reference}/invoice', [SubscriptionController::class, 'paymentInvoice']);
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
 
