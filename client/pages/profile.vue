@@ -618,7 +618,15 @@
                                         "
                                         @click="openNotification(item)"
                                     >
+                                        <img
+                                            v-if="item.branch?.image"
+                                            :src="item.branch.image"
+                                            :alt="item.branch.name ?? 'Branch'"
+                                            class="mt-0.5 h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-slate-200 dark:ring-white/10"
+                                        />
+
                                         <span
+                                            v-else
                                             class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                                             :class="
                                                 notificationToneFor(
@@ -1333,6 +1341,7 @@ const bindNotificationChannel = () => {
             message_type: event.message_type,
             created_at: new Date().toISOString(),
             unread: true,
+            branch: event.branch ?? null,
         } as Notification);
 
         unreadCount.value += 1;

@@ -20,10 +20,11 @@ class NotificationResource extends JsonResource
 
             'created_at' => $this->created_at,
 
-            'branch' => $this->whenLoaded('branch', fn() => [
-                'uuid' => $this->branch?->uuid,
-                'name' => $this->branch?->name,
-            ]),
+            'branch' => $this->whenLoaded('branch', fn() => $this->branch ? [
+                'uuid' => $this->branch->uuid,
+                'name' => $this->branch->name,
+                'image' => $this->branch->image,
+            ] : null),
         ];
     }
 }

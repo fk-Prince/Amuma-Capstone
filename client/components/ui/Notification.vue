@@ -103,14 +103,18 @@
                                 notif.unread,
                         }"
                     >
+                        <img
+                            v-if="notif.branch?.image"
+                            :src="notif.branch.image"
+                            :alt="notif.branch.name ?? 'Branch'"
+                            class="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-gray-100 dark:ring-white/10"
+                        />
+
                         <div
-                            class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base"
-                            :style="{
-                                background: notif.bg,
-                                color: notif.color,
-                            }"
+                            v-else
+                            class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300"
                         >
-                            <i :class="`ti ${notif.icon}`" />
+                            <Bell class="h-4 w-4" />
                         </div>
 
                         <div class="flex-1 min-w-0">
@@ -164,6 +168,7 @@ import {
     watch,
 } from "vue";
 import { onClickOutside } from "@vueuse/core";
+import { Bell } from "lucide-vue-next";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -329,9 +334,7 @@ const bindChannel = (branchUuid?: string) => {
             message_type: e.message_type,
             created_at: new Date().toISOString(),
             unread: true,
-            icon: "ti-bell",
-            bg: "#EAF4F2",
-            color: "#0E7C7B",
+            branch: e.branch ?? null,
         });
     };
 

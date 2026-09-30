@@ -9,6 +9,7 @@ export interface Notification {
     branch?: {
         uuid: string | null;
         name: string | null;
+        image?: string | null;
     } | null;
     icon?: string;
     color?: string;

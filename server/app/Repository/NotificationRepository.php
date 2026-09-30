@@ -14,7 +14,7 @@ class NotificationRepository
         bool $unreadOnly = false
     ) {
         $query = Notification::latest()
-            ->with('branch:branch_id,uuid,name')
+            ->with('branch:branch_id,uuid,name,image')
             ->where('to_user_id', $user_id);
 
         if ($branch_id) {
