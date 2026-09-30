@@ -121,11 +121,15 @@
                             </span>
 
                             <div class="min-w-0">
-                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <div
+                                    class="flex flex-wrap items-center gap-x-3 gap-y-1"
+                                >
                                     <h4
                                         class="font-semibold text-secondary dark:text-white"
                                         :class="
-                                            variant === 3 ? 'text-base' : 'text-xl'
+                                            variant === 3
+                                                ? 'text-base'
+                                                : 'text-xl'
                                         "
                                     >
                                         {{ log.schedule_code }}
@@ -493,22 +497,45 @@
                                                 <span
                                                     v-if="assignee.note"
                                                     class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
-                                                    :title="shiftHours(assignee.note) ?? undefined"
+                                                    :title="
+                                                        shiftHours(
+                                                            assignee.note,
+                                                        ) ?? undefined
+                                                    "
                                                 >
                                                     {{ assignee.note }}
-                                                    <template v-if="shiftHours(assignee.note)">
-                                                        · {{ shiftHours(assignee.note) }}
+                                                    <template
+                                                        v-if="
+                                                            shiftHours(
+                                                                assignee.note,
+                                                            )
+                                                        "
+                                                    >
+                                                        ·
+                                                        {{
+                                                            shiftHours(
+                                                                assignee.note,
+                                                            )
+                                                        }}
                                                     </template>
                                                 </span>
 
                                                 <span
                                                     v-if="
-                                                        shiftEnded(log, assignee.note) &&
-                                                        isOnDuty(log, assignee.employee_id)
+                                                        shiftEnded(
+                                                            log,
+                                                            assignee.note,
+                                                        ) &&
+                                                        isOnDuty(
+                                                            log,
+                                                            assignee.employee_id,
+                                                        )
                                                     "
                                                     class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                                                 >
-                                                    <TriangleAlert class="h-3 w-3" />
+                                                    <TriangleAlert
+                                                        class="h-3 w-3"
+                                                    />
                                                     Shift ended · still on duty
                                                 </span>
                                             </div>
@@ -549,7 +576,9 @@
                                 </div>
 
                                 <div
-                                    v-if="isOpen(log) || totalGapMinutes(log) > 0"
+                                    v-if="
+                                        isOpen(log) || totalGapMinutes(log) > 0
+                                    "
                                     class="mt-4 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/20 dark:bg-amber-500/10"
                                 >
                                     <div class="flex items-center gap-6">
@@ -582,7 +611,7 @@
                                         </div>
                                     </div>
 
-                                    <button
+                                    <!-- <button
                                         v-if="
                                             canRequestDeduction &&
                                             totalGapMinutes(log) > 0
@@ -594,7 +623,7 @@
                                         @click="openDeductionModal(log)"
                                     >
                                         <Minus class="h-3.5 w-3.5" />
-                                    </button>
+                                    </button> -->
                                 </div>
 
                                 <div class="mt-5 space-y-3 pb-5">
@@ -812,7 +841,9 @@
         <InvoiceDeductionModal
             :open="showDeductionModal"
             :log="deductionSchedule"
-            :gap-minutes="deductionSchedule ? totalGapMinutes(deductionSchedule) : 0"
+            :gap-minutes="
+                deductionSchedule ? totalGapMinutes(deductionSchedule) : 0
+            "
             :is-saving="isSendingDeduction"
             @close="closeDeductionModal"
             @confirm="submitDeductionRequest"
@@ -1088,7 +1119,10 @@ onUnmounted(() => {
 
 type ShiftKey = "am" | "pm" | "full";
 
-const SHIFT_HOURS: Record<ShiftKey, { start: number; end: number; label: string }> = {
+const SHIFT_HOURS: Record<
+    ShiftKey,
+    { start: number; end: number; label: string }
+> = {
     am: { start: 0, end: 12, label: "12:00 AM – 12:00 PM" },
     pm: { start: 12, end: 24, label: "12:00 PM – 12:00 AM" },
     full: { start: 0, end: 24, label: "Whole booking" },
@@ -1115,7 +1149,8 @@ function shiftEnded(log: AuditRow, note?: string | null): boolean {
 
     const shift = shiftOf(note);
 
-    if (!shift || shift === "full" || log.status?.toLowerCase() !== "ongoing") return false;
+    if (!shift || shift === "full" || log.status?.toLowerCase() !== "ongoing")
+        return false;
 
     const now = new Date();
     const hour = now.getHours() + now.getMinutes() / 60;
@@ -1250,7 +1285,9 @@ async function submitDeductionRequest(payload: {
             reason: payload.reason,
         });
 
-        success("Accounting has been notified to review this deduction request.");
+        success(
+            "Accounting has been notified to review this deduction request.",
+        );
         closeDeductionModal();
     } catch (err: any) {
         error(
