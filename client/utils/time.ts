@@ -6,9 +6,6 @@ function minutesToHHMM(totalMinutes: number): string {
     return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-// GENERATE 00:00 to 23:59 — 23:59 is appended as the true end-of-day option
-// so a closing time can represent midnight without colliding with "00:00",
-// which is reserved to mean "open 24 hours".
 export function generate24HourTimes(stepMinutes = 60): string[] {
     const times: string[] = [];
 
@@ -23,10 +20,7 @@ export function generate24HourTimes(stepMinutes = 60): string[] {
     return times;
 }
 
-// Converts an ISO/UTC datetime string into the "YYYY-MM-DDTHH:mm" shape a
-// <input type="datetime-local"> needs to actually show a value — feeding it
-// the raw ISO string (with seconds/microseconds and a trailing Z) leaves the
-// field blank since the browser can't parse that format.
+
 export function toDateTimeLocalValue(value?: string | null): string {
     if (!value) return "";
 

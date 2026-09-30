@@ -197,6 +197,7 @@ import {
     type CSSProperties,
     type FunctionalComponent,
 } from "vue";
+import { remScale } from "~/utils/rem";
 
 defineOptions({ name: "DatePickerField" });
 
@@ -276,11 +277,13 @@ function updatePosition() {
     if (!triggerEl.value) return;
 
     const rect = triggerEl.value.getBoundingClientRect();
+    const scale = remScale();
     const spaceBelow = window.innerHeight - rect.bottom;
-    const openUpward = spaceBelow < PANEL_HEIGHT && rect.top > spaceBelow;
+    const openUpward =
+        spaceBelow < PANEL_HEIGHT * scale && rect.top > spaceBelow;
     const left = Math.max(
         GAP,
-        Math.min(rect.left, window.innerWidth - PANEL_WIDTH - GAP),
+        Math.min(rect.left, window.innerWidth - PANEL_WIDTH * scale - GAP),
     );
 
     panelStyle.value = {

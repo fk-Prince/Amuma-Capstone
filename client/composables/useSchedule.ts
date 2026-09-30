@@ -1,5 +1,6 @@
 import { computed, ref } from "vue";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import { useRemScale } from "~/composables/useRemScale";
 
 export interface UseScheduleProps {
     schedules?: ScheduleItem[];
@@ -22,6 +23,9 @@ export interface DayGroup {
 const HOUR_WIDTH = 500;
 
 export function useSchedule(props: UseScheduleProps = {}) {
+    const scale = useRemScale();
+    const hourWidth = computed(() => HOUR_WIDTH * scale.value);
+
     function toLocalDateString(d: Date) {
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
             2,
@@ -297,13 +301,13 @@ export function useSchedule(props: UseScheduleProps = {}) {
                     scheduleStart,
                 ) ?? scheduleStart;
 
-        return ((serviceStart - dayStart) / 60) * HOUR_WIDTH;
+        return ((serviceStart - dayStart) / 60) * hourWidth.value;
     }
 
     function getServiceWidth(service: ScheduleServiceItem) {
         const duration = service.duration_minutes ?? 0;
-        if (!duration) return HOUR_WIDTH;
-        return Math.max((duration / 60) * HOUR_WIDTH, 240);
+        if (!duration) return hourWidth.value;
+        return Math.max((duration / 60) * hourWidth.value, 240 * scale.value);
     }
 
     function getScheduleLeft(
@@ -315,7 +319,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
 
         const dayStart = day.hours[0]!.value * 60;
 
-        return ((start - dayStart) / 60) * HOUR_WIDTH;
+        return ((start - dayStart) / 60) * hourWidth.value;
     }
 
     function getScheduleWidth(schedule: ScheduleItem) {
@@ -327,16 +331,16 @@ export function useSchedule(props: UseScheduleProps = {}) {
             schedule.total_duration_minutes > 0
         ) {
             return Math.max(
-                (schedule.total_duration_minutes / 60) * HOUR_WIDTH,
-                140,
+                (schedule.total_duration_minutes / 60) * hourWidth.value,
+                140 * scale.value,
             );
         }
 
-        if (start === null || end === null) return HOUR_WIDTH;
+        if (start === null || end === null) return hourWidth.value;
 
         const duration = end - start;
 
-        return Math.max((duration / 60) * HOUR_WIDTH, 240);
+        return Math.max((duration / 60) * hourWidth.value, 240 * scale.value);
     }
 
     const tick = ref(0);
@@ -356,7 +360,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
 
         if (nowMin < dayStart || nowMin > dayEnd) return null;
 
-        return ((nowMin - dayStart) / 60) * HOUR_WIDTH;
+        return ((nowMin - dayStart) / 60) * hourWidth.value;
     }
 
     function startNowTicker() {
@@ -451,7 +455,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
         }
     }
 
-    const labelWidth = computed(() => 220);
+    const labelWidth = computed(() => 220 * scale.value);
 
 
 
@@ -479,7 +483,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
     ];
     return {
         labelWidth,
-        hourWidth: HOUR_WIDTH,
+        hourWidth,
 
         selectedDate,
         rangeEnd,

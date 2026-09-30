@@ -29,10 +29,7 @@ class PatientAdmission extends Model
         'discharged_at' => 'datetime',
     ];
 
-    // discharged_at is the date the stay is planned to end under the billing
-    // plan — an extension pushes it out, and an early discharge overwrites it
-    // with the actual date. Exposed under the old name so existing reads and
-    // API payloads keep working.
+
     public function getEndDateAttribute()
     {
         return $this->discharged_at;

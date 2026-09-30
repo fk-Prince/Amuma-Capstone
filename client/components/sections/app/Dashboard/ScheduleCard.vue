@@ -211,7 +211,7 @@ function shiftDay(direction: 1 | -1) {
 const gridTemplate = computed(() => ({
     gridTemplateColumns: `${staffColWidth} 1fr`,
 }));
-const staffColWidth = "110px";
+const staffColWidth = "6.875rem";
 
 const totalHours = computed(() => props.rangeEnd - props.rangeStart);
 

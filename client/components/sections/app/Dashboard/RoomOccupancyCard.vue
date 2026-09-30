@@ -4,11 +4,10 @@
     >
         <h3 class="text-secondary text-[15px] font-medium mb-4 dark:text-white">{{ title }}</h3>
 
-        <div class="flex" style="height: 220px">
+        <div class="flex h-[220px]">
             <!-- y-axis labels -->
             <div
-                class="flex flex-col justify-between text-right pr-3 text-[11px] text-muted shrink-0 dark:text-gray-400"
-                style="width: 28px"
+                class="flex w-[28px] flex-col justify-between text-right pr-3 text-[11px] text-muted shrink-0 dark:text-gray-400"
             >
                 <span v-for="tick in yTicks" :key="tick">{{ tick }}</span>
             </div>
@@ -98,7 +97,7 @@
             </div>
         </div>
 
-        <div class="flex mt-2" style="margin-left: 28px">
+        <div class="flex mt-2 ml-[28px]">
             <div
                 v-for="room in rooms"
                 :key="room.label"

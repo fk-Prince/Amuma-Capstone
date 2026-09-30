@@ -90,9 +90,7 @@ class RefundRepository
         return round((float) $this->forPatient($patientId)->available()->sum('amount'), 2);
     }
 
-    // Everything the bills handed back, whatever has since become of it. The
-    // money left the invoices when the credit was raised, so a withdrawal that
-    // is still waiting — or was turned down — does not change this.
+
     public function refundedCreditFor(mixed $patientId): float
     {
         if (!$patientId) {

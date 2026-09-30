@@ -13,6 +13,12 @@ export default defineNuxtConfig({
   tailwindcss: {
     cssPath: '~/assets/css/main.css',
   },
+
+  postcss: {
+    plugins: {
+      '~~/postcss/px-to-rem': {},
+    },
+  },
   // runtimeConfig: {
   //   public: {
   //     backendApi: 'http://localhost:8000',
@@ -47,8 +53,8 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000,
     https: {
-      key: './certs/192.168.1.2+3-key.pem',
-      cert: './certs/192.168.1.2+3.pem',
+      key: './certs/dev-key.pem',
+      cert: './certs/dev.pem',
     },
   },
 

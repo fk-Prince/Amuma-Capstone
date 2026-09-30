@@ -175,6 +175,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import { useToast } from "~/composables/useToast";
+import { remScale } from "~/utils/rem";
 const { info } = useToast();
 const route = useRoute();
 const user = useAuthUser();
@@ -223,7 +224,7 @@ function updatePosition() {
 
     const rect = btn.getBoundingClientRect();
     const width = Math.min(
-        DROPDOWN_MAX_WIDTH,
+        DROPDOWN_MAX_WIDTH * remScale(),
         window.innerWidth - DROPDOWN_MARGIN * 2,
     );
 

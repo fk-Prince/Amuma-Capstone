@@ -47,7 +47,7 @@
                             v-for="width in [96, 64, 112, 92, 168, 84, 72]"
                             :key="width"
                             class="h-9 rounded-lg bg-slate-100 dark:bg-white/10"
-                            :style="{ width: `${width}px` }"
+                            :style="{ width: rem(width) }"
                         ></div>
                     </div>
                 </div>
@@ -1068,6 +1068,7 @@ import { useBranchStore } from "~/stores/branch";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
+import { rem } from "~/utils/rem";
 
 definePageMeta({
     layout: "dashboard",

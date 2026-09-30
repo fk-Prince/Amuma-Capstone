@@ -12,7 +12,7 @@ const highlights = [
 
 <template>
     <div
-        class="relative min-h-dvh w-full overflow-hidden bg-slate-950"
+        class="fit-screen-height relative min-h-dvh w-full overflow-hidden bg-slate-950"
     >
         <div class="absolute inset-0 hidden md:block overflow-hidden">
             <img
@@ -43,7 +43,7 @@ const highlights = [
         </div>
 
         <div
-            class="relative z-10 mx-auto flex min-h-dvh w-[94%] max-w-[1400px] items-start justify-center px-6 pt-24 pb-8 sm:pt-32 sm:pb-12 lg:justify-start"
+            class="relative z-10 mx-auto flex min-h-dvh w-[94%] max-w-[1400px] items-start justify-center px-6 pt-24 pb-8 sm:pt-32 sm:pb-12 lg:justify-start lg:pb-6"
         >
             <div
                 class="my-auto grid w-full grid-cols-1 items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:justify-items-stretch lg:gap-16"

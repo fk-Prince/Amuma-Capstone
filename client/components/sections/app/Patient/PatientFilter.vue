@@ -287,6 +287,7 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
+import { remScale } from "~/utils/rem";
 
 const props = defineProps<{
     search: string;
@@ -335,10 +336,13 @@ const updateDropdownPosition = () => {
 
     const rect = filterButton.value.getBoundingClientRect();
 
-    const width = Math.min(DROPDOWN_WIDTH, window.innerWidth - SCREEN_GAP * 2);
+    const width = Math.min(
+        DROPDOWN_WIDTH * remScale(),
+        window.innerWidth - SCREEN_GAP * 2,
+    );
 
     const height = Math.min(
-        DROPDOWN_HEIGHT,
+        DROPDOWN_HEIGHT * remScale(),
         window.innerHeight - SCREEN_GAP * 2,
     );
 

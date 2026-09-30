@@ -128,7 +128,7 @@
                         class="pointer-events-none absolute bottom-0 z-10 w-0.5 bg-teal-500 shadow-[0_0_6px_rgba(20,184,166,0.5)]"
                         :style="{
                             left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
-                            top: '40px',
+                            top: '2.5rem',
                         }"
                     >
                         <div
@@ -177,7 +177,7 @@
                         class="relative flex border-b last:border-b-0 transition dark:border-white/10"
                         :class="rowTheme(rowIndex)"
                         :style="{
-                            minHeight: '92px',
+                            minHeight: '5.75rem',
                         }"
                     >
                         <div
@@ -333,8 +333,8 @@
                                     :style="{
                                         left: `${getServiceLeft(schedule, sIndex, day)}px`,
                                         width: `${getServiceWidth(service)}px`,
-                                        top: '6px',
-                                        height: '80px',
+                                        top: '0.375rem',
+                                        height: '5rem',
                                     }"
                                     @click="$emit('view-details', schedule)"
                                 >
@@ -423,8 +423,8 @@
                                 :style="{
                                     left: `${getScheduleLeft(schedule, day)}px`,
                                     width: `${getScheduleWidth(schedule)}px`,
-                                    top: '6px',
-                                    height: '80px',
+                                    top: '0.375rem',
+                                    height: '5rem',
                                 }"
                                 @click="$emit('view-details', schedule)"
                             >

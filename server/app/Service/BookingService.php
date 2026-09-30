@@ -271,9 +271,9 @@ class BookingService
                     $bookingData['homecare']['date'] . ' ' .
                         $bookingData['homecare']['prefered_time']
                 ),
-                Booking::CATEGORY_FACILITY => Carbon::parse(
-                    $bookingData['facility']['admission_date']
-                )->endOfDay(),
+                Booking::CATEGORY_FACILITY => ($bookingData['facility']['type'] ?? null) === Booking::TYPE_PREADMISSION
+                    ? Carbon::now()->addMonth()
+                    : Carbon::parse($bookingData['facility']['admission_date'])->endOfDay(),
                 default => Carbon::now()->addWeek(),
             };
             $booking = $this->bookingRepository->create([

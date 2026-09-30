@@ -102,7 +102,7 @@
                             class="pointer-events-none absolute bottom-0 z-[5] w-px bg-teal-400"
                             :style="{
                                 left: `${labelWidth + (nowOffset(day) ?? 0)}px`,
-                                top: '40px',
+                                top: '2.5rem',
                             }"
                         >
                             <div
@@ -149,7 +149,7 @@
                             class="relative flex border-b border-slate-100 last:border-b-0 transition dark:border-white/10"
                             :class="rowTheme(rowIndex)"
                             :style="{
-                                minHeight: `${rowHeight(schedule)}px`,
+                                minHeight: rem(rowHeight(schedule)),
                             }"
                         >
                             <div
@@ -278,8 +278,8 @@
                                         :style="{
                                             left: `${getServiceLeft(schedule, sIndex, day)}px`,
                                             width: `${getServiceWidth(service)}px`,
-                                            top: `${8 + sIndex * SERVICE_STRIDE}px`,
-                                            height: `${SERVICE_HEIGHT}px`,
+                                            top: rem(8 + sIndex * SERVICE_STRIDE),
+                                            height: rem(SERVICE_HEIGHT),
                                         }"
                                         @click="$emit('view-details', schedule)"
                                     >
@@ -436,8 +436,8 @@
                                     :style="{
                                         left: `${getScheduleLeft(schedule, day)}px`,
                                         width: `${getScheduleWidth(schedule)}px`,
-                                        top: '8px',
-                                        height: '90px',
+                                        top: '0.5rem',
+                                        height: '5.625rem',
                                     }"
                                     @click="$emit('view-details', schedule)"
                                 >
@@ -512,6 +512,7 @@ import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import type { ScheduleItem } from "~/types/schedule";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
+import { rem } from "~/utils/rem";
 
 const props = withDefaults(
     defineProps<{
