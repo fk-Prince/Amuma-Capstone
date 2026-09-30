@@ -588,11 +588,12 @@
                                             totalGapMinutes(log) > 0
                                         "
                                         type="button"
-                                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                                        title="Request deduction"
+                                        aria-label="Request deduction"
+                                        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 transition hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
                                         @click="openDeductionModal(log)"
                                     >
                                         <Minus class="h-3.5 w-3.5" />
-                                        Request deduction
                                     </button>
                                 </div>
 
