@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Models\Invoice;
-use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\Transaction;
 
@@ -84,76 +83,11 @@ class RefundRepository
 
     public function creditFor(mixed $patientId): float
     {
-        return round($this->refundCreditFor($patientId) + $this->depositCreditFor($patientId), 2);
-    }
-
-    public function refundCreditFor(mixed $patientId): float
-    {
         if (!$patientId) {
             return 0.0;
         }
 
         return round((float) $this->forPatient($patientId)->available()->sum('amount'), 2);
-    }
-
-    public function depositCreditFor(mixed $patientId): float
-    {
-        if (!$patientId) {
-            return 0.0;
-        }
-
-        $spent = Transaction::query()
-            ->where('patient_id', $patientId)
-            ->where(
-                fn($query) => $query
-                    ->where(
-                        fn($payment) => $payment->where('type', Transaction::TYPE_PAYMENT)
-                            ->where('method', Payment::METHOD_CREDIT)
-                            ->where('status', Transaction::STATUS_COMPLETED)
-                    )
-                    ->orWhere(
-                        fn($withdrawal) => $withdrawal->where('type', Transaction::TYPE_WITHDRAW)
-                            ->where('status', '!=', Transaction::STATUS_REJECTED)
-                    )
-            )
-            ->withSum('refunds', 'amount')
-            ->get()
-            ->sum(fn(Transaction $transaction) => $this->depositShare($transaction));
-
-        return round(max(0, $this->depositedFor($patientId) - $spent), 2);
-    }
-
-    public function depositShare(Transaction $transaction): float
-    {
-        $fromRefunds = $transaction->refunds_sum_amount
-            ?? ($transaction->relationLoaded('refunds') ? $transaction->refunds->sum('amount') : $transaction->refunds()->sum('amount'));
-
-        return round(max(0, (float) $transaction->amount - (float) $fromRefunds), 2);
-    }
-
-    public function depositsFor(mixed $patientId)
-    {
-        return Transaction::query()
-            ->where('patient_id', $patientId)
-            ->where('type', Transaction::TYPE_DEPOSIT)
-            ->latest('created_at')
-            ->get();
-    }
-
-    public function depositedFor(mixed $patientId): float
-    {
-        if (!$patientId) {
-            return 0.0;
-        }
-
-        return round(
-            (float) Transaction::query()
-                ->where('patient_id', $patientId)
-                ->where('type', Transaction::TYPE_DEPOSIT)
-                ->where('status', Transaction::STATUS_COMPLETED)
-                ->sum('amount'),
-            2
-        );
     }
 
 
@@ -231,10 +165,12 @@ class RefundRepository
         }
 
         return round(
-            (float) Transaction::query()
-                ->where('patient_id', $patientId)
-                ->where('type', Transaction::TYPE_WITHDRAW)
-                ->where('status', $status)
+            (float) $this->forPatient($patientId)
+                ->whereHas(
+                    'transaction',
+                    fn($query) => $query->where('type', Transaction::TYPE_WITHDRAW)
+                        ->where('status', $status)
+                )
                 ->sum('amount'),
             2
         );

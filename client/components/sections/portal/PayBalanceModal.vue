@@ -213,8 +213,8 @@ function peso(value: number) {
                                     <span
                                         class="mt-0.5 block text-xs text-emerald-800/80 dark:text-emerald-300/70"
                                     >
-                                        Refunds and deposits on the account
-                                        that no bill has used yet.
+                                        Money you already paid that no bill
+                                        claims any more.
                                     </span>
                                 </span>
                             </label>

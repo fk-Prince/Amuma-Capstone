@@ -123,8 +123,6 @@ export function transactionIcon(type: PortalTransactionType) {
             return "arrow-down-circle";
         case "adjustment":
             return "sliders-horizontal";
-        case "deposit":
-            return "piggy-bank";
         default:
             return "receipt";
     }
@@ -170,8 +168,6 @@ export function transactionAmountColor(type: PortalTransactionType) {
             return "text-emerald-600 dark:text-emerald-300";
         case "adjustment":
             return "text-amber-600 dark:text-amber-300";
-        case "deposit":
-            return "text-primary-600 dark:text-primary-300";
         default:
             return "text-gray-600 dark:text-gray-300";
     }
@@ -185,8 +181,6 @@ export function transactionIconClasses(type: PortalTransactionType) {
             return "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300";
         case "adjustment":
             return "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300";
-        case "deposit":
-            return "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
         default:
             return "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400";
     }
@@ -198,8 +192,6 @@ export function transactionRole(type: PortalTransactionType, status?: string) {
             return "Billed";
         case "payment":
             return "Paid";
-        case "deposit":
-            return "Added to your credit";
         default:
             break;
     }

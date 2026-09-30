@@ -64,7 +64,7 @@ export interface PortalInvoiceDetail extends PortalInvoice {
 }
 
 export type PortalTransactionType =
-    "invoice" | "payment" | "refund" | "adjustment" | "deposit";
+    "invoice" | "payment" | "refund" | "adjustment";
 
 export interface PortalTransaction {
     id: string;
@@ -81,5 +81,4 @@ export interface PortalTransaction {
     reason?: string;
     maskedCardNumber?: string | null;
     receiptNo?: string | null;
-    source?: "deposit" | null;
 }

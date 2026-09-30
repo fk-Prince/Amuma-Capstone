@@ -9,7 +9,6 @@ use App\Http\Controllers\BranchContractController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BranchSettingController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\DepositController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MedicationController;
@@ -114,14 +113,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // WITHDRAWALS
     Route::post('/withdrawals/issue', [RefundController::class, 'issue']);
 
-    // DEPOSITS
-    Route::post('/deposits/issue', [DepositController::class, 'issue']);
-
     // PORTAL (family/client-facing)
     Route::middleware('portal')->group(function () {
         Route::post('/withdrawals/action', [RefundController::class, 'store']);
         Route::post('/withdrawals/requests', [RefundController::class, 'index']);
-        Route::post('/deposits/action', [DepositController::class, 'store']);
         Route::post('/payments/action', [PaymentController::class, 'store']);
         Route::post('/payments/receipt', [PaymentController::class, 'receipt']);
         Route::get('/messages/conversations', [MessageController::class, 'clientIndex']);

@@ -32,7 +32,6 @@ class PatientInvoiceSummaryResource extends JsonResource
             'voided_invoices',
             'payments',
             'refunds',
-            'deposits',
             'admissions',
             'services',
             'admission_invoices',

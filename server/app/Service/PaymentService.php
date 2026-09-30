@@ -26,7 +26,7 @@ class PaymentService
         private InvoiceService $invoiceService
     ) {}
 
-    public function chargeCard(Client $client, float $amount, array $payload, string $purpose = 'balance'): array
+    private function chargeCard(Client $client, float $amount, array $payload): array
     {
         if (empty($payload['token_id']) || empty($payload['authentication_id'])) {
             throw new Exception('Card details are required to pay online.', 422);
@@ -38,21 +38,21 @@ class PaymentService
                 'token_id' => $payload['token_id'],
                 'authentication_id' => $payload['authentication_id'],
                 'capture' => true,
-                'descriptor' => $purpose,
+                'descriptor' => 'balance',
                 'currency' => 'PHP',
                 'external_id' => (string) Str::uuid(),
                 'amount' => $amount,
                 'payer_email' => $client->user?->email,
                 'payment_methods' => ['CREDIT-CARD'],
                 'metadata' => [
-                    'type' => "patient_{$purpose}",
+                    'type' => 'patient_balance',
                     'patient_id' => $payload['patient_id'],
                     'client_id' => $client->client_id,
                 ],
             ]);
 
         if ($response->failed()) {
-            Log::warning("Xendit {$purpose} charge failed", [
+            Log::warning('Xendit balance charge failed', [
                 'status' => $response->status(),
                 'body' => $response->json(),
             ]);

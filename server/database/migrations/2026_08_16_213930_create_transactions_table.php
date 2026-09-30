@@ -32,7 +32,7 @@ return new class extends Migration
 
             $table->decimal('amount', 10, 2);
 
-            $table->enum('type', ['payment', 'withdraw', 'deposit']);
+            $table->enum('type', ['payment', 'withdraw']);
             $table->enum('direction', ['credit', 'debit']);
 
             $table->enum('status', ['completed', 'requested', 'rejected'])

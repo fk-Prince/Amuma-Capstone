@@ -10,15 +10,11 @@ use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Models\Transaction;
-use App\Repository\RefundRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class PortalHelper
 {
-    public function __construct(
-        private RefundRepository $refunds
-    ) {}
 
     public function bookingPayload(Booking $booking): array
     {
@@ -169,23 +165,23 @@ class PortalHelper
             $invoices = $patient->getRelation('invoices');
             $active = self::invoices($invoices);
 
-            $payload += self::balances($invoices, $patient, true);
+            $payload += self::balances($invoices, true);
             $payload['latest_invoice'] = $active[0] ?? null;
             $payload['invoices'] = $active;
             $payload['voided_invoices'] = self::invoices($invoices, true);
-            $payload['transactions'] = self::transactions($invoices, $patient);
+            $payload['transactions'] = self::transactions($invoices);
         } elseif (in_array('summary', $sections, true)) {
             $invoices = $patient->getRelation('invoices');
             $latest = $invoices->first(fn($invoice) => $invoice->status !== Invoice::STATUS_VOID);
 
-            $payload += self::balances($invoices, $patient);
+            $payload += self::balances($invoices);
             $payload['latest_invoice'] = $latest ? [
                 'invoice_id' => $latest->invoice_id,
                 'invoice_code' => $latest->invoice_code,
                 'status' => $latest->status,
                 'balance_due' => (float) $latest->balance_due,
             ] : null;
-            $payload['transactions'] = self::transactions($invoices, $patient);
+            $payload['transactions'] = self::transactions($invoices);
         }
 
         if ($wants('schedule')) {
@@ -433,7 +429,7 @@ class PortalHelper
     }
 
 
-    private function transactions(Collection $invoices, object $patient)
+    private function transactions(Collection $invoices)
     {
         $payments = [];
         $refunds = [];
@@ -499,40 +495,8 @@ class PortalHelper
 
         }
 
-        $deposits = $this->refunds->depositsFor($patient->patient_id)
-            ->map(fn(Transaction $deposit) => [
-                'id' => 'deposit-' . $deposit->transaction_id,
-                'type' => 'deposit',
-                'amount' => (float) $deposit->amount,
-                'payment_method' => $deposit->method,
-                'reference_id' => $deposit->transaction_code,
-                'masked_account_detail' => $deposit->masked_account_number,
-                'status' => $deposit->status,
-                'created_at' => $deposit->created_at?->format('Y-m-d H:i:s'),
-                'invoice_codes' => [],
-            ]);
-
-        $depositWithdrawals = $this->refunds->withdrawalsFor($patient->patient_id)
-            ->map(fn(Transaction $withdrawal) => [
-                'id' => 'withdrawal-' . $withdrawal->transaction_id,
-                'type' => 'refund',
-                'source' => 'deposit',
-                'amount' => $this->refunds->depositShare($withdrawal),
-                'refund_method' => $withdrawal->method,
-                'refund_code' => $withdrawal->transaction_code,
-                'masked_account_detail' => $withdrawal->masked_account_number,
-                'account_name' => $withdrawal->party_name,
-                'declined_reason' => $withdrawal->declined_reason,
-                'status' => $withdrawal->status,
-                'created_at' => $withdrawal->created_at?->format('Y-m-d H:i:s'),
-                'invoice_codes' => [],
-            ])
-            ->filter(fn($entry) => $entry['amount'] > 0);
-
         return collect($payments)
             ->concat($refunds)
-            ->concat($deposits)
-            ->concat($depositWithdrawals)
             ->map(function ($entry) {
                 $entry['invoice_codes'] = array_values(array_unique($entry['invoice_codes']));
 
@@ -543,7 +507,7 @@ class PortalHelper
             ->toArray();
     }
 
-    private function balances(Collection $invoices, object $patient, bool $full = false)
+    private function balances(Collection $invoices, bool $full = false)
     {
         $billed = $invoices->filter(fn($invoice) => in_array($invoice->status, [
             Invoice::STATUS_PENDING,
@@ -551,14 +515,30 @@ class PortalHelper
             Invoice::STATUS_PAID,
         ], true));
 
+        $refunds = $invoices
+            ->flatMap(fn($invoice) => $invoice->allocations)
+            ->flatMap(fn($allocation) => $allocation->refundAllocations)
+            ->pluck('refund')
+            ->filter()
+            ->unique('refund_id');
+
         $balances = [
             'patient_balance' => (float) $billed->sum('balance_due'),
-            'patient_refundable' => $this->refunds->creditFor($patient->patient_id),
+            'patient_refundable' => round(
+                (float) $refunds->filter(fn($refund) => $refund->is_available)->sum('amount'),
+                2
+            ),
         ];
 
         if ($full) {
             $balances += [
-                'patient_pending_withdrawal' => $this->refunds->pendingCreditFor($patient->patient_id),
+                'patient_pending_withdrawal' => round(
+                    (float) $refunds
+                        ->filter(fn($refund) => $refund->transaction?->type === Transaction::TYPE_WITHDRAW
+                            && $refund->transaction?->status === Transaction::STATUS_REQUESTED)
+                        ->sum('amount'),
+                    2
+                ),
                 'patient_adjusted' => (float) $billed->sum('adjusted_total'),
             ];
         }
