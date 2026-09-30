@@ -13,8 +13,13 @@
         "api-https": "wait-on tcp:127.0.0.1:8000 && npm run ssl-proxy -- --source 8443 --target 8000",
         "reverb-wss": "wait-on tcp:127.0.0.1:8080 && npm run ssl-proxy -- --source 9443 --target 8080",
         "env": "node scripts/sync-env.mjs",
+        "db": "node scripts/db.mjs",
+        "db:fresh": "node scripts/db.mjs --fresh",
+        "db:remote": "node scripts/db.mjs --remote",
+        "stack": "concurrently \"npm run artisan\" \"npm run api-https\" \"npm run reverb\" \"npm run reverb-wss\" \"npm run schedule\" \"npm run client\" ",
         "dev": "concurrently \"npm run artisan\" \"npm run reverb\" \"npm run schedule\" \"npm run client\" ",
-        "dev:https": "npm run env && concurrently \"npm run artisan\" \"npm run api-https\" \"npm run reverb\" \"npm run reverb-wss\" \"npm run schedule\" \"npm run client\" "
+        "dev:https": "npm run env && npm run db:remote && npm run stack",
+        "dev:db": "npm run env && npm run db && npm run stack"
     },
     "keywords": [],
     "author": "",

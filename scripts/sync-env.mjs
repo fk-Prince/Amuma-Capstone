@@ -1,13 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { X509Certificate } from "node:crypto";
 import dgram from "node:dgram";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const config = JSON.parse(readFileSync(path.join(root, "env.config.json"), "utf8"));
+import { config, root, writeEnv } from "./env-file.mjs";
 
 function routeIp() {
     return new Promise((resolve) => {
@@ -39,28 +36,6 @@ async function detectIp() {
     const manual = process.argv[2] ?? (config.ip !== "auto" ? config.ip : null);
 
     return manual ?? (await routeIp()) ?? interfaceIp() ?? "127.0.0.1";
-}
-
-function writeEnv(file, values) {
-    if (!existsSync(file)) {
-        console.warn(`  skipped ${path.relative(root, file)} (file not found)`);
-        return;
-    }
-
-    const text = readFileSync(file, "utf8");
-    const eol = text.includes("\r\n") ? "\r\n" : "\n";
-    const lines = text.split(/\r?\n/);
-
-    for (const [key, value] of Object.entries(values)) {
-        const line = `${key}=${value}`;
-        const index = lines.findIndex((l) => new RegExp(`^\\s*${key}\\s*=`).test(l));
-
-        if (index !== -1) lines[index] = line;
-        else lines.splice(lines.at(-1) === "" ? -1 : lines.length, 0, line);
-    }
-
-    writeFileSync(file, lines.join(eol));
-    console.log(`  updated ${path.relative(root, file)}`);
 }
 
 function ensureCert(ip) {

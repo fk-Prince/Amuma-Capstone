@@ -84,6 +84,21 @@ return [
             ]) : [],
         ],
 
+        'local' => [
+            'driver' => 'mysql',
+            'host' => env('LOCAL_DB_HOST', '127.0.0.1'),
+            'port' => env('LOCAL_DB_PORT', '3306'),
+            'database' => env('LOCAL_DB_DATABASE', 'amuma'),
+            'username' => env('LOCAL_DB_USERNAME', 'root'),
+            'password' => env('LOCAL_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
