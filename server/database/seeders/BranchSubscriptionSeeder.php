@@ -105,73 +105,73 @@ class BranchSubscriptionSeeder extends Seeder
     ];
 
     private const AMUMA_EXTRA_BRANCHES = [
-        ['AMUMA Panabo', 'Panabo City', 'Davao del Norte', 7.3086, 125.6844],
-        ['AMUMA Samal', 'Island Garden City of Samal', 'Davao del Norte', 7.0472, 125.7139],
+        ['AMUMA Panabo', 'Rizal Street', 'Panabo City', 'Davao del Norte', 7.2995764, 125.6814238],
+        ['AMUMA Samal', 'Purok 2, Circumferential Road', 'Samal', 'Davao del Norte', 7.0560898, 125.7211018],
     ];
 
     private const BRANCHES = [
-        ['AMUMA Davao', 'Davao City', 'Davao del Sur', 7.1907, 125.4553],
-        ['Sunrise Butuan', 'Butuan City', 'Agusan del Norte', 8.9475, 125.5406],
-        ['Sunrise Digos', 'Digos City', 'Davao del Sur', 6.7497, 125.3572],
-        ['Sunrise Tagum', 'Tagum City', 'Davao del Norte', 7.4478, 125.8078],
-        ['Golden Years Cebu', 'Cebu City', 'Cebu', 10.3157, 123.8854],
-        ['Golden Years Mandaue', 'Mandaue City', 'Cebu', 10.3236, 123.9223],
-        ['Harmony Quezon City', 'Quezon City', 'Metro Manila', 14.6760, 121.0437],
-        ['Bayanihan Makati', 'Makati City', 'Metro Manila', 14.5547, 121.0244],
-        ['Bayanihan Pasig', 'Pasig City', 'Metro Manila', 14.5764, 121.0851],
-        ['Serenity Iloilo', 'Iloilo City', 'Iloilo', 10.7202, 122.5621],
-        ['Serenity Bacolod', 'Bacolod City', 'Negros Occidental', 10.6407, 122.9689],
-        ['CareBridge Cagayan de Oro', 'Cagayan de Oro', 'Misamis Oriental', 8.4542, 124.6319],
-        ['Tahanan Baguio', 'Baguio City', 'Benguet', 16.4023, 120.5960],
-        ['Tahanan La Union', 'San Fernando', 'La Union', 16.6159, 120.3209],
-        ['Tahanan Angeles', 'Angeles City', 'Pampanga', 15.1450, 120.5887],
-        ['Silver Oak General Santos', 'General Santos', 'South Cotabato', 6.1164, 125.1716],
-        ['Silver Oak Koronadal', 'Koronadal', 'South Cotabato', 6.5031, 124.8469],
-        ['Kalinga Zamboanga', 'Zamboanga City', 'Zamboanga del Sur', 6.9214, 122.0790],
-        ['Kalinga Dipolog', 'Dipolog City', 'Zamboanga del Norte', 8.5886, 123.3409],
-        ['Mabuhay Naga', 'Naga City', 'Camarines Sur', 13.6218, 123.1948],
-        ['Mabuhay Legazpi', 'Legazpi City', 'Albay', 13.1391, 123.7438],
-        ['Malasakit Iligan', 'Iligan City', 'Lanao del Norte', 8.2280, 124.2452],
-        ['Malasakit Ozamiz', 'Ozamiz City', 'Misamis Occidental', 8.1500, 123.8437],
-        ['Payapa Roxas', 'Roxas City', 'Capiz', 11.5853, 122.7511],
-        ['Ligaya Dumaguete', 'Dumaguete City', 'Negros Oriental', 9.3103, 123.3080],
-        ['Ligaya Tacloban', 'Tacloban City', 'Leyte', 11.2543, 125.0000],
-        ['Malaya Malolos', 'Malolos City', 'Bulacan', 14.8433, 120.8114],
-        ['Malaya San Jose Del Monte', 'San Jose Del Monte', 'Bulacan', 14.8136, 121.0453],
-        ['Ginhawa Antipolo', 'Antipolo City', 'Rizal', 14.5878, 121.1760],
-        ['Lakbay Bacoor', 'Bacoor City', 'Cavite', 14.4624, 120.8967],
-        ['Lakbay Imus', 'Imus City', 'Cavite', 14.4297, 120.9367],
-        ['Tahimik Dasmarinas', 'Dasmarinas City', 'Cavite', 14.3294, 120.9367],
-        ['Tahimik San Pedro', 'San Pedro City', 'Laguna', 14.3583, 121.0583],
-        ['Tahimik Binan', 'Binan City', 'Laguna', 14.3333, 121.0833],
-        ['Kapwa Santa Rosa', 'Santa Rosa City', 'Laguna', 14.3122, 121.1114],
-        ['Bahaghari Lipa', 'Lipa City', 'Batangas', 13.9411, 121.1622],
-        ['Bahaghari Batangas City', 'Batangas City', 'Batangas', 13.7565, 121.0583],
-        ['Alagang Lucena', 'Lucena City', 'Quezon', 13.9373, 121.6174],
-        ['Malinis Puerto Princesa', 'Puerto Princesa City', 'Palawan', 9.7392, 118.7353],
-        ['Ligtas Kalibo', 'Kalibo', 'Aklan', 11.7079, 122.3626],
-        ['Ligtas Ormoc', 'Ormoc City', 'Leyte', 11.0064, 124.6075],
-        ['Ligtas Bislig', 'Bislig City', 'Surigao del Sur', 8.2150, 126.3183],
-        ['Damayan Surigao', 'Surigao City', 'Surigao del Norte', 9.7833, 125.4917],
-        ['Damayan Cotabato City', 'Cotabato City', 'Maguindanao', 7.2231, 124.2452],
-        ['Tibay Marawi', 'Marawi City', 'Lanao del Sur', 8.0000, 124.2903],
-        ['Sinag Pagadian', 'Pagadian City', 'Zamboanga del Sur', 7.8257, 123.4373],
-        ['Sinag Tuguegarao', 'Tuguegarao City', 'Cagayan', 17.6132, 121.7270],
-        ['Ganda Ilagan', 'Ilagan City', 'Isabela', 17.1497, 121.8892],
-        ['Bayan Vigan', 'Vigan City', 'Ilocos Sur', 17.5747, 120.3869],
-        ['Pag-asa Laoag', 'Laoag City', 'Ilocos Norte', 18.1978, 120.5936],
-        ['Pag-asa Dagupan', 'Dagupan City', 'Pangasinan', 16.0433, 120.3333],
-        ['Sigla San Fernando', 'San Fernando City', 'Pampanga', 15.0286, 120.6897],
-        ['Sigla Tarlac', 'Tarlac City', 'Tarlac', 15.4802, 120.5979],
-        ['Sigla Cabanatuan', 'Cabanatuan City', 'Nueva Ecija', 15.4869, 120.9683],
-        ['Tatag Olongapo', 'Olongapo City', 'Zambales', 14.8294, 120.2830],
-        ['Kalusugan Alaminos', 'Alaminos City', 'Pangasinan', 16.1553, 119.9784],
-        ['Kalusugan Urdaneta', 'Urdaneta City', 'Pangasinan', 15.9761, 120.5701],
-        ['Liwanag Malaybalay', 'Malaybalay City', 'Bukidnon', 8.1575, 125.1278],
-        ['Bukas Valencia', 'Valencia City', 'Bukidnon', 7.9061, 125.0947],
-        ['Bukas Tandag', 'Tandag City', 'Surigao del Sur', 9.0785, 126.1989],
-        ['Sagip Cabuyao', 'Cabuyao City', 'Laguna', 14.2786, 121.1189],
-        ['Tanglaw Meycauayan', 'Meycauayan City', 'Bulacan', 14.7365, 120.9583],
+        ['AMUMA Davao', 'Rizal Street', 'Davao City', 'Davao del Sur', 7.0760930, 125.6015037],
+        ['Sunrise Butuan', 'Quezon Avenue', 'Butuan City', 'Agusan del Norte', 8.9477147, 125.5432054],
+        ['Sunrise Digos', 'Bonifacio Street', 'Digos City', 'Davao del Sur', 6.7422588, 125.3662853],
+        ['Sunrise Tagum', 'Roxas Avenue', 'Tagum City', 'Davao del Norte', 7.4470784, 125.8094853],
+        ['Golden Years Cebu', 'Osmena Boulevard', 'Cebu City', 'Cebu', 10.3081889, 123.8936359],
+        ['Golden Years Mandaue', 'Magsaysay Street', 'Mandaue City', 'Cebu', 10.3269049, 123.9427295],
+        ['Harmony Quezon City', 'Magsaysay Street', 'Quezon City', 'Metro Manila', 14.6385123, 121.0669410],
+        ['Bayanihan Makati', 'Del Pilar Street', 'Makati City', 'Metro Manila', 14.5419763, 121.0121495],
+        ['Bayanihan Pasig', 'Quezon Avenue', 'Pasig City', 'Metro Manila', 14.5558469, 121.0894160],
+        ['Serenity Iloilo', 'Quezon Avenue', 'Iloilo City', 'Iloilo', 10.7131258, 122.5626690],
+        ['Serenity Bacolod', 'Bonifacio Street', 'Bacolod City', 'Negros Occidental', 10.6762836, 122.9513786],
+        ['CareBridge Cagayan de Oro', 'Bonifacio Street', 'Cagayan de Oro', 'Misamis Oriental', 8.4756417, 124.6421532],
+        ['Tahanan Baguio', 'Osmena Boulevard', 'Baguio City', 'Benguet', 16.4119860, 120.5933878],
+        ['Tahanan La Union', 'Magsaysay Street', 'San Fernando', 'La Union', 16.6162676, 120.3171040],
+        ['Tahanan Angeles', 'Rizal Street', 'Angeles City', 'Pampanga', 15.1348084, 120.5906946],
+        ['Silver Oak General Santos', 'Del Pilar Street', 'General Santos', 'South Cotabato', 6.1122217, 125.1721893],
+        ['Silver Oak Koronadal', 'Quezon Avenue', 'Koronadal', 'South Cotabato', 6.5004041, 124.8435437],
+        ['Kalinga Zamboanga', 'Quezon Avenue', 'Zamboanga City', 'Zamboanga del Sur', 6.9046876, 122.0764868],
+        ['Kalinga Dipolog', 'Mabini Street', 'Dipolog City', 'Zamboanga del Norte', 8.5879253, 123.3438302],
+        ['Mabuhay Naga', 'Osmena Boulevard', 'Naga City', 'Camarines Sur', 13.6240122, 123.1850318],
+        ['Mabuhay Legazpi', 'Magsaysay Street', 'Legazpi City', 'Albay', 13.1388505, 123.7345746],
+        ['Malasakit Iligan', 'Roxas Avenue', 'Iligan City', 'Lanao del Norte', 8.2281556, 124.2411508],
+        ['Malasakit Ozamiz', 'Del Pilar Street', 'Ozamiz City', 'Misamis Occidental', 8.1470175, 123.8459793],
+        ['Payapa Roxas', 'Del Pilar Street', 'Roxas City', 'Capiz', 11.5831593, 122.7525555],
+        ['Ligaya Dumaguete', 'Rizal Street', 'Dumaguete City', 'Negros Oriental', 9.3055063, 123.3082522],
+        ['Ligaya Tacloban', 'Mabini Street', 'Tacloban City', 'Leyte', 11.2431609, 125.0082936],
+        ['Malaya Malolos', 'Mabini Street', 'Malolos City', 'Bulacan', 14.8526836, 120.8160252],
+        ['Malaya San Jose Del Monte', 'Osmena Boulevard', 'San Jose Del Monte', 'Bulacan', 14.8101978, 121.0474088],
+        ['Ginhawa Antipolo', 'Osmena Boulevard', 'Antipolo City', 'Rizal', 14.5871972, 121.1759246],
+        ['Lakbay Bacoor', 'Roxas Avenue', 'Bacoor City', 'Cavite', 14.4593497, 120.9401912],
+        ['Lakbay Imus', 'Del Pilar Street', 'Imus City', 'Cavite', 14.4290216, 120.9365838],
+        ['Tahimik Dasmarinas', 'Del Pilar Street', 'Dasmarinas City', 'Cavite', 14.3435028, 120.9484977],
+        ['Tahimik San Pedro', 'Quezon Avenue', 'San Pedro City', 'Laguna', 14.3384729, 121.0312829],
+        ['Tahimik Binan', 'Bonifacio Street', 'Binan City', 'Laguna', 14.3388196, 121.0778089],
+        ['Kapwa Santa Rosa', 'Mabini Street', 'Santa Rosa City', 'Laguna', 14.3146042, 121.1137004],
+        ['Bahaghari Lipa', 'Bonifacio Street', 'Lipa City', 'Batangas', 13.9414340, 121.1642826],
+        ['Bahaghari Batangas City', 'Roxas Avenue', 'Batangas City', 'Batangas', 13.7552594, 121.0590753],
+        ['Alagang Lucena', 'Roxas Avenue', 'Lucena City', 'Quezon', 13.9357696, 121.6128612],
+        ['Malinis Puerto Princesa', 'Magsaysay Street', 'Puerto Princesa City', 'Palawan', 9.7398561, 118.7438187],
+        ['Ligtas Kalibo', 'Del Pilar Street', 'Kalibo', 'Aklan', 11.7088966, 122.3640225],
+        ['Ligtas Ormoc', 'Quezon Avenue', 'Ormoc City', 'Leyte', 11.0052622, 124.6090638],
+        ['Ligtas Bislig', 'Bonifacio Street', 'Bislig City', 'Surigao del Sur', 8.2130815, 126.3156173],
+        ['Damayan Surigao', 'Mabini Street', 'Surigao City', 'Surigao del Norte', 9.7905028, 125.4935697],
+        ['Damayan Cotabato City', 'Osmena Boulevard', 'Cotabato City', 'Maguindanao', 7.2237628, 124.2467062],
+        ['Tibay Marawi', 'Osmena Boulevard', 'Marawi City', 'Lanao del Sur', 8.0047262, 124.2854351],
+        ['Sinag Pagadian', 'Roxas Avenue', 'Pagadian City', 'Zamboanga del Sur', 7.8249717, 123.4365816],
+        ['Sinag Tuguegarao', 'Del Pilar Street', 'Tuguegarao City', 'Cagayan', 17.6118858, 121.7300377],
+        ['Ganda Ilagan', 'Del Pilar Street', 'Ilagan City', 'Isabela', 17.1486341, 121.8886466],
+        ['Bayan Vigan', 'Rizal Street', 'Vigan City', 'Ilocos Sur', 17.5751881, 120.3879038],
+        ['Pag-asa Laoag', 'Quezon Avenue', 'Laoag City', 'Ilocos Norte', 18.1954482, 120.5926755],
+        ['Pag-asa Dagupan', 'Bonifacio Street', 'Dagupan City', 'Pangasinan', 16.0430210, 120.3337627],
+        ['Sigla San Fernando', 'Bonifacio Street', 'San Fernando City', 'Pampanga', 15.0691071, 120.6528206],
+        ['Sigla Tarlac', 'Roxas Avenue', 'Tarlac City', 'Tarlac', 15.4861218, 120.5893473],
+        ['Sigla Cabanatuan', 'Del Pilar Street', 'Cabanatuan City', 'Nueva Ecija', 15.4905045, 120.9684264],
+        ['Tatag Olongapo', 'Magsaysay Street', 'Olongapo City', 'Zambales', 14.8388848, 120.2843587],
+        ['Kalusugan Alaminos', 'Del Pilar Street', 'Alaminos City', 'Pangasinan', 16.1553857, 119.9792201],
+        ['Kalusugan Urdaneta', 'Quezon Avenue', 'Urdaneta City', 'Pangasinan', 15.9759995, 120.5668992],
+        ['Liwanag Malaybalay', 'Quezon Avenue', 'Malaybalay City', 'Bukidnon', 8.1550421, 125.1305726],
+        ['Bukas Valencia', 'Mabini Street', 'Valencia City', 'Bukidnon', 7.9066812, 125.0910548],
+        ['Bukas Tandag', 'Osmena Boulevard', 'Tandag City', 'Surigao del Sur', 9.0799833, 126.1974606],
+        ['Sagip Cabuyao', 'Magsaysay Street', 'Cabuyao City', 'Laguna', 14.2414037, 121.1565601],
+        ['Tanglaw Meycauayan', 'Rizal Street', 'Meycauayan City', 'Bulacan', 14.7345008, 120.9571635],
     ];
 
     private const AGENCY_REJECTION_REASONS = [
@@ -185,17 +185,6 @@ class BranchSubscriptionSeeder extends Seeder
         'The branch address does not match the address on the submitted documents. Please update the address or re-submit matching documents.',
         'The TIN provided is incomplete or does not match the BIR certificate. Please correct it and re-submit.',
         'The submitted business document could not be verified. Please upload a clear copy and try again.',
-    ];
-
-    private const STREETS = [
-        'Rizal Street',
-        'Quezon Avenue',
-        'Mabini Street',
-        'Bonifacio Street',
-        'Osmena Boulevard',
-        'Roxas Avenue',
-        'Magsaysay Street',
-        'Del Pilar Street',
     ];
 
     public function run(): void
@@ -277,13 +266,15 @@ class BranchSubscriptionSeeder extends Seeder
                     'birth_date' => Carbon::now()->subYears(30 + $number)->toDateString(),
                 ]);
 
+                [, $agencyStreet, $agencyCity, $agencyProvince, $agencyLatitude, $agencyLongitude] = self::BRANCHES[$branchIndex];
+
                 $agencyLocation = Location::create([
-                    'street' => self::STREETS[$number % count(self::STREETS)],
-                    'city' => self::BRANCHES[$branchIndex][1],
-                    'province' => self::BRANCHES[$branchIndex][2],
+                    'street' => $agencyStreet,
+                    'city' => $agencyCity,
+                    'province' => $agencyProvince,
                     'country' => 'Philippines',
-                    'latitude' => self::BRANCHES[$branchIndex][3],
-                    'longitude' => self::BRANCHES[$branchIndex][4],
+                    'latitude' => $agencyLatitude,
+                    'longitude' => $agencyLongitude,
                 ]);
 
                 $agency = Agency::create([
@@ -343,13 +334,13 @@ class BranchSubscriptionSeeder extends Seeder
                     $isAmumaExtra = $agencyName === 'AMUMA' && $n > 0;
 
                     if ($isAmumaExtra) {
-                        [$name, $city, $province, $latitude, $longitude] = self::AMUMA_EXTRA_BRANCHES[$n - 1];
+                        [$name, $street, $city, $province, $latitude, $longitude] = self::AMUMA_EXTRA_BRANCHES[$n - 1];
                     } else {
-                        [$name, $city, $province, $latitude, $longitude] = self::BRANCHES[$branchIndex];
+                        [$name, $street, $city, $province, $latitude, $longitude] = self::BRANCHES[$branchIndex];
                     }
 
                     $location = Location::create([
-                        'street' => self::STREETS[$cosmeticIndex % count(self::STREETS)],
+                        'street' => $street,
                         'city' => $city,
                         'province' => $province,
                         'country' => 'Philippines',

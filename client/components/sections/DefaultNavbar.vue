@@ -316,7 +316,7 @@ watch(
 
                 <div
                     v-if="variant === 1 || variant === 2 || variant === 3"
-                    class="relative hidden shrink-0 items-center xl:flex"
+                    class="relative hidden shrink-0 items-center lg:flex"
                 >
                     <span
                         class="absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-300 ease-out"
@@ -329,7 +329,7 @@ watch(
                         :key="i.to"
                         :ref="(el) => setNavRef(el, index)"
                         :to="i.to"
-                        class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-5"
+                        class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-3 xl:px-5"
                         :class="navLinkClass(i.to)"
                     >
                         {{ i.label }}
@@ -342,7 +342,7 @@ watch(
                     </NuxtLink>
                 </div>
 
-                <div class="flex flex-1 items-center justify-end gap-6">
+                <div class="flex flex-1 items-center justify-end gap-4 xl:gap-6">
                     <template v-if="!hydrated || !user">
                         <NuxtLink
                             :to="hydrated ? '/auth/signin' : undefined"
@@ -362,7 +362,7 @@ watch(
                             class="hidden sm:block shrink-0"
                         >
                             <BaseButton
-                                buttonClass="md:px-9 h-[46px] rounded-xl whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
+                                buttonClass="md:px-6 xl:px-9 h-[46px] rounded-xl whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
                                 class="bg-primary text-white border border-primary hover:bg-primary-600"
                             >
                                 Sign up
@@ -390,7 +390,7 @@ watch(
 
                     <button
                         v-if="variant === 1 || variant === 2 || variant === 3"
-                        class="xl:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
+                        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
                         :class="menuIconClass"
                         aria-label="Open menu"
                         @click="mobileMenuOpen = true"
@@ -418,7 +418,7 @@ watch(
                 :logo="logoIcon"
                 :authMenu="navList"
                 :user="user"
-                :desktop-breakpoint="1280"
+                :desktop-breakpoint="1024"
                 @close="mobileMenuOpen = false"
             />
         </ClientOnly>
