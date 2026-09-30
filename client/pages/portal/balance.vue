@@ -17,6 +17,8 @@ import PortalInvoicesModal from "~/components/sections/portal/PortalInvoicesModa
 import PortalInvoiceDetailModal from "~/components/sections/portal/PortalInvoiceDetailModal.vue";
 import WithdrawCreditsModal from "~/components/sections/portal/WithdrawCreditsModal.vue";
 import PayBalanceModal from "~/components/sections/portal/PayBalanceModal.vue";
+import DepositModal from "~/components/sections/portal/DepositModal.vue";
+import { depositService } from "~/api/deposit/DepositService";
 import { formatCurrency } from "~/utils/currency";
 import {
     formatBillingDateTime as formatDateTime,
@@ -133,6 +135,7 @@ const invoiceTransactions = computed(() =>
     transactions.value.filter(
         (transaction) =>
             transaction.type === "payment" ||
+            transaction.type === "deposit" ||
             (transaction.type === "refund" &&
                 (transaction.status ?? "").toLowerCase() !== "credited"),
     ),
@@ -142,13 +145,14 @@ const RECENT_LIMIT = 5;
 
 const PAGE_SIZE = 2;
 
-type TransactionFilter = "all" | "payment" | "refund";
+type TransactionFilter = "all" | "payment" | "deposit" | "refund";
 
 const transactionFilter = ref<TransactionFilter>("all");
 
 const transactionFilters: { value: TransactionFilter; label: string }[] = [
     { value: "all", label: "All" },
     { value: "payment", label: "Payments" },
+    { value: "deposit", label: "Deposits" },
     { value: "refund", label: "Withdrawals" },
 ];
 
@@ -156,7 +160,7 @@ const showRefunds = ref(false);
 
 const refundTransactions = computed(() =>
     rawTransactions.value
-        .filter((entry: any) => entry.type === "refund")
+        .filter((entry: any) => entry.type === "refund" && !entry.source)
         .map((entry: any) => ({
             id: entry.id,
             invoiceCode: entry.invoice_codes?.[0] ?? "",
@@ -261,7 +265,10 @@ const keptPaidAmount = computed(() =>
 
 const totalRefundedAmount = computed(() =>
     transactions.value
-        .filter((transaction) => transaction.type === "refund")
+        .filter(
+            (transaction) =>
+                transaction.type === "refund" && !transaction.source,
+        )
         .reduce((total, transaction) => total + transaction.amount, 0),
 );
 
@@ -517,6 +524,11 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
 function mapTransactions(list: any[]): Transaction[] {
     return (list || []).map((entry: any) => {
         const amount = Number(entry.amount ?? 0);
+
+        if (entry.type === "deposit") {
+            return depositEntry(entry);
+        }
+
         const isRefund = entry.type === "refund";
         const isCredit = entry.payment_method === "CREDIT";
 
@@ -549,8 +561,26 @@ function mapTransactions(list: any[]): Transaction[] {
                 : (entry.declined_reason ?? entry.reason ?? undefined),
             maskedCardNumber: entry.masked_account_detail ?? null,
             receiptNo: entry.payment_code ?? null,
+            source: entry.source ?? null,
         };
     });
+}
+
+function depositEntry(entry: any): Transaction {
+    return {
+        id: entry.id,
+        invoiceCode: "",
+        invoiceCodes: [],
+        type: "deposit",
+        label: `Deposit · ${methodLabel(entry.payment_method)}`,
+        reference: entry.reference_id ?? undefined,
+        date: formatDateTime(entry.created_at),
+        amount: Number(entry.amount ?? 0),
+        method: entry.payment_method ?? undefined,
+        status: entry.status,
+        maskedCardNumber: entry.masked_account_detail ?? null,
+        receiptNo: null,
+    };
 }
 
 function refundRows(request: RefundRequest) {
@@ -1183,6 +1213,108 @@ function spendCreditLocally(applied: number) {
     }
 
     advanceBalance.value = round2(Math.max(0, advanceBalance.value - applied));
+}
+
+const showDepositModal = ref(false);
+const depositAmount = ref(0);
+const isDepositing = ref(false);
+
+function openDepositModal() {
+    checkout.payment_method = "CREDIT-CARD";
+    depositAmount.value = 0;
+    showDepositModal.value = true;
+}
+
+function closeDepositModal() {
+    if (isDepositing.value) return;
+
+    showDepositModal.value = false;
+}
+
+async function depositCredit() {
+    const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+
+    if (!patientId) {
+        error("Unable to determine which loved one this deposit is for.");
+        return;
+    }
+
+    const amount = round2(Number(depositAmount.value) || 0);
+
+    if (amount < 1) {
+        error("Enter a deposit of at least ₱1.");
+        return;
+    }
+
+    isDepositing.value = true;
+
+    try {
+        await cardPayment({
+            card: card.value,
+            amount,
+
+            onClose: () => {
+                isDepositing.value = false;
+            },
+
+            createPayment: ({ token_id, authentication_id }) =>
+                depositService.deposit({
+                    patient_id: patientId,
+                    amount,
+                    token_id,
+                    authentication_id,
+                }),
+
+            onSuccess: (res: any) => {
+                showDepositModal.value = false;
+                addDepositLocally(res);
+                success(
+                    res?.message || "Deposit added to the credit on the account.",
+                );
+            },
+        });
+    } catch (err: any) {
+        error(err?.message || "Failed to process the deposit.");
+    } finally {
+        isDepositing.value = false;
+    }
+}
+
+function addDepositLocally(res: any) {
+    const credit = round2(Number(res?.available_credit ?? 0));
+    const idx = selectedIndex.value;
+    const lovedOne = lovedOnes.value[idx];
+    const deposit = res?.deposit;
+
+    if (lovedOne) {
+        lovedOne.refundable_amount = credit;
+    }
+
+    advanceBalance.value = credit;
+
+    if (!deposit) return;
+
+    const entry = {
+        id: `deposit-${deposit.deposit_id}`,
+        type: "deposit",
+        amount: Number(deposit.amount ?? 0),
+        payment_method: deposit.method,
+        reference_id: deposit.deposit_code,
+        masked_account_detail: deposit.masked_account_detail,
+        status: deposit.status,
+        created_at: deposit.created_at,
+        invoice_codes: [],
+    };
+
+    const raw = rawRecords.value[idx];
+
+    if (raw) {
+        raw.patient_refundable = credit;
+        raw.transactions = [entry, ...(raw.transactions ?? [])];
+    }
+
+    rawTransactions.value = [entry, ...rawTransactions.value];
+    transactions.value = [depositEntry(entry), ...transactions.value];
 }
 
 function applyReceiptLocally(receipt: PaymentReceiptData) {
@@ -2138,24 +2270,41 @@ async function openReceipt(receiptNo?: string | null) {
                                     settled.
                                 </p>
 
-                                <button
-                                    v-else-if="advanceBalance > 0"
-                                    @click="openModal"
-                                    class="mt-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
-                                >
-                                    Request Withdraw Credits
-                                    <AppIcon
-                                        name="arrow-right"
-                                        class="h-3.5 w-3.5"
-                                    />
-                                </button>
-
                                 <p
                                     v-else-if="creditOnAccount <= 0"
                                     class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
                                 >
                                     No credit on this account
                                 </p>
+
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <button
+                                        v-if="
+                                            !openRefundRequest &&
+                                            advanceBalance > 0
+                                        "
+                                        @click="openModal"
+                                        class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
+                                    >
+                                        Request Withdraw Credits
+                                        <AppIcon
+                                            name="arrow-right"
+                                            class="h-3.5 w-3.5"
+                                        />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="openDepositModal"
+                                        class="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-4 py-2 text-xs font-semibold text-primary-700 transition hover:bg-primary-100 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/15"
+                                    >
+                                        Deposit
+                                        <AppIcon
+                                            name="plus"
+                                            class="h-3.5 w-3.5"
+                                        />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -2289,14 +2438,14 @@ async function openReceipt(receiptNo?: string | null) {
                                     <p
                                         class="text-sm font-bold text-gray-900 dark:text-white"
                                     >
-                                        Withdrawals &amp; Payments
+                                        Payments, Deposits &amp; Withdrawals
                                     </p>
                                 </div>
 
                                 <p
                                     class="mt-1 pl-10 text-xs text-gray-400 dark:text-gray-500"
                                 >
-                                    Money paid and credit returned on this
+                                    Money paid, deposited and returned on this
                                     account
                                 </p>
                             </div>
@@ -2404,8 +2553,8 @@ async function openReceipt(receiptNo?: string | null) {
 
             <BalanceHistoryModal
                 :open="showAllTransactions"
-                title="All withdrawals &amp; payments"
-                subtitle="Money paid and credit returned on this account"
+                title="All payments, deposits &amp; withdrawals"
+                subtitle="Money paid, deposited and returned on this account"
                 :items="filteredTransactions"
                 :page-size="PAGE_SIZE"
                 :loading="isLoadingLedger"
@@ -2453,6 +2602,17 @@ async function openReceipt(receiptNo?: string | null) {
                 :processing="isPaying"
                 :on-card-pay="payBalance"
                 @close="closePaymentModal"
+            />
+
+            <DepositModal
+                :open="showDepositModal"
+                :patient-name="selectedLovedOne?.full_name"
+                :available-credit="refundableAmount"
+                v-model:amount="depositAmount"
+                v-model:card="card"
+                :processing="isDepositing"
+                :on-card-pay="depositCredit"
+                @close="closeDepositModal"
             />
 
             <PaymentReceipt

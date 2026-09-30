@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Transaction;
+use App\Http\Resources\DepositResource;
 use App\Http\Resources\PatientInvoiceSummaryResource;
 use App\Http\Resources\RefundResource;
 use App\Models\AdmissionPeriod;
@@ -481,6 +482,7 @@ class InvoiceRepository
 
         if ($this->wants($sections, 'refunds')) {
             $summary['refunds'] = $this->formatRefunds($patientModel?->patient_id);
+            $summary['deposits'] = $this->formatDeposits($patientModel?->patient_id);
         }
 
         if ($wantsAdmissions) {
@@ -946,6 +948,18 @@ class InvoiceRepository
         return $this->refundRepository
             ->withdrawalsFor($patientId)
             ->map(fn(Transaction $withdrawal) => RefundResource::format($withdrawal))
+            ->values();
+    }
+
+    private function formatDeposits(mixed $patientId)
+    {
+        if (!$patientId) {
+            return collect();
+        }
+
+        return $this->refundRepository
+            ->depositsFor($patientId)
+            ->map(fn(Transaction $deposit) => DepositResource::format($deposit))
             ->values();
     }
 

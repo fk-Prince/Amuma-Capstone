@@ -300,6 +300,12 @@
                                     label="Credit"
                                     :value="creditOnAccount"
                                     variant="refunded"
+                                    :action-label="
+                                        canRecordPayment
+                                            ? 'Record deposit'
+                                            : undefined
+                                    "
+                                    :on-action="openDeposit"
                                     :hint="creditHint"
                                     :hint-action-label="
                                         hasRefundable && canRecordPayment
@@ -1097,7 +1103,7 @@
 
                                     <div
                                         v-else
-                                        class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8"
+                                        class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 xl:grid-cols-3"
                                     >
                                         <section>
                                             <p
@@ -1282,6 +1288,91 @@
                                                                 Math.abs(
                                                                     entry.amount,
                                                                 ),
+                                                            )
+                                                        }}
+                                                    </p>
+                                                </li>
+                                            </ul>
+                                        </section>
+
+                                        <section
+                                            class="xl:border-l xl:border-gray-100 xl:pl-8 xl:dark:border-white/10"
+                                        >
+                                            <p
+                                                class="pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted dark:text-gray-400"
+                                            >
+                                                Deposits
+                                            </p>
+
+                                            <p
+                                                v-if="!tabDeposits.length"
+                                                class="py-8 text-center text-[13px] text-muted dark:text-gray-400"
+                                            >
+                                                No deposits.
+                                            </p>
+
+                                            <ul
+                                                v-else
+                                                class="divide-y divide-gray-100 dark:divide-white/10"
+                                            >
+                                                <li
+                                                    v-for="entry in tabDeposits"
+                                                    :key="entry.key"
+                                                    class="flex items-start justify-between gap-3 py-3.5 first:pt-0 last:pb-0"
+                                                >
+                                                    <div class="min-w-0">
+                                                        <p
+                                                            class="text-[13px] font-semibold text-secondary dark:text-white"
+                                                        >
+                                                            {{ entry.label }}
+                                                        </p>
+
+                                                        <div
+                                                            class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-400 dark:text-gray-500"
+                                                        >
+                                                            <span
+                                                                v-if="
+                                                                    entry.depositedBy
+                                                                "
+                                                            >
+                                                                {{
+                                                                    entry.depositedBy
+                                                                }}
+                                                            </span>
+
+                                                            <span
+                                                                v-if="
+                                                                    entry.maskedAccount
+                                                                "
+                                                            >
+                                                                {{
+                                                                    entry.maskedAccount
+                                                                }}
+                                                            </span>
+
+                                                            <span>
+                                                                {{
+                                                                    formatDate(
+                                                                        entry.createdAt,
+                                                                    )
+                                                                }}
+                                                            </span>
+                                                        </div>
+
+                                                        <p
+                                                            v-if="entry.note"
+                                                            class="mt-1 text-[12px] text-muted dark:text-gray-400"
+                                                        >
+                                                            {{ entry.note }}
+                                                        </p>
+                                                    </div>
+
+                                                    <p
+                                                        class="shrink-0 text-[13px] font-semibold text-emerald-600 dark:text-emerald-300"
+                                                    >
+                                                        +₱{{
+                                                            formatMoney(
+                                                                entry.amount,
                                                             )
                                                         }}
                                                     </p>
@@ -1889,6 +1980,18 @@
             @close="invoicePickerOpen = false"
         />
     </div>
+    <DepositModal
+        :open="depositOpen"
+        :available="totalRefundable"
+        v-model:amount="depositAmount"
+        v-model:deposited-by="depositedBy"
+        v-model:note="depositNote"
+        :processing="recordingDeposit"
+        :error-message="depositError"
+        @confirm="confirmDeposit"
+        @close="depositOpen = false"
+    />
+
     <WithdrawCreditsModal
         :open="creditRefundOpen"
         :available="totalRefundable"
@@ -1912,12 +2015,14 @@ import { useRoute, useRouter } from "vue-router";
 import { admissionService } from "~/api/admission/AdmissionService";
 import { invoiceService } from "~/api/invoice/InvoiceService";
 import { refundService } from "~/api/refund/RefundService";
+import { depositService } from "~/api/deposit/DepositService";
 import { formatAmount } from "~/utils/currency";
 import { statusClasses } from "~/utils/invoiceStatus";
 import { amountFor as resolveInvoiceAmount } from "~/utils/invoiceSelection";
 import BillingCycleModal from "~/components/sections/app/Patient/BillingCycleModal.vue";
 import BillingHistoryModal from "~/components/sections/app/Billing/BillingHistoryModal.vue";
 import WithdrawCreditsModal from "~/components/sections/app/Billing/WithdrawCreditsModal.vue";
+import DepositModal from "~/components/sections/app/Billing/DepositModal.vue";
 import DischargeCalculationModal from "~/components/sections/app/Billing/DischargeCalculationModal.vue";
 import EntityInvoicesModal from "~/components/sections/app/Billing/EntityInvoicesModal.vue";
 import ExtendPaymentModal from "~/components/sections/app/Billing/ExtendPaymentModal.vue";
@@ -2315,6 +2420,20 @@ const tabRefunds = computed(() =>
         .sort(byNewest),
 );
 
+const tabDeposits = computed(() =>
+    (summary.value?.deposits ?? [])
+        .map((deposit) => ({
+            key: `deposit-${deposit.deposit_id}`,
+            label: entryLabel(deposit.deposit_code, "Deposit", deposit.method),
+            depositedBy: deposit.deposited_by,
+            maskedAccount: deposit.masked_account_detail,
+            note: deposit.note,
+            amount: Number(deposit.amount ?? 0),
+            createdAt: deposit.created_at ?? null,
+        }))
+        .sort(byNewest),
+);
+
 const isVoided = (status?: string) => (status ?? "").toLowerCase() === "void";
 
 const isClosedStatus = (status?: string) => {
@@ -2439,6 +2558,83 @@ async function issueRefunds() {
         await fetchSummary();
     } finally {
         issuingRefund.value = false;
+    }
+}
+
+const depositOpen = ref(false);
+const depositAmount = ref<number | string | null>(null);
+const depositedBy = ref("");
+const depositNote = ref("");
+const recordingDeposit = ref(false);
+
+const depositError = computed(() => {
+    if (depositAmount.value === null || depositAmount.value === "") {
+        return "";
+    }
+
+    const amount = Number(depositAmount.value);
+
+    if (!Number.isFinite(amount) || amount < 1) {
+        return "Enter an amount of at least ₱1.";
+    }
+
+    return "";
+});
+
+function openDeposit() {
+    depositAmount.value = null;
+    depositedBy.value = "";
+    depositNote.value = "";
+    depositOpen.value = true;
+}
+
+async function confirmDeposit() {
+    if (recordingDeposit.value || depositError.value) return;
+
+    const amount = Number(depositAmount.value ?? 0);
+
+    if (!(amount > 0)) return;
+
+    recordingDeposit.value = true;
+
+    try {
+        const res = await depositService.issue({
+            p_uuid: patientUuid.value,
+            branch_uuid: uuid.value,
+            amount,
+            ...(depositedBy.value.trim()
+                ? { deposited_by: depositedBy.value.trim() }
+                : {}),
+            ...(depositNote.value.trim()
+                ? { note: depositNote.value.trim() }
+                : {}),
+        });
+
+        if (summary.value) {
+            summary.value.total_refundable = Number(
+                res?.available_credit ?? summary.value.total_refundable,
+            );
+
+            if (res?.deposit) {
+                summary.value.deposits = [
+                    res.deposit,
+                    ...(summary.value.deposits ?? []),
+                ];
+            }
+        }
+
+        depositOpen.value = false;
+
+        success(res?.message ?? `Deposit of ₱${formatMoney(amount)} recorded.`);
+    } catch (err: any) {
+        error(
+            err?.data?.message ??
+                err?.response?.data?.message ??
+                err?.message ??
+                "Unable to record the deposit.",
+        );
+    } finally {
+        recordingDeposit.value = false;
     }
 }
 

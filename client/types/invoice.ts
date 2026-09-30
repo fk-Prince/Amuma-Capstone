@@ -161,6 +161,19 @@ export interface PatientRefund extends InvoiceRefund {
     invoice_codes: string[];
 }
 
+export interface PatientDeposit {
+    deposit_id: number;
+    deposit_code: string | null;
+    reference_id: string | null;
+    amount: number;
+    method: string | null;
+    masked_account_detail: string | null;
+    deposited_by: string | null;
+    note: string | null;
+    status: string;
+    created_at: string | null;
+}
+
 export interface PatientPayment {
     payment_id: number;
     payment_code: string | null;
@@ -422,6 +435,7 @@ export interface PatientInvoiceSummary {
     voided_invoices: PatientInvoiceItem[];
     payments: PatientPayment[];
     refunds: PatientRefund[];
+    deposits?: PatientDeposit[];
     admissions: PatientAdmission[];
     services: InvoiceServiceLine[];
     discharge_calculation: DischargeCalculation | null;

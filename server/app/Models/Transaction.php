@@ -13,6 +13,7 @@ class Transaction extends Model
 
     public const TYPE_PAYMENT = 'payment';
     public const TYPE_WITHDRAW = 'withdraw';
+    public const TYPE_DEPOSIT = 'deposit';
 
     public const DIRECTION_CREDIT = 'credit';
     public const DIRECTION_DEBIT = 'debit';

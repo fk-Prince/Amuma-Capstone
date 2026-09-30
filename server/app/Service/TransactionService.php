@@ -59,6 +59,25 @@ class TransactionService
         );
     }
 
+    public function forDeposit(
+        float $amount,
+        mixed $branchId,
+        mixed $patientId,
+        ?string $description = null,
+        array $extra = []
+    ): Transaction {
+        return $this->record(
+            Transaction::TYPE_DEPOSIT,
+            Transaction::DIRECTION_CREDIT,
+            $amount,
+            $branchId,
+            $patientId,
+            $description,
+            Transaction::STATUS_COMPLETED,
+            $extra
+        );
+    }
+
     public function forWithdraw(
         float $amount,
         mixed $branchId,
