@@ -133,6 +133,40 @@ function segments(shift: ShiftBoardShift): [number, number][] {
     return [[start, DAY], ...(end > 0 ? [[0, end] as [number, number]] : [])];
 }
 
+const LANE_HEIGHT = 36;
+const LANE_GAP = 4;
+
+function layoutBars(shifts: ShiftBoardShift[]) {
+    const bars = shifts
+        .flatMap((shift) =>
+            segments(shift).map(([start, end], index) => ({
+                key: `${shift.caregiver_facility_shift_id}-${index}`,
+                shift,
+                start,
+                end,
+                lane: 0,
+            })),
+        )
+        .sort((a, b) => a.start - b.start || a.end - b.end);
+
+    const laneEnds: number[] = [];
+
+    for (const bar of bars) {
+        let lane = laneEnds.findIndex((end) => end <= bar.start);
+
+        if (lane === -1) lane = laneEnds.push(0) - 1;
+
+        laneEnds[lane] = bar.end;
+        bar.lane = lane;
+    }
+
+    return { bars, lanes: Math.max(laneEnds.length, 1) };
+}
+
+function trackHeight(lanes: number) {
+    return lanes * LANE_HEIGHT + (lanes + 1) * LANE_GAP;
+}
+
 function isOnDuty(shift: ShiftBoardShift) {
     return segments(shift).some(
         ([start, end]) => nowMinutes.value >= start && nowMinutes.value < end,
@@ -216,6 +250,7 @@ const caregivers = computed(() => {
             ...group,
             residents: new Set(group.shifts.map((s) => s.resident.admission_id))
                 .size,
+            layout: layoutBars(group.shifts),
             dutyMinutes: dutyMinutes(group.shifts),
             onDuty: group.shifts.some(isOnDuty),
         }))
@@ -581,7 +616,8 @@ const residents = computed(() => {
                             </div>
 
                             <div
-                                class="relative h-11 flex-1 overflow-hidden rounded-lg bg-slate-50 dark:bg-white/5"
+                                class="relative flex-1 overflow-hidden rounded-lg bg-slate-50 dark:bg-white/5"
+                                :style="{ height: `${trackHeight(row.layout.lanes)}px` }"
                             >
                                 <span
                                     v-for="hour in HOUR_MARKS.slice(1, -1)"
@@ -590,41 +626,36 @@ const residents = computed(() => {
                                     :style="{ left: `${(hour / 24) * 100}%` }"
                                 />
 
-                                <template
-                                    v-for="shift in row.shifts"
-                                    :key="shift.caregiver_facility_shift_id"
+                                <button
+                                    v-for="bar in row.layout.bars"
+                                    :key="bar.key"
+                                    type="button"
+                                    :title="`${bar.shift.resident.full_name} · ${formatTime(bar.shift.start_time)} – ${formatTime(bar.shift.end_time)}${bar.shift.note ? ` · ${bar.shift.note}` : ''}`"
+                                    class="absolute flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md px-2 text-left text-[11px] font-medium transition hover:brightness-95"
+                                    :class="
+                                        isOnDuty(bar.shift)
+                                            ? 'bg-primary-500 text-white'
+                                            : 'bg-primary-100 text-primary-800 dark:bg-primary-500/25 dark:text-primary-100'
+                                    "
+                                    :style="{
+                                        top: `${LANE_GAP + bar.lane * (LANE_HEIGHT + LANE_GAP)}px`,
+                                        height: `${LANE_HEIGHT}px`,
+                                        left: `${(bar.start / DAY) * 100}%`,
+                                        width: `calc(${((bar.end - bar.start) / DAY) * 100}% - 2px)`,
+                                    }"
+                                    @click="openResident(bar.shift.resident)"
                                 >
-                                    <button
-                                        v-for="([start, end], index) in segments(
-                                            shift,
-                                        )"
-                                        :key="index"
-                                        type="button"
-                                        :title="`${shift.resident.full_name} · ${formatTime(shift.start_time)} – ${formatTime(shift.end_time)}${shift.note ? ` · ${shift.note}` : ''}`"
-                                        class="absolute inset-y-1 flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md px-2 text-left text-[11px] font-medium transition hover:brightness-95"
-                                        :class="
-                                            isOnDuty(shift)
-                                                ? 'bg-primary-500 text-white'
-                                                : 'bg-primary-100 text-primary-800 dark:bg-primary-500/25 dark:text-primary-100'
-                                        "
-                                        :style="{
-                                            left: `${(start / DAY) * 100}%`,
-                                            width: `calc(${((end - start) / DAY) * 100}% - 2px)`,
-                                        }"
-                                        @click="openResident(shift.resident)"
-                                    >
-                                        <span class="truncate">
-                                            {{ shift.resident.full_name }}
-                                        </span>
+                                    <span class="truncate">
+                                        {{ bar.shift.resident.full_name }}
+                                    </span>
 
-                                        <span
-                                            v-if="shift.resident.room_no"
-                                            class="shrink-0 opacity-75"
-                                        >
-                                            {{ shift.resident.room_no }}
-                                        </span>
-                                    </button>
-                                </template>
+                                    <span
+                                        v-if="bar.shift.resident.room_no"
+                                        class="shrink-0 opacity-75"
+                                    >
+                                        {{ bar.shift.resident.room_no }}
+                                    </span>
+                                </button>
 
                                 <span
                                     class="pointer-events-none absolute inset-y-0 w-0.5 bg-rose-500"
