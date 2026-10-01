@@ -19,6 +19,11 @@
                         :loading="pending"
                         :mine-only="route.query.assignment === 'mine'"
                         :can-assign="canAssign(Modules.Schedules)"
+                        :search="
+                            typeof route.query.search === 'string'
+                                ? route.query.search
+                                : ''
+                        "
                     />
 
                     <div v-else-if="pending" class="p-4 space-y-3">
@@ -488,8 +493,6 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
             const [board, overview] = await Promise.all([
                 caregiverShiftService.board({
                     branch_uuid: uuid.value,
-                    ...(typeof route.query.search === "string" &&
-                        route.query.search && { search: route.query.search }),
                     ...(assignment === "mine" && { assigned_only: 1 }),
                 }),
                 fetchScheduleOverview(uuid.value),
@@ -545,8 +548,10 @@ async function loadMore() {
 
 watch(
     () => {
-        const { view, ...rest } = route.query;
-        return JSON.stringify(rest);
+        const { view, search, ...rest } = route.query;
+        return JSON.stringify(
+            scheduleType.value === "shifts" ? rest : { ...rest, search },
+        );
     },
     () => {
         loadSchedules({ append: false });

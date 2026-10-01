@@ -24,6 +24,7 @@ const props = defineProps<{
     loading?: boolean;
     mineOnly?: boolean;
     canAssign?: boolean;
+    search?: string;
 }>();
 
 const emit = defineEmits<{
@@ -229,13 +230,34 @@ function admissionLink(resident: ShiftBoardResident) {
         : undefined;
 }
 
+const searchTerm = computed(() => (props.search ?? "").trim().toLowerCase());
+
+function matches(...values: (string | null | undefined)[]) {
+    return values.some((value) =>
+        (value ?? "").toLowerCase().includes(searchTerm.value),
+    );
+}
+
+function residentMatches(resident: ShiftBoardResident) {
+    return matches(resident.full_name, resident.room_no, roomLabel(resident));
+}
+
+const visibleShifts = computed(() =>
+    (props.board?.shifts ?? []).filter(
+        (shift) =>
+            !searchTerm.value ||
+            matches(shift.caregiver.full_name) ||
+            residentMatches(shift.resident),
+    ),
+);
+
 const caregivers = computed(() => {
     const groups = new Map<
         number,
         { caregiver: ShiftBoardShift["caregiver"]; shifts: ShiftBoardShift[] }
     >();
 
-    for (const shift of props.board?.shifts ?? []) {
+    for (const shift of visibleShifts.value) {
         const id = shift.caregiver.employee_id;
 
         if (!groups.has(id)) {
@@ -267,11 +289,14 @@ const onDutyCount = computed(
 
 const residentsCovered = computed(
     () =>
-        new Set((props.board?.shifts ?? []).map((s) => s.resident.admission_id))
-            .size,
+        new Set(visibleShifts.value.map((s) => s.resident.admission_id)).size,
 );
 
-const uncovered = computed(() => props.board?.uncovered ?? []);
+const uncovered = computed(() =>
+    (props.board?.uncovered ?? []).filter(
+        (resident) => !searchTerm.value || residentMatches(resident),
+    ),
+);
 
 const dutyLimitMinutes = computed(() => (props.board?.duty_limit ?? 12) * 60);
 
@@ -293,7 +318,7 @@ const residents = computed(() => {
         { resident: ShiftBoardResident; caregivers: number }
     >();
 
-    for (const shift of props.board?.shifts ?? []) {
+    for (const shift of visibleShifts.value) {
         const entry = entries.get(shift.resident.admission_id) ?? {
             resident: shift.resident,
             caregivers: 0,
@@ -361,15 +386,20 @@ const residents = computed(() => {
 
             <p class="text-sm font-semibold text-slate-600 dark:text-gray-400">
                 {{
-                    mineOnly
-                        ? "You have no facility caregiver shifts"
-                        : "No facility caregiver shifts yet"
+                    searchTerm
+                        ? "No shifts match your search"
+                        : mineOnly
+                          ? "You have no facility caregiver shifts"
+                          : "No facility caregiver shifts yet"
                 }}
             </p>
 
             <p class="max-w-xs text-sm text-slate-400 dark:text-gray-500">
-                Caregivers are assigned to residents from the resident's
-                Admission tab.
+                {{
+                    searchTerm
+                        ? "Try another resident, caregiver or room."
+                        : "Caregivers are assigned to residents from the resident's Admission tab."
+                }}
             </p>
         </div>
 
