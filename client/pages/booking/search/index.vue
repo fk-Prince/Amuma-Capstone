@@ -157,7 +157,7 @@ const loadingMore = ref(false);
 const page = ref(1);
 const lastPage = ref(1);
 
-const PER_PAGE = 6;
+const PER_PAGE = 15;
 
 const DEFAULT_LOCATION = DAVAO_DEFAULT;
 
