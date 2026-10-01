@@ -9,26 +9,30 @@ use Illuminate\Support\Facades\Cache;
 
 class ReviewRepository
 {
-    private function cacheKey(string $branchUuid): string
+    private function cacheKey(?string $branchUuid): string
     {
-        return "reviews:branch:{$branchUuid}";
+        return $branchUuid ? "reviews:branch:{$branchUuid}" : 'reviews:app';
     }
 
 
-    private function loadReviews(string $branchUuid)
+    private function loadReviews(?string $branchUuid)
     {
         return Cache::rememberForever(
             $this->cacheKey($branchUuid),
             fn() => Review::query()
-                ->whereHas('branch', fn($q) => $q->where('uuid', $branchUuid))
-                ->with('user')
+                ->when(
+                    $branchUuid,
+                    fn($q) => $q->whereHas('branch', fn($b) => $b->where('uuid', $branchUuid)),
+                    fn($q) => $q->whereNull('branch_id')
+                )
+                ->with(Review::REVIEWER_RELATIONS)
                 ->orderByRaw('ROUND(rate) DESC')
                 ->latest()
                 ->get()
         );
     }
 
-    public function paginate(int $perPage, string $branch_uuid,  ?int $rate = null,  bool $withComments = false,  bool $withMedia = false)
+    public function paginate(int $perPage, ?string $branch_uuid,  ?int $rate = null,  bool $withComments = false,  bool $withMedia = false)
     {
         $all = $this->loadReviews($branch_uuid);
 
@@ -92,26 +96,23 @@ class ReviewRepository
     public function create(array $payload, ?string $branchUuid = null)
     {
         $review = Review::create($payload);
+        $review->load(Review::REVIEWER_RELATIONS);
 
-        if ($branchUuid) {
-            $review->load('user');
+        $key = $this->cacheKey($branchUuid);
+        $cached = Cache::get($key);
 
-            $key = $this->cacheKey($branchUuid);
-            $cached = Cache::get($key);
+        if ($cached !== null) {
+            $updated = $cached->push($review)->sort(function ($a, $b) {
+                $rateCompare = round($b->rate) <=> round($a->rate);
 
-            if ($cached !== null) {
-                $updated = $cached->push($review)->sort(function ($a, $b) {
-                    $rateCompare = round($b->rate) <=> round($a->rate);
+                return $rateCompare !== 0
+                    ? $rateCompare
+                    : $b->created_at <=> $a->created_at;
+            })->values();
 
-                    return $rateCompare !== 0
-                        ? $rateCompare
-                        : $b->created_at <=> $a->created_at;
-                })->values();
-
-                Cache::forever($key, $updated);
-            } else {
-                $this->loadReviews($branchUuid);
-            }
+            Cache::forever($key, $updated);
+        } else {
+            $this->loadReviews($branchUuid);
         }
 
         return $review;

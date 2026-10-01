@@ -141,7 +141,8 @@ const linkClass =
     "w-fit text-sm leading-6 text-gray-400 transition-colors hover:text-white";
 
 const companyLinks = [
-    { label: "About", to: "/" },
+    { label: "About", to: "/company" },
+    { label: "Reviews", to: "/company/reviews" },
     { label: "Contact", to: "/" },
 ];
 </script>

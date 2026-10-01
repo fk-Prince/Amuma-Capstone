@@ -18,9 +18,12 @@ class ReviewService
 
     public function createReview(User $user, array $payload)
     {
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        $branch = !empty($payload['branch_uuid'])
+            ? BranchGuard::resolveBranch($payload['branch_uuid'])
+            : null;
+
         $reviewData = [
-            'branch_id' => $branch->branch_id ?? null,
+            'branch_id' => $branch?->branch_id,
             'user_id' => $user->user_id,
             'rate' => $payload['rate'],
             'description' => $payload['description'],
@@ -30,7 +33,7 @@ class ReviewService
             $reviewData['image'] = SupabaseService::store($payload['image'])['url'];
         }
 
-        $review = $this->reviewRepository->create($reviewData, $branch->uuid);
+        $review = $this->reviewRepository->create($reviewData, $branch?->uuid);
 
         return response()->json([
             'success' => true,
@@ -41,7 +44,10 @@ class ReviewService
 
     public function retrieveReview(array $payload)
     {
-        $branch =  BranchGuard::resolveBranch($payload['branch_uuid']);
-        return $this->reviewRepository->paginate($payload['per_page'],  $branch->uuid,  $payload['rate'] ?? null,   $payload['withComments'] ?? false,   $payload['withMedia'] ?? false);
+        $branch = !empty($payload['branch_uuid'])
+            ? BranchGuard::resolveBranch($payload['branch_uuid'])
+            : null;
+
+        return $this->reviewRepository->paginate($payload['per_page'],  $branch?->uuid,  $payload['rate'] ?? null,   $payload['withComments'] ?? false,   $payload['withMedia'] ?? false);
     }
 }

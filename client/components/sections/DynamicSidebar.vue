@@ -73,6 +73,34 @@
                                         v-if="item.divider"
                                         class="h-px bg-primary-100 my-2.5 mx-2"
                                     />
+                                    <div
+                                        v-else-if="item.children?.length"
+                                        class="flex flex-col gap-1"
+                                    >
+                                        <p
+                                            class="mt-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted dark:text-gray-400"
+                                        >
+                                            {{ item.label }}
+                                        </p>
+                                        <NuxtLink
+                                            v-for="child in item.children"
+                                            :key="child.to"
+                                            :to="child.to"
+                                            :class="navClass(child.to, false, true)"
+                                            @click="$emit('close')"
+                                        >
+                                            <span :class="iconWrapClass(child.to, true)">
+                                                <component
+                                                    v-if="child.icon"
+                                                    :is="child.icon"
+                                                    class="w-4 h-4"
+                                                />
+                                            </span>
+                                            <span class="truncate">{{
+                                                child.label
+                                            }}</span>
+                                        </NuxtLink>
+                                    </div>
                                     <NuxtLink
                                         v-else
                                         :to="item.to"
@@ -434,6 +462,7 @@ const props = withDefaults(
             to: string;
             icon?: any;
             divider?: boolean;
+            children?: Array<{ label: string; to: string; icon?: any }>;
         }>;
         user?: any | null;
         variant?: 1 | 2;
@@ -484,24 +513,24 @@ onBeforeUnmount(() => {
     window.removeEventListener("resize", checkScreen);
 });
 
-function isActive(to: string) {
-    return route.path === to || route.path.startsWith(to + "/");
+function isActive(to: string, exact = false) {
+    return route.path === to || (!exact && route.path.startsWith(to + "/"));
 }
 
-function navClass(to: string, desktop = false) {
+function navClass(to: string, desktop = false, exact = false) {
     return [
         "relative px-3 py-2 rounded-lg transition-all duration-200 flex gap-2.5 items-center font-medium text-[13px]",
         desktop && desktopCollapsed.value ? "justify-center px-0" : "",
-        isActive(to)
+        isActive(to, exact)
             ? "bg-primary text-white shadow-md shadow-primary-500/30"
             : "text-primary-700 hover:bg-primary-50 dark:text-white/80 dark:hover:bg-white/10",
     ];
 }
 
-function iconWrapClass(to: string) {
+function iconWrapClass(to: string, exact = false) {
     return [
         "w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors duration-200",
-        isActive(to)
+        isActive(to, exact)
             ? "bg-white/20 text-white"
             : "bg-primary-50 text-primary-500 dark:bg-white/10 dark:text-white/70",
     ];

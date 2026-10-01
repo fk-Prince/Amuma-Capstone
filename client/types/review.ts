@@ -9,6 +9,10 @@ export interface Review {
     created_at: string;
     updated_at: string;
     user: User
+    reviewer?: {
+        role: string;
+        organization: string | null;
+    } | null;
 }
 
 export interface ReviewListResponse {

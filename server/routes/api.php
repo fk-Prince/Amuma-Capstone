@@ -161,8 +161,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile',  [UserController::class, 'profile']);
     Route::post('/profile',  [UserController::class, 'updateProfile']);
     Route::post('/onboarding/{area}',  [UserController::class, 'completeOnboarding'])->whereIn('area', ['portal']);
-    Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 });
+
+Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 
 
 // PRIVATE API ROUTES
