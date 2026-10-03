@@ -1,8 +1,15 @@
-
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
+import { authMenuList } from "~/config/authMenu";
+import { PermissionAction } from "~/utils/permissions";
 
-const AUTH_ROUTES = ["/auth/signin", "/auth/signup", "/auth/forgot-password"];
+const AUTH_ROUTES = [
+    "/auth/select",
+    "/auth/staff/signin",
+    "/auth/family/signin",
+    "/auth/signup",
+    "/auth/agency/signup",
+];
 
 export default defineNuxtRouteMiddleware(async (to) => {
     const user = useAuthUser();
@@ -14,23 +21,79 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const isAuthenticated = !!user.value;
 
     if (!isAuthenticated && !isAuthRoute) {
+        // Someone heading to checkout with no account is a new subscriber,
+        // so send them to the agency sign-up instead of the portal chooser.
+        const target = to.path.startsWith("/product/subscription-details")
+            ? "/auth/agency/signup"
+            : to.path.startsWith("/portal") || to.path.startsWith("/booking")
+              ? "/auth/family/signin"
+              : to.path.startsWith("/app")
+                ? "/auth/staff/signin"
+                : "/auth/select";
+
+        saveAuthRedirect(to.fullPath);
+
         return navigateTo({
-            path: "/auth/signin",
+            path: target,
             query: { redirect: to.fullPath },
         });
     }
 
     if (isAuthenticated && isAuthRoute) {
-        return navigateTo("/");
+        if (user.value?.isClient) {
+            return navigateTo("/portal/overview");
+        }
+
+        if (user.value?.isSystemOwner) {
+            return navigateTo("/app/owner/dashboard");
+        }
+
+        if (!branchStore.branches.length) {
+            await branchStore.fetchBranches();
+            return;
+        }
+
+        const defaultBranch = branchStore.branches[0];
+
+        return navigateTo(
+            defaultBranch?.uuid
+                ? `/app/branches/${defaultBranch.uuid}/dashboard`
+                : "/app/branches/dashboard",
+        );
     }
 
-    const branchUuid = to.params.uuid as string;
+    if (to.path.startsWith("/app/branches/")) {
+        const branchUuid = to.params.uuid as string;
+        if (!branchUuid) return;
 
-    if (
-        to.path.startsWith("/app/branches/") &&
-        branchUuid &&
-        !branchStore.loaded
-    ) {
-        await branchStore.fetchBranches(branchUuid);
+        if (!branchStore.branches.length) {
+            await branchStore.fetchBranches(branchUuid);
+        }
+
+        const branch = branchStore.branches.find((b) => b?.uuid === branchUuid);
+        if (!branch) {
+            return navigateTo("/403");
+        }
+
+        const readableModules = branch.permissions
+            ?.filter((p) => p.actions?.includes(PermissionAction.Read))
+            .map((p) => p.module_name) ?? [];
+
+        const selectedMenu = authMenuList.find((item) => {
+            const uuid = item.to.replace("[uuid]", branchUuid);
+            return to.path === uuid || to.path.startsWith(uuid);
+        });
+
+        const isDashboard = selectedMenu?.to?.endsWith("/dashboard");
+
+        if (!isDashboard && selectedMenu?.modules) {
+            const hasModuleAccess = selectedMenu.modules.some((m) =>
+                readableModules.includes(m),
+            );
+
+            if (!hasModuleAccess) {
+                return navigateTo("/403");
+            }
+        }
     }
 });

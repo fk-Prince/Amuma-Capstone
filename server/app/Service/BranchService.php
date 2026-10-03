@@ -132,6 +132,13 @@ class BranchService
                 throw new \RuntimeException('Image upload failed.');
             }
 
+            // A branch only ever has one cover photo: a new upload replaces the old one.
+            if (($payload['type'] ?? null) === BranchImage::IMAGE_COVER) {
+                BranchImage::where('branch_id', $payload['branch_id'])
+                    ->where('type', BranchImage::IMAGE_COVER)
+                    ->delete();
+            }
+
             $data = BranchImage::create([
                 'image_url' => $stored['url'],
                 'branch_id' => $payload['branch_id'],
@@ -150,9 +157,17 @@ class BranchService
     {
         if ($payload['action'] === 'image') {
             $perPage = $payload['per_page'] ?? 20;
-            return BranchImage::where('branch_id', $payload['branch_id'])
-                ->latest()
-                ->paginate($perPage);
+            $query = BranchImage::where('branch_id', $payload['branch_id']);
+
+            // The cover photo is managed from Branch Information, so it stays out of the
+            // gallery list unless it is asked for explicitly.
+            if (!empty($payload['type'])) {
+                $query->where('type', $payload['type']);
+            } else {
+                $query->where('type', '!=', BranchImage::IMAGE_COVER);
+            }
+
+            return $query->latest()->paginate($perPage);
         }
     }
 

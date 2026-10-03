@@ -1,200 +1,518 @@
 <template>
-    <tr class="group hover:bg-[#F7FAF9] transition-colors dark:hover:bg-white/5">
-        <td class="py-4 pl-6 pr-3 whitespace-nowrap">
-            <div class="flex flex-col gap-1">
-                <span
-                    class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-[#EAF4F2] text-[#0E7C7B] w-fit dark:text-accent-300 dark:bg-accent-500/15"
-                >
-                    <span
-                        class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                        :class="statusDotClasses(booking.status)"
-                    />
-                    #{{ booking.reference_id }}
-                </span>
-
-                <span class="text-[11px] text-gray-400 dark:text-gray-500">
-                    {{ stringToDateTime(booking.created_at) }}
-                </span>
+    <div>
+        <div
+            v-if="loading"
+            class="hidden lg:block rounded-2xl border border-gray-100 bg-white p-6 shadow-sm animate-pulse dark:border-white/10 dark:bg-secondary"
+        >
+            <div class="h-4 w-32 rounded bg-gray-200 dark:bg-white/15"></div>
+            <div class="mt-4 flex flex-col gap-3">
+                <div class="h-16 rounded-xl bg-gray-200 dark:bg-white/15"></div>
+                <div class="h-16 rounded-xl bg-gray-200 dark:bg-white/15"></div>
             </div>
-        </td>
+            <div class="mt-4 h-11 rounded-xl bg-gray-200 dark:bg-white/15"></div>
+        </div>
 
-        <td class="py-4 px-3 min-w-[220px]">
-            <div class="flex items-center gap-3 min-w-0">
-                <div class="min-w-0">
-                    <p class="font-semibold text-[#16302E] truncate text-sm dark:text-white">
-                        {{
-                            fullName(
-                                booking.patient?.first_name,
-                                booking.patient?.middle_name,
-                                booking.patient?.last_name,
-                            )
-                        }}
-                    </p>
-                    <p class="text-xs text-muted dark:text-gray-400 truncate">
-                        {{ serviceAddress }}
+        <div
+            v-else
+            class="hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:block dark:border-white/10 dark:bg-secondary"
+        >
+            <div class="flex w-full items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <CalendarCheck class="h-6 w-6 text-primary" />
+                    <p class="text-base font-bold text-secondary dark:text-white">
+                        Choose a Service
                     </p>
                 </div>
+
+                <span
+                    v-if="getBranchTimeDisplay(branch?.settings).is24Hours"
+                    class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                >
+                    Open 24 Hours
+                </span>
+
+                <span
+                    v-else
+                    class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                >
+                    <Clock class="h-3.5 w-3.5" />
+                    {{ getBranchTimeDisplay(branch?.settings).label }}
+                </span>
             </div>
-        </td>
 
-        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap capitalize">
-            {{ booking.category ?? "—" }}
-        </td>
-
-        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap">
-            {{
-                booking.homecare?.type === "Medical"
-                    ? "Medical Services"
-                    : booking.facility?.type === "Complete"
-                      ? "Complete Admission"
-                      : booking.facility?.type === "Pre-Admission"
-                        ? booking.facility?.type
-                        : booking.homecare?.type === "ADL"
-                          ? "Activity of Daily Living (ADL)"
-                          : "—"
-            }}
-        </td>
-
-        <td class="py-4 px-3 text-sm text-muted dark:text-gray-400 whitespace-nowrap">
-            {{
-                booking.category === "facility"
-                    ? booking.facility?.admission_date
-                        ? formatDate(booking.facility.admission_date)
-                        : "—"
-                    : booking.homecare?.date
-                      ? formatDate(booking.homecare.date)
-                      : "—"
-            }}
-        </td>
-        <td v-if="booking.valid_until" class="py-4 px-3 whitespace-nowrap">
-            <span class="px-3 py-1 rounded-full text-xs font-medium capitalize">
-                {{ stringToDateTime(booking.valid_until) }}
-            </span>
-        </td>
-
-        <td class="py-4 px-3 whitespace-nowrap">
-            <span
-                class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-                :class="statusClasses(booking.status)"
-            >
-                {{ formatStatus(booking.status) }}
-            </span>
-        </td>
-
-        <td class="py-4 pl-3 pr-6 whitespace-nowrap">
-            <div class="flex items-center justify-end gap-2">
+            <div class="mt-5 flex flex-col gap-3">
                 <button
-                    v-if="
-                        booking.status.toLowerCase() === 'pending' &&
-                        booking.facility?.type !== 'Pre-Admission'
-                    "
+                    v-if="hasHomecare"
                     type="button"
-                    @click.stop="emit('reject', booking)"
-                    class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"
+                    :disabled="!canUseHomecare"
+                    @click="selected = 'homecare'"
+                    class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
+                    :class="[
+                        selected === 'homecare'
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                            : 'border-gray-200 dark:border-white/10',
+                        canUseHomecare
+                            ? 'hover:border-primary cursor-pointer'
+                            : 'cursor-not-allowed opacity-60',
+                    ]"
                 >
-                    Reject
-                </button>
-
-                <button
-                    type="button"
-                    @click.stop="viewDetails"
-                    class="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4EFED] text-[#16302E] hover:bg-[#F0F5F4] transition flex items-center gap-1 shrink-0 dark:hover:bg-white/5 dark:border-white/10 dark:text-white"
-                >
-                    View
-                    <svg
-                        class="w-3.5 h-3.5 text-[#6B8A87] dark:text-gray-400"
-                        viewBox="0 0 20 20"
-                        fill="none"
+                    <span
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white"
                     >
-                        <path
-                            d="M7.5 5L12.5 10L7.5 15"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
+                        <House class="h-6 w-6" />
+                    </span>
+
+                    <span class="flex-1">
+                        <span class="block text-sm font-semibold text-gray-900 dark:text-white">
+                            Homecare Services
+                        </span>
+
+                        <span class="block text-xs text-gray-500 dark:text-gray-400">
+                            Care delivered at your home
+                        </span>
+
+                        <span
+                            v-if="!canUseHomecare"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                            Currently unavailable
+                        </span>
+                    </span>
+
+                    <CheckCircle2
+                        v-if="selected === 'homecare'"
+                        class="h-5 w-5 shrink-0 text-primary"
+                    />
+
+                    <ChevronRight v-else class="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                </button>
+
+                <button
+                    v-if="hasFacility"
+                    type="button"
+                    :disabled="!canUseFacility"
+                    @click="selected = 'facility'"
+                    class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
+                    :class="[
+                        selected === 'facility'
+                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20 dark:bg-emerald-500/10'
+                            : 'border-gray-200 dark:border-white/10',
+                        canUseFacility
+                            ? 'hover:border-emerald-300 cursor-pointer'
+                            : 'cursor-not-allowed opacity-60',
+                    ]"
+                >
+                    <span
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white"
+                    >
+                        <Building2 class="h-6 w-6" />
+                    </span>
+
+                    <span class="flex-1">
+                        <span class="block text-sm font-semibold text-gray-900 dark:text-white">
+                            Facility Admission
+                        </span>
+
+                        <span class="block text-xs text-gray-500 dark:text-gray-400">
+                            In-house, facility-based care
+                        </span>
+
+                        <span
+                            v-if="branch?.facility.length === 0"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                            Currently unavailable
+                        </span>
+
+                        <span
+                            v-else-if="availableSlots > 0"
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/20"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+
+                            {{ availableSlots }}
+                            slot{{ availableSlots === 1 ? "" : "s" }}
+                            available
+                        </span>
+
+                        <span
+                            v-else
+                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+
+                            No rooms availables
+                        </span>
+                    </span>
+
+                    <CheckCircle2
+                        v-if="selected === 'facility'"
+                        class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300"
+                    />
+
+                    <ChevronRight v-else class="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                </button>
+
+                <p
+                    v-if="!hasHomecare && !hasFacility"
+                    class="rounded-xl border border-dashed border-gray-200 p-4 text-sm text-gray-400 dark:border-white/10 dark:text-gray-500"
+                >
+                    No services are currently listed for this branch.
+                </p>
+            </div>
+
+            <template v-if="hasHomecare || hasFacility">
+                <button
+                    type="button"
+                    :disabled="!selected"
+                    @click="confirm"
+                    class="mt-5 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Continue to Book
+                </button>
+
+                <p
+                    class="mt-3 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
+                >
+                    <ShieldCheck class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                    Your information is safe and secure.
+                </p>
+            </template>
+        </div>
+
+        <div
+            v-if="!loading && serviceOptions.length"
+            class="lg:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white p-4 dark:bg-secondary dark:border-white/10"
+        >
+            <div class="flex items-center gap-3">
+                <button
+                    type="button"
+                    class="flex flex-1 items-center gap-3 rounded-xl border border-gray-200 px-4 py-2.5 text-left transition hover:border-gray-300 dark:border-white/10 dark:hover:border-white/10"
+                    @click="mobileSheetOpen = true"
+                >
+                    <span
+                        v-if="selected"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white"
+                        :class="
+                            selected === 'homecare'
+                                ? 'bg-primary'
+                                : 'bg-emerald-600'
+                        "
+                    >
+                        <House v-if="selected === 'homecare'" class="h-4 w-4" />
+                        <Building2 v-else class="h-4 w-4" />
+                    </span>
+
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-[11px] text-gray-400 dark:text-gray-500">
+                            Service
+                        </span>
+                        <span
+                            class="block truncate text-sm font-semibold text-gray-900 dark:text-white"
+                        >
+                            {{ selectedLabel || "Choose a service" }}
+                        </span>
+                    </span>
+
+                    <ChevronUp class="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+                </button>
+
+                <button
+                    type="button"
+                    :disabled="!selected"
+                    @click="confirm"
+                    class="shrink-0 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
+                >
+                    Continue
                 </button>
             </div>
-        </td>
-    </tr>
-</template>
+        </div>
 
-<script lang="ts" setup>
-import { useRoute, useRouter } from "vue-router";
-import { fullName } from "~/utils/user";
-import { stringToDateTime } from "~/utils/time";
+        <Teleport to="body">
+            <Transition name="sheet-fade">
+                <div
+                    v-if="mobileSheetOpen"
+                    class="fixed inset-0 z-50 bg-gray-900/50 lg:hidden"
+                    @click.self="mobileSheetOpen = false"
+                >
+                    <Transition name="sheet-slide" appear>
+                        <div
+                            class="fixed inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] dark:bg-secondary"
+                        >
+                            <div
+                                class="mx-auto mb-4 h-1.5 w-10 rounded-full bg-gray-200 dark:bg-white/15"
+                            />
+
+                            <div class="flex items-center justify-between">
+                                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                    Choose a service
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+                                    aria-label="Close"
+                                    @click="mobileSheetOpen = false"
+                                >
+                                    <X class="h-5 w-5" />
+                                </button>
+                            </div>
+
+                            <div class="mt-4 flex flex-col gap-3">
+                                <button
+                                    v-if="hasHomecare"
+                                    type="button"
+                                    :disabled="!canUseHomecare"
+                                    @click="selectAndClose('homecare')"
+                                    class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
+                                    :class="[
+                                        selected === 'homecare'
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                                            : 'border-gray-200 dark:border-white/10',
+                                        canUseHomecare
+                                            ? 'cursor-pointer'
+                                            : 'cursor-not-allowed opacity-60',
+                                    ]"
+                                >
+                                    <span
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-white"
+                                    >
+                                        <House class="h-5 w-5" />
+                                    </span>
+
+                                    <span class="flex-1">
+                                        <span
+                                            class="block text-sm font-semibold text-gray-900 dark:text-white"
+                                        >
+                                            Homecare Services
+                                        </span>
+
+                                        <span
+                                            class="block text-sm text-gray-500 dark:text-gray-400"
+                                        >
+                                            Care delivered at your home
+                                        </span>
+
+                                        <span
+                                            v-if="!canUseHomecare"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
+                                        >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-amber-500"
+                                            ></span>
+                                            Currently unavailable
+                                        </span>
+                                    </span>
+
+                                    <CheckCircle2
+                                        v-if="selected === 'homecare'"
+                                        class="h-5 w-5 shrink-0 text-primary"
+                                    />
+
+                                    <Circle
+                                        v-else
+                                        class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500"
+                                    />
+                                </button>
+
+                                <button
+                                    v-if="hasFacility"
+                                    type="button"
+                                    :disabled="!canUseFacility"
+                                    @click="selectAndClose('facility')"
+                                    class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
+                                    :class="[
+                                        selected === 'facility'
+                                            ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600/20 dark:bg-emerald-500/10'
+                                            : 'border-gray-200 dark:border-white/10',
+                                        canUseFacility
+                                            ? 'cursor-pointer'
+                                            : 'cursor-not-allowed opacity-60',
+                                    ]"
+                                >
+                                    <span
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white"
+                                    >
+                                        <Building2 class="h-5 w-5" />
+                                    </span>
+
+                                    <span class="flex-1">
+                                        <span
+                                            class="block text-sm font-semibold text-gray-900 dark:text-white"
+                                        >
+                                            Facility Admission
+                                        </span>
+
+                                        <span
+                                            class="block text-sm text-gray-500 dark:text-gray-400"
+                                        >
+                                            In-house, facility-based care
+                                        </span>
+
+                                        <span
+                                            v-if="branch?.facility.length === 0"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-400 dark:ring-amber-500/20"
+                                        >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-amber-500"
+                                            ></span>
+                                            Currently unavailable
+                                        </span>
+
+                                        <span
+                                            v-else-if="availableSlots > 0"
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-400 dark:ring-emerald-500/20"
+                                        >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                            ></span>
+
+                                            {{ availableSlots }}
+                                            slot{{ availableSlots === 1 ? "" : "s" }}
+                                            available
+                                        </span>
+
+                                        <span
+                                            v-else
+                                            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
+                                        >
+                                            <span
+                                                class="h-1.5 w-1.5 rounded-full bg-gray-400"
+                                            ></span>
+
+                                            No rooms availables
+                                        </span>
+                                    </span>
+
+                                    <CheckCircle2
+                                        v-if="selected === 'facility'"
+                                        class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300"
+                                    />
+
+                                    <Circle
+                                        v-else
+                                        class="h-5 w-5 shrink-0 text-gray-300 dark:text-gray-500"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
+            </Transition>
+        </Teleport>
+    </div>
+</template>
+<script setup lang="ts">
+import { computed, ref, watchEffect } from "vue";
 import {
-    formatStatus,
-    statusClasses,
-    type BookingRetrieve,
-} from "~/types/booking";
+    House,
+    Building2,
+    CalendarCheck,
+    CheckCircle2,
+    ChevronRight,
+    Circle,
+    ChevronUp,
+    Clock,
+    ShieldCheck,
+    X,
+} from "lucide-vue-next";
+import { getBranchTimeDisplay } from "~/utils/time";
+import { useBranch } from "~/composables/useBranchProvider";
 
 const props = defineProps<{
-    booking: BookingRetrieve;
+    hasHomecare: boolean;
+    hasFacility: boolean;
 }>();
-
 const emit = defineEmits<{
-    (e: "reject", booking: any): void;
-    (e: "confirm", booking: any): void;
-    (e: "view-details", booking: any): void;
+    (e: "homecare"): void;
+    (e: "facility"): void;
 }>();
 
-// Facility care happens at the branch, so it has no visit address — falling
-// back to the patient's home address there would be misleading.
-const serviceAddress = computed(() => {
-    if (String(props.booking?.category ?? "").toLowerCase() === "facility") {
-        return "On-site";
+const { branch, loading, has, canUseHomecare, canUseFacility, availableSlots } =
+    useBranch();
+
+const selected = ref<"homecare" | "facility" | null>(null);
+const mobileSheetOpen = ref(false);
+
+const serviceOptions = computed(() => {
+    const options: {
+        label: string;
+        value: "homecare" | "facility";
+    }[] = [];
+
+    if (canUseHomecare.value) {
+        options.push({
+            label: "Homecare Services",
+            value: "homecare",
+        });
     }
 
-    return (
-        (props.booking as any)?.homecare?.address ||
-        (props.booking as any)?.patient?.address ||
-        ""
-    );
+    if (canUseFacility.value) {
+        options.push({
+            label: "Facility Admission",
+            value: "facility",
+        });
+    }
+
+    return options;
 });
 
-const route = useRoute();
-const router = useRouter();
-
-async function viewDetails() {
-    if (!props.booking?.reference_id) return;
-
-    emit("view-details", props.booking);
-}
-
-function formatDate(value?: string) {
-    if (!value) return "—";
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
-    return d.toLocaleDateString("en-PH", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-    });
-}
-function statusDotClasses(status?: string) {
-    const s = (status ?? "").toLowerCase().replace("-", "_");
-    switch (s) {
-        case "approved":
-            return "bg-[#1F7A4D]";
-
-        // case "in_progress":
-        //     return "bg-[#2563A6]";
-
-        // case "completed":
-        //     return "bg-[#0E7C7B]";
-
-        case "rejected":
-        case "cancelled":
-            return "bg-[#B3402F]";
-
-        case "expired":
-            return "bg-gray-400";
-
-        case "pending":
-        default:
-            return "bg-[#966B1F]";
+watchEffect(() => {
+    if (canUseHomecare.value && !canUseFacility.value) {
+        selected.value = "homecare";
     }
+
+    if (!canUseHomecare.value && canUseFacility.value) {
+        selected.value = "facility";
+    }
+});
+
+const selectedLabel = computed(
+    () => serviceOptions.value.find((o) => o.value === selected.value)?.label ?? "",
+);
+
+function selectAndClose(value: "homecare" | "facility") {
+    selected.value = value;
+    mobileSheetOpen.value = false;
 }
+
+defineExpose({
+    openSheet: () => {
+        mobileSheetOpen.value = true;
+    },
+});
+
+const confirm = () => {
+    if (selected.value === "homecare") {
+        emit("homecare");
+    }
+
+    if (selected.value === "facility") {
+        emit("facility");
+    }
+};
 </script>
+
+<style scoped>
+.sheet-fade-enter-active,
+.sheet-fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+
+.sheet-fade-enter-from,
+.sheet-fade-leave-to {
+    opacity: 0;
+}
+
+.sheet-slide-enter-active,
+.sheet-slide-leave-active {
+    transition: transform 0.25s ease-out;
+}
+
+.sheet-slide-enter-from,
+.sheet-slide-leave-to {
+    transform: translateY(100%);
+}
+</style>

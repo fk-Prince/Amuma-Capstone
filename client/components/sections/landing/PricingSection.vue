@@ -77,7 +77,7 @@
                     :key="plan.title"
                     v-bind="plan"
                     :billingInterval="billingCycle"
-                    @select="checkout.setSelectedPlan(plan)"
+                    @select="startSubscribe(plan)"
                 />
             </div>
         </main>
@@ -89,7 +89,9 @@ import { ref } from "vue";
 import BillingToggle from "~/components/ui/BillingToggle.vue";
 import PricingCard from "~/components/ui/PricingCard.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
+import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");
-const { checkout, loading, formattedPlans } = usePlanCards(billingCycle);
+const { loading, formattedPlans } = usePlanCards(billingCycle);
+const { startSubscribe } = useSubscribeFlow();
 </script>

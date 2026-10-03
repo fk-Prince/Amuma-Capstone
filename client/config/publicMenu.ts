@@ -1,4 +1,4 @@
-import { Home, Package, CalendarCheck, BookOpen, Building2 } from "lucide-vue-next";
+import { Home, Package, CalendarCheck, BookOpen, Building2, Search } from "lucide-vue-next";
 
 export const navList = [
     { label: "Home", to: "/", icon: Home },
@@ -6,4 +6,8 @@ export const navList = [
     { label: "Booking", to: "/booking", icon: CalendarCheck },
     { label: "Resources", to: "/resources", icon: BookOpen },
     { label: "Company", to: "/company", icon: Building2 },
+]
+
+
+export const providerNavList = [
 ]

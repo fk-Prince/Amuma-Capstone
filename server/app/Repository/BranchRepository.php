@@ -173,6 +173,7 @@ class BranchRepository
                     BranchImage::IMAGE_BRANCH,
                     BranchImage::IMAGE_COMMON_ROOM,
                     BranchImage::IMAGE_VIP_ROOM,
+                    BranchImage::IMAGE_COVER,
                 ]);
             },
         ])

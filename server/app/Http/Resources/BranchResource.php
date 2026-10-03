@@ -242,6 +242,12 @@ class BranchResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'image' => $this->image,
+            'cover_image' => $this->whenLoaded('images', function () {
+                return $this->images
+                    ->where('type', BranchImage::IMAGE_COVER)
+                    ->sortByDesc('branch_image_id')
+                    ->first()?->image_url;
+            }),
 
             'settings' => [
                 'is_open' => $isOpen,

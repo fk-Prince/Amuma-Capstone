@@ -2,31 +2,132 @@
     <div
         class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-surface dark:via-surface dark:to-surface"
     >
-        <div
-            class="w-full z-40 border-b border-slate-200/50 bg-white backdrop-blur-sm dark:bg-secondary dark:border-white/10"
-        >
-            <div class="mx-auto max-w-[100rem] px-6 pt-4">
-                <Breadcrumb :items="[{ label: 'Find a Provider' }]" />
-            </div>
+        <div class="relative w-full z-30 shrink-0 overflow-hidden bg-[#EEF3FB] pt-[130px] pb-6 dark:bg-secondary">
+            <img
+                :src="finderBg"
+                class="pointer-events-none select-none absolute inset-0 h-full w-full object-cover"
+                alt=""
+            />
+            <div
+                class="absolute inset-0 bg-gradient-to-b from-[#EEF3FB]/85 via-[#EEF3FB]/80 to-[#EEF3FB] dark:from-secondary/85 dark:via-secondary/80 dark:to-secondary"
+            />
 
-            <div class="mx-auto max-w-[100rem]">
-                <Filter />
+            <div class="relative z-10 mx-auto max-w-[100rem] px-6">
+                <NuxtLink
+                    to="/"
+                    class="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-600 dark:text-white/80 dark:hover:text-white"
+                >
+                    <ArrowLeft class="h-3.5 w-3.5" />
+                    Back to Home
+                </NuxtLink>
+
+                <h1 class="text-2xl font-bold text-secondary sm:text-3xl dark:text-white">
+                    Find a
+                    <span class="text-primary">Provider</span>
+                </h1>
+                <p class="mt-1 text-sm text-muted dark:text-white/80">
+                    Browse trusted caregivers and care services near you.
+                </p>
+
+                <div class="mt-6">
+                    <Filter />
+                </div>
             </div>
         </div>
 
-        <div class="flex-1 overflow-hidden">
-            <div class="mx-auto max-w-[100rem] px-6 py-8 h-full">
+        <div class="relative flex-1 min-h-0 overflow-hidden bg-[#EEF3FB] dark:bg-secondary">
+            <img
+                :src="finderBg"
+                class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-10 dark:opacity-20"
+                alt=""
+            />
+            <div
+                class="absolute inset-0 bg-gradient-to-b from-[#EEF3FB]/95 via-[#EEF3FB] to-[#EEF3FB] dark:from-secondary/95 dark:via-secondary dark:to-secondary"
+            />
+
+            <div
+                class="relative z-10 mx-auto flex h-full max-w-[100rem] flex-col px-6 py-8"
+            >
                 <div
-                    class="flex flex-col lg:flex-row gap-8 h-full items-stretch"
+                    v-if="!loading"
+                    class="flex items-center justify-between gap-3 pb-4"
+                >
+                    <p class="text-sm text-muted dark:text-gray-400">
+                        <span class="font-semibold text-secondary dark:text-white">{{
+                            branches.length
+                        }}</span>
+                        of
+                        <span class="font-semibold text-secondary dark:text-white">{{
+                            totalCount
+                        }}</span>
+                        providers found in
+                        <span class="font-semibold text-secondary dark:text-white">{{
+                            (route.query.location as string) ??
+                            DEFAULT_LOCATION.label
+                        }}</span>
+                    </p>
+
+                    <div
+                        class="flex shrink-0 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-white/10"
+                    >
+                        <button
+                            type="button"
+                            class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            :class="
+                                viewMode === 'list'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white/90'
+                            "
+                            @click="viewMode = 'list'"
+                        >
+                            <List class="h-3.5 w-3.5" />
+                            List
+                        </button>
+                        <button
+                            type="button"
+                            class="hidden lg:flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            :class="
+                                viewMode === 'both'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white/90'
+                            "
+                            @click="viewMode = 'both'"
+                        >
+                            <Columns2 class="h-3.5 w-3.5" />
+                            Split
+                        </button>
+                        <button
+                            type="button"
+                            class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            :class="
+                                viewMode === 'map'
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white/90'
+                            "
+                            @click="viewMode = 'map'"
+                        >
+                            <MapIcon class="h-3.5 w-3.5" />
+                            Map
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    class="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row items-stretch"
                 >
                     <div
-                        class="w-full lg:w-[60%] flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-secondary"
+                        class="flex-col min-h-0 overflow-hidden rounded-2xl lg:shrink-0"
+                        :class="[
+                            viewMode === 'map' ? 'hidden' : 'flex w-full',
+                            viewMode === 'both' ? 'lg:w-[58%]' : 'lg:w-full',
+                        ]"
                     >
                         <div class="flex-1 overflow-y-auto">
                             <SearchBooking
                                 :branches="branches"
                                 :loading="loading"
-                                @hover="hoveredBranchUuid = $event"
+                                :compact="viewMode === 'both'"
+                                @reset="resetFilters"
                             />
 
                             <div
@@ -63,24 +164,20 @@
                     </div>
 
                     <div
-                        class="relative w-full lg:w-[40%] z-20 flex flex-col rounded-2xl overflow-hidden bg-white shadow-sm border border-slate-200/50 dark:bg-secondary dark:border-white/10"
+                        class="relative w-full z-20 flex-1 min-h-0 flex-col rounded-2xl overflow-hidden shadow-sm border border-slate-200/50 bg-white dark:border-white/10 dark:bg-secondary"
+                        :class="viewMode === 'list' ? 'hidden' : 'flex'"
                     >
                         <LocationPin
                             class="flex-1 h-full w-full z-20"
                             :locations="locations"
-                            :center-lat="mapCenter.lat"
-                            :center-lng="mapCenter.lng"
-                            :zoom="mapCenter.zoom"
-                            :hovered-uuid="hoveredBranchUuid"
-                            :show-my-location="
-                                route.query.location_explicit !== '1'
-                            "
+                            :center-lat="centerLat"
+                            :center-lng="centerLng"
                         />
 
                         <Transition name="fade">
                             <div
                                 v-if="loading && locations.length === 0"
-                                class="absolute inset-0 z-30 flex items-center justify-center bg-gradient-to-b from-white/80 to-white/60 backdrop-blur-md dark:from-secondary/80 dark:to-secondary/60"
+                                class="absolute inset-0 z-30 flex items-center justify-center bg-white/80 backdrop-blur-md dark:bg-secondary/80"
                             >
                                 <div class="flex flex-col items-center gap-4">
                                     <div
@@ -105,14 +202,10 @@
                                         </svg>
                                     </div>
                                     <div class="text-center">
-                                        <p
-                                            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
-                                        >
+                                        <p class="text-sm font-semibold text-slate-700 dark:text-gray-300">
                                             Finding care near you
                                         </p>
-                                        <p
-                                            class="text-xs text-slate-500 mt-1 dark:text-gray-400"
-                                        >
+                                        <p class="text-xs text-slate-500 mt-1 dark:text-gray-400">
                                             Please wait while we search
                                         </p>
                                     </div>
@@ -130,48 +223,42 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Filter from "~/components/sections/booking/search/Filter.vue";
-import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import SearchBooking from "~/components/sections/booking/search/SearchBooking.vue";
 import { branchService } from "~/api/branch/BranchService";
 import type { BranchRetrieve } from "~/types/branch";
-import { useGeo, DAVAO_DEFAULT } from "~/composables/useGeo";
+import { ArrowLeft, List, Map as MapIcon, Columns2 } from "lucide-vue-next";
+import { useGeo } from "~/composables/useGeo";
+import finderBg from "~/assets/images/finder-bg.png";
 
 definePageMeta({
     layout: "default",
-    navVariant: 4,
-    navTheme: "light",
+    navVariant: 3,
     middleware: ["prevent-staff-booking"],
 });
 useHead({ title: "Search Homecare" });
 
 const route = useRoute();
 const router = useRouter();
-const { centerLat, centerLng, geocodeLocation, resolveDefaultCenter } =
-    useGeo();
+const { centerLat, centerLng, geocodeLocation } = useGeo();
 
 const branches = ref<BranchRetrieve[]>([]);
-const hoveredBranchUuid = ref<string | null>(null);
 const loading = ref(false);
 const loadingMore = ref(false);
 const page = ref(1);
 const lastPage = ref(1);
+const totalCount = ref(0);
+const viewMode = ref<"list" | "map" | "both">("both");
 
 const PER_PAGE = 6;
 
-const DEFAULT_LOCATION = DAVAO_DEFAULT;
+const DEFAULT_LOCATION = {
+    label: "Davao City",
+    lat: 7.1907,
+    long: 125.4553,
+};
 
 const hasMore = computed(() => page.value < lastPage.value);
-
-const isNationwideSearch = computed(() => {
-    if (route.query.location_explicit === "1") return false;
-
-    const hasProviderName = !!route.query.provider_name;
-    const hasCareType =
-        !!route.query.plan_code && route.query.plan_code !== "C";
-
-    return hasProviderName || hasCareType;
-});
 
 let requestId = 0;
 const l = async (opts: { append?: boolean } = {}) => {
@@ -186,31 +273,20 @@ const l = async (opts: { append?: boolean } = {}) => {
     }
 
     try {
-        if (!append && !isNationwideSearch.value && route.query.location) {
+        if (!append && route.query.location) {
             await geocodeLocation(route.query.location as string);
         }
 
-        const payload = isNationwideSearch.value
-            ? {
-                  provider_name: route.query.provider_name ?? "",
-                  location: "",
-                  lat: "",
-                  long: "",
-                  plan_code: route.query.plan_code ?? "",
-                  sort: route.query.sort ?? "recommended",
-                  per_page: PER_PAGE,
-                  page: page.value,
-              }
-            : {
-                  provider_name: route.query.provider_name ?? "",
-                  location: route.query.location ?? DEFAULT_LOCATION.label,
-                  lat: route.query.lat ?? DEFAULT_LOCATION.lat,
-                  long: route.query.long ?? DEFAULT_LOCATION.long,
-                  plan_code: route.query.plan_code ?? "",
-                  sort: route.query.sort ?? "recommended",
-                  per_page: PER_PAGE,
-                  page: page.value,
-              };
+        const payload = {
+            provider_name: route.query.provider_name ?? "",
+            location: route.query.location ?? DEFAULT_LOCATION.label,
+            lat: route.query.lat ?? DEFAULT_LOCATION.lat,
+            long: route.query.long ?? DEFAULT_LOCATION.long,
+            plan_code: route.query.plan_code ?? "",
+            sort: route.query.sort ?? "recommended",
+            per_page: PER_PAGE,
+            page: page.value,
+        };
 
         const res = await branchService.filtered(payload);
 
@@ -222,6 +298,7 @@ const l = async (opts: { append?: boolean } = {}) => {
             : newBranches;
 
         lastPage.value = res?.meta?.last_page ?? 1;
+        totalCount.value = res?.meta?.total ?? newBranches.length;
     } catch (err) {
         if (currentRequest !== requestId) return;
 
@@ -241,15 +318,26 @@ const loadMore = () => {
     l({ append: true });
 };
 
+const resetFilters = () => {
+    router.replace({
+        query: {
+            location: DEFAULT_LOCATION.label,
+            lat: DEFAULT_LOCATION.lat,
+            long: DEFAULT_LOCATION.long,
+            plan_code: "",
+            sort: "recommended",
+        },
+    });
+};
+
 onMounted(async () => {
     if (Object.keys(route.query).length === 0) {
         loading.value = true;
-        const defaultCenter = await resolveDefaultCenter();
         await router.replace({
             query: {
-                location: defaultCenter.label,
-                lat: defaultCenter.lat,
-                long: defaultCenter.long,
+                location: DEFAULT_LOCATION.label,
+                lat: DEFAULT_LOCATION.lat,
+                long: DEFAULT_LOCATION.long,
                 plan_code: "C",
                 sort: "recommended",
             },
@@ -269,7 +357,6 @@ const locations = computed(() =>
     branches.value
         .filter((branch) => branch.location)
         .map((branch) => ({
-            uuid: branch.uuid,
             latitude: Number(branch.location.latitude),
             longitude: Number(branch.location.longitude),
             label: branch.name,
@@ -279,34 +366,6 @@ const locations = computed(() =>
             country: branch.location.country,
         })),
 );
-
-const mapCenter = computed(() => {
-    if (!isNationwideSearch.value) {
-        return { lat: centerLat.value, lng: centerLng.value, zoom: undefined };
-    }
-
-    const locs = locations.value;
-    const first = locs[0];
-    if (!first) {
-        return { lat: undefined, lng: undefined, zoom: undefined };
-    }
-
-    const norm = (v?: string) => (v ?? "").trim().toLowerCase();
-    const cityKeys = new Set(
-        locs.map((l) => `${norm(l.city)}|${norm(l.country)}`),
-    );
-    const countryKeys = new Set(locs.map((l) => norm(l.country)));
-
-    if (cityKeys.size === 1) {
-        return { lat: first.latitude, lng: first.longitude, zoom: 12 };
-    }
-
-    if (countryKeys.size === 1) {
-        return { lat: undefined, lng: undefined, zoom: undefined };
-    }
-
-    return { lat: first.latitude, lng: first.longitude, zoom: 12 };
-});
 </script>
 
 <style scoped>
@@ -318,4 +377,4 @@ const mapCenter = computed(() => {
 .fade-leave-to {
     opacity: 0;
 }
-</style>
+</style>a

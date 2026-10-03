@@ -1,55 +1,20 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, watch } from "vue";
 import { type Location } from "~/types/location";
-import { useGeo } from "~/composables/useGeo";
 
 let L: any;
 let map: any = null;
 let markersLayer: any = null;
-let myLocationMarker: any = null;
-let highlightIcon: any = null;
-let markersByUuid: Record<string, any> = {};
-let highlightedMarker: any = null;
+let centerMarker: any = null;
+let resizeObserver: ResizeObserver | null = null;
 
-const { getMyLocation } = useGeo();
-
-const props = withDefaults(
-    defineProps<{
-        locations?: Location[];
-        centerLat?: number;
-        centerLng?: number;
-        zoom?: number;
-        extraClass?: string;
-        hoveredUuid?: string | null;
-        showMyLocation?: boolean;
-    }>(),
-    { showMyLocation: true },
-);
-
-let myLocation: { lat: number; lng: number } | null = null;
-
-const renderMyLocation = () => {
-    myLocationMarker?.remove();
-    myLocationMarker = null;
-
-    if (!map || !myLocation || !props.showMyLocation) return;
-
-    myLocationMarker = L.circleMarker([myLocation.lat, myLocation.lng], {
-        radius: 8,
-        fillColor: "#3b82f6",
-        color: "#fff",
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-    })
-        .addTo(map)
-        .bindTooltip("This is me", {
-            permanent: true,
-            direction: "top",
-            offset: [0, -8],
-        })
-        .bindPopup("<b>This is me</b>");
-};
+const props = defineProps<{
+    locations?: Location[];
+    centerLat?: number;
+    centerLng?: number;
+    zoom?: number;
+    extraClass?: string;
+}>();
 
 const fitToBounds = () => {
     if (!map || !props.locations?.length) return;
@@ -75,30 +40,10 @@ const fitToBounds = () => {
     }
 };
 
-const applyHover = () => {
-    if (highlightedMarker) {
-        highlightedMarker.setIcon(new L.Icon.Default());
-        highlightedMarker.setZIndexOffset(0);
-        highlightedMarker = null;
-    }
-
-    const marker = props.hoveredUuid
-        ? markersByUuid[props.hoveredUuid]
-        : null;
-
-    if (marker) {
-        marker.setIcon(highlightIcon);
-        marker.setZIndexOffset(1000);
-        highlightedMarker = marker;
-    }
-};
-
 const renderMarkers = () => {
     if (!map || !markersLayer) return;
 
     markersLayer.clearLayers();
-    markersByUuid = {};
-    highlightedMarker = null;
 
     props.locations?.forEach((location) => {
         if (
@@ -109,27 +54,41 @@ const renderMarkers = () => {
         )
             return;
 
-        const marker = L.marker([
-            Number(location.latitude),
-            Number(location.longitude),
-        ]).addTo(markersLayer);
-
-        if (location.uuid) {
-            markersByUuid[location.uuid] = marker;
-        }
+        L.marker([Number(location.latitude), Number(location.longitude)]).addTo(
+            markersLayer,
+        );
     });
 
     if (props.centerLat == null) {
         fitToBounds();
     }
-
-    applyHover();
 };
 
 const applyCenter = () => {
     if (!map || props.centerLat == null || props.centerLng == null) return;
 
     map.setView([props.centerLat, props.centerLng], props.zoom ?? 13);
+
+    if (centerMarker) {
+        centerMarker.remove();
+    }
+
+    const redIcon = L.icon({
+        iconUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+        iconRetinaUrl:
+            "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
+        shadowUrl:
+            "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+    });
+
+    centerMarker = L.marker([props.centerLat, props.centerLng], {
+        icon: redIcon,
+    }).addTo(map);
 };
 
 onMounted(async () => {
@@ -145,15 +104,6 @@ onMounted(async () => {
         iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
         shadowUrl:
             "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-    });
-
-    // bounce animates an inner wrapper, not the icon element Leaflet positions
-    highlightIcon = L.divIcon({
-        className: "highlight-marker-wrapper",
-        html: '<div class="marker-bounce"><img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png" style="width:30px;height:49px;display:block;" /></div>',
-        iconSize: [30, 49],
-        iconAnchor: [15, 49],
-        popupAnchor: [1, -34],
     });
 
     map = L.map("locations-map", {
@@ -181,33 +131,21 @@ onMounted(async () => {
         map?.invalidateSize();
     }, 200);
 
-    getMyLocation().then((loc) => {
-        if (!loc) return;
-
-        myLocation = { lat: loc.lat, lng: loc.lng };
-        renderMyLocation();
-    });
+    const mapEl = document.getElementById("locations-map");
+    if (mapEl && typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(() => {
+            map?.invalidateSize();
+        });
+        resizeObserver.observe(mapEl);
+    }
 });
-
-watch(
-    () => props.showMyLocation,
-    () => renderMyLocation(),
-);
 
 watch(
     () => [props.centerLat, props.centerLng],
     () => {
         if (!props.locations?.length) {
             applyCenter();
-            return;
         }
-
-        if (props.centerLat == null || props.centerLng == null) {
-            fitToBounds();
-            return;
-        }
-
-        applyCenter();
     },
 );
 
@@ -230,20 +168,12 @@ watch(
     { deep: true },
 );
 
-watch(
-    () => props.hoveredUuid,
-    () => {
-        if (!map) return;
-        applyHover();
-    },
-);
-
 onUnmounted(() => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     map?.remove();
     map = null;
-    myLocationMarker = null;
-    markersByUuid = {};
-    highlightedMarker = null;
+    centerMarker = null;
 });
 </script>
 
@@ -251,29 +181,8 @@ onUnmounted(() => {
     <div
         id="locations-map"
         :class="[
-            'w-full h-[400px] rounded-xl z-30 overflow-hidden border border-gray-200 shadow-sm dark:border-white/10',
+            'w-full h-full rounded-xl overflow-hidden border border-gray-200 shadow-sm dark:border-white/10',
             extraClass,
         ]"
     />
 </template>
-
-<style>
-.highlight-marker-wrapper {
-    background: transparent;
-    border: none;
-}
-
-@keyframes marker-bounce {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-.marker-bounce {
-    animation: marker-bounce 0.6s ease-in-out infinite;
-}
-</style>

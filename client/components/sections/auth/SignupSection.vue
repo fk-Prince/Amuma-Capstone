@@ -66,7 +66,7 @@ const features = [
                         <p
                             class="inline-block border-b-2 border-blue-500 pb-1.5 text-xs text-blue-300"
                         >
-                            Create account
+                            Family account
                         </p>
 
                         <h1
@@ -76,9 +76,8 @@ const features = [
                         </h1>
 
                         <p class="text-sm leading-relaxed text-white/70">
-                            Create your account and start accessing all features
-                            designed to help you manage and monitor your
-                            services with ease.
+                            Create your family account to book care and stay
+                            connected with your loved one's care.
                         </p>
                     </div>
 
@@ -118,7 +117,7 @@ const features = [
                         <h2
                             class="text-[1.85rem] font-extrabold text-slate-900 dark:text-white"
                         >
-                            Create an Account
+                            Create a Family Account
                         </h2>
                         <p
                             class="mt-1 text-sm text-slate-500 dark:text-gray-400"
@@ -132,7 +131,19 @@ const features = [
                         </p>
                     </div>
 
-                    <SignupForm />
+                    <SignupForm portal="family" />
+
+                    <p
+                        class="mt-5 text-center text-xs text-slate-500 dark:text-gray-400"
+                    >
+                        Registering a caregiving agency?
+                        <NuxtLink
+                            to="/auth/agency/signup"
+                            class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                            Sign up as an agency
+                        </NuxtLink>
+                    </p>
                 </div>
                 <!-- <SignupForm /> -->
             </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+ 
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import logoIcon from "~/assets/logo/logo.png";
@@ -8,6 +9,8 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
 import DynamicSidebar from "./DynamicSidebar.vue";
+import Notification from "../ui/Notification.vue";
+import { Search } from "lucide-vue-next";
 
 const user = useAuthUser();
 const route = useRoute();
@@ -30,7 +33,7 @@ onUnmounted(() => {
 });
 
 const props = defineProps<{
-    navList?: { label: string; to: string }[];
+    navList?: { label: string; to: string; match?: string; icon?: any }[];
 }>();
 
 const variant = computed(() => route.meta.navVariant ?? 1);
@@ -39,20 +42,24 @@ const CONTENT_BOX = "inset-x-0 mx-auto w-[88%] max-w-[1600px]";
 
 const AUTH_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1400px]";
 
-const DARK_CHROME_SOLID = "dark:border-white/10 dark:bg-secondary";
+ const DARK_CHROME_SOLID =
+    "dark:border-white/10 dark:bg-secondary/70 dark:backdrop-blur-xl";
 
-const DARK_CHROME_RAISED = "dark:border-white/10 dark:bg-[#212A3E]";
+const DARK_CHROME_RAISED =
+    "dark:border-white/10 dark:bg-[#212A3E]/60 dark:backdrop-blur-xl";
 
-const DARK_GLOW = "dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]";
+ const DARK_GLOW =
+    "shadow-[0_10px_30px_-10px_rgba(15,23,42,0.15)] dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]";
 
 const INDICATOR_BLEED = 8;
 
 const navInner = computed(() => {
-    if (variant.value === 2 || variant.value === 3) return "px-4 sm:px-10";
+    if (variant.value === 2 || variant.value === 3 || variant.value === 7)
+        return "px-4 sm:px-10";
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
-    if (variant.value === 5 || variant.value === 6) return "px-6";
-    if (variant.value === 7) return "mx-auto max-w-[100rem] px-6 sm:px-10";
+    if (variant.value === 5) return "px-6";
+    if (variant.value === 6) return "mx-auto max-w-[100rem] px-6 sm:px-10";
 
     return "px-6";
 });
@@ -86,6 +93,7 @@ const header = computed(() => {
             ]
                 .filter(Boolean)
                 .join(" ");
+        case 7:
         case 3:
             return [
                 "fixed top-6 z-50",
@@ -101,10 +109,10 @@ const header = computed(() => {
                 .filter(Boolean)
                 .join(" ");
         case 4:
-            return [
-                "relative w-full h-[70px] flex items-center",
-                "transition-all duration-300 ease-out",
-                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
+             return [
+                "relative mx-4 mt-4 sm:mx-6 sm:mt-6 h-[70px] flex items-center",
+                "rounded-2xl shadow-md shadow-secondary/10",
+                "transition-all duration-300 ease-out bg-secondary dark:bg-surface",
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -117,26 +125,24 @@ const header = computed(() => {
                 "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
             ].join(" ");
         case 6:
-            return [
-                "fixed top-4 sm:top-6 z-50",
-                AUTH_BOX,
-                "h-[72px] sm:h-[90px] rounded-[20px] flex items-center",
-                "border border-light/20 bg-light/10 backdrop-blur-sm",
-                "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
-            ].join(" ");
-        case 7:
-            return [
-                "fixed top-0 left-0 z-50 w-full h-[90px] flex items-center",
-                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
-            ].join(" ");
+            return (
+                ["relative w-full h-[90px] flex items-center bg-transparent"]
+                    //${DARK_CHROME_SOLID} border-b border-muted-light
+                    .filter(Boolean)
+                    .join(" ")
+            );
     }
 });
 
-const authSwitch = computed(() =>
-    route.path === "/auth/signup"
-        ? { label: "Sign in", to: "/auth/signin" }
-        : { label: "Sign up", to: "/auth/signup" },
-);
+const authSwitch = computed(() => {
+    if (route.path === "/auth/family/signin") {
+        return { label: "Sign up", to: "/auth/signup" };
+    }
+    if (route.path === "/auth/signup") {
+        return { label: "Sign in", to: "/auth/family/signin" };
+    }
+    return null;
+});
 
 const isActive = (to: string) => {
     if (to === "/") return route.path === "/";
@@ -192,10 +198,26 @@ const menuIconClass = computed(() => {
         : "text-secondary hover:bg-primary-50";
 });
 
+const isItemActive = (item: { to: string; match?: string }) =>
+    item.match ? route.path.startsWith(item.match) : isActive(item.to);
+
 const activeIndex = computed(() => {
     if (!props.navList) return -1;
-    return props.navList.findIndex((item) => isActive(item.to));
+    return props.navList.findIndex((item) => isItemActive(item));
 });
+
+const itemLinkClass = (item: { to: string; match?: string }) =>
+    isItemActive(item) ? "text-primary" : navLinkClass(item.to);
+
+const searchQuery = ref("");
+const submitSearch = () => {
+    const q = searchQuery.value.trim();
+    navigateTo(
+        q
+            ? { path: "/booking/search", query: { provider_name: q } }
+            : { path: "/booking/search" },
+    );
+};
 
 const navRefs = ref<(HTMLElement | null)[]>([]);
 const pillStyle = ref({
@@ -247,7 +269,7 @@ watch(
     <header :class="header">
         <nav
             class="relative flex justify-between items-center w-full"
-            :class="[navInner, variant === 5 || variant === 6 ? 'h-full' : 'h-[90px]']"
+            :class="[navInner, variant === 5 ? 'h-full' : 'h-[90px]']"
         >
             <nav
                 v-if="variant === 5"
@@ -264,7 +286,8 @@ watch(
                         />
                     </ClientOnly>
 
-                    <NuxtLink
+                                      <NuxtLink
+                        v-if="authSwitch"
                         :to="authSwitch.to"
                         class="whitespace-nowrap text-sm font-semibold text-primary-300 transition-colors duration-200 hover:text-light"
                     >
@@ -273,15 +296,121 @@ watch(
                 </div>
             </nav>
             <nav
-                v-if="variant === 6"
-                class="relative flex h-full w-full items-center justify-center"
+                v-if="variant === 7"
+                class="flex h-full w-full items-center"
             >
-                <NuxtLink to="/" aria-label="AMUMA home">
-                    <BrandLogo />
+                <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
+                    <BrandLogo
+                        icon-class="h-8 w-8 sm:h-10 sm:w-10"
+                        text-class="text-lg sm:text-2xl"
+                    />
                 </NuxtLink>
+
+                <div class="relative ml-8 hidden shrink-0 items-center xl:flex">
+                    <span
+                        class="absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-300 ease-out"
+                        :class="indicatorColor"
+                        :style="pillStyle"
+                    />
+
+                    <NuxtLink
+                        v-for="(i, index) in navList"
+                        :key="i.to"
+                        :ref="(el) => setNavRef(el, index)"
+                        :to="i.to"
+                        class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-5"
+                        :class="itemLinkClass(i)"
+                    >
+                        {{ i.label }}
+                        <span
+                            v-if="!isItemActive(i)"
+                            class="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
+                            :class="indicatorColor"
+                        />
+                    </NuxtLink>
+                </div>
+
+                <div class="ml-auto flex items-center gap-6">
+                    <form class="hidden md:block" @submit.prevent="submitSearch">
+                        <label
+                            class="flex h-[46px] w-[220px] items-center gap-2 rounded-full border border-muted-light bg-white/60 px-4 text-muted transition focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15 2xl:w-[340px] dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                        >
+                            <Search class="h-4 w-4 shrink-0" />
+                            <input
+                                v-model="searchQuery"
+                                type="search"
+                                placeholder="Search providers, services, or location..."
+                                class="min-w-0 flex-1 bg-transparent text-sm text-secondary outline-none placeholder:text-muted dark:text-white dark:placeholder:text-gray-400"
+                            />
+                        </label>
+                    </form>
+
+                    <template v-if="!hydrated || !user">
+                        <NuxtLink
+                            :to="hydrated ? '/auth/signin' : undefined"
+                            class="hidden shrink-0 whitespace-nowrap text-sm font-medium transition-colors duration-200 sm:block"
+                            :class="signInLinkClass"
+                        >
+                            Sign in
+                        </NuxtLink>
+
+                        <NuxtLink
+                            :to="hydrated ? '/auth/signup' : undefined"
+                            class="hidden sm:block shrink-0"
+                        >
+                            <BaseButton
+                                buttonClass="md:px-9 h-[46px] rounded-xl whitespace-nowrap min-w-fit shadow-sm shadow-primary-500/25 transition-all duration-200 hover:shadow-md hover:shadow-primary-500/30 active:scale-[0.97]"
+                                class="bg-primary text-white border border-primary hover:bg-primary-600"
+                            >
+                                Sign up
+                            </BaseButton>
+                        </NuxtLink>
+
+                        <ClientOnly>
+                            <ThemeToggle
+                                :class="
+                                    !isChromeSolid
+                                        ? 'text-white hover:bg-white/10'
+                                        : 'text-muted-dark hover:bg-primary/10 dark:text-white dark:hover:bg-white/10'
+                                "
+                            />
+                        </ClientOnly>
+                    </template>
+
+                    <template v-else>
+                        <Notification />
+
+                        <NavbarProfileDropdown
+                            :user="user"
+                            :scrolled="scrolled"
+                            :navTheme="navTheme"
+                            :theme-aware="isChromeSolid"
+                        />
+                    </template>
+
+                    <button
+                        class="xl:hidden w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-300"
+                        :class="menuIconClass"
+                        aria-label="Open menu"
+                        @click="mobileMenuOpen = true"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            class="w-6 h-6"
+                        >
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
+                </div>
             </nav>
             <nav
-                v-if="variant === 7"
+                v-if="variant === 6"
                 class="flex w-full items-center justify-between"
             >
                 <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
@@ -333,8 +462,7 @@ watch(
                         :class="navLinkClass(i.to)"
                     >
                         {{ i.label }}
-
-                        <span
+                     <span
                             v-if="!isActive(i.to)"
                             class="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
                             :class="indicatorColor"
@@ -412,7 +540,9 @@ watch(
             </template>
         </nav>
 
-        <ClientOnly v-if="variant === 1 || variant === 2 || variant === 3">
+        <ClientOnly
+            v-if="variant === 1 || variant === 2 || variant === 3 || variant === 7"
+        >
             <DynamicSidebar
                 :open="mobileMenuOpen"
                 :logo="logoIcon"

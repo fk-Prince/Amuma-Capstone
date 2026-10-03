@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed, ref } from "vue";
 import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
-import { useAuthUser } from "~/composables/useAuthUser";
+import { useAuthUser, resetAuth } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
 import { useBranchStore } from "#imports";
 
-const route = useRoute();
+const props = defineProps<{
+    portal: "staff" | "family";
+}>();
+
 const branch = useBranchStore();
 const user = useAuthUser();
+const route = useRoute();
 const redirecting = ref(false);
 const welcomeName = ref("");
 const showTerms = ref(false);
@@ -25,19 +28,14 @@ const welcomeTitle = computed(() =>
         : "Welcome back!",
 );
 
-const redirectTarget = computed(() => {
-    const target = route.query.redirect;
-    return typeof target === "string" &&
-        target.startsWith("/") &&
-        !target.startsWith("//")
-        ? target
-        : "/";
+const signinData = ref<SigninRequest>({
+    email: "",
+    password: "",
 });
 
-const signinData = ref<SigninRequest>({
-    email: "prince.sestoso@gmail.com",
-    password: "password",
-});
+const signupRedirect = computed(
+    () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
+);
 
 const showPassword = ref(false);
 const loading = ref(false);
@@ -67,6 +65,12 @@ const borderClass = (error: string) =>
         ? "border-danger focus:border-danger focus:ring-danger/30"
         : "border-slate-200 dark:border-white/10";
 
+function portalMismatchMessage() {
+    return props.portal === "staff"
+        ? "This account isn't a staff account. Please use the Family Portal to sign in."
+        : "This account isn't a family account. Please use the Staff Portal to sign in.";
+}
+
 async function handleSignIn() {
     errors.value = {
         email: "",
@@ -75,19 +79,8 @@ async function handleSignIn() {
 
     alert.value.show = false;
 
-    const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!signinData.value.email) {
-        errors.value.email = "Email is required.";
-    } else if (!EMAIL_PATTERN.test(signinData.value.email)) {
-        errors.value.email = "Please enter a valid email address.";
-    }
-
-    if (!signinData.value.password) {
-        errors.value.password = "Password is required.";
-    }
-
-    if (errors.value.email || errors.value.password) {
+    if (!signinData.value.email || !signinData.value.password) {
+        showAlert(alert, "error", "Invalid credentials", 0);
         return;
     }
 
@@ -95,14 +88,60 @@ async function handleSignIn() {
 
     try {
         const res = await authService.login(signinData.value);
+
+        const isStaffAccount =
+            !!res.user?.isEmployee || !!res.user?.isSystemOwner;
+        const isFamilyAccount = !!res.user?.isClient;
+
+        // Checking out a plan is open to any valid account (a brand-new
+        // sign-up included), so it isn't bounced for its account type here.
+        // The checkout page still blocks staff who can't subscribe.
+        const subscribing = isSubscribeFlowPath(
+            safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
+        );
+
+        const matchesPortal = subscribing
+            ? isStaffAccount || isFamilyAccount
+            : props.portal === "staff"
+              ? isStaffAccount
+              : isFamilyAccount;
+
+        if (!matchesPortal) {
+            await authService.logout().catch(() => {});
+            resetAuth();
+            showAlert(alert, "error", portalMismatchMessage(), 0);
+            return;
+        }
+
         showAlert(alert, "success", res.message);
         welcomeName.value = res.user?.first_name ?? "";
         redirecting.value = true;
+
+        // Where this person was headed (for example checkout), if anywhere.
+        const redirectTo = consumeAuthRedirect(route.query.redirect);
+
         setTimeout(async () => {
             loading.value = true;
             user.value = res.user;
-            await navigateTo(redirectTarget.value);
-            await branch.refreshBranch();
+
+            if (props.portal === "staff") {
+                if (res.user?.isSystemOwner) {
+                    await navigateTo("/app/owner/dashboard");
+                } else if (redirectTo) {
+                    await navigateTo(redirectTo);
+                } else {
+                    // Loads the staff member's branches and sends them to
+                    // their default branch dashboard (falls back below only
+                    // if they somehow have no branch assigned yet).
+                    await branch.fetchBranches();
+
+                    if (!branch.branches.length) {
+                        await navigateTo("/app/branches/dashboard");
+                    }
+                }
+            } else {
+                await navigateTo(redirectTo ?? "/portal/overview");
+            }
         }, 1500);
     } catch (err: any) {
         showAlert(
@@ -116,20 +155,12 @@ async function handleSignIn() {
     }
 }
 
-onMounted(() => {
-    const providerError = route.query.error;
-
-    if (typeof providerError === "string" && providerError) {
-        showAlert(alert, "error", providerError, 0);
-    }
-});
-
 async function googleUrl() {
     loading.value = true;
 
     try {
+        saveAuthRedirect(route.query.redirect);
         const res = await authService.googleUrl();
-        sessionStorage.setItem("auth_redirect", redirectTarget.value);
         window.location.href = res.url;
     } catch (err: any) {
         showAlert(alert, "error", err?.message || "Internal Server Error", 0);
@@ -148,7 +179,7 @@ async function googleUrl() {
             class="mb-4"
         />
 
-        <form novalidate @submit.prevent="handleSignIn">
+        <form @submit.prevent="handleSignIn">
             <label for="signin-email" :class="labelClass">Email</label>
 
             <div class="relative">
@@ -163,7 +194,6 @@ async function googleUrl() {
                     autocomplete="email"
                     placeholder="Enter your email address"
                     :class="[fieldClass, borderClass(errors.email)]"
-                    @input="errors.email = ''"
                 />
             </div>
 
@@ -187,13 +217,11 @@ async function googleUrl() {
                     autocomplete="current-password"
                     placeholder="Enter your password"
                     :class="[fieldClass, borderClass(errors.password), 'pr-11']"
-                    @input="errors.password = ''"
                 />
 
                 <button
                     type="button"
-                    tabindex="-1"
-                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 outline-none transition-colors hover:text-blue-500 dark:text-gray-500"
+                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-400 outline-none transition-colors hover:text-blue-500 focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-gray-500"
                     :aria-label="
                         showPassword ? 'Hide password' : 'Show password'
                     "
@@ -213,7 +241,7 @@ async function googleUrl() {
 
             <div class="mt-3.5 flex justify-end">
                 <NuxtLink
-                    to="/auth/forgot-password"
+                    to="/forgot-password"
                     class="rounded text-xs font-medium text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Forgot Password?
@@ -229,39 +257,69 @@ async function googleUrl() {
                 {{ loading ? "Signing in…" : "Sign in" }}
             </button>
 
-            <div class="mt-5 flex items-center gap-3">
-                <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
-                <span
-                    class="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-gray-500"
-                >
-                    or
-                </span>
-                <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
-            </div>
+            <template v-if="portal === 'family'">
+                <div class="mt-5 flex items-center gap-3">
+                    <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+                    <span
+                        class="text-xs font-medium uppercase tracking-widest text-slate-400 dark:text-gray-500"
+                    >
+                        or
+                    </span>
+                    <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+                </div>
 
-            <button
-                type="button"
-                :disabled="loading || redirecting"
-                class="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-100 text-[15px] font-semibold text-slate-700 outline-none transition-colors hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.12]"
-                @click="googleUrl()"
-            >
-                <img
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt=""
-                    class="h-5 w-5"
-                />
-                Sign in with Google
-            </button>
+                <button
+                    type="button"
+                    :disabled="loading || redirecting"
+                    class="mt-5 flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-100 text-[15px] font-semibold text-slate-700 outline-none transition-colors hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-primary-500/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.12]"
+                    @click="googleUrl()"
+                >
+                    <img
+                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                        alt=""
+                        class="h-5 w-5"
+                    />
+                    Sign in with Google
+                </button>
+
+                <p
+                    class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
+                >
+                    Don't have an account?
+                    <NuxtLink
+                        :to="withRedirect('/auth/signup', signupRedirect)"
+                        class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
+                    >
+                        Sign up
+                    </NuxtLink>
+                </p>
+            </template>
 
             <p
+                v-else-if="signupRedirect"
                 class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
             >
                 Don't have an account?
                 <NuxtLink
-                    to="/auth/signup"
+                    :to="withRedirect('/auth/agency/signup', signupRedirect)"
                     class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Sign up
+                </NuxtLink>
+            </p>
+
+            <p
+                v-else
+                class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
+            >
+                Staff? Ask your branch administrator for access.
+                <br />
+                Want to register your agency?
+                <NuxtLink
+                    to="/product"
+                    class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
+                >
+                    View plans
                 </NuxtLink>
             </p>
 
@@ -271,7 +329,7 @@ async function googleUrl() {
                 By signing in you agree to AMUMA's
                 <button
                     type="button"
-                    class="font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                    class="font-semibold text-blue-600 hover:underline"
                     @click.prevent="showTerms = true"
                 >
                     Terms and Conditions

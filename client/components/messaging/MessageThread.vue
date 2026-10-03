@@ -27,8 +27,8 @@ const props = withDefaults(
         title?: string | null;
         subtitle?: string | null;
         avatar?: string | null;
+        online?: boolean;
         patients?: string[];
-        patientsLabel?: string;
         channel?: string | string[] | null;
         conversationId?: number | null;
         loading?: boolean;
@@ -39,7 +39,6 @@ const props = withDefaults(
     }>(),
     {
         patients: () => [],
-        patientsLabel: "Caring for",
     },
 );
 
@@ -72,8 +71,6 @@ const scroller = ref<HTMLElement | null>(null);
 const showAllPatients = ref(false);
 
 const PATIENT_PREVIEW = 2;
-
-const SKELETON_BUBBLES = ["w-40", "w-56", "w-32", "w-64", "w-44"];
 
 const hiddenPatientCount = computed(() =>
     Math.max(0, props.patients.length - PATIENT_PREVIEW),
@@ -350,47 +347,37 @@ onBeforeUnmount(unsubscribe);
 
 <template>
     <div
-        class="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
+        class="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
     >
         <div
-            v-if="loading && !conversationId"
-            class="shrink-0 border-b border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4 dark:border-white/10"
+            v-if="title"
+            class="relative z-10 shrink-0 border-b border-slate-100 bg-white/90 px-4 py-4 shadow-[0_1px_0_0_rgba(15,23,42,0.04)] backdrop-blur-sm sm:px-6 sm:py-4.5 dark:border-white/10 dark:bg-secondary/90 overflow-hidden"
         >
-            <div class="flex animate-pulse items-center gap-3">
-                <div
-                    class="h-10 w-10 shrink-0 rounded-full bg-slate-100 dark:bg-white/10"
-                />
-
-                <div class="min-w-0 flex-1 space-y-2">
-                    <div
-                        class="h-3.5 w-36 max-w-full rounded bg-slate-200 dark:bg-white/15"
-                    />
-                    <div
-                        class="h-3 w-56 max-w-full rounded bg-slate-100 dark:bg-white/10"
-                    />
-                </div>
-            </div>
-        </div>
-
-        <div
-            v-else-if="title"
-            class="shrink-0 border-b border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4 dark:border-white/10 overflow-hidden"
-        >
-            <div class="flex items-center gap-3">
-                <MessageAvatar :src="avatar" :name="title" size="md" />
+            <div class="flex items-center gap-3.5">
+                <MessageAvatar :src="avatar" :name="title" size="md" :online="online" />
 
                 <div class="min-w-0 flex-1">
-                    <p
-                        class="truncate text-sm font-semibold text-slate-800 dark:text-white"
-                    >
-                        {{ title }}
-                    </p>
+                    <div class="flex items-center gap-1.5">
+                        <p
+                            class="truncate text-[15px] leading-tight font-bold tracking-tight text-slate-900 dark:text-white"
+                        >
+                            {{ title }}
+                        </p>
+
+                        <span
+                            v-if="online"
+                            class="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                        >
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            Active now
+                        </span>
+                    </div>
 
                     <p
                         v-if="patients.length"
-                        class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                        class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500"
                     >
-                        {{ patientsLabel }} {{ visiblePatients.join(", ") }}
+                        Caring for {{ visiblePatients.join(", ") }}
 
                         <button
                             v-if="hiddenPatientCount && !showAllPatients"
@@ -413,7 +400,7 @@ onBeforeUnmount(unsubscribe);
 
                     <p
                         v-else-if="subtitle"
-                        class="mt-0.5 truncate text-xs text-slate-400 dark:text-gray-500"
+                        class="mt-1 truncate text-xs text-slate-400 dark:text-gray-500"
                     >
                         {{ subtitle }}
                     </p>
@@ -423,7 +410,7 @@ onBeforeUnmount(unsubscribe);
                     v-if="showClose"
                     type="button"
                     aria-label="Close conversation"
-                    class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 lg:hidden dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
+                    class="flex shrink-0 items-center justify-center rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-95 lg:hidden dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
                     @click="$emit('close')"
                 >
                     <X class="h-4 w-4" />
@@ -436,26 +423,12 @@ onBeforeUnmount(unsubscribe);
             class="flex-1 min-h-0 space-y-3 overflow-y-auto p-3 sm:p-5"
             @scroll.passive="onScroll"
         >
-            <div v-if="loading" class="animate-pulse space-y-4">
+            <div v-if="loading" class="space-y-3">
                 <div
-                    v-for="(width, index) in SKELETON_BUBBLES"
-                    :key="index"
-                    class="flex flex-col gap-1.5"
-                    :class="index % 2 ? 'items-end' : 'items-start'"
-                >
-                    <div
-                        class="h-10 max-w-[75%] rounded-lg"
-                        :class="[
-                            width,
-                            index % 2
-                                ? 'bg-primary-100 dark:bg-primary-500/20'
-                                : 'bg-slate-100 dark:bg-white/10',
-                        ]"
-                    />
-                    <div
-                        class="h-2.5 w-20 rounded bg-slate-100 dark:bg-white/5"
-                    />
-                </div>
+                    v-for="n in 4"
+                    :key="n"
+                    class="h-12 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
+                />
             </div>
 
             <p
@@ -465,78 +438,76 @@ onBeforeUnmount(unsubscribe);
                 {{ emptyText ?? "No messages yet. Say hello." }}
             </p>
 
-            <template v-if="!loading">
+            <div
+                v-for="message in messages"
+                :key="message.message_id"
+                class="flex"
+                :class="isMine(message) ? 'justify-end' : 'justify-start'"
+            >
                 <div
-                    v-for="message in messages"
-                    :key="message.message_id"
-                    class="flex"
-                    :class="isMine(message) ? 'justify-end' : 'justify-start'"
+                    class="flex min-w-0 max-w-[85%] flex-col gap-1.5 sm:max-w-[75%]"
+                    :class="isMine(message) ? 'items-end' : 'items-start'"
                 >
-                    <div
-                        class="flex min-w-0 max-w-[85%] flex-col gap-1.5 sm:max-w-[75%]"
-                        :class="isMine(message) ? 'items-end' : 'items-start'"
+                    <button
+                        v-if="message.attachment?.type === 'image'"
+                        type="button"
+                        class="block max-w-full overflow-hidden rounded-2xl border border-slate-200 transition hover:opacity-90 dark:border-white/10"
+                        @click="openImage(message.attachment.url)"
                     >
-                        <button
-                            v-if="message.attachment?.type === 'image'"
-                            type="button"
-                            class="block max-w-full overflow-hidden rounded-lg border border-slate-200 transition hover:opacity-90 dark:border-white/10"
-                            @click="openImage(message.attachment.url)"
-                        >
-                            <img
-                                :src="message.attachment.url"
-                                :alt="message.attachment.name ?? 'Attachment'"
-                                loading="lazy"
-                                class="max-h-48 w-auto max-w-full object-cover sm:max-h-64"
-                            />
-                        </button>
-    
-                        <a
-                            v-else-if="message.attachment"
-                            :href="message.attachment.url"
-                            :download="message.attachment.name ?? 'attachment'"
-                            class="flex max-w-full items-center gap-2.5 rounded-lg px-3.5 py-2.5 text-sm transition"
-                            :class="
-                                isMine(message)
-                                    ? 'bg-primary text-white hover:bg-primary-600'
-                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15'
-                            "
-                            @click.prevent="downloadAttachment(message)"
-                        >
-                            <FileText class="h-5 w-5 shrink-0" />
-    
-                            <span class="min-w-0 truncate font-medium">
-                                {{ message.attachment.name ?? "Document.pdf" }}
-                            </span>
-    
-                            <LoaderCircle
-                                v-if="downloadingId === message.message_id"
-                                class="h-4 w-4 shrink-0 animate-spin opacity-70"
-                            />
-    
-                            <Download v-else class="h-4 w-4 shrink-0 opacity-70" />
-                        </a>
-    
-                        <div
-                            v-if="message.body"
-                            class="min-w-0 max-w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-lg px-4 py-2.5 text-sm"
-                            :class="
-                                isMine(message)
-                                    ? 'bg-primary text-white'
-                                    : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-gray-100'
-                            "
-                        >
-                            {{ message.body }}
-                        </div>
-    
-                        <p
-                            class="mt-1 text-[10px] text-slate-400 dark:text-gray-500"
-                            :class="isMine(message) ? 'text-right' : 'text-left'"
-                        >
-                            {{ formatTime(message.created_at) }}
-                        </p>
+                        <img
+                            :src="message.attachment.url"
+                            :alt="message.attachment.name ?? 'Attachment'"
+                            loading="lazy"
+                            class="max-h-48 w-auto max-w-full object-cover sm:max-h-64"
+                        />
+                    </button>
+
+                    <a
+                        v-else-if="message.attachment"
+                        :href="message.attachment.url"
+                        :download="message.attachment.name ?? 'attachment'"
+                        class="flex max-w-full items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-sm transition"
+                        :class="
+                            isMine(message)
+                                ? 'bg-primary text-white hover:bg-primary-600'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-white/10 dark:text-gray-100 dark:hover:bg-white/15'
+                        "
+                        @click.prevent="downloadAttachment(message)"
+                    >
+                        <FileText class="h-5 w-5 shrink-0" />
+
+                        <span class="min-w-0 truncate font-medium">
+                            {{ message.attachment.name ?? "Document.pdf" }}
+                        </span>
+
+                        <LoaderCircle
+                            v-if="downloadingId === message.message_id"
+                            class="h-4 w-4 shrink-0 animate-spin opacity-70"
+                        />
+
+                        <Download v-else class="h-4 w-4 shrink-0 opacity-70" />
+                    </a>
+
+                    <div
+                        v-if="message.body"
+                        class="min-w-0 max-w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-2xl px-4 py-2.5 text-sm"
+                        :class="
+                            isMine(message)
+                                ? 'bg-primary text-white'
+                                : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-gray-100'
+                        "
+                    >
+                        {{ message.body }}
                     </div>
+
+                    <p
+                        class="mt-1 text-[10px] text-slate-400 dark:text-gray-500"
+                        :class="isMine(message) ? 'text-right' : 'text-left'"
+                    >
+                        {{ formatTime(message.created_at) }}
+                    </p>
                 </div>
-            </template>
+            </div>
         </div>
 
         <Transition
@@ -548,7 +519,7 @@ onBeforeUnmount(unsubscribe);
             <button
                 v-if="!atBottom && messages.length"
                 type="button"
-                class="absolute bottom-[86px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
+                class="absolute bottom-[96px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
                 :class="
                     missedCount
                         ? 'border-primary-200 text-primary-600 dark:border-primary-500/20 dark:text-primary-300'
@@ -566,92 +537,97 @@ onBeforeUnmount(unsubscribe);
             </button>
         </Transition>
 
-        <div
-            class="shrink-0 border-t border-slate-200 p-3 dark:border-white/10"
-        >
+        <div class="shrink-0 bg-transparent px-3 pt-1 pb-3 sm:px-4 sm:pb-4">
             <div
-                v-if="attachment"
-                class="mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-white/5"
+                class="rounded-[26px] border border-slate-200/70 bg-white/95 p-2.5 shadow-[0_10px_30px_-8px_rgba(15,23,42,0.15)] backdrop-blur-sm transition-shadow focus-within:border-primary/30 focus-within:shadow-[0_10px_30px_-6px_rgba(0,150,136,0.25)] dark:border-white/10 dark:bg-white/[0.06] dark:shadow-black/20"
             >
-                <img
-                    v-if="attachmentPreview"
-                    :src="attachmentPreview"
-                    :alt="attachment.name"
-                    class="h-12 w-12 shrink-0 rounded-lg object-cover"
-                />
-
                 <div
-                    v-else
-                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                    v-if="attachment"
+                    class="mb-2 flex items-center gap-3 rounded-2xl bg-slate-50 p-2 dark:bg-white/5"
                 >
-                    <FileText class="h-5 w-5" />
+                    <img
+                        v-if="attachmentPreview"
+                        :src="attachmentPreview"
+                        :alt="attachment.name"
+                        class="h-12 w-12 shrink-0 rounded-xl object-cover"
+                    />
+
+                    <div
+                        v-else
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                    >
+                        <FileText class="h-5 w-5" />
+                    </div>
+
+                    <p
+                        class="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-gray-200"
+                    >
+                        {{ attachment.name }}
+                    </p>
+
+                    <button
+                        type="button"
+                        aria-label="Remove attachment"
+                        :disabled="sending"
+                        class="shrink-0 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                        @click="setAttachment(null)"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
                 </div>
 
                 <p
-                    class="min-w-0 flex-1 truncate text-sm font-medium text-slate-700 dark:text-gray-200"
+                    v-if="attachmentError"
+                    class="mb-2 px-1 text-xs text-red-500 dark:text-red-400"
                 >
-                    {{ attachment.name }}
+                    {{ attachmentError }}
                 </p>
 
-                <button
-                    type="button"
-                    aria-label="Remove attachment"
-                    :disabled="sending"
-                    class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
-                    @click="setAttachment(null)"
-                >
-                    <X class="h-4 w-4" />
-                </button>
-            </div>
+                <div class="flex items-end gap-1.5">
+                    <input
+                        ref="fileInput"
+                        type="file"
+                        :accept="ATTACHMENT_TYPES.join(',')"
+                        class="hidden"
+                        @change="pickAttachment"
+                    />
 
-            <p
-                v-if="attachmentError"
-                class="mb-2 text-xs text-red-500 dark:text-red-400"
-            >
-                {{ attachmentError }}
-            </p>
+                    <button
+                        type="button"
+                        aria-label="Attach an image or PDF"
+                        :disabled="disabled || sending"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-500 dark:hover:bg-white/10"
+                        @click="fileInput?.click()"
+                    >
+                        <Paperclip class="h-4 w-4" />
+                    </button>
 
-            <div class="flex items-end gap-2">
-                <input
-                    ref="fileInput"
-                    type="file"
-                    :accept="ATTACHMENT_TYPES.join(',')"
-                    class="hidden"
-                    @change="pickAttachment"
-                />
+                    <textarea
+                        v-model="draft"
+                        rows="1"
+                        :disabled="disabled"
+                        placeholder="Write a message..."
+                        class="max-h-32 min-h-10 flex-1 resize-none self-center rounded-2xl border-0 bg-transparent px-2 py-2 text-sm text-slate-700 outline-none placeholder:text-slate-400 disabled:opacity-60 dark:text-gray-100 dark:placeholder:text-gray-500"
+                        @keydown.enter.exact.prevent="submit"
+                    />
 
-                <button
-                    type="button"
-                    aria-label="Attach an image or PDF"
-                    :disabled="disabled || sending"
-                    class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
-                    @click="fileInput?.click()"
-                >
-                    <Paperclip class="h-4 w-4" />
-                </button>
+                    <button
+                        type="button"
+                        :disabled="!canSend"
+                        class="flex h-10 shrink-0 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                        @click="submit"
+                    >
+                        <LoaderCircle
+                            v-if="sending"
+                            class="h-4 w-4 animate-spin"
+                        />
+                        <SendHorizontal v-else class="h-4 w-4" />
 
-                <textarea
-                    v-model="draft"
-                    rows="1"
-                    :disabled="disabled"
-                    placeholder="Write a message..."
-                    class="max-h-32 min-h-[42px] flex-1 resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
-                    @keydown.enter.exact.prevent="submit"
-                />
-
-                <button
-                    type="button"
-                    :disabled="!canSend"
-                    class="flex h-[42px] shrink-0 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
-                    @click="submit"
-                >
-                    <LoaderCircle v-if="sending" class="h-4 w-4 animate-spin" />
-                    <SendHorizontal v-else class="h-4 w-4" />
-
-                    <span class="hidden sm:inline">
-                        {{ sending ? "Sending..." : "Send" }}
-                    </span>
-                </button>
+                        <span class="hidden sm:inline">
+                            {{ sending ? "Sending..." : "Send" }}
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
 

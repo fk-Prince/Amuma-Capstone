@@ -8,10 +8,6 @@
             @click="toggle"
         >
             {{ label }}
-            <ChevronDown
-                class="h-3 w-3 shrink-0 transition-transform duration-200"
-                :class="collapsed ? '-rotate-90' : ''"
-            />
         </button>
 
         <div
@@ -47,7 +43,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { ChevronDown } from "lucide-vue-next";
 
 const props = withDefaults(
     defineProps<{

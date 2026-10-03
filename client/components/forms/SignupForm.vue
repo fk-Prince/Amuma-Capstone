@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { Check } from "lucide-vue-next";
 import BaseInput from "../ui/BaseInput.vue";
 import BaseButton from "../ui/BaseButton.vue";
@@ -10,7 +10,28 @@ import { otpService } from "~/api/otp/OtpService";
 
 defineOptions({ name: "SignupForm" });
 
+const props = withDefaults(
+    defineProps<{
+        portal?: "agency" | "family";
+    }>(),
+    { portal: "family" },
+);
+
 const { success, error } = useToast();
+const route = useRoute();
+
+// Agencies sign up on their own page and always continue to the plans, so a
+// direct visit still ends up somewhere useful. Family sign-ups only carry a
+// redirect when one was given.
+const redirectTo = computed(() => {
+    const given = safeRedirect(route.query.redirect) ?? peekAuthRedirect();
+
+    return props.portal === "agency" ? (given ?? "/product") : given;
+});
+
+const signinPath = computed(() =>
+    props.portal === "agency" ? "/auth/staff/signin" : "/auth/family/signin",
+);
 
 const signupData = ref({
     firstName: "",
@@ -220,7 +241,9 @@ async function verifyOtp(code: string) {
 
         showOtpDialog.value = false;
 
-        await navigateTo("/auth/signin");
+        // Agencies continue on the staff sign-in, families on the family
+        // sign-in. Either way the redirect (for example checkout) is kept.
+        await navigateTo(withRedirect(signinPath.value, redirectTo.value));
     } catch (err: any) {
         const firstError = Object.values(err?.errors ?? {}).flat()[0];
 
@@ -530,7 +553,7 @@ async function resendOtp() {
             >
                 Already have an account?
                 <NuxtLink
-                    to="/auth/signin"
+                    :to="withRedirect(signinPath, redirectTo)"
                     class="font-semibold text-blue-600 dark:text-blue-400 hover:underline outline-none rounded focus-visible:ring-2 focus-visible:ring-primary-500/40"
                 >
                     Sign in

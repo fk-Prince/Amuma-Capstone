@@ -79,7 +79,7 @@
                     :key="plan.title"
                     v-bind="plan"
                     :billingInterval="billingCycle"
-                    @select="checkout.setSelectedPlan(plan)"
+                    @select="startSubscribe(plan)"
                 />
             </div>
 
@@ -94,6 +94,7 @@ import BillingToggle from "~/components/ui/BillingToggle.vue";
 import PricingCard from "~/components/ui/PricingCard.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
+import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
 
 useHead({ title: "Product" });
 
@@ -105,5 +106,6 @@ definePageMeta({
 });
 
 const billingCycle = ref<"monthly" | "yearly">("monthly");
-const { checkout, loading, formattedPlans } = usePlanCards(billingCycle);
+const { loading, formattedPlans } = usePlanCards(billingCycle);
+const { startSubscribe } = useSubscribeFlow();
 </script>
