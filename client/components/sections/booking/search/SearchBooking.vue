@@ -18,22 +18,52 @@
             </div>
         </div>
 
-        <div v-else class="flex flex-col gap-4">
+        <div
+            v-else
+            :class="
+                compact
+                    ? 'flex flex-col gap-4'
+                    : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'
+            "
+        >
             <CardBooking
-                :variant="2"
+                :variant="compact ? 2 : 3"
                 v-for="branch in props.branches"
                 :key="branch.uuid"
                 :branch="branch"
                 @select="handleSelect"
-                @hover="$emit('hover', $event)"
             />
         </div>
 
         <div
             v-if="isMounted && !props.loading && props.branches.length === 0"
-            class="text-center py-16 text-slate-400 dark:text-gray-500"
+            class="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]"
         >
-            No branches found.
+            <div
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-primary-500 dark:bg-primary-500/10 dark:text-primary-300"
+            >
+                <SearchX class="h-6 w-6" />
+            </div>
+
+            <div>
+                <p class="text-base font-semibold text-secondary dark:text-white">
+                    No providers found
+                </p>
+                <p class="mt-1 max-w-sm text-sm text-muted dark:text-gray-400">
+                    We couldn't find any providers matching your current
+                    location and care type. Try a different location, or
+                    reset your filters to see everyone nearby.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-600"
+                @click="$emit('reset')"
+            >
+                <RotateCcw class="h-3.5 w-3.5" />
+                Reset filters
+            </button>
         </div>
     </div>
 </template>
@@ -42,15 +72,14 @@
 import CardBooking from "./CardBooking.vue";
 import type { BranchRetrieve } from "~/types/branch";
 import { ref, onMounted } from "vue";
+import { SearchX, RotateCcw } from "lucide-vue-next";
 
-defineEmits<{
-    (e: "select", branch: BranchRetrieve): void;
-    (e: "hover", uuid: string | null): void;
-}>();
+defineEmits(["select", "reset"]);
 
 const props = defineProps<{
     branches: BranchRetrieve[];
     loading?: boolean;
+    compact?: boolean;
 }>();
 
 const isMounted = ref(false);

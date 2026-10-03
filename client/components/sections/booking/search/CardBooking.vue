@@ -3,8 +3,6 @@
         v-if="variant === 1"
         class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary dark:border-primary-500/20"
         @click="$emit('select', branch)"
-        @mouseenter="$emit('hover', branch.uuid)"
-        @mouseleave="$emit('hover', null)"
     >
         <div class="relative h-40 overflow-hidden bg-muted-light dark:bg-white/10">
             <img
@@ -128,72 +126,99 @@
 
     <div
         v-else-if="variant === 2"
-        class="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-300 cursor-pointer sm:flex-row dark:bg-secondary dark:border-white/10 dark:hover:border-white/10"
-        @mouseenter="$emit('hover', branch.uuid)"
-        @mouseleave="$emit('hover', null)"
+        class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary-200 cursor-pointer md:flex-row dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
     >
-        <div
-            class="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100 sm:h-auto sm:w-64 dark:bg-white/10"
-        >
-            <img
-                v-if="branch?.image && !imageBroken"
-                :src="branch.image"
-                class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                alt="branch image"
-                @error="imageBroken = true"
-            />
+        <div class="relative w-full shrink-0 md:w-64">
+            <div class="relative h-48 w-full overflow-hidden bg-muted-light dark:bg-white/10">
+                <img
+                    v-if="branch?.image && !imageBroken"
+                    :src="branch.image"
+                    class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    alt="branch image"
+                    @error="imageBroken = true"
+                />
 
-            <img
-                v-else
-                :src="Logo"
-                class="h-full w-full object-contain opacity-40 p-8"
-                alt="default logo"
-            />
+                <img
+                    v-else
+                    :src="Logo"
+                    class="h-full w-full object-contain opacity-40 p-8"
+                    alt="default logo"
+                />
 
-            <div
-                class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent"
-            />
-
-            <span
-                class="absolute left-3 bg-white/90 top-3 rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide backdrop-blur-sm dark:bg-secondary/90"
-                :class="
-                    branch.settings.is_open
-                        ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                "
-            >
-                {{ branch.settings.is_open ? "Open Now" : "Closed" }}
-            </span>
-
-            <div
-                class="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm dark:bg-secondary/90"
-            >
-                <!-- <span class="text-amber-500 text-xs dark:text-amber-300">★</span> -->
-                <Star class="h-3 w-3 text-orange-400 fill-orange-400" />
-
-                <span class="text-xs font-semibold text-slate-700 dark:text-gray-300">
-                    {{ branch.averageRating ?? "0.0" }}
-                </span>
+                <div
+                    class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/50 to-transparent"
+                />
 
                 <span
-                    v-if="branch.reviewCount > 0"
-                    class="text-xs text-slate-500 dark:text-gray-400"
+                    class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
+                    :class="
+                        branch.settings.is_open
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-white/90 text-danger dark:bg-secondary/90 dark:text-danger'
+                    "
                 >
-                    ({{ branch.reviewCount }})
+                    <span
+                        v-if="branch.settings.is_open"
+                        class="h-1.5 w-1.5 shrink-0 rounded-full bg-white"
+                    />
+                    {{ branch.settings.is_open ? "Open Now" : "Closed" }}
                 </span>
+
+                <button
+                    type="button"
+                    class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-white dark:bg-secondary/90 dark:hover:bg-secondary"
+                    :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+                    @click.stop="isFavorited = !isFavorited"
+                >
+                    <Heart
+                        class="h-3.5 w-3.5"
+                        :class="
+                            isFavorited
+                                ? 'fill-danger text-danger'
+                                : 'text-muted dark:text-gray-300'
+                        "
+                    />
+                </button>
+            </div>
+
+            <div
+                v-if="extraImages.length"
+                class="flex h-14 gap-1 bg-muted-light p-1 dark:bg-white/5"
+            >
+                <div
+                    v-for="(img, i) in extraImages.slice(0, 3)"
+                    :key="img.branch_image_id"
+                    class="relative flex-1 overflow-hidden rounded-md bg-white/50 dark:bg-white/10"
+                >
+                    <img
+                        :src="img.image_url"
+                        class="h-full w-full object-cover"
+                        alt=""
+                    />
+                    <div
+                        v-if="i === 2 && remainingImageCount > 0"
+                        class="absolute inset-0 flex items-center justify-center bg-black/55 text-xs font-semibold text-white"
+                    >
+                        +{{ remainingImageCount }}
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="flex flex-1 flex-col p-6">
             <div>
                 <h3
-                    class="line-clamp-1 text-lg font-semibold tracking-tight text-slate-900 transition group-hover:text-primary dark:text-white"
+                    class="flex min-w-0 items-center gap-1.5 line-clamp-1 text-lg font-semibold tracking-tight text-secondary transition group-hover:text-primary dark:text-white"
                 >
-                    {{ branch.name }}
+                    <span class="truncate">{{ branch.name }}</span>
+                    <BadgeCheck
+                        v-if="branch.is_verified"
+                        class="h-4 w-4 shrink-0 fill-primary text-white"
+                    />
                 </h3>
 
                 <div
-                    class="mt-1.5 flex items-center gap-1.5 text-sm text-slate-500 dark:text-gray-400"
+                    class="mt-1.5 flex items-center gap-1.5 text-sm text-muted dark:text-gray-400"
                 >
                     <Location class="h-4 w-4 shrink-0" />
                     <span class="line-clamp-1">
@@ -203,8 +228,21 @@
                     </span>
                 </div>
 
+                <div class="mt-1.5 flex items-center gap-1 text-sm">
+                    <Star class="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                    <span class="font-semibold text-secondary dark:text-white">
+                        {{ branch.averageRating ?? "0.0" }}
+                    </span>
+                    <span
+                        v-if="branch.reviewCount > 0"
+                        class="text-muted dark:text-gray-400"
+                    >
+                        ({{ branch.reviewCount }})
+                    </span>
+                </div>
+
                 <p
-                    class="mt-3 w-[90%] mx-auto text-sm leading-6 text-slate-600 line-clamp-3 dark:text-gray-300"
+                    class="mt-3 text-sm leading-6 text-muted line-clamp-2 dark:text-gray-300"
                 >
                     {{ branch.description }}
                 </p>
@@ -217,12 +255,12 @@
                 >
                     <template v-if="p.plans.name === 'Hybrid'">
                         <span
-                            class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
+                            class="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                         >
                             Homecare Service
                         </span>
                         <span
-                            class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
+                            class="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                         >
                             Inhouse Facility
                         </span>
@@ -230,7 +268,7 @@
 
                     <span
                         v-else
-                        class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-secondary dark:border-white/10 dark:text-gray-300"
+                        class="rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                     >
                         {{ p.plans.name }}
                     </span>
@@ -242,8 +280,8 @@
                     class="h-4 w-4 shrink-0"
                     :class="
                         getTime(branch.settings).is24Hours
-                            ? 'text-emerald-600 dark:text-emerald-300'
-                            : 'text-slate-400 dark:text-gray-500'
+                            ? 'text-accent-600 dark:text-accent-300'
+                            : 'text-muted dark:text-gray-500'
                     "
                     fill="none"
                     viewBox="0 0 24 24"
@@ -259,48 +297,218 @@
 
                 <span
                     v-if="getTime(branch.settings).is24Hours"
-                    class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400"
+                    class="inline-flex items-center gap-1 rounded-md bg-accent-50 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-500/15 dark:text-accent-400"
                 >
                     Open 24 Hours
                 </span>
 
-                <span v-else class="font-medium text-slate-600 dark:text-gray-300">
+                <span v-else class="font-medium text-muted dark:text-gray-300">
                     {{ getTime(branch.settings).label }}
                 </span>
             </div>
+        </div>
 
-            <div class="mt-auto pt-5">
-                <button
-                    @click="$emit('select', branch)"
-                    class="w-full rounded-lg border border-slate-900 bg-slate-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 dark:border-primary dark:bg-primary dark:hover:bg-primary-600"
-                >
-                    View Provider
-                </button>
+        <div
+            class="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-muted-light p-6 md:w-56 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 dark:border-white/10"
+        >
+            <div v-if="priceLabel" class="text-right">
+                <p class="text-xs text-muted dark:text-gray-400">Starting at</p>
+                <p class="text-xl font-bold text-primary">
+                    {{ priceLabel.amount
+                    }}<span class="text-sm font-medium text-muted dark:text-gray-400">{{
+                        priceLabel.suffix
+                    }}</span>
+                </p>
+            </div>
+
+            <button
+                @click="$emit('select', branch)"
+                class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 md:w-full md:justify-center"
+            >
+                View Profile
+                <ArrowRight class="h-3.5 w-3.5" />
+            </button>
+        </div>
+    </div>
+
+    <div
+        v-else-if="variant === 3"
+        class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary-200 cursor-pointer dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
+        @click="$emit('select', branch)"
+    >
+        <div class="relative h-32 w-full shrink-0 overflow-hidden bg-muted-light dark:bg-white/10">
+            <img
+                v-if="branch?.image && !imageBroken"
+                :src="branch.image"
+                class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                alt="branch image"
+                @error="imageBroken = true"
+            />
+            <img
+                v-else
+                :src="Logo"
+                class="h-full w-full object-contain opacity-40 p-8"
+                alt="default logo"
+            />
+
+            <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/45 to-transparent" />
+
+            <span
+                class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
+                :class="
+                    branch.settings.is_open
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-white/90 text-danger dark:bg-secondary/90 dark:text-danger'
+                "
+            >
+                <span
+                    v-if="branch.settings.is_open"
+                    class="h-1.5 w-1.5 shrink-0 rounded-full bg-white"
+                />
+                {{ branch.settings.is_open ? "Open Now" : "Closed" }}
+            </span>
+
+            <button
+                type="button"
+                class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur-sm transition-colors hover:bg-white dark:bg-secondary/90 dark:hover:bg-secondary"
+                :aria-label="isFavorited ? 'Remove from favorites' : 'Add to favorites'"
+                @click.stop="isFavorited = !isFavorited"
+            >
+                <Heart
+                    class="h-3.5 w-3.5"
+                    :class="isFavorited ? 'fill-danger text-danger' : 'text-muted dark:text-gray-300'"
+                />
+            </button>
+        </div>
+
+        <div class="flex flex-1 flex-col p-3.5">
+            <h3
+                class="flex min-w-0 items-center gap-1.5 line-clamp-1 text-sm font-bold text-secondary transition group-hover:text-primary dark:text-white"
+            >
+                <span class="truncate">{{ branch.name }}</span>
+                <BadgeCheck
+                    v-if="branch.is_verified"
+                    class="h-3.5 w-3.5 shrink-0 fill-primary text-white"
+                />
+            </h3>
+
+            <div class="mt-1 flex items-center gap-1 text-xs">
+                <Star class="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                <span class="font-semibold text-secondary dark:text-white">
+                    {{ branch.averageRating ?? "0.0" }}
+                </span>
+                <span v-if="branch.reviewCount > 0" class="text-muted dark:text-gray-400">
+                    ({{ branch.reviewCount }})
+                </span>
+            </div>
+
+            <div class="mt-1.5 flex items-center gap-1.5 text-xs text-muted dark:text-gray-400">
+                <Location class="h-3.5 w-3.5 shrink-0" />
+                <span class="line-clamp-1">
+                    {{ branch.location.street }}, {{ branch.location.city }}
+                </span>
+            </div>
+
+            <div class="mt-2.5 flex flex-wrap gap-1.5">
+                <template v-for="p in branch.subscriptions" :key="p.plans.plan_code ?? ''">
+                    <template v-if="p.plans.name === 'Hybrid'">
+                        <span class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
+                            Homecare Services
+                        </span>
+                        <span class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300">
+                            In-House Facility
+                        </span>
+                    </template>
+                    <span
+                        v-else
+                        class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
+                    >
+                        {{ p.plans.name }}
+                    </span>
+                </template>
+            </div>
+
+            <div class="mt-auto flex items-end justify-between gap-2 pt-4">
+                <div v-if="priceLabel">
+                    <p class="text-[11px] text-muted dark:text-gray-400">Starting at</p>
+                    <p class="text-base font-bold text-primary">
+                        {{ priceLabel.amount
+                        }}<span class="text-xs font-medium text-muted dark:text-gray-400">{{
+                            priceLabel.suffix
+                        }}</span>
+                    </p>
+                </div>
+                <div v-else />
+
+                <div class="flex shrink-0 items-center gap-1.5">
+                    <button
+                        @click.stop="$emit('select', branch)"
+                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-muted-light px-3 py-1.5 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-white/10 dark:text-white"
+                    >
+                        View Profile
+                    </button>
+                    <button
+                        @click.stop="$emit('select', branch)"
+                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
+                    >
+                        Book Now
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { BranchRetrieve } from "~/types/branch";
 import Location from "~/components/icons/location.vue";
 import Logo from "~/assets/logo/logo.png";
-import { Star, ArrowRight } from "lucide-vue-next";
+import { Star, ArrowRight, Heart, BadgeCheck } from "lucide-vue-next";
 import { getBranchTimeDisplay } from "~/utils/time";
 
 const props = defineProps<{
     branch: BranchRetrieve;
-    variant: 1 | 2;
+    variant: 1 | 2 | 3;
 }>();
 
-defineEmits<{
-    (e: "select", branch: BranchRetrieve): void;
-    (e: "hover", uuid: string | null): void;
-}>();
+defineEmits(["select"]);
 
 const imageBroken = ref(false);
 
+const isFavorited = ref(false);
+
 const getTime = (settings: BranchRetrieve["settings"]) =>
     getBranchTimeDisplay(settings);
+
+const extraImages = computed(() => props.branch.images ?? []);
+const remainingImageCount = computed(() =>
+    Math.max(extraImages.value.length - 3, 0),
+);
+
+const priceLabel = computed(() => {
+    const hourlyRate = props.branch.homecare?.adl_hourly_rate;
+    if (hourlyRate) {
+        return { amount: `₱${hourlyRate}`, suffix: "/hr" };
+    }
+
+    const facilityPrices = (props.branch.facility ?? [])
+        .map((f) => ({ price: f.price, cycle: f.billing_cycle }))
+        .filter((f) => typeof f.price === "number");
+
+    if (!facilityPrices.length) return null;
+
+    const cheapest = facilityPrices.reduce((min, f) =>
+        f.price < min.price ? f : min,
+    );
+
+    const suffix =
+        cheapest.cycle === "HOURLY"
+            ? "/hr"
+            : cheapest.cycle === "MONTHLY"
+              ? "/mo"
+              : "/yr";
+
+    return { amount: `₱${cheapest.price}`, suffix };
+});
 </script>

@@ -1,19 +1,24 @@
 <template>
-    <section class="rounded-2xl border-muted-light bg-white p-6 md:p-8 dark:bg-secondary dark:border-white/10">
+    <section
+        class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
+    >
         <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-                <h2 class="text-3xl font-bold text-secondary dark:text-white">
-                    Ratings & Reviews
-                </h2>
-                <p class="mt-1 text-sm text-muted dark:text-gray-400">
-                    See what families are saying about their experience with
-                    this provider.
-                </p>
+            <div class="flex items-start gap-3">
+                <Star class="mt-1 h-6 w-6 shrink-0 fill-amber-400 text-amber-400" />
+                <div>
+                    <h2 class="text-xl font-bold text-secondary dark:text-white">
+                        Ratings & Reviews
+                    </h2>
+                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                        See what families are saying about their experience
+                        with this provider.
+                    </p>
+                </div>
             </div>
 
             <button
                 type="button"
-                class="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+                class="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-white px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary-50 dark:bg-transparent dark:hover:bg-white/5"
                 @click="openForm"
             >
                 <Pencil class="h-4 w-4" />
@@ -22,10 +27,10 @@
         </div>
 
         <div
-            class="mt-6 mb-6 grid grid-cols-1 gap-6 rounded-2xl border border-primary/10 bg-gradient-to-br from-light to-white p-6 md:grid-cols-[auto_1fr] md:gap-10 dark:bg-none dark:bg-white/5 dark:border-white/10"
+            class="mt-5 mb-5 grid grid-cols-1 gap-6 rounded-2xl border border-gray-100 p-6 md:grid-cols-[auto_1fr] md:gap-10 dark:border-white/10 dark:bg-white/5"
         >
             <div
-                class="flex flex-col items-center border-primary/10 pb-6 text-center md:items-start md:border-r md:pb-0 md:pr-10 md:text-left"
+                class="flex flex-col items-center border-gray-100 pb-6 text-center md:items-start md:border-r md:pb-0 md:pr-10 md:text-left dark:border-white/10"
             >
                 <span class="text-5xl font-extrabold leading-none text-secondary dark:text-white">
                     {{ (averageRating ?? 0).toFixed(1) }}
@@ -39,12 +44,12 @@
                         :class="
                             n <= Math.round(averageRating ?? 0)
                                 ? 'text-amber-400 fill-amber-400'
-                                : 'text-amber-100 fill-amber-100'
+                                : 'text-amber-100 fill-amber-100 dark:text-white/10 dark:fill-white/10'
                         "
                     />
                 </div>
 
-                <p class="mt-2 text-xs text-muted dark:text-gray-400">
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     Based on {{ total }}
                     {{ total === 1 ? "review" : "reviews" }}
                 </p>
@@ -62,31 +67,31 @@
                     @click="setFilter(star)"
                 >
                     <span
-                        class="w-11 shrink-0 text-xs font-medium"
+                        class="w-11 shrink-0 text-left text-xs font-medium"
                         :class="
-                            activeFilter === star ? 'text-primary' : 'text-muted dark:text-gray-400'
+                            activeFilter === star ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
                         "
                     >
-                        {{ star }} star
+                        {{ star }} Star
                     </span>
 
                     <span
-                        class="h-2 flex-1 overflow-hidden rounded-full bg-muted-light dark:bg-white/10"
+                        class="h-2 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
                     >
                         <span
-                            class="block h-full rounded-full bg-amber-400 transition-all"
+                            class="block h-full rounded-full bg-primary transition-all"
                             :style="{ width: ratingPercent(star) + '%' }"
                         />
                     </span>
 
-                    <span class="w-6 shrink-0 text-right text-xs text-muted dark:text-gray-400">
+                    <span class="w-6 shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
                         {{ ratingBreakdown[star] ?? 0 }}
                     </span>
                 </button>
             </div>
         </div>
 
-        <div class="flex flex-wrap gap-2 mb-6">
+        <div class="flex flex-wrap gap-2 mb-5">
             <button
                 @click="setFilter('all')"
                 :class="btnClass(activeFilter === 'all')"
@@ -140,35 +145,62 @@
         </template>
 
         <template v-else>
-            <div v-if="reviews.length">
+            <div v-if="reviews.length" class="flex flex-col gap-3">
                 <div
                     v-for="review in reviews"
                     :key="review.review_id"
-                    class="py-5 border-b border-muted-light dark:border-white/10"
+                    class="rounded-xl border border-gray-100 p-4 dark:border-white/10"
                 >
-                    <p class="text-sm font-medium text-secondary dark:text-white">
-                        {{ fullName(review.user) }}
-                    </p>
+                    <div class="flex gap-3">
+                        <img
+                            v-if="(review.user as any)?.avatar"
+                            :src="(review.user as any).avatar"
+                            alt=""
+                            class="h-10 w-10 shrink-0 rounded-full object-cover"
+                        />
+                        <span
+                            v-else
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-white/10 dark:text-gray-500"
+                        >
+                            <UserIcon class="h-5 w-5" />
+                        </span>
 
-                    <div class="text-amber-500 text-sm dark:text-amber-300">
-                        {{ "★".repeat(review.rate)
-                        }}{{ "☆".repeat(5 - review.rate) }}
+                        <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-secondary dark:text-white">
+                                {{ fullName(review.user) }}
+                            </p>
+
+                            <div class="mt-0.5 flex items-center gap-2">
+                                <span class="flex gap-0.5">
+                                    <Star
+                                        v-for="n in 5"
+                                        :key="n"
+                                        class="h-3.5 w-3.5"
+                                        :class="
+                                            n <= Math.round(Number(review.rate))
+                                                ? 'text-amber-400 fill-amber-400'
+                                                : 'text-amber-100 fill-amber-100 dark:text-white/10 dark:fill-white/10'
+                                        "
+                                    />
+                                </span>
+
+                                <span class="text-xs text-gray-400 dark:text-gray-500">
+                                    {{ formatDate(review.created_at) }}
+                                </span>
+                            </div>
+
+                            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                {{ review.description }}
+                            </p>
+
+                            <img
+                                v-if="review.image"
+                                :src="review.image"
+                                alt="Review photo"
+                                class="mt-3 h-24 w-24 rounded-lg object-cover ring-1 ring-gray-100 dark:ring-white/10"
+                            />
+                        </div>
                     </div>
-
-                    <p class="text-xs text-muted dark:text-gray-400">
-                        {{ formatDate(review.created_at) }}
-                    </p>
-
-                    <p class="mt-2 text-sm text-secondary/80 dark:text-gray-300">
-                        {{ review.description }}
-                    </p>
-
-                    <img
-                        v-if="review.image"
-                        :src="review.image"
-                        alt="Review photo"
-                        class="mt-3 h-28 w-28 rounded-lg object-cover ring-1 ring-muted-light dark:ring-white/10"
-                    />
                 </div>
 
                 <div v-if="hasMore" class="pt-6 flex justify-center">
@@ -402,7 +434,14 @@
 import { ref, watch, computed, onMounted } from "vue";
 import { reviewService } from "~/api/review/ReviewService";
 import type { Review } from "~/types/review";
-import { Star, Pencil, LoaderCircle, X, ImagePlus } from "lucide-vue-next";
+import {
+    Star,
+    Pencil,
+    LoaderCircle,
+    X,
+    ImagePlus,
+    User as UserIcon,
+} from "lucide-vue-next";
 import { useAuthUser, fetchAuthUser } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
 
@@ -683,19 +722,17 @@ function fullName(user: any) {
 function formatDate(dateStr: string) {
     const date = new Date(dateStr);
 
-    return date.toLocaleString("en-US", {
+    return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
     });
 }
 
 const btnClass = (active: boolean) =>
-    `px-3 py-1.5 text-sm rounded-lg border transition ${
+    `px-3.5 py-1.5 text-xs font-medium rounded-full border transition ${
         active
-            ? "border-amber-400 text-amber-500 bg-white dark:bg-secondary dark:text-amber-300"
-            : "border-muted-light text-muted hover:border-primary/30 dark:border-white/10 dark:text-gray-400"
+            ? "border-primary bg-primary text-white"
+            : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 dark:border-white/10 dark:bg-transparent dark:text-gray-400"
     }`;
 </script>
