@@ -13,6 +13,7 @@ class BranchImage extends Model
     public const IMAGE_COMMON_ROOM = 'common_room';
     public const IMAGE_BRANCH = 'branch';
     public const IMAGE_OTHER = 'other';
+    public const IMAGE_COVER = 'cover';
 
     protected $fillable = [
         'branch_id',

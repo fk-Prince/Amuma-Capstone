@@ -1,5 +1,7 @@
 <template>
     <div v-if="localValue" class="space-y-6 w-full">
+        <BranchCoverCard :uuid="branch?.uuid" :profile="localValue.image" />
+
         <ClientOnly>
             <BranchForm
                 v-model:branch="localValue"
@@ -31,6 +33,7 @@
 <script setup lang="ts">
 import { ref, watch, toRaw } from "vue";
 import BranchForm from "~/components/forms/BranchForm.vue";
+import BranchCoverCard from "~/components/sections/app/settings/BranchCoverCard.vue";
 import { branchService } from "~/api/branch/BranchService";
 import { branchSchema } from "~/schema/branch-schema";
 import type { Branch } from "~/types/branch";
