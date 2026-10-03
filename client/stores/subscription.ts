@@ -219,4 +219,11 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             this.subscriptionPayload = null;
         },
     },
+
+    // Keeps the chosen plan through a page reload or the Google sign-in
+    // round trip. Session-only, so it is gone when the tab closes.
+    persist: {
+        pick: ["selectedPlan", "selectedInterval"],
+        storage: import.meta.client ? sessionStorage : undefined,
+    } as any,
 });

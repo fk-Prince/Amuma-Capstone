@@ -1,7 +1,5 @@
 <template>
     <div class="flex flex-col min-h-screen">
-        <DefaultNavbar :navList="navList" />
-
         <main class="relative flex-1">
             <div
                 class="pointer-events-none absolute inset-0 overflow-hidden print:hidden w-full h-full dark:opacity-30"
@@ -26,23 +24,5 @@
             </div>
             <slot />
         </main>
-
-        <AppFooter v-if="footer" />
-
-        <SubscribeAuthModal />
     </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-
-import DefaultNavbar from "~/components/sections/DefaultNavbar.vue";
-import AppFooter from "~/components/sections/AppFooter.vue";
-import SubscribeAuthModal from "~/components/ui/SubscribeAuthModal.vue";
-import { navList as defaultNavList } from "~/config/publicMenu";
-
-const route = useRoute();
-const footer = computed(() => route.meta.footer ?? true);
-const navList = computed(() => (route.meta.navList as typeof defaultNavList | undefined) ?? defaultNavList);
-</script>
