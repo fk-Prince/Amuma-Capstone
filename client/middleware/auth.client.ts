@@ -21,15 +21,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const isAuthenticated = !!user.value;
 
     if (!isAuthenticated && !isAuthRoute) {
-        // Someone heading to checkout with no account is a new subscriber,
-        // so send them to the agency sign-up instead of the portal chooser.
         const target = to.path.startsWith("/product/subscription-details")
             ? "/auth/signup"
             : to.path.startsWith("/portal") || to.path.startsWith("/booking")
-              ? "/auth/client/signin"
-              : to.path.startsWith("/app")
-                ? "/auth/staff/signin"
-                : "/auth/select";
+                ? "/auth/client/signin"
+                : to.path.startsWith("/app")
+                    ? "/auth/staff/signin"
+                    : "/auth/select";
 
         saveAuthRedirect(to.fullPath);
 
