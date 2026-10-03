@@ -25,3 +25,6 @@ export const navList = [
         ],
     },
 ]
+
+
+export const providerNavList: typeof navList = []
