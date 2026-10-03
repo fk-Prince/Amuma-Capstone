@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="relative overflow-auto flex-1">
-                    <div v-if="loading" class="divide-y divide-muted-light">
+                    <div v-if="loading" class="divide-y divide-muted-light dark:divide-white/10">
                         <div v-for="n in 5" :key="n" class="px-6 py-4">
                             <div
                                 class="h-14 bg-light/60 rounded-2xl animate-pulse dark:bg-white/5"
@@ -57,7 +57,7 @@
                         No plans found
                     </div>
 
-                    <div v-else class="divide-y divide-muted-light">
+                    <div v-else class="divide-y divide-muted-light dark:divide-white/10">
                         <div
                             v-for="group in groupedPlans"
                             :key="group.category"
@@ -68,7 +68,7 @@
                                 {{ group.category }}
                             </p>
 
-                            <div class="divide-y divide-muted-light">
+                            <div class="divide-y divide-muted-light dark:divide-white/10">
                                 <div
                                     v-for="plan in group.items"
                                     :key="plan.branch_contract_id"

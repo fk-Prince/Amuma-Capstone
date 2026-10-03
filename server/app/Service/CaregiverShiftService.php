@@ -49,7 +49,7 @@ class CaregiverShiftService
         return response()->json([
             'data' => [
                 'shifts' => $shifts->map(fn($shift) => [
-                    'caregiver_facility_shift_id' => $shift->caregiver_facility_shift_id,
+                    'caregiver_shift_id' => $shift->caregiver_shift_id,
                     'start_time' => substr((string) $shift->start_time, 0, 5),
                     'end_time' => substr((string) $shift->end_time, 0, 5),
                     'note' => $shift->note,
@@ -126,7 +126,7 @@ class CaregiverShiftService
             if ($reactivating) {
                 $this->requireCurrent($shift->admission);
 
-                if ($this->shifts->hasActiveAssignment($shift->admission_id, $shift->caregiver_id, $shift->caregiver_facility_shift_id)) {
+                if ($this->shifts->hasActiveAssignment($shift->admission_id, $shift->caregiver_id, $shift->caregiver_shift_id)) {
                     throw new Exception('This caregiver is already assigned to this resident.', 422);
                 }
             }

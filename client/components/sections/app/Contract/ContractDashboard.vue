@@ -14,7 +14,7 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Active Patients"
                     :value="overview.active_patient"
@@ -60,7 +60,7 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Active Plans"
                     :value="overview.total_active_plans"
@@ -88,14 +88,6 @@
                     :loading="loading"
                 />
 
-                <StatCard
-                    title="Retention Rate"
-                    :value="overview.patient_retention"
-                    subtitle="Current retention"
-                    :icon="TrendingUp"
-                    tone="accent"
-                    :loading="loading"
-                />
             </div>
         </div>
 
@@ -155,7 +147,6 @@ import {
     HeartHandshake,
     HomeIcon,
     Lock,
-    TrendingUp,
     UserPlus,
     Users,
 } from "lucide-vue-next";

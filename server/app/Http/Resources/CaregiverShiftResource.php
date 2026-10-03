@@ -10,7 +10,7 @@ class CaregiverShiftResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'caregiver_facility_shift_id' => $this->caregiver_facility_shift_id,
+            'caregiver_shift_id' => $this->caregiver_shift_id,
             'caregiver_id' => $this->caregiver_id,
             'admission_id' => $this->admission_id,
             'caregiver_name' => $this->caregiver?->full_name,

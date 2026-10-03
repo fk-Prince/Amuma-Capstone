@@ -46,14 +46,8 @@
                                 v-for="tab in tabs"
                                 :key="tab.value"
                                 type="button"
-                                :disabled="isTabLocked(tab.value)"
-                                :title="
-                                    isTabLocked(tab.value)
-                                        ? lockedTabTitle[tab.value]
-                                        : undefined
-                                "
                                 @click="activeTab = tab.value"
-                                class="relative z-10 flex w-[180px] items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="relative z-10 flex w-[180px] items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-200"
                                 :class="
                                     activeTab === tab.value
                                         ? 'text-secondary dark:text-white'
@@ -61,9 +55,7 @@
                                 "
                             >
                                 <component
-                                    :is="
-                                        isTabLocked(tab.value) ? Lock : tab.icon
-                                    "
+                                    :is="tab.icon"
                                     class="w-4 h-4 shrink-0"
                                 />
                                 {{ tab.label }}
@@ -155,7 +147,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { HomeIcon, Building2, Lock } from "lucide-vue-next";
+import { HomeIcon, Building2 } from "lucide-vue-next";
 
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import HomecarePlan from "~/components/sections/app/Contract/HomecarePlan.vue";
@@ -192,14 +184,6 @@ const activeTab = ref<"homecare" | "facility">(
     homecareLocked.value && !facilityLocked.value ? "facility" : "homecare",
 );
 const plans = ref<any[]>([]);
-
-const isTabLocked = (tab: "homecare" | "facility") =>
-    tab === "homecare" ? homecareLocked.value : facilityLocked.value;
-
-const lockedTabTitle = {
-    homecare: "Locked — this branch has no Homecare Services plan.",
-    facility: "Locked — this branch has no In-house Facility plan.",
-};
 
 const homecareLockedMessage =
     "This branch has no Homecare Services plan, so homecare contracts are locked.";

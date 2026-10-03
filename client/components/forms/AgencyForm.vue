@@ -500,6 +500,7 @@
         >
             <FormSectionHeader
                 title="Primary Address"
+                required
                 description="Pick the agency location on the map."
                 :icon="isNew ? MapPin : undefined"
             >

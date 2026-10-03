@@ -140,20 +140,29 @@
                 <p
                     class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
-                    Expiring Soon
+                    Subscription Ends
                 </p>
 
                 <p
                     class="mt-1 text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
                 >
-                    {{ statsData.expiring_soon }}
+                    {{ expiresInLabel }}
                 </p>
 
                 <div
+                    v-if="isTesting && !loading"
+                    class="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-300"
+                >
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Still on free testing
+                </div>
+
+                <div
+                    v-if="daysLeftLabel"
                     class="mt-3 flex items-center gap-2 text-xs text-fuchsia-600 dark:text-fuchsia-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-fuchsia-500" />
-                    Expiring in 1 week
+                    {{ daysLeftLabel }}
                 </div>
             </div>
         </div>
@@ -218,12 +227,43 @@ interface BranchStatsData {
     total_branches_new_this_month: number;
     active_branches: number;
     active_branches_percent: number;
+    expires_in_days?: number | null;
+    subscription_end_date?: string | null;
     expiring_soon: number;
     expiring_soon_percent: number;
     maintenance_alerts: number;
+    branch_capacity?: { is_testing?: boolean } | null;
 }
 
-defineProps<{
+import { computed } from "vue";
+import { formatDate } from "~/utils/time";
+
+const props = defineProps<{
     statsData: BranchStatsData;
+    loading?: boolean;
 }>();
+
+const MONTH_DAYS = 30;
+
+const isTesting = computed(() =>
+    Boolean(props.statsData.branch_capacity?.is_testing),
+);
+
+const expiresInLabel = computed(() => {
+    if (props.loading) return "…";
+
+    return props.statsData.subscription_end_date
+        ? formatDate(props.statsData.subscription_end_date)
+        : "—";
+});
+
+const daysLeftLabel = computed(() => {
+    const days = props.statsData.expires_in_days;
+
+    if (props.loading || days === null || days === undefined) return null;
+    if (days >= MONTH_DAYS) return null;
+    if (days === 0) return "Ends today";
+
+    return `${days} ${days === 1 ? "day" : "days"} left`;
+});
 </script>

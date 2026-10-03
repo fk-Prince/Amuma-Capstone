@@ -19,6 +19,22 @@
             </span>
         </div>
 
+        <div
+            class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+            aria-hidden="true"
+        >
+            <div
+                :class="[
+                    'absolute right-[-62px] top-[46px] w-[240px] rotate-45 py-1.5 text-center text-[10px] font-extrabold uppercase leading-4 tracking-wider shadow-lg',
+                    featured
+                        ? 'bg-white text-emerald-600 shadow-black/15'
+                        : 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-emerald-500/30',
+                ]"
+            >
+                1 Month Free Testing
+            </div>
+        </div>
+
         <div class="mb-4">
             <span
                 :class="[
@@ -32,7 +48,7 @@
             </span>
         </div>
 
-        <div class="mb-6">
+        <div class="mb-6 pr-14">
             <h2
                 :class="[
                     'font-display font-bold text-2xl leading-tight mb-1',
@@ -51,7 +67,7 @@
             </p>
         </div>
 
-        <div class="flex items-baseline gap-1 mb-5">
+        <div class="flex items-baseline gap-1 mb-2">
             <span
                 :class="[
                     'font-display font-extrabold text-4xl transition-transform duration-300 group-hover:scale-105 origin-left inline-block',
@@ -66,15 +82,18 @@
                     featured ? 'text-white/60' : 'text-muted dark:text-gray-400',
                 ]"
             >
-                {{ billingInterval === "yearly" ? "/ year" : "/ month" }}
-            </span>
-            <span
-                v-if="billingInterval === 'yearly' && annualDiscount > 0"
-                class="text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
-            >
-                Save {{ annualDiscount }}%
+                / year
             </span>
         </div>
+
+        <p
+            :class="[
+                'mb-5 text-sm font-medium',
+                featured ? 'text-white/80' : 'text-primary dark:text-primary-300',
+            ]"
+        >
+            {{ branchNote }}
+        </p>
 
         <NuxtLink
             to="/product/subscription-details"
@@ -150,32 +169,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
 import { formatCurrency } from "~/utils/currency";
 
-const props = defineProps<{
+defineProps<{
     planLabel: string;
     title: string;
     description: string;
-    billingInterval: "monthly" | "yearly";
     price: number | undefined | string;
-    monthly_price: number | string;
-    yearly_price: number | string;
+    branchNote: string;
     ctaText: string;
     features: string[];
     featured?: boolean;
 }>();
-
-const annualDiscount = computed(() => {
-    const monthly = Number(props.monthly_price);
-    const yearly = Number(props.yearly_price);
-
-    if (!monthly || !yearly) return 0;
-
-    const fullYear = monthly * 12;
-
-    return Math.round(((fullYear - yearly) / fullYear) * 100);
-});
 
 defineEmits<{
     (e: "select", plan: any): void;

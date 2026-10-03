@@ -212,7 +212,7 @@ class PatientResource extends JsonResource
 
         return [
             'patient_admission_id' => $admission->patient_admission_id,
-            'caregiver_count' => \App\Models\CaregiverFacilityShift::where('admission_id', $admission->patient_admission_id)
+            'caregiver_count' => \App\Models\CaregiverShift::where('admission_id', $admission->patient_admission_id)
                 ->where('is_active', true)
                 ->count(),
             'status' => $admission->status,

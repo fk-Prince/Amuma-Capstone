@@ -99,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import {
     Building2,
     Landmark,
@@ -149,11 +149,23 @@ const tabs = [
         icon: Settings,
     },
     {
-        label: "Branch Renewal",
+        label: "Subscription Detail",
         value: "renewal",
         icon: RefreshCw,
     },
 ];
 
-const activeTab = ref("branch");
+const route = useRoute();
+
+const tabFromQuery = () =>
+    tabs.some((tab) => tab.value === route.query.tab)
+        ? String(route.query.tab)
+        : "branch";
+
+const activeTab = ref(tabFromQuery());
+
+watch(
+    () => route.query.tab,
+    () => (activeTab.value = tabFromQuery()),
+);
 </script>

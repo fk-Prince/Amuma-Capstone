@@ -212,7 +212,12 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     branch_manager: MODULE_ACTIONS,
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],
-        [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
+        [Modules.Patients]: [
+            PermissionAction.Read,
+            PermissionAction.Create,
+            PermissionAction.Update,
+            PermissionAction.Export,
+        ],
         [Modules.Schedules]: MODULE_ACTIONS[Modules.Schedules],
         [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions].filter(
             (action) => action !== PermissionAction.ForceDischarge,

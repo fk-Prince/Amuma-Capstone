@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Events\MessageSent;
 use App\Models\Branch;
-use App\Models\CaregiverFacilityShift;
+use App\Models\CaregiverShift;
 use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Employee;
@@ -151,7 +151,7 @@ class MessageService
             )
             ->pluck('employee_id')
             ->merge(
-                CaregiverFacilityShift::where('is_active', true)
+                CaregiverShift::where('is_active', true)
                     ->whereHas(
                         'admission',
                         fn($admission) => $admission
@@ -305,12 +305,12 @@ class MessageService
             ->where('schedule_assigned.is_active', true)
             ->select('schedule_assigned.employee_id', 'schedules.patient_id');
 
-        return DB::table('caregiver_facility_shifts')
-            ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'caregiver_facility_shifts.admission_id')
-            ->whereIn('caregiver_facility_shifts.caregiver_id', $employeeIds)
-            ->where('caregiver_facility_shifts.is_active', true)
+        return DB::table('caregiver_shifts')
+            ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'caregiver_shifts.admission_id')
+            ->whereIn('caregiver_shifts.caregiver_id', $employeeIds)
+            ->where('caregiver_shifts.is_active', true)
             ->where('patient_admissions.status', PatientAdmission::STATUS_ADMITTED)
-            ->select('caregiver_facility_shifts.caregiver_id as employee_id', 'patient_admissions.patient_id')
+            ->select('caregiver_shifts.caregiver_id as employee_id', 'patient_admissions.patient_id')
             ->union($scheduled)
             ->get()
             ->groupBy('employee_id')

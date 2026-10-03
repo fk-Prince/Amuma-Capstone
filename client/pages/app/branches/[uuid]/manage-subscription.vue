@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen-header rounded-lg p-1">
-        <BranchDashboard :stats-data="statsData" />
+        <BranchDashboard :stats-data="statsData" :loading="statsLoading" />
 
         <div
             class="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -42,12 +42,10 @@
                         <ActionButton
                             variant="primary"
                             extra-class="!rounded-xl !px-5 !py-2.5"
-                            :disabled="addDisabled || !canAddBranch"
-                            :tooltip="
-                                canAddBranch
-                                    ? ''
-                                    : 'You need permission to create in Manage Branches to add a branch.'
+                            :disabled="
+                                addDisabled || !canAddBranch || testingAtMax
                             "
+                            :tooltip="addBranchTooltip"
                             @click="openAddBranch"
                         >
                             <svg
@@ -92,13 +90,13 @@
                             v-if="agency?.image"
                             :src="agency.image"
                             :alt="agency.name"
-                            class="h-14 w-14 object-cover"
+                            class="h-16 w-16 shrink-0 rounded-2xl border border-slate-200 object-cover shadow-sm dark:border-white/10"
                         />
                         <!-- </div> -->
 
                         <div
                             v-else
-                            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
+                            class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary-50 text-primary shadow-sm dark:bg-primary-500/10"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -119,10 +117,11 @@
 
                         <div v-if="agency" class="min-w-0">
                             <h1
-                                class="truncate text-xl font-semibold text-slate-800 dark:text-white"
+                                class="truncate text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
                             >
                                 {{ agency.name }}
                             </h1>
+
 
                             <!-- <p
                             v-if="agency.description"
@@ -131,8 +130,15 @@
                             {{ agency.description }}
                         </p> -->
 
+                            <p
+                                v-if="subscriptionPlan?.name"
+                                class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                            >
+                                {{ planTypeLabel(subscriptionPlan.type) }} ·
+                                {{ subscriptionPlan.name }}
+                            </p>
                             <div
-                                class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2"
+                                class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 dark:border-white/10"
                             >
                                 <span
                                     v-if="agency.email"
@@ -182,6 +188,16 @@
                             </div>
                         </div>
                     </div>
+
+                    <ActionButton
+                        v-if="renewalAvailable"
+                        variant="primary"
+                        extra-class="!rounded-xl !px-5 !py-2.5 shrink-0"
+                        @click="showRenewal = true"
+                    >
+                        <RefreshCw class="h-4 w-4" />
+                        <span>Renewal</span>
+                    </ActionButton>
                 </div>
 
                 <div
@@ -315,6 +331,12 @@
             @created="onBranchCreated"
         />
 
+        <RenewalModal
+            :open="showRenewal"
+            :uuid="route.params.uuid as string"
+            @close="closeRenewal"
+        />
+
         <ResubmitBranchModal
             v-if="resubmitTarget"
             :branch="resubmitTarget.branch"
@@ -343,12 +365,20 @@ import BranchDashboard from "~/components/sections/app/branches/BranchDashboard.
 import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
+import RenewalModal from "~/components/sections/app/branches/RenewalModal.vue";
+import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { CircleCheck, CircleX, Clock, LayoutGrid } from "lucide-vue-next";
+import {
+    CircleCheck,
+    CircleX,
+    Clock,
+    LayoutGrid,
+    RefreshCw,
+} from "lucide-vue-next";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
@@ -357,16 +387,17 @@ import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { useRoute } from "vue-router";
 import logo from "~/assets/logo/logo.png";
+import { planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
 
 definePageMeta({
     layout: "dashboard",
     middleware: "auth-client",
 });
-useHead({ title: "Branches" });
+useHead({ title: "Manage Subscription" });
 
 const route = useRoute();
 const { error } = useToast();
-const { canCreate, canUpdate } = usePermissions();
+const { canCreate, canUpdate, canRenew } = usePermissions();
 
 const canResubmit = computed(() => canUpdate(Modules.ManageBranches));
 const canAddBranch = computed(() => canCreate(Modules.ManageBranches));
@@ -484,8 +515,9 @@ const onBranchResubmitted = (result: any) => {
     }
 
     const capacity = statsData.value.branch_capacity;
+    const branchLimit = planTypeBranchLimit(result.subscription?.plan_type);
     const nextUsed = capacity.used + 1;
-    const nextCapacity = capacity.capacity + (purchased ? BRANCH_LIMIT : 0);
+    const nextCapacity = capacity.capacity + (purchased ? branchLimit : 0);
 
     const existing = (capacity.available_subscriptions ?? [])
         .map((option) =>
@@ -513,8 +545,8 @@ const onBranchResubmitted = (result: any) => {
                       {
                           ...result.subscription,
                           branches_used: 1,
-                          branch_limit: BRANCH_LIMIT,
-                          slots_left: BRANCH_LIMIT - 1,
+                          branch_limit: branchLimit,
+                          slots_left: branchLimit - 1,
                       },
                   ]
                 : existing,
@@ -522,7 +554,6 @@ const onBranchResubmitted = (result: any) => {
     };
 };
 
-const BRANCH_LIMIT = 5;
 
 type Branch = {
     branch_id: number;
@@ -531,6 +562,7 @@ type Branch = {
     address: string;
     phone: string;
     email: string;
+    tin?: string | null;
     status: "pending" | "verified" | "rejected";
     review_status?: "pending" | "verified" | "rejected";
     rejection_reason?: string | null;
@@ -546,7 +578,7 @@ type AvailableSubscription = {
     uuid: string;
     plan_name: string | null;
     plan_code: string | null;
-    billing_interval: string | null;
+    plan_type: string | null;
     status?: string | null;
     end_date: string | null;
     branches_used: number;
@@ -594,10 +626,9 @@ const onBranchCreated = (result: any) => {
 
     branches.value = [mapBranch(created), ...branches.value];
 
-    const BRANCHES_PER_SUBSCRIPTION = 5;
     const addedCapacity = result?.used_existing_capacity
         ? 0
-        : BRANCHES_PER_SUBSCRIPTION;
+        : planTypeBranchLimit(result?.plan_type);
     const nextCapacity =
         statsData.value.branch_capacity.capacity + addedCapacity;
     const nextUsed = statsData.value.branch_capacity.used + 1;
@@ -649,6 +680,7 @@ const statsData = ref({
         remaining: 0,
         has_room: false,
         available_subscriptions: [] as AvailableSubscription[],
+        is_testing: false,
     },
 });
 
@@ -669,6 +701,7 @@ const mapBranch = (b: any): Branch => ({
         "—",
     phone: b.contact_number ?? "—",
     email: b.email ?? "—",
+    tin: b.tin ?? null,
     status: b.status,
     review_status: b.review_status,
     rejection_reason: b.rejection_reason ?? null,
@@ -681,6 +714,26 @@ const mapBranch = (b: any): Branch => ({
 });
 
 const statsLoading = ref(true);
+
+const isTesting = computed(() =>
+    Boolean(statsData.value.branch_capacity?.is_testing),
+);
+
+const testingAtMax = computed(
+    () =>
+        isTesting.value &&
+        !statsData.value.branch_capacity?.available_subscriptions?.length,
+);
+
+const addBranchTooltip = computed(() => {
+    if (!canAddBranch.value) {
+        return "You need permission to create in Manage Branches to add a branch.";
+    }
+
+    return testingAtMax.value
+        ? "You've reached your plan's branch limit. More branches can be added once your free testing ends."
+        : "";
+});
 
 const addDisabled = computed(
     () => branchStore.loading || loading.value || statsLoading.value,
@@ -770,7 +823,41 @@ watch(statusFilter, () => fetchBranches(1));
 
 onBeforeUnmount(() => clearTimeout(searchDebounce));
 
+const showRenewal = ref(false);
+const renewalSummary = ref<any>(null);
+const subscriptionPlan = ref<any>(null);
+
+const renewalAvailable = computed(
+    () =>
+        canRenew(Modules.BranchSettings) &&
+        Boolean(
+            renewalSummary.value?.can_renew ||
+            renewalSummary.value?.can_upgrade ||
+            renewalSummary.value?.can_resubscribe,
+        ),
+);
+
+const fetchRenewal = async () => {
+    try {
+        const res = await subscriptionService.list({
+            branch_uuid: route.params.uuid,
+            per_page: 1,
+        });
+
+        renewalSummary.value = res?.data?.[0]?.renewal ?? null;
+        subscriptionPlan.value = res?.data?.[0]?.plan ?? null;
+    } catch {
+        renewalSummary.value = null;
+        subscriptionPlan.value = null;
+    }
+};
+
+const closeRenewal = () => {
+    showRenewal.value = false;
+    fetchRenewal();
+};
+
 onMounted(async () => {
-    await Promise.all([fetchStats(), fetchBranches()]);
+    await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);
 });
 </script>

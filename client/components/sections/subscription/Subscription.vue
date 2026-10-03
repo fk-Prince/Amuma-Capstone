@@ -66,68 +66,17 @@
                         {{ stepError }}
                     </p>
 
-                    <div class="mb-8">
-                        <div class="flex flex-col items-center justify-center">
-                            <div
-                                class="relative inline-flex border border-primary-200 dark:border-white/10 items-center rounded-full bg-muted-light/40 dark:bg-white/5 py-1"
-                            >
-                                <span
-                                    class="absolute top-1 bottom-1 left-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300 ease-in-out"
-                                    :class="
-                                        checkout.selectedInterval === 'yearly'
-                                            ? 'translate-x-[calc(100%+3px)]'
-                                            : 'translate-x-0'
-                                    "
-                                />
-
-                                <button
-                                    type="button"
-                                    class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
-                                    :class="
-                                        checkout.selectedInterval === 'monthly'
-                                            ? 'text-white'
-                                            : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
-                                    "
-                                    @click="
-                                        checkout.selectedInterval = 'monthly'
-                                    "
-                                >
-                                    Monthly
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="relative z-10 flex min-w-[130px] items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-300"
-                                    :class="
-                                        checkout.selectedInterval === 'yearly'
-                                            ? 'text-white'
-                                            : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
-                                    "
-                                    @click="
-                                        checkout.selectedInterval = 'yearly'
-                                    "
-                                >
-                                    Yearly
-                                </button>
-                            </div>
-
-                            <p
-                                class="mt-2 text-xs text-muted dark:text-gray-400"
-                            >
-                                {{
-                                    checkout.selectedInterval === "yearly"
-                                        ? "Billed annually — save more compared to monthly billing."
-                                        : "Billed monthly. Switch to yearly to save more."
-                                }}
-                            </p>
-                        </div>
-                    </div>
+                    <PlanTypeToggle
+                        class="mb-5"
+                        :model-value="checkout.selectedPlanType"
+                        @update:model-value="checkout.setSelectedPlanType"
+                    />
 
                     <div
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 items-stretch"
                     >
                         <label
-                            v-for="plan in checkout.plans"
+                            v-for="plan in checkout.typedPlans"
                             :key="plan.plan_id"
                             class="relative flex flex-col h-full gap-3 border border-primary/20 p-5 sm:p-6 rounded-xl cursor-pointer transition-all"
                             :class="
@@ -143,7 +92,7 @@
                                     checkout.selectedPlan?.plan_id ===
                                     plan.plan_id
                                 "
-                                @change="checkout.selectedPlan = plan"
+                                @change="checkout.setSelectedPlan(plan)"
                             />
 
                             <!-- Radio -->
@@ -170,7 +119,7 @@
                                 class="h-10 w-10 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center shrink-0 dark:bg-primary-500/10"
                             >
                                 <component
-                                    :is="plan.icon ?? Home"
+                                    :is="planIcon(plan.plan_code)"
                                     class="h-5 w-5 text-primary"
                                 />
                             </div>
@@ -197,49 +146,14 @@
                                 <span
                                     class="text-sm font-medium text-muted whitespace-nowrap dark:text-gray-400"
                                 >
-                                    {{
-                                        checkout.selectedInterval === "yearly"
-                                            ? "/ year"
-                                            : "/ month"
-                                    }}
+                                    {{ branchLimitText(plan.type) }} / year
                                 </span>
 
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        v-if="
-                                            checkout.selectedInterval ===
-                                            'yearly'
-                                        "
-                                        class="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700"
-                                    >
-                                        Save
-                                        {{
-                                            Math.round(
-                                                ((Number(plan.monthly_price) *
-                                                    12 -
-                                                    Number(plan.yearly_price)) /
-                                                    (Number(
-                                                        plan.monthly_price,
-                                                    ) *
-                                                        12)) *
-                                                    100,
-                                            )
-                                        }}%
-                                    </span>
-
-                                    <span
-                                        class="font-bold text-lg text-primary whitespace-nowrap"
-                                    >
-                                        {{
-                                            formatCurrency(
-                                                checkout.selectedInterval ===
-                                                    "yearly"
-                                                    ? plan.yearly_price
-                                                    : plan.monthly_price,
-                                            )
-                                        }}
-                                    </span>
-                                </div>
+                                <span
+                                    class="font-bold text-lg text-primary whitespace-nowrap"
+                                >
+                                    {{ formatCurrency(planPrice(plan)) }}
+                                </span>
                             </div>
                         </label>
                     </div>
@@ -248,10 +162,7 @@
                         <button
                             type="button"
                             @click="nextStep"
-                            :disabled="
-                                !checkout.selectedPlan ||
-                                !checkout.selectedInterval
-                            "
+                            :disabled="!checkout.selectedPlan"
                             class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                         >
                             Continue
@@ -319,7 +230,7 @@
                         </template>
                         <template v-else>
                             {{
-                                currentStep === 4 ? "Review & Pay" : "Continue"
+                                currentStep === 4 ? "Review" : "Continue"
                             }}
                             <ChevronRight class="h-4 w-4" />
                         </template>
@@ -335,7 +246,6 @@ import {
     Check,
     ChevronLeft,
     ChevronRight,
-    Home,
     LoaderCircle,
 } from "lucide-vue-next";
 import { ref, onMounted, nextTick, watch } from "vue";
@@ -347,9 +257,12 @@ import { useToast } from "~/composables/useToast";
 import { type SubscriptionRequest } from "~/types/subscription";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import { formatCurrency } from "~/utils/currency";
+import { planIcon } from "~/utils/planIcon";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
+import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import { branchLimitText, planPrice } from "~/utils/planType";
 import SubscriptionStepDot from "~/components/sections/subscription/SubscriptionStepDot.vue";
 import SubscriptionSkeleton from "~/components/sections/subscription/SubscriptionSkeleton.vue";
 import SubscriptionPayment from "~/components/sections/subscription/SubscriptionPayment.vue";
@@ -375,15 +288,15 @@ const STEPS = [
     "Agency Information",
     "Branch Information",
     "Configuration",
-    "Review & Payment",
+    "Review & Confirm",
 ];
 
 const STEP_SUBTITLES = [
-    "Choose your plan and billing cycle",
+    "Choose your plan and plan type",
     "Your agency and verification documents",
     "Branch details, tax info and location",
     "Operating hours and booking preferences",
-    "Review details and complete payment",
+    "Review your details before submitting",
 ];
 
 const scrollToFirstError = async () => {
@@ -400,8 +313,8 @@ const nextStep = async () => {
     stepError.value = null;
 
     if (currentStep.value === 1) {
-        if (!checkout.selectedPlan || !checkout.selectedInterval) {
-            stepError.value = "Please select a plan and billing cycle.";
+        if (!checkout.selectedPlan) {
+            stepError.value = "Please select a plan.";
             return;
         }
     }
@@ -527,7 +440,7 @@ const validateBranch = async (): Promise<boolean> => {
         result.error.issues.forEach((issue) => {
             const path = issue.path.join(".");
 
-            errors[keyMap[path] ?? path] = issue.message;
+            errors[keyMap[path] ?? path] ??= issue.message;
         });
         claimErrors(errors, 3);
         mergeStepErrors(isBranchField, errors);
@@ -649,8 +562,8 @@ const submitDetails = async () => {
     try {
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
+            plan_type: checkout.selectedPlan.type,
             payment_method: checkout.payment_method,
-            billing_interval: checkout.selectedInterval,
 
             //BRANCH DATA
             branch_name: checkout.branch.name,
@@ -748,8 +661,6 @@ onMounted(async () => {
 
         if (route.query.step === "payment" && checkout.subscriptionPayload) {
             currentStep.value = 5;
-        } else {
-            checkout.selectedInterval = "monthly";
         }
     } finally {
         loading.value = false;

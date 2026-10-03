@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen pt-[74px] bg-white dark:bg-surface">
         <main class="max-w-[1600px] mx-auto px-6 py-16">
-            <div class="text-center mb-10">
+            <div class="text-center mb-12">
                 <p
                     class="text-xs font-bold tracking-[0.2em] text-primary uppercase mb-4"
                 >
@@ -14,10 +14,12 @@
                     One calm price. All the
                     <span class="text-primary">features</span> you need.
                 </h1>
-            </div>
 
-            <div class="flex justify-center mb-12">
-                <BillingToggle v-model="billingCycle" />
+                <PlanTypeToggle
+                    class="mt-8"
+                    :model-value="checkout.selectedPlanType"
+                    @update:model-value="checkout.setSelectedPlanType"
+                />
             </div>
 
             <div
@@ -78,7 +80,6 @@
                     v-for="plan in formattedPlans"
                     :key="plan.title"
                     v-bind="plan"
-                    :billingInterval="billingCycle"
                     @select="checkout.setSelectedPlan(plan)"
                 />
             </div>
@@ -89,9 +90,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import BillingToggle from "~/components/ui/BillingToggle.vue";
 import PricingCard from "~/components/ui/PricingCard.vue";
+import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
 
@@ -104,6 +104,5 @@ definePageMeta({
     middleware: ["prevent-staff-subscription"],
 });
 
-const billingCycle = ref<"monthly" | "yearly">("monthly");
-const { checkout, loading, formattedPlans } = usePlanCards(billingCycle);
+const { checkout, loading, formattedPlans } = usePlanCards();
 </script>

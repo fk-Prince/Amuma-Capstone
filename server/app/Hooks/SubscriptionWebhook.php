@@ -28,9 +28,7 @@ class SubscriptionWebhook
             'masked_card_number' => null,
         ];
 
-        $response = ($metadata['type'] ?? null) === 'renewal'
-            ? $this->subscriptionService->renewSubscriber($result)
-            : $this->subscriptionService->newSubscriber($result);
+        $response = $this->subscriptionService->settlePayment($result);
 
         Cache::put(
             "xendit_payment_status_{$reference}",

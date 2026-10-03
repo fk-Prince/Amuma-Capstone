@@ -28,8 +28,8 @@ useHead({ title: "Subscription Details" });
 
                         <p class="mt-3 text-muted dark:text-gray-400">
                             Complete your subscription by reviewing your plan,
-                            agency and branch information, billing cycle, and
-                            payment details.
+                            agency and branch information, and payment
+                            details.
                         </p>
                     </div>
 

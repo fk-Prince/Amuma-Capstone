@@ -17,6 +17,8 @@ export interface ScheduleAssignee {
     phone_number: string | null;
     email: string | null;
     note: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
 
     online: OnlineScheduleAssignment[];
     is_active: boolean
@@ -160,6 +162,8 @@ export interface AuditRow {
         full_name: string | null;
         avatar: string | null;
         note: string | null;
+        start_time?: string | null;
+        end_time?: string | null;
         phone_number: string | null;
         email: string | null;
     }[];

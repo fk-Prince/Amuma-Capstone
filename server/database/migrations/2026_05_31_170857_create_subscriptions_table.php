@@ -16,15 +16,14 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('plan_id')->constrained('plans', 'plan_id');
             $table->foreignId('agency_id')->constrained('agencies', 'agency_id');
-            $table->enum('status', ['active', 'expired', 'pending', 'rejected'])->default('pending');
-            $table->enum('billing_interval', ['MONTHLY', 'YEARLY'])->default('MONTHLY');
+            $table->enum('status', ['active', 'expired', 'pending', 'rejected', 'cancelled'])->default('pending');
+            $table->enum('mode', ['test', 'live'])->default('test');
             $table->date('start_date');
             $table->date('end_date');
             $table->foreignId('pending_plan_id')
                 ->nullable()
                 ->constrained('plans', 'plan_id');
             $table->date('pending_plan_starts_at')->nullable();
-            $table->enum('pending_billing_interval', ['MONTHLY', 'YEARLY'])->nullable();
             $table->timestamps();
             $table->index('pending_plan_starts_at');
         });

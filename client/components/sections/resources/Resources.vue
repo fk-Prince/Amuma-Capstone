@@ -586,7 +586,7 @@ const categories = [
         title: "Billing & Subscriptions",
         items: [
             "Choosing a Plan",
-            "Monthly vs Yearly Billing",
+            "Yearly Billing",
             "3D Secure Payments",
             "Viewing Invoices",
         ],
@@ -608,7 +608,7 @@ const faqs = [
     },
     {
         q: "How is billing and subscription handled?",
-        a: "Branches subscribe to a monthly or yearly plan, and payments are processed securely with 3D Secure verification.",
+        a: "Branches subscribe to a yearly plan, and payments are processed securely with 3D Secure verification.",
     },
     {
         q: "Can I message my caregiver or branch directly?",

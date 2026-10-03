@@ -15,11 +15,12 @@
                     class="text-lg font-semibold text-slate-900 dark:text-white"
                 >
                     {{ title }}
+                    <span v-if="required" class="text-danger ml-0.5">*</span>
                 </h2>
 
                 <p
                     v-if="description"
-                    class="text-sm text-slate-500 mt-1 dark:text-gray-400"
+                    class="text-sm text-slate-500 dark:text-gray-400"
                 >
                     {{ description }}
                 </p>
@@ -37,5 +38,6 @@ defineProps<{
     title: string;
     description?: string;
     icon?: object;
+    required?: boolean;
 }>();
 </script>

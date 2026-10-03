@@ -24,6 +24,8 @@ export interface Branch {
     email: string;
     status: "pending" | "verified" | "rejected";
     subscription_status?: "pending" | "approved" | "rejected" | null;
+    subscription_mode?: "test" | "live" | null;
+    subscription_end_date?: string | null;
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;
     resubmit_subscription_status?: "active" | "expired" | "pending" | "rejected" | null;

@@ -58,8 +58,8 @@ function applyOutcome(resident: ShiftBoardResident, outcome: CaregiverShiftOutco
 
     const shifts = board.shifts.filter(
         (shift) =>
-            shift.caregiver_facility_shift_id !==
-            changed.caregiver_facility_shift_id,
+            shift.caregiver_shift_id !==
+            changed.caregiver_shift_id,
     );
 
     const visibleToMe =
@@ -70,7 +70,7 @@ function applyOutcome(resident: ShiftBoardResident, outcome: CaregiverShiftOutco
 
     if (changed.is_active && visibleToMe) {
         shifts.push({
-            caregiver_facility_shift_id: changed.caregiver_facility_shift_id,
+            caregiver_shift_id: changed.caregiver_shift_id,
             start_time: changed.start_time,
             end_time: changed.end_time,
             note: changed.note,
@@ -141,7 +141,7 @@ function layoutBars(shifts: ShiftBoardShift[]) {
     const bars = shifts
         .flatMap((shift) =>
             segments(shift).map(([start, end], index) => ({
-                key: `${shift.caregiver_facility_shift_id}-${index}`,
+                key: `${shift.caregiver_shift_id}-${index}`,
                 shift,
                 start,
                 end,
@@ -737,7 +737,7 @@ const residents = computed(() => {
 
                         <button
                             v-for="shift in row.shifts"
-                            :key="shift.caregiver_facility_shift_id"
+                            :key="shift.caregiver_shift_id"
                             type="button"
                             class="block w-full rounded-lg border px-3 py-2 text-left transition"
                             :class="

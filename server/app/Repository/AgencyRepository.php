@@ -7,11 +7,10 @@ use App\Models\Branch;
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use Carbon\Carbon;
 
 class AgencyRepository
 {
-    public const BRANCHES_PER_SUBSCRIPTION = 5;
-
     public function createAgency(array $payload)
     {
         return Agency::create($payload);
@@ -49,6 +48,12 @@ class AgencyRepository
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
+        $nearestEnd = Subscription::query()
+            ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_PENDING])
+            ->whereDate('end_date', '>=', today())
+            ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
+            ->min('end_date');
+
         $maintenanceAlerts = Subscription::query()
             ->where('status', 'active')
             ->where('end_date', '<', today())
@@ -63,6 +68,12 @@ class AgencyRepository
                 'active_branches_percent' => $totalBranches
                     ? round(($activeBranches / $totalBranches) * 100)
                     : 0,
+                'subscription_end_date' => $nearestEnd
+                    ? Carbon::parse($nearestEnd)->toDateString()
+                    : null,
+                'expires_in_days' => $nearestEnd
+                    ? (int) today()->diffInDays(Carbon::parse($nearestEnd)->startOfDay())
+                    : null,
                 'expiring_soon' => $expiringSoon,
                 'expiring_soon_percent' => $totalBranches
                     ? round(($expiringSoon / $totalBranches) * 100)
@@ -83,52 +94,63 @@ class AgencyRepository
                 'remaining' => 0,
                 'has_room' => false,
                 'available_subscriptions' => [],
+                'additional_options' => [],
+                'is_testing' => false,
             ];
         }
 
-        $paidSubscriptions = Subscription::query()
+        $capacity = Subscription::query()
+            ->with('plans')
             ->where('agency_id', $agencyId)
-            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->whereNotIn('status', [Subscription::STATUS_REJECTED, Subscription::STATUS_CANCELLED])
             ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
-            ->count();
-
-        $capacity = self::BRANCHES_PER_SUBSCRIPTION * $paidSubscriptions;
+            ->get()
+            ->sum(fn($subscription) => $subscription->branchLimit() + $subscription->additionalBranchCount());
 
         $used = Branch::query()
             ->where('agency_id', $agencyId)
             ->where('status', '!=', Branch::STATUS_REJECTED)
             ->count();
 
+        $additionalOptions = Subscription::query()
+            ->with('plans')
+            ->where('agency_id', $agencyId)
+            ->orderBy('created_at')
+            ->get()
+            ->filter(fn($subscription) => $subscription->canAddAdditionalBranch())
+            ->map(fn($subscription) => [
+                'uuid' => $subscription->uuid,
+                'plan_name' => $subscription->plans?->name,
+                'plan_code' => $subscription->plans?->plan_code,
+                'plan_type' => $subscription->plans?->type,
+                'end_date' => $subscription->end_date,
+                ...$subscription->additionalBranchQuote(),
+            ])
+            ->values();
+
         $available = Subscription::query()
             ->with(['plans', 'latestPayment'])
             ->withCount([
-                'branchLinks as branches_used' => fn($q) => $q->where(
-                    'status',
-                    '!=',
-                    BranchSubscription::STATUS_REJECTED
-                ),
+                'branchLinks as branches_used' => fn($q) => $q
+                    ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                    ->where('type', BranchSubscription::TYPE_INCLUDED),
             ])
             ->where('agency_id', $agencyId)
-            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
             ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
-            ->whereRaw(
-                '(select count(*) from branch_subscription bs
-                    where bs.subscription_id = subscriptions.subscription_id
-                      and bs.status != ?) < ?',
-                [BranchSubscription::STATUS_REJECTED, Subscription::BRANCH_LIMIT]
-            )
+            ->withOpenSlot()
             ->orderBy('created_at')
             ->get()
             ->map(fn($subscription) => [
                 'uuid' => $subscription->uuid,
                 'plan_name' => $subscription->plans?->name,
                 'plan_code' => $subscription->plans?->plan_code,
-                'billing_interval' => $subscription->billing_interval,
+                'plan_type' => $subscription->plans?->type,
                 'status' => $subscription->status,
                 'end_date' => $subscription->end_date,
                 'branches_used' => (int) $subscription->branches_used,
-                'branch_limit' => Subscription::BRANCH_LIMIT,
-                'slots_left' => Subscription::BRANCH_LIMIT - (int) $subscription->branches_used,
+                'branch_limit' => $subscription->branchLimit(),
+                'slots_left' => $subscription->branchLimit() - (int) $subscription->branches_used,
             ])
             ->values();
 
@@ -138,6 +160,8 @@ class AgencyRepository
             'remaining' => max(0, $capacity - $used),
             'has_room' => $used < $capacity,
             'available_subscriptions' => $available,
+            'additional_options' => $additionalOptions,
+            'is_testing' => app(SubscriptionRepository::class)->agencyIsTesting($agencyId),
         ];
     }
     public function paginate(array $payload)
@@ -154,7 +178,8 @@ class AgencyRepository
                 'subscriptionLink.subscription' => fn($query) => $query
                     ->withCount([
                         'branchLinks as branches_used' => fn($links) => $links
-                            ->where('status', '!=', BranchSubscription::STATUS_REJECTED),
+                            ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                            ->where('type', BranchSubscription::TYPE_INCLUDED),
                     ])
                     ->withExists([
                         'payments as has_paid_payment' => fn($payments) => $payments
@@ -201,6 +226,7 @@ class AgencyRepository
                 'slot_available' => (bool) $branch->subscriptionLink?->subscription?->hasOpenSlot(),
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
+                'tin' => data_get($branch->settings, 'tin'),
                 'location' => $branch->location ? [
                     'street' => $branch->location->street,
                     'city' => $branch->location->city,

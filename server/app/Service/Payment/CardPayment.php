@@ -47,14 +47,13 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                         'user'             => $subscription['user'],
                         'branch'           => $subscription['branch'],
                         'agency'           => $subscription['agency'],
-                        'billing_interval' => $subscription['billing_interval'],
                         'payment_method'   => $subscription['method'],
                         'total_amount'     => $subscription['total_amount'],
                         'endDate'          => $subscription['endDate'],
+                        'mode'             => $subscription['mode'] ?? null,
                         'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
-                        'is_upgrade'         => $subscription['is_upgrade'] ?? false,
-                        'upgrade_starts_now' => $subscription['upgrade_starts_now'] ?? false,
-                        'upgrade_starts_at'  => $subscription['upgrade_starts_at'] ?? null,
+                        'action'           => $subscription['action'] ?? null,
+                        'plan_starts_at'   => $subscription['plan_starts_at'] ?? null,
                     ],
                 ]);
 
@@ -79,11 +78,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 'masked_card_number' => $charge['masked_card_number'] ?? null,
             ];
 
-            if (($subscription['type'] ?? null) === 'renewal') {
-                return $this->subscriptionService->renewSubscriber($result);
-            }
-
-            return $this->subscriptionService->newSubscriber($result);
+            return $this->subscriptionService->settlePayment($result);
         } catch (ConnectionException $e) {
             report($e);
 
@@ -135,7 +130,6 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
                 'xendit_invoice_id' => $charge['id'] ?? null,
                 'total'             => $payload['total']
             ];
-            // return $this->bookingService->createPaymentBooking($user, $payload);
         } catch (Exception $e) {
             report($e);
 

@@ -19,7 +19,7 @@
         <div class="mt-4 divide-y divide-slate-100 dark:divide-white/5">
             <div
                 v-for="shift in rows"
-                :key="shift.caregiver_facility_shift_id"
+                :key="shift.caregiver_shift_id"
                 class="py-3 first:pt-0 last:pb-0"
                 :class="isDraft(shift) ? 'opacity-70' : ''"
             >
@@ -64,16 +64,16 @@
                             <button
                                 v-else-if="!readonly"
                                 type="button"
-                                :disabled="busyId === shift.caregiver_facility_shift_id"
+                                :disabled="busyId === shift.caregiver_shift_id"
                                 class="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 transition hover:underline disabled:opacity-50 dark:text-rose-300"
                                 @click="$emit('unassign', shift)"
                             >
                                 <Loader2
-                                    v-if="busyId === shift.caregiver_facility_shift_id"
+                                    v-if="busyId === shift.caregiver_shift_id"
                                     class="h-3 w-3 animate-spin"
                                 />
                                 {{
-                                    busyId === shift.caregiver_facility_shift_id
+                                    busyId === shift.caregiver_shift_id
                                         ? "Unassigning..."
                                         : "Unassign"
                                 }}
@@ -177,7 +177,7 @@ const rows = computed(() =>
 );
 
 function isDraft(shift: CaregiverShift) {
-    return shift.caregiver_facility_shift_id === -1;
+    return shift.caregiver_shift_id === -1;
 }
 
 const ticks = computed(() =>

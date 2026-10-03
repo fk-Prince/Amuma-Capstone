@@ -4,7 +4,8 @@
     >
         <div class="w-full">
             <CheckoutSummary
-                :total-amount="total"
+                :total-amount="loadingTotal ? null : total"
+                :with-trial="withTrial"
                 :disabled="busy || processing"
                 @back="emit('back')"
             />
@@ -58,6 +59,7 @@ const processing = ref(false);
 const xenditProcessing = ref(false);
 const loadingTotal = ref(true);
 const total = ref(0);
+const withTrial = ref(true);
 
 watch([processing, xenditProcessing], ([p, x]) => {
     busy.value = p || x;
@@ -107,6 +109,8 @@ const payCard = async () => {
                     path: "/product/subscription-summary?status=success",
                     query: {
                         status: result.status,
+                        trial: withTrial.value ? "1" : "0",
+                        ref: result.payment_reference_id,
                     },
                 });
             },
@@ -140,10 +144,14 @@ const payGCash = async () => {
                 processing.value = false;
             },
 
-            onSuccess: async () => {
+            onSuccess: async (invoice) => {
                 await navigateTo({
                     path: "/product/subscription-summary",
-                    query: { status: "true" },
+                    query: {
+                        status: "true",
+                        trial: withTrial.value ? "1" : "0",
+                        ref: invoice?.external_id,
+                    },
                 });
             },
         });
@@ -162,6 +170,7 @@ onMounted(async () => {
         const res =
             await subscriptionService.retrieveSubscriptionDetail(payload);
         total.value = Number(res.total_amount);
+        withTrial.value = res.mode === "test";
     } catch (err: any) {
         error(err.message ?? "Failed to load subscription total.");
     } finally {

@@ -140,9 +140,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-check-unique',  [SubscriptionController::class, 'checkUnique']);
     Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
     Route::post('/subscriptions-branch', [SubscriptionController::class, 'newBranchFromCapacity']);
+    Route::post('/subscriptions-branch-additional', [SubscriptionController::class, 'newAdditionalBranch']);
     Route::post('/subscriptions-branch-resubmit', [SubscriptionController::class, 'resubmitBranch']);
     Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
     Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
+    Route::post('/subscriptions-cancel-test', [SubscriptionController::class, 'cancelTest']);
+    Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
     Route::get('/subscriptions/payments/{reference}/invoice', [SubscriptionController::class, 'paymentInvoice']);
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);

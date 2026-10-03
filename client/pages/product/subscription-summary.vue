@@ -31,6 +31,15 @@
                 <p class="mt-3 text-sm text-slate-500 dark:text-gray-400">
                     We'll verify your subscription and notify you of your
                     request's status within 1-2 business days.
+                    <template v-if="withTrial">
+                        Your 1-month free testing starts once your branch is
+                        approved, and your paid year begins right after it.
+                        You can cancel for a full refund any time during the
+                        test.
+                    </template>
+                    <template v-else>
+                        Your paid year starts once your branch is approved.
+                    </template>
                 </p>
             </template>
 
@@ -94,27 +103,24 @@
                 </p>
             </div>
 
-            <NuxtLink
-                v-if="isSuccess && dashboardUrl"
-                :to="dashboardUrl"
-                class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-                View Dashboard
-            </NuxtLink>
+            <template v-if="isSuccess">
+                <NuxtLink
+                    v-if="dashboardUrl"
+                    :to="dashboardUrl"
+                    class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                    View Dashboard
+                </NuxtLink>
 
-            <button
-                v-else-if="isSuccess"
-                type="button"
-                :disabled="isPreparing"
-                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-                @click="resolveBranch"
-            >
-                <LoaderCircle v-if="isPreparing" class="h-4 w-4 animate-spin" />
-
-                {{
-                    isPreparing ? "Preparing your workspace..." : "Check again"
-                }}
-            </button>
+                <NuxtLink
+                    v-if="paymentUrl"
+                    :to="paymentUrl"
+                    target="_blank"
+                    class="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/5"
+                >
+                    View Payment
+                </NuxtLink>
+            </template>
 
             <NuxtLink
                 v-else
@@ -129,9 +135,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { LoaderCircle } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import { subscriptionInvoiceLink } from "~/utils/subscriptionInvoice";
 
 const branchStore = useBranchStore();
 const route = useRoute();
@@ -140,36 +146,30 @@ useHead({
     title: "Subscription Status",
 });
 
+const withTrial = computed(() => route.query.trial !== "0");
+
 const isSuccess = computed(() => {
     return route.query.status === "true";
 });
 
-const isPreparing = ref(false);
+
+const paymentUrl = computed(() =>
+    typeof route.query.ref === "string" && route.query.ref
+        ? subscriptionInvoiceLink(route.query.ref)
+        : null,
+);
 
 onMounted(async () => {
     await fetchAuthUser();
 
-    await resolveBranch();
-});
+    for (let attempt = 0; attempt < 8; attempt++) {
+        await branchStore.refreshBranch();
 
-// The branch is created by the payment webhook, so it usually does not exist
-// yet when this page loads. Without the wait the button falls back to "/" and
-// looks like it does nothing.
-async function resolveBranch() {
-    isPreparing.value = true;
+        if (branchStore.branches?.length) break;
 
-    try {
-        for (let attempt = 0; attempt < 8; attempt++) {
-            await branchStore.refreshBranch();
-
-            if (branchStore.branches.length) return;
-
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-    } finally {
-        isPreparing.value = false;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
     }
-}
+});
 
 const dashboardUrl = computed(() => {
     const uuid =
@@ -177,10 +177,6 @@ const dashboardUrl = computed(() => {
         branchStore.lastSelectedBranch?.uuid ??
         branchStore.branches?.[0]?.uuid;
 
-    if (!uuid) {
-        return null;
-    }
-
-    return `/app/branches/${uuid}/dashboard`;
+    return uuid ? `/app/branches/${uuid}/dashboard` : null;
 });
 </script>

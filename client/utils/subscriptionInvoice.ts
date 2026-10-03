@@ -15,3 +15,11 @@ export function paymentAccount(payment: {
 
     return payment.payment_method === "GCASH" ? "GCash" : "—";
 }
+
+export function paymentTypeLabel(type?: string | null) {
+    if (!type) return "—";
+
+    const text = type.replace(/_/g, " ");
+
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}

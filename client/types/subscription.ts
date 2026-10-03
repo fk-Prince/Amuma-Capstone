@@ -1,16 +1,19 @@
 import type { Agency } from "./agency";
 import type { Branch, BranchSettings } from "./branch";
+import type { PlanType } from "~/utils/planType";
 
 export interface SubscriptionPaymentRecord {
     subscription_payment_id: number;
     xendit_invoice_id?: string | null;
     payment_reference_id: string;
     plan_name?: string | null;
+    plan_type?: string | null;
     masked_card_number: string | null;
     price: number;
     status: "paid" | "refunded";
-    type: "subscription" | "renewal";
-    billing_interval: "MONTHLY" | "YEARLY" | null;
+    type: "subscription" | "renewal" | "upgrade" | "additional_branch";
+    branch_name?: string | null;
+    branch_uuid?: string | null;
     payment_method: "GCASH" | "CREDIT-CARD" | null;
     created_at: string | null;
 }
@@ -28,12 +31,12 @@ export interface SubscriptionCoveredBranch {
     tin?: string | null;
     branch_status: "pending" | "verified" | "rejected";
     status: "pending" | "approved" | "rejected";
+    type?: "included" | "additional";
 }
 
 export interface SubscriptionCardData {
     uuid: string;
-    billing_interval: "YEARLY" | "MONTHLY";
-    status: "pending" | "approved" | "active" | "inactive" | "expired" | "rejected";
+    status: "pending" | "approved" | "active" | "inactive" | "expired" | "rejected" | "cancelled";
     start_date: string;
     rejection_reason?: string | null;
     rejected_at?: string | null;
@@ -77,6 +80,11 @@ export interface SubscriptionCardData {
         plan_id: number;
         name: string;
         plan_code: string;
+        type: PlanType;
+        branch_limit: number;
+        yearly_total?: number;
+        additional_branches?: number;
+        additional_branch_price?: number;
     };
 
     subscription?: {
@@ -99,7 +107,7 @@ export interface VerificationLogRecord {
 export interface Subscription {
     plans: any[];
     selectedPlan: any;
-    selectedInterval: "" | "monthly" | "yearly";
+    selectedPlanType: PlanType;
     payment_method: string;
     branch: Branch;
     agency: Agency;
@@ -112,7 +120,7 @@ export interface SubscriptionRequest {
     token_id?: string;
     authentication_id?: string;
     plan_code: string;
-    billing_interval: string;
+    plan_type: PlanType;
     payment_method: string;
 
     branch_name: string;

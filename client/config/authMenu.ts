@@ -111,17 +111,17 @@ export const authMenuList: MenuItems[] = [
     //     group: "Business",
     // },
     {
-        label: "Manage Branches",
-        icon: Building2,
-        to: "/app/branches/[uuid]/manage-branches",
-        modules: ["Manage Branches"],
-        group: "Business",
-    },
-    {
         label: "Branch Settings",
         icon: Settings,
         to: "/app/branches/[uuid]/settings",
         modules: ["Branch Settings"],
+        group: "Business",
+    },
+    {
+        label: "Manage Subscription",
+        icon: Building2,
+        to: "/app/branches/[uuid]/manage-subscription",
+        modules: ["Manage Branches"],
         group: "Business",
     },
 ];

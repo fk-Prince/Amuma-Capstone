@@ -33,6 +33,17 @@ class SubscriptionRepository
             ->get();
     }
 
+    public function agencyHasUsedTrial(?int $agencyId): bool
+    {
+        if (!$agencyId) {
+            return false;
+        }
+
+        return Subscription::where('agency_id', $agencyId)
+            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->exists();
+    }
+
     public function findByFields(array $payload)
     {
         return Subscription::where($payload)->first();
@@ -43,6 +54,34 @@ class SubscriptionRepository
     {
         return SubscriptionPayment::with('plan', 'subscription.agency')
             ->where('payment_reference_id', $reference)
+            ->first();
+    }
+
+    public function agencyIsTesting(int|string|null $agencyId): bool
+    {
+        if (!$agencyId) {
+            return false;
+        }
+
+        return Subscription::where('agency_id', $agencyId)
+            ->where('mode', Subscription::MODE_TEST)
+            ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
+            ->exists();
+    }
+
+    public function agencyHasSubscription(int|string $agencyId): bool
+    {
+        return Subscription::where('agency_id', $agencyId)
+            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->exists();
+    }
+
+    public function findForAgency(int|string $agencyId, string $uuid, bool $lock = false)
+    {
+        return Subscription::with('plans')
+            ->where('agency_id', $agencyId)
+            ->where('uuid', $uuid)
+            ->when($lock, fn($q) => $q->lockForUpdate())
             ->first();
     }
 
@@ -60,14 +99,9 @@ class SubscriptionRepository
         return Subscription::query()
             ->where('agency_id', $agencyId)
             ->when($subscriptionUuid, fn($q) => $q->where('uuid', $subscriptionUuid))
-            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
             ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
-            ->whereRaw(
-                '(select count(*) from branch_subscription bs
-                    where bs.subscription_id = subscriptions.subscription_id
-                      and bs.status != ?) < ?',
-                [BranchSubscription::STATUS_REJECTED, Subscription::BRANCH_LIMIT]
-            )
+            ->withOpenSlot()
             ->orderBy('created_at')
             ->lockForUpdate()
             ->first();
@@ -102,7 +136,8 @@ class SubscriptionRepository
                 'branch.agencies',
                 'subscription.plans',
                 'subscription.pendingPlan',
-                'subscription.payments',
+                'subscription.payments.plan',
+                'subscription.payments.branch',
                 'subscription.latestPayment',
             ])
             ->latest('created_at')
@@ -234,10 +269,10 @@ class SubscriptionRepository
         $planBreakdown = Plan::query()
             ->select(
                 'plans.name',
-                'plans.plan_code'
+                'plans.plan_code',
+                'plans.type'
             )
-            ->selectRaw('COUNT(subscriptions.subscription_id) as total')
-            ->leftJoin(
+            ->selectRaw('COUNT(subscriptions.subscription_id) as total')            ->leftJoin(
                 'subscriptions',
                 function ($join) {
                     $join->on('subscriptions.plan_id', '=', 'plans.plan_id')
@@ -247,9 +282,11 @@ class SubscriptionRepository
             ->groupBy(
                 'plans.plan_id',
                 'plans.name',
-                'plans.plan_code'
+                'plans.plan_code',
+                'plans.type'
             )
             ->orderBy('plans.plan_code', 'asc')
+            ->orderBy('plans.type', 'desc')
             ->get();
 
 
@@ -312,7 +349,7 @@ class SubscriptionRepository
                 'latestRejection',
                 'branch.agencies',
                 'subscription.plans',
-                'subscription.payments',
+                'subscription.payments.plan',
                 'subscription.latestPayment',
             ])
             ->latest('created_at')

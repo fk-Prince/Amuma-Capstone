@@ -68,6 +68,31 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->createBranchWithinCapacity($data, $request->user());
     }
 
+    public function newAdditionalBranch(SubscriptionRequest $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::ManageBranches,
+            PermissionAction::Create
+        );
+
+        $data = $request->validated();
+
+        $data['agency_id'] = $branch->agency_id;
+
+        if ($request->hasFile('branch_image')) {
+            $data['branch_image'] = $request->file('branch_image');
+        }
+
+        if ($request->hasFile('branch_document')) {
+            $data['branch_document'] = $request->file('branch_document');
+        }
+
+        return $this->subscriptionService->makeAdditionalBranch($data, $request->user());
+    }
+
     public function resubmitBranch(BranchResubmitRequest $request)
     {
         return $this->subscriptionService->resubmitBranch(
@@ -160,6 +185,22 @@ class SubscriptionController extends Controller
         AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->applyPendingPlan($request->all());
+    }
+
+    public function cancelPendingPlan(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->subscriptionService->cancelPendingPlan($request->all());
+    }
+
+    public function cancelTest(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->subscriptionService->cancelTest($request->all());
     }
 
     public function paymentInvoice(Request $request, string $reference)

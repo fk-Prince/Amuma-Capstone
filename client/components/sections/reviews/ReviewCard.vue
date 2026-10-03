@@ -33,7 +33,7 @@
             v-if="image"
             :src="image"
             alt="Review attachment"
-            class="mt-4 max-h-56 w-full rounded-xl object-cover ring-1 ring-gray-200 dark:ring-white/10"
+            class="mt-4 max-h-56 w-full rounded-xl object-cover"
         />
 
         <div

@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Models\CaregiverFacilityShift;
+use App\Models\CaregiverShift;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\PatientAdmission;
@@ -16,22 +16,22 @@ class CaregiverShiftRepository
 
     public function forAdmission(int $admissionId)
     {
-        return CaregiverFacilityShift::with('caregiver')
+        return CaregiverShift::with('caregiver')
             ->where('admission_id', $admissionId)
             ->orderByDesc('is_active')
             ->orderBy('start_time')
-            ->orderBy('caregiver_facility_shift_id')
+            ->orderBy('caregiver_shift_id')
             ->get();
     }
 
-    public function find(int $shiftId): ?CaregiverFacilityShift
+    public function find(int $shiftId): ?CaregiverShift
     {
-        return CaregiverFacilityShift::with(['caregiver', 'admission.patient'])->find($shiftId);
+        return CaregiverShift::with(['caregiver', 'admission.patient'])->find($shiftId);
     }
 
-    public function create(array $attributes): CaregiverFacilityShift
+    public function create(array $attributes): CaregiverShift
     {
-        return CaregiverFacilityShift::create($attributes)->load('caregiver');
+        return CaregiverShift::create($attributes)->load('caregiver');
     }
 
     public function facilityCaregivers(int $branchId)
@@ -59,18 +59,18 @@ class CaregiverShiftRepository
             return [];
         }
 
-        return CaregiverFacilityShift::query()
+        return CaregiverShift::query()
             ->join(
                 'patient_admissions',
                 'patient_admissions.patient_admission_id',
                 '=',
-                'caregiver_facility_shifts.admission_id'
+                'caregiver_shifts.admission_id'
             )
-            ->where('caregiver_facility_shifts.is_active', true)
+            ->where('caregiver_shifts.is_active', true)
             ->where('patient_admissions.status', PatientAdmission::STATUS_ADMITTED)
-            ->whereIn('caregiver_facility_shifts.caregiver_id', $employeeIds)
-            ->selectRaw('caregiver_facility_shifts.caregiver_id as caregiver_id, COUNT(DISTINCT caregiver_facility_shifts.admission_id) as residents')
-            ->groupBy('caregiver_facility_shifts.caregiver_id')
+            ->whereIn('caregiver_shifts.caregiver_id', $employeeIds)
+            ->selectRaw('caregiver_shifts.caregiver_id as caregiver_id, COUNT(DISTINCT caregiver_shifts.admission_id) as residents')
+            ->groupBy('caregiver_shifts.caregiver_id')
             ->pluck('residents', 'caregiver_id')
             ->map(fn($count) => (int) $count)
             ->all();
@@ -82,20 +82,20 @@ class CaregiverShiftRepository
             return [];
         }
 
-        return CaregiverFacilityShift::query()
+        return CaregiverShift::query()
             ->join(
                 'patient_admissions',
                 'patient_admissions.patient_admission_id',
                 '=',
-                'caregiver_facility_shifts.admission_id'
+                'caregiver_shifts.admission_id'
             )
-            ->where('caregiver_facility_shifts.is_active', true)
+            ->where('caregiver_shifts.is_active', true)
             ->where('patient_admissions.status', PatientAdmission::STATUS_ADMITTED)
-            ->whereIn('caregiver_facility_shifts.caregiver_id', $employeeIds)
+            ->whereIn('caregiver_shifts.caregiver_id', $employeeIds)
             ->get([
-                'caregiver_facility_shifts.caregiver_id',
-                'caregiver_facility_shifts.start_time',
-                'caregiver_facility_shifts.end_time',
+                'caregiver_shifts.caregiver_id',
+                'caregiver_shifts.start_time',
+                'caregiver_shifts.end_time',
             ])
             ->groupBy('caregiver_id')
             ->map(fn($rows) => $rows
@@ -113,7 +113,7 @@ class CaregiverShiftRepository
     {
         $term = '%' . $search . '%';
 
-        return CaregiverFacilityShift::query()
+        return CaregiverShift::query()
             ->where('is_active', true)
             ->when($caregiverId !== null, fn($query) => $query->where('caregiver_id', $caregiverId))
             ->whereHas(
@@ -162,16 +162,16 @@ class CaregiverShiftRepository
 
     public function hasActiveAssignment(int $admissionId, int $caregiverId, ?int $exceptShiftId = null): bool
     {
-        return CaregiverFacilityShift::where('admission_id', $admissionId)
+        return CaregiverShift::where('admission_id', $admissionId)
             ->where('caregiver_id', $caregiverId)
             ->where('is_active', true)
-            ->when($exceptShiftId, fn($query) => $query->where('caregiver_facility_shift_id', '!=', $exceptShiftId))
+            ->when($exceptShiftId, fn($query) => $query->where('caregiver_shift_id', '!=', $exceptShiftId))
             ->exists();
     }
 
     public function activeCountForAdmission(int $admissionId): int
     {
-        return CaregiverFacilityShift::where('admission_id', $admissionId)
+        return CaregiverShift::where('admission_id', $admissionId)
             ->where('is_active', true)
             ->count();
     }

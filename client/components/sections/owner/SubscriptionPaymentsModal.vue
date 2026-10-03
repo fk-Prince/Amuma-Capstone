@@ -7,7 +7,7 @@
                 @click.self="emit('close')"
             >
                 <div
-                    class="min-h-[360px] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                    class="min-h-[360px] w-full max-w-[1157px] overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
                     role="dialog"
                     aria-modal="true"
                 >
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="max-h-[70vh] overflow-y-auto">
-                        <table class="w-full min-w-[780px]">
+                        <table class="w-full min-w-[900px]">
                             <thead
                                 class="sticky top-0 bg-white dark:bg-secondary"
                             >
@@ -47,8 +47,8 @@
                                         v-for="head in [
                                             'Reference',
                                             'Plan',
+                                            'Plan Type',
                                             'Type',
-                                            'Cycle',
                                             'Method',
                                             'Account',
                                             'Amount',
@@ -103,27 +103,30 @@
                                         {{ payment.plan_name ?? "—" }}
                                     </td>
 
+                                    <td
+                                        class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{ planTypeLabel(payment.plan_type) || "—" }}
+                                    </td>
+
                                     <td class="whitespace-nowrap px-4 py-2.5">
                                         <span
-                                            class="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase"
+                                            class="rounded-full px-2 py-0.5 text-[10px] font-medium"
                                             :class="
                                                 payment.type === 'renewal'
                                                     ? 'bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300'
                                                     : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
                                             "
                                         >
-                                            {{ payment.type ?? "—" }}
+                                            {{ paymentTypeLabel(payment.type) }}
                                         </span>
-                                    </td>
 
-                                    <td
-                                        class="whitespace-nowrap px-4 py-2.5 text-xs capitalize text-slate-500 dark:text-gray-400"
-                                    >
-                                        {{
-                                            payment.billing_interval
-                                                ? payment.billing_interval.toLowerCase()
-                                                : "—"
-                                        }}
+                                        <p
+                                            v-if="payment.type === 'additional_branch' && payment.branch_name"
+                                            class="mt-1 text-[11px] text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ payment.branch_name }}
+                                        </p>
                                     </td>
 
                                     <td
@@ -199,12 +202,14 @@ import { computed, ref, watch } from "vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import { formatCurrency } from "~/utils/currency";
+import { paymentTypeLabel } from "~/utils/subscriptionInvoice";
 import { formatDate } from "~/utils/time";
 import {
     paymentAccount,
     subscriptionInvoiceLink,
 } from "~/utils/subscriptionInvoice";
 import type { SubscriptionPaymentRecord } from "~/types/subscription";
+import { planTypeLabel } from "~/utils/planType";
 
 const props = defineProps<{
     open: boolean;

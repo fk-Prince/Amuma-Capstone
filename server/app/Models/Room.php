@@ -26,6 +26,11 @@ class Room extends Model
         return $this->hasMany(Bed::class, 'room_id', 'room_id');
     }
 
+    public function cameras()
+    {
+        return $this->hasMany(Camera::class, 'room_id', 'room_id');
+    }
+
     public function availableBeds()
     {
         return $this->hasMany(Bed::class, 'room_id', 'room_id')

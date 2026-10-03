@@ -851,7 +851,7 @@ const roomTypes = computed(() =>
 
             return {
                 ...room,
-                description: data?.description || room.description,
+                description: data?.description ?? "",
                 slots: data?.slots ?? 0,
                 image: getRoomImage(room.value),
             };
@@ -905,6 +905,18 @@ function getPrice(plan: "Monthly" | "Yearly") {
     const price = Number(facility?.price ?? 0);
     return isNaN(price) ? "0" : formatAmount(price);
 }
+
+watch(
+    [() => props.model.type, () => props.model.billing_cycle, availablePlans],
+    () => {
+        if (props.model.type !== "Complete" || props.model.billing_cycle) return;
+
+        const first = availablePlans.value[0];
+
+        if (first) update("billing_cycle", first.value);
+    },
+    { immediate: true },
+);
 
 watch(
     () => props.model.type,

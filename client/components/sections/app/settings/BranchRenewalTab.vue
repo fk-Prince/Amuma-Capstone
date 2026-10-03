@@ -106,13 +106,16 @@
                                 </p>
 
                                 <p
-                                    v-if="subscription.billing_interval"
                                     class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                                 >
-                                    Billed
-                                    {{
-                                        subscription.billing_interval.toLowerCase()
-                                    }}
+                                    {{ planTypeLabel(currentType) }} ·
+                                    {{ branchLimitText(currentType) }}
+                                    <template v-if="isCancelled">
+                                        · Subscription cancelled
+                                    </template>
+                                    <template v-else-if="isTest">
+                                        · Free testing
+                                    </template>
                                 </p>
                             </div>
                         </div>
@@ -139,7 +142,15 @@
                             <p
                                 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
-                                {{ isExpired ? "Expired on" : "Renews on" }}
+                                {{
+                                    isCancelled
+                                        ? "Cancelled on"
+                                        : isExpired
+                                          ? "Expired on"
+                                          : isTest
+                                            ? "Test ends on"
+                                            : "Renews on"
+                                }}
                             </p>
                             <p
                                 class="mt-0.5 text-sm font-semibold text-slate-800 dark:text-white"
@@ -152,9 +163,23 @@
                             <p
                                 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
-                                {{ isExpired ? "Overdue by" : "Time left" }}
+                                {{
+                                    isCancelled
+                                        ? "Refunded"
+                                        : isExpired
+                                          ? "Overdue by"
+                                          : "Time left"
+                                }}
                             </p>
                             <p
+                                v-if="isCancelled"
+                                class="mt-0.5 text-sm font-semibold"
+                                :class="statusTone.text"
+                            >
+                                ₱{{ formatMoney(refundedAmount) }}
+                            </p>
+                            <p
+                                v-else
                                 class="mt-0.5 text-sm font-semibold"
                                 :class="statusTone.text"
                             >
@@ -171,7 +196,7 @@
             </div>
 
             <div
-                v-if="canRenew && !hasPendingUpgrade"
+                v-if="canRenew && !hasPendingUpgrade && !isCancelled"
                 class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
             >
                 <Clock class="mt-0.5 h-4 w-4 shrink-0" />
@@ -199,7 +224,11 @@
                         class="text-sm font-bold text-slate-900 dark:text-white"
                     >
                         {{
-                            hasPendingUpgrade
+                            isCancelled
+                                ? "Subscription cancelled"
+                                : isTest
+                                ? "Free testing"
+                                : hasPendingUpgrade
                                 ? "Pending plan"
                                 : coveredBranches.length > 1
                                   ? "Renew this subscription"
@@ -210,21 +239,36 @@
                     <p
                         class="mt-1 max-w-lg text-xs leading-5 text-slate-500 dark:text-gray-400"
                     >
-                        <template v-if="hasPendingUpgrade">
+                        <template v-if="isCancelled">
+                            You cancelled this subscription on
+                            {{ formatDate(subscription.end_date) }} and your
+                            payment was refunded. Want to keep using AMUMA?
+                            Pick any plan type and plan and subscribe now — your
+                            paid year starts today, with no free testing.
+                        </template>
+                        <template v-else-if="isTest">
+                            Your paid year is already queued and starts
+                            automatically when free testing ends. Not for you?
+                            Cancel before then for a full refund.
+                            <template v-if="canUpgrade">
+                                You can still upgrade to Hybrid anytime.
+                            </template>
+                        </template>
+                        <template v-else-if="hasPendingUpgrade">
                             {{ pendingPlan.name }} is already paid for and takes
                             over when the current period ends. You can renew
                             again once it does.
                         </template>
                         <template v-else-if="canRenew">
-                            Renewal is open. Choose monthly or yearly — the
-                            new period is added after the current end date, so
+                            Renewal is open. The new year is added after
+                            the current end date, so
                             you never lose the days you've already paid for.
                         </template>
                         <template v-else>
                             Renewal opens on {{ formatDate(renewalOpensAt) }},
                             {{ windowDays }} days before this subscription ends.
-                            <template v-if="upgradePlan">
-                                Upgrading is available anytime.
+                            <template v-if="canUpgrade">
+                                Upgrading to Hybrid can start today anytime.
                             </template>
                         </template>
                     </p>
@@ -274,294 +318,344 @@
                 >
                     <div class="flex items-start gap-3 text-xs text-primary">
                         <RefreshCw class="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>
-                            Upgrade to {{ pendingPlan.name }}
-                            <template v-if="pendingPlan.billing_interval">
-                                ({{
-                                    pendingPlan.billing_interval.toLowerCase()
-                                }})
-                            </template>
-                            starts on
+                        <span v-if="isTest">
+                            Your paid year of {{ pendingPlan.name }}
+                            {{ planTypeLabel(pendingPlan.type) }} starts on
+                            {{ formatDate(pendingPlan.starts_at) }}, when free
+                            testing ends.
+                        </span>
+                        <span v-else>
+                            Change to {{ pendingPlan.name }}
+                            {{ planTypeLabel(pendingPlan.type) }} starts on
                             {{ formatDate(pendingPlan.starts_at) }}, when the
                             current period ends.
                         </span>
                     </div>
 
                     <div
-                        v-if="!confirmApply"
-                        class="mt-3 flex flex-wrap items-center justify-between gap-3 pl-7"
-                    >
-                        <p class="text-xs text-slate-500 dark:text-gray-400">
-                            Don't want to wait?
-                        </p>
-                        <button
-                            type="button"
-                            class="inline-flex items-center rounded-lg border border-primary/30 bg-white px-1.5 py-1.5 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/50 hover:bg-primary/5 dark:bg-secondary"
-                            @click="confirmApply = true"
-                        >
-                            <span class="px-2.5"> Start it today </span>
-
-                            <template v-if="forfeitedDays > 0">
-                                <span
-                                    class="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700"
-                                    aria-hidden="true"
-                                />
-
-                                <span
-                                    class="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                                >
-                                    {{ forfeitedDays }}
-                                    {{ forfeitedDays === 1 ? "day" : "days" }}
-                                    lost
-                                </span>
-                            </template>
-                        </button>
-                    </div>
-
-                    <div
-                        v-else
-                        class="mt-3 rounded-lg border border-primary/20 bg-white p-3 dark:bg-white/5"
+                        v-if="!isTest && confirmCancelPending"
+                        class="mt-3 rounded-lg border border-rose-200 bg-white p-3 dark:border-rose-500/30 dark:bg-white/5"
                     >
                         <p class="text-xs text-slate-600 dark:text-gray-300">
-                            {{ pendingPlan.name }} starts today and
-                            <span class="font-semibold">
-                                {{ currentPlan?.name ?? "your current plan" }}
-                            </span>
-                            ends now — you give up its
-                            {{ forfeitedDays }}
-                            remaining
-                            {{ forfeitedDays === 1 ? "day" : "days" }}, so
-                            coverage runs to
-                            {{ formatDate(earlyUpgradeEndDate) }} instead of
-                            {{ formatDate(subscription?.end_date) }}.
+                            Cancel the change to {{ pendingPlan.name }}
+                            {{ planTypeLabel(pendingPlan.type) }}? You stay on
+                            {{ currentPlan?.name ?? "your current plan" }} until
+                            {{ formatDate(subscription?.end_date) }}, and
+                            ₱{{ formatMoney(pendingPlanPaid) }} is refunded.
                         </p>
 
                         <div class="mt-3 flex flex-wrap justify-end gap-2">
                             <button
                                 type="button"
-                                :disabled="applying"
+                                :disabled="cancellingPending"
                                 class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/10"
-                                @click="confirmApply = false"
+                                @click="confirmCancelPending = false"
                             >
-                                Keep waiting
+                                Keep the change
                             </button>
 
                             <button
                                 type="button"
-                                :disabled="applying"
-                                class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
-                                @click="applyUpgradeNow"
+                                :disabled="cancellingPending"
+                                class="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                                @click="cancelPendingPlan"
                             >
                                 {{
-                                    applying ? "Applying…" : "Yes, start today"
+                                    cancellingPending
+                                        ? "Cancelling…"
+                                        : "Yes, cancel & refund"
+                                }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        v-else-if="!isTest"
+                        class="mt-3 flex flex-wrap items-center justify-between gap-3 pl-7"
+                    >
+                        <p class="text-xs text-slate-500 dark:text-gray-400">
+                            Changed your mind?
+                        </p>
+                        <button
+                            type="button"
+                            class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
+                            @click="confirmCancelPending = true"
+                        >
+                            Cancel change
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    v-if="canCancel"
+                    class="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-500/30 dark:bg-rose-500/10"
+                >
+                    <div
+                        v-if="!confirmCancel"
+                        class="flex flex-wrap items-center justify-between gap-3"
+                    >
+                        <p class="text-xs text-rose-700 dark:text-rose-300">
+                            Not what you need? Cancel before
+                            {{ formatDate(pendingPlan?.starts_at) }} and we'll
+                            refund your payment in full.
+                        </p>
+
+                        <button
+                            type="button"
+                            class="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/40 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
+                            @click="confirmCancel = true"
+                        >
+                            Cancel subscription
+                        </button>
+                    </div>
+
+                    <div v-else>
+                        <p class="text-xs text-rose-700 dark:text-rose-300">
+                            Cancelling ends free testing now and refunds
+                            ₱{{ formatMoney(refundAmount) }}.
+                            {{
+                                coveredBranches.length > 1
+                                    ? `All ${coveredBranches.length} branches on this subscription`
+                                    : "This branch"
+                            }}
+                            will stop running. This can't be undone.
+                        </p>
+
+                        <div class="mt-3 flex flex-wrap justify-end gap-2">
+                            <button
+                                type="button"
+                                :disabled="cancelling"
+                                class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/10"
+                                @click="confirmCancel = false"
+                            >
+                                Keep subscription
+                            </button>
+
+                            <button
+                                type="button"
+                                :disabled="cancelling"
+                                class="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
+                                @click="cancelTest"
+                            >
+                                {{
+                                    cancelling
+                                        ? "Cancelling…"
+                                        : "Yes, cancel & refund"
                                 }}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <div v-else-if="upgradePlan" class="mt-5">
+                <div v-if="showPlanPicker" class="mt-5">
                     <p
                         class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Plan
+                        <template v-if="!isCancelled">
+                            · {{ planTypeLabel(planType) }}
+                        </template>
                     </p>
 
-                    <label
-                        class="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition dark:border-white/10"
-                        :class="
-                            wantsUpgrade
-                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                : 'border-slate-200 hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
-                        "
-                    >
-                        <input
-                            v-model="wantsUpgrade"
-                            type="checkbox"
-                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
-                        />
+                    <PlanTypeToggle
+                        v-if="isCancelled"
+                        v-model="planType"
+                        class="mb-3"
+                    />
 
-                        <span class="min-w-0 flex-1">
-                            <span class="flex flex-wrap items-center gap-2">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <button
+                            v-for="plan in selectablePlans"
+                            :key="plan.plan_id"
+                            type="button"
+                            class="flex h-full flex-col gap-2 rounded-xl border p-4 text-left transition dark:border-white/10"
+                            :class="[
+                                chosenPlanCode === plan.plan_code
+                                    ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                    : 'border-slate-200 hover:border-primary-200 dark:hover:border-primary-500/40',
+                                showUpgradeMath &&
+                                isUpgrading &&
+                                chosenPlanCode === plan.plan_code
+                                    ? 'sm:col-span-3'
+                                    : '',
+                            ]"
+                            @click="chosenPlanCode = plan.plan_code"
+                        >
+                            <span class="flex items-center gap-2">
+                                <component
+                                    :is="planIcon(plan.plan_code)"
+                                    class="h-4 w-4 text-primary"
+                                />
                                 <span
                                     class="text-sm font-semibold text-slate-900 dark:text-white"
                                 >
-                                    Upgrade to {{ upgradePlan.name }}
+                                    {{ plan.name }}
                                 </span>
-
                                 <span
-                                    v-if="upgradeDelta > 0"
-                                    class="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary"
+                                    v-if="!isCancelled && plan.plan_id === currentPlan?.plan_id"
+                                    class="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
                                 >
-                                    +₱{{ formatMoney(upgradeDelta) }}
-                                    {{
-                                        renewInterval === "yearly"
-                                            ? "/ year"
-                                            : "/ month"
-                                    }}
+                                    Current
                                 </span>
                             </span>
 
                             <span
-                                class="mt-1 block text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                class="text-xs text-slate-500 dark:text-gray-400"
                             >
-                                Currently on
-                                {{ subscription?.plan?.name }} — upgrading adds
-                                both homecare and in-house facility to
-                                {{
-                                    coveredBranches.length > 1
-                                        ? `all ${coveredBranches.length} branches on this subscription`
-                                        : "this branch"
-                                }}.
-                            </span>
-                        </span>
-                    </label>
-
-                    <div
-                        v-if="wantsUpgrade"
-                        class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2"
-                    >
-                        <label
-                            v-for="timing in UPGRADE_TIMINGS"
-                            :key="timing.value"
-                            class="flex cursor-pointer flex-col rounded-xl border px-4 py-3 transition dark:border-white/10"
-                            :class="
-                                upgradeTiming === timing.value
-                                    ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                    : 'border-slate-200 hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
-                            "
-                        >
-                            <span class="flex items-center gap-2.5">
-                                <span
-                                    class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2"
-                                    :class="
-                                        upgradeTiming === timing.value
-                                            ? 'border-primary'
-                                            : 'border-slate-300 dark:border-white/20'
-                                    "
-                                >
-                                    <span
-                                        v-if="upgradeTiming === timing.value"
-                                        class="h-2 w-2 rounded-full bg-primary"
-                                    />
-                                </span>
-
-                                <span
-                                    class="text-sm font-medium text-slate-800 dark:text-white"
-                                >
-                                    {{ timing.label }}
-                                </span>
-
-                                <span
-                                    v-if="
-                                        timing.value === 'now' &&
-                                        daysRemaining > 0
-                                    "
-                                    class="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                                >
-                                    {{ daysRemaining }}
-                                    {{ daysRemaining === 1 ? "day" : "days" }}
-                                    lost
-                                </span>
-
-                                <span
-                                    v-else-if="timing.value === 'after'"
-                                    class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                >
-                                    Nothing lost
-                                </span>
+                                {{ branchLimitText(plan.type) }}
                             </span>
 
                             <span
-                                class="mt-1.5 pl-6.5 text-xs leading-5"
-                                :class="
-                                    timing.value === 'now' && daysRemaining > 0
-                                        ? 'text-amber-600 dark:text-amber-400'
-                                        : 'text-slate-500 dark:text-gray-400'
+                                class="mt-auto text-base font-bold text-primary"
+                            >
+                                ₱{{ formatMoney(planTotal(plan)) }}
+                                <span
+                                    class="text-xs font-medium text-slate-500 dark:text-gray-400"
+                                >
+                                    / year
+                                </span>
+                            </span>
+
+                            <template
+                                v-if="
+                                    !isCancelled &&
+                                    canUpgrade &&
+                                    plan.plan_code === HYBRID_PLAN_CODE &&
+                                    plan.plan_id !== currentPlan?.plan_id
                                 "
                             >
-                                {{
-                                    timing.value === "now"
-                                        ? `Starts today. You give up the ${Math.max(daysRemaining, 0)} day${Math.max(daysRemaining, 0) === 1 ? "" : "s"} left on the current plan.`
-                                        : `Starts ${formatDate(subscription?.end_date)}, keeping the days you already paid for.`
-                                }}
+                                <span
+                                    class="flex items-center gap-1.5 text-[11px] font-semibold text-primary"
+                                >
+                                    Upgrade today · ₱{{ formatMoney(upgradeCost(plan)) }}
+                                    for the {{ upgradeMonths }} remaining
+                                    {{ upgradeMonths === 1 ? "month" : "months" }}
+
+                                    <span
+                                        role="button"
+                                        tabindex="0"
+                                        aria-label="How is this calculated?"
+                                        class="rounded-full p-0.5 text-primary/70 transition hover:bg-primary/10 hover:text-primary"
+                                        @click.stop="showUpgradeMath = !showUpgradeMath"
+                                        @keydown.enter.stop.prevent="showUpgradeMath = !showUpgradeMath"
+                                    >
+                                        <Info class="h-3.5 w-3.5" />
+                                    </span>
+                                </span>
+
+                                <span
+                                    v-if="showUpgradeMath"
+                                    class="flex flex-col gap-1 rounded-lg bg-white/70 p-3 text-[11px] text-slate-600 dark:bg-white/5 dark:text-gray-300"
+                                    @click.stop
+                                >
+                                    <span class="font-semibold text-slate-700 dark:text-white">
+                                        New plan · {{ plan.name }}
+                                    </span>
+                                    <span class="flex justify-between gap-3">
+                                        <span>Plan price</span>
+                                        <span>₱{{ formatMoney(planPrice(plan)) }} / year</span>
+                                    </span>
+                                    <span
+                                        v-if="additionalBranches"
+                                        class="flex justify-between gap-3"
+                                    >
+                                        <span>
+                                            + {{ additionalBranches }} additional
+                                            {{ additionalBranches === 1 ? "branch" : "branches" }}
+                                            × ₱{{ formatMoney(Number(plan.additional_branch_price) || 0) }}
+                                        </span>
+                                        <span>
+                                            ₱{{ formatMoney(additionalBranches * (Number(plan.additional_branch_price) || 0)) }} / year
+                                        </span>
+                                    </span>
+                                    <span class="flex justify-between gap-3 font-semibold">
+                                        <span>Yearly total</span>
+                                        <span>₱{{ formatMoney(planTotal(plan)) }} / year</span>
+                                    </span>
+
+                                    <span class="mt-2 font-semibold text-slate-700 dark:text-white">
+                                        Current plan · {{ currentPlan?.name }}
+                                    </span>
+                                    <span class="flex justify-between gap-3">
+                                        <span>Plan price</span>
+                                        <span>₱{{ formatMoney(planPrice(currentPlan)) }} / year</span>
+                                    </span>
+                                    <span
+                                        v-if="additionalBranches"
+                                        class="flex justify-between gap-3"
+                                    >
+                                        <span>
+                                            + {{ additionalBranches }} additional
+                                            {{ additionalBranches === 1 ? "branch" : "branches" }}
+                                            × ₱{{ formatMoney(Number(currentPlan?.additional_branch_price) || 0) }}
+                                        </span>
+                                        <span>
+                                            ₱{{ formatMoney(additionalBranches * (Number(currentPlan?.additional_branch_price) || 0)) }} / year
+                                        </span>
+                                    </span>
+                                    <span class="flex justify-between gap-3 font-semibold">
+                                        <span>Yearly total</span>
+                                        <span>₱{{ formatMoney(planTotal(currentPlan)) }} / year</span>
+                                    </span>
+
+                                    <span
+                                        class="mt-2 flex justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/10"
+                                    >
+                                        <span>
+                                            Difference (₱{{ formatMoney(planTotal(plan)) }} − ₱{{ formatMoney(planTotal(currentPlan)) }})
+                                            ÷ {{ TERM_MONTHS }} months
+                                        </span>
+                                        <span>₱{{ formatMoney(monthlyDifference(plan)) }} / month</span>
+                                    </span>
+                                    <span class="flex justify-between gap-3">
+                                        <span>× {{ upgradeMonths }} remaining {{ upgradeMonths === 1 ? "month" : "months" }}</span>
+                                        <span class="font-semibold text-primary">
+                                            ₱{{ formatMoney(upgradeCost(plan)) }}
+                                        </span>
+                                    </span>
+                                    <span class="pt-1 text-slate-500 dark:text-gray-400">
+                                        {{
+                                            isTest
+                                                ? "Your paid year hasn't started yet, so all 12 months are counted."
+                                                : "The month you're in counts as a full month, even if only one day of it is used."
+                                        }}
+                                    </span>
+                                </span>
+                            </template>
+
+                            <span
+                                v-else-if="
+                                    !isCancelled &&
+                                    plan.plan_id !== currentPlan?.plan_id &&
+                                    daysRemaining > 0
+                                "
+                                class="text-[11px] font-semibold text-slate-500 dark:text-gray-400"
+                            >
+                                Starts {{ formatDate(subscription?.end_date) }}
                             </span>
-
-                            <input
-                                type="radio"
-                                class="sr-only"
-                                :value="timing.value"
-                                :checked="upgradeTiming === timing.value"
-                                @change="upgradeTiming = timing.value"
-                            />
-                        </label>
+                        </button>
                     </div>
-                </div>
 
-                <template v-if="!hasPendingUpgrade && canSubmitRenewal">
                     <p
-                        class="mb-2 mt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        v-if="isUpgrading"
+                        class="mt-3 text-xs leading-5 text-slate-500 dark:text-gray-400"
                     >
-                        Billing cycle
+                        The upgrade starts today and keeps your end date. You
+                        pay the monthly difference for each month left — the
+                        current month counts as a full month.
                     </p>
 
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <label
-                            v-for="option in INTERVALS"
-                            :key="option.value"
-                            class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 transition dark:border-white/10"
-                            :class="
-                                renewInterval === option.value
-                                    ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                    : 'border-slate-200 hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
-                            "
-                        >
-                            <div class="flex items-center gap-2.5">
-                                <span
-                                    class="flex h-4 w-4 items-center justify-center rounded-full border-2"
-                                    :class="
-                                        renewInterval === option.value
-                                            ? 'border-primary'
-                                            : 'border-slate-300 dark:border-white/20'
-                                    "
-                                >
-                                    <span
-                                        v-if="renewInterval === option.value"
-                                        class="h-2 w-2 rounded-full bg-primary"
-                                    />
-                                </span>
+                    <p
+                        v-else-if="changeStartsAt"
+                        class="mt-3 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                    >
+                        {{ currentPlan?.name }} stays active until
+                        {{ formatDate(changeStartsAt) }}, then
+                        {{ chargedPlan?.name }} takes over for a year.
+                    </p>
+                </div>
 
-                                <span
-                                    class="text-sm font-medium text-slate-800 dark:text-white"
-                                >
-                                    {{ option.label }}
-                                </span>
-
-                                <span
-                                    v-if="
-                                        option.value === 'yearly' &&
-                                        yearlySavings > 0
-                                    "
-                                    class="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                >
-                                    Save {{ yearlySavings }}%
-                                </span>
-                            </div>
-
-                            <span class="text-sm font-bold text-primary">
-                                ₱{{ formatMoney(priceFor(option.value)) }}
-                            </span>
-
-                            <input
-                                type="radio"
-                                class="sr-only"
-                                :value="option.value"
-                                :checked="renewInterval === option.value"
-                                @change="renewInterval = option.value"
-                            />
-                        </label>
-                    </div>
-
+                <template v-if="showPlanPicker && canSubmitRenewal">
                     <div
                         class="mt-5 flex flex-col gap-4 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
                     >
@@ -577,15 +671,18 @@
                             <p
                                 class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                             >
-                                {{ chargedPlan?.name }} · covered until
+                                {{ chargedPlan?.name }}
+                                {{ planTypeLabel(planType) }} ·
+                                {{ branchLimitText(planType).toLowerCase() }} ·
+                                covered until
                                 {{ formatDate(projectedEndDate) }}
+                                <template v-if="additionalBranches">
+                                    · includes {{ additionalBranches }}
+                                    additional
+                                    {{ additionalBranches === 1 ? "branch" : "branches" }}
+                                </template>
                                 <template v-if="isUpgrading">
-                                    ·
-                                    {{
-                                        upgradeTiming === "now"
-                                            ? "upgrade starts today"
-                                            : `upgrade starts ${formatDate(subscription?.end_date)}`
-                                    }}
+                                    · upgrade starts today
                                 </template>
                             </p>
                         </div>
@@ -598,9 +695,11 @@
                         >
                             <RefreshCw class="h-4 w-4" />
                             {{
-                                isUpgrading
-                                    ? "Upgrade & renew"
-                                    : "Renew subscription"
+                                isCancelled
+                                    ? "Subscribe now"
+                                    : changesPlan
+                                      ? paymentCopy.heading
+                                      : "Renew subscription"
                             }}
                         </button>
                     </div>
@@ -638,8 +737,8 @@
                                     v-for="head in [
                                         'Reference',
                                         'Plan',
+                                        'Plan Type',
                                         'Type',
-                                        'Cycle',
                                         'Method',
                                         'Account',
                                         'Amount',
@@ -692,26 +791,29 @@
                                 >
                                     {{ payment.plan_name ?? "—" }}
                                 </td>
+                                <td
+                                    class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ planTypeLabel(payment.plan_type) || "—" }}
+                                </td>
                                 <td class="whitespace-nowrap px-4 py-2.5">
                                     <span
-                                        class="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase"
+                                        class="rounded-full px-2 py-0.5 text-[10px] font-medium"
                                         :class="
                                             payment.type === 'renewal'
                                                 ? 'bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300'
                                                 : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
                                         "
                                     >
-                                        {{ payment.type ?? "—" }}
+                                        {{ paymentTypeLabel(payment.type) }}
                                     </span>
-                                </td>
-                                <td
-                                    class="whitespace-nowrap px-4 py-2.5 text-xs capitalize text-slate-500 dark:text-gray-400"
-                                >
-                                    {{
-                                        payment.billing_interval
-                                            ? payment.billing_interval.toLowerCase()
-                                            : "—"
-                                    }}
+
+                                    <p
+                                        v-if="payment.type === 'additional_branch' && payment.branch_name"
+                                        class="mt-1 text-[11px] text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{ payment.branch_name }}
+                                    </p>
                                 </td>
                                 <td
                                     class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
@@ -780,18 +882,12 @@
                                 <h2
                                     class="text-lg font-semibold text-gray-900 dark:text-white"
                                 >
-                                    Renew subscription
+                                    {{ paymentCopy.heading }}
                                 </h2>
                                 <p
                                     class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    Extends
-                                    {{
-                                        coveredBranches.length > 1
-                                            ? `${coveredBranches.length} branches`
-                                            : "this branch"
-                                    }}
-                                    to {{ formatDate(projectedEndDate) }}
+                                    {{ paymentCopy.subheading }}
                                 </p>
                             </div>
                         </div>
@@ -814,9 +910,9 @@
                             :processing="processing"
                             :onCardPay="payCard"
                             :onGCashPay="payGCash"
-                            title="Renewal payment"
-                            description="Choose how to pay for this branch's renewal."
-                            submit-label="Confirm renewal"
+                            :title="paymentCopy.formTitle"
+                            :description="paymentCopy.description"
+                            :submit-label="paymentCopy.submitLabel"
                             gcash-processing-label="Waiting for GCash payment..."
                             terms-context="subscription"
                         />
@@ -828,11 +924,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import {
     CalendarX,
     CheckCircle2,
+    CircleX,
     Clock,
+    Info,
     RefreshCw,
     TriangleAlert,
     X,
@@ -842,6 +940,7 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import {
     paymentAccount,
+    paymentTypeLabel,
     subscriptionInvoiceLink,
 } from "~/utils/subscriptionInvoice";
 import { formatAmount } from "~/utils/currency";
@@ -850,7 +949,19 @@ import { planService } from "~/api/plan/PlanService";
 import { paymentService } from "~/api/payment/PaymentService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
+import { useBranchStore } from "~/stores/branch";
 import type { CardDetails } from "~/types/payment";
+import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import {
+    DEFAULT_PLAN_TYPE,
+    findPlan,
+    branchLimitText,
+    planPrice,
+    plansOfType,
+    planTypeLabel,
+    type PlanType,
+} from "~/utils/planType";
+import { planIcon } from "~/utils/planIcon";
 
 const props = defineProps<{
     uuid: string;
@@ -858,15 +969,8 @@ const props = defineProps<{
 
 const { success, error, info } = useToast();
 
-const UPGRADE_TIMINGS = [
-    { value: "now", label: "Start today" },
-    { value: "after", label: "Start when current period ends" },
-] as const;
-
-const INTERVALS = [
-    { value: "monthly", label: "Monthly" },
-    { value: "yearly", label: "Yearly" },
-] as const;
+const HYBRID_PLAN_CODE = "C";
+const TERM_MONTHS = 12;
 
 const loading = ref(true);
 const processing = ref(false);
@@ -874,7 +978,24 @@ const showRenew = ref(false);
 
 const subscription = ref<any>(null);
 const plans = ref<any[]>([]);
-const renewInterval = ref<"monthly" | "yearly">("monthly");
+
+const branchStore = useBranchStore();
+
+const isTest = computed(() => subscription.value?.mode === "test");
+
+const isCancelled = computed(
+    () => subscription.value?.subscription?.status === "cancelled",
+);
+
+const syncBranchMode = () => {
+    const branch = branchStore.activeBranch;
+
+    if (!branch || !subscription.value) return;
+
+    branch.subscription_mode =
+        subscription.value.status === "cancelled" ? null : subscription.value.mode;
+    branch.subscription_end_date = subscription.value.end_date;
+};
 
 const card = ref<CardDetails>({
     number: "4000000000001000",
@@ -904,17 +1025,9 @@ const coveredBranches = computed<
 
 const currentPlan = computed(() =>
     plans.value.find(
-        (plan) => plan.plan_code === subscription.value?.plan?.plan_code,
+        (plan) => plan.plan_id === subscription.value?.plan?.plan_id,
     ),
 );
-
-const upgradePlan = computed(() => {
-    const code = subscription.value?.plan?.plan_code;
-
-    if (!code || code === "C") return null;
-
-    return plans.value.find((plan) => plan.plan_code === "C") ?? null;
-});
 
 const pendingPlan = computed(() => subscription.value?.pending_plan ?? null);
 
@@ -922,85 +1035,139 @@ const hasPendingUpgrade = computed(
     () => Boolean(pendingPlan.value) && !pendingPlan.value.is_due,
 );
 
-const confirmApply = ref(false);
-const applying = ref(false);
+const confirmCancelPending = ref(false);
+const cancellingPending = ref(false);
 
-const forfeitedDays = computed(() => {
-    if (!pendingPlan.value?.starts_at) return 0;
+const pendingPlanPaid = computed(() => {
+    const latestPaid = [...payments.value]
+        .filter((payment: any) => payment.status === "paid")
+        .sort((a: any, b: any) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))[0];
 
-    const starts = new Date(pendingPlan.value.starts_at).setHours(0, 0, 0, 0);
-    const today = new Date().setHours(0, 0, 0, 0);
-
-    return Math.max(0, Math.round((starts - today) / 86_400_000));
+    return Number(latestPaid?.price) || 0;
 });
 
-const earlyUpgradeEndDate = computed(() => {
-    if (!subscription.value?.end_date) return null;
-
-    const end = new Date(subscription.value.end_date);
-    end.setDate(end.getDate() - forfeitedDays.value);
-
-    return end.toISOString();
-});
-
-const wantsUpgrade = ref(false);
-const upgradeTiming = ref<"now" | "after">("after");
-
-const isUpgrading = computed(
-    () => wantsUpgrade.value && Boolean(upgradePlan.value),
+const canCancel = computed(
+    () => Boolean(subscription.value?.renewal?.can_cancel),
 );
 
-const chargedPlan = computed(() =>
-    isUpgrading.value ? upgradePlan.value : currentPlan.value,
+const confirmCancel = ref(false);
+const cancelling = ref(false);
+
+const refundAmount = computed(() =>
+    payments.value
+        .filter((payment: any) => payment.status === "paid")
+        .reduce((sum: number, payment: any) => sum + Number(payment.price || 0), 0),
 );
 
-const priceFor = (interval: "monthly" | "yearly") =>
-    Number(
-        interval === "yearly"
-            ? chargedPlan.value?.yearly_price
-            : chargedPlan.value?.monthly_price,
-    ) || 0;
-
-const renewTotal = computed(() => priceFor(renewInterval.value));
-
-// What the upgrade costs on top of simply renewing the current plan.
-const upgradeDelta = computed(() => {
-    if (!upgradePlan.value || !currentPlan.value) return 0;
-
-    const key =
-        renewInterval.value === "yearly" ? "yearly_price" : "monthly_price";
-
-    return (
-        (Number(upgradePlan.value[key]) || 0) -
-        (Number(currentPlan.value[key]) || 0)
-    );
-});
-
-const yearlySavings = computed(() => {
-    const monthly = Number(chargedPlan.value?.monthly_price) || 0;
-    const yearly = Number(chargedPlan.value?.yearly_price) || 0;
-
-    if (!monthly || !yearly) return 0;
-
-    return Math.max(
-        0,
-        Math.round(((monthly * 12 - yearly) / (monthly * 12)) * 100),
-    );
-});
-
-const subscriptionInterval = computed<"monthly" | "yearly">(() =>
-    String(subscription.value?.billing_interval ?? "monthly").toLowerCase() ===
-    "yearly"
-        ? "yearly"
-        : "monthly",
+const refundedAmount = computed(() =>
+    payments.value
+        .filter((payment: any) => payment.status === "refunded")
+        .reduce((sum: number, payment: any) => sum + Number(payment.price || 0), 0),
 );
 
 const renewal = computed(() => subscription.value?.renewal ?? null);
-const canRenew = computed(() => renewal.value?.can_renew ?? true);
+const canRenew = computed(() => Boolean(renewal.value?.can_renew));
+const canUpgrade = computed(() => Boolean(renewal.value?.can_upgrade));
+const upgradeMonths = computed(() => Number(renewal.value?.upgrade_months) || 0);
 const windowDays = computed(() => renewal.value?.window_days ?? 7);
 const renewalOpensAt = computed(() => renewal.value?.opens_at ?? null);
 
-const canSubmitRenewal = computed(() => isUpgrading.value || canRenew.value);
+const currentType = computed<PlanType>(
+    () => subscription.value?.plan?.type ?? DEFAULT_PLAN_TYPE,
+);
+
+const planType = ref<PlanType>(DEFAULT_PLAN_TYPE);
+
+watch(currentType, (type) => (planType.value = type), { immediate: true });
+
+const hybridPlan = computed(() =>
+    findPlan(plans.value, HYBRID_PLAN_CODE, currentType.value),
+);
+
+const isOnHybrid = computed(
+    () => currentPlan.value?.plan_code === HYBRID_PLAN_CODE,
+);
+
+const selectablePlans = computed(() => {
+    if (isCancelled.value) return plansOfType(plans.value, planType.value);
+
+    if (isOnHybrid.value) {
+        return canRenew.value ? plansOfType(plans.value, currentType.value) : [];
+    }
+
+    return [
+        canRenew.value ? currentPlan.value : null,
+        canRenew.value || canUpgrade.value ? hybridPlan.value : null,
+    ].filter(Boolean);
+});
+
+const showPlanPicker = computed(() => selectablePlans.value.length > 0);
+
+const chosenPlanCode = ref<string | null>(null);
+
+watch(
+    [() => currentPlan.value?.plan_code, canRenew, canUpgrade],
+    ([code]) =>
+        (chosenPlanCode.value =
+            !isCancelled.value && !canRenew.value && canUpgrade.value
+                ? HYBRID_PLAN_CODE
+                : (code ?? null)),
+    { immediate: true },
+);
+
+const chargedPlan = computed(() =>
+    findPlan(plans.value, chosenPlanCode.value, planType.value),
+);
+
+const changesPlan = computed(
+    () =>
+        !isCancelled.value &&
+        Boolean(chargedPlan.value) &&
+        chargedPlan.value?.plan_id !== subscription.value?.plan?.plan_id,
+);
+
+const isUpgrading = computed(
+    () =>
+        changesPlan.value &&
+        canUpgrade.value &&
+        chargedPlan.value?.plan_code === HYBRID_PLAN_CODE,
+);
+
+const changeStartsAt = computed(() =>
+    changesPlan.value && !isUpgrading.value && daysRemaining.value > 0
+        ? subscription.value?.end_date
+        : null,
+);
+
+const showUpgradeMath = ref(false);
+
+const additionalBranches = computed(
+    () => Number(subscription.value?.plan?.additional_branches) || 0,
+);
+
+const planTotal = (plan: any) =>
+    planPrice(plan) +
+    additionalBranches.value * (Number(plan?.additional_branch_price) || 0);
+
+const monthlyDifference = (plan: any) =>
+    (planTotal(plan) - planTotal(currentPlan.value)) / TERM_MONTHS;
+
+const upgradeCost = (plan: any) =>
+    Math.round(monthlyDifference(plan) * upgradeMonths.value * 100) / 100;
+
+const renewTotal = computed(() =>
+    isUpgrading.value
+        ? upgradeCost(chargedPlan.value)
+        : planTotal(chargedPlan.value),
+);
+
+const canSubmitRenewal = computed(() =>
+    isCancelled.value
+        ? Boolean(chargedPlan.value)
+        : isUpgrading.value
+          ? canUpgrade.value
+          : canRenew.value,
+);
 
 const daysRemaining = computed(() => {
     if (!subscription.value?.end_date) return 0;
@@ -1017,6 +1184,19 @@ const isExpiringSoon = computed(
 );
 
 const statusTone = computed(() => {
+    if (isCancelled.value) {
+        return {
+            border: "border-slate-200 dark:border-white/10",
+            bg: "bg-slate-50/60 dark:bg-white/5",
+            divider: "border-slate-200/70 dark:border-white/10",
+            icon: "text-slate-500 dark:text-gray-400",
+            glyph: CircleX,
+            badge: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
+            dot: "bg-slate-400",
+            text: "text-slate-600 dark:text-gray-300",
+        };
+    }
+
     if (isExpired.value) {
         return {
             border: "border-rose-200 dark:border-rose-500/30",
@@ -1055,24 +1235,77 @@ const statusTone = computed(() => {
     };
 });
 
+const addYear = (date: string | number | Date) => {
+    const projected = new Date(date);
+    projected.setFullYear(projected.getFullYear() + 1);
+    return projected.toISOString();
+};
+
 const projectedEndDate = computed(() => {
     const end = subscription.value?.end_date
         ? new Date(subscription.value.end_date)
         : new Date();
 
-    const startsToday = isUpgrading.value && upgradeTiming.value === "now";
-
-    const base = !startsToday && end.getTime() > Date.now() ? end : new Date();
-
-    const projected = new Date(base);
-
-    if (renewInterval.value === "yearly") {
-        projected.setFullYear(projected.getFullYear() + 1);
-    } else {
-        projected.setMonth(projected.getMonth() + 1);
+    if (isUpgrading.value) {
+        return isTest.value && pendingPlan.value?.starts_at
+            ? addYear(pendingPlan.value.starts_at)
+            : end.toISOString();
     }
 
-    return projected.toISOString();
+    return addYear(!isCancelled.value && end.getTime() > Date.now() ? end : new Date());
+});
+
+const paymentCopy = computed(() => {
+    const coverage =
+        coveredBranches.value.length > 1
+            ? `${coveredBranches.value.length} branches`
+            : "this branch";
+    const until = formatDate(projectedEndDate.value);
+    const newPlan = `${chargedPlan.value?.name ?? ""} ${planTypeLabel(chargedPlan.value?.type)}`.trim();
+
+    if (isCancelled.value) {
+        return {
+            heading: "Subscribe",
+            subheading: `${newPlan} covers ${coverage} until ${until}`,
+            formTitle: "Subscription payment",
+            description: "Choose how to pay for your subscription.",
+            submitLabel: "Confirm & subscribe",
+        };
+    }
+
+    if (isUpgrading.value) {
+        const months = `${upgradeMonths.value} ${upgradeMonths.value === 1 ? "month" : "months"}`;
+
+        return {
+            heading: "Upgrade to Hybrid",
+            subheading: `${newPlan} starts today and runs to ${until} — prorated for ${months}`,
+            formTitle: "Upgrade payment",
+            description: `Choose how to pay for ${newPlan}.`,
+            submitLabel: "Confirm upgrade",
+        };
+    }
+
+    if (changesPlan.value) {
+        const starts = changeStartsAt.value
+            ? `starts ${formatDate(changeStartsAt.value)}`
+            : "starts today";
+
+        return {
+            heading: "Renew & change plan",
+            subheading: `${newPlan} ${starts} and runs to ${until}`,
+            formTitle: "Renewal payment",
+            description: `Choose how to pay for ${newPlan}.`,
+            submitLabel: "Confirm renewal",
+        };
+    }
+
+    return {
+        heading: "Renew subscription",
+        subheading: `Extends ${coverage} to ${until}`,
+        formTitle: "Renewal payment",
+        description: "Choose how to pay for this branch's renewal.",
+        submitLabel: "Confirm renewal",
+    };
 });
 
 const fetchSubscription = async (silent = false) => {
@@ -1089,8 +1322,6 @@ const fetchSubscription = async (silent = false) => {
 
         subscription.value = subRes?.data?.[0] ?? null;
         plans.value = planRes ?? [];
-
-        renewInterval.value = subscriptionInterval.value;
     } catch (err: any) {
         error(err?.message ?? "Failed to load subscription.");
     } finally {
@@ -1105,7 +1336,7 @@ const openRenew = () => {
     }
 
     if (!renewTotal.value) {
-        error("This plan has no price for the selected billing cycle.");
+        error("This plan has no price set.");
         return;
     }
 
@@ -1134,12 +1365,9 @@ const payCard = async () => {
             createPayment: ({ token_id, authentication_id }) =>
                 subscriptionService.renew({
                     branch_uuid: props.uuid,
-                    billing_interval: renewInterval.value,
                     payment_method: "CREDIT-CARD",
                     plan_code: chargedPlan.value?.plan_code,
-                    upgrade_timing: isUpgrading.value
-                        ? upgradeTiming.value
-                        : undefined,
+                    plan_type: chargedPlan.value?.type,
                     token_id,
                     authentication_id,
                 }),
@@ -1153,13 +1381,16 @@ const payCard = async () => {
                     subscription.value = {
                         ...subscription.value,
                         ...changes,
+                        subscription: {
+                            ...subscription.value?.subscription,
+                            status: changes.status,
+                        },
                         payments: payment
                             ? [...payments.value, payment]
                             : payments.value,
                     };
 
-                    wantsUpgrade.value = false;
-                    renewInterval.value = subscriptionInterval.value;
+                    syncBranchMode();
                 }
 
                 showRenew.value = false;
@@ -1197,8 +1428,7 @@ const finishGcashPayment = async (reference?: string) => {
 
     if (outcome.status === "submitted") {
         await fetchSubscription(true);
-        wantsUpgrade.value = false;
-        renewInterval.value = subscriptionInterval.value;
+        syncBranchMode();
         success(outcome.message ?? "Subscription renewed.");
     } else if (outcome.status === "failed") {
         error(
@@ -1221,12 +1451,9 @@ const payGCash = async () => {
             createPayment: () =>
                 subscriptionService.renew({
                     branch_uuid: props.uuid,
-                    billing_interval: renewInterval.value,
                     payment_method: "GCASH",
                     plan_code: chargedPlan.value?.plan_code,
-                    upgrade_timing: isUpgrading.value
-                        ? upgradeTiming.value
-                        : undefined,
+                    plan_type: chargedPlan.value?.type,
                 }),
 
             onClose: () => {
@@ -1245,13 +1472,13 @@ const payGCash = async () => {
     }
 };
 
-const applyUpgradeNow = async () => {
-    if (applying.value) return;
+const cancelPendingPlan = async () => {
+    if (cancellingPending.value) return;
 
-    applying.value = true;
+    cancellingPending.value = true;
 
     try {
-        const result = await subscriptionService.applyUpgrade({
+        const result = await subscriptionService.cancelPendingPlan({
             branch_uuid: props.uuid,
         });
 
@@ -1260,12 +1487,41 @@ const applyUpgradeNow = async () => {
             ...result.subscription,
         };
 
-        confirmApply.value = false;
-        success(result?.message ?? "Upgrade applied.");
+        confirmCancelPending.value = false;
+        success(result?.message ?? "Plan change cancelled.");
     } catch (err: any) {
-        error(err?.message ?? "Could not start the upgrade.");
+        error(err?.message ?? "Could not cancel the plan change.");
     } finally {
-        applying.value = false;
+        cancellingPending.value = false;
+    }
+};
+
+const cancelTest = async () => {
+    if (cancelling.value) return;
+
+    cancelling.value = true;
+
+    try {
+        const result = await subscriptionService.cancelTest({
+            branch_uuid: props.uuid,
+        });
+
+        subscription.value = {
+            ...subscription.value,
+            ...result.subscription,
+            subscription: {
+                ...subscription.value?.subscription,
+                status: result.subscription?.status,
+            },
+        };
+
+        confirmCancel.value = false;
+        syncBranchMode();
+        success(result?.message ?? "Subscription cancelled.");
+    } catch (err: any) {
+        error(err?.message ?? "Could not cancel the subscription.");
+    } finally {
+        cancelling.value = false;
     }
 };
 

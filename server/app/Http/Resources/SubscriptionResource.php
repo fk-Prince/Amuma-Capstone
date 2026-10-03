@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\BranchSubscription;
-use App\Models\Subscription;
 use App\Utils\MaskUtil;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -32,7 +31,7 @@ class SubscriptionResource extends JsonResource
             'rejected_at' => $isRejected ? $this->latestRejection?->created_at : null,
             'rejection_logs_count' => (int) ($this->branch?->rejection_logs_count ?? 0),
 
-            'billing_interval' => $subscription?->billing_interval,
+            'mode' => $subscription?->mode,
             'start_date' => $subscription?->start_date,
             'end_date' => $subscription?->end_date,
 
@@ -43,7 +42,9 @@ class SubscriptionResource extends JsonResource
                 'status' => $subscription?->status,
                 'start_date' => $subscription?->start_date,
                 'end_date' => $subscription?->end_date,
-                'branch_limit' => Subscription::BRANCH_LIMIT,
+                'branch_limit' => $subscription?->branchLimit(),
+                'additional_branches' => $subscription?->additionalBranchCount(),
+                'additional_branch_price' => (float) $subscription?->plans?->additional_branch_price,
 
                 'covered_branches' => $subscription
                     ? $subscription->branchLinks()
@@ -64,6 +65,7 @@ class SubscriptionResource extends JsonResource
                         'tin' => data_get($link->branch?->settings, 'tin'),
                         'branch_status' => $link->branch?->status,
                         'status' => $link->status,
+                        'type' => $link->type,
                     ])
                     ->values()
                     : [],
@@ -102,11 +104,7 @@ class SubscriptionResource extends JsonResource
                 ],
             ],
 
-            'plan' => [
-                'plan_id' => $subscription?->plans?->plan_id,
-                'name' => $subscription?->plans?->name,
-                'plan_code' => $subscription?->plans?->plan_code,
-            ],
+            'plan' => $subscription?->planSummary(),
 
             'pending_plan' => $subscription?->pendingPlanSummary(),
 

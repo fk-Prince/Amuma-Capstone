@@ -468,17 +468,9 @@
                 One calm price. All the <span class="accent">features</span> you
                 need.
             </h2>
-            <div class="pricing-toggle">
-                <span :class="{ active: !annually }">Monthly</span>
-                <button class="toggle-btn" @click="annually = !annually">
-                    <span
-                        class="toggle-knob"
-                        :class="{ right: annually }"
-                    ></span>
-                </button>
-                <span :class="{ active: annually }">Yearly</span>
-                <span class="save-badge" v-if="annually">Save 20%</span>
-            </div>
+            <p class="pricing-note">
+                Billed yearly · up to 10 branches per subscription
+            </p>
             <div class="pricing-grid">
                 <div class="pricing-card">
                     <span class="plan-badge">Plan A</span>
@@ -489,8 +481,7 @@
                         personalized assistance.
                     </p>
                     <div class="plan-price">
-                        ₱{{ annually ? "28000.00" : "2500.00"
-                        }}<span> / month</span>
+                        ₱28000.00<span> / year</span>
                     </div>
                     <button class="plan-btn-outline">
                         Subscribe to Homecare Services →
@@ -510,8 +501,7 @@
                         and modern amenities.
                     </p>
                     <div class="plan-price">
-                        ₱{{ annually ? "40000.00" : "3500.00"
-                        }}<span> / month</span>
+                        ₱40000.00<span> / year</span>
                     </div>
                     <button class="plan-btn-outline">
                         Subscribe to In-house Facility →
@@ -535,8 +525,7 @@
                         healthcare facility.
                     </p>
                     <div class="plan-price">
-                        ₱{{ annually ? "58000.00" : "4500.00"
-                        }}<span> / month</span>
+                        ₱58000.00<span> / year</span>
                     </div>
                     <button class="plan-btn-white">
                         Subscribe to Hybrid →
@@ -568,10 +557,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import dashboardImg from "~/assets/images/dashboard.png";
-
-const annually = ref(false);
 
 const testimonials = [
     {
@@ -1663,53 +1649,10 @@ const testimonials = [
     position: relative;
     z-index: 1;
 }
-.pricing-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
+.pricing-note {
     margin-bottom: 3rem;
     font-size: 0.9rem;
     color: #6b7280;
-}
-.pricing-toggle .active {
-    color: #111827;
-    font-weight: 600;
-}
-.toggle-btn {
-    width: 44px;
-    height: 24px;
-    border-radius: 12px;
-    background: #e5e7eb;
-    border: none;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-    padding: 0;
-}
-.toggle-btn:has(+ span.active) {
-    background: #3b82f6;
-}
-.toggle-knob {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: white;
-    transition: left 0.2s;
-}
-.toggle-knob.right {
-    left: 23px;
-}
-.save-badge {
-    background: #dcfce7;
-    color: #16a34a;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
 }
 
 .pricing-grid {

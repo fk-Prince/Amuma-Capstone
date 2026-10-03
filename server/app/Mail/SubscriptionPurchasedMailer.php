@@ -13,7 +13,6 @@ class SubscriptionPurchasedMailer extends Mailable
         public string $planName,
         public string $branchName,
         public float $amount,
-        public string $billingInterval,
     ) {}
 
     public function envelope(): Envelope
@@ -69,10 +68,6 @@ class SubscriptionPurchasedMailer extends Mailable
                                                     <tr>
                                                         <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Plan</td>
                                                         <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$this->planName}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Billing</td>
-                                                        <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;text-transform:capitalize;'>{$this->billingInterval}</td>
                                                     </tr>
                                                     <tr>
                                                         <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Amount paid</td>

@@ -36,6 +36,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-branch', 'POST', payload);
     }
 
+    async createAdditionalBranch(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch-additional', 'POST', payload);
+    }
+
     async resubmitBranch(payload: any): Promise<any> {
         return await this.request(this.resource + '-branch-resubmit', 'POST', payload);
     }
@@ -46,6 +50,14 @@ class SubscriptionService extends BaseService {
 
     async applyUpgrade(payload: any): Promise<any> {
         return await this.request(this.resource + '-apply-upgrade', 'POST', payload);
+    }
+
+    async cancelPendingPlan(payload: any): Promise<any> {
+        return await this.request(this.resource + '-cancel-pending', 'POST', payload);
+    }
+
+    async cancelTest(payload: any): Promise<any> {
+        return await this.request(this.resource + '-cancel-test', 'POST', payload);
     }
 
 

@@ -300,6 +300,8 @@ class ScheduleResource extends JsonResource
                                     'phone_number' => $employee?->phone_number,
                                     'email' => $employee?->users?->email,
                                     'note' => $assignment->note,
+                                    'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
+                                    'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
 
                                     'online' => $assignment->relationLoaded('onlineSchedules')
                                         ? $assignment->onlineSchedules

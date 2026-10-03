@@ -116,7 +116,7 @@
                             <ul v-if="showPrevious" class="mt-2 space-y-2">
                                 <li
                                     v-for="shift in inactiveShifts"
-                                    :key="shift.caregiver_facility_shift_id"
+                                    :key="shift.caregiver_shift_id"
                                     class="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-white/5"
                                 >
                                     <div class="min-w-0 flex-1">
@@ -140,7 +140,7 @@
                                         type="button"
                                         :disabled="
                                             busyId ===
-                                                shift.caregiver_facility_shift_id ||
+                                                shift.caregiver_shift_id ||
                                             isAssigned(shift.caregiver_id)
                                         "
                                         :title="
@@ -533,7 +533,7 @@ const draftShift = computed<CaregiverShift | null>(() => {
     const caregiver = caregiverById(caregiverId);
 
     return {
-        caregiver_facility_shift_id: -1,
+        caregiver_shift_id: -1,
         caregiver_id: caregiverId,
         admission_id: props.admissionId ?? 0,
         caregiver_name: caregiver?.full_name ?? "New caregiver",
@@ -560,8 +560,8 @@ function resetForm() {
 function applyOutcome(outcome: CaregiverShiftOutcome) {
     const index = shifts.value.findIndex(
         (s) =>
-            s.caregiver_facility_shift_id ===
-            outcome.shift.caregiver_facility_shift_id,
+            s.caregiver_shift_id ===
+            outcome.shift.caregiver_shift_id,
     );
 
     if (index === -1) {
@@ -667,11 +667,11 @@ async function submit() {
 async function setActive(shift: CaregiverShift, isActive: boolean) {
     if (busyId.value) return;
 
-    busyId.value = shift.caregiver_facility_shift_id;
+    busyId.value = shift.caregiver_shift_id;
 
     try {
         const res = await caregiverShiftService.update(
-            shift.caregiver_facility_shift_id,
+            shift.caregiver_shift_id,
             { branch_uuid: props.branchUuid, is_active: isActive },
         );
 

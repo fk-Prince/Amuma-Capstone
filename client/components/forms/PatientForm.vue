@@ -176,11 +176,11 @@
                 />
             </div>
 
-            <BaseInput
+            <ListInput
                 label="Allergies"
                 :model-value="model.allergies"
                 @update:model-value="update('allergies', $event)"
-                placeholder="e.g. Penicillin, Peanuts, Latex"
+                placeholder="Add an allergy, e.g. Penicillin"
                 :error="errors?.allergies"
             />
         </div>
@@ -189,6 +189,7 @@
 
 <script setup lang="ts">
 import BaseInput from "../ui/BaseInput.vue";
+import ListInput from "../ui/ListInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
 import Combobox from "../ui/Combobox.vue";
 import DatePickerField from "../ui/DatePickerField.vue";

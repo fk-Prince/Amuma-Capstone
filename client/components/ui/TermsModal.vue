@@ -177,8 +177,8 @@ onBeforeUnmount(() => {
                         </h3>
                         <p>
                             Agencies subscribe to a plan — Homecare Services,
-                            In-house Facility, or Hybrid — billed monthly or
-                            yearly. One subscription covers up to five branches
+                            In-house Facility, or Hybrid — billed yearly. One
+                            subscription covers up to ten branches
                             under the same agency; additional branches beyond
                             that require another subscription. Every branch,
                             paid or included, is reviewed by AMUMA before it

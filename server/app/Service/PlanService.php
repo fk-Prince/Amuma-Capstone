@@ -24,8 +24,8 @@ class PlanService
     {
         $updated = $this->planRepository->update($plan, [
             'description' => $payload['description'] ?? $plan->description,
-            'monthly_price' => $payload['monthly_price'] ?? $plan->monthly_price,
-            'yearly_price' => $payload['yearly_price'] ?? $plan->yearly_price,
+            'price' => $payload['price'] ?? $plan->price,
+            'additional_branch_price' => $payload['additional_branch_price'] ?? $plan->additional_branch_price,
         ]);
 
         return response()->json([

@@ -190,8 +190,14 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Online & walk-in bookings",
+        name: "Online bookings",
         homecare: true,
+        facility: true,
+        hybrid: true,
+    },
+    {
+        name: "Walk-in bookings",
+        homecare: false,
         facility: true,
         hybrid: true,
     },
@@ -226,7 +232,7 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Up to 5 branches on one subscription",
+        name: "Up to 10 branches on one subscription",
         homecare: true,
         facility: true,
         hybrid: true,

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\BillingIntervalEnum;
 use App\Enums\RoleEnum;
 use App\Models\Agency;
 use App\Models\Branch;
@@ -27,42 +26,42 @@ use Illuminate\Support\Str;
 class BranchSubscriptionSeeder extends Seeder
 {
     private const SUBSCRIPTIONS = [
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'YEARLY', 'status' => 'active', 'branch_statuses' => [1 => 'pending', 2 => 'rejected']],
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active', 'days_left' => 5],
-        ['plan' => 'C', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'A', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'rejected'],
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'A', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'pending'],
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'MONTHLY', 'status' => 'active', 'days_left' => 2],
-        ['plan' => 'A', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'rejected'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'A', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'pending'],
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'rejected'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'A', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'C', 'branches' => 3, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'A', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'rejected'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'active'],
-        ['plan' => 'A', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'pending'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'MONTHLY', 'status' => 'active'],
-        ['plan' => 'A', 'branches' => 3, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'rejected'],
-        ['plan' => 'C', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'A', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'pending'],
-        ['plan' => 'B', 'branches' => 2, 'interval' => 'YEARLY', 'status' => 'pending'],
-        ['plan' => 'A', 'branches' => 1, 'interval' => 'MONTHLY', 'status' => 'pending'],
-        ['plan' => 'B', 'branches' => 1, 'interval' => 'YEARLY', 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active', 'branch_statuses' => [1 => 'pending', 2 => 'rejected']],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 2, 'status' => 'active', 'days_left' => 5],
+        ['plan' => 'C', 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'A', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'A', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active', 'days_left' => 2],
+        ['plan' => 'A', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'A', 'branches' => 2, 'status' => 'pending'],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'pending'],
+        ['plan' => 'A', 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'C', 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'A', 'branches' => 2, 'status' => 'pending'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'A', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'A', 'branches' => 3, 'status' => 'pending'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'rejected'],
+        ['plan' => 'C', 'branches' => 2, 'status' => 'pending'],
+        ['plan' => 'A', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'B', 'branches' => 2, 'status' => 'pending'],
+        ['plan' => 'A', 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'B', 'branches' => 1, 'status' => 'rejected'],
     ];
 
     private const OWNERS = [
@@ -189,7 +188,7 @@ class BranchSubscriptionSeeder extends Seeder
 
     public function run(): void
     {
-        $plans = Plan::all()->keyBy('plan_code');
+        $plans = Plan::all()->keyBy(fn($plan) => "{$plan->plan_code}-{$plan->type}");
         $modules = Module::all();
         $reference = Agency::whereNotNull('document')->first();
         $ownerPermissions = RoleEnum::BranchManager->permissions();
@@ -230,25 +229,21 @@ class BranchSubscriptionSeeder extends Seeder
                 $adminId,
                 &$branchIndex
             ) {
-                $plan = $plans[$spec['plan']];
-                $interval = BillingIntervalEnum::from($spec['interval']);
+                $planType = $spec['branches'] > Plan::branchLimitFor(Plan::TYPE_SME)
+                    ? Plan::TYPE_ENTERPRISE
+                    : Plan::TYPE_SME;
+                $plan = $plans["{$spec['plan']}-{$planType}"];
                 $isPending = $spec['status'] === 'pending';
                 $isRejected = $spec['status'] === 'rejected';
 
                 $start = $isPending
                     ? Carbon::now()
-                    : Carbon::now()->subDays(
-                        $spec['interval'] === 'YEARLY'
-                            ? 20 + $number * 17
-                            : 2 + $number * 2
-                    );
-                $end = $interval->addTo($start);
+                    : Carbon::now()->subDays(20 + $number * 17);
+                $end = Subscription::termEnd($start);
 
                 if (isset($spec['days_left'])) {
                     $end = Carbon::now()->addDays($spec['days_left']);
-                    $start = $spec['interval'] === 'YEARLY'
-                        ? $end->copy()->subYear()
-                        : $end->copy()->subMonth();
+                    $start = $end->copy()->subYear();
                 }
 
                 $user = User::create([
@@ -296,13 +291,13 @@ class BranchSubscriptionSeeder extends Seeder
 
                 $subscription = Subscription::create([
                     'plan_id' => $plan->plan_id,
+                    'mode' => Subscription::MODE_LIVE,
                     'agency_id' => $agency->agency_id,
                     'status' => match (true) {
                         $isPending => Subscription::STATUS_PENDING,
                         $isRejected => Subscription::STATUS_REJECTED,
                         default => Subscription::STATUS_ACTIVE,
                     },
-                    'billing_interval' => $interval->value,
                     'start_date' => $start,
                     'end_date' => $end,
                 ]);
@@ -315,12 +310,11 @@ class BranchSubscriptionSeeder extends Seeder
                     'xendit_invoice_id' => bin2hex(random_bytes(12)),
                     'payment_reference_id' => (string) Str::uuid(),
                     'masked_card_number' => '400000XXXXXX' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
-                    'price' => (float) $plan->{$interval->loadPriceKey()},
+                    'price' => (float) $plan->price,
                     'status' => $isRejected
                         ? SubscriptionPayment::STATUS_REFUNDED
                         : SubscriptionPayment::STATUS_PAID,
                     'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
-                    'billing_interval' => $interval->value,
                     'payment_method' => $paidByCard ? 'CREDIT-CARD' : 'GCASH',
                 ]);
 

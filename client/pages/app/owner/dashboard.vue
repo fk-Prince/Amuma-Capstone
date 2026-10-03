@@ -315,7 +315,7 @@
                         </div>
 
                         <div
-                            v-if="coloredPlanData.length"
+                            v-if="planGroups.length"
                             class="relative mt-2 h-[220px]"
                         >
                             <canvas
@@ -338,40 +338,40 @@
                         </div>
 
                         <div
-                            v-if="coloredPlanData.length"
+                            v-if="planGroups.length"
                             class="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-slate-100 dark:border-white/10 pt-2"
                         >
                             <div
-                                v-for="plan in coloredPlanData"
-                                :key="plan.plan_code"
+                                v-for="type in planTypeTotals"
+                                :key="type.value"
                                 class="flex min-w-0 items-center gap-1.5"
                             >
                                 <span
                                     class="h-1.5 w-1.5 shrink-0 rounded-full"
                                     :style="{
-                                        background: plan.color,
-                                        boxShadow: `0 0 0 3px ${plan.color}22`,
+                                        background: type.color,
+                                        boxShadow: `0 0 0 3px ${type.color}22`,
                                     }"
                                 />
                                 <span
                                     class="truncate text-[12px] font-medium"
                                     :class="
-                                        plan.total
+                                        type.total
                                             ? 'text-secondary dark:text-white'
                                             : 'text-muted dark:text-gray-400'
                                     "
                                 >
-                                    {{ plan.name || plan.plan_code }}
+                                    {{ type.label }}
                                 </span>
                                 <span
                                     class="shrink-0 text-[12px] font-bold tabular-nums"
                                     :class="
-                                        plan.total
+                                        type.total
                                             ? 'text-muted dark:text-gray-400'
                                             : 'text-slate-300 dark:text-gray-600'
                                     "
                                 >
-                                    {{ plan.total }}
+                                    {{ type.total }}
                                 </span>
                             </div>
                         </div>
@@ -1160,16 +1160,7 @@
                                             class="mt-1 whitespace-nowrap text-[10px] text-accent-600 dark:text-accent-300"
                                         >
                                             → {{ sub.pending_plan.name }}
-                                            <template
-                                                v-if="
-                                                    sub.pending_plan
-                                                        .billing_interval
-                                                "
-                                            >
-                                                ({{
-                                                    sub.pending_plan.billing_interval.toLowerCase()
-                                                }})
-                                            </template>
+                                            {{ planTypeLabel(sub.pending_plan.type) }}
                                             on
                                             {{
                                                 formatDate(
@@ -1232,6 +1223,7 @@
 <script setup lang="ts">
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
+import { PLAN_TYPES, planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
 import StatusBadge from "~/components/ui/StatusBadge.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import {
@@ -1280,6 +1272,7 @@ interface Subscription {
     pending_plan?: {
         name: string;
         plan_code: string;
+        type: string;
         starts_at: string;
         is_due: boolean;
     } | null;
@@ -1302,6 +1295,7 @@ interface Subscription {
 interface PlanBreakdown {
     name: string;
     plan_code: string;
+    type: string;
     total: number;
 }
 
@@ -1386,17 +1380,6 @@ let statusChart: Chart | null = null;
 let revenueChart: Chart | null = null;
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 32;
-
-const PLAN_COLORS = [
-    "#3182ED",
-    "#F59E0B",
-    "#0E7C7B",
-    "#A855F7",
-    "#F43F5E",
-    "#14B8A6",
-    "#EAB308",
-    "#6366F1",
-];
 
 const CHART_TICK_COLOR = "#94a3b8";
 const CHART_GRID_COLOR = "rgba(148, 163, 184, 0.15)";
@@ -1551,14 +1534,40 @@ const branchPending = computed(() =>
     overview.value.branches.pending.slice(0, 3),
 );
 
-const coloredPlanData = computed(() => {
-    return [...planData.value]
-        .sort((a, b) => a.plan_code.localeCompare(b.plan_code))
-        .map((plan, index) => ({
-            ...plan,
-            color: PLAN_COLORS[index % PLAN_COLORS.length],
-        }));
+const PLAN_TYPE_COLORS: Record<string, string> = {
+    sme: "#3182ED",
+    enterprise: "#14B8A6",
+};
+
+const planGroups = computed(() => {
+    const groups = new Map<string, { plan_code: string; name: string; totals: Record<string, number> }>();
+
+    for (const plan of planData.value) {
+        const group = groups.get(plan.plan_code) ?? {
+            plan_code: plan.plan_code,
+            name: plan.name || plan.plan_code,
+            totals: {},
+        };
+
+        group.totals[plan.type] = Number(plan.total) || 0;
+        groups.set(plan.plan_code, group);
+    }
+
+    return [...groups.values()].sort((a, b) =>
+        a.plan_code.localeCompare(b.plan_code),
+    );
 });
+
+const planTypeTotals = computed(() =>
+    PLAN_TYPES.map((type) => ({
+        ...type,
+        color: PLAN_TYPE_COLORS[type.value],
+        total: planGroups.value.reduce(
+            (sum, group) => sum + (group.totals[type.value] ?? 0),
+            0,
+        ),
+    })),
+);
 
 const statusSegments = computed(() => {
     const total = stats.value.total || 1;
@@ -1698,26 +1707,25 @@ const initPlanChart = () => {
         "planChart",
     ) as HTMLCanvasElement | null;
 
-    if (!canvas || !coloredPlanData.value.length) return;
+    if (!canvas || !planGroups.value.length) return;
 
-    const sorted = coloredPlanData.value;
+    const groups = planGroups.value;
 
     planChart = new Chart(canvas, {
         type: "bar",
         data: {
-            labels: sorted.map((plan) => plan.name || plan.plan_code),
-            datasets: [
-                {
-                    label: "Subscriptions",
-                    data: sorted.map((plan) => plan.total),
-                    backgroundColor: sorted.map((plan) => plan.color),
-                    hoverBackgroundColor: sorted.map((plan) => plan.color),
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    barThickness: 28,
-                    maxBarThickness: 36,
-                },
-            ],
+            labels: groups.map((group) => group.name),
+            datasets: planTypeTotals.value.map((type) => ({
+                label: type.label,
+                data: groups.map((group) => group.totals[type.value] ?? 0),
+                backgroundColor: type.color,
+                hoverBackgroundColor: type.color,
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 28,
+                categoryPercentage: 0.6,
+                barPercentage: 0.9,
+            })),
         },
         options: {
             responsive: true,
@@ -1739,10 +1747,10 @@ const initPlanChart = () => {
                     bodyFont: {
                         size: 11,
                     },
-                    displayColors: false,
+                    boxPadding: 4,
                     callbacks: {
                         label: (context: any) =>
-                            ` ${context.parsed.y} subscriptions`,
+                            ` ${context.dataset.label}: ${context.parsed.y} ${context.parsed.y === 1 ? "subscription" : "subscriptions"}`,
                     },
                 },
             },
@@ -1993,7 +2001,8 @@ const initials = (name: string): string => {
         .join("");
 };
 
-const branchLimit = (sub: any): number => sub?.subscription?.branch_limit ?? 5;
+const branchLimit = (sub: any): number =>
+    sub?.subscription?.branch_limit ?? planTypeBranchLimit(sub?.plan?.type);
 
 // Each row is one branch joining the subscription, so its count is how many
 // branches had joined by that point — not the subscription's current total,

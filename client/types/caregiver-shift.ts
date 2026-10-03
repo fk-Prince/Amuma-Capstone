@@ -1,5 +1,5 @@
 export interface CaregiverShift {
-    caregiver_facility_shift_id: number;
+    caregiver_shift_id: number;
     caregiver_id: number;
     admission_id: number;
     caregiver_name: string | null;
@@ -38,7 +38,7 @@ export interface ShiftBoardResident {
 }
 
 export interface ShiftBoardShift {
-    caregiver_facility_shift_id: number;
+    caregiver_shift_id: number;
     start_time: string;
     end_time: string;
     note: string | null;

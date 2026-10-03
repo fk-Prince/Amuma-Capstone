@@ -2,6 +2,13 @@ import { defineStore } from "pinia";
 import { type Agency } from "~/types/agency";
 import { type Branch, type BranchSettings } from "~/types/branch";
 import { type Subscription } from "~/types/subscription";
+import {
+    DEFAULT_PLAN_TYPE,
+    findPlan,
+    planPrice,
+    plansOfType,
+    type PlanType,
+} from "~/utils/planType";
 
 const defaultLocation = () => ({
     address: "",
@@ -17,77 +24,77 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
     state: (): Subscription => ({
         plans: [],
         selectedPlan: null,
-        selectedInterval: "monthly",
+        selectedPlanType: DEFAULT_PLAN_TYPE,
         payment_method: "CREDIT-CARD",
 
-        // branch: {
-        //     name: "AMUMA Davao City",
-        //     contact_number: "9000000000",
-        //     image: null,
-        //     description:
-        //         "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
-        //     location: {
-        //         street: "J.P. Laurel Avenue",
-        //         city: "Davao City",
-        //         province: "Davao del Sur",
-        //         country: "Philippines",
-        //         latitude: 7.1907,
-        //         longitude: 125.4553,
-        //     },
-        //     email: "davao@amuma.com",
-        //     status: "pending",
-        //     document: "",
-        // } as Branch,
-
-        // agency: {
-        //     agency_id: undefined,
-        //     name: "AMUMA Incorporation",
-        //     description:
-        //         "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
-        //     location: {
-        //         street: "J.P. Laurel Avenue",
-        //         city: "Davao City",
-        //         province: "Davao del Sur",
-        //         country: "Philippines",
-        //         latitude: 7.1907,
-        //         longitude: 125.4553,
-        //     },
-        //     email: "info@amuma.com",
-        //     image: null,
-        //     status: "pending",
-        // } as Agency,
-
-
         branch: {
-            name: "",
-            contact_number: "",
+            name: "AMUMA Davao City",
+            contact_number: "9000000000",
             image: null,
-            description: "",
+            description:
+                "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
             location: {
-                street: "",
-                city: "",
-                province: "",
-                country: "",
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
             },
-            email: "",
+            email: "davao@amuma.com",
             status: "pending",
             document: "",
         } as Branch,
 
         agency: {
             agency_id: undefined,
-            name: "",
-            description: "",
+            name: "AMUMA Incorporation",
+            description:
+                "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
             location: {
-                street: "",
-                city: "",
-                province: "",
-                country: "",
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
             },
-            email: "",
+            email: "info@amuma.com",
             image: null,
             status: "pending",
         } as Agency,
+
+
+        // branch: {
+        //     name: "",
+        //     contact_number: "",
+        //     image: null,
+        //     description: "",
+        //     location: {
+        //         street: "",
+        //         city: "",
+        //         province: "",
+        //         country: "",
+        //     },
+        //     email: "",
+        //     status: "pending",
+        //     document: "",
+        // } as Branch,
+
+        // agency: {
+        //     agency_id: undefined,
+        //     name: "",
+        //     description: "",
+        //     location: {
+        //         street: "",
+        //         city: "",
+        //         province: "",
+        //         country: "",
+        //     },
+        //     email: "",
+        //     image: null,
+        //     status: "pending",
+        // } as Agency,
 
         settings: {
             opening: "00:00",
@@ -115,24 +122,31 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             tin: (state.branch as any)?.tin || null,
         }),
 
-        selectedPrice: (state) => {
-            if (!state.selectedPlan) return null;
-            return state.selectedInterval === "yearly"
-                ? state.selectedPlan.yearly_price
-                : state.selectedPlan.monthly_price;
-        },
+        selectedPrice: (state) =>
+            state.selectedPlan ? planPrice(state.selectedPlan) : null,
+
+        typedPlans: (state) => plansOfType(state.plans, state.selectedPlanType),
     },
 
     actions: {
         setPlans(plans: any[]) {
             this.plans = plans;
             if (plans.length > 0 && !this.selectedPlan) {
-                this.selectedPlan = plans[0];
+                this.selectedPlan = plansOfType(plans, this.selectedPlanType)[0] ?? null;
             }
         },
 
         setSelectedPlan(plan: any) {
             this.selectedPlan = plan;
+            if (plan?.type) this.selectedPlanType = plan.type;
+        },
+
+        setSelectedPlanType(type: PlanType) {
+            this.selectedPlanType = type;
+            this.selectedPlan =
+                findPlan(this.plans, this.selectedPlan?.plan_code, type) ??
+                plansOfType(this.plans, type)[0] ??
+                null;
         },
 
         setErrors(errors: Record<string, string>) {
@@ -162,7 +176,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
 
         reset() {
             this.selectedPlan = null;
-            this.selectedInterval = "monthly";
+            this.selectedPlanType = DEFAULT_PLAN_TYPE;
 
             this.branch = {
                 name: "",

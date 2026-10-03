@@ -165,11 +165,11 @@
                                 >
                                     {{ subscription.plan.plan_code }}
                                 </span>
-                                <span v-if="subscription.billing_interval">
-                                    · Billed
-                                    {{
-                                        subscription.billing_interval.toLowerCase()
-                                    }}
+                                <span
+                                    v-if="subscription.plan.type"
+                                    class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                                >
+                                    {{ planTypeLabel(subscription.plan.type) }}
                                 </span>
                                 <span>
                                     · Runs through
@@ -196,6 +196,19 @@
                                     }}
                                 </button>
                             </div>
+
+                            <p
+                                v-if="subscription.plan.yearly_total"
+                                class="mt-2 flex items-center gap-2 text-xs text-muted dark:text-gray-400"
+                            >
+                                Pays
+                                <span
+                                    class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary ring-1 ring-primary/20 dark:bg-primary-500/15 dark:text-primary-300"
+                                >
+                                    ₱{{ Number(subscription.plan.yearly_total).toLocaleString("en-PH", { maximumFractionDigits: 2 }) }}
+                                    a year
+                                </span>
+                            </p>
                         </div>
 
                         <aside
@@ -212,7 +225,11 @@
                                 <span
                                     class="text-[10px] font-semibold tabular-nums text-muted dark:text-gray-400"
                                 >
-                                    {{ usedSlots }} of {{ branchLimit }} used
+                                    {{
+                                        usedSlots > branchLimit
+                                            ? `${usedSlots} branches`
+                                            : `${usedSlots} of ${branchLimit} used`
+                                    }}
                                 </span>
                             </div>
 
@@ -243,9 +260,16 @@
 
                                     <div class="min-w-0 flex-1">
                                         <p
-                                            class="truncate text-xs font-semibold"
+                                            class="flex items-center gap-1 text-xs font-semibold"
                                         >
-                                            {{ branch.name }}
+                                            <span class="truncate">{{ branch.name }}</span>
+                                            <span
+                                                v-if="branch.type === 'additional'"
+                                                title="Additional branch"
+                                                class="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary text-white"
+                                            >
+                                                <Plus class="h-3 w-3 stroke-[3]" />
+                                            </span>
                                         </p>
                                         <p
                                             class="mt-0.5 flex items-center gap-1 text-[10px] text-muted dark:text-gray-400"
@@ -497,6 +521,7 @@ import {
     Mail,
     MapPin,
     Phone,
+    Plus,
     Store,
     UserRound,
     X,
@@ -508,6 +533,7 @@ import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionP
 import RejectionRecord from "~/components/sections/owner/RejectionRecord.vue";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { formatDate } from "~/utils/time";
+import { planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
 import type {
     SubscriptionCardData,
     SubscriptionCoveredBranch,
@@ -566,7 +592,9 @@ const branches = computed(() => {
 });
 
 const branchLimit = computed(
-    () => props.subscription?.subscription?.branch_limit ?? 5,
+    () =>
+        props.subscription?.subscription?.branch_limit ??
+        planTypeBranchLimit(props.subscription?.plan?.type),
 );
 
 const usedSlots = computed(() => coveredBranches.value.length);

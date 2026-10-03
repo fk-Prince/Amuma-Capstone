@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Subscription;
 
+use App\Models\Plan;
 use App\Rules\ValidTin;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,7 +26,7 @@ class SubscriptionRequest extends FormRequest
             'authentication_id' => ['nullable', 'string'],
 
             'plan_code' => ['required', 'string'],
-            'billing_interval' => ['required', 'string'],
+            'plan_type' => ['required', Rule::in(Plan::TYPES)],
             'payment_method' => ['nullable', 'string'],
             'payment_type' => ['nullable', 'string'],
 

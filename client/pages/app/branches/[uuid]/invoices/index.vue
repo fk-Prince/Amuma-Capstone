@@ -71,8 +71,8 @@
                     :pagination="pagination"
                     :loading="loading"
                     :searchable="false"
-                    empty-title="No invoices found"
-                    empty-description="Try a different search term or filter."
+                    empty-title="No patients found"
+                    empty-description="Try a different patient code or name."
                     :on-row-click="onRowClick"
                     @page-change="fetchInvoices"
                 >

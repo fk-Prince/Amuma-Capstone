@@ -12,6 +12,8 @@ class ScheduleAssigned extends Model
         'schedule_services_id',
         'employee_id',
         'note',
+        'start_time',
+        'end_time',
         'is_active'
     ];
 

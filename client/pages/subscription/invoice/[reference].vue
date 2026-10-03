@@ -134,6 +134,8 @@ import AppIcon from "~/components/ui/AppIcon.vue";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { formatCurrency } from "~/utils/currency";
 import { stringToDateTime } from "~/utils/time";
+import { planTypeLabel } from "~/utils/planType";
+import { paymentTypeLabel } from "~/utils/subscriptionInvoice";
 
 interface PaymentReceipt {
     method: "GCASH" | "CREDIT-CARD";
@@ -148,7 +150,7 @@ interface PaymentReceipt {
     paid_at: string | null;
     plan: string | null;
     type: string | null;
-    billing_interval: string | null;
+    plan_type: string | null;
 }
 
 definePageMeta({ layout: false });
@@ -194,11 +196,11 @@ const rows = computed(() => {
         { label: "Paid with", value: paidWith },
         {
             label: "Plan",
-            value: [data.plan, capitalize(data.billing_interval)]
+            value: [data.plan, planTypeLabel(data.plan_type)]
                 .filter(Boolean)
                 .join(" · "),
         },
-        { label: "Payment for", value: capitalize(data.type) },
+        { label: "Payment for", value: paymentTypeLabel(data.type) },
         { label: "Xendit ID", value: data.xendit_id },
         { label: "Reference", value: data.reference_id },
     ].filter((row) => !!row.value);

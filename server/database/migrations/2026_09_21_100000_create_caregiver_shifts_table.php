@@ -8,8 +8,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('caregiver_facility_shifts', function (Blueprint $table) {
-            $table->id('caregiver_facility_shift_id');
+        Schema::create('caregiver_shifts', function (Blueprint $table) {
+            $table->id('caregiver_shift_id');
 
             $table->foreignId('caregiver_id')
                 ->constrained('employees', 'employee_id')
@@ -34,6 +34,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('caregiver_facility_shifts');
+        Schema::dropIfExists('caregiver_shifts');
     }
 };

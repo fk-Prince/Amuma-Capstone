@@ -551,6 +551,7 @@ onUnmounted(() => {
             v-if="manual"
             :model-value="manualAddress"
             label="Location"
+            required
             @update:model-value="onManualInput"
             placeholder="House/unit no., street, barangay, city, province"
             :error="manualError"
@@ -597,7 +598,9 @@ onUnmounted(() => {
                 }}
             </span>
 
-            <div class="inline-flex shrink-0 rounded-lg border border-gray-200 p-0.5 dark:border-white/10">
+            <div
+                class="inline-flex shrink-0 rounded-lg border border-gray-200 p-0.5 dark:border-white/10"
+            >
                 <button
                     type="button"
                     @click="switchMode('map')"
@@ -656,7 +659,7 @@ onUnmounted(() => {
             <BaseInput
                 v-model="typedAddress"
                 class="flex-1"
-                placeholder="Type this address and click &quot;Use this address&quot; to generate the location"
+                placeholder='Type this address and click "Use this address" to generate the location'
                 :error="typeError"
                 @keydown.enter.prevent="applyTypedAddress"
             />

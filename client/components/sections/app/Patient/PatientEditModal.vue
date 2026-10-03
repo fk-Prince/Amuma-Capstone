@@ -170,9 +170,9 @@
                         />
                     </div>
 
-                    <BaseInput
+                    <ListInput
                         label="Allergies"
-                        placeholder="e.g. Penicillin, Peanuts, Latex"
+                        placeholder="Add an allergy, e.g. Penicillin"
                         :model-value="form.allergies"
                         :error="errors.allergies"
                         @update:model-value="set('allergies', $event)"
@@ -209,6 +209,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { Loader2, X } from "lucide-vue-next";
 import AvatarUpload from "~/components/ui/AvatarUpload.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import ListInput from "~/components/ui/ListInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";

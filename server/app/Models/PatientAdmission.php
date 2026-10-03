@@ -115,7 +115,7 @@ class PatientAdmission extends Model
     public function caregiverShifts()
     {
         return $this->hasMany(
-            CaregiverFacilityShift::class,
+            CaregiverShift::class,
             'admission_id',
             'patient_admission_id'
         );

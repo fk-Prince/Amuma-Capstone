@@ -1,13 +1,17 @@
 <template>
-    <div class="rounded-2xl bg-light/40 p-4 flex flex-col gap-3 font-sans dark:bg-white/5">
+    <div
+        class="group rounded-2xl border border-muted-light/70 bg-light/40 p-4 flex flex-col gap-4 font-sans transition duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:border-primary-500/40"
+    >
         <div class="flex items-center justify-between">
-            <p class="text-xs font-medium text-muted dark:text-gray-400">
+            <p
+                class="text-[11px] font-semibold uppercase tracking-wider text-muted dark:text-gray-400"
+            >
                 {{ title }}
             </p>
 
             <div
                 v-if="icon"
-                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition group-hover:scale-105"
                 :class="toneClasses.iconBg"
             >
                 <component
@@ -23,7 +27,10 @@
                 v-if="loading"
                 class="h-7 w-16 rounded-md bg-muted-light animate-pulse dark:bg-white/10"
             />
-            <p v-else class="text-2xl font-bold text-secondary leading-none dark:text-white">
+            <p
+                v-else
+                class="text-3xl font-bold tabular-nums text-secondary leading-none dark:text-white"
+            >
                 {{ value }}
             </p>
 

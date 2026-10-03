@@ -105,7 +105,7 @@
 
                     <!-- Description Section -->
                     <div
-                        class="bg-gray-50 rounded-xl p-4 border border-gray-200 dark:bg-white/5 dark:border-white/10"
+                        class=""
                     >
                         <div class="space-y-3">
                             <BaseInput
@@ -130,7 +130,7 @@
                                 <!-- Current Description (Edit Mode) -->
                                 <div
                                     v-if="existingRoomDescription"
-                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-blue-200 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all group dark:bg-secondary dark:border-blue-500/20 dark:hover:bg-blue-500/10"
+                                    class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer transition-colors hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
                                     @click="useExistingDescription"
                                     role="button"
                                     tabindex="0"
@@ -174,7 +174,7 @@
                                 <!-- Suggested Description (Create Mode) -->
                                 <div
                                     v-else-if="suggestedDescription"
-                                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all group dark:bg-secondary"
+                                    class="flex items-start gap-3 p-3 rounded-lg border border-slate-200 cursor-pointer transition-colors hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
                                     @click="useSuggestedDescription"
                                     role="button"
                                     tabindex="0"

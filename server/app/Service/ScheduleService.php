@@ -389,12 +389,15 @@ class ScheduleService
                         true
                     );
 
+                    [$startTime, $endTime] = $this->assignmentTimes($assignment, $scheduleService->type);
+                    [$windowStart, $windowEnd] = $this->assignmentWindow($targetStart, $targetEnd, $startTime, $endTime);
+
                     $conflictCodes = $isFinalizing ? [] : $this->scheduleRepository->activeConflictCodes(
                         $employeeId,
                         (string) $branch->branch_id,
                         $schedule->schedule_id,
-                        $targetStart,
-                        $targetEnd
+                        $windowStart,
+                        $windowEnd
                     );
 
                     if ($conflictCodes) {
@@ -417,7 +420,12 @@ class ScheduleService
 
                     $scheduleService->assigned()->updateOrCreate(
                         ['employee_id' => $employeeId],
-                        ['is_active' => true, 'note' => $note]
+                        [
+                            'is_active' => true,
+                            'note' => $note,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                        ]
                     );
 
                     $assignedEmployeeIds[] = $employeeId;
@@ -689,6 +697,49 @@ class ScheduleService
         );
     }
 
+    private function assignmentTimes(array $row, ?string $serviceType): array
+    {
+        if ($serviceType !== ScheduleServiceModel::TYPE_ADL) {
+            return [null, null];
+        }
+
+        $start = trim((string) ($row['start_time'] ?? ''));
+        $end = trim((string) ($row['end_time'] ?? ''));
+
+        if ($start === '' && $end === '') {
+            return [null, null];
+        }
+
+        if ($start === '' || $end === '') {
+            throw new Exception('Pick both a start time and an end time.', 422);
+        }
+
+        try {
+            $startAt = Carbon::createFromFormat('H:i', substr($start, 0, 5));
+            $endAt = Carbon::createFromFormat('H:i', substr($end, 0, 5));
+        } catch (\Throwable $e) {
+            throw new Exception('Start and end times must look like 08:00.', 422);
+        }
+
+        if ($endAt->lte($startAt)) {
+            throw new Exception('The end time must be later than the start time.', 422);
+        }
+
+        return [$startAt->format('H:i:s'), $endAt->format('H:i:s')];
+    }
+
+    private function assignmentWindow(Carbon $scheduleStart, Carbon $scheduleEnd, ?string $startTime, ?string $endTime): array
+    {
+        if (!$startTime || !$endTime) {
+            return [$scheduleStart, $scheduleEnd];
+        }
+
+        return [
+            $scheduleStart->copy()->setTimeFromTimeString($startTime),
+            $scheduleStart->copy()->setTimeFromTimeString($endTime),
+        ];
+    }
+
     public function assignEmployee(array $payload)
     {
         return DB::transaction(function () use ($payload) {
@@ -774,17 +825,29 @@ class ScheduleService
 
                 $assisting = $this->assistingIds($scheduleService->type, $desiredEmployeeIds, $branchId);
 
+                $timesByEmployee = $assignments
+                    ->filter(fn($row) => !empty($row['employee_id']))
+                    ->mapWithKeys(fn($row) => [
+                        (int) $row['employee_id'] => $this->assignmentTimes($row, $scheduleService->type),
+                    ]);
+
                 foreach ($desiredEmployeeIds as $employeeId) {
                     if ($currentlyActiveIds->contains($employeeId)) {
                         continue;
                     }
 
+                    [$windowStart, $windowEnd] = $this->assignmentWindow(
+                        $targetStart,
+                        $targetEnd,
+                        ...($timesByEmployee->get($employeeId) ?? [null, null])
+                    );
+
                     $conflictCodes = $this->scheduleRepository->activeConflictCodes(
                         $employeeId,
                         (string) $branchId,
                         $schedule->schedule_id,
-                        $targetStart,
-                        $targetEnd
+                        $windowStart,
+                        $windowEnd
                     );
 
                     if ($conflictCodes) {
@@ -811,12 +874,20 @@ class ScheduleService
                         $note = self::ASSISTANT_NOTE;
                     }
 
+                    [$startTime, $endTime] = $timesByEmployee->get($employeeId) ?? [null, null];
+
                     if ($currentlyActiveIds->contains($employeeId)) {
+                        $current = $currentlyActive->firstWhere('employee_id', $employeeId);
 
                         if ($hasNote) {
-                            $currentlyActive
-                                ->firstWhere('employee_id', $employeeId)
-                                ?->update(['note' => $note]);
+                            $current?->update(['note' => $note]);
+                        }
+
+                        if ($timesByEmployee->has($employeeId)) {
+                            $current?->update([
+                                'start_time' => $startTime,
+                                'end_time' => $endTime,
+                            ]);
                         }
 
                         continue;
@@ -829,15 +900,21 @@ class ScheduleService
                         ->first();
 
                     if ($existingRow) {
-                        $existingRow->update(array_filter([
-                            'is_active' => true,
-                            'note' => $note,
-                        ], fn($value, $key) => $key !== 'note' || $hasNote, ARRAY_FILTER_USE_BOTH));
+                        $existingRow->update([
+                            ...array_filter([
+                                'is_active' => true,
+                                'note' => $note,
+                            ], fn($value, $key) => $key !== 'note' || $hasNote, ARRAY_FILTER_USE_BOTH),
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
+                        ]);
                     } else {
                         $scheduleService->assigned()->create([
                             'employee_id' => $employeeId,
                             'is_active' => true,
                             'note' => $note,
+                            'start_time' => $startTime,
+                            'end_time' => $endTime,
                         ]);
                     }
                 }

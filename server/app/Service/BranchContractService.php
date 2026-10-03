@@ -21,6 +21,20 @@ class BranchContractService
     ) {}
 
 
+    private function duplicateContractMessage(array $payload): string
+    {
+        $plan = match ($payload['accommodation_type']) {
+            'VIP' => 'VIP room',
+            'COMMON' => 'common ward',
+            'ADL' => 'ADL',
+            default => strtolower($payload['accommodation_type']),
+        };
+
+        $cycle = strtolower($payload['billing_cycle']);
+
+        return "You already have a {$cycle} {$plan} plan for this branch. Edit that plan instead of creating another.";
+    }
+
     public function overview(array $payload)
     {
         return $this->branchContractRepository
@@ -37,10 +51,7 @@ class BranchContractService
         ]);
 
         if ($existingContract) {
-            throw new Exception(
-                "A {$payload['category']} {$payload['accommodation_type']} {$payload['billing_cycle']} contract already exists for this branch.",
-                409
-            );
+            throw new Exception($this->duplicateContractMessage($payload), 409);
         }
 
         $payload = [
@@ -88,10 +99,7 @@ class BranchContractService
 
 
         if ($existingContract) {
-            throw new Exception(
-                "A {$payload['category']} {$payload['accommodation_type']} {$payload['billing_cycle']} contract already exists for this branch.",
-                409
-            );
+            throw new Exception($this->duplicateContractMessage($payload), 409);
         }
         $contract->update([
             'category' => $payload['category'],

@@ -454,7 +454,7 @@
                                                     "
                                                     class="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[9px] font-semibold text-primary-600 sm:px-2 sm:text-[10px] dark:bg-primary-500/15 dark:text-primary-300"
                                                 >
-                                                    Active
+                                                    Selected
                                                 </span>
                                                 <span
                                                     v-else-if="

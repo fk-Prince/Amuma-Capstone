@@ -70,9 +70,10 @@
                 </div>
 
                 <span
-                    class="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold capitalize"
+                    v-if="props.withTrial"
+                    class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold dark:bg-emerald-500/10 dark:text-emerald-400"
                 >
-                    {{ checkout.selectedInterval || "—" }}
+                    1 month free testing
                 </span>
             </div>
 
@@ -91,9 +92,20 @@
                 />
 
                 <SummaryRow
-                    class="capitalize"
-                    label="Billing Cycle"
-                    :value="checkout.selectedInterval || '—'"
+                    label="Plan Type"
+                    :value="planTypeLabel(checkout.selectedPlan?.type) || '—'"
+                />
+
+                <SummaryRow
+                    v-if="props.withTrial"
+                    label="Free Testing"
+                    value="1 month — your paid year starts after"
+                />
+
+                <SummaryRow
+                    v-else
+                    label="Paid Year"
+                    value="Starts once your branch is approved"
                 />
 
                 <SummaryRow
@@ -109,6 +121,20 @@
                             : '—'
                     "
                 />
+            </div>
+
+            <div
+                v-if="props.withTrial"
+                class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+            >
+                <ShieldCheck
+                    class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                />
+                <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
+                    <span class="font-semibold">Cancel anytime during testing.</span>
+                    If AMUMA isn't right for you, cancel within your free month
+                    from Branch Settings and we'll refund your payment in full.
+                </p>
             </div>
         </section>
 
@@ -296,9 +322,12 @@ import { computed } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
 import { formatCurrency } from "~/utils/currency";
+import { planTypeLabel } from "~/utils/planType";
+import { ShieldCheck } from "lucide-vue-next";
 
 const props = defineProps<{
     totalAmount?: number | null;
+    withTrial?: boolean;
     disabled?: boolean;
 }>();
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full mx-auto space-y-8" :class="cardClass">
+    <div class="w-full mx-auto" :class="cardClass">
         <div class="space-y-6">
             <FormSectionHeader
                 :title="isNew ? 'Branch Profile' : 'Branch Information'"
@@ -12,6 +12,7 @@
                     <LabelInput
                         v-model="branch.name"
                         label="Branch Name"
+                        required
                         :disabled="lockVerification"
                         @update:modelValue="clearError('branch_name')"
                         :error="errors?.branch_name"
@@ -21,6 +22,7 @@
                     <LabelInput
                         v-model="branch.email"
                         label="Email Address"
+                        required
                         type="email"
                         @update:modelValue="clearError('branch_email')"
                         :error="errors?.branch_email"
@@ -30,6 +32,7 @@
                     <LabelInput
                         v-model="branch.description"
                         label="Description"
+                        required
                         mode="textarea"
                         :textMax="1000"
                         :allowResize="true"
@@ -42,6 +45,7 @@
                     <PhoneInput
                         v-model="branch.contact_number"
                         label="Contact Number"
+                        required
                         @update:modelValue="clearError('branch_contact_number')"
                         :error="errors?.branch_contact_number"
                         data-field="branch_contact_number"
@@ -319,12 +323,13 @@
         </div>
 
         <div
-            class="space-y-5"
+            class="space-y-2"
             :class="dividerClass"
             data-field="location.street location.city location.province location.country location"
         >
             <FormSectionHeader
                 title="Primary Address"
+                required
                 description="Pick the branch location on the map."
                 :icon="isNew ? MapPin : undefined"
             >
@@ -389,12 +394,12 @@ const isNew = computed(() => props.mode === "new");
 
 const cardClass = computed(() =>
     isNew.value
-        ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/[0.03]"
-        : "",
+        ? "space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/[0.03]"
+        : "space-y-5",
 );
 
 const dividerClass = computed(() =>
-    isNew.value ? "border-t border-slate-200 pt-8 dark:border-white/10" : "",
+    isNew.value ? "border-t border-slate-200 pt-5 dark:border-white/10" : "",
 );
 
 const documentUrl = computed(() =>

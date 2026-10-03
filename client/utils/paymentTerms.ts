@@ -35,7 +35,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "AMUMA offers three subscription modules. Each unlocks a distinct part of the platform, and each is billed as a single subscription covering up to 5 branches.",
+                    text: "AMUMA offers three subscription modules. Each unlocks a distinct part of the platform, and each is billed as a single subscription covering up to 10 branches.",
                 },
             ],
         },
@@ -44,14 +44,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "You choose Monthly or Yearly billing when you subscribe. Your subscription period starts on the date payment is confirmed and runs for one full cycle from that date:",
-                },
-                {
-                    type: "list",
-                    items: [
-                        "Monthly plans are billed every 30 days from your subscription date.",
-                        "Yearly plans are billed once every 12 months from your subscription date, at the discounted yearly rate.",
-                    ],
+                    text: "All plans are billed yearly. Your subscription period starts on the date payment is confirmed and runs for 12 months from that date.",
                 },
                 // {
                 //     type: "paragraph",

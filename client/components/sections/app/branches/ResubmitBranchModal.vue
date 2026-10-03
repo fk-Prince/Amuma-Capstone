@@ -84,7 +84,8 @@
                                     class="mt-1 text-sm leading-6 text-rose-700 dark:text-rose-300"
                                 >
                                     {{
-                                        rejectionReason || "No reason was given."
+                                        rejectionReason ||
+                                        "No reason was given."
                                     }}
                                 </p>
                             </div>
@@ -116,9 +117,6 @@
 
                         <template v-if="step === 'payment'">
                             <div v-if="loadingPlans" class="space-y-4">
-                                <div
-                                    class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100 dark:bg-white/10"
-                                />
                                 <div class="grid gap-4 sm:grid-cols-3">
                                     <div
                                         v-for="n in 3"
@@ -129,34 +127,15 @@
                             </div>
 
                             <template v-else>
-                                <div
-                                    class="mb-5 flex justify-center"
-                                >
-                                    <div
-                                        class="inline-flex rounded-full border border-primary-200 bg-muted-light/40 p-1 dark:border-primary-500/30 dark:bg-white/5"
-                                    >
-                                        <button
-                                            v-for="option in INTERVALS"
-                                            :key="option"
-                                            type="button"
-                                            class="min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold capitalize transition-colors"
-                                            :class="
-                                                interval === option
-                                                    ? 'bg-primary text-white shadow-sm'
-                                                    : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
-                                            "
-                                            @click="interval = option"
-                                        >
-                                            {{ option }}
-                                        </button>
-                                    </div>
+                                <div class="mb-4 flex justify-center">
+                                    <PlanTypeToggle v-model="planType" />
                                 </div>
 
                                 <div
                                     class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3"
                                 >
                                     <button
-                                        v-for="plan in plans"
+                                        v-for="plan in typedPlans"
                                         :key="plan.plan_id"
                                         type="button"
                                         class="flex h-full flex-col gap-2 rounded-xl border p-5 text-left transition-all dark:border-white/10"
@@ -185,12 +164,7 @@
                                             <span
                                                 class="text-xs font-medium text-muted dark:text-gray-400"
                                             >
-                                                /
-                                                {{
-                                                    interval === "yearly"
-                                                        ? "year"
-                                                        : "month"
-                                                }}
+                                                / year
                                             </span>
                                         </p>
                                     </button>
@@ -289,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
     ChevronLeft,
     ChevronRight,
@@ -311,6 +285,8 @@ import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
 import { formatAmount } from "~/utils/currency";
+import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import { DEFAULT_PLAN_TYPE, planPrice, plansOfType, type PlanType } from "~/utils/planType";
 import type { Branch } from "~/types/branch";
 import type { CardDetails } from "~/types/payment";
 
@@ -329,8 +305,6 @@ const emit = defineEmits<{
 }>();
 
 const { success, error } = useToast();
-
-const INTERVALS = ["monthly", "yearly"] as const;
 
 const purchaseMode = ref(!!props.requiresPurchase);
 const purchaseNotice = ref(props.purchaseReason ?? null);
@@ -480,7 +454,6 @@ const processing = ref(false);
 const plans = ref<any[]>([]);
 const loadingPlans = ref(false);
 const selectedPlan = ref<any | null>(null);
-const interval = ref<(typeof INTERVALS)[number]>("monthly");
 
 const card = ref<CardDetails>({
     number: "4000000000001000",
@@ -492,10 +465,18 @@ const card = ref<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
-const priceOf = (plan: any) =>
-    Number(
-        interval.value === "yearly" ? plan?.yearly_price : plan?.monthly_price,
-    ) || 0;
+const planType = ref<PlanType>(DEFAULT_PLAN_TYPE);
+
+const priceOf = (plan: any) => planPrice(plan);
+
+const typedPlans = computed(() => plansOfType(plans.value, planType.value));
+
+watch(planType, () => {
+    selectedPlan.value =
+        typedPlans.value.find((plan) => plan.plan_code === selectedPlan.value?.plan_code) ??
+        typedPlans.value[0] ??
+        null;
+});
 
 const total = computed(() => priceOf(selectedPlan.value));
 
@@ -537,7 +518,7 @@ const validate = (): boolean => {
 
     result.error.issues.forEach((issue) => {
         const path = issue.path.join(".");
-        mapped[clientKeys[path] ?? path] = issue.message;
+        mapped[clientKeys[path] ?? path] ??= issue.message;
     });
 
     errors.value = mapped;
@@ -617,7 +598,7 @@ const loadPlans = async () => {
 
     try {
         plans.value = (await planService.list()) ?? [];
-        selectedPlan.value = plans.value[0] ?? null;
+        selectedPlan.value = typedPlans.value[0] ?? null;
     } catch (err: any) {
         formError.value = err?.message ?? "Failed to load plans.";
     } finally {
@@ -645,15 +626,14 @@ const submit = async () => {
     processing.value = true;
 
     try {
-        const result = await subscriptionService.resubmitBranch(
-            buildPayload(),
-        );
+        const result = await subscriptionService.resubmitBranch(buildPayload());
 
         success(result?.message ?? "Branch resubmitted for review.");
         emit("resubmitted", result);
     } catch (err: any) {
         if (err?.status === 409) {
-            slotPrompt.value = err?.message ?? "This branch's subscription has no free slot.";
+            slotPrompt.value =
+                err?.message ?? "This branch's subscription has no free slot.";
             return;
         }
 
@@ -679,12 +659,14 @@ const switchToPurchase = () => {
 const purchasePayload = (paymentMethod: "CREDIT-CARD" | "GCASH") => ({
     ...buildPayload(),
     plan_code: selectedPlan.value?.plan_code,
-    billing_interval: interval.value,
+    plan_type: selectedPlan.value?.type,
     payment_method: paymentMethod,
 });
 
 const onPaid = async (result: any) => {
-    success(result?.message ?? "Payment received. Branch resubmitted for review.");
+    success(
+        result?.message ?? "Payment received. Branch resubmitted for review.",
+    );
     emit("resubmitted", { ...result, purchased: true });
 };
 

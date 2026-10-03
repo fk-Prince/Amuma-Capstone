@@ -2,7 +2,9 @@
     <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6 dark:bg-secondary">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Summary</h2>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+                    Summary
+                </h2>
 
                 <p class="text-sm text-slate-500 mt-1 dark:text-gray-400">
                     Review your subscription details before payment.
@@ -17,13 +19,17 @@
         </div>
 
         <section>
-            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500">
+            <h3
+                class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500"
+            >
                 Subscription Details
             </h3>
 
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Plan </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Plan
+                    </span>
 
                     <span class="font-semibold text-slate-800 dark:text-white">
                         {{ checkout.selectedPlan?.name || "—" }}
@@ -31,15 +37,30 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Billing </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Plan Type
+                    </span>
 
-                    <span class="font-semibold capitalize">
-                        {{ checkout.selectedInterval || "—" }}
+                    <span class="font-semibold text-slate-800 dark:text-white">
+                        {{ planTypeLabel(checkout.selectedPlan?.type) || "—" }}
                     </span>
                 </div>
 
+                <div v-if="isNewAgency" class="flex justify-between">
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Free Testing
+                    </span>
+
+                    <span
+                        class="font-semibold text-emerald-600 dark:text-emerald-400"
+                        >1 month</span
+                    >
+                </div>
+
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Price </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Price
+                    </span>
 
                     <span class="font-bold text-primary">
                         {{
@@ -49,13 +70,25 @@
                         }}
                     </span>
                 </div>
+
+                <p
+                    v-if="isNewAgency"
+                    class="rounded-lg bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                >
+                    <span class="font-semibold"
+                        >Cancel anytime during testing</span
+                    >
+                    for a full refund.
+                </p>
             </div>
         </section>
 
         <div class="h-px bg-slate-100 dark:bg-white/10 dark:bg-secondary" />
 
         <section>
-            <h3 class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500">
+            <h3
+                class="text-xs uppercase font-semibold text-slate-400 mb-3 dark:text-gray-500"
+            >
                 Agency Information
             </h3>
 
@@ -106,7 +139,9 @@
 
         <section>
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs uppercase font-semibold text-slate-400 dark:text-gray-500">
+                <h3
+                    class="text-xs uppercase font-semibold text-slate-400 dark:text-gray-500"
+                >
                     Branch Information
                 </h3>
 
@@ -161,7 +196,9 @@
 
             <div class="mt-4 space-y-3 text-sm">
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Business Hours </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Business Hours
+                    </span>
 
                     <span class="font-semibold">
                         {{
@@ -174,7 +211,9 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Currency </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Currency
+                    </span>
 
                     <span class="font-semibold">
                         {{ checkout.settings?.currency || "—" }}
@@ -182,7 +221,9 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <span class="text-slate-500 dark:text-gray-400"> Time Zone </span>
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Time Zone
+                    </span>
 
                     <span class="font-semibold">
                         {{ checkout.settings?.time_zone || "—" }}
@@ -194,12 +235,12 @@
         <div class="h-px bg-slate-100 dark:bg-white/10 dark:bg-secondary" />
 
         <div class="flex items-center justify-between">
-            <span class="text-base font-bold text-slate-800 dark:text-white"> Total </span>
+            <span class="text-base font-bold text-slate-800 dark:text-white">
+                Total
+            </span>
 
             <span class="text-2xl font-bold text-primary">
-                {{
-                    formatCurrency(checkout.selectedPrice)
-                }}
+                {{ formatCurrency(checkout.selectedPrice) }}
             </span>
         </div>
 
@@ -238,6 +279,7 @@
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchFields, agencyFields } from "~/utils/fields";
 import { formatCurrency } from "~/utils/currency";
+import { planTypeLabel } from "~/utils/planType";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { type SubscriptionRequest } from "~/types/subscription";
 const isLoading = ref(false);
@@ -245,6 +287,8 @@ const props = defineProps<{
     stepCompleted: boolean;
 }>();
 const checkout = useSubscriptionCheckout();
+
+const isNewAgency = computed(() => !checkout.agency.agency_id);
 const branchImagePreview = computed(() =>
     checkout.branch.image instanceof File
         ? URL.createObjectURL(checkout.branch.image)
@@ -256,8 +300,8 @@ const send = async () => {
         isLoading.value = true;
         const payload: SubscriptionRequest = {
             plan_code: checkout.selectedPlan.plan_code,
+            plan_type: checkout.selectedPlan.type,
             payment_method: checkout.payment_method,
-            billing_interval: checkout.selectedInterval,
 
             //BRANCH DATA
             branch_name: checkout.branch.name,
@@ -296,7 +340,6 @@ const send = async () => {
             path: "/product/subscription-details/checkout",
             query: {
                 code: checkout.selectedPlan?.plan_id,
-                interval: checkout.selectedInterval,
             },
         });
     } catch (err: any) {

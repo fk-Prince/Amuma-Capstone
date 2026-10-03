@@ -96,22 +96,6 @@ const { canUpdate } = usePermissions();
 const authUser = useAuthUser();
 const branchStore = useBranchStore();
 
-const agencyEmailDomain = computed(() => {
-    const email = branchStore.activeBranch?.agency?.email;
-    return email?.includes("@") ? email.split("@")[1] : null;
-});
-
-const emailSuggestion = computed(() => {
-    const local = (employee.value.email ?? "").split("@")[0]?.trim();
-
-    if (!local || !agencyEmailDomain.value) return "";
-
-    return `${local}@${agencyEmailDomain.value}`;
-});
-
-function applyEmailSuggestion() {
-    employee.value.email = emailSuggestion.value;
-}
 
 const hasAssignment = computed(() =>
     ["nurse", "caregiver"].includes(
@@ -383,11 +367,12 @@ init();
                             Inactive
                         </span>
 
+                        <div class="group relative h-36 w-36">
                         <button
                             type="button"
                             @click="openFilePicker"
                             :disabled="isViewMode || isAgencyOwner"
-                            class="group relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white dark:border-white/20 dark:bg-secondary dark:hover:bg-primary-500/10 dark:disabled:hover:border-white/20 dark:disabled:hover:bg-secondary"
+                            class="relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-white transition hover:border-primary hover:bg-primary/5 disabled:hover:border-slate-300 disabled:hover:bg-white dark:border-white/20 dark:bg-secondary dark:hover:bg-primary-500/10 dark:disabled:hover:border-white/20 dark:disabled:hover:bg-secondary"
                         >
                             <img
                                 v-if="avatarPreview"
@@ -403,17 +388,16 @@ init();
                                     >Upload photo</span
                                 >
                             </span>
-
-                            <span
-                                v-if="!isViewMode && !isAgencyOwner"
-                                class="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-sm ring-2 ring-white transition group-hover:opacity-100"
-                                :class="
-                                    avatarPreview ? 'opacity-90' : 'opacity-0'
-                                "
-                            >
-                                <Camera class="h-4 w-4" />
-                            </span>
                         </button>
+
+                        <span
+                            v-if="!isViewMode && !isAgencyOwner"
+                            class="pointer-events-none absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-sm ring-2 ring-white transition group-hover:opacity-100"
+                            :class="avatarPreview ? 'opacity-90' : 'opacity-0'"
+                        >
+                            <Camera class="h-4 w-4" />
+                        </span>
+                        </div>
 
                         <input
                             ref="fileInput"
@@ -594,18 +578,6 @@ init();
                                         :disabled="isViewMode || isAgencyOwner"
                                         :error="errors.email"
                                     />
-                                    <button
-                                        v-if="
-                                            emailSuggestion &&
-                                            emailSuggestion !== employee.email
-                                        "
-                                        type="button"
-                                        @click="applyEmailSuggestion"
-                                        class="mt-1 text-xs text-primary hover:underline"
-                                    >
-                                        Use {{ emailSuggestion }} for a uniform
-                                        company email
-                                    </button>
                                 </div>
                             </div>
                         </section>

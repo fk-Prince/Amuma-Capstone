@@ -39,12 +39,16 @@
                         >
                             {{ subscription.plan.plan_code }}
                         </span>
+
+                        <span
+                            v-if="subscription.plan.type"
+                            class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                        >
+                            {{ planTypeLabel(subscription.plan.type) }}
+                        </span>
                     </div>
 
                     <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
-                        <template v-if="billingCycleLabel">
-                            {{ billingCycleLabel }} ·
-                        </template>
                         Runs through {{ formatDate(subscription.end_date) }}
                     </p>
                 </div>
@@ -194,7 +198,11 @@
                             : 'text-amber-600 dark:text-amber-300'
                     "
                 >
-                    {{ coveredBranches.length }} of {{ branchLimit }} used
+                    {{
+                        coveredBranches.length > branchLimit
+                            ? `${coveredBranches.length} branches`
+                            : `${coveredBranches.length} of ${branchLimit} used`
+                    }}
                 </span>
             </div>
 
@@ -234,6 +242,14 @@
                     />
 
                     <span class="truncate">{{ covered.name }}</span>
+
+                    <span
+                        v-if="covered.type === 'additional'"
+                        title="Additional branch"
+                        class="shrink-0 font-bold"
+                    >
+                        +
+                    </span>
                 </button>
 
                 <span
@@ -369,13 +385,13 @@
         <SubscriptionPaymentsModal
             :open="showPaymentsModal"
             :agency-name="agency.name"
-            :payments="props.subscription.payments ?? []"
+            :payments="branchPayment ? [branchPayment] : (props.subscription.payments ?? [])"
             @close="showPaymentsModal = false"
         />
 
         <div class="mt-auto">
             <div
-                v-if="latestPayment && isFirstBranch"
+                v-if="displayPayment"
                 class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
             >
                 <div
@@ -393,20 +409,19 @@
                         <path d="M2 10h20" />
                     </svg>
 
-                    <span v-if="latestPayment.masked_card_number">
-                        {{ latestPayment.masked_card_number }}
+                    <span v-if="displayPayment.masked_card_number">
+                        {{ displayPayment.masked_card_number }}
                     </span>
 
                     <span v-else>No card on file</span>
 
                     <button
-                        v-if="latestPayment"
                         type="button"
                         class="font-medium text-primary underline-offset-2 hover:underline dark:text-primary-300"
                         @click="showPaymentsModal = true"
                     >
                         {{
-                            hasMultiplePayments
+                            hasMultiplePayments && !branchPayment
                                 ? "View payments"
                                 : "View payment"
                         }}
@@ -415,18 +430,18 @@
 
                 <div class="flex items-center gap-2 text-[11px]">
                     <span class="font-semibold text-secondary dark:text-white">
-                        {{ formatCurrency(latestPayment.price) }}
+                        {{ formatCurrency(displayPayment.price) }}
                     </span>
 
                     <span
                         class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
                         :class="
-                            latestPayment.status === 'paid'
+                            displayPayment.status === 'paid'
                                 ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
                                 : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
                         "
                     >
-                        {{ latestPayment.status }}
+                        {{ displayPayment.status }}
                     </span>
                 </div>
             </div>
@@ -502,7 +517,7 @@
                     {{
                         actionLoading === "reject"
                             ? "Rejecting…"
-                            : isFirstBranch
+                            : isFirstBranch || branchPayment
                               ? "Reject & Refund"
                               : "Reject"
                     }}
@@ -530,7 +545,7 @@
                         />
                     </svg>
                     {{
-                        actionLoading === "approve" ? "Activating…" : "Activate"
+                        actionLoading === "approve" ? "Approving…" : "Approve"
                     }}
                 </button>
             </div>
@@ -547,6 +562,7 @@ import RejectionRecord from "~/components/sections/owner/RejectionRecord.vue";
 import AppIcon from "~/components/ui/AppIcon.vue";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
+import { planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
 import type {
     SubscriptionCardData,
     SubscriptionCoveredBranch as CoveredBranch,
@@ -593,13 +609,20 @@ const latestPayment = computed(() => {
     )[0];
 });
 
-const billingCycleLabel = computed(() => {
-    const interval = props.subscription.billing_interval;
+const branchPayment = computed(
+    () =>
+        props.subscription.payments?.find(
+            (payment) =>
+                payment.type === "additional_branch" &&
+                payment.branch_uuid === selectedBranch.value?.uuid,
+        ) ?? null,
+);
 
-    if (!interval) return "";
-
-    return `Billed ${interval.toLowerCase()}`;
-});
+const displayPayment = computed(
+    () =>
+        branchPayment.value ??
+        (isFirstBranch.value ? latestPayment.value : null),
+);
 
 const hasMultiplePayments = computed(
     () => (props.subscription.payments?.length ?? 0) > 1,
@@ -650,7 +673,9 @@ const coveredBranches = computed<CoveredBranch[]>(
 );
 
 const branchLimit = computed(
-    () => props.subscription.subscription?.branch_limit ?? 5,
+    () =>
+        props.subscription.subscription?.branch_limit ??
+        planTypeBranchLimit(props.subscription.plan?.type),
 );
 
 const slotsLeft = computed(() =>

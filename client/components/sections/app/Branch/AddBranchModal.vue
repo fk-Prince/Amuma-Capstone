@@ -160,6 +160,9 @@
                                             class="text-sm font-semibold text-secondary dark:text-white"
                                         >
                                             Use my {{ option.plan_name }}
+                                            {{
+                                                planTypeLabel(option.plan_type)
+                                            }}
                                             subscription
                                         </p>
 
@@ -191,40 +194,50 @@
                                     <span>
                                         All
                                         {{ capacity?.capacity ?? 0 }} branch
-                                        slots on your subscriptions are used.
-                                        Purchase another to add 5 more.
+                                        slots on your subscription are used.
                                     </span>
                                 </div>
 
                                 <button
+                                    v-for="option in additionalOptions"
+                                    :key="`additional-${option.uuid}`"
                                     type="button"
                                     class="flex w-full items-start gap-4 rounded-xl border border-slate-200 p-5 text-left transition hover:border-primary hover:bg-primary-50/40 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10"
-                                    @click="addMode = 'purchase'"
+                                    @click="chooseAdditional(option.uuid)"
                                 >
                                     <div
                                         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
                                     >
-                                        <Home class="h-5 w-5" />
+                                        <Building2 class="h-5 w-5" />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
                                         <p
                                             class="text-sm font-semibold text-secondary dark:text-white"
                                         >
-                                            Purchase another subscription
+                                            Add an additional branch to my
+                                            {{ option.plan_name }}
+                                            {{ planTypeLabel(option.plan_type) }}
+                                            subscription
                                         </p>
 
                                         <p
                                             class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
                                         >
-                                            Pick a plan and pay — adds this
-                                            branch plus 4 more slots.
+                                            ₱{{ formatMoney(option.additional_branch_price) }}
+                                            / year, prorated for the
+                                            {{ option.months }}
+                                            {{ option.months === 1 ? "month" : "months" }}
+                                            left until
+                                            {{ formatDate(option.end_date) }}.
                                         </p>
                                     </div>
 
-                                    <ChevronRight
-                                        class="mt-1 h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
-                                    />
+                                    <span
+                                        class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
+                                    >
+                                        ₱{{ formatMoney(option.amount) }}
+                                    </span>
                                 </button>
                             </div>
 
@@ -257,6 +270,7 @@
                                 </div>
 
                                 <button
+                                    v-if="optionCount > 1"
                                     type="button"
                                     class="text-xs font-medium text-primary hover:underline"
                                     @click="resetChoice"
@@ -265,215 +279,74 @@
                                 </button>
                             </div>
 
-                            <template v-else>
+                            <div
+                                v-else-if="addMode === 'additional'"
+                                class="space-y-4"
+                            >
+                                <div
+                                    class="rounded-xl border border-slate-200 p-5 dark:border-white/10"
+                                >
+                                    <p
+                                        class="text-sm font-semibold text-secondary dark:text-white"
+                                    >
+                                        {{ additionalOption?.plan_name }} —
+                                        additional branch
+                                    </p>
+                                    <p
+                                        class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                    >
+                                        This branch joins your existing
+                                        subscription and expires with it on
+                                        {{ formatDate(additionalOption?.end_date) }}.
+                                        You pay ₱{{ formatMoney(additionalOption?.amount ?? 0) }},
+                                        prorated for the time left. It renews
+                                        with the subscription at
+                                        ₱{{ formatMoney(additionalOption?.additional_branch_price ?? 0) }}
+                                        / year.
+                                    </p>
+
+                                    <div
+                                        class="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
+                                    >
+                                        <div class="flex justify-between">
+                                            <span class="text-muted dark:text-gray-400">
+                                                Additional branch (yearly)
+                                            </span>
+                                            <span class="font-medium text-secondary dark:text-white">
+                                                ₱{{ formatMoney(additionalOption?.additional_branch_price ?? 0) }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex justify-between">
+                                            <span class="text-muted dark:text-gray-400">
+                                                Months left on subscription
+                                            </span>
+                                            <span class="font-medium text-secondary dark:text-white">
+                                                {{ additionalOption?.months ?? 0 }} of 12
+                                            </span>
+                                        </div>
+
+                                        <div class="flex justify-between border-t border-slate-100 pt-1.5 dark:border-white/10">
+                                            <span class="font-semibold text-secondary dark:text-white">
+                                                You pay today
+                                            </span>
+                                            <span class="font-bold text-primary">
+                                                ₱{{ formatMoney(additionalOption?.amount ?? 0) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <button
-                                    v-if="canUseCapacity"
+                                    v-if="optionCount > 1"
                                     type="button"
-                                    class="mb-4 text-xs font-medium text-primary hover:underline"
+                                    class="text-xs font-medium text-primary hover:underline"
                                     @click="resetChoice"
                                 >
                                     Choose a different option
                                 </button>
+                            </div>
 
-                                <div v-if="loadingPlans" class="space-y-4">
-                                    <div
-                                        class="mx-auto h-10 w-56 animate-pulse rounded-full bg-slate-100 dark:bg-white/10"
-                                    />
-                                    <div class="grid gap-4 sm:grid-cols-3">
-                                        <div
-                                            v-for="n in 3"
-                                            :key="n"
-                                            class="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
-                                        />
-                                    </div>
-                                </div>
-
-                                <template v-else>
-                                    <div
-                                        class="mb-6 flex flex-col items-center justify-center"
-                                    >
-                                        <div
-                                            class="relative inline-flex items-center rounded-full border border-primary-200 bg-muted-light/40 py-1 dark:border-primary-500/30 dark:bg-white/5"
-                                        >
-                                            <span
-                                                class="absolute bottom-1 left-1 top-1 w-[calc(50%-6px)] rounded-full bg-primary shadow-sm transition-all duration-300"
-                                                :class="
-                                                    form.interval === 'yearly'
-                                                        ? 'translate-x-[calc(100%+3px)]'
-                                                        : 'translate-x-0'
-                                                "
-                                            />
-
-                                            <button
-                                                v-for="option in INTERVALS"
-                                                :key="option"
-                                                type="button"
-                                                class="relative z-10 min-w-[110px] rounded-full px-5 py-2 text-sm font-semibold capitalize transition-colors duration-300"
-                                                :class="
-                                                    form.interval === option
-                                                        ? 'text-white'
-                                                        : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
-                                                "
-                                                @click="form.interval = option"
-                                            >
-                                                {{ option }}
-                                            </button>
-                                        </div>
-
-                                        <p
-                                            class="mt-2 text-xs text-muted dark:text-gray-400"
-                                        >
-                                            {{
-                                                form.interval === "yearly"
-                                                    ? "Billed annually — save more compared to monthly billing."
-                                                    : "Billed monthly. Switch to yearly to save more."
-                                            }}
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3"
-                                    >
-                                        <label
-                                            v-for="plan in plans"
-                                            :key="plan.plan_id"
-                                            class="relative flex h-full flex-col gap-3 rounded-xl border p-5 transition-all dark:border-white/10"
-                                            :class="
-                                                slotsForPlan(plan)
-                                                    ? 'cursor-not-allowed border-muted-light bg-slate-50/80 dark:border-white/10 dark:bg-white/5'
-                                                    : form.plan?.plan_id ===
-                                                        plan.plan_id
-                                                      ? 'cursor-pointer border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                                      : 'cursor-pointer border-muted-light hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
-                                            "
-                                        >
-                                            <input
-                                                v-if="!slotsForPlan(plan)"
-                                                type="radio"
-                                                class="pointer-events-none absolute h-0 w-0 opacity-0"
-                                                :checked="
-                                                    form.plan?.plan_id ===
-                                                    plan.plan_id
-                                                "
-                                                @change="form.plan = plan"
-                                            />
-
-                                            <span
-                                                v-if="!slotsForPlan(plan)"
-                                                class="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors"
-                                                :class="
-                                                    form.plan?.plan_id ===
-                                                    plan.plan_id
-                                                        ? 'border-primary'
-                                                        : 'border-slate-300 dark:border-white/20'
-                                                "
-                                            >
-                                                <span
-                                                    v-if="
-                                                        form.plan?.plan_id ===
-                                                        plan.plan_id
-                                                    "
-                                                    class="h-2.5 w-2.5 rounded-full bg-primary"
-                                                />
-                                            </span>
-
-                                            <div
-                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary-100 bg-primary-50 dark:border-primary-500/20 dark:bg-primary-500/10"
-                                            >
-                                                <Home
-                                                    class="h-4 w-4 text-primary"
-                                                />
-                                            </div>
-
-                                            <div class="pr-6">
-                                                <p
-                                                    class="text-sm font-semibold leading-tight text-secondary dark:text-white"
-                                                >
-                                                    {{ plan.name }}
-                                                </p>
-
-                                                <p
-                                                    class="mt-1 text-xs leading-relaxed text-muted dark:text-gray-400"
-                                                >
-                                                    {{ plan.description }}
-                                                </p>
-                                            </div>
-
-                                            <div
-                                                v-if="slotsForPlan(plan)"
-                                                class="mt-auto border-t border-muted-light/70 pt-3 dark:border-white/10"
-                                            >
-                                                <span
-                                                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                                                >
-                                                    <CheckCircle2
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                    {{
-                                                        slotsForPlan(plan)!
-                                                            .slots
-                                                    }}
-                                                    {{
-                                                        slotsForPlan(plan)!
-                                                            .slots === 1
-                                                            ? "slot"
-                                                            : "slots"
-                                                    }}
-                                                    left
-                                                </span>
-
-                                                <p
-                                                    class="mt-2 text-xs leading-relaxed text-muted dark:text-gray-400"
-                                                >
-                                                    Already covered by your
-                                                    subscription — no need to
-                                                    buy it again.
-                                                </p>
-
-                                                <button
-                                                    type="button"
-                                                    class="mt-2 text-xs font-semibold text-primary hover:underline"
-                                                    @click.prevent="
-                                                        chooseSubscription(
-                                                            slotsForPlan(plan)!
-                                                                .uuid,
-                                                        )
-                                                    "
-                                                >
-                                                    Use a free slot instead
-                                                </button>
-                                            </div>
-
-                                            <div
-                                                v-else
-                                                class="mt-auto flex items-center justify-between border-t border-muted-light/70 pt-3 dark:border-white/10"
-                                            >
-                                                <span
-                                                    class="text-xs font-medium text-muted dark:text-gray-400"
-                                                >
-                                                    {{
-                                                        form.interval ===
-                                                        "yearly"
-                                                            ? "/ year"
-                                                            : "/ month"
-                                                    }}
-                                                </span>
-
-                                                <span
-                                                    class="whitespace-nowrap text-base font-bold text-primary"
-                                                >
-                                                    ₱{{
-                                                        form.interval ===
-                                                        "yearly"
-                                                            ? plan.yearly_price
-                                                            : plan.monthly_price
-                                                    }}
-                                                </span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </template>
-                            </template>
                         </div>
 
                         <!-- Step 2 — branch details (no agency form, it is inherited) -->
@@ -519,8 +392,11 @@
                             />
                         </div>
 
-                        <!-- Step 4 — plan recap + payment -->
-                        <div v-else-if="currentStep === 4">
+                        <!-- Step 4 — review -->
+                        <div
+                            v-else-if="currentStep === 4"
+                            class="mx-auto w-full max-w-2xl space-y-4"
+                        >
                             <div
                                 class="mx-auto mb-5 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-secondary"
                             >
@@ -528,7 +404,14 @@
                                     <div
                                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
                                     >
-                                        <Home class="h-5 w-5" />
+                                        <component
+                                            :is="
+                                                planIcon(
+                                                    effectivePlan?.plan_code,
+                                                )
+                                            "
+                                            class="h-5 w-5"
+                                        />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
@@ -539,9 +422,17 @@
                                         </p>
 
                                         <p
-                                            class="mt-0.5 text-xs capitalize text-muted dark:text-gray-400"
+                                            class="mt-0.5 text-xs text-muted dark:text-gray-400"
                                         >
-                                            Billed {{ effectiveInterval }}
+                                            {{
+                                                planTypeLabel(effectivePlanType)
+                                            }}
+                                            ·
+                                            {{
+                                                branchLimitText(
+                                                    effectivePlanType,
+                                                )
+                                            }}
                                         </p>
                                     </div>
 
@@ -578,14 +469,38 @@
                                         <p
                                             class="text-[11px] text-muted dark:text-gray-400"
                                         >
-                                            {{
-                                                form.interval === "yearly"
-                                                    ? "/ year"
-                                                    : "/ month"
-                                            }}
+                                            {{ usesAdditional ? "prorated" : "/ year" }}
                                         </p>
                                     </div>
                                 </div>
+
+                                <p
+                                    v-if="
+                                        !usesExistingCapacity &&
+                                        !usesAdditional &&
+                                        !loadingTotal
+                                    "
+                                    class="mt-3 rounded-lg px-3 py-2 text-xs leading-5"
+                                    :class="
+                                        purchaseWithTrial
+                                            ? 'bg-emerald-50/70 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                            : 'bg-slate-50 text-slate-600 dark:bg-white/5 dark:text-gray-300'
+                                    "
+                                >
+                                    <template v-if="purchaseWithTrial">
+                                        <span class="font-semibold"
+                                            >1 month free testing</span
+                                        >
+                                        first, then your paid year starts.
+                                        Cancel anytime during testing for a full
+                                        refund.
+                                    </template>
+                                    <template v-else>
+                                        Your agency has already used its free
+                                        month, so this paid year starts as soon
+                                        as the branch is approved.
+                                    </template>
+                                </p>
 
                                 <p
                                     v-if="effectivePlan?.description"
@@ -595,6 +510,92 @@
                                 </p>
                             </div>
 
+                            <section
+                                class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div
+                                    class="mb-3 flex items-center justify-between"
+                                >
+                                    <h3
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Branch details
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        class="text-xs font-semibold text-primary hover:underline"
+                                        @click="currentStep = 2"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+
+                                <SummaryRow
+                                    label="Branch name"
+                                    :value="form.branch.name"
+                                />
+                                <SummaryRow
+                                    label="Email"
+                                    :value="form.branch.email"
+                                />
+                                <SummaryRow
+                                    label="Contact number"
+                                    :value="form.branch.contact_number"
+                                />
+                                <SummaryRow
+                                    label="Address"
+                                    :value="branchAddress"
+                                />
+                                <SummaryRow
+                                    label="TIN"
+                                    :value="form.branch.tin"
+                                />
+                                <SummaryRow
+                                    label="Description"
+                                    :value="form.branch.description"
+                                />
+                            </section>
+
+                            <section
+                                class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div
+                                    class="mb-3 flex items-center justify-between"
+                                >
+                                    <h3
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Configuration
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        class="text-xs font-semibold text-primary hover:underline"
+                                        @click="currentStep = 3"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+
+                                <SummaryRow
+                                    label="Operating hours"
+                                    :value="`${form.settings.opening} – ${form.settings.closing}`"
+                                />
+                                <SummaryRow
+                                    label="Time zone"
+                                    :value="form.settings.time_zone"
+                                />
+                                <SummaryRow
+                                    label="Currency"
+                                    :value="form.settings.currency"
+                                />
+                            </section>
+                        </div>
+
+                        <!-- Step 5 — payment or confirm -->
+                        <div
+                            v-else-if="currentStep === 5"
+                            class="mx-auto w-full max-w-2xl"
+                        >
                             <div
                                 v-if="usesExistingCapacity"
                                 class="mx-auto w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
@@ -654,7 +655,7 @@
                         class="flex shrink-0 items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-white/10"
                     >
                         <button
-                            v-if="currentStep > 1"
+                            v-if="currentStep > 1 || (addMode && optionCount > 1)"
                             type="button"
                             class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/10"
                             @click="previousStep"
@@ -691,7 +692,7 @@
                             @click="previousStep"
                         >
                             <ChevronLeft class="h-4 w-4" />
-                            Back to details
+                            Back to review
                         </button>
                     </div>
                 </div>
@@ -727,16 +728,40 @@ import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
 import type { Branch, BranchSettings } from "~/types/branch";
 import type { CardDetails } from "~/types/payment";
+import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import SummaryRow from "~/components/ui/SummaryRow.vue";
+import { planIcon } from "~/utils/planIcon";
+import {
+    DEFAULT_PLAN_TYPE,
+    branchLimitText,
+    findPlan,
+    planPrice,
+    plansOfType,
+    planTypeBranchLimit,
+    planTypeLabel,
+    type PlanType,
+} from "~/utils/planType";
 
 interface AvailableSubscription {
     uuid: string;
     plan_name: string | null;
     plan_code: string | null;
-    billing_interval: string | null;
+    plan_type: PlanType | null;
     end_date: string | null;
     branches_used: number;
     branch_limit: number;
     slots_left: number;
+}
+
+interface AdditionalOption {
+    uuid: string;
+    plan_name: string | null;
+    plan_code: string | null;
+    plan_type: PlanType | null;
+    end_date: string | null;
+    additional_branch_price: number;
+    months: number;
+    amount: number;
 }
 
 interface BranchCapacity {
@@ -745,6 +770,7 @@ interface BranchCapacity {
     remaining: number;
     has_room: boolean;
     available_subscriptions?: AvailableSubscription[];
+    additional_options?: AdditionalOption[];
 }
 
 const props = defineProps<{
@@ -763,8 +789,6 @@ const { success, error } = useToast();
 
 const checkout = useSubscriptionCheckout();
 
-const INTERVALS = ["monthly", "yearly"] as const;
-
 const currentStep = ref(1);
 const stepError = ref<string | null>(null);
 const errors = ref<Record<string, string>>({});
@@ -774,7 +798,30 @@ const loadingPlans = ref(true);
 
 const capacity = computed(() => props.capacity ?? null);
 
-const addMode = ref<"capacity" | "purchase" | null>(null);
+const addMode = ref<"capacity" | "purchase" | "additional" | null>(null);
+
+const additionalOptions = computed<AdditionalOption[]>(
+    () => capacity.value?.additional_options ?? [],
+);
+
+const additionalOption = computed(
+    () =>
+        additionalOptions.value.find(
+            (option) => option.uuid === selectedSubscriptionUuid.value,
+        ) ?? null,
+);
+
+const usesAdditional = computed(
+    () => addMode.value === "additional" && !!additionalOption.value,
+);
+
+function chooseAdditional(uuid: string) {
+    selectedSubscriptionUuid.value = uuid;
+    addMode.value = "additional";
+    total.value =
+        additionalOptions.value.find((option) => option.uuid === uuid)
+            ?.amount ?? 0;
+}
 
 const selectedSubscriptionUuid = ref<string | null>(null);
 
@@ -797,10 +844,29 @@ function chooseSubscription(uuid: string) {
     addMode.value = "capacity";
 }
 
+const optionCount = computed(
+    () => availableSubscriptions.value.length + additionalOptions.value.length,
+);
+
+function selectSingleOption() {
+    if (addMode.value || optionCount.value !== 1) return;
+
+    if (availableSubscriptions.value.length) {
+        chooseSubscription(availableSubscriptions.value[0].uuid);
+    } else {
+        chooseAdditional(additionalOptions.value[0].uuid);
+    }
+}
+
+watch(optionCount, selectSingleOption);
+
 function resetChoice() {
     selectedSubscriptionUuid.value = null;
     addMode.value = null;
 }
+
+const planKey = (code?: string | null, type?: string | null) =>
+    `${type}:${code}`;
 
 const openSlotsByPlan = computed(() => {
     const map = new Map<string, { slots: number; uuid: string }>();
@@ -808,9 +874,10 @@ const openSlotsByPlan = computed(() => {
     for (const option of availableSubscriptions.value) {
         if (!option.plan_code || option.slots_left < 1) continue;
 
-        const existing = map.get(option.plan_code);
+        const key = planKey(option.plan_code, option.plan_type);
+        const existing = map.get(key);
 
-        map.set(option.plan_code, {
+        map.set(key, {
             slots: (existing?.slots ?? 0) + option.slots_left,
             uuid: existing?.uuid ?? option.uuid,
         });
@@ -820,10 +887,14 @@ const openSlotsByPlan = computed(() => {
 });
 
 const slotsForPlan = (plan: any) =>
-    openSlotsByPlan.value.get(plan?.plan_code) ?? null;
+    openSlotsByPlan.value.get(planKey(plan?.plan_code, plan?.type)) ?? null;
+
+const planType = ref<PlanType>(DEFAULT_PLAN_TYPE);
+
+const typedPlans = computed(() => plansOfType(plans.value, planType.value));
 
 const selectablePlans = computed(() =>
-    plans.value.filter((plan) => !slotsForPlan(plan)),
+    typedPlans.value.filter((plan) => !slotsForPlan(plan)),
 );
 
 const buyingMoreCapacity = computed(() => addMode.value === "purchase");
@@ -833,31 +904,61 @@ const usesExistingCapacity = computed(
 );
 
 const effectivePlan = computed(() => {
+    if (usesAdditional.value) {
+        return findPlan(
+            plans.value,
+            additionalOption.value?.plan_code,
+            additionalOption.value?.plan_type,
+        );
+    }
+
     if (!usesExistingCapacity.value) return form.plan;
 
-    const code = availableSubscription.value?.plan_code;
-
-    return plans.value.find((plan) => plan.plan_code === code) ?? null;
+    return findPlan(
+        plans.value,
+        availableSubscription.value?.plan_code,
+        availableSubscription.value?.plan_type,
+    );
 });
 
-const effectiveInterval = computed(() =>
-    usesExistingCapacity.value
-        ? (availableSubscription.value?.billing_interval?.toLowerCase() ??
-          form.interval)
-        : form.interval,
+const enterpriseLimit = planTypeBranchLimit("enterprise");
+
+const effectivePlanType = computed<PlanType>(() =>
+    usesAdditional.value
+        ? (additionalOption.value?.plan_type ?? DEFAULT_PLAN_TYPE)
+        : usesExistingCapacity.value
+          ? (availableSubscription.value?.plan_type ?? DEFAULT_PLAN_TYPE)
+          : planType.value,
 );
 
 const STEPS = computed(() => [
     "Plan",
     "Branch Details",
     "Configuration",
-    buyingMoreCapacity.value || !canUseCapacity.value ? "Payment" : "Confirm",
+    "Review",
+    usesExistingCapacity.value ? "Confirm" : "Payment",
 ]);
 
 const validating = ref(false);
 const processing = ref(false);
 const loadingTotal = ref(false);
 const total = ref(0);
+const purchaseWithTrial = ref(false);
+
+const branchAddress = computed(
+    () =>
+        form.branch.location.full_address ||
+        [
+            form.branch.location.street,
+            form.branch.location.city,
+            form.branch.location.province,
+            form.branch.location.country,
+        ]
+            .filter(Boolean)
+            .join(", "),
+);
+
+const onOff = (value?: boolean | null) => (value ? "On" : "Off");
 
 const emptyBranch = (): Branch =>
     ({
@@ -881,7 +982,6 @@ const emptyBranch = (): Branch =>
 
 const form = reactive({
     plan: null as any,
-    interval: "monthly" as (typeof INTERVALS)[number],
     branch: emptyBranch(),
     settings: {
         opening: "00:00",
@@ -921,7 +1021,7 @@ const continueDisabled = computed(() => {
 
 const buildPayload = () => ({
     plan_code: effectivePlan.value?.plan_code,
-    billing_interval: effectiveInterval.value,
+    plan_type: effectivePlanType.value,
     payment_method: checkout.payment_method,
 
     // BRANCH DATA
@@ -963,7 +1063,7 @@ const validateBranch = (): boolean => {
 
     result.error.issues.forEach((issue) => {
         const path = issue.path.join(".");
-        mapped[keyMap[path] ?? path] = issue.message;
+        mapped[keyMap[path] ?? path] ??= issue.message;
     });
 
     errors.value = mapped;
@@ -1067,8 +1167,8 @@ const nextStep = async () => {
         const passed = await validateOnServer();
         if (!passed) return;
 
-        if (!usesExistingCapacity.value) {
-            await loadTotal();
+        if (!usesExistingCapacity.value && !usesAdditional.value) {
+            void loadTotal();
         }
     }
 
@@ -1077,7 +1177,13 @@ const nextStep = async () => {
 
 const previousStep = () => {
     stepError.value = null;
-    if (currentStep.value > 1) currentStep.value--;
+
+    if (currentStep.value > 1) {
+        currentStep.value--;
+        return;
+    }
+
+    resetChoice();
 };
 
 const validateOnServer = async (): Promise<boolean> => {
@@ -1130,6 +1236,7 @@ const loadTotal = async () => {
         );
 
         total.value = Number(res.total_amount) || 0;
+        purchaseWithTrial.value = res.mode === "test";
     } catch (err: any) {
         error(err?.message ?? "Failed to load the branch total.");
     } finally {
@@ -1141,9 +1248,20 @@ const onCreated = async (result: any) => {
     success(result?.message ?? "Branch added successfully.");
     emit("created", {
         ...result,
-        used_existing_capacity: usesExistingCapacity.value,
+        used_existing_capacity:
+            usesExistingCapacity.value || usesAdditional.value,
+        plan_type: effectivePlanType.value,
     });
 };
+
+const createPurchase = (payload: Record<string, any>) =>
+    usesAdditional.value
+        ? subscriptionService.createAdditionalBranch({
+              ...payload,
+              branch_uuid: props.branchUuid,
+              subscription_uuid: additionalOption.value?.uuid,
+          })
+        : subscriptionService.createSubscription(payload);
 
 const payCard = async () => {
     if (processing.value || loadingTotal.value) return;
@@ -1162,7 +1280,7 @@ const payCard = async () => {
             },
 
             createPayment: ({ token_id, authentication_id }) =>
-                subscriptionService.createSubscription({
+                createPurchase({
                     ...payload,
                     token_id,
                     authentication_id,
@@ -1189,7 +1307,7 @@ const payGCash = async () => {
 
         await gcashPayment({
             createPayment: () =>
-                subscriptionService.createSubscription({
+                createPurchase({
                     ...payload,
                     payment_method: "GCASH",
                     payment_type: "SUBSCRIPTION",
@@ -1228,14 +1346,25 @@ const formatDate = (date?: string | null) => {
         return String(date);
     }
 };
+watch(planType, (type) => {
+    form.plan =
+        selectablePlans.value.find(
+            (plan) => plan.plan_code === form.plan?.plan_code,
+        ) ??
+        selectablePlans.value[0] ??
+        null;
+});
+
 watch(
-    () => [form.plan?.plan_id, form.interval],
+    () => form.plan?.plan_id,
     () => {
-        if (currentStep.value === 4) loadTotal();
+        if (currentStep.value >= 4) loadTotal();
     },
 );
 
 onMounted(async () => {
+    selectSingleOption();
+
     try {
         const res = await planService.list();
         plans.value = res ?? [];

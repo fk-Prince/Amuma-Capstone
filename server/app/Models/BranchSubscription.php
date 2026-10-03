@@ -17,10 +17,14 @@ class BranchSubscription extends Pivot
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
 
+    public const TYPE_INCLUDED = 'included';
+    public const TYPE_ADDITIONAL = 'additional';
+
     protected $fillable = [
         'subscription_id',
         'branch_id',
         'status',
+        'type',
     ];
 
     public function uniqueIds()

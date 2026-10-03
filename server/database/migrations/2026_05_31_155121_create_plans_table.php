@@ -15,9 +15,11 @@ return new class extends Migration
             $table->id('plan_id');
             $table->string('description');
             $table->string('name');
-            $table->decimal('monthly_price', 10, 2);
-            $table->decimal('yearly_price', 10, 2);
+            $table->decimal('price', 10, 2);
+            $table->decimal('additional_branch_price', 10, 2)->default(0);
             $table->string('plan_code')->index();
+            $table->enum('type', ['sme', 'enterprise']);
+            $table->unique(['plan_code', 'type']);
         });
     }
 

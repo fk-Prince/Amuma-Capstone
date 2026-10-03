@@ -24,6 +24,8 @@ enum RoleEnum: string
                 ModuleEnum::Bookings->value => ModuleEnum::Bookings->actionColumns(),
                 ModuleEnum::Patients->value => [
                     PermissionAction::Read->value,
+                    PermissionAction::Create->value,
+                    PermissionAction::Update->value,
                     PermissionAction::Export->value,
                 ],
                 ModuleEnum::Schedules->value => ModuleEnum::Schedules->actionColumns(),

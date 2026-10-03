@@ -70,7 +70,8 @@ class BranchRepository
             'subscriptionLink.subscription' => fn($query) => $query
                 ->withCount([
                     'branchLinks as branches_used' => fn($links) => $links
-                        ->where('status', '!=', BranchSubscription::STATUS_REJECTED),
+                        ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                        ->where('type', BranchSubscription::TYPE_INCLUDED),
                 ])
                 ->withExists([
                     'payments as has_paid_payment' => fn($payments) => $payments

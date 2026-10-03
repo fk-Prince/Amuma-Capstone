@@ -5,7 +5,7 @@
             class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         >
             <div
-                v-for="n in 3"
+                v-for="n in 6"
                 :key="n"
                 class="h-[340px] animate-pulse rounded-2xl bg-white/50 dark:bg-white/5"
             />
@@ -36,8 +36,11 @@
                             >
                                 {{ plan.name }}
                             </h2>
-                            <p class="text-[11px] text-muted dark:text-gray-400">
-                                Plan {{ plan.plan_code }}
+                            <p
+                                class="text-[11px] text-muted dark:text-gray-400"
+                            >
+                                Plan {{ plan.plan_code }} ·
+                                {{ planTypeLabel(plan.type) }}
                             </p>
                         </div>
                     </div>
@@ -62,21 +65,19 @@
                         placeholder="Enter plan description"
                     />
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <BaseInput
-                            v-model="draft.monthly_price"
-                            mode="number"
-                            label="Monthly Price"
-                            placeholder="0"
-                        />
+                    <BaseInput
+                        v-model="draft.price"
+                        mode="number"
+                        label="Yearly Price"
+                        placeholder="0"
+                    />
 
-                        <BaseInput
-                            v-model="draft.yearly_price"
-                            mode="number"
-                            label="Yearly Price"
-                            placeholder="0"
-                        />
-                    </div>
+                    <BaseInput
+                        v-model="draft.additional_branch_price"
+                        mode="number"
+                        label="Additional Branch Price (yearly)"
+                        placeholder="0"
+                    />
 
                     <div class="flex items-center justify-end gap-2 pt-1">
                         <BaseButton
@@ -109,33 +110,28 @@
                     </div>
 
                     <div
-                        class="grid grid-cols-1 sm:grid-cols-2 divide-x divide-slate-100 dark:divide-white/10 border-t border-slate-100 dark:border-white/10"
+                        class="border-t border-slate-100 p-4 dark:border-white/10"
                     >
-                        <div class="p-4">
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-500"
+                        <p
+                            class="text-lg font-bold tabular-nums text-secondary dark:text-white"
+                        >
+                            {{ formatCurrency(planPrice(plan)) }}
+                            <span
+                                class="text-xs font-medium text-muted dark:text-gray-400"
                             >
-                                Monthly
-                            </p>
-                            <p
-                                class="mt-1 text-lg font-bold tabular-nums text-secondary dark:text-white"
-                            >
-                                {{ formatCurrency(plan.monthly_price) }}
-                            </p>
-                        </div>
-
-                        <div class="p-4">
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-500"
-                            >
-                                Yearly
-                            </p>
-                            <p
-                                class="mt-1 text-lg font-bold tabular-nums text-secondary dark:text-white"
-                            >
-                                {{ formatCurrency(plan.yearly_price) }}
-                            </p>
-                        </div>
+                                / year
+                            </span>
+                        </p>
+                        <p class="text-[11px] text-muted dark:text-gray-400">
+                            {{ branchLimitText(plan.type) }}
+                        </p>
+                        <p class="mt-1 text-[11px] text-muted dark:text-gray-400">
+                            Additional branch
+                            <span class="font-semibold text-secondary dark:text-white">
+                                {{ formatCurrency(plan.additional_branch_price) }}
+                            </span>
+                            / year
+                        </p>
                     </div>
                 </template>
             </div>
@@ -169,14 +165,21 @@ import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { useToast } from "~/composables/useToast";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
+import {
+    branchLimitText,
+    planPrice,
+    planTypeLabel,
+    type PlanType,
+} from "~/utils/planType";
 
 interface PlanRecord {
     plan_id: number;
     plan_code: string;
     name: string;
     description: string | null;
-    monthly_price: number | string;
-    yearly_price: number | string;
+    type: PlanType;
+    price: number | string;
+    additional_branch_price: number | string;
 }
 
 definePageMeta({
@@ -197,8 +200,8 @@ const editingId = ref<number | null>(null);
 
 const draft = ref({
     description: "",
-    monthly_price: "",
-    yearly_price: "",
+    price: "",
+    additional_branch_price: "",
 });
 
 const formatCurrency = (value: number | string) => {
@@ -228,8 +231,8 @@ function startEdit(plan: PlanRecord) {
     editingId.value = plan.plan_id;
     draft.value = {
         description: plan.description ?? "",
-        monthly_price: String(plan.monthly_price),
-        yearly_price: String(plan.yearly_price),
+        price: String(plan.price),
+        additional_branch_price: String(plan.additional_branch_price ?? plan.price),
     };
 }
 
@@ -243,15 +246,13 @@ async function saveEdit(plan: PlanRecord) {
     try {
         const res = await planService.update(plan.plan_id, {
             description: draft.value.description,
-            monthly_price: Number(draft.value.monthly_price) || 0,
-            yearly_price: Number(draft.value.yearly_price) || 0,
+            price: Number(draft.value.price) || 0,
+            additional_branch_price: Number(draft.value.additional_branch_price) || 0,
         });
 
         const updated = res.plan ?? res.data?.plan ?? res;
 
-        const index = plans.value.findIndex(
-            (p) => p.plan_id === plan.plan_id,
-        );
+        const index = plans.value.findIndex((p) => p.plan_id === plan.plan_id);
 
         if (index !== -1) {
             plans.value[index] = { ...plans.value[index], ...updated };

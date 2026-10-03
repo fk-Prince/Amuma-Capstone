@@ -146,6 +146,19 @@
                 </svg>
                 {{ branch.email }}
             </p>
+            <p v-if="branch.tin" class="flex items-center gap-1.5">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    class="w-3.5 h-3.5 shrink-0"
+                >
+                    <path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18" />
+                </svg>
+                TIN {{ branch.tin }}
+            </p>
         </div>
 
         <div
@@ -153,22 +166,16 @@
         >
             <div class="flex flex-col justify-center pr-3">
                 <p class="text-[11px] text-slate-400 dark:text-gray-500">
-                    Plan
+                    Reviews
                 </p>
-                <p
-                    v-if="branch.plan"
-                    class="mt-1 text-sm font-semibold"
-                    :class="{
-                        'text-primary': branch.plan.plan_code === 'A',
-                        'text-accent': branch.plan.plan_code === 'B',
-                        'text-secondary dark:text-white': branch.plan.plan_code === 'C',
-                    }"
+                <button
+                    type="button"
+                    class="mt-1 inline-flex items-center gap-1.5 self-start text-sm font-semibold text-primary hover:underline"
+                    @click.stop="reviewsOpen = true"
                 >
-                    {{ branch.plan.name }}
-                </p>
-                <p v-else class="mt-1 text-xs text-slate-400 dark:text-gray-500">
-                    —
-                </p>
+                    <Star class="h-3.5 w-3.5" />
+                    View reviews
+                </button>
             </div>
 
             <div
@@ -212,9 +219,8 @@
             </div>
         </div>
 
-        <div class="mt-auto flex items-center gap-2 pt-4">
+        <div v-if="isRejected" class="mt-auto flex items-center gap-2 pt-4">
             <ActionButton
-                v-if="isRejected"
                 variant="primary"
                 class="flex-1"
                 extra-class="w-full !px-3 !text-xs"
@@ -225,16 +231,6 @@
                 <RotateCw class="h-3.5 w-3.5" />
                 Resubmit
             </ActionButton>
-
-            <button
-                v-else
-                type="button"
-                class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-primary"
-                @click.stop="reviewsOpen = true"
-            >
-                <Star class="h-3.5 w-3.5" />
-                View reviews
-            </button>
         </div>
     </div>
 
@@ -259,6 +255,7 @@ interface BranchCardData {
     address: string;
     phone: string;
     email: string;
+    tin?: string | null;
     status: "pending" | "verified" | "rejected";
     review_status?: "pending" | "verified" | "rejected";
     rejection_reason?: string | null;

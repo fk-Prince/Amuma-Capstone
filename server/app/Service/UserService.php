@@ -8,6 +8,7 @@ use App\Enums\RoleEnum;
 use App\Models\Branch;
 use App\Models\BranchSubscription;
 use App\Models\Location;
+use App\Models\Subscription;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\UserRepository;
@@ -119,6 +120,10 @@ class UserService
                     'email' => $branch?->email,
                     'status' => $branch?->status,
                     'subscription_status' => $branch?->subscriptionLink?->status,
+                    'subscription_mode' => $branch?->subscriptionLink?->subscription?->status === Subscription::STATUS_CANCELLED
+                        ? null
+                        : $branch?->subscriptionLink?->subscription?->mode,
+                    'subscription_end_date' => $branch?->subscriptionLink?->subscription?->end_date?->toDateString(),
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
                         && !$branch->subscriptionLink->subscription?->hasOpenSlot(),

@@ -1,6 +1,7 @@
-import { computed, onMounted, ref, watch, type Ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { planService } from "@/api/plan/PlanService";
 import { useSubscriptionCheckout } from "~/stores/subscription";
+import { branchLimitText, planPrice } from "~/utils/planType";
 
 const PLAN_LABELS: Record<string, string> = {
     A: "Plan A",
@@ -32,13 +33,9 @@ const MODULE_FEATURES: Record<string, string[]> = {
     ],
 };
 
-export function usePlanCards(billingCycle: Ref<"monthly" | "yearly">) {
+export function usePlanCards() {
     const checkout = useSubscriptionCheckout();
     const loading = ref(true);
-
-    watch(billingCycle, (value) => (checkout.selectedInterval = value), {
-        immediate: true,
-    });
 
     onMounted(async () => {
         try {
@@ -49,27 +46,17 @@ export function usePlanCards(billingCycle: Ref<"monthly" | "yearly">) {
     });
 
     const formattedPlans = computed(() =>
-        checkout.plans.map((plan: any, index: number) => {
-            const limit = Number(plan.branch_limit) || 5;
-
+        checkout.typedPlans.map((plan: any, index: number) => {
             return {
                 ...plan,
                 planLabel: PLAN_LABELS[plan.plan_code] ?? `Plan ${index + 1}`,
                 title: plan.name,
                 description: plan.description,
-                price:
-                    billingCycle.value === "yearly"
-                        ? plan.yearly_price
-                        : plan.monthly_price,
-                monthly_price: Number(plan.monthly_price),
-                yearly_price: Number(plan.yearly_price),
-                billing_interval: billingCycle.value,
+                price: planPrice(plan),
+                branchNote: branchLimitText(plan.type),
                 ctaText: `Subscribe to ${plan.name}`,
                 featured: plan.plan_code === "C",
-                features: [
-                    ...(MODULE_FEATURES[plan.plan_code] ?? []),
-                    `Cover up to ${limit} branches on one subscription`,
-                ],
+                features: MODULE_FEATURES[plan.plan_code] ?? [],
             };
         }),
     );

@@ -223,6 +223,35 @@
                                     </div>
                                 </div>
 
+                                <div class="mt-3 grid grid-cols-2 gap-3">
+                                    <label class="flex flex-col gap-1">
+                                        <span
+                                            class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                        >
+                                            Start time
+                                        </span>
+                                        <input
+                                            v-model="entry.start_time"
+                                            type="time"
+                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                        />
+                                    </label>
+
+                                    <label class="flex flex-col gap-1">
+                                        <span
+                                            class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                        >
+                                            End time
+                                        </span>
+                                        <input
+                                            v-model="entry.end_time"
+                                            type="time"
+                                            :min="entry.start_time || undefined"
+                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                        />
+                                    </label>
+                                </div>
+
                                 <div class="mt-3">
                                     <input
                                         v-model="entry.note"
@@ -688,6 +717,8 @@ const NOTE_PRESETS = ["AM Shift", "PM Shift", "Full Shift"];
 interface AssignmentEntry {
     employee_id: string;
     note: string;
+    start_time: string;
+    end_time: string;
 }
 
 const props = defineProps<{
@@ -846,7 +877,12 @@ function restoreSavedAssignments(schedule: AuditRow) {
               ? (schedule.note ?? "")
               : "";
 
-        return { employee_id: id, note };
+        return {
+            employee_id: id,
+            note,
+            start_time: match?.start_time ?? "",
+            end_time: match?.end_time ?? "",
+        };
     });
 }
 
@@ -904,7 +940,7 @@ function toggleEmployee(employeeId: string) {
     if (index === -1) {
         assignments.value = [
             ...assignments.value,
-            { employee_id: employeeId, note: "" },
+            { employee_id: employeeId, note: "", start_time: "", end_time: "" },
         ];
         return;
     }
@@ -954,6 +990,20 @@ function confirm() {
 
     const scheduleServiceId = props.schedule.schedule_services_id ?? null;
 
+    for (const entry of assignments.value) {
+        const name = nameFor(entry.employee_id);
+
+        if (!!entry.start_time !== !!entry.end_time) {
+            toastError(`Pick both a start and an end time for ${name}.`);
+            return;
+        }
+
+        if (entry.start_time && entry.end_time <= entry.start_time) {
+            toastError(`The end time for ${name} must be later than the start time.`);
+            return;
+        }
+    }
+
     const formattedAssignments = assignments.value.length
         ? assignments.value.map((entry) => {
               const employee = employeeById(entry.employee_id);
@@ -967,6 +1017,8 @@ function confirm() {
                       ? fullName(employee.first_name, "", employee.last_name)
                       : "",
                   note: entry.note.trim() || null,
+                  start_time: entry.start_time || null,
+                  end_time: entry.end_time || null,
               };
           })
         : [

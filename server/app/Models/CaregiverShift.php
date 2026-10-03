@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CaregiverFacilityShift extends Model
+class CaregiverShift extends Model
 {
-    protected $table = 'caregiver_facility_shifts';
+    protected $table = 'caregiver_shifts';
 
-    protected $primaryKey = 'caregiver_facility_shift_id';
+    protected $primaryKey = 'caregiver_shift_id';
 
     protected $fillable = [
         'caregiver_id',

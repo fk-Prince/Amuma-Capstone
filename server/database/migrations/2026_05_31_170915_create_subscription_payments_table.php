@@ -20,8 +20,8 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->enum('status', ['paid', 'refunded'])->default('paid');
             $table->foreignId('plan_id')->constrained('plans', 'plan_id')->nullable();
-            $table->enum('type', ['subscription', 'renewal'])->default('subscription');
-            $table->string('billing_interval', 10);
+            $table->foreignId('branch_id')->nullable()->constrained('branches', 'branch_id');
+            $table->enum('type', ['subscription', 'renewal', 'upgrade', 'additional_branch'])->default('subscription');
             $table->string('payment_method', 20);
             $table->timestamps();
         });
