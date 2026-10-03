@@ -1286,7 +1286,7 @@ async function submitDeductionRequest(payload: {
         });
 
         success(
-            "Accounting has been notified to review this deduction request.",
+            "The cashier has been notified to review this deduction request.",
         );
         closeDeductionModal();
     } catch (err: any) {

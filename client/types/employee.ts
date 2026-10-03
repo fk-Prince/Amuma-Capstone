@@ -151,7 +151,7 @@ export const employeeAssignmentTypes = computed(
 export const employeePositions = [
     { label: "Branch Manager", value: "branch_manager" },
     { label: "Admission", value: "admission" },
-    { label: "Accounting", value: "accounting" },
+    { label: "Cashier", value: "cashier" },
     { label: "Nurse", value: "nurse" },
     { label: "Caregiver", value: "caregiver" },
 ];

@@ -153,7 +153,7 @@ class EmployeeTest extends TestCase
     {
         $user = $this->createEmployee([
             'email' => 'admin1@amuma.com',
-            'role_name' => 'accounting',
+            'role_name' => 'cashier',
             'assignment_type' => 'both',
         ]);
 
@@ -171,11 +171,11 @@ class EmployeeTest extends TestCase
         }
     }
 
-    public function test_an_accounting_employee_does_not_need_an_assignment_type(): void
+    public function test_a_cashier_employee_does_not_need_an_assignment_type(): void
     {
         $this->postJson('/api/employees', $this->payload([
             'email' => 'admin2@amuma.com',
-            'role_name' => 'accounting',
+            'role_name' => 'cashier',
             'assignment_type' => null,
         ]))->assertOk();
     }
@@ -246,11 +246,11 @@ class EmployeeTest extends TestCase
         $user = $this->createEmployee();
 
         $this->putJson("/api/employees/{$user->uuid}", $this->payload([
-            'role_name' => 'accounting',
+            'role_name' => 'cashier',
             'assignment_type' => 'both',
         ]))->assertOk();
 
-        $this->assertSame('accounting', $this->employeeBranch($user)->role_name);
+        $this->assertSame('cashier', $this->employeeBranch($user)->role_name);
         $this->assertNull($this->employeeBranch($user)->assignment_type);
     }
 
@@ -347,7 +347,7 @@ class EmployeeTest extends TestCase
     public function test_the_employee_list_only_contains_this_branchs_staff_in_rank_order(): void
     {
         $this->createEmployee(['email' => 'nurse1@amuma.com', 'role_name' => 'nurse']);
-        $this->createEmployee(['email' => 'admin1@amuma.com', 'role_name' => 'accounting']);
+        $this->createEmployee(['email' => 'admin1@amuma.com', 'role_name' => 'cashier']);
         $this->createEmployee(['email' => 'caregiver1@amuma.com', 'role_name' => 'caregiver']);
 
         $otherBranchId = DB::table('branches')->insertGetId([

@@ -59,7 +59,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Update,
         PermissionAction.Export,
     ],
-    [Modules.ManageBranches]: [
+    [Modules.ManageSubscription]: [
         PermissionAction.Read,
         PermissionAction.Create,
         PermissionAction.Update,
@@ -91,10 +91,10 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
         "Add staff to the branch, issue their accounts, and manage their details, roles, permissions and status.",
     [Modules.BillingAndInvoices]:
         "Issue invoices, record payments and receipts, adjust or void invoices, decide on families' requests to withdraw credit, and print balance statements.",
-    [Modules.ManageBranches]:
-        "See the branches on this account with their subscription status, open new ones, and resubmit rejected ones.",
+    [Modules.ManageSubscription]:
+        "See the subscription status of the branches on this account, subscribe new branches, and resubmit rejected ones.",
     [Modules.BranchSettings]:
-        "View and change branch details such as address, hours, currency and policies, upload branch photos, and renew the branch's subscription.",
+        "View and change branch details such as address, hours, currency and policies, and upload branch photos.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -186,7 +186,7 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Export]:
             "Print a patient's statement of the balances still to be paid.",
     },
-    [Modules.ManageBranches]: {
+    [Modules.ManageSubscription]: {
         [PermissionAction.Read]:
             "See the branches under this account and their status.",
         [PermissionAction.Create]:
@@ -227,7 +227,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.Contracts]: [PermissionAction.Read],
         [Modules.EmployeeManagement]: [PermissionAction.Read],
     },
-    accounting: {
+    cashier: {
         [Modules.BillingAndInvoices]:
             MODULE_ACTIONS[Modules.BillingAndInvoices],
     },

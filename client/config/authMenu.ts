@@ -121,7 +121,7 @@ export const authMenuList: MenuItems[] = [
         label: "Manage Subscription",
         icon: Building2,
         to: "/app/branches/[uuid]/manage-subscription",
-        modules: ["Manage Branches"],
+        modules: ["Manage Subscription"],
         group: "Business",
     },
 ];
@@ -158,6 +158,6 @@ export const branchOwnerMenuLists: MenuItems[] = [
         label: "Manage Branches",
         icon: Building2,
         to: "/app/branches/manage",
-        modules: ["Manage Branches"],
+        modules: ["Manage Subscription"],
     },
 ];

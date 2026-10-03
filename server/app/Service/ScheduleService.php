@@ -576,11 +576,11 @@ class ScheduleService
             // $invoice->update([
             //     'status' => Invoice::STATUS_VOID,
             // ]);
-            $this->notifyAccounting($user, $schedule, $invoice);
+            $this->notifyCashier($user, $schedule, $invoice);
         }
     }
 
-    private function notifyAccounting(User $user, Schedule $schedule, Invoice $invoice): void
+    private function notifyCashier(User $user, Schedule $schedule, Invoice $invoice): void
     {
         $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)
             ->first();
@@ -663,7 +663,7 @@ class ScheduleService
             . " deduction for the invoice for schedule {$schedule->schedule_code}"
             . ($reason !== '' ? " due to {$reason}." : '.');
 
-        $this->notificationService->notifyAccountingStaff(
+        $this->notificationService->notifyCashierStaff(
             $branch,
             $message,
             $user,
@@ -672,7 +672,7 @@ class ScheduleService
         );
 
         return response()->json([
-            'message' => 'Accounting has been notified to review this deduction request.',
+            'message' => 'The cashier has been notified to review this deduction request.',
         ]);
     }
 

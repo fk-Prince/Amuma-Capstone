@@ -20,7 +20,7 @@ class EmployeeSeeder extends Seeder
     private const ROLES = [
         'branch_manager',
         'admission',
-        'accounting',
+        'cashier',
         'nurse',
         'caregiver',
     ];

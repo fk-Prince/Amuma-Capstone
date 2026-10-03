@@ -462,7 +462,7 @@ class RefundService
             $this->claimCredits($credits, $withdrawal, $amount);
 
             if ($status === Transaction::STATUS_REQUESTED) {
-                $this->notifyAccounting($withdrawal, $patient, $amount, $user);
+                $this->notifyCashier($withdrawal, $patient, $amount, $user);
             }
 
             return [
@@ -530,7 +530,7 @@ class RefundService
         return RefundResource::format($withdrawal);
     }
 
-    private function notifyAccounting(
+    private function notifyCashier(
         Transaction $withdrawal,
         object $patient,
         float $amount,
@@ -547,7 +547,7 @@ class RefundService
             ->whereHas(
                 'employeeBranch',
                 fn($q) => $q->where('branch_id', $withdrawal->branch_id)
-                    ->where('role_name', 'accounting')
+                    ->where('role_name', 'cashier')
             )
             ->whereHas(
                 'permissions',

@@ -40,4 +40,15 @@ class PatientDiagnosis extends Model
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
+
+    public function additionalCharge()
+    {
+        return $this->belongsToMany(
+            AdditionalCharge::class,
+            'additional_charge_diagnosis',
+            'patient_diagnosis_id',
+            'additional_charge_id'
+        )->withPivot('diagnosis_case_id')->withTimestamps();
+    }
+
 }

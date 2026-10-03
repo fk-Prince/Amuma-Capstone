@@ -720,7 +720,7 @@ async function fetchRefundRequests() {
         const res = await refundService.requests({ patient_id: patientId });
         const data = res?.data ?? res;
 
-        // Only what the family is still waiting on. Once accounting settles a
+        // Only what the family is still waiting on. Once the cashier settles a
         // request it belongs in the transaction list, not in this panel.
         refundRequests.value = (data?.requests ?? [])
             .map(mapRefundRequest)
@@ -918,7 +918,7 @@ async function refreshLedger() {
     }
 }
 
-// Only one refund can be in flight: a second request while accounting is
+// Only one refund can be in flight: a second request while the cashier is
 // still deciding would double-claim the same credit.
 const openRefundRequest = computed(
     () =>

@@ -18,7 +18,7 @@ return new class extends Migration
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
-            $table->enum('type', ['medication', 'supplies', 'additional_charges']);
+            $table->enum('type', ['medication', 'supplies', 'diagnosis_case', 'additional_charges']);
             $table->string('description');
             $table->decimal('amount', 10, 2);
             $table->timestamps();

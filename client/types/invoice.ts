@@ -359,7 +359,7 @@ export interface InvoiceDetail {
 
 export interface InvoiceChargeLine {
     additional_charge_id: number;
-    type: "medication" | "supplies" | "additional_charges";
+    type: "medication" | "supplies" | "diagnosis_case" | "additional_charges";
     type_label: string;
     description: string;
     amount: number;

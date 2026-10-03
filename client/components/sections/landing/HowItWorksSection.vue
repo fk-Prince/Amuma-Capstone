@@ -65,7 +65,7 @@
                         </h4>
 
                         <p class="text-sm leading-7 text-muted dark:text-gray-400">
-                            Nurses complete visits, accounting automatically
+                            Nurses complete visits, the cashier automatically
                             generates invoices, and balances update instantly.
                         </p>
                     </div>

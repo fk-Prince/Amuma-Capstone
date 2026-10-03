@@ -18,8 +18,8 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
         label: 'Branch Manager',
         class: 'bg-indigo-50 text-indigo-600 border-indigo-200',
     },
-    accounting: {
-        label: 'Accounting Staff',
+    cashier: {
+        label: 'Cashier',
         class: 'bg-yellow-50 text-yellow-600 border-yellow-200',
     },
     admission: {

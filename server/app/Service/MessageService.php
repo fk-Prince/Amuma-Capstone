@@ -25,7 +25,7 @@ class MessageService
     private const NOT_MESSAGEABLE_BY_FAMILY = [
         'branch_manager',
         'agency_owner',
-        'accounting',
+        'cashier',
     ];
 
     private const MESSAGEABLE_STATUSES = [

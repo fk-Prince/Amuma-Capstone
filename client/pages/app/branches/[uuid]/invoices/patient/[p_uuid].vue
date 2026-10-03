@@ -2752,7 +2752,7 @@ function formatDateTime(value: string | null | undefined) {
     });
 }
 
-// What the family has asked for and accounting has not answered yet.
+// What the family has asked for and the cashier has not answered yet.
 const pendingRefundRequests = computed(() =>
     (summary.value?.refunds ?? []).filter(
         (refund: any) => (refund.status ?? "").toLowerCase() === "requested",

@@ -60,7 +60,7 @@
 
                 <div class="space-y-4 p-6">
                     <p class="text-sm text-slate-500 dark:text-gray-400">
-                        This sends accounting a request to review and adjust the
+                        This sends the cashier a request to review and adjust the
                         invoice for this schedule — it does not change the
                         invoice by itself.
                     </p>
@@ -155,7 +155,7 @@
                         :disabled="!(amount > 0)"
                         @click="submit"
                     >
-                        Notify Accounting
+                        Notify Cashier
                     </ActionButton>
                 </div>
             </div>

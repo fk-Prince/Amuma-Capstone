@@ -30,6 +30,20 @@ class AdditionalChargeController extends Controller
         return $this->additionalCharges->list($request->all());
     }
 
+    public function diagnoses(Request $request)
+    {
+        $request->validate([
+            'branch_uuid' => ['required', 'uuid'],
+            'patient_uuid' => ['required', 'uuid'],
+        ]);
+
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
+        BranchGuard::mergeRequest($request, $branch);
+
+        return $this->additionalCharges->diagnoses($request->all());
+    }
+
     public function store(AdditionalChargeRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

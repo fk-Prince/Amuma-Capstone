@@ -1247,7 +1247,7 @@
         :open="cancelConfirmOpen"
         title="Cancel this schedule?"
         message="This action cannot be undone."
-        description="This schedule will be cancelled and the accounting staff will be notified to void its invoice."
+        description="This schedule will be cancelled and the cashier will be notified to void its invoice."
         confirm-label="Cancel Schedule"
         cancel-label="Keep Schedule"
         variant="danger"

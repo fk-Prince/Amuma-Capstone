@@ -95,7 +95,7 @@
 
         <div
             v-if="visibleActions.length"
-            class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
+            class="p-5 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
         >
             <button
                 v-for="action in visibleActions"
@@ -147,6 +147,7 @@ import {
     HeartHandshake,
     HomeIcon,
     Lock,
+    Stethoscope,
     UserPlus,
     Users,
 } from "lucide-vue-next";
@@ -156,7 +157,11 @@ import { computed } from "vue";
 import StatCard from "./StatCard.vue";
 import { Modules } from "~/types/module";
 
-type ActionType = "create-homecare" | "create-facility" | "view-plans";
+type ActionType =
+    | "create-homecare"
+    | "create-facility"
+    | "view-plans"
+    | "diagnosis-cases";
 
 interface Overview {
     active_patient: string;
@@ -217,6 +222,13 @@ const actions: {
         iconBg: "bg-light dark:bg-white/10",
         iconColor: "text-primary-700 dark:text-primary-300",
     },
+    {
+        label: "Diagnosis Cases & Prices",
+        action: "diagnosis-cases",
+        icon: Stethoscope,
+        iconBg: "bg-light dark:bg-white/10",
+        iconColor: "text-primary-700 dark:text-primary-300",
+    },
 ];
 
 const { canCreate } = usePermissions();
@@ -224,7 +236,9 @@ const { canCreate } = usePermissions();
 const visibleActions = computed(() =>
     actions.filter(
         (action) =>
-            action.action === "view-plans" || canCreate(Modules.Contracts),
+            action.action === "view-plans" ||
+            action.action === "diagnosis-cases" ||
+            canCreate(Modules.Contracts),
     ),
 );
 

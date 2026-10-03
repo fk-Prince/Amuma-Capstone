@@ -406,7 +406,7 @@
                     <div class="step-content">
                         <h4>Care happens, billing follows</h4>
                         <p>
-                            Nurses close shifts. Accounting auto-invoices.
+                            Nurses close shifts. Cashier auto-invoices.
                             Family pays. Balance updates instantly.
                         </p>
                     </div>

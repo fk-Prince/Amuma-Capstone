@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             BedSeeder::class,
             BranchContractSeeder::class,
             ServiceSeeder::class,
+            DiagnosisCaseSeeder::class,
             EmployeeSeeder::class,
             NurseSeeder::class,
             ClientSeeder::class,

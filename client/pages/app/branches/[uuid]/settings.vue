@@ -84,14 +84,6 @@
                         "
                         v-model:setting="branchStore.activeBranch.settings"
                     />
-
-                    <BranchRenewalTab
-                        v-else-if="
-                            activeTab === 'renewal' &&
-                            branchStore.activeBranch?.uuid
-                        "
-                        :uuid="branchStore.activeBranch.uuid"
-                    />
                 </Transition>
             </div>
         </div>
@@ -105,7 +97,6 @@ import {
     Landmark,
     Image,
     Settings,
-    RefreshCw,
 } from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
@@ -114,7 +105,6 @@ import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.v
 import BranchAgencyTab from "~/components/sections/app/settings/BranchAgencyTab.vue";
 import BranchImagesTab from "~/components/sections/app/settings/BranchImagesTab.vue";
 import BranchOperationTab from "~/components/sections/app/settings/BranchOperationTab.vue";
-import BranchRenewalTab from "~/components/sections/app/settings/BranchRenewalTab.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -147,11 +137,6 @@ const tabs = [
         label: "Operation Settings",
         value: "operation",
         icon: Settings,
-    },
-    {
-        label: "Subscription Detail",
-        value: "renewal",
-        icon: RefreshCw,
     },
 ];
 

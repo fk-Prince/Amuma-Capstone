@@ -8,14 +8,14 @@
                     v-if="homecareLocked"
                     class="mb-4"
                     title="Homecare contracts are locked"
-                    message="This branch has no Homecare Services plan. Homecare plans can't be created or edited until the branch subscribes to one."
+                    message="This branch has no Homecare Services plan. Upgrade to Hybrid to create or edit Homecare plans."
                 />
 
                 <PlanLockNotice
                     v-if="facilityLocked"
                     class="mb-4"
                     title="Facility contracts are locked"
-                    message="This branch has no In-house Facility plan. Facility plans can't be created or edited until the branch subscribes to one."
+                    message="This branch has no In-house Facility plan. Upgrade to Hybrid to create or edit Facility plans."
                 />
 
                 <ContractDashboard
@@ -132,6 +132,12 @@
                     @saved="closeModal"
                 />
 
+                <DiagnosisCasesModal
+                    :open="showDiagnosisModal"
+                    :branch-uuid="String(route.params.uuid)"
+                    @close="showDiagnosisModal = false"
+                />
+
                 <ViewModal
                     :open="showViewModal"
                     :plans="plans"
@@ -156,6 +162,7 @@ import ContractDashboard from "~/components/sections/app/Contract/ContractDashbo
 import CreateHomecarePlanModal from "~/components/sections/app/Contract/CreateHomecarePlanModal.vue";
 import CreateFacilityPlanModal from "~/components/sections/app/Contract/CreateFacilityPlanModal.vue";
 import ViewModal from "~/components/sections/app/Contract/ViewModal.vue";
+import DiagnosisCasesModal from "~/components/sections/app/Contract/DiagnosisCasesModal.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
 import { useBranchPlan } from "~/composables/useBranchPlan";
@@ -171,6 +178,7 @@ definePageMeta({
 const showHomecareModal = ref(false);
 const showFacilityModal = ref(false);
 const showViewModal = ref(false);
+const showDiagnosisModal = ref(false);
 
 const selectedPlan = ref<any>(null);
 const route = useRoute();
@@ -281,6 +289,10 @@ function handleDashboardAction(action: string) {
 
         case "view-plans":
             showViewModal.value = true;
+            break;
+
+        case "diagnosis-cases":
+            showDiagnosisModal.value = true;
             break;
     }
 }

@@ -111,7 +111,7 @@
                         class="mt-5 w-full"
                         extra-class="w-full !rounded-xl !py-3 font-semibold"
                         :disabled="!canReapply"
-                        tooltip="You need permission to update Manage Branches to reapply."
+                        tooltip="You need permission to update Manage Subscription to reapply."
                         @click="showReapply = true"
                     >
                         <RotateCw class="h-4 w-4" />
@@ -128,7 +128,7 @@
                 </template>
 
                 <p v-else class="mt-4 text-xs leading-5 text-muted-DEFAULT">
-                    You can resubmit this branch from Manage Branches in any of
+                    You can resubmit this branch from Manage Subscription in any of
                     your verified branches.
                 </p>
             </template>
@@ -248,7 +248,7 @@ import { Modules } from "~/types/module";
 const branchStore = useBranchStore();
 
 const { canUpdate } = usePermissions();
-const canReapply = computed(() => canUpdate(Modules.ManageBranches));
+const canReapply = computed(() => canUpdate(Modules.ManageSubscription));
 
 const branch = computed(() => branchStore.activeBranch);
 

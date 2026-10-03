@@ -341,7 +341,7 @@ const BALANCE_TERMS: PaymentTerms = {
                     items: [
                         "A refund reflects credit created on your account, most commonly from an invoice adjustment made after a payment.",
                         "Credit on your account can be applied automatically to a future invoice or withdrawn as a payout upon request.",
-                        "A withdrawal request is reviewed by branch/accounting staff and may be approved or rejected; approved withdrawals are paid out via the method selected at request time.",
+                        "A withdrawal request is reviewed by branch/cashier staff and may be approved or rejected; approved withdrawals are paid out via the method selected at request time.",
                         "Refunds and withdrawals are not guaranteed to be instant and follow the branch's review process.",
                     ],
                 },

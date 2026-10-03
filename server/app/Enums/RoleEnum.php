@@ -7,7 +7,7 @@ enum RoleEnum: string
     case AgencyOwner = 'agency_owner';
     case BranchManager = 'branch_manager';
     case Admission = 'admission';
-    case Accounting = 'accounting';
+    case Cashier = 'cashier';
     case Nurse = 'nurse';
     case Caregiver = 'caregiver';
 
@@ -39,7 +39,7 @@ enum RoleEnum: string
                 ModuleEnum::EmployeeManagement->value => [PermissionAction::Read->value],
             ],
 
-            self::Accounting => [
+            self::Cashier => [
                 ModuleEnum::BillingAndInvoices->value => ModuleEnum::BillingAndInvoices->actionColumns(),
             ],
 

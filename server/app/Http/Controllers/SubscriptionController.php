@@ -49,7 +49,7 @@ class SubscriptionController extends Controller
         AuthGuard::requireModule(
             $request->user(),
             $branch->branch_id,
-            ModuleEnum::ManageBranches,
+            ModuleEnum::ManageSubscription,
             PermissionAction::Create
         );
 
@@ -74,7 +74,7 @@ class SubscriptionController extends Controller
         AuthGuard::requireModule(
             $request->user(),
             $branch->branch_id,
-            ModuleEnum::ManageBranches,
+            ModuleEnum::ManageSubscription,
             PermissionAction::Create
         );
 
@@ -115,7 +115,7 @@ class SubscriptionController extends Controller
         AuthGuard::requireModule(
             $request->user(),
             $branch->branch_id,
-            ModuleEnum::ManageBranches,
+            ModuleEnum::ManageSubscription,
             PermissionAction::Update
         );
 

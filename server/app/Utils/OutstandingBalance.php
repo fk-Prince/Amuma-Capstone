@@ -19,6 +19,8 @@ class OutstandingBalance
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
             ->values();
 
+        $invoices->each(fn($invoice) => $invoice->loadMissing('additionalCharges'));
+
         $accommodation = $invoices->filter(
             fn($invoice) => $invoice->invoiceAdmissionLines->isNotEmpty()
         );
@@ -35,6 +37,12 @@ class OutstandingBalance
             fn($invoice) => $invoice->invoiceServices->contains(
                 fn($line) => $line->scheduleService?->service_id !== null
             )
+        );
+
+        $charges = $invoices->filter(
+            fn($invoice) => $invoice->invoiceAdmissionLines->isEmpty()
+                && $invoice->invoiceServices->isEmpty()
+                && $invoice->additionalCharges->isNotEmpty()
         );
 
         $medicalIds = $medical->pluck('invoice_id')->all();
@@ -62,11 +70,19 @@ class OutstandingBalance
             )
         );
 
+        $chargesOfAdmission = $charges->filter(
+            fn($invoice) => $admissionId !== null
+                && $invoice->additionalCharges->contains(
+                    fn($charge) => (int) $charge->patient_admission_id === $admissionId
+                )
+        );
+
         return [
             'total_balance' => round((float) $invoices->sum('balance_due'), 2),
             'balance_excluding_future' => $balance($invoices),
             'accommodation_balance' => $balance($accommodation),
-            'admission_balance' => $balance($ofAdmission),
+            'admission_balance' => round($balance($ofAdmission) + $balance($chargesOfAdmission), 2),
+            'additional_charge_balance' => $balance($chargesOfAdmission),
             'service_balance' => $balance($scheduled),
             'adl_balance' => $balance($adl),
 
@@ -85,7 +101,7 @@ class OutstandingBalance
                 ->map(fn($invoice) => [
                     'invoice_code' => $invoice->invoice_code,
                     'description' => $invoice->paymentDescription(),
-                    'kind' => self::kind($invoice, $medical, $adl),
+                    'kind' => self::kind($invoice, $medical, $adl, $charges),
                     'balance_due' => $due($invoice),
                     'is_discharge_invoice' => $dischargeInvoice
                         && $invoice->invoice_id === $dischargeInvoice->invoice_id,
@@ -96,8 +112,12 @@ class OutstandingBalance
         ];
     }
 
-    private static function kind(Invoice $invoice, mixed $medical, mixed $adl): string
+    private static function kind(Invoice $invoice, mixed $medical, mixed $adl, mixed $charges): string
     {
+        if ($charges->contains(fn($item) => $item->invoice_id === $invoice->invoice_id)) {
+            return 'charge';
+        }
+
         if ($medical->contains(fn($item) => $item->invoice_id === $invoice->invoice_id)) {
             return 'service';
         }

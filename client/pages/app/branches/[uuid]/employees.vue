@@ -148,7 +148,7 @@ const ROLE_ORDER = [
     "agency_owner",
     "branch_manager",
     "admission",
-    "accounting",
+    "cashier",
     "nurse",
     "caregiver",
 ];

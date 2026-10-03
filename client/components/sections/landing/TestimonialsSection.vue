@@ -140,7 +140,7 @@ const testimonials: {
     },
     {
         name: "Lorna Bautista",
-        role: "Accounting Staff",
+        role: "Cashier",
         tone: "staff",
         organization: "Malasakit Care Center",
         quote: "Invoices are automatic now. Families pay online and our month-end workload is much lighter.",

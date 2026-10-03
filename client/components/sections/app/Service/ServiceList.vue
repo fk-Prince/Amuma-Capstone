@@ -192,7 +192,7 @@ const groupedServices = computed(() => {
             <template v-else>
                 <div
                     v-if="services.length === 0"
-                    class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40 dark:border-white/10"
+                    class="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[#E4EFED] bg-[#F7FAF9]/40 dark:bg-transparent dark:border-white/10"
                 >
                     <div
                         class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center mb-3 dark:bg-primary-500/10"

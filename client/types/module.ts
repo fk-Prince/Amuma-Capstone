@@ -14,5 +14,5 @@ export enum Modules {
     EmployeeManagement = "Employee Management",
     BillingAndInvoices = "Billing & Invoices",
     BranchSettings = "Branch Settings",
-    ManageBranches = "Manage Branches",
+    ManageSubscription = "Manage Subscription",
 }

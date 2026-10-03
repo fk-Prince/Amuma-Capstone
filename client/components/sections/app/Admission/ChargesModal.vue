@@ -125,6 +125,16 @@
                                 </p>
 
                                 <p
+                                    v-if="charge.diagnosis"
+                                    class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
+                                >
+                                    Diagnosis: {{ charge.diagnosis }}
+                                    <template v-if="charge.diagnosis_case">
+                                        · Case: {{ charge.diagnosis_case }}
+                                    </template>
+                                </p>
+
+                                <p
                                     class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                 >
                                     {{ formatDate(charge.created_at) }}
@@ -138,11 +148,24 @@
                                 </p>
                             </div>
 
-                            <p
-                                class="shrink-0 text-sm font-semibold text-slate-800 dark:text-white"
-                            >
-                                {{ formatCurrency(charge.amount) }}
-                            </p>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <p
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    {{ formatCurrency(charge.amount) }}
+                                </p>
+
+                                <button
+                                    v-if="charge.invoice_code"
+                                    type="button"
+                                    class="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-primary dark:text-gray-500 dark:hover:bg-white/10"
+                                    title="Print charge slip"
+                                    aria-label="Print charge slip"
+                                    @click="openSlip(charge.invoice_code, charges)"
+                                >
+                                    <Printer class="h-4 w-4" />
+                                </button>
+                            </div>
                         </li>
                     </ul>
 
@@ -163,6 +186,8 @@
             </div>
         </Transition>
 
+        <ChargeSlipModal :slip="slip" @close="slip = null" />
+
         <AdditionalChargeModal
             :open="addOpen"
             :branch-uuid="branchUuid"
@@ -176,9 +201,13 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from "vue";
-import { Plus } from "lucide-vue-next";
+import { Plus, Printer } from "lucide-vue-next";
 import Pagination from "~/components/ui/Pagination.vue";
 import AdditionalChargeModal from "~/components/sections/app/Admission/AdditionalChargeModal.vue";
+import ChargeSlipModal from "~/components/sections/app/Admission/ChargeSlipModal.vue";
+import { useAuthUser } from "~/composables/useAuthUser";
+import { useBranchStore } from "~/stores/branch";
+import type { ChargeSlip } from "~/types/charge-slip";
 import { additionalChargeService } from "~/api/additional-charge/AdditionalChargeService";
 import { useToast } from "~/composables/useToast";
 import { formatCurrency } from "~/utils/currency";
@@ -214,6 +243,37 @@ const { success, error } = useToast();
 const charges = ref<AdditionalCharge[]>([]);
 const loading = ref(false);
 const addOpen = ref(false);
+const slip = ref<ChargeSlip | null>(null);
+const authUser = useAuthUser();
+const branchStore = useBranchStore();
+
+function openSlip(invoiceCode: string | null, source: AdditionalCharge[]) {
+    const lines = source.filter((charge) => charge.invoice_code === invoiceCode);
+
+    if (!lines.length) return;
+
+    const user = authUser.value;
+
+    slip.value = {
+        branch_name: branchStore.activeBranch?.name ?? null,
+        patient_name: props.patientName ?? null,
+        prepared_by: user
+            ? [user.first_name, user.last_name].filter(Boolean).join(" ")
+            : null,
+        invoice_code: invoiceCode,
+        total:
+            lines[0]?.invoice_total ??
+            lines.reduce((sum, charge) => sum + charge.amount, 0),
+        charges: [...lines].reverse().map((charge) => ({
+            id: charge.additional_charge_id,
+            type_label: charge.type_label,
+            description: charge.description,
+            amount: charge.amount,
+            diagnosis: charge.diagnosis,
+            diagnosis_case: charge.diagnosis_case,
+        })),
+    };
+}
 const meta = reactive({
     current_page: 1,
     last_page: 1,
@@ -254,6 +314,8 @@ function onCreated(created: AdditionalCharge[]) {
             : `${created.length} charges added to ${code}.`,
     );
 
+    openSlip(created[0]?.invoice_code ?? null, created);
+
     meta.total += created.length;
     meta.last_page = Math.max(1, Math.ceil(meta.total / meta.per_page));
 
@@ -271,6 +333,8 @@ function chargeTypeClass(type: AdditionalChargeType) {
             return "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300";
         case "supplies":
             return "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
+        case "diagnosis_case":
+            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         default:
             return "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300";
     }

@@ -399,8 +399,8 @@ const route = useRoute();
 const { error } = useToast();
 const { canCreate, canUpdate, canRenew } = usePermissions();
 
-const canResubmit = computed(() => canUpdate(Modules.ManageBranches));
-const canAddBranch = computed(() => canCreate(Modules.ManageBranches));
+const canResubmit = computed(() => canUpdate(Modules.ManageSubscription));
+const canAddBranch = computed(() => canCreate(Modules.ManageSubscription));
 
 const resubmitTarget = ref<{
     branch: FullBranch;
@@ -727,7 +727,7 @@ const testingAtMax = computed(
 
 const addBranchTooltip = computed(() => {
     if (!canAddBranch.value) {
-        return "You need permission to create in Manage Branches to add a branch.";
+        return "You need permission to create in Manage Subscription to add a branch.";
     }
 
     return testingAtMax.value

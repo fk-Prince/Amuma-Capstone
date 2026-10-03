@@ -225,7 +225,7 @@
                 class="flex-1"
                 extra-class="w-full !px-3 !text-xs"
                 :disabled="!canResubmit"
-                tooltip="You need permission to update Manage Branches to resubmit a branch."
+                tooltip="You need permission to update Manage Subscription to resubmit a branch."
                 @click="emit('resubmit', branch)"
             >
                 <RotateCw class="h-3.5 w-3.5" />

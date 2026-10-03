@@ -267,7 +267,7 @@ class NotificationService
         }
     }
 
-    public function notifyAccountingStaff(
+    public function notifyCashierStaff(
         Branch $branch,
         string $message,
         ?User $actor = null,

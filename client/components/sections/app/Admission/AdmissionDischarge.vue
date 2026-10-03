@@ -799,8 +799,9 @@
                                 <p
                                     class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
-                                    What this admission still owes, not counting
-                                    periods that have not started. Services and
+                                    What this admission still owes, including
+                                    additional charges and not counting periods
+                                    that have not started. Services and
                                     schedules are not included.
                                 </p>
                             </div>
@@ -1158,15 +1159,14 @@ const hasAccountCredit = computed(() => accountCredit.value > 0);
 
 const hasRetainedHalf = computed(() => retainedHalf.value > 0);
 
-// Worth showing whenever there is a figure to explain, not only when money is
-// coming back — a discharge that owes money needs the working just as much.
 // The working explains the half-retention split, so it only makes sense inside
-// the refund window. A monthly plan is charged whole and its days are never
-// worked out, so there is nothing to show.
+// the refund window, and only when money is actually coming back — with
+// nothing to refund there is no calculation to show.
 const showWorking = computed(
     () =>
         isWithinRefundWindow.value &&
         periodPrice.value > 0 &&
+        currentRefundAmount.value > 0 &&
         (isEligibleForRefund.value ||
             isUnderRequiredPayment.value ||
             hasRequiredPayment.value),

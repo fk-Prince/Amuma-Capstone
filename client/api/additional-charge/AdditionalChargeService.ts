@@ -24,10 +24,23 @@ class AdditionalChargeService extends BaseService {
         return await this.request(this.resource, "GET", params);
     }
 
+    async diagnoses(params: {
+        branch_uuid: string;
+        patient_uuid: string;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/diagnoses`, "GET", params);
+    }
+
     async create(payload: {
         branch_uuid: string;
         patient_uuid: string;
-        charges: { type: string; description: string; amount: number }[];
+        charges: {
+            type: string;
+            description: string;
+            amount: number;
+            diagnosis_case_uuid?: string | null;
+            patient_diagnosis_uuid?: string | null;
+        }[];
     }): Promise<any> {
         return await this.request(this.resource, "POST", payload);
     }
