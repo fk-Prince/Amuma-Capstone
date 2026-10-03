@@ -30,7 +30,7 @@ const redirectTo = computed(() => {
 });
 
 const signinPath = computed(() =>
-    props.portal === "agency" ? "/auth/staff/signin" : "/auth/family/signin",
+    props.portal === "agency" ? "/auth/staff/signin" : "/auth/client/signin",
 );
 
 const signupData = ref({

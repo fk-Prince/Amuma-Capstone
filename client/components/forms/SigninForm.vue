@@ -346,7 +346,7 @@ async function googleUrl() {
                 v-else
                 class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
             >
-                Unable to log in? Contact your branch manager.
+                Unable to sign in? Contact your branch manager.
             </p>
 
             <p

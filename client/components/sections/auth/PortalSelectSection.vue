@@ -37,7 +37,7 @@ const portals = [
         description:
             "For clients and regular users booking care and staying connected with their loved one's care.",
         icon: HeartHandshake,
-        to: "/auth/family/signin",
+        to: "/auth/client/signin",
         chips: [],
         signup: "/auth/signup",
         badge: "bg-light text-primary group-hover:bg-primary group-hover:text-white group-focus-visible:bg-primary group-focus-visible:text-white dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:bg-primary-500",

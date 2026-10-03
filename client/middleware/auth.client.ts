@@ -6,7 +6,7 @@ import { PermissionAction } from "~/utils/permissions";
 const AUTH_ROUTES = [
     "/auth/select",
     "/auth/staff/signin",
-    "/auth/family/signin",
+    "/auth/client/signin",
     "/auth/signup",
     "/auth/forgot-password",
 ];
@@ -26,7 +26,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         const target = to.path.startsWith("/product/subscription-details")
             ? "/auth/signup"
             : to.path.startsWith("/portal") || to.path.startsWith("/booking")
-              ? "/auth/family/signin"
+              ? "/auth/client/signin"
               : to.path.startsWith("/app")
                 ? "/auth/staff/signin"
                 : "/auth/select";

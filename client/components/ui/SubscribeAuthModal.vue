@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
                                 <button
                                     type="button"
                                     class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
-                                    @click="go('/auth/family/signin')"
+                                    @click="go('/auth/client/signin')"
                                 >
                                     Sign in
                                 </button>

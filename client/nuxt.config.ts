@@ -43,11 +43,10 @@ export default defineNuxtConfig({
       },
     },
   },
-  // routeRules: {
-  //   '/api/**': {
-  //     proxy: 'http://127.0.0.1:8000/api/**'
-  //   }
-  // },
+  routeRules: {
+    // The old address of the client sign-in keeps working for saved links.
+    '/auth/family/signin': { redirect: '/auth/client/signin' },
+  },
 
   devServer: {
     host: '0.0.0.0',
