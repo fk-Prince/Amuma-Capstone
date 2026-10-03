@@ -41,6 +41,7 @@
                             :diagnoses="bookingStore.diagnoses"
                             :payment="bookingStore.payment"
                             :diagnosis-charges="diagnosisPrices"
+                            :diagnosis-notice="true"
                             @edit-step="goEditStep"
                         />
                     </div>

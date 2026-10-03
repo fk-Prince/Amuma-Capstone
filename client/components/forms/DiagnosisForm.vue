@@ -20,7 +20,11 @@
             </div>
         </div>
 
-        <DiagnosisPriceNotice :charges="charges" class="mb-8" />
+        <DiagnosisPriceNotice
+            :show="chargeNotice"
+            :charges="charges"
+            class="mb-8"
+        />
 
         <div
             v-if="diagnoses.length > 1"
@@ -235,6 +239,7 @@ const props = defineProps<{
     // Lowest and highest diagnosis case price of an in-house facility, shown
     // as a heads-up that the bill can grow with the patient's diagnosis.
     charges?: { min: number; max: number } | null;
+    chargeNotice?: boolean;
 }>();
 
 const emit = defineEmits<{

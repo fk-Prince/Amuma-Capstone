@@ -1,6 +1,6 @@
 <template>
     <div
-        v-if="charges"
+        v-if="show"
         class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
     >
         <Info
@@ -10,14 +10,14 @@
         <p class="text-[13px] leading-5 text-amber-800 dark:text-amber-200">
             Additional charges may be added to the bill depending on the
             patient's diagnosis.
-            <template v-if="charges.min === charges.max">
+            <template v-if="charges && charges.min === charges.max">
                 Diagnosis case price at this facility:
                 <span class="font-semibold">{{
                     formatCurrency(charges.min)
                 }}</span
                 >.
             </template>
-            <template v-else>
+            <template v-else-if="charges">
                 Diagnosis case prices at this facility range from
                 <span class="font-semibold">{{
                     formatCurrency(charges.min)
@@ -37,6 +37,9 @@ import { Info } from "lucide-vue-next";
 import { formatCurrency } from "~/utils/currency";
 
 defineProps<{
+    // Shown for in-house facilities, where the bill can grow with the diagnosis.
+    show?: boolean;
+    // Lowest and highest diagnosis case price, when the facility has any.
     charges?: { min: number; max: number } | null;
 }>();
 </script>

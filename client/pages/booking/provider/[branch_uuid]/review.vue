@@ -78,10 +78,9 @@
                                 bookingStore.branchFacility ?? undefined
                             "
                             :showPayment="showPayment"
-                            :diagnosis-charges="
+                            :diagnosis-charges="branch?.diagnosis_case_prices"
+                            :diagnosis-notice="
                                 bookingStore.category === 'facility'
-                                    ? branch?.diagnosis_case_prices
-                                    : null
                             "
                             :bookingPercent="bookingPercent"
                             @edit-step="goEditStep"

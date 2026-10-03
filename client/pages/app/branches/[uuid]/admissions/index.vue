@@ -289,6 +289,7 @@
                         <DiagnosisForm
                             :model="diagnosisData"
                             :charges="diagnosisPrices"
+                            :charge-notice="true"
                             :errors="assessmentErrors"
                             @update:model="
                                 diagnosisData.splice(

@@ -293,11 +293,8 @@
                 >
                     <DiagnosisForm
                         :model="diagnosisData"
-                        :charges="
-                            branch?.facility?.length
-                                ? branch.diagnosis_case_prices
-                                : null
-                        "
+                        :charges="branch?.diagnosis_case_prices"
+                        :charge-notice="!!branch?.facility?.length"
                         :errors="assessmentErrors"
                         @update:model="
                             diagnosisData.splice(

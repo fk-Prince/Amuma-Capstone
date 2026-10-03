@@ -253,6 +253,7 @@
 
                 <div class="p-5">
                     <DiagnosisPriceNotice
+                        :show="diagnosisNotice"
                         :charges="diagnosisCharges"
                         class="mb-5"
                     />
@@ -422,6 +423,7 @@ const props = defineProps<{
     showPayment?: boolean;
     bookingPercent?: number;
     diagnosisCharges?: { min: number; max: number } | null;
+    diagnosisNotice?: boolean;
 }>();
 
 defineEmits<{
