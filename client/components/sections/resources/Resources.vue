@@ -481,7 +481,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import dashboardImg from "~/assets/images/dashboard-preview.jpg";
 import {
     Bookmark,
     ArrowRight,
