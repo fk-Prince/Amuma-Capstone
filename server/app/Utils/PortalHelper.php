@@ -120,6 +120,8 @@ class PortalHelper
 
     public function pickSchedules(Collection $schedules): array
     {
+        $schedules = Schedule::byPriority($schedules);
+
         return [
             'adl' => $schedules->first(
                 fn($schedule) => $schedule->scheduleServices->contains(

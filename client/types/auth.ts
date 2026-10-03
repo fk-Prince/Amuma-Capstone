@@ -1,7 +1,8 @@
 import type { Location } from "./location";
 
 export interface SigninRequest {
-    email: string;
+    email?: string;
+    employee_code?: string;
     password: string;
 }
 

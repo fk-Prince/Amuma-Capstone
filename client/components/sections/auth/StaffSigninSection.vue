@@ -5,7 +5,7 @@ import { Stethoscope, ShieldCheck, ClipboardList, Users } from "lucide-vue-next"
 
 const route = useRoute();
 
-// Someone signing in to subscribe is an agency, so the family-portal switch
+// Someone signing in to subscribe is an agency, so the client-portal switch
 // would only confuse them.
 const subscribing = computed(() =>
     isSubscribeFlowPath(
@@ -60,7 +60,7 @@ const highlights = [
                 <div
                     class="w-full rounded-[20px] border border-muted-light bg-white px-6 py-9 shadow-sm sm:px-8 dark:border-white/10 dark:bg-secondary"
                 >
-                    <div class="mb-7 flex flex-col items-center text-center">
+                    <div class="mb-9 flex flex-col items-center text-center">
                         <span
                             class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-400"
                         >
@@ -79,10 +79,6 @@ const highlights = [
                             Sign in to your dashboard
                         </h1>
 
-                        <p class="mt-1.5 text-sm text-muted dark:text-gray-400">
-                            For branch owners, nurses, caregivers, accounting,
-                            and admins.
-                        </p>
                     </div>
 
                     <SigninForm portal="staff" />
@@ -107,7 +103,7 @@ const highlights = [
                     to="/auth/select"
                     class="mt-4 flex items-center gap-1.5 text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-gray-400 dark:hover:text-white"
                 >
-                    ← Not staff? Switch to Family Portal
+                    ← Not staff? Switch to Client Portal
                 </NuxtLink>
             </div>
         </div>

@@ -26,14 +26,15 @@ class NotificationService
     ) {}
 
 
-    private const BOOKING_ROLES = ['admission', 'branch_manager', 'agency_owner'];
+
+    private const ADMISSION_ROLES = ['admission'];
 
     public function sendNotification(array $payload, object $booking)
     {
 
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         $employees = $this->employeeRepository->getBranchStaffByRoles(
-            self::BOOKING_ROLES,
+            self::ADMISSION_ROLES,
             $branch->branch_id
         );
 
@@ -243,7 +244,7 @@ class NotificationService
         ?array $roles = null,
     ): void {
         $employees = $this->employeeRepository->getBranchStaffByRoles(
-            $roles ?? self::BOOKING_ROLES,
+            $roles ?? self::ADMISSION_ROLES,
             $branch->branch_id
         );
 

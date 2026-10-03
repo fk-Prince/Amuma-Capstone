@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import signinLogo from "~/assets/logo/signinLogo2.png";
+import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 </script>
 
 <template>
@@ -20,13 +21,23 @@ import signinLogo from "~/assets/logo/signinLogo2.png";
             <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-[6px]"></div>
         </div>
 
-        <div
-            class="relative z-10 mx-auto flex min-h-dvh w-[94%] items-center justify-center px-2 pt-24 pb-8 sm:px-6 sm:pt-28"
-        >
+        <div class="relative z-10 flex min-h-dvh w-full flex-col">
+            <!-- Minimal top bar, the same as the sign-in pages -->
+            <div class="flex w-full items-center justify-between px-6 py-6 sm:px-10">
+                <NuxtLink to="/" aria-label="AMUMA home">
+                    <BrandLogo icon-class="h-8 w-8" text-class="text-lg" />
+                </NuxtLink>
+                <ThemeToggle class="text-secondary dark:text-white" />
+            </div>
+
             <div
-                class="w-full max-w-[440px] rounded-[20px] border border-white/10 bg-white/95 px-5 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-8 dark:bg-secondary/95"
+                class="mx-auto flex w-[94%] flex-1 items-center justify-center px-2 pb-8 sm:px-6"
             >
-                <slot />
+                <div
+                    class="w-full max-w-[440px] rounded-[20px] border border-white/10 bg-white/95 px-5 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl sm:px-8 dark:bg-secondary/95"
+                >
+                    <slot />
+                </div>
             </div>
         </div>
     </div>

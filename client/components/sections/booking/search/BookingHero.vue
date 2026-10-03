@@ -19,7 +19,7 @@
         ></div>
 
         <div
-            class="relative z-10 w-[92%] max-w-[1400px] mx-auto px-4 sm:px-10 pt-[120px] pb-24 lg:pt-[130px] lg:pb-28"
+            class="relative z-10 w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 pt-[120px] pb-24 lg:pt-[130px] lg:pb-28"
         >
             <div class="max-w-xl">
                 <span
@@ -55,12 +55,12 @@
                         class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-300"
                     >
                         <Search class="h-3.5 w-3.5" />
-                        Looking for
+                        Provider name
                     </label>
                     <input
                         v-model="searchName"
                         type="text"
-                        placeholder="e.g. caregiver, nursing, home care..."
+                        placeholder="Enter provider name"
                         class="mt-1 w-full min-w-0 border-none bg-transparent p-0 text-sm md:text-[15px] text-secondary outline-none placeholder:text-muted dark:text-white dark:placeholder:text-gray-400"
                     />
                 </div>
@@ -79,7 +79,7 @@
                             v-model="searchLocation"
                             type="text"
                             :readonly="locating"
-                            :placeholder="locating ? 'Locating...' : 'Enter city or barangay'"
+                            :placeholder="locating ? 'Locating...' : 'Enter city'"
                             class="w-full min-w-0 border-none bg-transparent p-0 text-sm md:text-[15px] text-secondary outline-none placeholder:text-muted dark:text-white dark:placeholder:text-gray-400"
                         />
                         <Location
@@ -176,7 +176,7 @@
 
     <div class="relative z-10 rounded-t-[28px] sm:rounded-t-[40px] bg-white dark:bg-secondary border-b border-muted-light dark:border-white/10 font-sans">
         <div
-            class="w-[92%] max-w-[1400px] mx-auto px-4 sm:px-10 py-6 flex flex-wrap items-center justify-between gap-8"
+            class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-6 flex flex-wrap items-center justify-between gap-8"
         >
             <div class="flex items-center gap-4">
                 <div class="flex -space-x-3">

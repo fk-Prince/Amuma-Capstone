@@ -28,6 +28,7 @@ use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class PatientSeeder extends Seeder
 {
@@ -336,31 +337,43 @@ class PatientSeeder extends Seeder
         $adlRate = null;
 
         if ($homecare['type'] === 'Medical') {
-            $service = Service::where('branch_id', $branch->branch_id)
+            $findService = fn() => Service::where('branch_id', $branch->branch_id)
                 ->whereIn('type', ['online', 'both'])
                 ->where('is_available', true)
                 ->orderBy('service_id')
                 ->first();
 
-            if ($service) {
-                $scheduleService = $schedule->scheduleServices()->create([
-                    'service_id' => $service->service_id,
-                    'hours_booked' => null,
-                    'type' => 'Medical',
-                ]);
+            $service = $findService();
 
-                $scheduleService->invoiceServices()->create([
-                    'invoice_id' => $invoice->invoice_id,
-                    'price' => $service->price,
-                ]);
-
-                $total = (float) $service->price;
-                $bookedServices[] = [
-                    'service_id' => $service->service_id,
-                    'service_name' => $service->service_name,
-                    'price' => (float) $service->price,
-                ];
+            if (!$service) {
+                $this->call(ServiceSeeder::class);
+                $service = $findService();
             }
+
+
+            if (!$service) {
+                throw new RuntimeException(
+                    "No available homecare service for branch {$branch->branch_id}; a medical visit can't be seeded without one."
+                );
+            }
+
+            $scheduleService = $schedule->scheduleServices()->create([
+                'service_id' => $service->service_id,
+                'hours_booked' => null,
+                'type' => 'Medical',
+            ]);
+
+            $scheduleService->invoiceServices()->create([
+                'invoice_id' => $invoice->invoice_id,
+                'price' => $service->price,
+            ]);
+
+            $total = (float) $service->price;
+            $bookedServices[] = [
+                'service_id' => $service->service_id,
+                'service_name' => $service->service_name,
+                'price' => (float) $service->price,
+            ];
         } else {
             $adlRate = (float) (BranchContract::where('branch_id', $branch->branch_id)
                 ->where('category', BranchContract::CAREGORY_HOMECARE)

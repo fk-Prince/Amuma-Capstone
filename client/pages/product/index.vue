@@ -80,7 +80,7 @@
                     v-for="plan in formattedPlans"
                     :key="plan.title"
                     v-bind="plan"
-                    @select="checkout.setSelectedPlan(plan)"
+                    @select="startSubscribe(plan)"
                 />
             </div>
 
@@ -94,6 +94,7 @@ import PricingCard from "~/components/ui/PricingCard.vue";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
+import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
 
 useHead({ title: "Product" });
 
@@ -105,4 +106,5 @@ definePageMeta({
 });
 
 const { checkout, loading, formattedPlans } = usePlanCards();
+const { startSubscribe } = useSubscribeFlow();
 </script>

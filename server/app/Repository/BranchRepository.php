@@ -45,6 +45,9 @@ class BranchRepository
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
             ->withAvg('reviews', 'rate')
+            ->withMin(['services as homecare_service_min_price' => fn($query) => $query
+                ->whereIn('type', ['online', 'both'])
+                ->where('is_available', true)], 'price')
             ->withCount([
                 'bookings' => fn($query) => $query->where('status', Booking::STATUS_APPROVED),
                 'patients',
@@ -96,6 +99,9 @@ class BranchRepository
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
             ->withAvg('reviews', 'rate')
+            ->withMin(['services as homecare_service_min_price' => fn($query) => $query
+                ->whereIn('type', ['online', 'both'])
+                ->where('is_available', true)], 'price')
             ->withCount('reviews')
             ->withCount('bookings')
 
@@ -174,10 +180,13 @@ class BranchRepository
                     BranchImage::IMAGE_BRANCH,
                     BranchImage::IMAGE_COMMON_ROOM,
                     BranchImage::IMAGE_VIP_ROOM,
+                    BranchImage::IMAGE_COVER,
                 ]);
             },
         ])
             ->withAvg('reviews', 'rate')
+            ->withMin('diagnosisCases as diagnosis_case_min_price', 'price')
+            ->withMax('diagnosisCases as diagnosis_case_max_price', 'price')
             ->withCount('reviews')
             ->where('uuid', $uuid)
             ->first();

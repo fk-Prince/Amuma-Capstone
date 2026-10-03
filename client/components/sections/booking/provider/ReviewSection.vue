@@ -95,13 +95,25 @@
                                 </span>
                             </div>
 
-                            <p
+                            <div
                                 v-if="showPayment"
-                                class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500"
+                                class="mt-3 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 dark:border-amber-500/30 dark:bg-amber-500/10"
                             >
-                                * Your payment will be fully refunded once it is
-                                rejected.
-                            </p>
+                                <Info
+                                    class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300"
+                                />
+
+                                <p
+                                    class="text-xs leading-5 text-amber-900 dark:text-amber-100"
+                                >
+                                    Your payment will be fully refunded if the
+                                    booking is rejected or expires.
+                                    <span class="font-bold">
+                                        Once the booking is approved, it cannot
+                                        be refunded.
+                                    </span>
+                                </p>
+                            </div>
                             <p
                                 v-else
                                 class="mt-1.5 text-[11px] text-slate-400 dark:text-gray-500"
@@ -240,6 +252,11 @@
                 </div>
 
                 <div class="p-5">
+                    <DiagnosisPriceNotice
+                        :charges="diagnosisCharges"
+                        class="mb-5"
+                    />
+
                     <p
                         v-if="!diagnosisGroups.length"
                         class="text-sm text-slate-400 dark:text-gray-500"
@@ -375,7 +392,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Pencil } from "lucide-vue-next";
+import { Info, Pencil } from "lucide-vue-next";
+import DiagnosisPriceNotice from "~/components/forms/DiagnosisPriceNotice.vue";
 import type { HomecareBooking, FacilityBooking } from "~/types/booking";
 import type { Patient, Guardian, Assessment } from "~/types/patient";
 import type { Diagnosis } from "~/types/patient";
@@ -403,6 +421,7 @@ const props = defineProps<{
     branchFacility?: BranchFacility[];
     showPayment?: boolean;
     bookingPercent?: number;
+    diagnosisCharges?: { min: number; max: number } | null;
 }>();
 
 defineEmits<{

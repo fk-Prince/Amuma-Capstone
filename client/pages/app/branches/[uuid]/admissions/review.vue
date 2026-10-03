@@ -40,6 +40,7 @@
                             :assessment="bookingStore.assessment"
                             :diagnoses="bookingStore.diagnoses"
                             :payment="bookingStore.payment"
+                            :diagnosis-charges="diagnosisPrices"
                             @edit-step="goEditStep"
                         />
                     </div>
@@ -150,6 +151,7 @@ import { admissionService } from "~/api/admission/AdmissionService";
 import { invoiceService } from "~/api/invoice/InvoiceService";
 import { formatAmount } from "~/utils/currency";
 import { useBranchStore } from "~/stores/branch";
+import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import type { AdmissionSlip } from "~/types/admission-slip";
 useHead({ title: "Review Admission" });
 
@@ -176,6 +178,26 @@ const bookingStore = useBookingStore();
 const toast = useToast();
 const submitting = ref(false);
 const uuid = route.params.uuid as string;
+
+const diagnosisPrices = ref<{ min: number; max: number } | null>(null);
+
+onMounted(async () => {
+    try {
+        const res = await diagnosisCaseService.list({
+            branch_uuid: uuid,
+            for: "charges",
+        });
+        const prices = (res.data ?? []).map((item: { price: number }) =>
+            Number(item.price),
+        );
+
+        diagnosisPrices.value = prices.length
+            ? { min: Math.min(...prices), max: Math.max(...prices) }
+            : null;
+    } catch {
+        diagnosisPrices.value = null;
+    }
+});
 
 const card = reactive<CardDetails>({
     number: "4000000000001000",

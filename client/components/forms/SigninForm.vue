@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
+import { Eye, EyeOff, IdCard, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
@@ -28,10 +28,27 @@ const welcomeTitle = computed(() =>
         : "Welcome back!",
 );
 
-const signinData = ref<SigninRequest>({
+// Staff sign in with their employee ID; the client portal still uses email.
+// Whatever is typed here is sent as the right kind of identifier.
+const signinData = ref({
     email: "",
     password: "",
 });
+
+const isStaffPortal = computed(() => props.portal === "staff");
+
+function buildCredentials(): SigninRequest {
+    const identifier = signinData.value.email.trim();
+
+    if (isStaffPortal.value && !identifier.includes("@")) {
+        return {
+            employee_code: identifier.toUpperCase(),
+            password: signinData.value.password,
+        };
+    }
+
+    return { email: identifier, password: signinData.value.password };
+}
 
 const signupRedirect = computed(
     () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
@@ -67,8 +84,8 @@ const borderClass = (error: string) =>
 
 function portalMismatchMessage() {
     return props.portal === "staff"
-        ? "This account isn't a staff account. Please use the Family Portal to sign in."
-        : "This account isn't a family account. Please use the Staff Portal to sign in.";
+        ? "This account isn't a staff account. Please use the Client Portal to sign in."
+        : "This account isn't a client account. Please use the Staff Portal to sign in.";
 }
 
 async function handleSignIn() {
@@ -87,7 +104,7 @@ async function handleSignIn() {
     loading.value = true;
 
     try {
-        const res = await authService.login(signinData.value);
+        const res = await authService.login(buildCredentials());
 
         const isStaffAccount =
             !!res.user?.isEmployee || !!res.user?.isSystemOwner;
@@ -140,14 +157,24 @@ async function handleSignIn() {
                     }
                 }
             } else {
-                await navigateTo(redirectTo ?? "/portal/overview");
+                // The portal only has something to show once there is a booking
+                // or a patient, so a new client lands on the home page first.
+                const hasPortalAccess =
+                    !!res.user?.hasBooking || !!res.user?.hasPatient;
+
+                await navigateTo(
+                    redirectTo ?? (hasPortalAccess ? "/portal/overview" : "/"),
+                );
             }
         }, 1500);
     } catch (err: any) {
         showAlert(
             alert,
             "error",
-            err?.message || "Invalid email or password.",
+            err?.message ||
+                (isStaffPortal.value
+                    ? "Invalid employee ID, email, or password."
+                    : "Invalid email or password."),
             0,
         );
     } finally {
@@ -180,19 +207,26 @@ async function googleUrl() {
         />
 
         <form @submit.prevent="handleSignIn">
-            <label for="signin-email" :class="labelClass">Email</label>
+            <label for="signin-email" :class="labelClass">
+                {{ isStaffPortal ? "Employee ID or email" : "Email" }}
+            </label>
 
             <div class="relative">
                 <span :class="affixClass">
-                    <Mail class="h-[1.05rem] w-[1.05rem]" />
+                    <IdCard v-if="isStaffPortal" class="h-[1.05rem] w-[1.05rem]" />
+                    <Mail v-else class="h-[1.05rem] w-[1.05rem]" />
                 </span>
 
                 <input
                     id="signin-email"
                     v-model="signinData.email"
-                    type="email"
-                    autocomplete="email"
-                    placeholder="Enter your email address"
+                    :type="isStaffPortal ? 'text' : 'email'"
+                    :autocomplete="isStaffPortal ? 'username' : 'email'"
+                    :placeholder="
+                        isStaffPortal
+                            ? 'Enter your employee ID or email'
+                            : 'Enter your email address'
+                    "
                     :class="[fieldClass, borderClass(errors.email)]"
                 />
             </div>
@@ -241,7 +275,7 @@ async function googleUrl() {
 
             <div class="mt-3.5 flex justify-end">
                 <NuxtLink
-                    to="/forgot-password"
+                    to="/auth/forgot-password"
                     class="rounded text-xs font-medium text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Forgot Password?
@@ -301,7 +335,7 @@ async function googleUrl() {
             >
                 Don't have an account?
                 <NuxtLink
-                    :to="withRedirect('/auth/agency/signup', signupRedirect)"
+                    :to="withRedirect('/auth/signup', signupRedirect)"
                     class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
                 >
                     Sign up
@@ -312,15 +346,7 @@ async function googleUrl() {
                 v-else
                 class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
             >
-                Staff? Ask your branch administrator for access.
-                <br />
-                Want to register your agency?
-                <NuxtLink
-                    to="/product"
-                    class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
-                >
-                    View plans
-                </NuxtLink>
+                Unable to log in? Contact your branch manager.
             </p>
 
             <p

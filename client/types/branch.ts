@@ -35,7 +35,7 @@ export interface Branch {
 export interface BranchImage {
     branch_image_id: number;
     image_url: string;
-    type: "branch" | "vip_room" | "common_room" | "other";
+    type: "branch" | "vip_room" | "common_room" | "other" | "cover";
     description: string | null;
 }
 
@@ -67,6 +67,13 @@ export interface BranchRetrieve {
     name: string;
     description: string | null;
     image: string | undefined;
+    is_verified?: boolean;
+    cover_image?: string | null;
+    diagnosis_case_prices?: { min: number; max: number } | null;
+    starting_price?: {
+        amount: number;
+        cycle: "HOURLY" | "MONTHLY" | "YEARLY" | null;
+    } | null;
     settings: BranchSettings;
     averageRating: number | null;
     reviewCount: number;

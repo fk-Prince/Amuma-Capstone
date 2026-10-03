@@ -32,13 +32,19 @@
             </div>
 
             <div class="relative">
-                <div
-                    class="hidden lg:block absolute top-7 left-[12.5%] right-[12.5%] border-t-2 border-primary-200 dark:border-primary-500/25"
-                    aria-hidden="true"
-                ></div>
-
                 <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-                    <div v-for="(module, index) in modules" :key="module.title">
+                    <div
+                        v-for="(module, index) in modules"
+                        :key="module.title"
+                        class="relative"
+                    >
+                        <!-- Joins this step's icon to the next one -->
+                        <div
+                            v-if="index < modules.length - 1"
+                            class="pointer-events-none absolute left-[4.5rem] top-7 hidden w-[calc(100%-4rem)] border-t-2 border-primary-200 lg:block dark:border-primary-500/25"
+                            aria-hidden="true"
+                        ></div>
+
                         <div class="relative inline-flex">
                             <div
                                 class="flex h-14 w-14 items-center justify-center rounded-full border border-muted-light bg-white dark:bg-secondary dark:border-white/10"

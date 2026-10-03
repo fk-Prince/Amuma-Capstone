@@ -225,6 +225,11 @@
                 </div>
 
                 <div class="p-5">
+                    <DiagnosisPriceNotice
+                        :charges="diagnosisCharges"
+                        class="mb-5"
+                    />
+
                     <p
                         v-if="!diagnosisGroups.length"
                         class="text-sm text-slate-400 dark:text-gray-500"
@@ -355,6 +360,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Pencil } from "lucide-vue-next";
+import DiagnosisPriceNotice from "~/components/forms/DiagnosisPriceNotice.vue";
 import type { Patient, Guardian, Assessment, Diagnosis } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { CircleCheck } from "lucide-vue-next";
@@ -374,6 +380,7 @@ const props = defineProps<{
     assessment: Assessment | Assessment[];
     diagnoses?: Diagnosis[];
     payment?: any;
+    diagnosisCharges?: { min: number; max: number } | null;
 }>();
 
 defineEmits<{

@@ -19,6 +19,14 @@ class UserRepository
         return User::create($payload);
     }
 
+    public function findByEmployeeCode(string $code): ?User
+    {
+        return User::whereHas(
+            'employee',
+            fn($query) => $query->where('employee_code', strtoupper(trim($code)))
+        )->first();
+    }
+
     public static function defaultPassword(string $lastName, mixed $createdAt = null): string
     {
         $name = strtolower(preg_replace('/[^A-Za-z]/', '', $lastName));

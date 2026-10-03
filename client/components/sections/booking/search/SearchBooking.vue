@@ -1,21 +1,68 @@
 <template>
     <div class="w-full mx-auto px-6">
-        <div v-if="!isMounted || props.loading" class="flex flex-col gap-4">
-            <div
-                v-for="n in 2"
-                :key="n"
-                class="border rounded-2xl overflow-hidden animate-pulse dark:border-white/10"
-            >
-                <div class="h-32 bg-gray-200 dark:bg-white/10"></div>
-                <div class="p-4 space-y-3">
-                    <div class="h-4 bg-gray-200 rounded w-3/4 dark:bg-white/10"></div>
-                    <div class="h-3 bg-gray-200 rounded w-1/2 dark:bg-white/10"></div>
-                    <div class="flex justify-between mt-4">
-                        <div class="h-6 w-16 bg-gray-200 rounded-full dark:bg-white/10"></div>
-                        <div class="h-3 w-20 bg-gray-200 rounded dark:bg-white/10"></div>
+        <div
+            v-if="!isMounted || props.loading"
+            :class="
+                compact
+                    ? 'flex flex-col gap-4'
+                    : 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'
+            "
+        >
+            <template v-if="compact">
+                <div
+                    v-for="n in 3"
+                    :key="n"
+                    class="flex animate-pulse flex-col overflow-hidden rounded-2xl border border-muted-light bg-white md:flex-row dark:border-white/5 dark:bg-secondary"
+                >
+                    <div class="h-48 w-full shrink-0 bg-muted-light dark:bg-white/10 md:w-64"></div>
+
+                    <div class="flex flex-1 flex-col p-6">
+                        <div class="h-5 w-1/2 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2.5 h-4 w-3/4 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2.5 h-4 w-14 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-4 h-3 w-full rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2 h-3 w-4/5 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-4 flex gap-1.5">
+                            <div class="h-6 w-24 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-6 w-20 rounded-full bg-muted-light dark:bg-white/10"></div>
+                        </div>
+                        <div class="mt-4 h-5 w-32 rounded bg-muted-light dark:bg-white/10"></div>
+                    </div>
+
+                    <div
+                        class="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-muted-light p-6 md:w-56 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 dark:border-white/10"
+                    >
+                        <div class="space-y-2 md:flex md:flex-col md:items-end">
+                            <div class="h-3 w-16 rounded bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-6 w-28 rounded bg-muted-light dark:bg-white/10"></div>
+                        </div>
+                        <div class="h-10 w-32 rounded-lg bg-muted-light dark:bg-white/10 md:w-full"></div>
                     </div>
                 </div>
-            </div>
+            </template>
+
+            <template v-else>
+                <div
+                    v-for="n in 6"
+                    :key="n"
+                    class="flex animate-pulse flex-col overflow-hidden rounded-2xl border border-muted-light bg-white dark:border-white/5 dark:bg-secondary"
+                >
+                    <div class="h-32 w-full bg-muted-light dark:bg-white/10"></div>
+
+                    <div class="flex flex-1 flex-col p-4">
+                        <div class="h-4 w-3/4 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2 h-3 w-1/2 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-3 flex gap-1.5">
+                            <div class="h-5 w-20 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-5 w-16 rounded-full bg-muted-light dark:bg-white/10"></div>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="h-5 w-20 rounded bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-8 w-24 rounded-lg bg-muted-light dark:bg-white/10"></div>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
 
         <div
@@ -32,6 +79,7 @@
                 :key="branch.uuid"
                 :branch="branch"
                 @select="handleSelect"
+                @hover="$emit('hover', $event)"
             />
         </div>
 
@@ -74,7 +122,7 @@ import type { BranchRetrieve } from "~/types/branch";
 import { ref, onMounted } from "vue";
 import { SearchX, RotateCcw } from "lucide-vue-next";
 
-defineEmits(["select", "reset"]);
+defineEmits(["select", "reset", "hover"]);
 
 const props = defineProps<{
     branches: BranchRetrieve[];

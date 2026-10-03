@@ -1,6 +1,8 @@
 <template>
     <div
         v-if="variant === 1"
+        @mouseenter="$emit('hover', branch.uuid)"
+        @mouseleave="$emit('hover', null)"
         class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary dark:border-primary-500/20"
         @click="$emit('select', branch)"
     >
@@ -126,6 +128,8 @@
 
     <div
         v-else-if="variant === 2"
+        @mouseenter="$emit('hover', branch.uuid)"
+        @mouseleave="$emit('hover', null)"
         class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary-200 cursor-pointer md:flex-row dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
     >
         <div class="relative w-full shrink-0 md:w-64">
@@ -314,10 +318,7 @@
             <div v-if="priceLabel" class="text-right">
                 <p class="text-xs text-muted dark:text-gray-400">Starting at</p>
                 <p class="text-xl font-bold text-primary">
-                    {{ priceLabel.amount
-                    }}<span class="text-sm font-medium text-muted dark:text-gray-400">{{
-                        priceLabel.suffix
-                    }}</span>
+                    {{ priceLabel }}
                 </p>
             </div>
 
@@ -325,7 +326,7 @@
                 @click="$emit('select', branch)"
                 class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 md:w-full md:justify-center"
             >
-                View Profile
+                View Provider
                 <ArrowRight class="h-3.5 w-3.5" />
             </button>
         </div>
@@ -333,6 +334,8 @@
 
     <div
         v-else-if="variant === 3"
+        @mouseenter="$emit('hover', branch.uuid)"
+        @mouseleave="$emit('hover', null)"
         class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary-200 cursor-pointer dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
         @click="$emit('select', branch)"
     >
@@ -432,10 +435,7 @@
                 <div v-if="priceLabel">
                     <p class="text-[11px] text-muted dark:text-gray-400">Starting at</p>
                     <p class="text-base font-bold text-primary">
-                        {{ priceLabel.amount
-                        }}<span class="text-xs font-medium text-muted dark:text-gray-400">{{
-                            priceLabel.suffix
-                        }}</span>
+                        {{ priceLabel }}
                     </p>
                 </div>
                 <div v-else />
@@ -445,7 +445,7 @@
                         @click.stop="$emit('select', branch)"
                         class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-muted-light px-3 py-1.5 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-white/10 dark:text-white"
                     >
-                        View Profile
+                        View Provider
                     </button>
                     <button
                         @click.stop="$emit('select', branch)"
@@ -466,13 +466,14 @@ import Location from "~/components/icons/location.vue";
 import Logo from "~/assets/logo/logo.png";
 import { Star, ArrowRight, Heart, BadgeCheck } from "lucide-vue-next";
 import { getBranchTimeDisplay } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 
 const props = defineProps<{
     branch: BranchRetrieve;
     variant: 1 | 2 | 3;
 }>();
 
-defineEmits(["select"]);
+defineEmits(["select", "hover"]);
 
 const imageBroken = ref(false);
 
@@ -487,28 +488,8 @@ const remainingImageCount = computed(() =>
 );
 
 const priceLabel = computed(() => {
-    const hourlyRate = props.branch.homecare?.adl_hourly_rate;
-    if (hourlyRate) {
-        return { amount: `₱${hourlyRate}`, suffix: "/hr" };
-    }
+    const price = props.branch.starting_price;
 
-    const facilityPrices = (props.branch.facility ?? [])
-        .map((f) => ({ price: f.price, cycle: f.billing_cycle }))
-        .filter((f) => typeof f.price === "number");
-
-    if (!facilityPrices.length) return null;
-
-    const cheapest = facilityPrices.reduce((min, f) =>
-        f.price < min.price ? f : min,
-    );
-
-    const suffix =
-        cheapest.cycle === "HOURLY"
-            ? "/hr"
-            : cheapest.cycle === "MONTHLY"
-              ? "/mo"
-              : "/yr";
-
-    return { amount: `₱${cheapest.price}`, suffix };
+    return price ? formatCurrency(price.amount) : null;
 });
 </script>

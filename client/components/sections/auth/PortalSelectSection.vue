@@ -5,7 +5,6 @@ import {
     HeartHandshake,
     ArrowRight,
     Sparkles,
-    MessageCircleQuestion,
 } from "lucide-vue-next";
 
 const portals = [
@@ -13,10 +12,17 @@ const portals = [
         key: "staff",
         title: "Staff Portal",
         description:
-            "For branch owners, nurses, caregivers, accounting, and platform administrators.",
+            "For agency owners, branch managers, admission staff, cashiers, nurses, and caregivers.",
         icon: Stethoscope,
         to: "/auth/staff/signin",
-        chips: ["Existing owners", "Nurses", "Caregivers", "Accounting", "Admins"],
+        chips: [
+            "Agency owners",
+            "Branch managers",
+            "Admission",
+            "Cashiers",
+            "Nurses",
+            "Caregivers",
+        ],
         badge: "bg-accent-50 text-accent-600 group-hover:bg-accent group-hover:text-white group-focus-visible:bg-accent group-focus-visible:text-white dark:bg-accent-500/10 dark:text-accent-400 dark:group-hover:bg-accent-500",
         chipHover:
             "group-hover:bg-accent-50 group-hover:text-accent-700 dark:group-hover:bg-accent-500/10 dark:group-hover:text-accent-300",
@@ -27,12 +33,13 @@ const portals = [
     },
     {
         key: "family",
-        title: "Family Portal",
+        title: "Client Portal",
         description:
-            "For family members monitoring and staying connected with their loved one's care.",
+            "For clients and regular users booking care and staying connected with their loved one's care.",
         icon: HeartHandshake,
         to: "/auth/family/signin",
-        chips: ["Family Members"],
+        chips: [],
+        signup: "/auth/signup",
         badge: "bg-light text-primary group-hover:bg-primary group-hover:text-white group-focus-visible:bg-primary group-focus-visible:text-white dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:bg-primary-500",
         chipHover:
             "group-hover:bg-light group-hover:text-primary-700 dark:group-hover:bg-primary-500/10 dark:group-hover:text-primary-300",
@@ -130,7 +137,26 @@ const portals = [
                         </p>
                     </div>
 
-                    <div class="relative flex flex-wrap gap-1.5">
+                    <p
+                        v-if="portal.signup"
+                        class="relative text-xs text-muted dark:text-gray-400"
+                    >
+                        Don't have an account?
+                        <span
+                            role="link"
+                            tabindex="0"
+                            class="cursor-pointer font-semibold text-primary hover:underline dark:text-primary-300"
+                            @click.stop.prevent="navigateTo(portal.signup)"
+                            @keydown.enter.stop.prevent="navigateTo(portal.signup)"
+                        >
+                            Sign up
+                        </span>
+                    </p>
+
+                    <div
+                        v-if="portal.chips.length"
+                        class="relative flex flex-wrap gap-1.5"
+                    >
                         <span
                             v-for="chip in portal.chips"
                             :key="chip"
@@ -152,23 +178,6 @@ const portals = [
                     </span>
                 </NuxtLink>
             </div>
-
-            <p
-                class="mt-10 flex items-center gap-1.5 text-xs text-muted dark:text-gray-500"
-            >
-                <MessageCircleQuestion class="h-3.5 w-3.5" />
-                Not sure which one fits you? Ask your agency administrator.
-            </p>
-
-            <p class="mt-3 text-xs text-muted dark:text-gray-500">
-                New here and want to register your agency?
-                <NuxtLink
-                    to="/product"
-                    class="font-semibold text-primary hover:underline dark:text-primary-300"
-                >
-                    View plans
-                </NuxtLink>
-            </p>
         </div>
     </div>
 </template>

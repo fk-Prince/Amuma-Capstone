@@ -5,12 +5,12 @@
                 <div class="flex items-center gap-2.5">
                     <span class="relative flex h-2 w-2">
                         <span
-                            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75"
+                            class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
                         ></span>
-                        <span class="relative inline-flex h-2 w-2 rounded-full bg-accent"></span>
+                        <span class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span>
                     </span>
                     <span
-                        class="text-xs font-bold tracking-[0.16em] uppercase text-muted dark:text-gray-400"
+                        class="text-xs font-bold tracking-[0.16em] uppercase text-primary dark:text-primary-300"
                     >
                         Featured
                     </span>
@@ -33,17 +33,20 @@
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="border border-muted-light rounded-2xl overflow-hidden animate-pulse dark:border-white/10"
+                    class="animate-pulse overflow-hidden rounded-2xl border border-primary-200 bg-white dark:border-primary-500/20 dark:bg-secondary"
                 >
-                    <div class="h-32 bg-muted-light dark:bg-white/10"></div>
-                    <div class="p-4 space-y-3">
-                        <div class="h-4 bg-muted-light rounded w-3/4 dark:bg-white/10"></div>
-                        <div class="h-3 bg-muted-light rounded w-1/2 dark:bg-white/10"></div>
-                        <div class="flex justify-between mt-4">
-                            <div
-                                class="h-6 w-16 bg-muted-light rounded-full dark:bg-white/10"
-                            ></div>
-                            <div class="h-3 w-20 bg-muted-light rounded dark:bg-white/10"></div>
+                    <div class="h-40 bg-muted-light dark:bg-white/10"></div>
+
+                    <div class="p-4">
+                        <div class="h-4 w-3/4 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2 h-3 w-1/2 rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-3 flex gap-1.5">
+                            <div class="h-5 w-20 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-5 w-16 rounded-full bg-muted-light dark:bg-white/10"></div>
+                        </div>
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="h-5 w-20 rounded bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-7 w-24 rounded-lg bg-muted-light dark:bg-white/10"></div>
                         </div>
                     </div>
                 </div>

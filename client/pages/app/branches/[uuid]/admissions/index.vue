@@ -288,6 +288,7 @@
                     <section class="px-6" id="step4" ref="step4">
                         <DiagnosisForm
                             :model="diagnosisData"
+                            :charges="diagnosisPrices"
                             :errors="assessmentErrors"
                             @update:model="
                                 diagnosisData.splice(
@@ -416,6 +417,7 @@ import BaseButton from "~/components/ui/BaseButton.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
 import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
+import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 
 import {
     patientData,
@@ -463,6 +465,28 @@ const bookingStore = useBookingStore();
 const route = useRoute();
 const router = useRouter();
 const uuid = computed(() => route.params.uuid as string);
+
+const diagnosisPrices = ref<{ min: number; max: number } | null>(null);
+
+async function loadDiagnosisPrices() {
+    try {
+        const res = await diagnosisCaseService.list({
+            branch_uuid: uuid.value,
+            for: "charges",
+        });
+        const prices = (res.data ?? []).map((item: { price: number }) =>
+            Number(item.price),
+        );
+
+        diagnosisPrices.value = prices.length
+            ? { min: Math.min(...prices), max: Math.max(...prices) }
+            : null;
+    } catch {
+        diagnosisPrices.value = null;
+    }
+}
+
+onMounted(loadDiagnosisPrices);
 const { branch } = useBranch();
 const loading = ref(true);
 const category = computed<"facility">(() => "facility");

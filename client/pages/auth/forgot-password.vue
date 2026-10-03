@@ -12,8 +12,7 @@ import ForgotPasswordForm from "~/components/forms/ForgotPasswordForm.vue";
 
 definePageMeta({
     middleware: "auth-client",
-    navVariant: 5,
-    footer: false,
+    layout: "auth",
 });
 
 useHead({

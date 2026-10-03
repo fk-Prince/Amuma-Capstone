@@ -22,7 +22,9 @@ class AuthService
 
     public function login(array $payload)
     {
-        $user = $this->userRepository->findByField('email', $payload['email']);
+        $user = filled($payload['employee_code'] ?? null)
+            ? $this->userRepository->findByEmployeeCode($payload['employee_code'])
+            : $this->userRepository->findByField('email', $payload['email']);
 
         if (!$user) {
             throw new Exception(__('Incorrect credentials'), 404);

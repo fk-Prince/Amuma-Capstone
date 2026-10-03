@@ -1,6 +1,7 @@
 <template>
     <div class="flex flex-col min-h-screen">
-        <DefaultNavbar :navList="navList" />
+        <BookingNavbar v-if="isBookingRoute" :navList="navList" />
+        <DefaultNavbar v-else :navList="navList" />
 
         <main class="relative flex-1">
             <div
@@ -38,11 +39,15 @@ import { computed } from "vue";
 import { useRoute } from "vue-router";
 
 import DefaultNavbar from "~/components/sections/DefaultNavbar.vue";
+import BookingNavbar from "~/components/sections/BookingNavbar.vue";
 import AppFooter from "~/components/sections/AppFooter.vue";
 import SubscribeAuthModal from "~/components/ui/SubscribeAuthModal.vue";
 import { navList as defaultNavList } from "~/config/publicMenu";
 
 const route = useRoute();
 const footer = computed(() => route.meta.footer ?? true);
+// The booking pages have their own navbar design; everything else keeps the
+// site-wide one.
+const isBookingRoute = computed(() => route.path.startsWith("/booking"));
 const navList = computed(() => (route.meta.navList as typeof defaultNavList | undefined) ?? defaultNavList);
 </script>

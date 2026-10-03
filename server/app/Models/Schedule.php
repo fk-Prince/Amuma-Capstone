@@ -16,6 +16,26 @@ class Schedule extends Model
     public const STATUS_CANCELLED = 'cancelled'; // cancelled
     public const STATUS_MISSED = 'missed'; // no show up
 
+    // When only one schedule is shown, the one that matters most comes first.
+    public const STATUS_PRIORITY = [
+        self::STATUS_ONGOING,
+        self::STATUS_PENDING,
+        self::STATUS_COMPLETED,
+        self::STATUS_CANCELLED,
+        self::STATUS_MISSED,
+    ];
+
+    public static function byPriority(\Illuminate\Support\Collection $schedules): \Illuminate\Support\Collection
+    {
+        return $schedules
+            ->sortBy(function ($schedule) {
+                $rank = array_search(strtolower((string) $schedule->status), self::STATUS_PRIORITY, true);
+
+                return $rank === false ? count(self::STATUS_PRIORITY) : $rank;
+            })
+            ->values();
+    }
+
 
     public const CATEGORYHOMECARE = 'Homecare';
     public const CATEGORYFACILITY = 'Facility';

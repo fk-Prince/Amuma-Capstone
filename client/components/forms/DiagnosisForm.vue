@@ -20,6 +20,8 @@
             </div>
         </div>
 
+        <DiagnosisPriceNotice :charges="charges" class="mb-8" />
+
         <div
             v-if="diagnoses.length > 1"
             class="mb-8 flex flex-wrap items-center gap-2"
@@ -224,11 +226,15 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "../ui/BaseInput.vue";
 import DatePickerField from "../ui/DatePickerField.vue";
+import DiagnosisPriceNotice from "./DiagnosisPriceNotice.vue";
 import type { Diagnosis } from "~/types/patient";
 
 const props = defineProps<{
     model: Diagnosis[];
     errors?: Record<string, string> | null;
+    // Lowest and highest diagnosis case price of an in-house facility, shown
+    // as a heads-up that the bill can grow with the patient's diagnosis.
+    charges?: { min: number; max: number } | null;
 }>();
 
 const emit = defineEmits<{

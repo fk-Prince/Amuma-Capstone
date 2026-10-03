@@ -8,7 +8,7 @@ const AUTH_ROUTES = [
     "/auth/staff/signin",
     "/auth/family/signin",
     "/auth/signup",
-    "/auth/agency/signup",
+    "/auth/forgot-password",
 ];
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -24,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         // Someone heading to checkout with no account is a new subscriber,
         // so send them to the agency sign-up instead of the portal chooser.
         const target = to.path.startsWith("/product/subscription-details")
-            ? "/auth/agency/signup"
+            ? "/auth/signup"
             : to.path.startsWith("/portal") || to.path.startsWith("/booking")
               ? "/auth/family/signin"
               : to.path.startsWith("/app")
@@ -41,7 +41,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     if (isAuthenticated && isAuthRoute) {
         if (user.value?.isClient) {
-            return navigateTo("/portal/overview");
+            return navigateTo(
+                user.value.hasBooking || user.value.hasPatient
+                    ? "/portal/overview"
+                    : "/",
+            );
         }
 
         if (user.value?.isSystemOwner) {

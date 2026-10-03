@@ -179,7 +179,7 @@ class PatientAccessResource extends JsonResource
 
     private function getScheduleByType(Collection $schedules, string $type): mixed
     {
-        return $schedules->first(function ($schedule) use ($type) {
+        return \App\Models\Schedule::byPriority($schedules)->first(function ($schedule) use ($type) {
             if ($type === 'adl') {
                 return $schedule->scheduleServices->contains(
                     fn($service) => $service->type === 'ADL'

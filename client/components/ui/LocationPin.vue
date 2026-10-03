@@ -10,6 +10,7 @@ let myLocationMarker: any = null;
 let highlightIcon: any = null;
 let markersByUuid: Record<string, any> = {};
 let highlightedMarker: any = null;
+let resizeObserver: ResizeObserver | null = null;
 
 const { getMyLocation } = useGeo();
 
@@ -181,6 +182,32 @@ onMounted(async () => {
         map?.invalidateSize();
     }, 200);
 
+    // Switching between the list, split and full-map views changes this
+    // container's size after the map exists, which leaves grey tiles and a
+    // drifted centre until Leaflet is told to re-measure.
+    const container = document.getElementById("locations-map");
+
+    if (container && typeof ResizeObserver !== "undefined") {
+        let frame = 0;
+
+        resizeObserver = new ResizeObserver(() => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => {
+                if (!map) return;
+
+                map.invalidateSize();
+
+                if (props.centerLat != null && props.centerLng != null) {
+                    applyCenter();
+                } else {
+                    fitToBounds();
+                }
+            });
+        });
+
+        resizeObserver.observe(container);
+    }
+
     getMyLocation().then((loc) => {
         if (!loc) return;
 
@@ -239,6 +266,8 @@ watch(
 );
 
 onUnmounted(() => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     map?.remove();
     map = null;
     myLocationMarker = null;

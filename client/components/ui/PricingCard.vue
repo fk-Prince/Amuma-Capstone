@@ -95,9 +95,9 @@
             {{ branchNote }}
         </p>
 
-        <NuxtLink
-            to="/product/subscription-details"
-            @click.prevent="$emit('select', $props)"
+        <button
+            type="button"
+            @click="$emit('select', $props)"
             :class="[
                 'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 mb-6',
                 featured
@@ -121,7 +121,7 @@
                     stroke-linejoin="round"
                 />
             </svg>
-        </NuxtLink>
+        </button>
 
         <div
             :class="[

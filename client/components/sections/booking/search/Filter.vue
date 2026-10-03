@@ -472,6 +472,7 @@ border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40 dark:bg-second
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useGeo } from "~/composables/useGeo";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Location from "~/components/icons/location.vue";
@@ -605,6 +606,18 @@ const DEFAULT_LOCATION = {
     long: 125.4553,
 };
 
+const { resolveDefaultCenter } = useGeo();
+
+// Where a visitor starts and what Reset returns to: their own area, found the
+// same way the page picks it on a fresh visit, and Davao City if that fails.
+const defaultLocation = ref({ ...DEFAULT_LOCATION });
+
+// Kept for the session so every visit to this page doesn't repeat the lookup.
+const cachedCenter = useState<typeof DEFAULT_LOCATION | null>(
+    "search_default_center",
+    () => null,
+);
+
 const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 
 const searchName = ref(
@@ -719,23 +732,51 @@ function applyFilters() {
     closeMenus();
 }
 
-function resetFilters() {
+async function resetFilters() {
+    closeMenus();
+
+    const center = await resolveDefaultCenter();
+    defaultLocation.value = center;
+    cachedCenter.value = center;
+
     searchName.value = "";
-    searchLocation.value = DEFAULT_LOCATION.label;
-    lat.value = DEFAULT_LOCATION.lat;
-    long.value = DEFAULT_LOCATION.long;
+    searchLocation.value = center.label;
+    lat.value = center.lat;
+    long.value = center.long;
     planCodeType.value = "C";
     activeSortOption.value = "recommended";
 
     updateQuery();
-    closeMenus();
 }
+
+// The page can change the query itself (its own Reset), so the fields here
+// follow it instead of keeping what was typed before.
+watch(
+    () => route.query,
+    (query) => {
+        searchName.value = (query.provider_name as string) ?? "";
+        searchLocation.value =
+            (query.location as string) ?? defaultLocation.value.label;
+        lat.value = (query.lat as string) ?? defaultLocation.value.lat;
+        long.value = (query.long as string) ?? defaultLocation.value.long;
+        planCodeType.value = (query.plan_code as string) ?? "C";
+        activeSortOption.value = (query.sort as string) ?? "recommended";
+    },
+);
+
+onMounted(async () => {
+    if (!cachedCenter.value) {
+        cachedCenter.value = await resolveDefaultCenter();
+    }
+
+    defaultLocation.value = cachedCenter.value;
+});
 
 const hasActiveFilters = computed(
     () =>
         planCodeType.value !== "C" ||
         activeSortOption.value !== "recommended" ||
-        (searchLocation.value || "") !== DEFAULT_LOCATION.label,
+        (searchLocation.value || "") !== defaultLocation.value.label,
 );
 </script>
 

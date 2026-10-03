@@ -11,8 +11,7 @@ import AuthCardShell from "~/components/sections/auth/AuthCardShell.vue";
 import ResetPasswordForm from "~/components/forms/ResetPasswordForm.vue";
 
 definePageMeta({
-    navVariant: 5,
-    footer: false,
+    layout: "auth",
 });
 
 useHead({
