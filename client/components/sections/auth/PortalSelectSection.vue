@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from "~/components/ui/BrandLogo.vue";
 import portalBg from "~/assets/images/portalselection-bg.png";
 import {
     Stethoscope,
@@ -15,6 +16,9 @@ const portals = [
             "For agency owners, branch managers, admission staff, cashiers, nurses, and caregivers.",
         icon: Stethoscope,
         to: "/auth/staff/signin",
+        signup: "/auth/agency/signup",
+        signupText: "Want to subscribe your agency?",
+        signupLabel: "Create an account",
         chips: [
             "Agency owners",
             "Branch managers",
@@ -141,7 +145,7 @@ const portals = [
                         v-if="portal.signup"
                         class="relative text-xs text-muted dark:text-gray-400"
                     >
-                        Don't have an account?
+                        {{ portal.signupText ?? "Don't have an account?" }}
                         <span
                             role="link"
                             tabindex="0"
@@ -149,7 +153,7 @@ const portals = [
                             @click.stop.prevent="navigateTo(portal.signup)"
                             @keydown.enter.stop.prevent="navigateTo(portal.signup)"
                         >
-                            Sign up
+                            {{ portal.signupLabel ?? "Sign up" }}
                         </span>
                     </p>
 

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import BrandLogo from "~/components/ui/BrandLogo.vue";
-import SigninForm from "~/components/forms/SigninForm.vue";
+import SignupForm from "~/components/forms/SignupForm.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
-import { Stethoscope, ShieldCheck, ClipboardList, Users } from "lucide-vue-next";
+import { Building2, Rocket, ShieldCheck, GitBranch } from "lucide-vue-next";
 
 const highlights = [
     { icon: ShieldCheck, label: "Secure & encrypted" },
-    { icon: ClipboardList, label: "Real-time records" },
-    { icon: Users, label: "Role-based access" },
+    { icon: Rocket, label: "Set up in minutes" },
+    { icon: GitBranch, label: "Multi-branch ready" },
 ];
 </script>
 
@@ -19,7 +19,6 @@ const highlights = [
             class="pointer-events-none absolute inset-0 overflow-hidden"
             aria-hidden="true"
         >
-            <!-- Dot-grid texture -->
             <div
                 class="absolute inset-0 opacity-[0.55] [background-image:radial-gradient(circle,#a9c0e8_1.5px,transparent_1.5px)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_90%_90%_at_50%_10%,#000_25%,transparent_85%)] dark:opacity-[0.07] dark:[background-image:radial-gradient(circle,#5b6b8c_1px,transparent_1px)]"
             ></div>
@@ -38,44 +37,53 @@ const highlights = [
             ></div>
         </div>
 
-        <!-- Minimal top bar: replaces the site header on auth pages -->
-        <div class="relative z-10 flex w-full items-center justify-between px-6 py-6 sm:px-10">
+        <div
+            class="relative z-10 flex w-full items-center justify-between px-6 py-4 sm:px-10"
+        >
             <NuxtLink to="/" aria-label="AMUMA home">
                 <BrandLogo icon-class="h-8 w-8" text-class="text-lg" />
             </NuxtLink>
             <ThemeToggle class="text-secondary dark:text-white" />
         </div>
 
-        <div class="relative z-10 flex w-full flex-1 items-center justify-center px-6 pb-16">
-            <div class="flex w-full max-w-[440px] flex-col items-center">
+        <div
+            class="relative z-10 flex w-full flex-1 items-center justify-center px-6 pb-8"
+        >
+            <div class="flex w-full max-w-[500px] flex-col items-center [@media(max-height:900px)]:[zoom:0.85] [@media(max-height:760px)]:[zoom:0.72]">
                 <div
-                    class="w-full rounded-[20px] border border-muted-light bg-white px-6 py-9 shadow-sm sm:px-8 dark:border-white/10 dark:bg-secondary"
+                    class="w-full rounded-[20px] border border-muted-light bg-white px-5 py-6 shadow-sm sm:px-7 dark:border-white/10 dark:bg-secondary"
                 >
-                    <div class="mb-9 flex flex-col items-center text-center">
+                    <div class="mb-5 flex flex-col items-center text-center">
                         <span
-                            class="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-400"
+                            class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300"
                         >
-                            <Stethoscope class="h-6 w-6" />
+                            <Building2 class="h-5 w-5" />
                         </span>
 
                         <p
-                            class="mb-1.5 text-xs font-semibold uppercase tracking-widest text-accent-600 dark:text-accent-400"
+                            class="mb-1.5 text-xs font-semibold uppercase tracking-widest text-primary dark:text-primary-300"
                         >
-                            Staff Portal
+                            Agency Owner Account
                         </p>
 
                         <h1
-                            class="text-2xl font-extrabold tracking-tight text-secondary dark:text-white"
+                            class="text-xl font-extrabold tracking-tight text-secondary dark:text-white"
                         >
-                            Sign in to your dashboard
+                            Create your account
                         </h1>
 
+                        <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                            Sign up to subscribe to AMUMA. After this, you'll
+                            choose a plan for your agency.
+                        </p>
                     </div>
 
-                    <SigninForm portal="staff" />
+                    <SignupForm portal="agency" />
                 </div>
 
-                <div class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                <div
+                    class="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
+                >
                     <div
                         v-for="item in highlights"
                         :key="item.label"
@@ -83,19 +91,19 @@ const highlights = [
                     >
                         <component
                             :is="item.icon"
-                            class="h-3.5 w-3.5 text-accent-500 dark:text-accent-400"
+                            class="h-3.5 w-3.5 text-primary-500 dark:text-primary-400"
                         />
                         {{ item.label }}
                     </div>
                 </div>
 
                 <NuxtLink
-                    to="/auth/select"
+                    to="/auth/signup"
                     class="mt-4 flex items-center gap-1.5 text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-gray-400 dark:hover:text-white"
                 >
-                    ← Not the right portal? Switch here
+                    Looking for family access? Create a family account
                 </NuxtLink>
             </div>
         </div>
     </div>
-</template>s
+</template>

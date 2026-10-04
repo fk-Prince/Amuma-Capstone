@@ -1,9 +1,18 @@
+<template>
+    <ClientOnly>
+        <AgencySignupSection />
+    </ClientOnly>
+</template>
+
 <script setup lang="ts">
+import AgencySignupSection from "~/components/sections/auth/AgencySignupSection.vue";
+
 definePageMeta({
-    redirect: "/auth/signup",
+    middleware: "auth-client",
+    layout: "auth",
+});
+
+useHead({
+    title: "Create your account - AMUMA",
 });
 </script>
-
-<template>
-    <div />
-</template>

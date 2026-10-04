@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from "~/components/ui/BrandLogo.vue";
 import SigninForm from "~/components/forms/SigninForm.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import signinLogo from "~/assets/logo/signinLogo2.png";
@@ -117,15 +118,9 @@ const highlights = [
                                 </div>
                             </div>
                         </div>
-
-                        <NuxtLink
-                            to="/auth/select"
-                            class="inline-flex w-fit items-center gap-1.5 rounded text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-white/60 dark:hover:text-white"
-                        >
-                            ← Not the right portal? Switch here
-                        </NuxtLink>
                     </div>
 
+                    <div class="flex w-full max-w-[480px] flex-col lg:ml-auto">
                     <div
                         class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-muted-light bg-white px-5 py-8 shadow-sm sm:px-8 lg:ml-auto dark:border-white/10 dark:bg-secondary/95 dark:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] dark:backdrop-blur-xl"
                     >
@@ -150,14 +145,15 @@ const highlights = [
                         </div>
 
                         <SigninForm portal="family" />
-
-                        <NuxtLink
-                            to="/auth/select"
-                            class="mt-5 flex items-center justify-center gap-1.5 text-xs font-medium text-slate-400 outline-none hover:text-blue-600 hover:underline lg:hidden dark:text-gray-500"
-                        >
-                            ← Not the right portal? Switch here
-                        </NuxtLink>
                     </div>
+
+                    <NuxtLink
+                        to="/auth/select"
+                        class="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-white/70 dark:hover:text-white"
+                    >
+                        ← Not the right portal? Switch here
+                    </NuxtLink>
+                </div>
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ export const AUTH_ROUTES = [
     "/auth/staff/signin",
     "/auth/client/signin",
     "/auth/signup",
+    "/auth/agency/signup",
     "/auth/forgot-password",
 ];
 

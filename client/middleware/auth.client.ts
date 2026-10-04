@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     if (!isAuthenticated && !isAuthRoute) {
         const target = to.path.startsWith("/product/subscription-details")
-            ? "/auth/signup"
+            ? "/auth/agency/signup"
             : to.path.startsWith("/portal") || to.path.startsWith("/booking")
                 ? "/auth/client/signin"
                 : to.path.startsWith("/app")

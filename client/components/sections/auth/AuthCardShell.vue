@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrandLogo from "~/components/ui/BrandLogo.vue";
 import signinLogo from "~/assets/logo/signinLogo2.png";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 </script>

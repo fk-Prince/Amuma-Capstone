@@ -334,20 +334,7 @@ async function googleUrl() {
             </template>
 
             <p
-                v-else-if="signupRedirect"
-                class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
-            >
-                Don't have an account?
-                <NuxtLink
-                    :to="withRedirect('/auth/signup', signupRedirect)"
-                    class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
-                >
-                    Sign up
-                </NuxtLink>
-            </p>
-
-            <p
-                v-else
+                v-if="isStaffPortal"
                 class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
             >
                 Unable to sign in? Contact your branch manager.
