@@ -112,19 +112,19 @@
                                 <p
                                     class="text-[10px] font-semibold uppercase tracking-wider text-primary-600/80 dark:text-primary-300/80"
                                 >
-                                    Active Homecare
+                                    Patients
                                 </p>
 
                                 <p
                                     class="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-secondary dark:text-white"
                                 >
-                                    {{ dashboard.contracts.active_patient }}
+                                    {{ dashboard.contracts.total_patients }}
                                 </p>
                             </div>
                             <div
                                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-700 text-white shadow-md shadow-primary-500/30"
                             >
-                                <Home class="h-4 w-4" />
+                                <Users class="h-4 w-4" />
                             </div>
                         </div>
 
@@ -132,7 +132,7 @@
                             <span
                                 class="rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:text-primary-300"
                             >
-                                Pending or ongoing visits
+                                All patients
                             </span>
                         </div>
                     </div>
@@ -759,7 +759,7 @@ interface DashboardOverview {
         patient_with_plan: number;
         new_monthy_patients: number;
         patient_retention: string;
-        active_patient: number;
+        total_patients: number;
         caregivers: number;
         scheduled_visits: number;
         homecare_retention: string;
@@ -785,7 +785,7 @@ const emptyContracts = () => ({
     patient_with_plan: 0,
     new_monthy_patients: 0,
     patient_retention: "—",
-    active_patient: 0,
+    total_patients: 0,
     caregivers: 0,
     scheduled_visits: 0,
     homecare_retention: "—",
@@ -973,7 +973,7 @@ const fetchDashboard = async () => {
                 new_monthy_patients:
                     Number(data.contracts?.new_monthy_patients) || 0,
                 patient_retention: data.contracts?.patient_retention ?? "—",
-                active_patient: Number(data.contracts?.active_patient) || 0,
+                total_patients: Number(data.contracts?.total_patients) || 0,
                 caregivers: Number(data.contracts?.caregivers) || 0,
                 scheduled_visits: Number(data.contracts?.scheduled_visits) || 0,
                 homecare_retention: data.contracts?.homecare_retention ?? "—",

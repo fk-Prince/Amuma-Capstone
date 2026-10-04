@@ -65,12 +65,8 @@
                         <p
                             class="hidden sm:block text-xs text-muted pb-4 shrink-0 dark:text-gray-400"
                         >
-                            {{
-                                activeTab === "homecare"
-                                    ? overview.active_patient
-                                    : overview.patient_with_plan
-                            }}
-                            patients enrolled
+                            {{ overview.total_patients }}
+                            patients
                         </p>
                     </div>
 
@@ -83,7 +79,6 @@
                         >
                             <div class="w-1/2 shrink-0 p-6">
                                 <HomecarePlan
-                                    :active_patient="overview.active_patient"
                                     :caregivers="overview.caregivers"
                                     :scheduled_visits="
                                         overview.scheduled_visits
@@ -241,7 +236,7 @@ function closeModal() {
 }
 
 const overview = ref({
-    active_patient: "0",
+    total_patients: "0",
     caregivers: "0",
     scheduled_visits: "0",
     homecare_retention: "0%",

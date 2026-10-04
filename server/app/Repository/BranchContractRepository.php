@@ -53,17 +53,11 @@ class BranchContractRepository
         $branchPatients = fn($query) => $query->where('branch_id', $branchId);
 
         // ---- Homecare -------------------------------------------------
-        $activeHomecarePatients = Schedule::query()
-            ->whereHas('patient', $branchPatients)
-            ->where('category', 'Homecare')
-            ->whereIn('status', [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING])
-            ->distinct('patient_id')
-            ->count('patient_id');
+        $totalPatients = Patient::where('branch_id', $branchId)->count();
 
         $caregivers = Employee::query()
             ->whereHas('employeeBranch', function ($query) use ($branchId) {
                 $query->where('branch_id', $branchId)
-                    ->where('status', EmployeeBranch::STATUS_ACTIVE)
                     ->where('role_name', 'caregiver');
             })
             ->count();
@@ -97,11 +91,7 @@ class BranchContractRepository
 
         $patientsWithPlan = PatientAdmission::query()
             ->whereHas('patient', $branchPatients)
-            ->whereIn('status', [
-                PatientAdmission::STATUS_ADMITTED,
-                PatientAdmission::STATUS_WAITING,
-            ])
-            ->whereHas('periods', fn($query) => $query->whereNotNull('branch_contract_id'))
+            ->where('status', PatientAdmission::STATUS_ADMITTED)
             ->distinct('patient_id')
             ->count('patient_id');
 
@@ -122,7 +112,7 @@ class BranchContractRepository
                 $now
             ),
 
-            'active_patient' => $activeHomecarePatients,
+            'total_patients' => $totalPatients,
             'caregivers' => $caregivers,
             'scheduled_visits' => $scheduledVisits,
             'homecare_retention' => $this->retentionRate(

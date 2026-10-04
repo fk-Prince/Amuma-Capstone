@@ -7,18 +7,18 @@
                 <div
                     class="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                 >
-                    <HomeIcon class="w-3.5 h-3.5 text-primary" />
+                    <LayoutDashboard class="w-3.5 h-3.5 text-primary" />
                 </div>
                 <p class="text-sm font-semibold text-secondary dark:text-white">
-                    Homecare Overview
+                    Overview
                 </p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
-                    title="Active Patients"
-                    :value="overview.active_patient"
-                    subtitle="Homecare patients"
+                    title="Patients"
+                    :value="overview.total_patients"
+                    subtitle="All patients"
                     :icon="Users"
                     tone="primary"
                     :loading="loading"
@@ -27,7 +27,7 @@
                 <StatCard
                     title="Caregivers"
                     :value="overview.caregivers"
-                    subtitle="Available caregivers"
+                    subtitle="All caregivers"
                     :icon="HeartHandshake"
                     tone="accent"
                     :loading="loading"
@@ -41,39 +41,20 @@
                     tone="secondary"
                     :loading="loading"
                 />
-            </div>
-        </div>
 
-        <div class="h-px bg-muted-light dark:bg-white/10" />
-
-        <div class="p-5 md:p-6">
-            <div class="flex items-center gap-2 mb-4">
-                <div
-                    class="w-7 h-7 rounded-lg bg-accent-50 flex items-center justify-center dark:bg-accent-500/15"
-                >
-                    <Building2
-                        class="w-3.5 h-3.5 text-accent-600 dark:text-accent-300"
-                    />
-                </div>
-                <p class="text-sm font-semibold text-secondary dark:text-white">
-                    Facility Overview
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard
                     title="Active Plans"
                     :value="overview.total_active_plans"
-                    subtitle="Facility plans"
+                    subtitle="Plans"
                     :icon="ClipboardList"
                     tone="secondary"
                     :loading="loading"
                 />
 
                 <StatCard
-                    title="Patients with Plan"
+                    title="Patients Admitted"
                     :value="overview.patient_with_plan"
-                    subtitle="Facility enrollment"
+                    subtitle="Admitted to facility"
                     :icon="Users"
                     tone="primary"
                     :loading="loading"
@@ -146,6 +127,7 @@ import {
     FileText,
     HeartHandshake,
     HomeIcon,
+    LayoutDashboard,
     Lock,
     Stethoscope,
     UserPlus,
@@ -164,7 +146,7 @@ type ActionType =
     | "diagnosis-cases";
 
 interface Overview {
-    active_patient: string;
+    total_patients: string;
     caregivers: string;
     scheduled_visits: string;
     homecare_retention: string;
