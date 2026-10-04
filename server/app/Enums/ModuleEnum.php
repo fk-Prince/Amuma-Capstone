@@ -21,6 +21,7 @@ enum ModuleEnum: string
         return match ($this) {
             self::Bookings => [
                 PermissionAction::Read,
+                PermissionAction::Create,
                 PermissionAction::Update,
             ],
             self::Patients => [

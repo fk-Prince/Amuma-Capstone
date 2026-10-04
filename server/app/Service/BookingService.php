@@ -6,6 +6,8 @@ use App\Factories\BookingFactory;
 use App\Factories\PaymentFactory;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
+use App\Models\Patient;
+use App\Models\PatientAccess;
 use App\Models\User;
 use App\Repository\BookingRepository;
 use App\Service\Booking\BookingHelper;
@@ -298,6 +300,93 @@ class BookingService
         });
     }
     //USED
+    // A homecare service booked by staff for a new patient and guardian.
+    public function createStaffHomecareBooking(User $staff, array $payload)
+    {
+        $branch = $payload['branch'];
+
+        if (!$branch->hasHomecareSubscription()) {
+            throw new Exception('This branch has no Homecare Service subscription.', 422);
+        }
+
+        $data = validator($payload, [
+            'patient' => ['required', 'array'],
+            'patient.first_name' => ['required', 'string', 'max:100'],
+            'patient.middle_name' => ['nullable', 'string', 'max:100'],
+            'patient.last_name' => ['required', 'string', 'max:100'],
+            'patient.gender' => ['required', 'string', 'max:20'],
+            'patient.date_of_birth' => ['required', 'date', 'before:today'],
+            'patient.address' => ['required', 'string', 'max:255'],
+            'patient.phone_number' => ['nullable', 'string', 'max:30'],
+            'guardian' => ['required', 'array'],
+            'guardian.first_name' => ['required', 'string', 'max:100'],
+            'guardian.middle_name' => ['nullable', 'string', 'max:100'],
+            'guardian.last_name' => ['required', 'string', 'max:100'],
+            'guardian.email' => ['required', 'email', 'max:255'],
+            'guardian.phone_number' => ['required', 'string', 'max:30'],
+            'guardian.relationship' => ['required', 'string', 'max:50'],
+            'type' => ['required', 'in:' . Booking::TYPE_ADL . ',' . Booking::TYPE_MEDICAL],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'prefered_time' => ['required', 'string', 'max:10'],
+            'time_span' => ['nullable'],
+            'address' => ['required', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric'],
+            'longitude' => ['nullable', 'numeric'],
+            'services' => ['nullable', 'array'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'rate' => ['nullable', 'numeric', 'min:0'],
+            'diagnoses' => ['nullable', 'array'],
+            'assessment' => ['nullable', 'array'],
+        ])->validate();
+
+        // Only the keys named above survive validation, so the full patient,
+        // guardian, diagnosis and assessment forms are taken from the payload.
+        $patient = $this->bookingHelper->resolvePatient($payload['patient']);
+        $guardian = $payload['guardian'];
+        $assessments = $payload['assessment'] ?? [];
+
+        $owner = User::where('email', $data['guardian']['email'])->first();
+
+        $bookingData = [
+            'patient' => $patient + ['middle_name' => null],
+            'guardian' => $guardian + ['middle_name' => null],
+            'homecare' => [
+                'type'          => $data['type'],
+                'date'          => $data['date'],
+                'prefered_time' => $data['prefered_time'],
+                'time_span'     => $data['time_span'] ?? null,
+                'address'       => $data['address'],
+                'latitude'      => $data['latitude'] ?? null,
+                'longitude'     => $data['longitude'] ?? null,
+                'services'      => $data['services'] ?? [],
+                'price'         => $data['type'] === Booking::TYPE_ADL ? ($data['rate'] ?? null) : null,
+            ],
+            'payment' => [
+                'total_amount' => $data['price'] ?? 0,
+            ],
+            'assessment' => array_values(array_filter(is_array($assessments) ? $assessments : [$assessments])),
+            'diagnoses' => $this->bookingHelper->resolveDiagnoses($payload['diagnoses'] ?? []),
+        ];
+
+        $booking = $this->bookingRepository->create([
+            // The family sees it in their portal; with no guardian account it stays with staff.
+            'user_id'      => $owner?->user_id ?? $staff->user_id,
+            'branch_id'    => $branch->branch_id,
+            'category'     => Booking::CATEGORY_ONLINE,
+            'booking_data' => $bookingData,
+            'status'       => Booking::STATUS_PENDING,
+            'valid_until'  => Carbon::parse($data['date'] . ' ' . $data['prefered_time']),
+            'booking_type' => Booking::BOOKINGTYPE_ONLINE,
+        ]);
+
+        $this->notificationService->notifyNewBooking($branch, $staff, $booking);
+
+        return response()->json([
+            'message' => 'Homecare booking created. It is waiting for review.',
+            'data' => new BookingResource($booking->fresh()),
+        ], 201);
+    }
+
     public function show(array $payload)
     {
         $booking = $this->bookingRepository->findByField([

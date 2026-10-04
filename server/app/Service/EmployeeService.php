@@ -229,7 +229,7 @@ class EmployeeService
 
             $image = null;
             if (!empty($payload['avatar']) && $payload['avatar'] instanceof UploadedFile) {
-                $image = SupabaseService::store($payload['avatar']);
+                $image = SupabaseService::store($payload['avatar'])['url'];
             } else {
                 $image = 'https://ui-avatars.com/api/?name=' . $initials;
             };
@@ -332,7 +332,7 @@ class EmployeeService
             $image = $employee->avatar;
 
             if (!empty($payload['avatar']) && $payload['avatar'] instanceof UploadedFile) {
-                $image = SupabaseService::store($payload['avatar']);
+                $image = SupabaseService::store($payload['avatar'])['url'];
             }
 
             // UPDATE EMPLOYEE

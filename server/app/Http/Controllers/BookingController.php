@@ -60,6 +60,9 @@ class BookingController extends Controller
                 'user' => $request->user(),
             ]);
             return $this->bookingService->accept($request->all());
+        } else if ($request->action === 'staff_homecare') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
+            return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all());
         } else if ($request->action === 'reject') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
             $request->merge([

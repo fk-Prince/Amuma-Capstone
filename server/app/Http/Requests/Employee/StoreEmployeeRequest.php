@@ -31,7 +31,15 @@ class StoreEmployeeRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'avatar' => ['nullable', 'string'],
+            'avatar' => ['nullable', function (string $attribute, mixed $value, \Closure $fail) {
+                if ($value instanceof \Illuminate\Http\UploadedFile) {
+                    if (!str_starts_with((string) $value->getMimeType(), 'image/') || $value->getSize() > 5 * 1024 * 1024) {
+                        $fail('The avatar must be an image up to 5 MB.');
+                    }
+                } elseif (!is_string($value)) {
+                    $fail('The avatar must be an image.');
+                }
+            }],
             'birth_date' => ['required', 'date'],
             'phone_number' => ['required', 'string', 'max:20', 'regex:/^9\d{2}[\s-]?\d{3}[\s-]?\d{4}$/'],
 

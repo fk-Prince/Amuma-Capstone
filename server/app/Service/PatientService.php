@@ -417,12 +417,12 @@ class PatientService
     {
         $user = $this->userRepository->createUpdateTypeUser([
             'email' => $guardian['email'],
-            'address' => $guardian['address'],
+            'address' => $guardian['address'] ?? null,
             'first_name' => $guardian['first_name'],
-            'middle_name' => $guardian['middle_name'],
+            'middle_name' => $guardian['middle_name'] ?? null,
             'last_name' => $guardian['last_name'],
             'phone_number' => $guardian['phone_number'],
-            'occupation' => $guardian['occupation'],
+            'occupation' => $guardian['occupation'] ?? null,
         ], 'client');
 
         $client = $user->client;
