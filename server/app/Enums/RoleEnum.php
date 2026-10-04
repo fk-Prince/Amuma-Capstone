@@ -14,9 +14,31 @@ enum RoleEnum: string
     public function permissions(): array
     {
         return match ($this) {
-            self::AgencyOwner, self::BranchManager => collect(ModuleEnum::cases())
+            self::AgencyOwner => collect(ModuleEnum::cases())
                 ->mapWithKeys(fn(ModuleEnum $module) => [
                     $module->value => $module->actionColumns(),
+                ])
+                ->all(),
+
+            self::BranchManager => collect(ModuleEnum::cases())
+                ->mapWithKeys(fn(ModuleEnum $module) => [
+                    $module->value => match ($module) {
+                        ModuleEnum::Admissions => [
+                            PermissionAction::Read->value,
+                            PermissionAction::ForceDischarge->value,
+                        ],
+                        ModuleEnum::Patients => [
+                            PermissionAction::Read->value,
+                            PermissionAction::Export->value,
+                        ],
+                        ModuleEnum::Contracts,
+                        ModuleEnum::RoomsAndBeds,
+                        ModuleEnum::Services,
+                        ModuleEnum::EmployeeManagement,
+                        ModuleEnum::BillingAndInvoices,
+                        ModuleEnum::BranchSettings => $module->actionColumns(),
+                        default => [PermissionAction::Read->value],
+                    },
                 ])
                 ->all(),
 
