@@ -49,22 +49,38 @@ class Review extends Model
         $ranks = array_map(fn(RoleEnum $role) => $role->value, RoleEnum::cases());
         $rank = fn(string $slug) => ($index = array_search($slug, $ranks, true)) === false ? PHP_INT_MAX : $index;
 
-        $assignment = ($user->employee?->employeeBranch ?? collect())
+        $assignments = ($user->employee?->employeeBranch ?? collect())
             ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
             ->sortBy(fn($employeeBranch) => $rank(RoleEnum::slug($employeeBranch->role_name)))
-            ->first();
+            ->values();
+
+        $assignment = $assignments->first();
 
         if (!$assignment) {
             return ['role' => 'client', 'organization' => null];
         }
 
         $role = RoleEnum::slug($assignment->role_name);
+        $isOwner = $role === RoleEnum::AgencyOwner->value;
+
+        $names = $assignments
+            ->filter(fn($employeeBranch) => RoleEnum::slug($employeeBranch->role_name) === $role)
+            ->map(fn($employeeBranch) => $isOwner
+                ? ($employeeBranch->branches?->agencies?->name ?? $employeeBranch->branches?->name)
+                : $employeeBranch->branches?->name)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $organization = $names->first();
+
+        if ($names->count() > 1) {
+            $organization .= ' +' . ($names->count() - 1) . ' more';
+        }
 
         return [
             'role' => $role,
-            'organization' => $role === RoleEnum::AgencyOwner->value
-                ? ($assignment->branches?->agencies?->name ?? $assignment->branches?->name)
-                : $assignment->branches?->name,
+            'organization' => $organization,
         ];
     }
 
