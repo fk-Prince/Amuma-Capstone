@@ -694,6 +694,66 @@
                 </div>
             </div>
 
+            <div
+                v-if="model.type === 'Pre-Admission' && !loading && roomTypes.length"
+            >
+                <div class="mb-3">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                        Accommodation Rates
+                    </h3>
+
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                        For your reference. You'll choose your accommodation and
+                        billing cycle when you arrive at the facility.
+                    </p>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div
+                        v-for="room in roomTypes"
+                        :key="room.value"
+                        class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
+                    >
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">
+                            {{ room.title }}
+                        </h4>
+
+                        <p class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400">
+                            {{ getRoomDescription(room.value) }}
+                        </p>
+
+                        <div
+                            class="mt-4 flex items-end gap-6 border-t border-slate-100 pt-4 dark:border-white/10"
+                        >
+                            <template
+                                v-for="cycle in (['Monthly', 'Yearly'] as const)"
+                                :key="cycle"
+                            >
+                                <div
+                                    v-if="getFacilityPrice(facilityList, cycle, room.value) > 0"
+                                >
+                                    <p
+                                        class="text-[10px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                    >
+                                        {{ cycle }}
+                                    </p>
+
+                                    <p
+                                        class="mt-0.5 text-lg font-bold text-primary-600 dark:text-primary-300"
+                                    >
+                                        ₱{{
+                                            formatAmount(
+                                                getFacilityPrice(facilityList, cycle, room.value),
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div v-if="model.type === 'Complete' && !loading" class="max-w-xs">
                 <DatePickerField
                     label="Admission Date"

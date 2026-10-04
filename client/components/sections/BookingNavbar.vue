@@ -1,5 +1,4 @@
 <script setup lang="ts">
- 
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import logoIcon from "~/assets/logo/logo.png";
@@ -91,13 +90,13 @@ const CONTENT_BOX = "inset-x-0 mx-auto w-[88%] max-w-[1600px]";
 
 const AUTH_BOX = "inset-x-0 mx-auto w-[94%] max-w-[1400px]";
 
- const DARK_CHROME_SOLID =
+const DARK_CHROME_SOLID =
     "dark:border-white/10 dark:bg-secondary/70 dark:backdrop-blur-xl";
 
 const DARK_CHROME_RAISED =
     "dark:border-white/10 dark:bg-[#212A3E]/60 dark:backdrop-blur-xl";
 
- const DARK_GLOW =
+const DARK_GLOW =
     "shadow-[0_10px_30px_-10px_rgba(15,23,42,0.15)] dark:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]";
 
 const INDICATOR_BLEED = 8;
@@ -158,7 +157,7 @@ const header = computed(() => {
                 .filter(Boolean)
                 .join(" ");
         case 4:
-             return [
+            return [
                 "relative mx-4 mt-4 sm:mx-6 sm:mt-6 h-[70px] flex items-center",
                 "rounded-2xl shadow-md shadow-secondary/10",
                 "transition-all duration-300 ease-out bg-secondary dark:bg-surface",
@@ -174,12 +173,11 @@ const header = computed(() => {
                 "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
             ].join(" ");
         case 6:
-            return (
-                ["relative w-full h-[90px] flex items-center bg-transparent"]
-                    //${DARK_CHROME_SOLID} border-b border-muted-light
-                    .filter(Boolean)
-                    .join(" ")
-            );
+            return [
+                "relative w-full h-[90px] flex items-center bg-white dark:bg-secondary",
+            ]
+                .filter(Boolean)
+                .join(" ");
     }
 });
 
@@ -199,8 +197,6 @@ const isActive = (to: string) => {
 };
 const isDark = useIsDark();
 
-// A page can ask for the white-on-dark navbar only while the theme is dark,
-// for a hero that turns light in light mode.
 const navTheme = computed(() =>
     route.meta.navThemeDarkOnly && !isDark.value
         ? "light"
@@ -349,7 +345,7 @@ watch(() => route.path, closeMenu);
                         />
                     </ClientOnly>
 
-                                      <NuxtLink
+                    <NuxtLink
                         v-if="authSwitch"
                         :to="authSwitch.to"
                         class="whitespace-nowrap text-sm font-semibold text-primary-300 transition-colors duration-200 hover:text-light"
@@ -358,10 +354,7 @@ watch(() => route.path, closeMenu);
                     </NuxtLink>
                 </div>
             </nav>
-            <nav
-                v-if="variant === 7"
-                class="flex h-full w-full items-center"
-            >
+            <nav v-if="variant === 7" class="flex h-full w-full items-center">
                 <NuxtLink to="/" class="shrink-0" aria-label="AMUMA home">
                     <BrandLogo
                         icon-class="h-8 w-8 sm:h-10 sm:w-10"
@@ -523,7 +516,9 @@ watch(() => route.path, closeMenu);
 
                                 <ChevronDown
                                     class="h-3.5 w-3.5 transition-transform duration-200"
-                                    :class="openMenu === i.to ? 'rotate-180' : ''"
+                                    :class="
+                                        openMenu === i.to ? 'rotate-180' : ''
+                                    "
                                 />
 
                                 <span
@@ -572,7 +567,9 @@ watch(() => route.path, closeMenu);
                                             <span class="flex min-w-0 flex-col">
                                                 <span
                                                     class="text-sm font-semibold"
-                                                    :class="dropdownTitleClass(c.to)"
+                                                    :class="
+                                                        dropdownTitleClass(c.to)
+                                                    "
                                                 >
                                                     {{ c.label }}
                                                 </span>
@@ -607,7 +604,9 @@ watch(() => route.path, closeMenu);
                     </template>
                 </div>
 
-                <div class="flex flex-1 items-center justify-end gap-4 xl:gap-6">
+                <div
+                    class="flex flex-1 items-center justify-end gap-4 xl:gap-6"
+                >
                     <template v-if="!hydrated || !user">
                         <NuxtLink
                             :to="hydrated ? '/auth/signin' : undefined"
@@ -678,7 +677,9 @@ watch(() => route.path, closeMenu);
         </nav>
 
         <ClientOnly
-            v-if="variant === 1 || variant === 2 || variant === 3 || variant === 7"
+            v-if="
+                variant === 1 || variant === 2 || variant === 3 || variant === 7
+            "
         >
             <DynamicSidebar
                 :open="mobileMenuOpen"

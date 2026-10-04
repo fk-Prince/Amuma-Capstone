@@ -5,7 +5,10 @@
         <aside
             class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary dark:border-white/10"
         >
-            <BookingProgressHeader title="Booking Progress" :progress="progress" />
+            <BookingProgressHeader
+                title="Booking Progress"
+                :progress="progress"
+            />
 
             <div class="min-h-0 flex-1 overflow-y-auto px-4 py-5">
                 <BookingSteps
@@ -134,6 +137,19 @@
                                     and accepted.
                                 </span>
                             </div>
+
+                            <div
+                                class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
+                            >
+                                <CircleAlert
+                                    class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                                />
+
+                                <span>
+                                    You are unable to cancel once the booking
+                                    is made.
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -165,7 +181,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from "vue";
-import { BellRing, ShieldCheck } from "lucide-vue-next";
+import { BellRing, CircleAlert, ShieldCheck } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import ReviewSection from "~/components/sections/booking/provider/ReviewSection.vue";
@@ -182,7 +198,7 @@ import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Review Booking" });
 definePageMeta({
-    navVariant: 4,
+    navVariant: 6,
     navTheme: "light",
     middleware: [
         "auth-client",

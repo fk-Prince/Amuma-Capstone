@@ -294,7 +294,10 @@
                     <DiagnosisForm
                         :model="diagnosisData"
                         :charges="branch?.diagnosis_case_prices"
-                        :charge-notice="!!branch?.facility?.length"
+                        :charge-notice="
+                            category === 'facility' &&
+                            !!branch?.facility?.length
+                        "
                         :errors="assessmentErrors"
                         @update:model="
                             diagnosisData.splice(
@@ -407,7 +410,7 @@ import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Patient Details" });
 definePageMeta({
-    navVariant: 4,
+    navVariant: 6,
     navTheme: "light",
     middleware: ["auth-client", "prevent-staff-booking", "provider-guard"],
 });

@@ -13,8 +13,6 @@ import Notification from "../ui/Notification.vue";
 
 const user = useAuthUser();
 
-// Notifications exist for staff and owners, and for a client once they have a
-// booking or a patient. A brand-new client has nothing to be notified about.
 const showNotifications = computed(() => {
     const current = user.value;
 
@@ -48,7 +46,12 @@ onUnmounted(() => {
 type NavChild = { label: string; to: string; icon?: any; description?: string };
 
 const props = defineProps<{
-    navList?: { label: string; to: string; icon?: any; children?: NavChild[] }[];
+    navList?: {
+        label: string;
+        to: string;
+        icon?: any;
+        children?: NavChild[];
+    }[];
 }>();
 
 const openMenu = ref<string | null>(null);
@@ -308,7 +311,10 @@ watch(() => route.path, closeMenu);
     <header :class="header">
         <nav
             class="relative flex justify-between items-center w-full"
-            :class="[navInner, variant === 5 || variant === 6 ? 'h-full' : 'h-[90px]']"
+            :class="[
+                navInner,
+                variant === 5 || variant === 6 ? 'h-full' : 'h-[90px]',
+            ]"
         >
             <nav
                 v-if="variant === 5"
@@ -406,7 +412,9 @@ watch(() => route.path, closeMenu);
 
                                 <ChevronDown
                                     class="h-3.5 w-3.5 transition-transform duration-200"
-                                    :class="openMenu === i.to ? 'rotate-180' : ''"
+                                    :class="
+                                        openMenu === i.to ? 'rotate-180' : ''
+                                    "
                                 />
 
                                 <span
@@ -455,7 +463,9 @@ watch(() => route.path, closeMenu);
                                             <span class="flex min-w-0 flex-col">
                                                 <span
                                                     class="text-sm font-semibold"
-                                                    :class="dropdownTitleClass(c.to)"
+                                                    :class="
+                                                        dropdownTitleClass(c.to)
+                                                    "
                                                 >
                                                     {{ c.label }}
                                                 </span>
@@ -490,7 +500,9 @@ watch(() => route.path, closeMenu);
                     </template>
                 </div>
 
-                <div class="flex flex-1 items-center justify-end gap-4 xl:gap-6">
+                <div
+                    class="flex flex-1 items-center justify-end gap-4 xl:gap-6"
+                >
                     <template v-if="!hydrated || !user">
                         <NuxtLink
                             :to="hydrated ? '/auth/signin' : undefined"
