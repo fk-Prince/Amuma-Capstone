@@ -79,6 +79,14 @@ const portals = [
             ></div>
         </div>
 
+        <NuxtLink
+            to="/"
+            aria-label="AMUMA home"
+            class="absolute left-6 top-6 z-10 sm:left-10"
+        >
+            <BrandLogo icon-only icon-class="h-10 w-10" />
+        </NuxtLink>
+
         <div
             class="relative z-10 flex w-full max-w-[920px] flex-col items-center text-center"
         >
