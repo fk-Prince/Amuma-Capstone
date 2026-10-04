@@ -229,7 +229,7 @@
             >
                 <div
                     v-if="composerOpen"
-                    class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+                    class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
                     @click.self="composerOpen = false"
                 >
                     <Transition
@@ -243,7 +243,7 @@
                     >
                         <div
                             v-if="composerOpen"
-                            class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl dark:bg-secondary"
+                            class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
                         >
                             <div
                                 class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-white/10"
