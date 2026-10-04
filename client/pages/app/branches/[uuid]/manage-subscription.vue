@@ -397,7 +397,7 @@ useHead({ title: "Manage Subscription" });
 
 const route = useRoute();
 const { error } = useToast();
-const { canCreate, canUpdate, canRenew } = usePermissions();
+const { canCreate, canUpdate } = usePermissions();
 
 const canResubmit = computed(() => canUpdate(Modules.ManageSubscription));
 const canAddBranch = computed(() => canCreate(Modules.ManageSubscription));
@@ -829,7 +829,7 @@ const subscriptionPlan = ref<any>(null);
 
 const renewalAvailable = computed(
     () =>
-        canRenew(Modules.BranchSettings) &&
+        canUpdate(Modules.ManageSubscription) &&
         Boolean(
             renewalSummary.value?.can_renew ||
             renewalSummary.value?.can_upgrade ||

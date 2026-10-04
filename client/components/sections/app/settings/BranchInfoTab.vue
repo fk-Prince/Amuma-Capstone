@@ -1,12 +1,17 @@
 <template>
     <div v-if="localValue" class="space-y-6 w-full">
-        <BranchCoverCard :uuid="branch?.uuid" :profile="localValue.image" />
+        <BranchCoverCard
+            :uuid="branch?.uuid"
+            :profile="localValue.image"
+            @select-profile="(file) => (localValue!.image = file)"
+        />
 
         <ClientOnly>
             <BranchForm
                 v-model:branch="localValue"
                 v-model:errors="errors"
                 lock-verification
+                hide-image
             />
         </ClientOnly>
 

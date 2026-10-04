@@ -44,9 +44,6 @@ export const usePermissions = () => {
     const canForceDischarge = (module_name: string) =>
         can(module_name, PermissionAction.ForceDischarge);
 
-    const canRenew = (module_name: string) =>
-        can(module_name, PermissionAction.Renew);
-
     const role = computed(() =>
         (branchStore.activeBranch?.role_name ?? "").toLowerCase(),
     );
@@ -73,7 +70,6 @@ export const usePermissions = () => {
         canAssign,
         canExport,
         canForceDischarge,
-        canRenew,
         role,
         hasRole,
         canChart,

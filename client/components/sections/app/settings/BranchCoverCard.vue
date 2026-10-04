@@ -44,7 +44,7 @@
             <input
                 ref="fileInput"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg"
                 class="hidden"
                 @change="handleFile"
             />
@@ -56,7 +56,8 @@
                 type="button"
                 class="group relative -mt-12 h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-gray-100 shadow-md dark:border-secondary dark:bg-white/10"
                 title="Change profile photo"
-                @click="goToProfileField"
+                :disabled="!canEdit"
+                @click="profileInput?.click()"
             >
                 <img
                     v-if="profileSrc"
@@ -84,10 +85,19 @@
                 </p>
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     The cover photo is the banner on your public provider page.
-                    Your profile photo is the square logo on top of it. JPG, PNG
-                    or WebP, up to 5MB.
+                    Your profile photo is the square logo on top of it; click it
+                    to choose one, then press Save Changes. JPG, PNG or JPEG,
+                    up to 5MB.
                 </p>
             </div>
+
+            <input
+                ref="profileInput"
+                type="file"
+                accept="image/png,image/jpeg"
+                class="hidden"
+                @change="handleProfile"
+            />
         </div>
 
         <p
@@ -119,6 +129,12 @@ const props = defineProps<{
     profile?: File | string | null;
 }>();
 
+const emit = defineEmits<{
+    (e: "select-profile", file: File): void;
+}>();
+
+const profileInput = ref<HTMLInputElement | null>(null);
+
 const { success, error } = useToast();
 const { canCreate } = usePermissions();
 const canEdit = computed(() => canCreate(Modules.BranchSettings));
@@ -132,7 +148,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const profileSrc = computed(() => getBranchImage(props.profile));
 
 const MAX_SIZE = 5 * 1024 * 1024;
-const ALLOWED = ["image/png", "image/jpeg", "image/webp"];
+const ALLOWED = ["image/png", "image/jpeg"];
 
 const fetchCover = async () => {
     if (!props.uuid) return;
@@ -167,7 +183,7 @@ const handleFile = async (event: Event) => {
     uploadError.value = "";
 
     if (!ALLOWED.includes(file.type)) {
-        uploadError.value = "Only JPG, PNG or WebP images are allowed.";
+        uploadError.value = "Only JPG, PNG or JPEG images are allowed.";
         return;
     }
 
@@ -198,12 +214,29 @@ const handleFile = async (event: Event) => {
     }
 };
 
-// The profile photo is edited in the "Branch Image" field of the form below,
-// which is saved together with the rest of the branch information.
-const goToProfileField = () => {
-    document
-        .querySelector('[data-field="branch_image"]')
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+// The profile photo is the branch image; it is saved together with the rest
+// of the branch information.
+const handleProfile = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    input.value = "";
+
+    if (!file) return;
+
+    uploadError.value = "";
+
+    if (!ALLOWED.includes(file.type)) {
+        uploadError.value = "Only JPG, PNG or JPEG images are allowed.";
+        return;
+    }
+
+    if (file.size > MAX_SIZE) {
+        uploadError.value = "The image must be 5MB or smaller.";
+        return;
+    }
+
+    emit("select-profile", file);
 };
 
 watch(() => props.uuid, fetchCover);

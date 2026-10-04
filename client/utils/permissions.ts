@@ -72,7 +72,6 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Read,
         PermissionAction.Create,
         PermissionAction.Update,
-        PermissionAction.Renew,
     ],
 };
 
@@ -205,8 +204,6 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
             "View branch details: address, opening hours, currency and policies.",
         [PermissionAction.Create]: "Upload photos of the branch and its rooms.",
         [PermissionAction.Update]: "Change those branch details.",
-        [PermissionAction.Renew]:
-            "Renew the branch's subscription and pay for it.",
     },
 };
 
@@ -215,7 +212,23 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     Partial<Record<Modules, PermissionActionKey[]>>
 > = {
     agency_owner: MODULE_ACTIONS,
-    branch_manager: MODULE_ACTIONS,
+    branch_manager: {
+        [Modules.Bookings]: [PermissionAction.Read],
+        [Modules.Schedules]: [PermissionAction.Read],
+        [Modules.Admissions]: [
+            PermissionAction.Read,
+            PermissionAction.ForceDischarge,
+        ],
+        [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
+        [Modules.Contracts]: MODULE_ACTIONS[Modules.Contracts],
+        [Modules.RoomsAndBeds]: MODULE_ACTIONS[Modules.RoomsAndBeds],
+        [Modules.Services]: MODULE_ACTIONS[Modules.Services],
+        [Modules.EmployeeManagement]: MODULE_ACTIONS[Modules.EmployeeManagement],
+        [Modules.BillingAndInvoices]:
+            MODULE_ACTIONS[Modules.BillingAndInvoices],
+        [Modules.ManageSubscription]: [PermissionAction.Read],
+        [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
+    },
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],
         [Modules.Patients]: [

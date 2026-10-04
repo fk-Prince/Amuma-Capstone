@@ -19,6 +19,9 @@ class BranchSettingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Create);
+        $request->validate([
+            'image' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ]);
         BranchGuard::mergeRequest($request, $branch);
         return $this->branchService->action($request->all());
     }

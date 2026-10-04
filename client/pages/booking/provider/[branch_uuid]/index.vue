@@ -10,7 +10,7 @@
 
         <!-- Tabs -->
         <div
-            class="mt-5 flex overflow-x-auto border-b border-gray-200 dark:border-white/10"
+            class="mt-5 flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-b border-gray-200 dark:border-white/10"
         >
             <button
                 v-for="tab in tabs"

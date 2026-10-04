@@ -67,7 +67,6 @@ enum ModuleEnum: string
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,
-                PermissionAction::Renew,
             ],
         };
     }

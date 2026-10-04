@@ -174,7 +174,7 @@ class SubscriptionController extends Controller
     public function renew(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->makeRenewal($request->all(), $request->user());
     }
@@ -182,7 +182,7 @@ class SubscriptionController extends Controller
     public function applyUpgrade(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->applyPendingPlan($request->all());
     }
@@ -190,7 +190,7 @@ class SubscriptionController extends Controller
     public function cancelPendingPlan(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->cancelPendingPlan($request->all());
     }
@@ -198,7 +198,7 @@ class SubscriptionController extends Controller
     public function cancelTest(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::BranchSettings,  PermissionAction::Renew);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->subscriptionService->cancelTest($request->all());
     }

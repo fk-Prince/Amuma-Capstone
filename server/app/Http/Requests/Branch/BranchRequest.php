@@ -47,7 +47,7 @@ class BranchRequest extends FormRequest
                 'nullable',
                 Rule::when(
                     $this->hasFile('image'),
-                    ['file', 'image', 'max:5120'],
+                    ['file', 'mimes:jpg,jpeg,png', 'max:5120'],
                     ['string']
                 ),
             ],

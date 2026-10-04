@@ -7,7 +7,10 @@
                 :icon="isNew ? Store : undefined"
             />
 
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-8">
+            <div
+                class="grid grid-cols-1 gap-8"
+                :class="{ 'lg:grid-cols-[1fr_220px]': !hideImage }"
+            >
                 <div class="space-y-5">
                     <LabelInput
                         v-model="branch.name"
@@ -52,7 +55,11 @@
                     />
                 </div>
 
-                <div class="space-y-2" data-field="branch_image">
+                <div
+                    v-if="!hideImage"
+                    class="space-y-2"
+                    data-field="branch_image"
+                >
                     <div class="flex items-center justify-between">
                         <label
                             class="text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -92,7 +99,7 @@
 
                             <p class="text-sm font-medium">Upload Image</p>
 
-                            <span class="text-xs"> PNG, JPG up to 5MB </span>
+                            <span class="text-xs"> PNG, JPG, JPEG up to 5MB </span>
                         </div>
 
                         <div
@@ -104,7 +111,7 @@
                     <input
                         ref="branchImageInput"
                         type="file"
-                        accept="image/*"
+                        accept="image/png,image/jpeg"
                         class="hidden"
                         @change="handleBranchImage"
                     />
@@ -388,6 +395,7 @@ const props = defineProps<{
     errors?: Record<string, string> | null;
     mode?: "new" | "edit";
     lockVerification?: boolean;
+    hideImage?: boolean;
 }>();
 
 const isNew = computed(() => props.mode === "new");

@@ -183,15 +183,10 @@ const images = computed<BranchImage[]>(() => {
     return [...primary, ...cover, ...(props.branch?.images ?? [])];
 });
 
-// Profile photo = the branch image. Banner = the dedicated cover photo, and for
-// branches that haven't set one yet, their first gallery photo (then a gradient).
+// Profile photo = the branch image. Banner = the latest cover-type photo only
+// (a gradient when the branch hasn't set one).
 const logoImage = computed(() => props.branch?.image ?? null);
-const coverImage = computed(
-    () =>
-        props.branch?.cover_image ??
-        props.branch?.images?.[0]?.image_url ??
-        null,
-);
+const coverImage = computed(() => props.branch?.cover_image ?? null);
 
 const isTopRated = computed(
     () =>
