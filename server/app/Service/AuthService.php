@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Enums\PortalEnum;
 use App\Models\User;
 use App\Repository\UserRepository;
 use Exception;
@@ -41,6 +42,12 @@ class AuthService
 
         if (!Hash::check($payload['password'], $user->password)) {
             throw new Exception(__('Incorrect credentials'), 401);
+        }
+
+        $portal = PortalEnum::from($payload['portal']);
+
+        if (!$portal->allows($user)) {
+            throw new Exception($portal->mismatchMessage(), 403);
         }
 
         Auth::login($user);

@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\PortalEnum;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SigninRequest extends FormRequest
 {
@@ -26,6 +28,7 @@ class SigninRequest extends FormRequest
             'email' => ['required_without:employee_code', 'nullable', 'email'],
             'employee_code' => ['required_without:email', 'nullable', 'string', 'max:50'],
             'password' => ['required'],
+            'portal' => ['required', Rule::enum(PortalEnum::class)],
         ];
     }
 }

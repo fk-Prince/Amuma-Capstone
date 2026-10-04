@@ -1,9 +1,12 @@
 import type { Location } from "./location";
 
+export type SigninPortal = "staff" | "client" | "checkout";
+
 export interface SigninRequest {
     email?: string;
     employee_code?: string;
     password: string;
+    portal: SigninPortal;
 }
 
 export interface ForgotPasswordRequest {

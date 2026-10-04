@@ -8,11 +8,10 @@ import TermsModal from "../ui/TermsModal.vue";
 import {
     useAuthUser,
     useAuthReady,
-    resetAuth,
 } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
-import type { SigninRequest } from "~/types/auth.js";
+import type { SigninPortal, SigninRequest } from "~/types/auth.js";
 import { useBranchStore } from "#imports";
 
 const props = defineProps<{
@@ -38,22 +37,33 @@ const signinData = ref({
 
 const isStaffPortal = computed(() => props.portal === "staff");
 
+const signupRedirect = computed(
+    () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
+);
+
+// Checking out a plan is open to any valid account (a brand-new sign-up
+// included), so it signs in as "checkout". The server decides whether the
+// account fits the portal it is signing in to.
+const signinPortal = computed<SigninPortal>(() => {
+    if (isSubscribeFlowPath(signupRedirect.value)) return "checkout";
+
+    return isStaffPortal.value ? "staff" : "client";
+});
+
 function buildCredentials(): SigninRequest {
     const identifier = signinData.value.email.trim();
+    const portal = signinPortal.value;
 
     if (isStaffPortal.value && !identifier.includes("@")) {
         return {
             employee_code: identifier.toUpperCase(),
             password: signinData.value.password,
+            portal,
         };
     }
 
-    return { email: identifier, password: signinData.value.password };
+    return { email: identifier, password: signinData.value.password, portal };
 }
-
-const signupRedirect = computed(
-    () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
-);
 
 const showPassword = ref(false);
 const loading = ref(false);
@@ -83,12 +93,6 @@ const borderClass = (error: string) =>
         ? "border-danger focus:border-danger focus:ring-danger/30"
         : "border-slate-200 dark:border-white/10";
 
-function portalMismatchMessage() {
-    return props.portal === "staff"
-        ? "This account isn't a staff account. Please use the Client Portal to sign in."
-        : "This account isn't a client account. Please use the Staff Portal to sign in.";
-}
-
 async function handleSignIn() {
     errors.value = {
         email: "",
@@ -106,28 +110,6 @@ async function handleSignIn() {
 
     try {
         const res = await authService.login(buildCredentials());
-
-        const isStaffAccount = !!res.user?.isEmployee;
-        // Platform admins sign in through the client portal, not the staff one.
-        const isFamilyAccount =
-            !!res.user?.isClient || !!res.user?.isSystemOwner;
-
-        const subscribing = isSubscribeFlowPath(
-            safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
-        );
-
-        const matchesPortal = subscribing
-            ? isStaffAccount || isFamilyAccount
-            : props.portal === "staff"
-              ? isStaffAccount
-              : isFamilyAccount;
-
-        if (!matchesPortal) {
-            await authService.logout().catch(() => {});
-            resetAuth();
-            showAlert(alert, "error", portalMismatchMessage(), 0);
-            return;
-        }
 
         showAlert(alert, "success", res.message);
         welcomeName.value = res.user?.first_name ?? "";
