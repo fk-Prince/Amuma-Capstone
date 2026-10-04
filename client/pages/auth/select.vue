@@ -8,6 +8,7 @@
 import PortalSelectSection from "~/components/sections/auth/PortalSelectSection.vue";
 
 definePageMeta({
+    middleware: "auth-client",
     navVariant: 5,
     footer: false,
 });

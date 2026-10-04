@@ -243,7 +243,7 @@
                     >
                         <div
                             v-if="composerOpen"
-                            class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-lg sm:rounded-2xl dark:bg-secondary"
+                            class="w-full overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl dark:bg-secondary"
                         >
                             <div
                                 class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5 dark:border-white/10"
@@ -298,7 +298,7 @@
                             </div>
 
                             <div
-                                class="max-h-[70dvh] overflow-y-auto p-2.5 overscroll-contain sm:max-h-[24rem]"
+                                class="max-h-[70dvh] overflow-y-auto p-2.5 overscroll-contain sm:max-h-[min(32rem,60dvh)]"
                             >
                                 <p
                                     v-if="

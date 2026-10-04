@@ -117,6 +117,7 @@
     </header>
 
     <BranchSelectModal />
+
 </template>
 
 <script setup lang="ts">

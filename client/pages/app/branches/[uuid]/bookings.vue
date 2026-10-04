@@ -32,26 +32,54 @@
                                     @update:dateTo="dateTo = $event"
                                 />
 
-                                <button
-                                    type="button"
-                                    class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
-                                    :aria-label="
-                                        showOverview
-                                            ? 'Hide booking overview'
-                                            : 'Show booking overview'
-                                    "
-                                    :aria-pressed="showOverview"
-                                    @click="showOverview = !showOverview"
-                                >
-                                    <component
-                                        :is="
+                                <div class="ml-auto flex shrink-0 items-center gap-2">
+                                    <button
+                                        type="button"
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                                        aria-label="Refresh bookings"
+                                        :disabled="isFetching || isLoading"
+                                        @click="fetchBookings()"
+                                    >
+                                        <RefreshCw
+                                            class="h-4 w-4"
+                                            :class="{
+                                                'animate-spin':
+                                                    isFetching || isLoading,
+                                            }"
+                                        />
+                                    </button>
+
+                                    <button
+                                        v-if="showHomecareBooking"
+                                        type="button"
+                                        class="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+                                        @click="homecareBookingOpen = true"
+                                    >
+                                        <Plus class="h-4 w-4" />
+                                        Homecare Booking
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                                        :aria-label="
                                             showOverview
-                                                ? PanelRightClose
-                                                : PanelRightOpen
+                                                ? 'Hide booking overview'
+                                                : 'Show booking overview'
                                         "
-                                        class="h-4 w-4"
-                                    />
-                                </button>
+                                        :aria-pressed="showOverview"
+                                        @click="showOverview = !showOverview"
+                                    >
+                                        <component
+                                            :is="
+                                                showOverview
+                                                    ? PanelRightClose
+                                                    : PanelRightOpen
+                                            "
+                                            class="h-4 w-4"
+                                        />
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -691,6 +719,13 @@
             :require-admission-date="false"
         />
 
+        <StaffHomecareBookingModal
+            :open="homecareBookingOpen"
+            :branch-uuid="branch_uuid"
+            @close="homecareBookingOpen = false"
+            @booked="onHomecareBooked"
+        />
+
         <RejectBookingModal
             v-if="rejectTarget"
             :reference-id="rejectTarget.reference_id"
@@ -705,11 +740,20 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { PanelRightClose, PanelRightOpen, X } from "lucide-vue-next";
+import {
+    PanelRightClose,
+    PanelRightOpen,
+    Plus,
+    RefreshCw,
+    X,
+} from "lucide-vue-next";
 import { bookingService } from "~/api/booking/BookingService";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
 import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
+import StaffHomecareBookingModal from "~/components/sections/app/Booking/StaffHomecareBookingModal.vue";
+import { Modules } from "~/types/module";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 import RejectBookingModal from "~/components/sections/app/Booking/RejectBookingModal.vue";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import DataTable from "~/components/ui/DataTable.vue";
@@ -773,6 +817,59 @@ const {
 } = useBookingList(branch_uuid);
 
 const isSubmitting = ref(false);
+
+// Only for a branch on a Homecare Services or Hybrid plan, and for staff who
+// can create bookings.
+const { hasHomecarePlan } = useBranchPlan();
+const { canCreate } = usePermissions();
+
+const showHomecareBooking = computed(
+    () => hasHomecarePlan.value && canCreate(Modules.Bookings),
+);
+
+const homecareBookingOpen = ref(false);
+
+function onHomecareBooked(booking: any) {
+    if (!booking?.reference_id) return;
+
+    const listed = (bookingData.value ?? []).some(
+        (item: any) => item.booking_id === booking.booking_id,
+    );
+
+    const matchesFilters =
+        ["all", "pending"].includes(statusFilter.value) &&
+        ["all", "homecare"].includes(typeFilter.value) &&
+        ["all", booking.homecare?.type].includes(bookingTypeFilter.value) &&
+        !searchQuery.value.trim() &&
+        pagination.currentPage.value === 1;
+
+    if (!listed && matchesFilters) {
+        bookingData.value = [booking, ...(bookingData.value ?? [])].slice(
+            0,
+            pagination.pageSize.value,
+        );
+        pagination.setTotal(pagination.totalItems.value + 1);
+    }
+
+    const counts = overview.value?.bookings;
+
+    if (counts && !listed) {
+        counts.pending_confirmation = Number(counts.pending_confirmation ?? 0) + 1;
+        counts.today = Number(counts.today ?? 0) + 1;
+        counts.recent = [
+            {
+                booking_id: booking.booking_id,
+                reference_id: booking.reference_id,
+                category: booking.category,
+                status: booking.status,
+                created_at: new Date().toISOString(),
+            },
+            ...(counts.recent ?? []),
+        ].slice(0, 5);
+    }
+
+    selectBooking(booking.reference_id);
+}
 const isApproving = ref(false);
 const isRejecting = ref(false);
 const isReviewing = computed(() => isApproving.value || isRejecting.value);

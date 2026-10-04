@@ -2,14 +2,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { authMenuList } from "~/config/authMenu";
 import { PermissionAction } from "~/utils/permissions";
-
-const AUTH_ROUTES = [
-    "/auth/select",
-    "/auth/staff/signin",
-    "/auth/client/signin",
-    "/auth/signup",
-    "/auth/forgot-password",
-];
+import { AUTH_ROUTES, authLandingPath } from "~/utils/authLanding";
 
 export default defineNuxtRouteMiddleware(async (to) => {
     const user = useAuthUser();
@@ -37,32 +30,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
         });
     }
 
-    if (isAuthenticated && isAuthRoute) {
-        if (user.value?.isClient) {
-            return navigateTo(
-                user.value.hasBooking || user.value.hasPatient
-                    ? "/portal/overview"
-                    : "/",
-            );
-        }
-
-        if (user.value?.isSystemOwner) {
-            return navigateTo("/app/owner/dashboard");
-        }
-
-        if (!branchStore.branches.length) {
-            await branchStore.fetchBranches();
-            return;
-        }
-
-        const defaultBranch = branchStore.branches[0];
-
-        return navigateTo(
-            defaultBranch?.uuid
-                ? `/app/branches/${defaultBranch.uuid}/dashboard`
-                : "/app/branches/dashboard",
-        );
-    }
+    // if (isAuthenticated && isAuthRoute) {
+    //     if (useNuxtApp().isHydrating) return;
+    //     return navigateTo(await authLandingPath());
+    // }
 
     if (to.path.startsWith("/app/branches/")) {
         const branchUuid = to.params.uuid as string;

@@ -190,14 +190,8 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Online bookings",
+        name: "Online & walk-in bookings",
         homecare: true,
-        facility: true,
-        hybrid: true,
-    },
-    {
-        name: "Walk-in bookings",
-        homecare: false,
         facility: true,
         hybrid: true,
     },

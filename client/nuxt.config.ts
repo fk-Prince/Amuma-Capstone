@@ -44,7 +44,6 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
-    // The old address of the client sign-in keeps working for saved links.
     '/auth/family/signin': { redirect: '/auth/client/signin' },
   },
 

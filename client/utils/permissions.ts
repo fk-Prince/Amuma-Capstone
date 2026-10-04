@@ -14,7 +14,11 @@ export type PermissionActionKey =
     (typeof PermissionAction)[keyof typeof PermissionAction];
 
 export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
-    [Modules.Bookings]: [PermissionAction.Read, PermissionAction.Update],
+    [Modules.Bookings]: [
+        PermissionAction.Read,
+        PermissionAction.Create,
+        PermissionAction.Update,
+    ],
     [Modules.Patients]: [
         PermissionAction.Read,
         PermissionAction.Create,
@@ -74,7 +78,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
 
 export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
     [Modules.Bookings]:
-        "Review booking requests from families and accept or decline them, turning an approved request into a visit or admission.",
+        "Review booking requests from families and accept or decline them, turning an approved request into a visit or admission, and book homecare services for patients on file.",
     [Modules.Schedules]:
         "View the visit calendar, assign nurses and caregivers to visits, and move, edit or cancel them.",
     [Modules.Admissions]:
@@ -113,6 +117,8 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     [Modules.Bookings]: {
         [PermissionAction.Read]:
             "See booking requests from families, including the service, dates and who sent them.",
+        [PermissionAction.Create]:
+            "Book a homecare service for a patient from the Homecare Booking button, which sends a request for review.",
         [PermissionAction.Update]:
             "Accept a request, which turns it into a schedule or admission and bills the family, or decline it so it never becomes one.",
     },

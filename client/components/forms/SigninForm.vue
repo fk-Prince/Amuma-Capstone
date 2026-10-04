@@ -5,7 +5,7 @@ import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
-import { useAuthUser, resetAuth } from "~/composables/useAuthUser";
+import { useAuthUser, useAuthReady, resetAuth } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
@@ -17,6 +17,7 @@ const props = defineProps<{
 
 const branch = useBranchStore();
 const user = useAuthUser();
+const authReady = useAuthReady();
 const route = useRoute();
 const redirecting = ref(false);
 const welcomeName = ref("");
@@ -140,6 +141,9 @@ async function handleSignIn() {
         setTimeout(async () => {
             loading.value = true;
             user.value = res.user;
+            // The welcome screen above already covered the wait, so the dashboard
+            // layout must not show its own "Setting things up" screen after it.
+            authReady.value = true;
 
             if (props.portal === "staff") {
                 if (res.user?.isSystemOwner) {

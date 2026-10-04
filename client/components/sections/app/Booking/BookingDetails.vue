@@ -281,11 +281,7 @@
                             <Field
                                 v-if="booking.homecare?.time_span"
                                 label="Duration"
-                                :value="
-                                    formatDuration(
-                                        Number(booking.homecare?.time_span),
-                                    )
-                                "
+                                :value="durationLabel"
                             />
 
                             <Field label="Service Address">
@@ -592,6 +588,13 @@ const isCompleteAdmission = computed(
 
 const highlightClass =
     "rounded-xl bg-[#EAF4F2] px-4 py-3 ring-1 ring-[#0E7C7B]/25 dark:bg-accent-500/10 dark:ring-accent-500/30";
+
+const durationLabel = computed(() => {
+    const hours = Number(props.booking.homecare?.time_span);
+    const label = formatDuration(hours);
+
+    return hours >= 24 ? `${label} (${hours} hrs)` : label;
+});
 
 const serviceType = computed(() => {
     if (props.booking.booking_type !== "online") {
