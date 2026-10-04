@@ -34,10 +34,12 @@
 </template>
 
 <script setup lang="ts">
+import type { Component } from "vue";
+
 defineProps<{
     title: string;
     description?: string;
-    icon?: object;
+    icon?: Component;
     required?: boolean;
 }>();
 </script>

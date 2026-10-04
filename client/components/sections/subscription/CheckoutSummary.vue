@@ -132,8 +132,8 @@
                 />
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Cancel anytime during testing.</span>
-                    If AMUMA isn't right for you, cancel within your free month
-                    from Branch Settings and we'll refund your payment in full.
+                    If AMUMA isn't right for you, cancel within your free month and
+                    we'll refund your payment in full.
                 </p>
             </div>
         </section>
@@ -186,6 +186,36 @@
                     />
 
                     <SummaryRow label="Address" :value="agencyAddress || '—'" />
+
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:justify-between gap-1 sm:gap-4 py-2.5 border-t border-slate-100 dark:border-white/10"
+                    >
+                        <span
+                            class="text-slate-500 dark:text-gray-400 text-[13px] font-semibold tracking-wide shrink-0 pt-0.5"
+                        >
+                            Documents
+                        </span>
+
+                        <div
+                            v-if="agencyDocuments.length"
+                            class="flex flex-wrap gap-2 sm:justify-end"
+                        >
+                            <DocumentLink
+                                v-for="doc in agencyDocuments"
+                                :key="doc.label"
+                                :url="doc.url"
+                                :label="doc.label"
+                                :pdf="doc.pdf"
+                            />
+                        </div>
+
+                        <span
+                            v-else
+                            class="text-slate-400 dark:text-gray-500 text-sm"
+                        >
+                            —
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -250,6 +280,36 @@
                     />
 
                     <SummaryRow label="Address" :value="branchAddress || '—'" />
+
+                    <div
+                        class="flex flex-col sm:flex-row items-start sm:justify-between gap-1 sm:gap-4 py-2.5 border-t border-slate-100 dark:border-white/10"
+                    >
+                        <span
+                            class="text-slate-500 dark:text-gray-400 text-[13px] font-semibold tracking-wide shrink-0 pt-0.5"
+                        >
+                            Documents
+                        </span>
+
+                        <div
+                            v-if="branchDocuments.length"
+                            class="flex flex-wrap gap-2 sm:justify-end"
+                        >
+                            <DocumentLink
+                                v-for="doc in branchDocuments"
+                                :key="doc.label"
+                                :url="doc.url"
+                                :label="doc.label"
+                                :pdf="doc.pdf"
+                            />
+                        </div>
+
+                        <span
+                            v-else
+                            class="text-slate-400 dark:text-gray-500 text-sm"
+                        >
+                            —
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -321,6 +381,7 @@
 import { computed } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
+import DocumentLink from "~/components/ui/DocumentLink.vue";
 import { formatCurrency } from "~/utils/currency";
 import { planTypeLabel } from "~/utils/planType";
 import { ShieldCheck } from "lucide-vue-next";
@@ -351,6 +412,38 @@ const agencyImagePrevieiw = computed(() =>
         : typeof checkout.agency.image === "string"
           ? checkout.agency.image
           : null,
+);
+
+type DocumentFile = File | string | null | undefined;
+
+function toDocument(label: string, file: DocumentFile) {
+    if (file instanceof File) {
+        return {
+            label,
+            url: URL.createObjectURL(file),
+            pdf: file.type === "application/pdf",
+        };
+    }
+
+    if (typeof file === "string" && file) {
+        return { label, url: file, pdf: file.toLowerCase().includes(".pdf") };
+    }
+
+    return null;
+}
+
+const agencyDocuments = computed(() =>
+    [
+        toDocument("ID (Front)", checkout.agency.id_front),
+        toDocument("ID (Back)", checkout.agency.id_back),
+        toDocument("Agency Document", checkout.agency.document),
+    ].filter((doc) => doc !== null),
+);
+
+const branchDocuments = computed(() =>
+    [toDocument("Branch Document", checkout.branch.document)].filter(
+        (doc) => doc !== null,
+    ),
 );
 
 const branchAddress = computed(() =>

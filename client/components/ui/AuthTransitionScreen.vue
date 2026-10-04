@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import logo from "~/assets/logo/logo.png";
+import BrandLogo from "~/components/ui/BrandLogo.vue";
+import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 
 withDefaults(
     defineProps<{

@@ -6,6 +6,7 @@ withDefaults(
         iconClass?: string;
         textClass?: string;
         gapClass?: string;
+        iconOnly?: boolean;
     }>(),
     {
         iconClass: "h-9 w-9 sm:h-10 sm:w-10",
@@ -26,6 +27,7 @@ withDefaults(
         />
 
         <span
+            v-if="!iconOnly"
             class="brand-shine font-extrabold leading-none tracking-wide"
             :class="textClass"
         >

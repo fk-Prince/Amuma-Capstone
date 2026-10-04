@@ -16,7 +16,6 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('agency_id')->nullable()->constrained('agencies', 'agency_id');
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id');
-            $table->string('branch_code')->nullable();
             $table->string('name');
             $table->string('email')->unique();
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
@@ -26,8 +25,6 @@ return new class extends Migration
             $table->string('image')->nullable(true);
             $table->string('document')->nullable();
             $table->timestamps();
-
-            $table->unique(['agency_id', 'branch_code']);
         });
     }
 

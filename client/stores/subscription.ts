@@ -27,74 +27,74 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
         selectedPlanType: DEFAULT_PLAN_TYPE,
         payment_method: "CREDIT-CARD",
 
-        // branch: {
-        //     name: "AMUMA Davao City",
-        //     contact_number: "9000000000",
-        //     image: null,
-        //     description:
-        //         "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
-        //     location: {
-        //         street: "J.P. Laurel Avenue",
-        //         city: "Davao City",
-        //         province: "Davao del Sur",
-        //         country: "Philippines",
-        //         latitude: 7.1907,
-        //         longitude: 125.4553,
-        //     },
-        //     email: "davao@amuma.com",
-        //     status: "pending",
-        //     document: "",
-        // } as Branch,
-
-        // agency: {
-        //     agency_id: undefined,
-        //     name: "AMUMA Incorporation",
-        //     description:
-        //         "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
-        //     location: {
-        //         street: "J.P. Laurel Avenue",
-        //         city: "Davao City",
-        //         province: "Davao del Sur",
-        //         country: "Philippines",
-        //         latitude: 7.1907,
-        //         longitude: 125.4553,
-        //     },
-        //     email: "info@amuma.com",
-        //     image: null,
-        //     status: "pending",
-        // } as Agency,
-
-
         branch: {
-            name: "",
-            contact_number: "",
+            name: "AMUMA Davao City",
+            contact_number: "9000000000",
             image: null,
-            description: "",
+            description:
+                "AMUMA Davao City provides compassionate and dependable caregiving services, offering personalized support for daily living, personal care, companionship, and other essential needs.",
             location: {
-                street: "",
-                city: "",
-                province: "",
-                country: "",
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
             },
-            email: "",
+            email: "davao@amuma.com",
             status: "pending",
             document: "",
         } as Branch,
 
         agency: {
             agency_id: undefined,
-            name: "",
-            description: "",
+            name: "AMUMA Incorporation",
+            description:
+                "AMUMA Incorporation is a compassionate caregiving agency providing personalized, reliable, and respectful care to individuals and families while promoting dignity, comfort, safety, and independence.",
             location: {
-                street: "",
-                city: "",
-                province: "",
-                country: "",
+                street: "J.P. Laurel Avenue",
+                city: "Davao City",
+                province: "Davao del Sur",
+                country: "Philippines",
+                latitude: 7.1907,
+                longitude: 125.4553,
             },
-            email: "",
+            email: "info@amuma.com",
             image: null,
             status: "pending",
         } as Agency,
+
+
+        // branch: {
+        //     name: "",
+        //     contact_number: "",
+        //     image: null,
+        //     description: "",
+        //     location: {
+        //         street: "",
+        //         city: "",
+        //         province: "",
+        //         country: "",
+        //     },
+        //     email: "",
+        //     status: "pending",
+        //     document: "",
+        // } as Branch,
+
+        // agency: {
+        //     agency_id: undefined,
+        //     name: "",
+        //     description: "",
+        //     location: {
+        //         street: "",
+        //         city: "",
+        //         province: "",
+        //         country: "",
+        //     },
+        //     email: "",
+        //     image: null,
+        //     status: "pending",
+        // } as Agency,
 
         settings: {
             opening: "00:00",

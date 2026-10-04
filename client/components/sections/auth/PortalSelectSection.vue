@@ -82,10 +82,6 @@ const portals = [
         <div
             class="relative z-10 flex w-full max-w-[920px] flex-col items-center text-center"
         >
-            <NuxtLink to="/" class="mb-10" aria-label="AMUMA home">
-                <BrandLogo icon-class="h-9 w-9" text-class="text-xl" />
-            </NuxtLink>
-
             <span
                 class="inline-flex items-center gap-1.5 rounded-full bg-light px-3 py-1 text-xs font-semibold text-primary dark:bg-primary-500/10 dark:text-primary-300"
             >
@@ -102,8 +98,8 @@ const portals = [
             <p
                 class="mt-3 max-w-lg text-sm leading-relaxed text-muted dark:text-gray-400"
             >
-                Choose the portal that matches your account so we can take
-                you to the right sign in.
+                Choose the portal that matches your account so we can take you
+                to the right sign in.
             </p>
 
             <div class="mt-12 grid w-full grid-cols-1 gap-6 sm:grid-cols-2">
@@ -151,7 +147,9 @@ const portals = [
                             tabindex="0"
                             class="cursor-pointer font-semibold text-primary hover:underline dark:text-primary-300"
                             @click.stop.prevent="navigateTo(portal.signup)"
-                            @keydown.enter.stop.prevent="navigateTo(portal.signup)"
+                            @keydown.enter.stop.prevent="
+                                navigateTo(portal.signup)
+                            "
                         >
                             {{ portal.signupLabel ?? "Sign up" }}
                         </span>

@@ -76,8 +76,8 @@ async function resetPassword() {
 
     if (!password.value) {
         errors.value.password = "Password is required.";
-    } else if (password.value.length < 6) {
-        errors.value.password = "Password must be at least 6 characters.";
+    } else if (password.value.length < 8) {
+        errors.value.password = "Password must be at least 8 characters.";
     }
 
     if (!confirmPassword.value) {

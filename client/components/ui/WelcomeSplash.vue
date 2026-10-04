@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { ArrowRight } from "lucide-vue-next";
+import BrandLogo from "~/components/ui/BrandLogo.vue";
 
 const props = withDefaults(
     defineProps<{

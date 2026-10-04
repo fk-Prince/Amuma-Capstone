@@ -27,7 +27,7 @@ class SignupRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', new CaseInsensitiveUnique('users', 'email')],
-            'password' => ['required', 'string', 'min:6', 'max:255'],
+            'password' => ['required', 'string', 'min:8', 'max:255'],
         ];
     }
 }

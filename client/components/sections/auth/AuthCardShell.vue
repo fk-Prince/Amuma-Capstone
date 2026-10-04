@@ -26,7 +26,7 @@ import ThemeToggle from "~/components/ui/ThemeToggle.vue";
             <!-- Minimal top bar, the same as the sign-in pages -->
             <div class="flex w-full items-center justify-between px-6 py-6 sm:px-10">
                 <NuxtLink to="/" aria-label="AMUMA home">
-                    <BrandLogo icon-class="h-8 w-8" text-class="text-lg" />
+                    <BrandLogo icon-only icon-class="h-10 w-10" />
                 </NuxtLink>
                 <ThemeToggle class="text-secondary dark:text-white" />
             </div>

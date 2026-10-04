@@ -1119,8 +1119,16 @@ const reset = () => {
 };
 
 const save = async () => {
-    saving.value = true;
     errors.value = {};
+
+    if (form.password && form.password.length < 8) {
+        errors.value = {
+            password: "Password must be at least 8 characters.",
+        };
+        return;
+    }
+
+    saving.value = true;
 
     try {
         const payload: Record<string, any> = {

@@ -157,13 +157,14 @@
                         v-if="confirmState === 'submitted'"
                         class="mt-8 flex flex-col gap-3"
                     >
-                        <NuxtLink
+                        <button
                             v-if="dashboardUrl"
-                            :to="dashboardUrl"
+                            type="button"
                             class="inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                            @click="showSplash = true"
                         >
                             View Dashboard
-                        </NuxtLink>
+                        </button>
 
                         <BaseButton
                             v-else
@@ -230,10 +231,16 @@
                 </div>
             </div>
         </div>
+        <WelcomeSplash
+            v-if="showSplash"
+            :name="authUser?.first_name"
+            @continue="enterDashboard"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
+import WelcomeSplash from "~/components/ui/WelcomeSplash.vue";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -247,7 +254,7 @@ import {
 import BaseButton from "~/components/ui/BaseButton.vue";
 import backdrop from "~/assets/logo/signinLogo2.png";
 import { useBranchStore } from "~/stores/branch";
-import { fetchAuthUser } from "~/composables/useAuthUser";
+import { fetchAuthUser, useAuthUser } from "~/composables/useAuthUser";
 import { paymentService } from "~/api/payment/PaymentService";
 
 definePageMeta({ layout: false });
@@ -256,6 +263,12 @@ useHead({ title: "Payment" });
 const route = useRoute();
 const router = useRouter();
 const branchStore = useBranchStore();
+const authUser = useAuthUser();
+const showSplash = ref(false);
+
+const enterDashboard = () => {
+    if (dashboardUrl.value) navigateTo(dashboardUrl.value);
+};
 
 const isSuccess = computed(() => route.query.status === "success");
 const reference = computed(() => route.query.ref as string | undefined);

@@ -27,7 +27,7 @@ class OtpRequest extends FormRequest
             'user.first_name' => ['required', 'string', 'max:255'],
             'user.last_name' => ['required', 'string', 'max:255'],
             'user.email' => ['required', 'email'],
-            'user.password' => ['required', 'string', 'min:6'],
+            'user.password' => ['required', 'string', 'min:8'],
             'otp_value' => ['required', 'digits:6'],
         ];
     }
@@ -43,7 +43,7 @@ class OtpRequest extends FormRequest
             'user.email.required' => __('Enter your email address.'),
             'user.email.email' => __('Enter a valid email address.'),
             'user.password.required' => __('Enter a password.'),
-            'user.password.min' => __('Password must be at least 6 characters.'),
+            'user.password.min' => __('Password must be at least 8 characters.'),
         ];
     }
 }

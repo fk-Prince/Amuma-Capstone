@@ -136,8 +136,8 @@ async function handleSignUp() {
 
     if (!signupData.value.password) {
         errors.value.password = "Password is required.";
-    } else if (signupData.value.password.length < 6) {
-        errors.value.password = "Password must be at least 6 characters.";
+    } else if (signupData.value.password.length < 8) {
+        errors.value.password = "Password must be at least 8 characters.";
     }
 
     if (!signupData.value.confirmPassword) {

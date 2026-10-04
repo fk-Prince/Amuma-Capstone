@@ -16,7 +16,7 @@ class ResetPasswordRequest extends FormRequest
         return [
             'token' => ['required', 'string'],
             'user' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 
@@ -26,7 +26,7 @@ class ResetPasswordRequest extends FormRequest
             'token.required' => __('This link has expired or has already been used.'),
             'user.required' => __('This link has expired or has already been used.'),
             'password.required' => __('Password is required.'),
-            'password.min' => __('Password must be at least 6 characters.'),
+            'password.min' => __('Password must be at least 8 characters.'),
             'password.confirmed' => __('Passwords do not match.'),
         ];
     }

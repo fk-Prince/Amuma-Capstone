@@ -16,7 +16,6 @@ class Branch extends Model
 
     protected $fillable = [
         'agency_id',
-        'branch_code',
         'name',
         'location_id',
         'description',
@@ -27,29 +26,6 @@ class Branch extends Model
         'image',
         'email'
     ];
-
-    protected static function booted()
-    {
-        static::creating(function ($branch) {
-            if ($branch->branch_code || !$branch->agency_id) {
-                return;
-            }
-
-            $letter = strtoupper(substr(
-                preg_replace('/[^A-Za-z0-9]/', '', (string) Agency::find($branch->agency_id)?->name),
-                0,
-                1
-            )) ?: 'B';
-
-            $last = self::where('agency_id', $branch->agency_id)
-                ->whereNotNull('branch_code')
-                ->pluck('branch_code')
-                ->map(fn($code) => (int) preg_replace('/\D/', '', $code))
-                ->max() ?? 0;
-
-            $branch->branch_code = $letter . ($last + 1);
-        });
-    }
 
     public function hasFacilitySubscription()
     {

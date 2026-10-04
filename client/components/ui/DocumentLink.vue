@@ -44,7 +44,8 @@
 const props = defineProps<{
     url: string;
     label: string;
+    pdf?: boolean;
 }>();
 
-const isPdf = computed(() => /\.pdf($|\?)/i.test(props.url));
+const isPdf = computed(() => props.pdf ?? /\.pdf($|\?)/i.test(props.url));
 </script>

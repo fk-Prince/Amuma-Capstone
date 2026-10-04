@@ -104,13 +104,32 @@
             </div>
 
             <template v-if="isSuccess">
-                <NuxtLink
+                <button
                     v-if="dashboardUrl"
-                    :to="dashboardUrl"
+                    type="button"
                     class="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                    @click="showSplash = true"
                 >
                     View Dashboard
-                </NuxtLink>
+                </button>
+
+                <button
+                    v-else
+                    type="button"
+                    :disabled="isPreparing"
+                    class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="prepareWorkspace"
+                >
+                    <span
+                        v-if="isPreparing"
+                        class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                    />
+                    {{
+                        isPreparing
+                            ? "Preparing your workspace..."
+                            : "Check again"
+                    }}
+                </button>
 
                 <NuxtLink
                     v-if="paymentUrl"
@@ -130,16 +149,28 @@
                 Try Again
             </NuxtLink>
         </div>
+        <WelcomeSplash
+            v-if="showSplash"
+            :name="authUser?.first_name"
+            @continue="enterDashboard"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
+import WelcomeSplash from "~/components/ui/WelcomeSplash.vue";
 import { computed, onMounted, ref } from "vue";
 import { useBranchStore } from "~/stores/branch";
-import { fetchAuthUser } from "~/composables/useAuthUser";
+import { fetchAuthUser, useAuthUser } from "~/composables/useAuthUser";
 import { subscriptionInvoiceLink } from "~/utils/subscriptionInvoice";
 
 const branchStore = useBranchStore();
+const authUser = useAuthUser();
+const showSplash = ref(false);
+
+const enterDashboard = () => {
+    if (dashboardUrl.value) navigateTo(dashboardUrl.value);
+};
 const route = useRoute();
 
 useHead({
@@ -159,16 +190,29 @@ const paymentUrl = computed(() =>
         : null,
 );
 
+const isPreparing = ref(true);
+
+// The branch is created by the payment webhook, so it can take a few seconds
+// to exist after the payment succeeds.
+async function prepareWorkspace() {
+    isPreparing.value = true;
+
+    try {
+        for (let attempt = 0; attempt < 8; attempt++) {
+            await branchStore.refreshBranch();
+
+            if (branchStore.branches?.length) break;
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+    } finally {
+        isPreparing.value = false;
+    }
+}
+
 onMounted(async () => {
     await fetchAuthUser();
-
-    for (let attempt = 0; attempt < 8; attempt++) {
-        await branchStore.refreshBranch();
-
-        if (branchStore.branches?.length) break;
-
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-    }
+    await prepareWorkspace();
 });
 
 const dashboardUrl = computed(() => {
