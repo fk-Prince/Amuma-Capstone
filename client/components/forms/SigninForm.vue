@@ -5,7 +5,11 @@ import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
-import { useAuthUser, useAuthReady, resetAuth } from "~/composables/useAuthUser";
+import {
+    useAuthUser,
+    useAuthReady,
+    resetAuth,
+} from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
 import type { SigninRequest } from "~/types/auth.js";
@@ -24,13 +28,9 @@ const welcomeName = ref("");
 const showTerms = ref(false);
 
 const welcomeTitle = computed(() =>
-    welcomeName.value
-        ? `Welcome back, ${welcomeName.value}!`
-        : "Welcome back!",
+    welcomeName.value ? `Welcome back, ${welcomeName.value}!` : "Welcome back!",
 );
 
-// Staff sign in with their employee ID; the client portal still uses email.
-// Whatever is typed here is sent as the right kind of identifier.
 const signinData = ref({
     email: "",
     password: "",
@@ -107,13 +107,11 @@ async function handleSignIn() {
     try {
         const res = await authService.login(buildCredentials());
 
-        const isStaffAccount =
-            !!res.user?.isEmployee || !!res.user?.isSystemOwner;
-        const isFamilyAccount = !!res.user?.isClient;
+        const isStaffAccount = !!res.user?.isEmployee;
+        // Platform admins sign in through the client portal, not the staff one.
+        const isFamilyAccount =
+            !!res.user?.isClient || !!res.user?.isSystemOwner;
 
-        // Checking out a plan is open to any valid account (a brand-new
-        // sign-up included), so it isn't bounced for its account type here.
-        // The checkout page still blocks staff who can't subscribe.
         const subscribing = isSubscribeFlowPath(
             safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
         );
@@ -146,23 +144,18 @@ async function handleSignIn() {
             authReady.value = true;
 
             if (props.portal === "staff") {
-                if (res.user?.isSystemOwner) {
-                    await navigateTo("/app/owner/dashboard");
-                } else if (redirectTo) {
+                if (redirectTo) {
                     await navigateTo(redirectTo);
                 } else {
-                    // Loads the staff member's branches and sends them to
-                    // their default branch dashboard (falls back below only
-                    // if they somehow have no branch assigned yet).
                     await branch.fetchBranches();
 
                     if (!branch.branches.length) {
                         await navigateTo("/app/branches/dashboard");
                     }
                 }
+            } else if (res.user?.isSystemOwner) {
+                await navigateTo(redirectTo ?? "/app/owner/dashboard");
             } else {
-                // The portal only has something to show once there is a booking
-                // or a patient, so a new client lands on the home page first.
                 const hasPortalAccess =
                     !!res.user?.hasBooking || !!res.user?.hasPatient;
 
@@ -217,7 +210,10 @@ async function googleUrl() {
 
             <div class="relative">
                 <span :class="affixClass">
-                    <IdCard v-if="isStaffPortal" class="h-[1.05rem] w-[1.05rem]" />
+                    <IdCard
+                        v-if="isStaffPortal"
+                        class="h-[1.05rem] w-[1.05rem]"
+                    />
                     <Mail v-else class="h-[1.05rem] w-[1.05rem]" />
                 </span>
 
