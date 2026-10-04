@@ -101,7 +101,7 @@ const highlights = [
                     to="/auth/signup"
                     class="mt-4 flex items-center gap-1.5 text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-gray-400 dark:hover:text-white"
                 >
-                    Looking for family access? Create a family account
+                    Looking to book care? Create a client account
                 </NuxtLink>
             </div>
         </div>
