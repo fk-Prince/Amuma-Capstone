@@ -12,17 +12,19 @@ export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
 
     const backendUrl = new URL(config.public.backendApi as string);
-    const isSecure = backendUrl.protocol === 'https:';
+    const reverbScheme = (config.public.reverbScheme as string) || backendUrl.protocol.replace(':', '');
+    const forceTLS = reverbScheme === 'https';
+    const reverbPort = Number(config.public.reverbPort) || (forceTLS ? 443 : 80);
 
     (window as any).Pusher = Pusher;
 
     const echo = new Echo({
         broadcaster: 'reverb',
-        key: 'lbcswwvuj6gh7s5cmwza',
-        wsHost: backendUrl.hostname,
-        wsPort: 8080,
-        wssPort: 9443,
-        forceTLS: isSecure,
+        key: config.public.reverbKey as string,
+        wsHost: (config.public.reverbHost as string) || backendUrl.hostname,
+        wsPort: reverbPort,
+        wssPort: reverbPort,
+        forceTLS,
         enabledTransports: ['ws', 'wss'],
         authorizer: (channel: any) => {
             return {

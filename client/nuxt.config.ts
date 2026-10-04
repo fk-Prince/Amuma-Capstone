@@ -28,6 +28,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       backendApi: '',
+      reverbKey: '',
+      reverbHost: '',
+      reverbPort: '',
+      reverbScheme: '',
       xenditPublicKey: ''
     }
   },
