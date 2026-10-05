@@ -23,7 +23,7 @@ class OtpService
         $this->userRepository = $userRepository;
     }
 
-    private const OTP_TTL_MINUTES = 5;
+    private const OTP_TTL_MINUTES = 3;
 
     public function send(array $payload)
     {

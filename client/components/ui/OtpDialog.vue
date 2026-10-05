@@ -17,7 +17,7 @@ const props = withDefaults(
         resending: false,
         error: null,
         resendCooldownSeconds: 60,
-        expiresInSeconds: 300,
+        expiresInSeconds: 180,
         codeKey: null,
     },
 );

@@ -13,6 +13,7 @@ class SubscriptionPurchasedMailer extends Mailable
         public string $planName,
         public string $branchName,
         public float $amount,
+        public ?string $planType = null,
     ) {}
 
     public function envelope(): Envelope
@@ -25,6 +26,16 @@ class SubscriptionPurchasedMailer extends Mailable
     public function content(): Content
     {
         $formattedAmount = '₱' . number_format($this->amount, 2);
+
+        $typeRow = '';
+        if ($this->planType) {
+            $typeLabel = strtolower($this->planType) === 'sme' ? 'SME' : ucfirst($this->planType);
+            $typeRow = "
+                                                    <tr>
+                                                        <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Type</td>
+                                                        <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$typeLabel}</td>
+                                                    </tr>";
+        }
 
         return new Content(
             htmlString: "
@@ -68,7 +79,7 @@ class SubscriptionPurchasedMailer extends Mailable
                                                     <tr>
                                                         <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Plan</td>
                                                         <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$this->planName}</td>
-                                                    </tr>
+                                                    </tr>{$typeRow}
                                                     <tr>
                                                         <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Amount paid</td>
                                                         <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$formattedAmount}</td>

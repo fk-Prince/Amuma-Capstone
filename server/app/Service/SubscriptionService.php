@@ -799,6 +799,7 @@ class SubscriptionService
                     planName: $plan['name'] ?? $plan['plan_code'],
                     branchName: $branchData->name,
                     amount: $totalAmount,
+                    planType: $plan['type'] ?? null,
                 ));
 
                 $this->notifyAdmins(
@@ -1355,6 +1356,7 @@ class SubscriptionService
             planName: $plan['name'] ?? $plan['plan_code'],
             branchName: $branch->name,
             amount: (float) $meta['total_amount'],
+            planType: $plan['type'] ?? null,
         ));
 
         return $this->resubmissionResponse(

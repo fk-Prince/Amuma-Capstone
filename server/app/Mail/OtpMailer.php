@@ -10,7 +10,7 @@ class OtpMailer extends Mailable
 {
     public function __construct(
         public int $otp,
-        public int $minutes = 5
+        public int $minutes = 3
     ) {}
 
     public function envelope(): Envelope
