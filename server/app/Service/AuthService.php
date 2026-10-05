@@ -164,6 +164,9 @@ class AuthService
             );
         }
 
+        Auth::login($user);
+        request()->session()->regenerate();
+
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return redirect()->away(

@@ -17,7 +17,11 @@ onMounted(async () => {
 
     try {
         const res = await authService.me();
-        user.value = res.user ?? res;
+        if (!res.user) {
+            throw new Error("No active session");
+        }
+
+        user.value = res.user;
         navigateTo(consumeAuthRedirect() ?? "/");
     } catch (err: any) {
         console.log(err);

@@ -52,7 +52,7 @@ Route::prefix('auth')->group(function () {
 
 
     Route::post('/google/url', [AuthController::class, 'google']);
-    Route::get('/google/callback', [AuthController::class, 'googleCallback']);
+    Route::get('/google/callback', [AuthController::class, 'googleCallback'])->middleware('web');
 
     Route::prefix('otp')->group(function () {
         Route::post('/send', [OtpController::class, 'send']);

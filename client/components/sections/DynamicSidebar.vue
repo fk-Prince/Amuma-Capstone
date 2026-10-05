@@ -144,6 +144,7 @@
                                             <img
                                                 v-if="user.avatar"
                                                 :src="user.avatar"
+                                                referrerpolicy="no-referrer"
                                                 alt="Profile"
                                                 class="w-full h-full object-cover"
                                             />
@@ -340,6 +341,7 @@
                                 <img
                                     v-if="user.avatar"
                                     :src="user.avatar"
+                                    referrerpolicy="no-referrer"
                                     alt="Profile"
                                     class="w-full h-full object-cover"
                                 />

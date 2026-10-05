@@ -15,6 +15,7 @@
                     <div class="relative">
                         <img
                             :src="user.avatar"
+                            referrerpolicy="no-referrer"
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
                             :class="themeAware ? 'dark:border-white/20' : ''"
                             alt="Profile"
@@ -84,6 +85,7 @@
                         <div class="relative shrink-0">
                             <img
                                 :src="user.avatar"
+                                referrerpolicy="no-referrer"
                                 class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                                 alt="Profile"
                             />
