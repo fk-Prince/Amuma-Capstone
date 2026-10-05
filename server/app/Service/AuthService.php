@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -125,7 +126,16 @@ class AuthService
         $driver->setHttpClient(new \GuzzleHttp\Client([
             'verify' => false
         ]));
-        $googleUser = $driver->stateless()->user();
+
+        try {
+            $googleUser = $driver->stateless()->user();
+        } catch (Exception $e) {
+            Log::error('Google sign-in failed: ' . $e->getMessage());
+
+            return redirect()->away(
+                config('app.client_url') . '/auth/client/signin?error=google_failed'
+            );
+        }
 
         $user = $this->userRepository->findByField('email', $googleUser->getEmail());
 
@@ -153,9 +163,6 @@ class AuthService
                 config('app.client_url') . '/auth/client/signin?error=provider_mismatch'
             );
         }
-
-        Auth::login($user);
-        request()->session()->regenerate();
 
         $token = $user->createToken('auth-token')->plainTextToken;
 

@@ -80,6 +80,7 @@ const alert = ref<Alert>({
 });
 
 const oauthErrors: Record<string, string> = {
+    google_failed: "Google sign-in failed. Please try again.",
     provider_mismatch:
         "This email is registered with email and password. Please sign in with your email and password instead.",
 };
