@@ -276,7 +276,7 @@ const team = [
     {
         name: "Gem S. Mamale",
         title: "Business Analysis & Testing",
-        blurb: "Gem grounds AMUMA in the real needs of caregiving agencies, running the requirements analysis that shapes every module. She also leads functional testing, working through each booking, billing, and admission flow to catch issues before they reach real users.",
+        blurb: "Gem grounds AMUMA in the real needs of caregiving agencies, running the requirements analysis that shapes every module. He also leads functional testing, working through each booking, billing, and admission flow to catch issues before they reach real users.",
         roles: [
             "Test Documentation",
             "Business Analysis",

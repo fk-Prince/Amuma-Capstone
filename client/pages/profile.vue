@@ -373,6 +373,7 @@
                             </section>
 
                             <section
+                                v-if="meta.provider === 'local'"
                                 class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
                             >
                                 <div>

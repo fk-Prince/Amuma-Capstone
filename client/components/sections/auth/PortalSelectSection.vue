@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import BrandLogo from "~/components/ui/BrandLogo.vue";
 import portalBg from "~/assets/images/portalselection-bg.png";
 import {
     Stethoscope,
@@ -78,14 +77,6 @@ const portals = [
                 class="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-[#EEF3FB]/70 dark:to-secondary-950/60"
             ></div>
         </div>
-
-        <NuxtLink
-            to="/"
-            aria-label="AMUMA home"
-            class="absolute left-6 top-6 z-10 sm:left-10"
-        >
-            <BrandLogo icon-only icon-class="h-10 w-10" />
-        </NuxtLink>
 
         <div
             class="relative z-10 flex w-full max-w-[920px] flex-col items-center text-center"
