@@ -32,12 +32,7 @@ const statusClasses: Record<string, string> = {
 };
 
 const methodLabel = (method: string | null) =>
-    method
-        ? method
-              .toLowerCase()
-              .replace(/[-_]/g, " ")
-              .replace(/\b\w/g, (char) => char.toUpperCase())
-        : "—";
+    method ? method.replace(/[-_]/g, " ").toUpperCase() : "—";
 
 const statusLabel = (status: string) =>
     status.charAt(0).toUpperCase() + status.slice(1);

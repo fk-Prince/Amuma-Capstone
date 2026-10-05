@@ -15,7 +15,7 @@
         >
             <div
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center"
-                :class="headerHasTitle ? 'sm:justify-between' : 'sm:justify-end'"
+                :class="headerHasTitle ? 'sm:justify-end' : 'sm:justify-between'"
             >
                 <div v-if="!headerHasTitle">
                     <h1
