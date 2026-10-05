@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->enum('billing_cycle', ['MONTHLY',  'YEARLY',   'HOURLY',])->index();
             $table->boolean('is_active')->default(true);
-            $table->string('description', 500)->nullable();
+            $table->string('description', 1000)->nullable();
             $table->timestamps();
         });
     }

@@ -31,7 +31,7 @@ class UpdateBranchContractRequest extends FormRequest
             'accommodation_type' => ['required', Rule::in(['ADL', 'VIP', 'COMMON'])],
             'price' => ['required',  'numeric',  'min:1'],
             'billing_cycle' => ['required',   Rule::in(['MONTHLY', 'YEARLY', 'OPEN', 'HOURLY'])],
-            'description' => ['nullable', 'string',  'max:500'],
+            'description' => ['nullable', 'string',  'max:1000'],
         ];
     }
 }

@@ -108,6 +108,9 @@
                                 placeholder="Describe the service, visit frequency, and caregiver support..."
                                 :error="errors.description"
                                 mode="textarea"
+                                :rows="6"
+                                :allowResize="true"
+                                :textMax="1000"
                             />
 
                             <!-- Suggestions -->

@@ -44,11 +44,7 @@ class UserService
         $employeeBranches = $employee?->employeeBranch ?? collect();
         $branchIds = $employeeBranches->pluck('branch_id')->filter()->unique()->values();
 
-        // Whoever registered an agency (an `agency_owner` row on any one of
-        // its branches) has full access to every branch under it, even ones
-        // they never personally set up — surface those branches here too,
-        // so the branch switcher and permission checks agree with what
-        // AuthGuard::requireModule already allows.
+
         $ownedAgencyIds = Branch::whereIn(
             'branch_id',
             $employeeBranches->where('role_name', RoleEnum::AgencyOwner->value)->pluck('branch_id')
@@ -57,8 +53,8 @@ class UserService
         $impliedBranchIds = $ownedAgencyIds->isEmpty()
             ? collect()
             : Branch::whereIn('agency_id', $ownedAgencyIds)
-                ->whereNotIn('branch_id', $branchIds)
-                ->pluck('branch_id');
+            ->whereNotIn('branch_id', $branchIds)
+            ->pluck('branch_id');
 
         $branchModels = $this->branchRepository->getUserBranches(
             $branchIds->merge($impliedBranchIds)->unique()->values()->all()
@@ -181,8 +177,8 @@ class UserService
                             'module_name' => $permission->modules?->module_name,
                             'actions' => $permission->grantedActions(),
                         ])
-                            ->filter(fn($permission) => $permission['actions'])
-                            ->values(),
+                        ->filter(fn($permission) => $permission['actions'])
+                        ->values(),
                 ];
             })
             ->filter()
@@ -312,17 +308,17 @@ class UserService
 
         $clientTransactions = $user->client
             ? $this->transactionRepository
-                ->forClient($user->client->client_id)
-                ->map(fn($transaction) => [
-                    'label' => Str::headline($transaction->type),
-                    'reference' => $transaction->transaction_code,
-                    'description' => $transaction->description
-                        ?: $transaction->branch?->name,
-                    'method' => $transaction->method,
-                    'amount' => (float) $transaction->amount,
-                    'status' => $transaction->status,
-                    'created_at' => $transaction->created_at?->toIso8601String(),
-                ])
+            ->forClient($user->client->client_id)
+            ->map(fn($transaction) => [
+                'label' => Str::headline($transaction->type),
+                'reference' => $transaction->transaction_code,
+                'description' => $transaction->description
+                    ?: $transaction->branch?->name,
+                'method' => $transaction->method,
+                'amount' => (float) $transaction->amount,
+                'status' => $transaction->status,
+                'created_at' => $transaction->created_at?->toIso8601String(),
+            ])
             : collect();
 
         return response()->json([
