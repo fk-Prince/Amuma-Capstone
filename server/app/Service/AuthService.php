@@ -150,9 +150,7 @@ class AuthService
             ]);
         } elseif ($user->provider !== 'google') {
             return redirect()->away(
-                config('app.client_url') . '/auth/signin?error=' . urlencode(
-                    __('This email is registered with email and password. Please sign in with your email and password instead.')
-                )
+                config('app.client_url') . '/auth/client/signin?error=provider_mismatch'
             );
         }
 

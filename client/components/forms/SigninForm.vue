@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { Eye, EyeOff, IdCard, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
@@ -77,6 +77,24 @@ const alert = ref<Alert>({
     show: false,
     type: "info",
     message: "",
+});
+
+const oauthErrors: Record<string, string> = {
+    provider_mismatch:
+        "This email is registered with email and password. Please sign in with your email and password instead.",
+};
+
+onMounted(() => {
+    const queryError = route.query.error;
+    const code = Array.isArray(queryError) ? queryError[0] : queryError;
+    if (!code) return;
+
+    const message =
+        oauthErrors[code] ?? "Unable to sign in with Google. Please try again.";
+
+    showAlert(alert, "error", message, 0);
+    const { error: _error, ...rest } = route.query;
+    navigateTo({ path: route.path, query: rest }, { replace: true });
 });
 
 const fieldClass =

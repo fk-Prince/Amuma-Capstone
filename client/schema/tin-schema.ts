@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-export const TIN_PATTERN = /^\d{3}-\d{3}-\d{3}-\d{3}$/;
+export const TIN_PATTERN = /^\d{3}-\d{3}-\d{3}-(\d{3}|\d{5})$/;
 
-export const TIN_MESSAGE = "Enter a valid 12-digit TIN (e.g. 004-512-873-000)";
+export const TIN_MESSAGE =
+    "Enter a valid 12 or 15-digit TIN (e.g. 004-512-873-000 or 004-512-873-00000)";
 
 export function formatTin(input: string) {
-    const digits = input.replace(/\D/g, "").slice(0, 12);
+    const digits = input.replace(/\D/g, "").slice(0, 15);
 
     return digits
         .replace(/^(\d{3})(\d)/, "$1-$2")
