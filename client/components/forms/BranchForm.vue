@@ -139,7 +139,7 @@
                     v-model="tin"
                     label="TIN (Taxpayer Identification Number)"
                     placeholder="000-000-000-000"
-                    :text-max="15"
+                    :text-max="17"
                     :required="!lockVerification"
                     :disabled="lockVerification"
                     :error="errors?.branch_tin"

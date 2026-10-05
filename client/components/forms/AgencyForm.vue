@@ -12,6 +12,7 @@
                     <LabelInput
                         v-model="agency.name"
                         label="Agency Name"
+                        required
                         placeholder="Enter agency name"
                         :disabled="lockVerification"
                         :error="errors?.agency_name"
@@ -22,6 +23,7 @@
                     <LabelInput
                         v-model="agency.email"
                         label="Email Address"
+                        required
                         type="email"
                         placeholder="Enter agency email address"
                         @update:modelValue="clearError('agency_email')"
@@ -32,6 +34,7 @@
                     <LabelInput
                         v-model="agency.description"
                         label="Description"
+                        required
                         mode="textarea"
                         :rows="4"
                         placeholder="Describe your agency"
@@ -639,7 +642,7 @@ const applicableIds = [
 const applicableDocuments = [
     "DTI Business Name Registration",
     "SEC Certificate of Registration",
-    "BIR Certificate of Registration (Form 2303)",
+    // "BIR Certificate of Registration (Form 2303)",
     "DOH / Home Health Agency Accreditation",
 ];
 
