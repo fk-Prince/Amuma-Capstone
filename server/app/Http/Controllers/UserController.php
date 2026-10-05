@@ -36,6 +36,11 @@ class UserController extends Controller
         return $this->userService->profile($request->user());
     }
 
+    public function payments(Request $request)
+    {
+        return $this->userService->payments($request->user());
+    }
+
     public function updateProfile(UpdateProfileRequest $request)
     {
         $data = $request->validated();

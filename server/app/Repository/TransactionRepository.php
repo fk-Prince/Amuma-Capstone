@@ -23,6 +23,16 @@ class TransactionRepository
             ->get();
     }
 
+    public function paymentsByClient(mixed $clientId)
+    {
+        return Transaction::with('branch:branch_id,name')
+            ->where('client_id', $clientId)
+            ->where('type', Transaction::TYPE_PAYMENT)
+            ->where('status', Transaction::STATUS_COMPLETED)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
     public function forBranchBetween(mixed $branchId, mixed $from, mixed $to)
     {
         return Transaction::where('branch_id', $branchId)

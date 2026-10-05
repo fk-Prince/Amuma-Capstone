@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('payment_reference_id');
             $table->string('masked_card_number', 25)->nullable();
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
+            $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
             $table->decimal('price', 10, 2);
             $table->enum('status', ['paid', 'refunded'])->default('paid');
             $table->foreignId('plan_id')->constrained('plans', 'plan_id')->nullable();

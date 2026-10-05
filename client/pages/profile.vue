@@ -14,9 +14,10 @@
             "
         >
             <div
-                class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between"
+                class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center"
+                :class="headerHasTitle ? 'sm:justify-between' : 'sm:justify-end'"
             >
-                <div>
+                <div v-if="!headerHasTitle">
                     <h1
                         class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
                     >
@@ -716,6 +717,8 @@
                             </section>
                         </div>
 
+                        <ProfilePayments v-if="activeTab === 'payments'" />
+
                         <!-- APPEARANCE -->
                         <div
                             v-show="activeTab === 'appearance'"
@@ -804,6 +807,7 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
+import ProfilePayments from "~/components/sections/profile/ProfilePayments.vue";
 import { userService } from "~/api/user/UserService";
 import { notificationService } from "~/api/notification/NotificationService";
 import { useToast } from "~/composables/useToast";
@@ -833,6 +837,10 @@ useHead({ title: "My Profile" });
 const route = useRoute();
 const router = useRouter();
 
+const headerHasTitle = computed(() =>
+    ["owner", "portal"].includes(String(route.query.from ?? "")),
+);
+
 const embedded = computed(() =>
     ["dashboard", "owner", "portal"].includes(String(route.query.from ?? "")),
 );
@@ -846,6 +854,7 @@ const useMap = ref(false);
 const tabs = [
     { label: "General", value: "profile", icon: UserRound },
     { label: "Notifications", value: "notifications", icon: Bell },
+    { label: "Payments", value: "payments", icon: CreditCard },
     { label: "Appearance", value: "appearance", icon: Sun },
 ];
 

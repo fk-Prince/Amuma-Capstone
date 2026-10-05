@@ -1152,7 +1152,11 @@
                                         <span
                                             class="inline-flex rounded-md bg-primary-50 dark:bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:text-primary-300 ring-1 ring-primary-100 dark:ring-primary-500/20"
                                         >
-                                            {{ sub.plan?.name || "—" }}
+                                            {{
+                                                sub.is_test
+                                                    ? "Free Testing"
+                                                    : sub.plan?.name || "—"
+                                            }}
                                         </span>
 
                                         <p
@@ -1265,6 +1269,7 @@ interface Subscription {
     start_date: string;
     end_date: string;
     created_at: string;
+    is_test?: boolean;
     plan?: {
         name: string;
         plan_code: string;

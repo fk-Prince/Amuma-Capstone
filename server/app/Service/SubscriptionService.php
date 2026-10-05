@@ -324,6 +324,7 @@ class SubscriptionService
 
             $payment = $subscription->payments()->create([
                 'subscription_id' => $subscription->subscription_id,
+                'user_id' => $meta['user']['user_id'] ?? null,
                 'plan_id' => $paidPlanId,
                 'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
                 'payment_reference_id' => $payload['external_id'] ?? null,
@@ -764,6 +765,7 @@ class SubscriptionService
 
                 $subscription->payments()->create([
                     'subscription_id' => $subscription->subscription_id,
+                    'user_id' => $meta['user']['user_id'] ?? null,
                     'plan_id' => $plan['plan_id'],
                     'xendit_invoice_id' => $xendit_invoice_id,
                     'payment_reference_id' => $reference_id,
@@ -1125,6 +1127,7 @@ class SubscriptionService
 
                 $subscription->payments()->create([
                     'subscription_id' => $subscription->subscription_id,
+                    'user_id' => $meta['user']['user_id'] ?? null,
                     'plan_id' => $subscription->plan_id,
                     'branch_id' => $branch->branch_id,
                     'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
@@ -1320,6 +1323,7 @@ class SubscriptionService
 
         $subscription->payments()->create([
             'subscription_id' => $subscription->subscription_id,
+            'user_id' => $meta['user']['user_id'] ?? null,
             'plan_id' => $plan['plan_id'],
             'xendit_invoice_id' => $invoiceId,
             'payment_reference_id' => $reference,

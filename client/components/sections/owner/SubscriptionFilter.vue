@@ -72,7 +72,7 @@
         </div>
 
         <Combobox
-            class="shrink-0 sm:w-44"
+            class="shrink-0 sm:w-56"
             :model-value="planFilter"
             :items="planOptions"
             placeholder="Plan"

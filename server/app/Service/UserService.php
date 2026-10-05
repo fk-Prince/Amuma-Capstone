@@ -11,6 +11,8 @@ use App\Models\Location;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Repository\BranchRepository;
+use App\Repository\SubscriptionRepository;
+use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
@@ -26,6 +28,8 @@ class UserService
     public function __construct(
         private BranchRepository $branchRepository,
         private UserRepository $userRepository,
+        private SubscriptionRepository $subscriptionRepository,
+        private TransactionRepository $transactionRepository,
     ) {}
 
     public function getUserBranch(User $user)
@@ -284,6 +288,49 @@ class UserService
                     'is_system_owner' => $user->isSystemOwner,
                 ],
             ],
+        ]);
+    }
+
+    public function payments(User $user)
+    {
+        $subscriptionPayments = $this->subscriptionRepository
+            ->paymentsByUser($user->user_id)
+            ->map(fn($payment) => [
+                'source' => 'subscription',
+                'reference' => $payment->payment_reference_id,
+                'description' => collect([
+                    Str::headline($payment->type),
+                    $payment->plan?->name,
+                    $payment->branch?->name,
+                ])->filter()->implode(' · '),
+                'method' => $payment->payment_method,
+                'amount' => (float) $payment->price,
+                'status' => $payment->status,
+                'created_at' => $payment->created_at?->toIso8601String(),
+            ]);
+
+        $user->loadMissing('client');
+
+        $carePayments = $user->client
+            ? $this->transactionRepository
+                ->paymentsByClient($user->client->client_id)
+                ->map(fn($transaction) => [
+                    'source' => 'care',
+                    'reference' => $transaction->transaction_code,
+                    'description' => $transaction->description
+                        ?: $transaction->branch?->name,
+                    'method' => $transaction->method,
+                    'amount' => (float) $transaction->amount,
+                    'status' => $transaction->status,
+                    'created_at' => $transaction->created_at?->toIso8601String(),
+                ])
+            : collect();
+
+        return response()->json([
+            'data' => $subscriptionPayments
+                ->concat($carePayments)
+                ->sortByDesc('created_at')
+                ->values(),
         ]);
     }
 

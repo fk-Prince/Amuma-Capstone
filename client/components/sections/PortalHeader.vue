@@ -156,6 +156,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         subtitle:
             "View invoices, payments, balances, and available refunds for your loved ones.",
     },
+    "/profile": {
+        title: "My Profile",
+        subtitle: "Update your personal details, contact information, and preferences.",
+    },
 };
 
 const currentPath = computed(() =>

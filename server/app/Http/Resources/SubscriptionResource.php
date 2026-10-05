@@ -106,6 +106,8 @@ class SubscriptionResource extends JsonResource
 
             'plan' => $subscription?->planSummary(),
 
+            'is_test' => (bool) $subscription?->isTest(),
+
             'pending_plan' => $subscription?->pendingPlanSummary(),
 
             'payments' => $subscription?->relationLoaded('payments')

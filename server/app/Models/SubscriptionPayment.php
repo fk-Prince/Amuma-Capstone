@@ -22,6 +22,11 @@ class SubscriptionPayment extends Model
         return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
@@ -53,6 +58,7 @@ class SubscriptionPayment extends Model
 
     protected $fillable = [
         'subscription_id',
+        'user_id',
         'plan_id',
         'branch_id',
         'xendit_invoice_id',

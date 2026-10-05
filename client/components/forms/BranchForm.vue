@@ -3,7 +3,11 @@
         <div class="space-y-6">
             <FormSectionHeader
                 :title="isNew ? 'Branch Profile' : 'Branch Information'"
-                description="Update your branch details and contact information."
+                :description="
+                    isNew
+                        ? 'Enter your branch details and contact information.'
+                        : 'Update your branch details and contact information.'
+                "
                 :icon="isNew ? Store : undefined"
             />
 
