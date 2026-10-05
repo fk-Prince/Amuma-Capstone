@@ -21,6 +21,13 @@ class StoreRoomRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('room_type') === 'VIP') {
+            $this->merge(['capacity' => 1]);
+        }
+    }
+
     public function rules(): array
     {
         return [

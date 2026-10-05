@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 import {
     BedSingle,
     Crown,
@@ -36,6 +36,17 @@ const {
     clearError,
     reset,
 } = useSchemaValidation(roomSchema, props.form);
+
+watch(
+    () => props.form.room_type,
+    (type) => {
+        if (type === "VIP") {
+            props.form.capacity = "1";
+            clearError("capacity");
+        }
+    },
+    { immediate: true },
+);
 
 const fieldErrors = computed(() => ({
     ...schemaErrors.value,
@@ -205,6 +216,7 @@ onUnmounted(() => document.removeEventListener("keydown", onKeydown, true));
                                         "
                                         type="number"
                                         min="1"
+                                        :disabled="form.room_type === 'VIP'"
                                         label="Maximum Capacity"
                                         placeholder="e.g. 4"
                                     />
