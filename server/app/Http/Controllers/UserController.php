@@ -36,9 +36,9 @@ class UserController extends Controller
         return $this->userService->profile($request->user());
     }
 
-    public function payments(Request $request)
+    public function transactions(Request $request)
     {
-        return $this->userService->payments($request->user());
+        return $this->userService->transactions($request->user());
     }
 
     public function updateProfile(UpdateProfileRequest $request)

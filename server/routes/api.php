@@ -168,7 +168,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);
     Route::get('/profile',  [UserController::class, 'profile']);
     Route::post('/profile',  [UserController::class, 'updateProfile']);
-    Route::get('/profile/payments',  [UserController::class, 'payments']);
+    Route::get('/profile/transactions',  [UserController::class, 'transactions']);
     Route::post('/onboarding/{area}',  [UserController::class, 'completeOnboarding'])->whereIn('area', ['portal']);
 });
 

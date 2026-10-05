@@ -4,8 +4,8 @@ import { userService } from "~/api/user/UserService";
 import { formatCurrency } from "~/utils/currency";
 import { stringToDateTime } from "~/utils/time";
 
-interface PaymentRow {
-    source: "subscription" | "care";
+interface TransactionRow {
+    label: string;
     reference: string | null;
     description: string | null;
     method: string | null;
@@ -14,14 +14,9 @@ interface PaymentRow {
     created_at: string | null;
 }
 
-const payments = ref<PaymentRow[]>([]);
+const transactions = ref<TransactionRow[]>([]);
 const loading = ref(true);
 const failed = ref(false);
-
-const sourceLabels: Record<PaymentRow["source"], string> = {
-    subscription: "Subscription",
-    care: "Care",
-};
 
 const statusClasses: Record<string, string> = {
     paid: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
@@ -29,6 +24,10 @@ const statusClasses: Record<string, string> = {
         "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
     refunded:
         "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    requested:
+        "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    rejected:
+        "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300",
 };
 
 const methodLabel = (method: string | null) =>
@@ -37,15 +36,15 @@ const methodLabel = (method: string | null) =>
 const statusLabel = (status: string) =>
     status.charAt(0).toUpperCase() + status.slice(1);
 
-const hasPayments = computed(() => payments.value.length > 0);
+const hasTransactions = computed(() => transactions.value.length > 0);
 
 const load = async () => {
     loading.value = true;
     failed.value = false;
 
     try {
-        const res = await userService.payments();
-        payments.value = res?.data ?? [];
+        const res = await userService.transactions();
+        transactions.value = res?.data ?? [];
     } catch {
         failed.value = true;
     } finally {
@@ -62,10 +61,10 @@ onMounted(load);
     >
         <div class="mb-5">
             <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                Payments
+                Transactions
             </h2>
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                Every payment made with this account.
+                All payments, withdrawals and other transactions on this account.
             </p>
         </div>
 
@@ -81,7 +80,7 @@ onMounted(load);
             v-else-if="failed"
             class="py-10 text-center text-sm text-slate-500 dark:text-gray-400"
         >
-            We couldn't load your payments.
+            We couldn't load your transactions.
             <button
                 type="button"
                 class="font-medium text-primary hover:underline"
@@ -92,10 +91,10 @@ onMounted(load);
         </p>
 
         <p
-            v-else-if="!hasPayments"
+            v-else-if="!hasTransactions"
             class="py-10 text-center text-sm text-slate-500 dark:text-gray-400"
         >
-            No payments yet.
+            No transactions yet.
         </p>
 
         <div v-else class="overflow-x-auto">
@@ -116,7 +115,7 @@ onMounted(load);
                 </thead>
                 <tbody>
                     <tr
-                        v-for="(payment, index) in payments"
+                        v-for="(payment, index) in transactions"
                         :key="`${payment.reference}-${index}`"
                         class="border-b border-slate-100 last:border-0 dark:border-white/5"
                     >
@@ -126,7 +125,7 @@ onMounted(load);
                             {{ stringToDateTime(payment.created_at) || "—" }}
                         </td>
                         <td class="py-3 pr-4 text-slate-600 dark:text-gray-300">
-                            {{ sourceLabels[payment.source] }}
+                            {{ payment.label }}
                         </td>
                         <td class="py-3 pr-4">
                             <p

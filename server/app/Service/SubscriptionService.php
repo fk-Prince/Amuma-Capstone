@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Enums\RoleEnum;
 use App\Events\NotificationEvent;
+use App\Mail\BranchApprovedMailer;
 use App\Mail\BranchRejectedMailer;
 use App\Mail\SubscriptionPurchasedMailer;
 use App\Repository\BranchRepository;
@@ -1721,9 +1722,9 @@ class SubscriptionService
                     ]);
             }
 
-            DB::afterCommit(function () use ($branch) {
+            DB::afterCommit(function () use ($branch, $subscription) {
                 try {
-                    $this->announceApproval($branch);
+                    $this->announceApproval($branch, $subscription?->fresh('plans'));
                 } catch (\Throwable $e) {
                     Log::error('Branch approval notice failed', [
                         'branch_id' => $branch->branch_id,
@@ -1739,11 +1740,35 @@ class SubscriptionService
         });
     }
 
-    private function announceApproval(Branch $branch): void
+    private function announceApproval(Branch $branch, ?Subscription $subscription = null): void
     {
-        $owner = $branch->agencies?->registered_by
-            ? User::find($branch->agencies->registered_by)
+        $agency = $branch->agencies;
+        $owner = $agency?->registered_by
+            ? User::find($agency->registered_by)
             : null;
+
+        $email = $branch->email ?: ($agency?->email ?: $owner?->email);
+
+        if ($email) {
+            try {
+                Mail::to($email)->send(new BranchApprovedMailer(
+                    recipientName: trim(
+                        ($owner?->client?->first_name ?? '')
+                            . ' ' . ($owner?->client?->last_name ?? '')
+                    ) ?: ($agency?->name ?? 'there'),
+                    branchName: $branch->name,
+                    agencyName: $agency?->name ?? 'your agency',
+                    planName: $subscription?->plans?->name,
+                    planType: $subscription?->plans?->type,
+                    validUntil: $subscription?->end_date?->toFormattedDateString(),
+                ));
+            } catch (\Throwable $e) {
+                Log::error('Branch approval email failed', [
+                    'branch_id' => $branch->branch_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         if (!$owner) {
             return;

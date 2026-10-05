@@ -24,8 +24,8 @@ class UserService extends BaseService {
         return await this.request(`${this.getBackendApi}/api/profile`, 'GET');
     }
 
-    public async payments(): Promise<any> {
-        return await this.request(`${this.getBackendApi}/api/profile/payments`, 'GET');
+    public async transactions(): Promise<any> {
+        return await this.request(`${this.getBackendApi}/api/profile/transactions`, 'GET');
     }
 
     public async updateProfile(payload: object): Promise<any> {

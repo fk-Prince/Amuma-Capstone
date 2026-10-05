@@ -717,7 +717,7 @@
                             </section>
                         </div>
 
-                        <ProfilePayments v-if="activeTab === 'payments'" />
+                        <ProfileTransactions v-if="activeTab === 'transactions'" />
 
                         <!-- APPEARANCE -->
                         <div
@@ -807,7 +807,7 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
-import ProfilePayments from "~/components/sections/profile/ProfilePayments.vue";
+import ProfileTransactions from "~/components/sections/profile/ProfileTransactions.vue";
 import { userService } from "~/api/user/UserService";
 import { notificationService } from "~/api/notification/NotificationService";
 import { useToast } from "~/composables/useToast";
@@ -854,7 +854,7 @@ const useMap = ref(false);
 const tabs = [
     { label: "General", value: "profile", icon: UserRound },
     { label: "Notifications", value: "notifications", icon: Bell },
-    { label: "Payments", value: "payments", icon: CreditCard },
+    { label: "Transactions", value: "transactions", icon: CreditCard },
     { label: "Appearance", value: "appearance", icon: Sun },
 ];
 

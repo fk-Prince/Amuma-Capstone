@@ -291,15 +291,14 @@ class UserService
         ]);
     }
 
-    public function payments(User $user)
+    public function transactions(User $user)
     {
         $subscriptionPayments = $this->subscriptionRepository
             ->paymentsByUser($user->user_id)
             ->map(fn($payment) => [
-                'source' => 'subscription',
+                'label' => Str::headline($payment->type),
                 'reference' => $payment->payment_reference_id,
                 'description' => collect([
-                    Str::headline($payment->type),
                     $payment->plan?->name,
                     $payment->branch?->name,
                 ])->filter()->implode(' · '),
@@ -311,11 +310,11 @@ class UserService
 
         $user->loadMissing('client');
 
-        $carePayments = $user->client
+        $clientTransactions = $user->client
             ? $this->transactionRepository
-                ->paymentsByClient($user->client->client_id)
+                ->forClient($user->client->client_id)
                 ->map(fn($transaction) => [
-                    'source' => 'care',
+                    'label' => Str::headline($transaction->type),
                     'reference' => $transaction->transaction_code,
                     'description' => $transaction->description
                         ?: $transaction->branch?->name,
@@ -328,7 +327,7 @@ class UserService
 
         return response()->json([
             'data' => $subscriptionPayments
-                ->concat($carePayments)
+                ->concat($clientTransactions)
                 ->sortByDesc('created_at')
                 ->values(),
         ]);
