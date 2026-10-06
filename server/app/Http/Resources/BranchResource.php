@@ -92,7 +92,7 @@ class BranchResource extends JsonResource
                 ];
             })->values()->all(),
 
-            'facility' => $this->contracts
+            'facility' => $this->activeContracts()
                 ->where('category', 'Facility')
                 ->map(function ($contract) use (&$remainingReserved) {
 
@@ -150,12 +150,12 @@ class BranchResource extends JsonResource
 
 
             'homecare' => [
-                'adl_hourly_rate' => $this->contracts
+                'adl_hourly_rate' => $this->activeContracts()
                     ->where('category', 'Homecare')
                     ->where('accommodation_type', 'ADL')
                     ->first()?->price,
                 'adl_min_hour' => $settings['minimum_adl_hours'] ?? 8,
-                'description' => $this->contracts
+                'description' => $this->activeContracts()
                     ->where('category', 'Homecare')
                     ->where('accommodation_type', 'ADL')
                     ->first()?->description,
@@ -203,7 +203,7 @@ class BranchResource extends JsonResource
         }
 
         if (array_intersect($codes, ['B', 'C'])) {
-            $plan = $this->contracts
+            $plan = $this->activeContracts()
                 ->where('category', 'Facility')
                 ->sortBy('price')
                 ->first();
@@ -217,6 +217,11 @@ class BranchResource extends JsonResource
         }
 
         return collect($candidates)->sortBy('amount')->first();
+    }
+
+    private function activeContracts()
+    {
+        return $this->contracts->where('is_active', true);
     }
 
     private function getBranchOpenStatus(
