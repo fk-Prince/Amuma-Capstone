@@ -32,16 +32,10 @@ const signupRedirect = computed(
 );
 
 function buildCredentials(): SigninRequest {
-    const identifier = signinData.value.email.trim();
-
-    if (!identifier.includes("@")) {
-        return {
-            employee_code: identifier.toUpperCase(),
-            password: signinData.value.password,
-        };
-    }
-
-    return { email: identifier, password: signinData.value.password };
+    return {
+        email: signinData.value.email.trim(),
+        password: signinData.value.password,
+    };
 }
 
 const showPassword = ref(false);
@@ -129,7 +123,7 @@ async function handleSignIn() {
         showAlert(
             alert,
             "error",
-            err?.message || "Invalid employee ID, email, or password.",
+            err?.message || "Invalid email or password.",
             0,
         );
     } finally {
@@ -163,7 +157,7 @@ async function googleUrl() {
 
         <form @submit.prevent="handleSignIn">
             <label for="signin-email" :class="labelClass">
-                Employee ID or email
+                Email
             </label>
 
             <div class="relative">
@@ -174,9 +168,9 @@ async function googleUrl() {
                 <input
                     id="signin-email"
                     v-model="signinData.email"
-                    type="text"
-                    autocomplete="username"
-                    placeholder="Enter your employee ID or email"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="Enter your email address"
                     :class="[fieldClass, borderClass(errors.email)]"
                 />
             </div>

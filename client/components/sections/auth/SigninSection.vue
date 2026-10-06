@@ -55,7 +55,7 @@ const highlights = [
             <!-- Minimal top bar: replaces the site header on auth pages -->
             <div class="flex w-full items-center justify-between px-6 py-6 sm:px-10">
                 <NuxtLink to="/" aria-label="AMUMA home">
-                    <BrandLogo icon-only icon-class="h-10 w-10" />
+                    <BrandLogo icon-class="h-10 w-10" />
                 </NuxtLink>
                 <ThemeToggle class="text-secondary dark:text-white" />
             </div>
