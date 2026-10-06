@@ -16,7 +16,7 @@ import BedCard from "./BedCard.vue";
 import CurrentAdmissionCard from "./CurrentCard.vue";
 import ReservedAdmissionCard from "./ReservedCard.vue";
 import type { Bed, BedForm } from "~/types/bed.js";
-const { canUpdate } = usePermissions();
+const { canCreate, canUpdate } = usePermissions();
 
 const props = defineProps<{
     loading: boolean;
@@ -486,7 +486,7 @@ const cancelAddBed = () => {
                                                 room.room_id ||
                                             addingSlot.index !== i
                                         "
-                                        v-show="canUpdate(Modules.RoomsAndBeds)"
+                                        v-show="canCreate(Modules.RoomsAndBeds)"
                                         type="button"
                                         @click.stop="openAddBed(room, i)"
                                         class="group flex min-h-[140px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-gradient-to-br from-white to-slate-50 dark:from-secondary dark:to-white/5 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-lg dark:border-white/10"

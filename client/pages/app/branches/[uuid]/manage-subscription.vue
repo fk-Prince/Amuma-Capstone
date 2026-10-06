@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen-header rounded-lg p-1">
+    <div class="min-h-screen-header rounded-lg p-3 sm:p-1">
         <BranchDashboard :stats-data="statsData" :loading="statsLoading" />
 
         <div

@@ -312,7 +312,7 @@ const roomMatchesCurrentFilter = (room: Room) => {
 </script>
 
 <template>
-    <div class="min-h-screen-header rounded-lg">
+    <div class="min-h-screen-header rounded-lg px-3 pb-4 sm:px-0 sm:pb-0">
         <div class="mx-auto space-y-6">
             <PlanLockNotice
                 v-if="!hasFacilityPlan"

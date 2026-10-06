@@ -44,7 +44,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
 </script>
 
 <template>
-    <div class="bg-white px-5 py-2 space-y-5 dark:bg-secondary">
+    <div class="bg-white px-3 py-2 space-y-4 sm:px-5 sm:space-y-5 dark:bg-secondary">
         <div class="flex gap-2">
             <div class="relative flex-1">
                 <Search
@@ -63,7 +63,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                 v-if="canCreate(Modules.Services)"
                 type="button"
                 @click="emit('addService')"
-                class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+                class="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3 sm:px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
             >
                 <Plus class="h-4 w-4" />
 
@@ -75,7 +75,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div
-                class="relative inline-grid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto dark:border-white/10 dark:bg-secondary"
+                class="relative inline-grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
@@ -89,7 +89,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                     v-for="tab in tabs"
                     :key="tab.label"
                     type="button"
-                    class="relative z-10 flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200"
+                    class="relative z-10 flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-1.5 py-2 text-xs font-medium transition-colors duration-200 sm:gap-2 sm:px-4 sm:text-sm"
                     :class="
                         activeTab === tab.label
                             ? 'text-white'
@@ -97,7 +97,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                     "
                     @click="emit('update:activeTab', tab.label)"
                 >
-                    <component :is="tab.icon" class="h-4 w-4" />
+                    <component :is="tab.icon" class="hidden h-4 w-4 sm:block" />
 
                     {{ tab.label }}
                 </button>
