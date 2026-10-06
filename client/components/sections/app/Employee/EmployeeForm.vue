@@ -135,28 +135,24 @@ const canManageLeave = computed(
         !isOwnerRole.value,
 );
 
+const isCaregiver = computed(
+    () => String(employee.value.role_name ?? "").toLowerCase() === "caregiver",
+);
+
 const assignmentItems = computed(() =>
     employeeAssignmentTypes.value.filter(
-        (type) =>
-            type.value !== "both" ||
-            employee.value.role_name !== "caregiver" ||
-            (employee.value.assignment_type === "both" &&
-                (isEditMode.value || isViewMode.value)),
+        (type) => type.value !== "both" || !isCaregiver.value,
     ),
 );
 
 watch(
-    [
-        assignmentItems,
-        () => employee.value.role_name,
-        () => employee.value.assignment_type,
-    ],
-    ([items, role, current]) => {
-        if (isViewMode.value || isEditMode.value) return;
+    [assignmentItems, isCaregiver, () => employee.value.assignment_type],
+    ([items, caregiver, current]) => {
+        if (isViewMode.value) return;
 
         const first = items[0];
 
-        if (role === "caregiver" && current === "both" && first) {
+        if (caregiver && current === "both" && first) {
             employee.value.assignment_type = first.value;
         }
     },
