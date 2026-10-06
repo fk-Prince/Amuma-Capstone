@@ -1,10 +1,14 @@
 <template>
     <div class="flex min-h-screen-header flex-col dark:bg-surface">
-        <div class="mx-auto flex w-full flex-1 flex-col space-y-6 px-3 pb-4 sm:px-0 sm:pb-0">
+        <div
+            class="mx-auto flex w-full flex-1 flex-col space-y-6 px-3 pb-4 sm:pt-2 sm:px-0 sm:pb-0"
+        >
             <div
                 class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div class="border-b border-slate-100 p-3 sm:p-5 dark:border-white/10">
+                <div
+                    class="border-b border-slate-100 p-3 sm:p-5 dark:border-white/10"
+                >
                     <ServiceSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"

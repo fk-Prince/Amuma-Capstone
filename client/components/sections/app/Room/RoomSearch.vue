@@ -35,8 +35,8 @@ const { canCreate } = usePermissions();
 <template>
     <div class="bg-white px-3 py-2 space-y-4 sm:px-5 sm:space-y-5 dark:bg-secondary">
         <div class="flex gap-2">
-            <div class="relative flex-1">
-                <div class="relative flex-1">
+            <div class="relative min-w-0 flex-1">
+                <div class="relative min-w-0 flex-1">
                     <Search
                         class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
                     />
