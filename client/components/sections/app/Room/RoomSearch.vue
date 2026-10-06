@@ -33,7 +33,7 @@ const { canCreate } = usePermissions();
 </script>
 
 <template>
-    <div class="bg-white px-5 py-2 space-y-5 dark:bg-secondary">
+    <div class="bg-white px-3 py-2 space-y-4 sm:px-5 sm:space-y-5 dark:bg-secondary">
         <div class="flex gap-2">
             <div class="relative flex-1">
                 <div class="relative flex-1">
@@ -54,7 +54,7 @@ const { canCreate } = usePermissions();
                 type="button"
                 v-if="canCreate(Modules.RoomsAndBeds)"
                 @click="emit('addRoom')"
-                class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+                class="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3 sm:px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -78,14 +78,14 @@ const { canCreate } = usePermissions();
         <div
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
-            <div class="flex items-center md:flex-row flex-col gap-5">
-                <div class="inline-flex w-fit rounded-xl bg-slate-100 p-1 dark:bg-white/10">
+            <div class="flex w-full items-center flex-col gap-5 md:w-auto md:flex-row">
+                <div class="flex w-full overflow-x-auto rounded-xl bg-slate-100 p-1 dark:bg-white/10 md:inline-flex md:w-fit">
                     <button
                         v-for="tab in tabs"
                         :key="tab.label"
                         type="button"
                         @click="emit('update:activeTab', tab.label)"
-                        class="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200"
+                        class="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-medium transition-all duration-200 sm:gap-2 sm:px-4 sm:text-sm md:flex-none"
                         :class="
                             activeTab === tab.label
                                 ? 'bg-white text-slate-900 shadow-sm dark:bg-secondary dark:text-white'

@@ -335,8 +335,8 @@ const roomMatchesCurrentFilter = (room: Room) => {
                     />
                 </div>
 
-                <div class="p-5">
-                    <div class="mb-5 flex items-center justify-between">
+                <div class="p-3 sm:p-5">
+                    <div class="mb-5 flex items-start justify-between gap-3">
                         <div>
                             <h2
                                 class="text-lg font-semibold text-slate-900 dark:text-white"
@@ -353,7 +353,7 @@ const roomMatchesCurrentFilter = (room: Room) => {
                         </div>
 
                         <span
-                            class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
+                            class="shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
                         >
                             {{ pagination.totalItems }}
                             {{
