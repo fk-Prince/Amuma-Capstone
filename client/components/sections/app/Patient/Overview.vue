@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import {
+    Briefcase,
+    Heart,
     Droplet,
     Calendar,
     Phone,
@@ -161,6 +163,38 @@ function statusClasses(status?: string) {
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
                             {{ patient.citizenship || "—" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="mt-6 grid gap-6 border-t border-muted-light pt-6 sm:grid-cols-3 dark:border-white/10"
+            >
+                <div class="flex items-center gap-3">
+                    <Briefcase class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Occupation
+                        </p>
+                        <p
+                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
+                        >
+                            {{ patient.occupation || "—" }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <Heart class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Marital Status
+                        </p>
+                        <p
+                            class="mt-0.5 text-sm font-medium capitalize text-secondary dark:text-white"
+                        >
+                            {{ patient.marital_status || "—" }}
                         </p>
                     </div>
                 </div>

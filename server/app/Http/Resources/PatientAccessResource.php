@@ -63,6 +63,8 @@ class PatientAccessResource extends JsonResource
             $data += [
                 'full_name' => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"),
                 'full_address' => $this->location?->full_address,
+                'occupation' => $this->occupation,
+                'marital_status' => $this->marital_status,
                 'medication' => $this->resource->medications
                     ->map(fn($medication) => MedicationPresenter::medication($medication))
                     ->concat(

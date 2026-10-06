@@ -315,10 +315,10 @@
                                     class="flex items-center gap-2 flex-wrap mt-3"
                                 >
                                     <span
-                                        v-if="lo.age"
+                                        v-if="lo.age && lo.age !== '—'"
                                         class="px-2.5 py-1 rounded-full bg-gray-50 text-gray-600 text-xs dark:bg-white/5 dark:text-gray-400"
                                     >
-                                        {{ lo.age }} yrs old
+                                        {{ lo.age }}
                                     </span>
 
                                     <span
@@ -508,6 +508,54 @@
                                     class="text-xs text-gray-400 dark:text-gray-500"
                                 >
                                     Home address
+                                </p>
+                            </div>
+                        </li>
+
+                        <li
+                            v-if="lovedOne.occupation"
+                            class="flex items-start gap-3 min-w-0"
+                        >
+                            <span
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 dark:bg-primary-500/10 dark:text-primary-300"
+                            >
+                                <Briefcase class="w-4 h-4" />
+                            </span>
+
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="text-sm font-medium text-gray-800 break-words dark:text-white"
+                                >
+                                    {{ lovedOne.occupation }}
+                                </p>
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
+                                    Occupation
+                                </p>
+                            </div>
+                        </li>
+
+                        <li
+                            v-if="lovedOne.maritalStatus"
+                            class="flex items-start gap-3 min-w-0"
+                        >
+                            <span
+                                class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 dark:bg-primary-500/10 dark:text-primary-300"
+                            >
+                                <Heart class="w-4 h-4" />
+                            </span>
+
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="text-sm font-medium text-gray-800 capitalize break-words dark:text-white"
+                                >
+                                    {{ lovedOne.maritalStatus }}
+                                </p>
+                                <p
+                                    class="text-xs text-gray-400 dark:text-gray-500"
+                                >
+                                    Marital status
                                 </p>
                             </div>
                         </li>
@@ -929,6 +977,8 @@ import {
     CalendarPlus,
     CreditCard,
     Cake,
+    Briefcase,
+    Heart,
     Droplet,
     Phone,
     Home,
@@ -995,6 +1045,8 @@ interface LovedOne {
     age: string;
     gender: string;
     bloodType: string;
+    occupation: string;
+    maritalStatus: string;
     contactNumber: string;
     relationship: string;
     haveAccess: boolean;
@@ -1041,6 +1093,8 @@ function fallbackLovedOne(): LovedOne {
         age: "N/A",
         gender: "N/A",
         bloodType: "N/A",
+        occupation: "",
+        maritalStatus: "",
         contactNumber: "N/A",
         relationship: "N/A",
         haveAccess: false,
@@ -1345,6 +1399,8 @@ function mapPatientRecord(item: any): LovedOne {
         age: calculateAge(patient.date_of_birth, false),
         gender: patient.gender || "N/A",
         bloodType: patient.blood_type || "N/A",
+        occupation: patient.occupation || "",
+        maritalStatus: patient.marital_status || "",
         contactNumber: patient.phone_number || "N/A",
         relationship: access.relationship_type || "N/A",
         haveAccess: Boolean(access.have_access),

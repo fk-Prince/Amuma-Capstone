@@ -49,6 +49,8 @@ class PatientResource extends JsonResource
             'weight' => $this->weight,
             'phone_number' => $this->phone_number,
             'citizenship' => $this->citizenship,
+            'occupation' => $this->occupation,
+            'marital_status' => $this->marital_status,
             'allergies' => $this->allergies ?? [],
 
             'has_homecare' => $this->relationLoaded('schedules')

@@ -30,6 +30,8 @@ class Patient extends Model
         'date_of_birth',
         'phone_number',
         'citizenship',
+        'occupation',
+        'marital_status',
         'avatar',
         'allergies',
     ];

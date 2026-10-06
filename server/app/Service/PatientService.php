@@ -92,6 +92,8 @@ class PatientService
             'date_of_birth' => $payload['date_of_birth'] ?? null,
             'phone_number' => $payload['phone_number'] ?? null,
             'citizenship' => $payload['citizenship'] ?? null,
+            'occupation' => $payload['occupation'] ?? null,
+            'marital_status' => $payload['marital_status'] ?? null,
             'blood_type' => $payload['blood_type'] ?? null,
             'height' => $payload['height'] ?? null,
             'weight' => $payload['weight'] ?? null,
@@ -121,6 +123,8 @@ class PatientService
                 'age' => $patient->date_of_birth?->age,
                 'phone_number' => $patient->phone_number,
                 'citizenship' => $patient->citizenship,
+                'occupation' => $patient->occupation,
+                'marital_status' => $patient->marital_status,
                 'blood_type' => $patient->blood_type,
                 'height' => $patient->height,
                 'weight' => $patient->weight,
@@ -162,6 +166,8 @@ class PatientService
             'phone_number'       => $patient['phone_number'] ?? null,
             'citizenship'        => $patient['citizenship'] ?? null,
             'avatar'             => $this->storeAvatar($patient['avatar'] ?? null),
+            'occupation'         => $patient['occupation'] ?? null,
+            'marital_status'     => $patient['marital_status'] ?? null,
             'allergies'          => $this->parseAllergies($patient['allergies'] ?? null),
         ]);
 

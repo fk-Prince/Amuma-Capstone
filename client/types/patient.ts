@@ -127,6 +127,8 @@ export interface PatientRetrieve {
     weight?: string;
     phone_number?: string;
     citizenship?: string;
+    occupation?: string | null;
+    marital_status?: string | null;
     allergies?: string[];
     has_homecare?: boolean;
     assessment?: Assessment | Assessment[] | null;

@@ -113,6 +113,7 @@
                             :max="todayStr"
                             :default-to-today="false"
                             placeholder="Select date of birth"
+                            required
                             :error="errors.date_of_birth"
                             @update:model-value="set('date_of_birth', $event)"
                         />
@@ -129,16 +130,38 @@
                         label="Address"
                         :model-value="form.address"
                         :error="errors.address"
+                        required
                         @update:model-value="set('address', $event)"
                     />
 
-                    <div class="grid grid-cols-2 gap-5 md:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
                         <BaseInput
                             label="Citizenship"
                             :model-value="form.citizenship"
                             :error="errors.citizenship"
+                            required
                             @update:model-value="set('citizenship', $event)"
                         />
+                        <BaseInput
+                            label="Occupation"
+                            label-hint="N/A if don't have a job, etc."
+                            :model-value="form.occupation"
+                            :error="errors.occupation"
+                            required
+                            @update:model-value="set('occupation', $event)"
+                        />
+                        <Combobox
+                            label="Marital Status"
+                            placeholder="Select status"
+                            required
+                            :model-value="form.marital_status"
+                            :error="errors.marital_status"
+                            :items="maritalStatuses"
+                            @update:model-value="set('marital_status', $event)"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-5 md:grid-cols-3">
                         <BaseInput
                             label="Height (cm)"
                             mode="number"
@@ -237,6 +260,13 @@ const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
     (type) => ({ label: type, value: type }),
 );
 
+const maritalStatuses = [
+    { label: "Single", value: "single" },
+    { label: "Married", value: "married" },
+    { label: "Divorced", value: "divorced" },
+    { label: "Widowed", value: "widowed" },
+];
+
 const saving = ref(false);
 const errors = ref<Record<string, string>>({});
 const avatarFile = ref<File | null>(null);
@@ -251,6 +281,8 @@ const form = reactive({
     phone_number: "",
     address: "",
     citizenship: "",
+    occupation: "",
+    marital_status: "",
     height: "",
     weight: "",
     blood_type: "",
@@ -283,6 +315,8 @@ function fill() {
         phone_number: p.phone_number ?? "",
         address: p.location?.full_address ?? "",
         citizenship: p.citizenship ?? "",
+        occupation: p.occupation ?? "",
+        marital_status: p.marital_status ?? "",
         height: p.height ?? "",
         weight: p.weight ?? "",
         blood_type: p.blood_type ?? "",
