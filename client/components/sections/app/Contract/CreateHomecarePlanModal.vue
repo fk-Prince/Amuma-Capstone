@@ -118,9 +118,7 @@
                         </p>
                     </div>
 
-                    <div
-                        class=""
-                    >
+                    <div class="">
                         <div class="space-y-3">
                             <BaseInput
                                 :model-value="form.description"
@@ -354,12 +352,6 @@ const serviceTypeLabel = computed(() => {
 
 const generalError = computed(() => errors.general);
 
-const formRef = ref<HTMLFormElement | null>(null);
-
-watch(generalError, (message) => {
-    if (message) formRef.value?.scrollTo({ top: 0, behavior: "smooth" });
-});
-
 const existingPackageDescription = computed(() => {
     return isEditMode.value ? props.data?.description : null;
 });
@@ -398,6 +390,12 @@ const errors = reactive<Record<string, string>>({
     general: "",
 });
 
+const formRef = ref<HTMLFormElement | null>(null);
+
+watch(generalError, (message) => {
+    if (message) formRef.value?.scrollTo({ top: 0, behavior: "smooth" });
+});
+
 watch(
     () => props.data,
     (newData) => {
@@ -418,9 +416,15 @@ watch(
         if (isOpen) {
             document.body.style.overflow = "hidden";
 
-            Object.assign(form, homecarePlanForm(), { description: "" }, props.data ?? {}, {
-                branch_uuid: uuid.value,
-            });
+            Object.assign(
+                form,
+                homecarePlanForm(),
+                { description: "" },
+                props.data ?? {},
+                {
+                    branch_uuid: uuid.value,
+                },
+            );
             clearErrors();
         } else {
             document.body.style.overflow = "auto";
