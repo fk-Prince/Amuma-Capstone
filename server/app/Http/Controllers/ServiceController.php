@@ -48,7 +48,7 @@ class ServiceController extends Controller
     public function assignEmployee(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(),  $branch->branch_id,  ModuleEnum::Services, PermissionAction::Create);
+        AuthGuard::requireModule($request->user(),  $branch->branch_id,  ModuleEnum::Services, PermissionAction::Assign);
         BranchGuard::mergeRequest($request, $branch);
         return $this->serviceService->assignEmployeeService($request->all());
     }

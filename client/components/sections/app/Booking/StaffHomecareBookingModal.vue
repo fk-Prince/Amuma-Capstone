@@ -13,7 +13,6 @@
         >
             <div
                 class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
-                @click="close"
             />
 
             <div

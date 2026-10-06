@@ -11,6 +11,7 @@ export interface EmployeeDocument {
 export interface Employee {
     employee_id: string;
     uuid: string;
+    employee_code?: string | null;
     email: string;
     first_name: string;
     middle_name: string;

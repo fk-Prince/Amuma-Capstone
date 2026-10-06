@@ -207,6 +207,13 @@ export class BaseService {
                     ? serverMessage
                     : 'Internal Server Error';
 
+            if (status === 403 && import.meta.client) {
+                useToast().error(
+                    "Insufficient permissions",
+                    "You don't have access to do this.",
+                );
+            }
+
             throw {
                 status,
                 message,

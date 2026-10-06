@@ -42,7 +42,7 @@ const tabs = [
                 <BaseInput
                     :model-value="modelValue"
                     @update:model-value="emit('update:modelValue', $event)"
-                    placeholder="Search employee..."
+                    placeholder="Search by name, ID, or email..."
                     input-class="pl-11"
                 />
             </div>

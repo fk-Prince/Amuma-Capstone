@@ -18,7 +18,7 @@ import {
     XCircle,
 } from "lucide-vue-next";
 
-const { canUpdate, canCreate } = usePermissions();
+const { canUpdate, canCreate, canAssign } = usePermissions();
 
 const props = defineProps<{
     loading: boolean;
@@ -360,7 +360,7 @@ const groupedServices = computed(() => {
                                         </button>
 
                                         <button
-                                            v-if="canCreate(Modules.Services)"
+                                            v-if="canAssign(Modules.Services)"
                                             @click.stop="
                                                 openAssignService(service)
                                             "

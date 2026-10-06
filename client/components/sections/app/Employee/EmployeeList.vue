@@ -60,6 +60,7 @@ watch(
 );
 
 const columns: DataTableColumn[] = [
+    { key: "employee_code", label: "ID" },
     { key: "name", label: "Name", sortable: true },
     { key: "email", label: "Email", sortable: true },
     { key: "phone", label: "Phone Number" },
@@ -71,6 +72,7 @@ const columns: DataTableColumn[] = [
 const rows = computed(() =>
     props.employees.map((employee) => ({
         id: employee.uuid,
+        employee_code: employee.employee_code || "—",
         name: `${employee.first_name} ${employee.last_name}`,
         role: formatRole(employee.role_name),
         avatar:

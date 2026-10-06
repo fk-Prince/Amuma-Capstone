@@ -88,9 +88,18 @@
                             {{ branch.description }}
                         </p>
 
-                        <div class="mt-5 grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-3">
+                        <div
+                            v-for="(row, rowIndex) in highlights"
+                            :key="rowIndex"
+                            class="grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-3"
+                            :class="
+                                rowIndex === 0
+                                    ? 'mt-5'
+                                    : 'mt-4 border-t border-gray-100 pt-4 dark:border-white/10'
+                            "
+                        >
                             <div
-                                v-for="item in highlights"
+                                v-for="item in row"
                                 :key="item.label"
                                 class="flex min-w-0 items-center gap-3"
                             >
@@ -387,7 +396,7 @@ const fullAddress = computed(() => {
 const highlights = computed(() => {
     const time = getBranchTimeDisplay(branch.value?.settings);
 
-    return [
+    const contact = [
         branch.value?.contact_number
             ? { label: formatPhone(branch.value.contact_number), icon: Phone }
             : null,
@@ -396,10 +405,15 @@ const highlights = computed(() => {
             label: time.is24Hours ? "24/7 Support" : `Open ${time.label}`,
             icon: Clock,
         },
+    ].filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const features = [
         { label: "Professional Caregivers", icon: Users },
         { label: "Personalized Care", icon: HeartHandshake },
         { label: "Safe & Trusted", icon: ShieldCheck },
-    ].filter((item): item is NonNullable<typeof item> => item !== null);
+    ];
+
+    return [contact, features];
 });
 
 const mapsUrl = computed(() => {
