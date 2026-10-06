@@ -737,6 +737,7 @@ class PatientAdmissionService
                     $facility = $payload['facility'] ?? [];
 
                     $existing = Booking::where('reference_id', $referenceId)
+                        ->where('branch_id', $payload['branch_id'])
                         ->lockForUpdate()
                         ->first();
 
@@ -763,6 +764,7 @@ class PatientAdmissionService
                     ];
 
                     $booking = Booking::where('reference_id', $referenceId)
+                        ->where('branch_id', $payload['branch_id'])
                         ->firstOrFail();
 
                     $booking->update([
@@ -789,6 +791,7 @@ class PatientAdmissionService
                 if ($type === Booking::TYPE_COMPLETEADMISSION) {
                     $booking = Booking::with(['patientsBooking.admissions.bed.room'])
                         ->where('reference_id', $referenceId)
+                        ->where('branch_id', $payload['branch_id'])
                         ->lockForUpdate()
                         ->firstOrFail();
 

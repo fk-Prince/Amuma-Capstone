@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\CapitalizesNames;
 use App\Models\Location;
+use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,22 +37,13 @@ class Employee extends Model
                 return;
             }
 
-            $last = self::lockForUpdate()
-                ->whereNotNull('employee_code')
-                ->orderByDesc('employee_id')
-                ->first();
-
-            $next = $last
-                ? ((int) substr($last->employee_code, 4)) + 1
-                : 1;
-
-            $employee->employee_code = 'EMP-' . str_pad(
-                (string) $next,
-                6,
-                '0',
-                STR_PAD_LEFT
-            );
+            $employee->employee_code = self::generateCode(null);
         });
+    }
+
+    public static function generateCode(mixed $branchId): string
+    {
+        return BranchCode::make(self::class, 'EMP', 'employee_code', $branchId);
     }
 
     protected function fullName()

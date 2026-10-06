@@ -222,10 +222,10 @@ class InvoiceRepository
     public function getPatientInvoiceSummary(array $payload)
     {
         $search = trim((string) ($payload['search'] ?? ''));
-        $branchId = $payload['branch_id'] ?? null;
+        $branchId = $payload['branch_id'];
 
         $patients = Patient::query()
-            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('branch_id', $branchId)
             ->when($search !== '', function ($q) use ($search) {
                 $term = '%' . strtolower($search) . '%';
 

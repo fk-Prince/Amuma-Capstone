@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utils\BranchCode;
 use Illuminate\Support\Str;
 
 use Illuminate\Database\Eloquent\Model;
@@ -79,22 +80,11 @@ class Schedule extends Model
     {
         static::creating(function ($schedule) {
             if (!$schedule->schedule_code) {
-                $lastSchedule = self::whereNotNull('schedule_code')
-                    ->orderByDesc('schedule_id')
-                    ->first();
-
-                $nextNumber = 1;
-
-                if ($lastSchedule && $lastSchedule->schedule_code) {
-                    $lastNumber = (int) substr($lastSchedule->schedule_code, 4);
-                    $nextNumber = $lastNumber + 1;
-                }
-
-                $schedule->schedule_code = 'SCH-' . str_pad(
-                    $nextNumber,
-                    6,
-                    '0',
-                    STR_PAD_LEFT
+                $schedule->schedule_code = BranchCode::make(
+                    self::class,
+                    'SCH',
+                    'schedule_code',
+                    Patient::whereKey($schedule->patient_id)->value('branch_id')
                 );
             }
         });

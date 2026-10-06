@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\CapitalizesNames;
 use App\Repository\RefundRepository;
+use App\Utils\BranchCode;
 use App\Utils\InvoiceMoney;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -65,20 +66,11 @@ class Patient extends Model
                 return;
             }
 
-            $last = self::lockForUpdate()
-                ->whereNotNull('patient_code')
-                ->orderByDesc('patient_id')
-                ->first();
-
-            $next = $last
-                ? ((int) substr($last->patient_code, 3)) + 1
-                : 1;
-
-            $patient->patient_code = 'PT-' . str_pad(
-                (string) $next,
-                6,
-                '0',
-                STR_PAD_LEFT
+            $patient->patient_code = BranchCode::make(
+                self::class,
+                'PT',
+                'patient_code',
+                $patient->branch_id
             );
         });
     }

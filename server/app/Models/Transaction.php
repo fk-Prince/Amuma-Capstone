@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -86,20 +87,11 @@ class Transaction extends Model
                 return;
             }
 
-            $last = self::lockForUpdate()
-                ->whereNotNull('transaction_code')
-                ->orderByDesc('transaction_id')
-                ->first();
-
-            $next = $last
-                ? ((int) substr($last->transaction_code, 4)) + 1
-                : 1;
-
-            $transaction->transaction_code = 'TXN-' . str_pad(
-                (string) $next,
-                6,
-                '0',
-                STR_PAD_LEFT
+            $transaction->transaction_code = BranchCode::make(
+                self::class,
+                'TXN',
+                'transaction_code',
+                $transaction->branch_id
             );
         });
     }

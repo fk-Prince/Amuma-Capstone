@@ -92,7 +92,8 @@ class EmployeeRepository
             $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
                     ->orWhereHas('employee', function ($employeeQuery) use ($search) {
-                        $employeeQuery->where('first_name', 'like', "%{$search}%")
+                        $employeeQuery->where('employee_code', 'ilike', "%{$search}%")
+                            ->orWhere('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
                             ->orWhere('phone_number', 'like', "%{$search}%");
                     });

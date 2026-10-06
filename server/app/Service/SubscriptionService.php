@@ -19,6 +19,7 @@ use App\Http\Resources\SubscriptionResource;
 use App\Models\Agency;
 use App\Models\Branch;
 use App\Models\BranchSubscription;
+use App\Models\Employee;
 use App\Models\EmployeePermission;
 use App\Models\Plan;
 use App\Models\PlatformAdmin;
@@ -784,6 +785,7 @@ class SubscriptionService
                 if (!$employee) {
                     $employee = $this->employeeRepository->createEmployee([
                         'user_id'    => $user['user_id'],
+                        'employee_code' => Employee::generateCode($branchData->branch_id),
                         'first_name' => $user['first_name'],
                         'last_name'  => $user['last_name'],
                         'avatar'     => $user['avatar'] ?? null,

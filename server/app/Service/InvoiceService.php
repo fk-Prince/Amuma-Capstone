@@ -65,7 +65,8 @@ class InvoiceService
 
             if ($mode === 'invoice') {
                 $invoice = $this->invoiceRepository->findByField([
-                    ['invoice_code', '=', $payload['invoice_code']]
+                    ['invoice_code', '=', $payload['invoice_code']],
+                    ['branch_id', '=', $payload['branch_id']],
                 ]);
 
                 if (!$invoice) {

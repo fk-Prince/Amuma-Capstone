@@ -9,6 +9,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
+use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
 use App\Models\Module;
@@ -236,6 +237,7 @@ class EmployeeService
 
             // INSERT EMPLOYEE
             $employee = $user->employee()->create([
+                'employee_code' => Employee::generateCode($branch->branch_id),
                 'first_name' => Str::title($payload['first_name']),
                 'last_name' => Str::title($payload['last_name']),
                 'location_id' => $location->location_id,

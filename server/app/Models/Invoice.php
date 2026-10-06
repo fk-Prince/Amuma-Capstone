@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -237,26 +238,11 @@ class Invoice extends Model
     {
         static::creating(function ($invoice) {
             if (!$invoice->invoice_code) {
-                $lastInvoice = self::whereNotNull('invoice_code')
-                    ->orderByDesc('invoice_id')
-                    ->first();
-
-                $nextNumber = 1;
-
-                if ($lastInvoice && $lastInvoice->invoice_code) {
-                    $lastNumber = (int) substr(
-                        $lastInvoice->invoice_code,
-                        4
-                    );
-
-                    $nextNumber = $lastNumber + 1;
-                }
-
-                $invoice->invoice_code = 'INV-' . str_pad(
-                    $nextNumber,
-                    6,
-                    '0',
-                    STR_PAD_LEFT
+                $invoice->invoice_code = BranchCode::make(
+                    self::class,
+                    'INV',
+                    'invoice_code',
+                    $invoice->branch_id
                 );
             }
         });
