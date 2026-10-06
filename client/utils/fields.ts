@@ -35,17 +35,26 @@ export const Field = (
         "p",
         {
             ...attrs,
-            class: ["flex flex-col gap-0.5 capitalize", attrs.class],
+            class: ["flex flex-col gap-0.5", attrs.class],
         },
         [
             h(
                 "span",
-                { class: "text-xs text-[#6B8A87] dark:text-gray-400" },
+                { class: "text-xs capitalize text-[#6B8A87] dark:text-gray-400" },
                 fieldProps.label,
             ),
             h(
                 "span",
-                { class: "text-[#16302E] font-medium dark:text-white" },
+                {
+                    class: [
+                        "text-[#16302E] font-medium dark:text-white",
+                        // Emails keep the case they were typed in.
+                        typeof fieldProps.value === "string" &&
+                        fieldProps.value.includes("@")
+                            ? ""
+                            : "capitalize",
+                    ],
+                },
                 slots.value
                     ? slots.value()
                     : fieldProps.value === null ||

@@ -90,6 +90,7 @@
                 />
                 <BaseInput
                     label="Occupation"
+                    label-hint="N/A if you don't have a job, etc."
                     :model-value="props.model.occupation"
                     @update:model-value="update('occupation', $event)"
                     :error="errors?.occupation"
@@ -350,6 +351,7 @@ onMounted(() => {
 
                 <BaseInput
                     label="Occupation"
+                    label-hint="N/A if you don't have a job, etc."
                     :model-value="props.model.occupation"
                     @update:model-value="update('occupation', $event)"
                     :error="errors?.occupation"

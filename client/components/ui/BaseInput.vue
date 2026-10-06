@@ -3,6 +3,12 @@
         <label v-if="label" class="text-sm font-semibold text-slate-700 dark:text-gray-300">
             {{ label }}
             <span v-if="required" class="text-danger ml-0.5">*</span>
+            <span
+                v-if="labelHint"
+                class="ml-1 text-xs font-normal text-slate-400 dark:text-gray-500"
+            >
+                ({{ labelHint }})
+            </span>
         </label>
 
         <div
@@ -102,6 +108,10 @@ const props = defineProps({
         default: "",
     },
     label: {
+        type: String,
+        default: "",
+    },
+    labelHint: {
         type: String,
         default: "",
     },
