@@ -66,6 +66,8 @@ export interface BranchRetrieve {
     uuid: string;
     name: string;
     description: string | null;
+    contact_number?: string | null;
+    email?: string | null;
     image: string | undefined;
     is_verified?: boolean;
     cover_image?: string | null;

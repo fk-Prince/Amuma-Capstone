@@ -103,10 +103,10 @@
 
                     <div
                         v-if="locationLabel"
-                        class="mt-1.5 flex items-center gap-1.5 text-sm text-white/85"
+                        class="mt-1.5 flex items-start gap-1.5 text-sm text-white/85"
                     >
-                        <MapPin class="h-4 w-4 shrink-0" />
-                        <span class="truncate">{{ locationLabel }}</span>
+                        <MapPin class="mt-0.5 h-4 w-4 shrink-0" />
+                        <span class="min-w-0">{{ locationLabel }}</span>
                     </div>
                 </div>
             </div>
@@ -197,7 +197,12 @@ const isTopRated = computed(
 const locationLabel = computed(() => {
     const loc = props.branch?.location;
     if (!loc) return "";
-    return [loc.city, loc.country].filter(Boolean).join(", ");
+    return (
+        loc.full_address ||
+        [loc.street, loc.city, loc.province, loc.country]
+            .filter(Boolean)
+            .join(", ")
+    );
 });
 
 const lightboxIndex = ref<number | null>(null);

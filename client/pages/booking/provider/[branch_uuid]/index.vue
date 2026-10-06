@@ -1,5 +1,7 @@
 <template>
-    <div class="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-[144px] sm:px-6 lg:pb-16">
+    <div
+        class="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-[144px] sm:px-6 lg:pb-16"
+    >
         <ProviderBanner
             ref="bannerRef"
             :branch="branch"
@@ -39,10 +41,18 @@
                 <section ref="overviewRef" :class="[cardClass, 'scroll-mt-40']">
                     <template v-if="loading">
                         <div class="flex animate-pulse flex-col gap-3">
-                            <div class="h-6 w-56 rounded-md bg-gray-200 dark:bg-white/10" />
-                            <div class="h-4 w-full rounded bg-gray-200 dark:bg-white/10" />
-                            <div class="h-4 w-2/3 rounded bg-gray-200 dark:bg-white/10" />
-                            <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <div
+                                class="h-6 w-56 rounded-md bg-gray-200 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-full rounded bg-gray-200 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-4 w-2/3 rounded bg-gray-200 dark:bg-white/10"
+                            />
+                            <div
+                                class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4"
+                            >
                                 <div
                                     v-for="n in 4"
                                     :key="n"
@@ -53,8 +63,12 @@
                     </template>
 
                     <template v-else>
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h2 class="text-xl font-bold text-secondary dark:text-white">
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-3"
+                        >
+                            <h2
+                                class="text-xl font-bold text-secondary dark:text-white"
+                            >
                                 About {{ branch?.name }}
                             </h2>
 
@@ -83,11 +97,47 @@
                                 <span
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
                                 >
-                                    <component :is="item.icon" class="h-5 w-5" />
+                                    <component
+                                        :is="item.icon"
+                                        class="h-5 w-5"
+                                    />
                                 </span>
-                                <span class="text-xs font-medium leading-tight text-gray-600 dark:text-gray-300">
+                                <span
+                                    class="text-xs font-medium leading-tight text-gray-600 dark:text-gray-300"
+                                >
                                     {{ item.label }}
                                 </span>
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="branch?.contact_number || branch?.email"
+                            class="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:flex-wrap sm:gap-x-8 dark:border-white/10"
+                        >
+                            <div
+                                v-if="branch?.contact_number"
+                                class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                                <span
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
+                                >
+                                    <Phone class="h-5 w-5" />
+                                </span>
+                                {{ formatPhone(branch.contact_number) }}
+                            </div>
+
+                            <div
+                                v-if="branch?.email"
+                                class="flex min-w-0 items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                                <span
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
+                                >
+                                    <Mail class="h-5 w-5" />
+                                </span>
+                                <span class="min-w-0 break-all">{{
+                                    branch.email
+                                }}</span>
                             </div>
                         </div>
                     </template>
@@ -95,11 +145,22 @@
 
                 <!-- Location -->
                 <section ref="locationRef" :class="[cardClass, 'scroll-mt-40']">
-                    <div v-if="loading" class="flex animate-pulse flex-col gap-4">
-                        <div class="h-[220px] w-full rounded-2xl bg-gray-200 dark:bg-white/10" />
-                        <div class="h-5 w-48 rounded-md bg-gray-200 dark:bg-white/10" />
-                        <div class="h-4 w-full rounded bg-gray-200 dark:bg-white/10" />
-                        <div class="h-4 w-3/5 rounded bg-gray-200 dark:bg-white/10" />
+                    <div
+                        v-if="loading"
+                        class="flex animate-pulse flex-col gap-4"
+                    >
+                        <div
+                            class="h-[220px] w-full rounded-2xl bg-gray-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-5 w-48 rounded-md bg-gray-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-4 w-full rounded bg-gray-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="h-4 w-3/5 rounded bg-gray-200 dark:bg-white/10"
+                        />
                     </div>
 
                     <template v-else-if="branch?.location">
@@ -111,20 +172,25 @@
                             </span>
 
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-lg font-bold text-secondary dark:text-white">
+                                <h3
+                                    class="text-lg font-bold text-secondary dark:text-white"
+                                >
                                     Visit Our Location
                                 </h3>
 
-                                <p class="mt-1.5 text-sm leading-7 text-gray-600 dark:text-gray-300">
-                                    <span class="font-medium text-gray-900 dark:text-white">
+                                <p
+                                    class="mt-1.5 text-sm leading-7 text-gray-600 dark:text-gray-300"
+                                >
+                                    <span
+                                        class="font-medium text-gray-900 dark:text-white"
+                                    >
                                         {{ branch.name }}
                                     </span>
                                     is conveniently located at
-                                    <span class="font-medium text-gray-900 dark:text-white">
-                                        {{ branch.location.street }},
-                                        {{ branch.location.city }},
-                                        {{ branch.location.province }},
-                                        {{ branch.location.country }} </span
+                                    <span
+                                        class="font-medium text-gray-900 dark:text-white"
+                                    >
+                                        {{ fullAddress }} </span
                                     >. Whether you're visiting for a
                                     consultation, treatment, or scheduled care,
                                     our location is easily accessible and ready
@@ -161,20 +227,32 @@
                 <!-- Reviews -->
                 <div v-if="loading" :class="cardClass">
                     <div class="flex animate-pulse flex-col gap-5">
-                        <div class="h-6 w-40 rounded-md bg-gray-200 dark:bg-white/10" />
+                        <div
+                            class="h-6 w-40 rounded-md bg-gray-200 dark:bg-white/10"
+                        />
 
-                        <div class="h-32 w-full rounded-2xl bg-gray-200 dark:bg-white/10" />
+                        <div
+                            class="h-32 w-full rounded-2xl bg-gray-200 dark:bg-white/10"
+                        />
 
                         <div
                             v-for="n in 2"
                             :key="n"
                             class="flex gap-3 border-t border-gray-100 pt-5 dark:border-white/10"
                         >
-                            <div class="h-10 w-10 shrink-0 rounded-full bg-gray-200 dark:bg-white/10" />
+                            <div
+                                class="h-10 w-10 shrink-0 rounded-full bg-gray-200 dark:bg-white/10"
+                            />
                             <div class="flex-1 space-y-2">
-                                <div class="h-4 w-28 rounded bg-gray-200 dark:bg-white/10" />
-                                <div class="h-3 w-full rounded bg-gray-200 dark:bg-white/10" />
-                                <div class="h-3 w-4/5 rounded bg-gray-200 dark:bg-white/10" />
+                                <div
+                                    class="h-4 w-28 rounded bg-gray-200 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-full rounded bg-gray-200 dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-4/5 rounded bg-gray-200 dark:bg-white/10"
+                                />
                             </div>
                         </div>
                     </div>
@@ -187,19 +265,30 @@
 
             <!-- Right column -->
             <div class="lg:col-span-1">
-                <div ref="servicesRef" class="flex scroll-mt-40 flex-col gap-4 lg:sticky lg:top-40">
+                <div
+                    ref="servicesRef"
+                    class="flex scroll-mt-40 flex-col gap-4 lg:sticky lg:top-40"
+                >
                     <div
                         v-if="loading"
                         class="animate-pulse rounded-2xl border border-gray-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
-                        <div class="h-7 w-40 rounded-md bg-gray-200 dark:bg-white/10" />
+                        <div
+                            class="h-7 w-40 rounded-md bg-gray-200 dark:bg-white/10"
+                        />
 
                         <div class="mt-6 space-y-3">
-                            <div class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10" />
-                            <div class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10" />
+                            <div
+                                class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10"
+                            />
+                            <div
+                                class="h-[72px] w-full rounded-xl bg-gray-200 dark:bg-white/10"
+                            />
                         </div>
 
-                        <div class="mt-6 h-11 w-full rounded-xl bg-gray-200 dark:bg-white/10" />
+                        <div
+                            class="mt-6 h-11 w-full rounded-xl bg-gray-200 dark:bg-white/10"
+                        />
                     </div>
 
                     <BookingCard
@@ -223,10 +312,14 @@
                             </span>
 
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-sm font-bold text-secondary dark:text-white">
+                                <h3
+                                    class="text-sm font-bold text-secondary dark:text-white"
+                                >
                                     Need Help?
                                 </h3>
-                                <p class="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                                <p
+                                    class="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-300"
+                                >
                                     Have questions or need assistance? Our team
                                     is here to help you.
                                 </p>
@@ -254,6 +347,7 @@ import {
     HeartHandshake,
     Info,
     Clock,
+    Mail,
     MapPin,
     Phone,
     ShieldCheck,
@@ -266,6 +360,7 @@ import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { providerNavList } from "~/config/publicMenu";
 import { getBranchTimeDisplay } from "~/utils/time";
+import { formatPhone } from "~/utils/phone";
 import { useBranch } from "~/composables/useBranchProvider";
 
 useHead({ title: "Search Homecare" });
@@ -306,11 +401,19 @@ const hasFacility = computed(
         ) ?? false,
 );
 
-// The provider endpoint doesn't return `status` yet, so the badge stays
-// hidden until BranchResource sends it (see notes).
-const isVerified = computed(
-    () => (branch.value as any)?.status === "verified",
-);
+const isVerified = computed(() => (branch.value as any)?.status === "verified");
+
+const fullAddress = computed(() => {
+    const loc = branch.value?.location;
+    if (!loc) return "";
+
+    return (
+        loc.full_address ||
+        [loc.street, loc.city, loc.province, loc.country]
+            .filter(Boolean)
+            .join(", ")
+    );
+});
 
 const highlights = computed(() => {
     const time = getBranchTimeDisplay(branch.value?.settings);

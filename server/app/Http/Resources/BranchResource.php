@@ -38,6 +38,8 @@ class BranchResource extends JsonResource
             'uuid' => $this->uuid,
             'name' => $this->name,
             'description' => $this->description,
+            'contact_number' => $this->contact_number,
+            'email' => $this->email,
             'image' => $this->image,
             'is_verified' => $this->status === Branch::STATUS_VERIFIED,
             'cover_image' => $this->whenLoaded('images', function () {

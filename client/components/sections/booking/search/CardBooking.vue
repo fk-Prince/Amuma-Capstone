@@ -59,12 +59,9 @@
                 {{ branch.name }}
             </h3>
 
-            <p class="mt-1 flex items-center gap-1 text-xs text-muted dark:text-gray-400">
+            <p class="mt-1 flex items-start gap-1 text-xs text-muted dark:text-gray-400">
                 <Location class="h-3.5 w-3.5 shrink-0" />
-                <span class="truncate"
-                    >{{ branch.location.street }},
-                    {{ branch.location.city }}</span
-                >
+                <span class="min-w-0 line-clamp-2">{{ fullAddress }}</span>
             </p>
 
             <div class="mt-3 flex flex-wrap items-center gap-1.5">
@@ -222,14 +219,10 @@
                 </h3>
 
                 <div
-                    class="mt-1.5 flex items-center gap-1.5 text-sm text-muted dark:text-gray-400"
+                    class="mt-1.5 flex items-start gap-1.5 text-sm text-muted dark:text-gray-400"
                 >
-                    <Location class="h-4 w-4 shrink-0" />
-                    <span class="min-w-0 line-clamp-1">
-                        {{ branch.location.street }},
-                        {{ branch.location.city }},
-                        {{ branch.location.province }}
-                    </span>
+                    <Location class="mt-0.5 h-4 w-4 shrink-0" />
+                    <span class="min-w-0 line-clamp-2">{{ fullAddress }}</span>
                 </div>
 
                 <div class="mt-1.5 flex items-center gap-1 text-sm">
@@ -407,9 +400,7 @@
 
             <div class="mt-1.5 flex items-center gap-1.5 text-xs text-muted dark:text-gray-400">
                 <Location class="h-3.5 w-3.5 shrink-0" />
-                <span class="line-clamp-1">
-                    {{ branch.location.street }}, {{ branch.location.city }}
-                </span>
+                <span class="min-w-0 line-clamp-2">{{ fullAddress }}</span>
             </div>
 
             <div class="mt-2.5 flex flex-wrap gap-1.5">
@@ -443,15 +434,9 @@
                 <div class="flex shrink-0 items-center gap-1.5">
                     <button
                         @click.stop="$emit('select', branch)"
-                        class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-muted-light px-3 py-1.5 text-xs font-semibold text-secondary transition-colors hover:border-primary hover:text-primary dark:border-white/10 dark:text-white"
-                    >
-                        View Provider
-                    </button>
-                    <button
-                        @click.stop="$emit('select', branch)"
                         class="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-600"
                     >
-                        Book Now
+                        View Provider
                     </button>
                 </div>
             </div>
@@ -478,6 +463,18 @@ defineEmits(["select", "hover"]);
 const imageBroken = ref(false);
 
 const isFavorited = ref(false);
+
+const fullAddress = computed(() => {
+    const loc = props.branch?.location;
+    if (!loc) return "";
+
+    return (
+        loc.full_address ||
+        [loc.street, loc.city, loc.province, loc.country]
+            .filter(Boolean)
+            .join(", ")
+    );
+});
 
 const getTime = (settings: BranchRetrieve["settings"]) =>
     getBranchTimeDisplay(settings);
