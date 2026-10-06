@@ -16,6 +16,7 @@ class PatientActivityPresenter
             'description' => $activity->description ?? '',
             'type' => $activity->type,
             'occurredAt' => $activity->occurred_at?->toISOString(),
+            'recordedBy' => MedicationPresenter::recorderName($activity->recordedBy),
         ];
     }
 }

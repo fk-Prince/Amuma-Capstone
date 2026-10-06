@@ -10,7 +10,8 @@ import {
 import type { PatientActivity } from "~/types/patient-activity";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canLogActivity, careTeamBlockedReason } = usePermissions();
+const { canChart, canLogActivity, chartingBlockedReason, careTeamBlockedReason } =
+    usePermissions();
 
 withDefaults(
     defineProps<{
@@ -57,7 +58,7 @@ const typeStyles: Record<
 };
 
 function styleFor(type: string) {
-    return typeStyles[type] ?? typeStyles.activity;
+    return typeStyles[type] ?? typeStyles.activity!;
 }
 
 function formatOccurredAt(value: string) {
@@ -140,6 +141,12 @@ function formatOccurredAt(value: string) {
                         >
                             {{ item.description }}
                         </p>
+                        <p
+                            v-if="item.recordedBy"
+                            class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
+                        >
+                            Recorded by {{ item.recordedBy }}
+                        </p>
                     </div>
 
                     <span
@@ -160,7 +167,9 @@ function formatOccurredAt(value: string) {
 
                     <button
                         type="button"
-                        class="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
+                        class="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500 dark:hover:bg-white/10"
+                        :disabled="!canChart"
+                        :title="canChart ? '' : chartingBlockedReason"
                         @click="emit('edit-activity', item)"
                     >
                         <Pencil class="h-4 w-4" />

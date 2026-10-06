@@ -12,6 +12,7 @@ export type PatientActivityForm = z.infer<typeof patientActivitySchema>;
 
 export interface PatientActivity extends PatientActivityForm {
     id: string;
+    recordedBy?: string | null;
 }
 
 export const activityTypeOptions = [

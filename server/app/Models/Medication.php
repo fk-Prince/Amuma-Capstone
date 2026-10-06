@@ -25,6 +25,7 @@ class Medication extends Model
         'times',
         'start_date',
         'recorded_at',
+        'recorded_by',
     ];
 
     protected $casts = [
@@ -37,6 +38,11 @@ class Medication extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+    }
+
+    public function recordedBy()
+    {
+        return $this->belongsTo(Employee::class, 'recorded_by', 'employee_id');
     }
 
     public function schedules()

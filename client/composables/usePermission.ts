@@ -53,13 +53,18 @@ export const usePermissions = () => {
 
     const canChart = computed(() => canUpdate(Modules.Patients));
 
-    const canLogActivity = computed(() => canUpdate(Modules.Patients));
+    const canAddChart = computed(() => canCreate(Modules.Patients));
+
+    const canLogActivity = computed(() => canCreate(Modules.Patients));
 
     const chartingBlockedReason =
         "You need permission to update patients to record this.";
 
+    const addChartBlockedReason =
+        "You need permission to create patients to record this.";
+
     const careTeamBlockedReason =
-        "You need permission to update patients to record this.";
+        "You need permission to create patients to record this.";
 
     return {
         actionsFor,
@@ -73,8 +78,10 @@ export const usePermissions = () => {
         role,
         hasRole,
         canChart,
+        canAddChart,
         canLogActivity,
         chartingBlockedReason,
+        addChartBlockedReason,
         careTeamBlockedReason,
     };
 };

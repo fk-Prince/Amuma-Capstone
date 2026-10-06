@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Models\Employee;
 use App\Models\Medication;
 use App\Models\MedicationSchedule;
 use App\Models\Vital;
@@ -26,6 +27,7 @@ class MedicationPresenter
             'times' => $medication->times ?? [],
             'startDate' => $medication->start_date?->format('Y-m-d'),
             'recorded_date' => $medication->recorded_at?->toISOString(),
+            'recorded_by' => self::recorderName($medication->recordedBy),
             'schedules' => $medication->schedules
                 ->map(fn($schedule) => self::schedule($schedule))
                 ->values(),
@@ -59,6 +61,12 @@ class MedicationPresenter
             'recordedDate' => $vital->recorded_date?->format('Y-m-d'),
             'recordedTime' => $vital->recorded_time,
             'notes' => $vital->notes ?? '',
+            'recordedBy' => self::recorderName($vital->recordedBy),
         ];
+    }
+
+    public static function recorderName(?Employee $employee): ?string
+    {
+        return $employee?->full_name ?: null;
     }
 }

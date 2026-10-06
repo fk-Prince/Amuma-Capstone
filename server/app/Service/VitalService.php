@@ -27,6 +27,7 @@ class VitalService
         }
 
         $vitals = Vital::where('patient_id', $patient->patient_id)
+            ->with('recordedBy')
             ->orderByDesc('recorded_date')
             ->orderByDesc('recorded_time')
             ->paginate((int) ($payload['per_page'] ?? 10));
@@ -69,6 +70,7 @@ class VitalService
             'recorded_date' => $data['recordedDate'],
             'recorded_time' => $data['recordedTime'],
             'notes' => $data['notes'] ?? null,
+            'recorded_by' => $user->employee?->employee_id,
         ]);
 
         $this->notificationService->notifyPatientAccess(

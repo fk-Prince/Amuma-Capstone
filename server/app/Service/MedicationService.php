@@ -27,7 +27,7 @@ class MedicationService
         }
 
         $medications = Medication::where('patient_id', $patient->patient_id)
-            ->with('schedules')
+            ->with(['schedules', 'recordedBy'])
             ->orderByDesc('recorded_at')
             ->paginate((int) ($payload['per_page'] ?? 10));
 
@@ -71,6 +71,7 @@ class MedicationService
             'times' => $data['times'] ?? [],
             'start_date' => $data['startDate'],
             'recorded_at' => now(),
+            'recorded_by' => $user->employee?->employee_id,
         ]);
 
         $this->notificationService->notifyPatientAccess(

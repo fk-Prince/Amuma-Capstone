@@ -21,6 +21,7 @@ class PatientActivity extends Model
         'description',
         'type',
         'occurred_at',
+        'recorded_by',
     ];
 
     protected $casts = [
@@ -30,5 +31,10 @@ class PatientActivity extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+    }
+
+    public function recordedBy()
+    {
+        return $this->belongsTo(Employee::class, 'recorded_by', 'employee_id');
     }
 }

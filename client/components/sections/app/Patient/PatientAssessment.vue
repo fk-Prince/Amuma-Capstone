@@ -6,6 +6,7 @@ import DatePickerField from "~/components/ui/DatePickerField.vue";
 import { patientService } from "~/api/patient/PatientService";
 import { useToast } from "~/composables/useToast";
 import type { PatientRetrieve } from "~/types/patient";
+import { Modules } from "~/types/module";
 import { formatDate } from "~/utils/time";
 import { patientDiagnosisSchema } from "~/schema/patient-schema";
 import {
@@ -16,7 +17,11 @@ import {
 } from "~/utils/assessment";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canLogActivity, careTeamBlockedReason } = usePermissions();
+const { canCreate } = usePermissions();
+
+const canAddDiagnosis = computed(() => canCreate(Modules.Patients));
+const diagnosisBlockedReason =
+    "You need permission to create patients to record this.";
 
 const props = defineProps<{
     patient: PatientRetrieve;
@@ -201,8 +206,8 @@ const activeAssessment = computed(
                 v-if="!adding"
                 variant="outline"
                 extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
-                :disabled="!canLogActivity"
-                :tooltip="canLogActivity ? '' : careTeamBlockedReason"
+                :disabled="!canAddDiagnosis"
+                :tooltip="canAddDiagnosis ? '' : diagnosisBlockedReason"
                 @click="adding = true"
             >
                 <Plus class="h-3.5 w-3.5" />

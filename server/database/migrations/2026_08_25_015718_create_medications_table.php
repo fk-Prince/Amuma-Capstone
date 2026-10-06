@@ -26,6 +26,9 @@ return new class extends Migration
             $table->json('times')->nullable();
             $table->date('start_date');
             $table->timestamp('recorded_at')->useCurrent();
+            $table->foreignId('recorded_by')->nullable()
+                ->constrained('employees', 'employee_id')
+                ->nullOnDelete();
             $table->timestamps();
         });
     }

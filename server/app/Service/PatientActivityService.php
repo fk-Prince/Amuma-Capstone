@@ -27,6 +27,7 @@ class PatientActivityService
         }
 
         $activities = PatientActivity::where('patient_id', $patient->patient_id)
+            ->with('recordedBy')
             ->orderByDesc('occurred_at')
             ->paginate((int) ($payload['per_page'] ?? 10));
 
@@ -62,6 +63,7 @@ class PatientActivityService
             'description' => $data['description'] ?? null,
             'type' => $data['type'] ?? null,
             'occurred_at' => $data['occurredAt'] ?? null,
+            'recorded_by' => Auth::user()?->employee?->employee_id,
         ]);
 
         $this->notificationService->notifyPatientAccess(

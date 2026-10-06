@@ -83,6 +83,7 @@ export interface Medication {
     times: string[];
     startDate: string;
     recorded_date: string;
+    recorded_by?: string | null;
     schedules?: MedicationSchedule[]
 }
 
@@ -215,6 +216,7 @@ export type VitalFormData = z.infer<typeof vitalSchema>;
 export interface Vital extends VitalFormData {
     id: string;
     category: string;
+    recordedBy?: string | null;
 }
 
 export const dosageUnitOptions = [

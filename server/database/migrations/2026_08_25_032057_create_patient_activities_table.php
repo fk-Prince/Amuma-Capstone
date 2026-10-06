@@ -18,6 +18,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('type', ['appointment', 'therapy', 'meal', 'activity']);
             $table->timestamp('occurred_at');
+            $table->foreignId('recorded_by')->nullable()
+                ->constrained('employees', 'employee_id')
+                ->nullOnDelete();
             $table->timestamps();
         });
     }

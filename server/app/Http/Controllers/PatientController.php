@@ -61,7 +61,7 @@ class PatientController extends Controller
             $request->user(),
             $branch->branch_id,
             ModuleEnum::Patients,
-            PermissionAction::Update
+            PermissionAction::Create
         );
 
         $validated = $request->validate([

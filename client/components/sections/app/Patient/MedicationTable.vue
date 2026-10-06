@@ -25,7 +25,8 @@ import { frequencyOptions } from "~/types/medication";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canChart, chartingBlockedReason } = usePermissions();
+const { canChart, canAddChart, chartingBlockedReason, addChartBlockedReason } =
+    usePermissions();
 
 interface DayColumn {
     label: string;
@@ -468,8 +469,8 @@ const emit = defineEmits<{
                 v-if="isProvider"
                 variant="primary"
                 extra-class="px-5 py-2"
-                :disabled="!canChart"
-                :tooltip="canChart ? '' : chartingBlockedReason"
+                :disabled="!canAddChart"
+                :tooltip="canAddChart ? '' : addChartBlockedReason"
                 @click="$emit('add-medication')"
             >
                 <Plus class="h-4 w-4" />
@@ -503,6 +504,9 @@ const emit = defineEmits<{
                         class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"
                     >
                         Prescribed at {{ formatDate(med.recorded_date) }}
+                        <template v-if="med.recorded_by">
+                            by {{ med.recorded_by }}
+                        </template>
                     </p>
                 </div>
 

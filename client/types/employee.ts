@@ -141,7 +141,7 @@ export type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 export const unFilteredEmployeeAssignmentTypes = [
     { label: "All", value: "both" },
-    { label: "Homecare", value: "homecare" },
+    { label: "Homecare", value: "online" },
     { label: "Inhouse Facility", value: "facility" },
 ];
 

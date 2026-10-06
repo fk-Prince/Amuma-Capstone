@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import {
-    Eye,
-    Pencil,
-    Trash2,
-    ChevronLeft,
-    ChevronRight,
-    Plus,
-} from "lucide-vue-next";
+import { Pencil, ChevronLeft, ChevronRight, Plus } from "lucide-vue-next";
 import type { Vital } from "~/types/medication";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canChart, chartingBlockedReason } = usePermissions();
+const { canChart, canAddChart, chartingBlockedReason, addChartBlockedReason } =
+    usePermissions();
 
 const props = withDefaults(
     defineProps<{
@@ -71,6 +65,12 @@ const filteredVitals = computed(() => {
         );
     });
 });
+
+function cell(value: unknown) {
+    return value === null || value === undefined || value === ""
+        ? "—"
+        : value;
+}
 
 const emit = defineEmits<{
     (e: "add-vital"): void;
@@ -255,8 +255,8 @@ const emit = defineEmits<{
             <ActionButton
                 variant="primary"
                 extra-class="px-5 py-2"
-                :disabled="!canChart"
-                :tooltip="canChart ? '' : chartingBlockedReason"
+                :disabled="!canAddChart"
+                :tooltip="canAddChart ? '' : addChartBlockedReason"
                 @click="emit('add-vital')"
             >
                 <Plus class="h-4 w-4" />
@@ -329,6 +329,12 @@ const emit = defineEmits<{
                             </th>
 
                             <th
+                                class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                            >
+                                Recorded By
+                            </th>
+
+                            <th
                                 class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
                                 Action
@@ -341,7 +347,7 @@ const emit = defineEmits<{
                     >
                         <tr v-if="filteredVitals.length === 0">
                             <td
-                                colspan="9"
+                                colspan="11"
                                 class="py-16 text-center text-sm text-slate-400 dark:text-gray-500"
                             >
                                 No vital signs recorded for this month.
@@ -379,13 +385,13 @@ const emit = defineEmits<{
                             <td
                                 class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
                             >
-                                {{ vital.heartRate ?? "—" }}
+                                {{ cell(vital.heartRate) }}
                             </td>
 
                             <td
                                 class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
                             >
-                                {{ vital.respiratoryRate ?? "—" }}
+                                {{ cell(vital.respiratoryRate) }}
                             </td>
 
                             <td
@@ -411,34 +417,30 @@ const emit = defineEmits<{
                             <td
                                 class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
                             >
-                                {{ vital.bloodGlucose ?? "—" }}
+                                {{ cell(vital.bloodGlucose) }}
                             </td>
 
                             <td
                                 class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
                             >
-                                {{ vital.painLevel ?? "—" }}
+                                {{ cell(vital.painLevel) }}
+                            </td>
+
+                            <td
+                                class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
+                            >
+                                {{ cell(vital.recordedBy) }}
                             </td>
 
                             <td class="px-6 py-4">
                                 <div class="flex justify-end gap-2">
                                     <button
-                                        class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
-                                    >
-                                        <Eye class="h-4 w-4" />
-                                    </button>
-
-                                    <button
-                                        class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 dark:text-gray-500 dark:hover:bg-white/10"
+                                        class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500 dark:hover:bg-white/10"
+                                        :disabled="!canChart"
+                                        :title="canChart ? '' : chartingBlockedReason"
                                         @click="emit('edit-vital', vital)"
                                     >
                                         <Pencil class="h-4 w-4" />
-                                    </button>
-
-                                    <button
-                                        class="rounded-md p-1.5 text-red-400 hover:bg-red-50"
-                                    >
-                                        <Trash2 class="h-4 w-4" />
                                     </button>
                                 </div>
                             </td>

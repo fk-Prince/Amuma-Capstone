@@ -24,6 +24,9 @@ return new class extends Migration
             $table->date('recorded_date');
             $table->string('recorded_time', 5);
             $table->text('notes')->nullable();
+            $table->foreignId('recorded_by')->nullable()
+                ->constrained('employees', 'employee_id')
+                ->nullOnDelete();
             $table->timestamps();
         });
     }
