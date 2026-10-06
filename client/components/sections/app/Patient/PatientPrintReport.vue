@@ -1,4 +1,3 @@
-                            <td>{{ row.recorded_by || "—" }}</td>
 <template>
     <div class="patient-print-report">
         <section
