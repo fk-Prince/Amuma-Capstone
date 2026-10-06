@@ -129,8 +129,8 @@
         @mouseleave="$emit('hover', null)"
         class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary-200 cursor-pointer md:flex-row dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
     >
-        <div class="relative w-full shrink-0 md:w-64">
-            <div class="relative h-48 w-full overflow-hidden bg-muted-light dark:bg-white/10">
+        <div class="relative flex w-full shrink-0 flex-col md:w-64">
+            <div class="relative h-48 w-full flex-1 overflow-hidden bg-muted-light dark:bg-white/10">
                 <img
                     v-if="branch?.image && !imageBroken"
                     :src="branch.image"
