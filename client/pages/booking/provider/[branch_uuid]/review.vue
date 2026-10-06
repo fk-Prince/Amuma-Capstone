@@ -132,9 +132,9 @@
                                 />
 
                                 <span>
-                                    You'll be notified in the app and by email
-                                    once your booking request has been reviewed
-                                    and accepted.
+                                    We'll let you know in the app and by email
+                                    as soon as the branch has reviewed your
+                                    booking request.
                                 </span>
                             </div>
 
@@ -146,8 +146,9 @@
                                 />
 
                                 <span>
-                                    You are unable to cancel once the booking
-                                    is made.
+                                    Please double-check your details before
+                                    you submit. A booking can't be cancelled
+                                    once it's made.
                                 </span>
                             </div>
                         </div>

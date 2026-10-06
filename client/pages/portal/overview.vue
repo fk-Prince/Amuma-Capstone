@@ -716,8 +716,9 @@
                     v-if="isMedicalVisit"
                     class="text-[11px] text-gray-400 dark:text-gray-500"
                 >
-                    Medical visits are recorded by the care team — no time-in or
-                    time-out code is needed.
+                    This is a one-time medical service visit, so there is no
+                    time-in or time-out. Your care team records the visit for
+                    you.
                 </p>
 
                 <template v-else>

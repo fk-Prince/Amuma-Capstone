@@ -19,6 +19,7 @@ import {
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
+import { useBranchStore } from "~/stores/branch";
 import type { EmployeeSlip } from "~/types/employee-slip";
 
 export type PermissionSet = PermissionActionKey[];
@@ -32,6 +33,7 @@ export interface UseEmployeeFormOptions {
 
 export function useEmployeeForm(options: UseEmployeeFormOptions) {
     const user = useAuthUser();
+    const branchStore = useBranchStore();
     const { success, error } = useToast();
     const route = useRoute();
     const uuid = route.params.uuid as string;
@@ -358,6 +360,10 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
             loadedStatus.value = next;
 
+            if (user.value?.uuid === current.uuid) {
+                await Promise.all([fetchAuthUser(), branchStore.refreshBranch()]);
+            }
+
             success(res?.message ?? "Employee status updated.");
 
             const saved = (res?.employee?.data ??
@@ -405,7 +411,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             employee.value.password_confirmation = "";
 
             if (user.value?.uuid === current?.uuid) {
-                await fetchAuthUser();
+                await Promise.all([fetchAuthUser(), branchStore.refreshBranch()]);
             }
 
             savedEmployee.value = (res?.employee?.data ??
