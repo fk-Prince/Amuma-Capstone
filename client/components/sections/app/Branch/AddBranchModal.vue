@@ -852,10 +852,13 @@ const optionCount = computed(
 function selectSingleOption() {
     if (addMode.value || optionCount.value !== 1) return;
 
-    if (availableSubscriptions.value.length) {
-        chooseSubscription(availableSubscriptions.value[0].uuid);
-    } else {
-        chooseAdditional(additionalOptions.value[0].uuid);
+    const subscription = availableSubscriptions.value[0];
+    const additional = additionalOptions.value[0];
+
+    if (subscription) {
+        chooseSubscription(subscription.uuid);
+    } else if (additional) {
+        chooseAdditional(additional.uuid);
     }
 }
 
