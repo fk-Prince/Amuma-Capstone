@@ -179,6 +179,10 @@ Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patients/{uuid}/report', [PatientController::class, 'report']);
     Route::post('/patients/{uuid}/diagnoses', [PatientController::class, 'storeDiagnosis']);
+    Route::put('/patients/{uuid}/diagnoses/{diagnosis_uuid}', [PatientController::class, 'updateDiagnosis'])
+        ->whereUuid(['uuid', 'diagnosis_uuid']);
+    Route::put('/patients/{uuid}/assessments/{assessment_uuid}', [PatientController::class, 'updateAssessment'])
+        ->whereUuid(['uuid', 'assessment_uuid']);
 
     Route::patch('/employees/{uuid}/status', [EmployeeController::class, 'updateStatus']);
 

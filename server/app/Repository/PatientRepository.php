@@ -43,6 +43,16 @@ class PatientRepository
         return $patient->load('location');
     }
 
+    public function findDiagnosis(Patient $patient, string $uuid)
+    {
+        return $patient->diagnoses()->where('uuid', $uuid)->first();
+    }
+
+    public function findAssessment(Patient $patient, string $uuid)
+    {
+        return $patient->assessments()->where('uuid', $uuid)->first();
+    }
+
     public function findByFields(array $conditions)
     {
         return Patient::where($conditions)->first();
@@ -241,9 +251,9 @@ class PatientRepository
             'schedules.location',
             'schedules.scheduleServices.service',
 
-            'medications',
-            'vitals',
-            'activities',
+            'medications.recordedBy',
+            'vitals.recordedBy',
+            'activities.recordedBy',
         ])
             ->where('uuid', $uuid)
             ->first();

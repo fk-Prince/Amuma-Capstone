@@ -6,6 +6,9 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Requests\Patient\Clinical\StoreDiagnosisRequest;
+use App\Http\Requests\Patient\Clinical\UpdateAssessmentRequest;
+use App\Http\Requests\Patient\Clinical\UpdateDiagnosisRequest;
 use App\Http\Requests\Patient\UpdatePatientRequest;
 use App\Service\PatientService;
 use Illuminate\Http\Request;
@@ -53,7 +56,7 @@ class PatientController extends Controller
         );
     }
 
-    public function storeDiagnosis(Request $request, string $uuid)
+    public function storeDiagnosis(StoreDiagnosisRequest $request, string $uuid)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
 
@@ -64,27 +67,54 @@ class PatientController extends Controller
             PermissionAction::Create
         );
 
-        $validated = $request->validate([
-            'diagnosis' => ['required', 'string', 'max:200'],
-            'diagnosis_date' => ['required', 'date'],
-            'diagnosis_notes' => ['nullable', 'string', 'max:1000'],
-            'diagnosis_file' => [
-                'nullable',
-                'file',
-                'mimes:pdf,png,jpg,jpeg',
-                'max:10240',
-            ],
-        ], [
-            'diagnosis.required' => 'Primary Diagnosis is required',
-            'diagnosis_date.required' => 'Date Diagnosed is required',
-        ]);
-
+        $validated = $request->validated();
         $validated['diagnosis_file'] = $request->file('diagnosis_file');
 
         return $this->patientService->addDiagnosis(
             $uuid,
             $branch->branch_id,
             $validated
+        );
+    }
+
+    public function updateDiagnosis(UpdateDiagnosisRequest $request, string $uuid, string $diagnosisUuid)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::Patients,
+            PermissionAction::Update
+        );
+
+        $validated = $request->validated();
+        $validated['diagnosis_file'] = $request->file('diagnosis_file');
+
+        return $this->patientService->updateDiagnosis(
+            $uuid,
+            $branch->branch_id,
+            $diagnosisUuid,
+            $validated
+        );
+    }
+
+    public function updateAssessment(UpdateAssessmentRequest $request, string $uuid, string $assessmentUuid)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            ModuleEnum::Patients,
+            PermissionAction::Update
+        );
+
+        return $this->patientService->updateAssessment(
+            $uuid,
+            $branch->branch_id,
+            $assessmentUuid,
+            $request->validated()
         );
     }
 

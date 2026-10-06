@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue";
-import { FileText, Plus, Stethoscope, UploadCloud } from "lucide-vue-next";
+import {
+    FileText,
+    Pencil,
+    Plus,
+    Stethoscope,
+    UploadCloud,
+} from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import PatientAssessmentEditModal from "~/components/sections/app/Patient/PatientAssessmentEditModal.vue";
+import PatientDiagnosisEditModal from "~/components/sections/app/Patient/PatientDiagnosisEditModal.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import { patientService } from "~/api/patient/PatientService";
 import { useToast } from "~/composables/useToast";
@@ -17,27 +25,51 @@ import {
 } from "~/utils/assessment";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canCreate } = usePermissions();
+const { canCreate, canUpdate } = usePermissions();
 
 const canAddDiagnosis = computed(() => canCreate(Modules.Patients));
 const diagnosisBlockedReason =
     "You need permission to create patients to record this.";
 
+const canEditRecords = computed(() => canUpdate(Modules.Patients));
+const editBlockedReason =
+    "You need permission to update patients to edit this.";
+
 const props = defineProps<{
     patient: PatientRetrieve;
 }>();
 
-const assessments = computed(() => {
+const assessmentEdits = reactive<Record<string, any>>({});
+const diagnosisEdits = reactive<Record<string, any>>({});
+
+const assessments = computed<any[]>(() => {
     const value = props.patient.assessment;
 
-    if (!value) return [];
+    const list = !value ? [] : Array.isArray(value) ? value : [value];
 
-    if (Array.isArray(value)) return value;
-
-    if (typeof value === "object") return [value];
-
-    return [];
+    return list.map((entry: any) => ({
+        ...entry,
+        ...(assessmentEdits[entry?.uuid] ?? {}),
+    }));
 });
+
+const editingAssessment = ref<any>(null);
+const editingDiagnosis = ref<any>(null);
+
+function onAssessmentSaved(updated: any) {
+    assessmentEdits[updated.uuid] = updated;
+}
+
+function onDiagnosisSaved(updated: any) {
+    if (added.value.some((entry) => entry.uuid === updated.uuid)) {
+        added.value = added.value.map((entry) =>
+            entry.uuid === updated.uuid ? updated : entry,
+        );
+        return;
+    }
+
+    diagnosisEdits[updated.uuid] = updated;
+}
 
 // Diagnoses are their own records now; bookings made before the split still
 // carry them inside the assessment, so those are read back here too.
@@ -51,7 +83,13 @@ const diagnoses = computed<any[]>(() => {
                   (entry: any) => entry?.diagnosis || entry?.diagnosis_notes,
               );
 
-    return [...existing, ...added.value];
+    return [
+        ...existing.map((entry: any) => ({
+            ...entry,
+            ...(diagnosisEdits[entry?.uuid] ?? {}),
+        })),
+        ...added.value,
+    ];
 });
 
 const route = useRoute();
@@ -340,12 +378,30 @@ const activeAssessment = computed(
                 :key="index"
                 class="border-b border-slate-100 pb-5 last:border-b-0 last:pb-0 dark:border-white/10"
             >
-                <p
-                    v-if="diagnoses.length > 1"
-                    class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
+                <div
+                    v-if="diagnoses.length > 1 || (entry.uuid && !entry.condition)"
+                    class="mb-3 flex items-center justify-between gap-3"
                 >
-                    Diagnosis {{ index + 1 }}
-                </p>
+                    <p
+                        class="text-xs font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
+                    >
+                        <template v-if="diagnoses.length > 1">
+                            Diagnosis {{ index + 1 }}
+                        </template>
+                    </p>
+
+                    <ActionButton
+                        v-if="entry.uuid && !entry.condition"
+                        variant="outline"
+                        extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                        :disabled="!canEditRecords"
+                        :tooltip="canEditRecords ? '' : editBlockedReason"
+                        @click="editingDiagnosis = entry"
+                    >
+                        <Pencil class="h-3.5 w-3.5" />
+                        Edit
+                    </ActionButton>
+                </div>
 
                 <div class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
                     <div>
@@ -400,11 +456,25 @@ const activeAssessment = computed(
     </section>
 
     <section class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary">
-        <div class="flex items-center gap-2">
-            <Stethoscope class="h-4 w-4 text-primary" />
-            <h3 class="font-semibold text-secondary dark:text-white">
-                Assessment
-            </h3>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <Stethoscope class="h-4 w-4 text-primary" />
+                <h3 class="font-semibold text-secondary dark:text-white">
+                    Assessment
+                </h3>
+            </div>
+
+            <ActionButton
+                v-if="activeAssessment?.uuid"
+                variant="outline"
+                extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                :disabled="!canEditRecords"
+                :tooltip="canEditRecords ? '' : editBlockedReason"
+                @click="editingAssessment = activeAssessment"
+            >
+                <Pencil class="h-3.5 w-3.5" />
+                Edit
+            </ActionButton>
         </div>
 
         <p
@@ -562,4 +632,24 @@ const activeAssessment = computed(
             </div>
         </template>
     </section>
+
+    <PatientDiagnosisEditModal
+        :open="!!editingDiagnosis"
+        :diagnosis="editingDiagnosis"
+        :patient-uuid="patient.uuid"
+        :patient-name="patient.full_name"
+        :branch-uuid="String(route.params.uuid)"
+        @close="editingDiagnosis = null"
+        @saved="onDiagnosisSaved"
+    />
+
+    <PatientAssessmentEditModal
+        :open="!!editingAssessment"
+        :assessment="editingAssessment"
+        :patient-uuid="patient.uuid"
+        :patient-name="patient.full_name"
+        :branch-uuid="String(route.params.uuid)"
+        @close="editingAssessment = null"
+        @saved="onAssessmentSaved"
+    />
 </template>

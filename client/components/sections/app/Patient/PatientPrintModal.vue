@@ -190,6 +190,32 @@ function close() {
     emit("close");
 }
 
+const IMAGE_WAIT_MS = 8000;
+
+function waitForReportImages() {
+    const pending = Array.from(
+        document.querySelectorAll<HTMLImageElement>(".patient-print-report img"),
+    ).filter((img) => !img.complete);
+
+    if (!pending.length) return Promise.resolve();
+
+    const loaded = Promise.all(
+        pending.map(
+            (img) =>
+                new Promise<void>((resolve) => {
+                    img.addEventListener("load", () => resolve(), { once: true });
+                    img.addEventListener("error", () => resolve(), { once: true });
+                }),
+        ),
+    );
+
+    const timeout = new Promise<void>((resolve) =>
+        setTimeout(resolve, IMAGE_WAIT_MS),
+    );
+
+    return Promise.race([loaded, timeout]);
+}
+
 async function generate() {
     if (!selected.value.length) return;
 
@@ -209,6 +235,8 @@ async function generate() {
         await nextTick();
 
         document.body.classList.add("printing-report");
+
+        await waitForReportImages();
 
         await new Promise((resolve) =>
             requestAnimationFrame(() => requestAnimationFrame(resolve)),

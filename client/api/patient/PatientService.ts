@@ -37,6 +37,14 @@ class PatientService extends BaseService {
         return await this.request(`${this.resource}/${uuid}/diagnoses`, 'POST', payload);
     }
 
+    async updateDiagnosis(uuid: string, diagnosisUuid: string, payload: object): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/diagnoses/${diagnosisUuid}`, 'PUT', payload);
+    }
+
+    async updateAssessment(uuid: string, assessmentUuid: string, payload: object): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/assessments/${assessmentUuid}`, 'PUT', payload);
+    }
+
     async update(uuid: string, payload: object): Promise<any> {
         return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
     }

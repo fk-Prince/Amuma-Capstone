@@ -1,3 +1,4 @@
+                            <td>{{ row.recorded_by || "—" }}</td>
 <template>
     <div class="patient-print-report">
         <section
@@ -426,6 +427,7 @@
                             <th>Schedule</th>
                             <th>Start</th>
                             <th>Instructions</th>
+                            <th>Recorded by</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -481,6 +483,7 @@
                             <th>SpO₂ (%)</th>
                             <th>Glucose (mg/dL)</th>
                             <th>Pain (/10)</th>
+                            <th>Recorded by</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -494,6 +497,7 @@
                             <td>{{ row.oxygen_saturation ?? "—" }}</td>
                             <td>{{ row.blood_glucose ?? "—" }}</td>
                             <td>{{ row.pain_level ?? "—" }}</td>
+                            <td>{{ row.recorded_by || "—" }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -511,6 +515,7 @@
                             <th>Type</th>
                             <th>Title</th>
                             <th>Description</th>
+                            <th>Recorded by</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -524,6 +529,7 @@
                                 >
                             </td>
                             <td>{{ row.description ?? "—" }}</td>
+                            <td>{{ row.recorded_by || "—" }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -737,6 +743,11 @@ function patientLines(section: string) {
         lines.push(
             { label: "Blood type", value: patient.blood_type ?? "—" },
             { label: "Citizenship", value: patient.citizenship ?? "—" },
+            { label: "Occupation", value: patient.occupation || "—" },
+            {
+                label: "Marital status",
+                value: statusLabel(patient.marital_status),
+            },
             { label: "Height", value: measure(patient.height, "cm") },
             { label: "Weight", value: measure(patient.weight, "kg") },
             { label: "Allergies", value: allergyList.value || "None recorded" },

@@ -324,6 +324,8 @@ class PortalHelper
     {
         return [
             'full_address' => $patient->location?->full_address,
+            'occupation' => $patient->occupation,
+            'marital_status' => $patient->marital_status,
             'assessments' => self::assessments($patient),
             'diagnoses' => self::diagnoses($patient),
         ];

@@ -384,6 +384,94 @@ class PatientService
         ], 201);
     }
 
+    public function updateDiagnosis(string $uuid, int $branchId, string $diagnosisUuid, array $payload)
+    {
+        $patient = $this->patientRepository->findByFields([
+            ['uuid', '=', $uuid],
+            ['branch_id', '=', $branchId],
+        ]);
+
+        $diagnosis = $patient
+            ? $this->patientRepository->findDiagnosis($patient, $diagnosisUuid)
+            : null;
+
+        if (!$diagnosis) {
+            throw new Exception('Diagnosis not found for this patient.', 404);
+        }
+
+        $file = $payload['diagnosis_file'] ?? null;
+
+        $data = [
+            'diagnosis' => $payload['diagnosis'],
+            'diagnosis_date' => $payload['diagnosis_date'],
+            'diagnosis_notes' => $payload['diagnosis_notes'] ?? null,
+        ];
+
+        if ($file instanceof UploadedFile) {
+            $data['diagnosis_file'] = $this->uploadDiagnosisFile($file);
+        }
+
+        $diagnosis->update($data);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Diagnosis updated.'),
+            'diagnosis' => [
+                'uuid' => $diagnosis->uuid,
+                'diagnosis' => $diagnosis->diagnosis,
+                'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                'diagnosis_file' => $diagnosis->diagnosis_file,
+            ],
+        ]);
+    }
+
+    public function updateAssessment(string $uuid, int $branchId, string $assessmentUuid, array $payload)
+    {
+        $patient = $this->patientRepository->findByFields([
+            ['uuid', '=', $uuid],
+            ['branch_id', '=', $branchId],
+        ]);
+
+        $assessment = $patient
+            ? $this->patientRepository->findAssessment($patient, $assessmentUuid)
+            : null;
+
+        if (!$assessment) {
+            throw new Exception('Assessment not found for this patient.', 404);
+        }
+
+        $row = collect($payload)->only([
+            'condition',
+            'mental_state',
+            'affect',
+            'behavior',
+            'communication',
+            'speech',
+        ])->all();
+
+        foreach (PatientAssessment::LIFE_SYSTEM_ACTIVITIES as $activity) {
+            $row[$activity] = $payload['life_system_profile'][$activity];
+        }
+
+        $assessment->update($row);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Assessment updated.'),
+            'assessment' => [
+                'uuid' => $assessment->uuid,
+                'condition' => $assessment->condition,
+                'mental_state' => $assessment->mental_state,
+                'affect' => $assessment->affect,
+                'behavior' => $assessment->behavior,
+                'communication' => $assessment->communication,
+                'speech' => $assessment->speech,
+                'life_system_profile' => $assessment->life_system_profile,
+            ],
+        ]);
+    }
+
     private function uploadDiagnosisFile(UploadedFile $file): ?string
     {
         try {
@@ -632,6 +720,7 @@ class PatientService
             'taken_for' => $medication->taken_for,
             'duration' => $medication->duration,
             'start_date' => $medication->start_date?->format('Y-m-d'),
+            'recorded_by' => $medication->recordedBy?->full_name,
         ])->values()->all();
     }
 
@@ -652,6 +741,7 @@ class PatientService
             'blood_glucose' => $vital->blood_glucose,
             'pain_level' => $vital->pain_level,
             'notes' => $vital->notes,
+            'recorded_by' => $vital->recordedBy?->full_name,
         ])->values()->all();
     }
 
@@ -663,6 +753,7 @@ class PatientService
             'description' => $activity->description,
             'type' => $activity->type,
             'occurred_at' => $activity->occurred_at?->toIso8601String(),
+            'recorded_by' => $activity->recordedBy?->full_name,
         ])->values()->all();
     }
 }

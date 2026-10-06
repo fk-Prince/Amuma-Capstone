@@ -28,6 +28,8 @@ class PatientReportResource extends JsonResource
                 'gender' => $patient->gender,
                 'phone_number' => $this->localPhone($patient->phone_number),
                 'citizenship' => $patient->citizenship,
+                'occupation' => $patient->occupation,
+                'marital_status' => $patient->marital_status,
                 'address' => $patient->location?->full_address,
                 'blood_type' => $patient->blood_type,
                 'height' => $patient->height,

@@ -51,3 +51,39 @@ export function assessmentLabel(value?: string | null) {
 
     return ASSESSMENT_LABELS[value] ?? value;
 }
+
+export const assessmentOptions = {
+    condition: [
+        { label: "Ambulatory", value: "ambulatory" },
+        { label: "Wheelchair", value: "wheelchair" },
+        { label: "Stretcher", value: "stretcher" },
+    ],
+    mental_state: [
+        { label: "Alert", value: "alert" },
+        { label: "Drowsy", value: "drowsy" },
+        { label: "Lethargic", value: "lethargic" },
+        { label: "Forgetfulness", value: "forgetfulness" },
+    ],
+    affect: [
+        { label: "Cheerful", value: "cheerful" },
+        { label: "Flat", value: "flat" },
+        { label: "Tearful", value: "tearful" },
+        { label: "Depressed", value: "depressed" },
+        { label: "Angry", value: "angry" },
+    ],
+    behavior: [
+        { label: "Cooperative", value: "cooperative" },
+        { label: "Uncooperative", value: "uncooperative" },
+        { label: "Lack of interaction", value: "lack_of_interaction" },
+        { label: "Communication barrier", value: "communication_barrier" },
+    ],
+    communication: [
+        { label: "Coherent & Logical", value: "Coherent & Logical" },
+        { label: "Impaired", value: "Impaired" },
+    ],
+    speech: [
+        { label: "Clear", value: "clear" },
+        { label: "Slurred", value: "slurred" },
+        { label: "Aphasic", value: "aphasic" },
+    ],
+};
