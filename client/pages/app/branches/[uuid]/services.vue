@@ -230,6 +230,7 @@ const submitService = async () => {
                     Array.isArray(value) ? value[0] : value,
                 ]),
             );
+            error(Object.values(errors.value)[0] ?? "Please check the form.");
         } else {
             error(err?.data?.message ?? "Something went wrong.");
         }

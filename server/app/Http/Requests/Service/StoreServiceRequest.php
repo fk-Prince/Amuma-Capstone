@@ -33,6 +33,13 @@ class StoreServiceRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'maximum_duration.date_format' => 'The maximum duration must be under 24 hours.',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
         if (

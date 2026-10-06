@@ -25,6 +25,7 @@ const props = defineProps<{
     buttonTitle?: string;
     submitLoading?: boolean;
     action?: "create" | "update";
+    errors?: Record<string, string>;
 }>();
 
 const durationType = ref<"time" | "minutes">(
@@ -32,10 +33,36 @@ const durationType = ref<"time" | "minutes">(
         (props.form.maximum_duration?.includes(":") ? "time" : "minutes"),
 );
 
-const { errors, validate, clearError, reset } = useSchemaValidation(
+const {
+    errors: schemaErrors,
+    validate,
+    clearError: clearSchemaError,
+    reset,
+} = useSchemaValidation(
     computed(() => createServiceSchema(durationType.value)),
     props.form,
 );
+
+// Errors the server sent back, kept until the field is edited.
+const serverErrors = ref<Record<string, string>>({});
+
+watch(
+    () => props.errors,
+    (value) => {
+        serverErrors.value = { ...(value ?? {}) };
+    },
+    { immediate: true, deep: true },
+);
+
+const errors = computed(() => ({
+    ...serverErrors.value,
+    ...schemaErrors.value,
+}));
+
+const clearError = (field: string) => {
+    clearSchemaError(field);
+    delete serverErrors.value[field];
+};
 
 watch(
     durationType,

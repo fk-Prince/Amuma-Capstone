@@ -30,7 +30,7 @@ export const createServiceForm = (): Service => ({
     service_name: "",
     maximum_duration: "",
     is_available: true,
-    type: "online",
+    type: "both",
 });
 
 export const serviceSchema = z
@@ -95,6 +95,10 @@ const createDurationSchema = (durationType: "minutes" | "time") =>
                     })
                     .refine((val) => Number(val) > 0, {
                         message: "Duration must be greater than 0",
+                    })
+                    .refine((val) => Number(val) <= 1439, {
+                        message:
+                            "Duration must be under 24 hours (1,439 minutes or less)",
                     })
                 : z
                     .string()

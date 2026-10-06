@@ -88,11 +88,11 @@
                             {{ branch.description }}
                         </p>
 
-                        <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div class="mt-5 grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-3">
                             <div
                                 v-for="item in highlights"
                                 :key="item.label"
-                                class="flex items-center gap-3"
+                                class="flex min-w-0 items-center gap-3"
                             >
                                 <span
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
@@ -103,41 +103,10 @@
                                     />
                                 </span>
                                 <span
-                                    class="text-xs font-medium leading-tight text-gray-600 dark:text-gray-300"
+                                    class="min-w-0 break-words text-xs font-medium leading-tight text-gray-600 dark:text-gray-300"
                                 >
                                     {{ item.label }}
                                 </span>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="branch?.contact_number || branch?.email"
-                            class="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:flex-wrap sm:gap-x-8 dark:border-white/10"
-                        >
-                            <div
-                                v-if="branch?.contact_number"
-                                class="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                <span
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
-                                >
-                                    <Phone class="h-5 w-5" />
-                                </span>
-                                {{ formatPhone(branch.contact_number) }}
-                            </div>
-
-                            <div
-                                v-if="branch?.email"
-                                class="flex min-w-0 items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                <span
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary/15"
-                                >
-                                    <Mail class="h-5 w-5" />
-                                </span>
-                                <span class="min-w-0 break-all">{{
-                                    branch.email
-                                }}</span>
                             </div>
                         </div>
                     </template>
@@ -419,14 +388,18 @@ const highlights = computed(() => {
     const time = getBranchTimeDisplay(branch.value?.settings);
 
     return [
-        { label: "Professional Caregivers", icon: Users },
-        { label: "Personalized Care", icon: HeartHandshake },
-        { label: "Safe & Trusted", icon: ShieldCheck },
+        branch.value?.contact_number
+            ? { label: formatPhone(branch.value.contact_number), icon: Phone }
+            : null,
+        branch.value?.email ? { label: branch.value.email, icon: Mail } : null,
         {
             label: time.is24Hours ? "24/7 Support" : `Open ${time.label}`,
             icon: Clock,
         },
-    ];
+        { label: "Professional Caregivers", icon: Users },
+        { label: "Personalized Care", icon: HeartHandshake },
+        { label: "Safe & Trusted", icon: ShieldCheck },
+    ].filter((item): item is NonNullable<typeof item> => item !== null);
 });
 
 const mapsUrl = computed(() => {
