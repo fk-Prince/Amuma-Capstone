@@ -481,7 +481,7 @@
                         personalized assistance.
                     </p>
                     <div class="plan-price">
-                        ₱28000.00<span> / year</span>
+                        ₱56000.00<span> / year</span>
                     </div>
                     <button class="plan-btn-outline">
                         Subscribe to Homecare Services →

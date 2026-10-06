@@ -135,8 +135,11 @@
 
                         <div class="mt-4 overflow-hidden rounded-2xl">
                             <LocationPin
+                                :locations="[branch.location]"
                                 :center-lat="Number(branch.location.latitude)"
                                 :center-lng="Number(branch.location.longitude)"
+                                :zoom="16"
+                                :show-my-location="false"
                             />
                         </div>
 

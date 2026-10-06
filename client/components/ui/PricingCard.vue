@@ -87,6 +87,13 @@
         </div>
 
         <p
+            v-if="savePercent"
+            class="mb-2 inline-flex w-fit items-center rounded-full bg-emerald-400/20 px-2.5 py-0.5 text-xs font-bold text-emerald-100"
+        >
+            Save up to {{ savePercent }}%
+        </p>
+
+        <p
             :class="[
                 'mb-5 text-sm font-medium',
                 featured ? 'text-white/80' : 'text-primary dark:text-primary-300',
@@ -180,6 +187,7 @@ defineProps<{
     ctaText: string;
     features: string[];
     featured?: boolean;
+    savePercent?: number;
 }>();
 
 defineEmits<{

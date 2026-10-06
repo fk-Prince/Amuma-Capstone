@@ -19,11 +19,11 @@ class PlanSeeder extends Seeder
 
         $plans = [
             ['plan_code' => 'A', 'type' => Plan::TYPE_SME, 'name' => 'Homecare Services', 'description' => $homecare, 'price' => 12000, 'additional_branch_price' => 12000],
-            ['plan_code' => 'A', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'Homecare Services', 'description' => $homecare, 'price' => 28000, 'additional_branch_price' => 12000],
+            ['plan_code' => 'A', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'Homecare Services', 'description' => $homecare, 'price' => 56000, 'additional_branch_price' => 12000],
             ['plan_code' => 'B', 'type' => Plan::TYPE_SME, 'name' => 'In-house Facility', 'description' => $facility, 'price' => 15000, 'additional_branch_price' => 15000],
-            ['plan_code' => 'B', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'In-house Facility', 'description' => $facility, 'price' => 33000, 'additional_branch_price' => 15000],
+            ['plan_code' => 'B', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'In-house Facility', 'description' => $facility, 'price' => 66000, 'additional_branch_price' => 15000],
             ['plan_code' => 'C', 'type' => Plan::TYPE_SME, 'name' => 'Hybrid', 'description' => $hybrid, 'price' => 20000, 'additional_branch_price' => 20000],
-            ['plan_code' => 'C', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'Hybrid', 'description' => $hybrid, 'price' => 50000, 'additional_branch_price' => 20000],
+            ['plan_code' => 'C', 'type' => Plan::TYPE_ENTERPRISE, 'name' => 'Hybrid', 'description' => $hybrid, 'price' => 100000, 'additional_branch_price' => 20000],
         ];
 
         foreach ($plans as $plan) {

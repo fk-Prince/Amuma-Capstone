@@ -644,13 +644,16 @@ watch(() => route.path, closeMenu);
                         </ClientOnly>
                     </template>
 
-                    <NavbarProfileDropdown
-                        v-else
-                        :user="user"
-                        :scrolled="scrolled"
-                        :navTheme="navTheme"
-                        :theme-aware="isChromeSolid"
-                    />
+                    <template v-else>
+                        <Notification v-if="showNotifications" />
+
+                        <NavbarProfileDropdown
+                            :user="user"
+                            :scrolled="scrolled"
+                            :navTheme="navTheme"
+                            :theme-aware="isChromeSolid"
+                        />
+                    </template>
 
                     <button
                         v-if="variant === 1 || variant === 2 || variant === 3"

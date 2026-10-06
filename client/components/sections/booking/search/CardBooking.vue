@@ -34,7 +34,7 @@
             <span
                 class="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-accent-700 shadow-sm backdrop-blur-sm dark:bg-secondary/90 dark:text-accent-400"
             >
-                {{ getTime(branch.settings).label }}
+                {{ hoursLabel(branch.settings) }}
             </span>
 
             <div
@@ -307,7 +307,7 @@
                 </span>
 
                 <span v-else class="font-medium text-muted dark:text-gray-300">
-                    {{ getTime(branch.settings).label }}
+                    {{ hoursLabel(branch.settings) }}
                 </span>
             </div>
         </div>
@@ -481,6 +481,12 @@ const isFavorited = ref(false);
 
 const getTime = (settings: BranchRetrieve["settings"]) =>
     getBranchTimeDisplay(settings);
+
+const hoursLabel = (settings: BranchRetrieve["settings"]) => {
+    const hours = getBranchTimeDisplay(settings);
+
+    return hours.time ? `Opens at ${hours.label}` : hours.label;
+};
 
 const extraImages = computed(() => props.branch.images ?? []);
 const remainingImageCount = computed(() =>
