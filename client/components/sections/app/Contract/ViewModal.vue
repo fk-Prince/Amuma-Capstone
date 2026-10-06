@@ -130,6 +130,7 @@
                                         </p>
 
                                         <button
+                                            v-if="canUpdate(Modules.Contracts)"
                                             type="button"
                                             class="text-xs font-semibold text-primary hover:text-primary-700 dark:hover:text-primary-300"
                                             @click="onUpdate(plan)"
@@ -170,6 +171,9 @@ import { X, Building2 } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import { formatCurrency } from "~/utils/currency";
+import { Modules } from "~/types/module";
+
+const { canUpdate } = usePermissions();
 
 const props = defineProps<{
     open: boolean;

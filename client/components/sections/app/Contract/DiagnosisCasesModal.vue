@@ -63,6 +63,8 @@
                             v-model="form.description"
                             label="Description (optional)"
                             mode="textarea"
+                            :rows="10"
+                            :allowResize="true"
                             :textMax="1000"
                             placeholder="What this case covers"
                             :error="errors.description"
@@ -72,6 +74,8 @@
                             v-model="form.price"
                             label="Price"
                             mode="number"
+                            step="0.01"
+                            min="0.01"
                             placeholder="0.00"
                             :error="errors.price"
                             required
@@ -291,7 +295,7 @@ async function save() {
         branch_uuid: props.branchUuid,
         title: form.title.trim(),
         description: form.description.trim() || null,
-        price: Number(form.price),
+        price: Math.round(Number(form.price) * 100) / 100,
     };
 
     try {

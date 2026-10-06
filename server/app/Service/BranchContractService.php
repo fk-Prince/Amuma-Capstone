@@ -107,6 +107,9 @@ class BranchContractService
             'price' => $payload['price'],
             'billing_cycle' => $payload['billing_cycle'],
             'description' => $payload['description'] ?? null,
+            'is_active' => array_key_exists('is_active', $payload)
+                ? filter_var($payload['is_active'], FILTER_VALIDATE_BOOLEAN)
+                : $contract->is_active,
         ]);
 
         return [

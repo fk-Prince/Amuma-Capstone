@@ -29,7 +29,7 @@ export const facilityPlanSchema = z.object({
     }),
 
     description: z.string()
-        .max(500, "Description must not exceed 500 characters")
+        .max(1000, "Description must not exceed 1000 characters")
         .optional()
         .nullable(),
 });
@@ -51,6 +51,7 @@ export const facilityPlanForm = () => ({
     accommodation_type: undefined,
     price: 1,
     billing_cycle: undefined,
+    is_active: true,
     description: "",
 });
 
@@ -67,7 +68,7 @@ export const homecarePlanSchema = z.object({
         message: "Billing cycle must be HOURLY",
     }),
     description: z.string()
-        .max(500, "Description must not exceed 500 characters")
+        .max(1000, "Description must not exceed 1000 characters")
         .optional()
         .nullable(),
 });

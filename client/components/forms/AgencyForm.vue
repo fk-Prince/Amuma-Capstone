@@ -36,7 +36,7 @@
                         label="Description"
                         required
                         mode="textarea"
-                        :rows="4"
+                        :rows="6"
                         placeholder="Describe your agency"
                         :allowResize="true"
                         :textMax="1000"

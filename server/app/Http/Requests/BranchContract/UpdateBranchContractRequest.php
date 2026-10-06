@@ -32,6 +32,7 @@ class UpdateBranchContractRequest extends FormRequest
             'price' => ['required',  'numeric',  'min:1'],
             'billing_cycle' => ['required',   Rule::in(['MONTHLY', 'YEARLY', 'OPEN', 'HOURLY'])],
             'description' => ['nullable', 'string',  'max:1000'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -41,9 +41,31 @@
 
                 <!-- Form -->
                 <form
+                    ref="formRef"
                     class="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto"
                     @submit.prevent="submit"
                 >
+                    <div
+                        v-if="generalError"
+                        class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg"
+                    >
+                        <div class="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                        <p class="text-sm font-medium text-red-700">
+                            {{ generalError }}
+                        </p>
+                    </div>
                     <!-- Accommodation Type -->
                     <div>
                         <Combobox
@@ -117,6 +139,9 @@
                                 placeholder="Describe the room features, amenities, and patient experience..."
                                 :error="errors.description"
                                 mode="textarea"
+                                :rows="6"
+                                :allowResize="true"
+                                :textMax="1000"
                             />
 
                             <!-- Suggestions -->
@@ -217,6 +242,17 @@
                         </div>
                     </div>
 
+
+                    <div
+                        v-if="isEditMode"
+                        class="rounded-xl border border-slate-200 px-4 py-3 dark:border-white/10"
+                    >
+                        <ToggleSwitch
+                            v-model="form.is_active"
+                            label="Active"
+                            description="Turn off to stop offering this plan. Existing admissions and bookings are not affected."
+                        />
+                    </div>
                 </form>
 
                 <!-- Footer -->
@@ -281,6 +317,7 @@ import { useRoute } from "vue-router";
 import { X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
@@ -355,6 +392,8 @@ const form = reactive({
     branch_uuid: uuid.value,
 });
 
+const formRef = ref<HTMLFormElement | null>(null);
+
 const errors = reactive<Record<string, string>>({
     accommodation_type: "",
     price: "",
@@ -378,8 +417,14 @@ watch(
     (isOpen) => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
+
+            Object.assign(form, facilityPlanForm(), props.data ?? {}, {
+                branch_uuid: uuid.value,
+            });
+            clearErrors();
         } else {
             document.body.style.overflow = "auto";
+            resetForm();
         }
     },
 );
@@ -392,6 +437,12 @@ function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
 function clearError(field: string) {
     errors[field] = "";
 }
+
+const generalError = computed(() => errors.general);
+
+watch(generalError, (message) => {
+    if (message) formRef.value?.scrollTo({ top: 0, behavior: "smooth" });
+});
 
 function clearErrors() {
     Object.keys(errors).forEach((key) => {
@@ -480,6 +531,8 @@ async function submit() {
         }
 
         emit("saved", savedPlan);
+        resetForm();
+        isSubmitting.value = false;
         close();
     } catch (err: any) {
         const message =
@@ -492,12 +545,12 @@ async function submit() {
 
         const apiErrors = err?.data?.errors || err?.response?.data?.errors;
 
-        // Field errors still mark their input; the summary goes to a toast
-        // rather than a banner buried at the bottom of the form.
         if (apiErrors && Object.keys(apiErrors).length > 0) {
             Object.entries(apiErrors).forEach(([key, value]: any) => {
                 errors[key] = Array.isArray(value) ? value[0] : value;
             });
+        } else {
+            errors.general = message;
         }
 
         error(message);

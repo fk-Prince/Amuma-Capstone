@@ -43,9 +43,32 @@
                 </div>
 
                 <form
+                    ref="formRef"
                     class="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto"
                     @submit.prevent="submit"
                 >
+                    <div
+                        v-if="generalError"
+                        class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg"
+                    >
+                        <div class="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
+                        <p class="text-sm font-medium text-red-700">
+                            {{ generalError }}
+                        </p>
+                    </div>
+
                     <div>
                         <label
                             class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -210,25 +233,14 @@
                     </div>
 
                     <div
-                        v-if="generalError"
-                        class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg"
+                        v-if="isEditMode"
+                        class="rounded-xl border border-slate-200 px-4 py-3 dark:border-white/10"
                     >
-                        <div class="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-red-700">
-                            {{ generalError }}
-                        </p>
+                        <ToggleSwitch
+                            v-model="form.is_active"
+                            label="Active"
+                            description="Turn off to stop offering this plan. Existing admissions and bookings are not affected."
+                        />
                     </div>
                 </form>
 
@@ -293,6 +305,7 @@ import { useRoute } from "vue-router";
 import { X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
 import { homecarePlanForm, homecarePlanSchema } from "~/types/contract";
@@ -340,6 +353,12 @@ const serviceTypeLabel = computed(() => {
 });
 
 const generalError = computed(() => errors.general);
+
+const formRef = ref<HTMLFormElement | null>(null);
+
+watch(generalError, (message) => {
+    if (message) formRef.value?.scrollTo({ top: 0, behavior: "smooth" });
+});
 
 const existingPackageDescription = computed(() => {
     return isEditMode.value ? props.data?.description : null;
@@ -398,8 +417,14 @@ watch(
     (isOpen) => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
+
+            Object.assign(form, homecarePlanForm(), { description: "" }, props.data ?? {}, {
+                branch_uuid: uuid.value,
+            });
+            clearErrors();
         } else {
             document.body.style.overflow = "auto";
+            resetForm();
         }
     },
 );
@@ -502,6 +527,8 @@ async function submit() {
         }
 
         emit("saved", savedPlan);
+        resetForm();
+        isSubmitting.value = false;
         close();
     } catch (err: any) {
         const message =
@@ -523,6 +550,8 @@ async function submit() {
         } else {
             errors.general = message;
         }
+
+        error(message);
     } finally {
         isSubmitting.value = false;
     }

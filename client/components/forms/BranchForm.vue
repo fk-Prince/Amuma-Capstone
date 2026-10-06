@@ -71,7 +71,7 @@
                         mode="textarea"
                         :textMax="1000"
                         :allowResize="true"
-                        :rows="3"
+                        :rows="6"
                         @update:modelValue="clearError('branch_description')"
                         :error="errors?.branch_description"
                         data-field="branch_description"
