@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Enums\PortalEnum;
 use App\Models\User;
 use App\Repository\UserRepository;
 use Exception;
@@ -43,12 +42,6 @@ class AuthService
 
         if (!Hash::check($payload['password'], $user->password)) {
             throw new Exception(__('Incorrect credentials'), 401);
-        }
-
-        $portal = PortalEnum::from($payload['portal']);
-
-        if (!$portal->allows($user)) {
-            throw new Exception($portal->mismatchMessage(), 403);
         }
 
         Auth::login($user);
@@ -133,7 +126,7 @@ class AuthService
             Log::error('Google sign-in failed: ' . $e->getMessage());
 
             return redirect()->away(
-                config('app.client_url') . '/auth/client/signin?error=google_failed'
+                config('app.client_url') . '/auth/signin?error=google_failed'
             );
         }
 
@@ -160,7 +153,7 @@ class AuthService
             ]);
         } elseif ($user->provider !== 'google') {
             return redirect()->away(
-                config('app.client_url') . '/auth/client/signin?error=provider_mismatch'
+                config('app.client_url') . '/auth/signin?error=provider_mismatch'
             );
         }
 

@@ -119,14 +119,14 @@ const branchStore = useBranchStore();
 
 const tabs = [
     {
-        label: "Branch Information",
-        value: "branch",
-        icon: Building2,
-    },
-    {
         label: "Agency Information",
         value: "agency",
         icon: Landmark,
+    },
+    {
+        label: "Branch Information",
+        value: "branch",
+        icon: Building2,
     },
     {
         label: "Images",
@@ -145,7 +145,7 @@ const route = useRoute();
 const tabFromQuery = () =>
     tabs.some((tab) => tab.value === route.query.tab)
         ? String(route.query.tab)
-        : "branch";
+        : "agency";
 
 const activeTab = ref(tabFromQuery());
 

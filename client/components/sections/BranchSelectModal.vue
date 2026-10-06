@@ -175,7 +175,7 @@
                                     <p
                                         class="flex min-w-0 items-center gap-1 text-[13px] font-semibold text-primary-900 dark:text-white sm:text-sm"
                                     >
-                                        <span class="min-w-0 truncate">
+                                        <span class="min-w-0 break-words">
                                             {{ agency.name }}
                                         </span>
 
@@ -418,7 +418,7 @@
                                                     class="flex min-w-0 flex-1 items-center gap-1 text-[13px] font-semibold text-primary-900 dark:text-white sm:text-sm"
                                                 >
                                                     <span
-                                                        class="min-w-0 truncate"
+                                                        class="min-w-0 break-words"
                                                     >
                                                         {{ branch.name }}
                                                     </span>

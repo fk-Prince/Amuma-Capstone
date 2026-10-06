@@ -1,24 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { Eye, EyeOff, IdCard, LoaderCircle, Lock, Mail } from "lucide-vue-next";
+import { Eye, EyeOff, LoaderCircle, Lock, Mail } from "lucide-vue-next";
 import AlertMessage from "../ui/AlertMessage.vue";
 import AuthTransitionScreen from "../ui/AuthTransitionScreen.vue";
 import TermsModal from "../ui/TermsModal.vue";
 
-import {
-    useAuthUser,
-    useAuthReady,
-} from "~/composables/useAuthUser";
+import { useAuthUser, useAuthReady } from "~/composables/useAuthUser";
 import { authService } from "~/api/auth/AuthService";
 import type { Alert } from "~/types/alert.js";
-import type { SigninPortal, SigninRequest } from "~/types/auth.js";
-import { useBranchStore } from "#imports";
+import type { SigninRequest } from "~/types/auth.js";
+import { authLandingPath } from "~/utils/authLanding";
 
-const props = defineProps<{
-    portal: "staff" | "family";
-}>();
-
-const branch = useBranchStore();
 const user = useAuthUser();
 const authReady = useAuthReady();
 const route = useRoute();
@@ -35,34 +27,21 @@ const signinData = ref({
     password: "",
 });
 
-const isStaffPortal = computed(() => props.portal === "staff");
-
 const signupRedirect = computed(
     () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
 );
 
-// Checking out a plan is open to any valid account (a brand-new sign-up
-// included), so it signs in as "checkout". The server decides whether the
-// account fits the portal it is signing in to.
-const signinPortal = computed<SigninPortal>(() => {
-    if (isSubscribeFlowPath(signupRedirect.value)) return "checkout";
-
-    return isStaffPortal.value ? "staff" : "client";
-});
-
 function buildCredentials(): SigninRequest {
     const identifier = signinData.value.email.trim();
-    const portal = signinPortal.value;
 
-    if (isStaffPortal.value && !identifier.includes("@")) {
+    if (!identifier.includes("@")) {
         return {
             employee_code: identifier.toUpperCase(),
             password: signinData.value.password,
-            portal,
         };
     }
 
-    return { email: identifier, password: signinData.value.password, portal };
+    return { email: identifier, password: signinData.value.password };
 }
 
 const showPassword = ref(false);
@@ -144,35 +123,13 @@ async function handleSignIn() {
             // layout must not show its own "Setting things up" screen after it.
             authReady.value = true;
 
-            if (props.portal === "staff") {
-                if (redirectTo) {
-                    await navigateTo(redirectTo);
-                } else {
-                    await branch.fetchBranches();
-
-                    if (!branch.branches.length) {
-                        await navigateTo("/app/branches/dashboard");
-                    }
-                }
-            } else if (res.user?.isSystemOwner) {
-                await navigateTo(redirectTo ?? "/app/owner/dashboard");
-            } else {
-                const hasPortalAccess =
-                    !!res.user?.hasBooking || !!res.user?.hasPatient;
-
-                await navigateTo(
-                    redirectTo ?? (hasPortalAccess ? "/portal/overview" : "/"),
-                );
-            }
+            await navigateTo(redirectTo ?? (await authLandingPath()));
         }, 1500);
     } catch (err: any) {
         showAlert(
             alert,
             "error",
-            err?.message ||
-                (isStaffPortal.value
-                    ? "Invalid employee ID, email, or password."
-                    : "Invalid email or password."),
+            err?.message || "Invalid employee ID, email, or password.",
             0,
         );
     } finally {
@@ -206,28 +163,20 @@ async function googleUrl() {
 
         <form @submit.prevent="handleSignIn">
             <label for="signin-email" :class="labelClass">
-                {{ isStaffPortal ? "Employee ID or email" : "Email" }}
+                Employee ID or email
             </label>
 
             <div class="relative">
                 <span :class="affixClass">
-                    <IdCard
-                        v-if="isStaffPortal"
-                        class="h-[1.05rem] w-[1.05rem]"
-                    />
-                    <Mail v-else class="h-[1.05rem] w-[1.05rem]" />
+                    <Mail class="h-[1.05rem] w-[1.05rem]" />
                 </span>
 
                 <input
                     id="signin-email"
                     v-model="signinData.email"
-                    :type="isStaffPortal ? 'text' : 'email'"
-                    :autocomplete="isStaffPortal ? 'username' : 'email'"
-                    :placeholder="
-                        isStaffPortal
-                            ? 'Enter your employee ID or email'
-                            : 'Enter your email address'
-                    "
+                    type="text"
+                    autocomplete="username"
+                    placeholder="Enter your employee ID or email"
                     :class="[fieldClass, borderClass(errors.email)]"
                 />
             </div>
@@ -292,7 +241,7 @@ async function googleUrl() {
                 {{ loading ? "Signing in…" : "Sign in" }}
             </button>
 
-            <template v-if="portal === 'family'">
+            <div>
                 <div class="mt-5 flex items-center gap-3">
                     <span class="h-px flex-1 bg-slate-200 dark:bg-white/10" />
                     <span
@@ -328,14 +277,7 @@ async function googleUrl() {
                         Sign up
                     </NuxtLink>
                 </p>
-            </template>
-
-            <p
-                v-if="isStaffPortal"
-                class="mt-7 text-center text-sm text-slate-500 dark:text-gray-400"
-            >
-                Unable to sign in? Contact your branch manager.
-            </p>
+            </div>
 
             <p
                 class="mt-3 text-center text-xs leading-5 text-slate-400 dark:text-gray-500"

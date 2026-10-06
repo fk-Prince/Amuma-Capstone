@@ -317,7 +317,7 @@ onBeforeUnmount(() => {
                                     ref="primaryRef"
                                     type="button"
                                     class="h-[50px] w-full rounded-xl bg-primary text-[15px] font-semibold text-white shadow-[0_10px_24px_-10px_rgba(49,130,237,0.8)] outline-none transition-all hover:-translate-y-0.5 hover:bg-primary-600 focus-visible:ring-2 focus-visible:ring-primary-300/60"
-                                    @click="go('/auth/agency/signup')"
+                                    @click="go('/auth/signup')"
                                 >
                                     Create account
                                 </button>
@@ -371,7 +371,7 @@ onBeforeUnmount(() => {
                                 <button
                                     type="button"
                                     class="rounded font-semibold text-blue-600 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary-500/40 dark:text-blue-400"
-                                    @click="go('/auth/client/signin')"
+                                    @click="go('/auth/signin')"
                                 >
                                     Sign in
                                 </button>

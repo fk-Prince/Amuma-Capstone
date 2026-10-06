@@ -182,11 +182,11 @@ const header = computed(() => {
 });
 
 const authSwitch = computed(() => {
-    if (route.path === "/auth/client/signin") {
+    if (route.path === "/auth/signin") {
         return { label: "Sign up", to: "/auth/signup" };
     }
     if (route.path === "/auth/signup") {
-        return { label: "Sign in", to: "/auth/client/signin" };
+        return { label: "Sign in", to: "/auth/signin" };
     }
     return null;
 });

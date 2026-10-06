@@ -47,10 +47,6 @@ export default defineNuxtConfig({
       },
     },
   },
-  routeRules: {
-    '/auth/family/signin': { redirect: '/auth/client/signin' },
-  },
-
   devServer: {
     host: '0.0.0.0',
     port: 3000,

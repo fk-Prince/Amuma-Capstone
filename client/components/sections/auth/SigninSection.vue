@@ -144,15 +144,8 @@ const highlights = [
                             </p>
                         </div>
 
-                        <SigninForm portal="family" />
+                        <SigninForm />
                     </div>
-
-                    <NuxtLink
-                        to="/auth/select"
-                        class="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-muted outline-none hover:text-secondary hover:underline dark:text-white/70 dark:hover:text-white"
-                    >
-                        ← Not the right portal? Switch here
-                    </NuxtLink>
                 </div>
                 </div>
             </div>

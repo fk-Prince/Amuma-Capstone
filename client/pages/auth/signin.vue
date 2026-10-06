@@ -1,9 +1,18 @@
+<template>
+    <ClientOnly>
+        <SigninSection />
+    </ClientOnly>
+</template>
+
 <script setup lang="ts">
+import SigninSection from "~/components/sections/auth/SigninSection.vue";
+
 definePageMeta({
-    redirect: "/auth/select",
+    middleware: "auth-client",
+    layout: "auth",
+});
+
+useHead({
+    title: "Sign in - AMUMA",
 });
 </script>
-
-<template>
-    <div />
-</template>

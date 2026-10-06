@@ -131,7 +131,7 @@ const features = [
                         </p>
                     </div>
 
-                    <SignupForm portal="family" />
+                    <SignupForm />
 
                 </div>
                 <!-- <SignupForm /> -->

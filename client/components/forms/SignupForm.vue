@@ -10,28 +10,15 @@ import { otpService } from "~/api/otp/OtpService";
 
 defineOptions({ name: "SignupForm" });
 
-const props = withDefaults(
-    defineProps<{
-        portal?: "agency" | "family";
-    }>(),
-    { portal: "family" },
-);
-
 const { success, error } = useToast();
 const route = useRoute();
 
-// Agencies sign up on their own page and always continue to the plans, so a
-// direct visit still ends up somewhere useful. Family sign-ups only carry a
-// redirect when one was given.
-const redirectTo = computed(() => {
-    const given = safeRedirect(route.query.redirect) ?? peekAuthRedirect();
-
-    return props.portal === "agency" ? (given ?? "/product") : given;
-});
-
-const signinPath = computed(() =>
-    props.portal === "agency" ? "/auth/staff/signin" : "/auth/client/signin",
+// A redirect (for example checkout) is kept through sign-up and sign-in.
+const redirectTo = computed(
+    () => safeRedirect(route.query.redirect) ?? peekAuthRedirect(),
 );
+
+const signinPath = "/auth/signin";
 
 const signupData = ref({
     firstName: "",
@@ -243,7 +230,7 @@ async function verifyOtp(code: string) {
 
         // Agencies continue on the staff sign-in, families on the family
         // sign-in. Either way the redirect (for example checkout) is kept.
-        await navigateTo(withRedirect(signinPath.value, redirectTo.value));
+        await navigateTo(withRedirect(signinPath, redirectTo.value));
     } catch (err: any) {
         const firstError = Object.values(err?.errors ?? {}).flat()[0];
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { authService } from "~/api/auth/AuthService";
+import { authLandingPath } from "~/utils/authLanding";
 
 const route = useRoute();
 const user = useAuthUser();
@@ -22,7 +23,7 @@ onMounted(async () => {
         }
 
         user.value = res.user;
-        navigateTo(consumeAuthRedirect() ?? "/");
+        navigateTo(consumeAuthRedirect() ?? (await authLandingPath()));
     } catch (err: any) {
         console.log(err);
         localStorage.removeItem("auth");
