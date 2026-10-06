@@ -385,7 +385,7 @@
 
 <script setup lang="ts">
 import { MapPin, ShieldCheck, Store } from "lucide-vue-next";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import FormSectionHeader from "../ui/FormSectionHeader.vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
@@ -400,6 +400,7 @@ const props = defineProps<{
     mode?: "new" | "edit";
     lockVerification?: boolean;
     hideImage?: boolean;
+    namePrefix?: string;
 }>();
 
 const isNew = computed(() => props.mode === "new");
@@ -429,6 +430,14 @@ const branch = computed({
 });
 
 const errors = computed(() => props.errors);
+
+onMounted(() => {
+    const prefix = props.namePrefix?.trim();
+
+    if (prefix && !props.branch.name?.trim()) {
+        branch.value = { ...props.branch, name: `${prefix} ` };
+    }
+});
 
 const tin = computed({
     get: () => props.branch.tin ?? "",
