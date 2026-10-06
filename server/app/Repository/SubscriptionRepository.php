@@ -18,7 +18,7 @@ class SubscriptionRepository
 {
     public function paymentsByUser(mixed $userId)
     {
-        return SubscriptionPayment::with(['plan:plan_id,name', 'branch:branch_id,name'])
+        return SubscriptionPayment::with(['plan:plan_id,name,type', 'branch:branch_id,name'])
             ->where('user_id', $userId)
             ->orderByDesc('created_at')
             ->get();

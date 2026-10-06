@@ -104,17 +104,27 @@
                         }"
                     >
                         <img
-                            v-if="notif.branch?.image"
+                            v-if="
+                                notif.branch?.image &&
+                                !failedImages.has(notif.id)
+                            "
                             :src="notif.branch.image"
                             :alt="notif.branch.name ?? 'Branch'"
                             class="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-gray-100 dark:ring-white/10"
+                            @error="failedImages.add(notif.id)"
                         />
 
                         <div
                             v-else
-                            class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300"
+                            class="w-9 h-9 flex items-center justify-center shrink-0 bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300"
+                            :class="
+                                notif.branch
+                                    ? 'rounded-xl bg-slate-100 text-blue-500 ring-1 ring-slate-200 dark:bg-white/5 dark:text-blue-400 dark:ring-white/10'
+                                    : 'rounded-full'
+                            "
                         >
-                            <Bell class="h-4 w-4" />
+                            <Building2 v-if="notif.branch" class="h-4 w-4" />
+                            <Bell v-else class="h-4 w-4" />
                         </div>
 
                         <div class="flex-1 min-w-0">
@@ -161,6 +171,7 @@
 <script setup lang="ts">
 import {
     ref,
+    reactive,
     computed,
     nextTick,
     onMounted,
@@ -168,7 +179,7 @@ import {
     watch,
 } from "vue";
 import { onClickOutside } from "@vueuse/core";
-import { Bell } from "lucide-vue-next";
+import { Bell, Building2 } from "lucide-vue-next";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -178,6 +189,8 @@ import { useToast } from "~/composables/useToast";
 import { remScale } from "~/utils/rem";
 const { info } = useToast();
 const route = useRoute();
+
+const failedImages = reactive(new Set<string | number>());
 const user = useAuthUser();
 const { $echo } = useNuxtApp();
 

@@ -130,7 +130,13 @@ class AuthService
             );
         }
 
-        $user = $this->userRepository->findByField('email', $googleUser->getEmail());
+        $user = User::where('provider', 'google')
+            ->where('provider_id', $googleUser->getId())
+            ->first();
+
+        if (!$user) {
+            $user = $this->userRepository->findByField('email', $googleUser->getEmail());
+        }
 
         if (!$user) {
             $nameParts = explode(' ', trim($googleUser->getName()), 2);

@@ -296,6 +296,9 @@ class UserService
                 'reference' => $payment->payment_reference_id,
                 'description' => collect([
                     $payment->plan?->name,
+                    $payment->plan?->type === 'sme'
+                        ? 'SME'
+                        : ucfirst((string) $payment->plan?->type),
                     $payment->branch?->name,
                 ])->filter()->implode(' · '),
                 'method' => $payment->payment_method,

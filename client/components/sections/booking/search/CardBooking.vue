@@ -209,15 +209,15 @@
             </div>
         </div>
 
-        <div class="flex flex-1 flex-col p-6">
+        <div class="flex min-w-0 flex-1 flex-col p-6">
             <div>
                 <h3
-                    class="flex min-w-0 items-center gap-1.5 line-clamp-1 text-lg font-semibold tracking-tight text-secondary transition group-hover:text-primary dark:text-white"
+                    class="text-lg font-semibold leading-snug tracking-tight text-secondary transition group-hover:text-primary dark:text-white"
                 >
-                    <span class="truncate">{{ branch.name }}</span>
+                    <span class="break-words">{{ branch.name }}</span>
                     <BadgeCheck
                         v-if="branch.is_verified"
-                        class="h-4 w-4 shrink-0 fill-primary text-white"
+                        class="ml-1.5 inline h-4 w-4 shrink-0 -translate-y-px fill-primary text-white"
                     />
                 </h3>
 
@@ -225,7 +225,7 @@
                     class="mt-1.5 flex items-center gap-1.5 text-sm text-muted dark:text-gray-400"
                 >
                     <Location class="h-4 w-4 shrink-0" />
-                    <span class="line-clamp-1">
+                    <span class="min-w-0 line-clamp-1">
                         {{ branch.location.street }},
                         {{ branch.location.city }},
                         {{ branch.location.province }}
