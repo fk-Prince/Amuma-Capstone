@@ -105,6 +105,11 @@ const debouncedFetchRoom = useDebounceFn(() => {
 
 watch(searchData, debouncedFetchRoom);
 
+watch(activeTab, () => {
+    pagination.reset();
+    fetchRoom();
+});
+
 onMounted(async () => {
     await Promise.all([fetchRoom(), fetchOverview()]);
 });
