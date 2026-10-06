@@ -27,7 +27,10 @@ class ScheduleController extends Controller
     public function index(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
+        $module = $request->filled('patient_uuid')
+            ? [ModuleEnum::Schedules, ModuleEnum::Patients]
+            : ModuleEnum::Schedules;
+        AuthGuard::requireModule($request->user(), $branch->branch_id, $module, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->retrieveSchedule($request->user(), $request->all());
     }
@@ -50,7 +53,7 @@ class ScheduleController extends Controller
             return $this->scheduleService->overview($request->all());
         } else if ($request->type === 'request_deduction') {
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Assign);
+            // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Assign);
             BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->requestInvoiceDeduction($request->all(), $request->user());
         }

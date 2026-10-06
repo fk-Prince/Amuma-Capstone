@@ -16,7 +16,7 @@
             />
 
             <form
-                class="relative z-50 flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                class="relative z-50 flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 @submit.prevent="submit"
             >
                 <div
@@ -144,7 +144,7 @@
                         />
                         <BaseInput
                             label="Occupation"
-                            label-hint="N/A if don't have a job, etc."
+                            label-hint="N/A if don't have a job"
                             :model-value="form.occupation"
                             :error="errors.occupation"
                             required

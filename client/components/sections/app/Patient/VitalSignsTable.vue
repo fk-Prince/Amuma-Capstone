@@ -221,6 +221,22 @@ const emit = defineEmits<{
                     {{ latestVital.recordedTime }}
                 </p>
             </div>
+
+            <div
+                v-if="latestVital.recordedBy"
+                class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/5"
+            >
+                <p
+                    class="text-[10px] uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                >
+                    Recorded By
+                </p>
+                <p
+                    class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
+                >
+                    {{ latestVital.recordedBy }}
+                </p>
+            </div>
         </div>
     </div>
 

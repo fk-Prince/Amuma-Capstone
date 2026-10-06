@@ -365,7 +365,8 @@ const emit = defineEmits<{
             </div>
 
             <div
-                class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 sm:grid-cols-3 dark:border-white/10"
+                class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 dark:border-white/10"
+                :class="latestMedication.recorded_by ? 'sm:grid-cols-4' : 'sm:grid-cols-3'"
             >
                 <div>
                     <p
@@ -403,6 +404,19 @@ const emit = defineEmits<{
                         class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
                     >
                         {{ latestMedication.durationLabel }}
+                    </p>
+                </div>
+
+                <div v-if="latestMedication.recorded_by">
+                    <p
+                        class="text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"
+                    >
+                        Recorded by
+                    </p>
+                    <p
+                        class="mt-1 text-sm font-medium text-gray-800 dark:text-white"
+                    >
+                        {{ latestMedication.recorded_by }}
                     </p>
                 </div>
             </div>

@@ -354,18 +354,21 @@ class PatientAccessRepository
         if ($this->wants($sections, 'medication')) {
             $relations = array_merge($relations, [
                 'medications.schedules',
+                'medications.recordedBy',
                 'vitals',
+                'vitals.recordedBy',
             ]);
         } elseif (in_array('recent_medication', $sections, true)) {
             $relations['medications'] = fn($query) =>
             $query->orderByDesc('recorded_at')
                 ->limit(self::RECENT_MEDICATION_LIMIT)
-                ->with('schedules');
+                ->with(['schedules', 'recordedBy']);
 
             $relations['vitals'] = fn($query) =>
             $query->orderByDesc('recorded_date')
                 ->orderByDesc('recorded_time')
-                ->limit(self::RECENT_MEDICATION_LIMIT);
+                ->limit(self::RECENT_MEDICATION_LIMIT)
+                ->with('recordedBy');
         }
 
         if ($this->wants($sections, 'activity')) {
@@ -375,7 +378,7 @@ class PatientAccessRepository
             );
 
             $relations['activities'] = fn($query) =>
-            $query->orderByDesc('occurred_at')->limit($limit);
+            $query->orderByDesc('occurred_at')->limit($limit)->with('recordedBy');
         }
 
         if ($this->wants($sections, 'admissions')) {

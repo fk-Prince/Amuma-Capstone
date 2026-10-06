@@ -865,6 +865,18 @@
                             >
                                 {{ u.description }}
                             </p>
+
+                            <p
+                                v-if="u.recordedBy"
+                                class="text-[11px] mt-0.5"
+                                :class="
+                                    u.highlighted
+                                        ? 'text-violet-500 dark:text-violet-300'
+                                        : 'text-gray-400 dark:text-gray-500'
+                                "
+                            >
+                                Recorded by {{ u.recordedBy }}
+                            </p>
                         </div>
                     </div>
 
@@ -1221,6 +1233,7 @@ interface UpdateItem {
     title: string;
     subtitle?: string;
     description?: string;
+    recordedBy?: string;
     time: string;
     highlighted?: boolean;
 }
@@ -1412,6 +1425,7 @@ const updates = computed<UpdateItem[]>(() => {
         title: activity.title,
         subtitle: activity.subtitle || undefined,
         description: activity.description || undefined,
+        recordedBy: activity.recordedBy || undefined,
         time: formatActivityTime(activity.occurredAt),
     }));
 });

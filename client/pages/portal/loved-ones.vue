@@ -512,10 +512,7 @@
                             </div>
                         </li>
 
-                        <li
-                            v-if="lovedOne.occupation"
-                            class="flex items-start gap-3 min-w-0"
-                        >
+                        <li class="flex items-start gap-3 min-w-0">
                             <span
                                 class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 dark:bg-primary-500/10 dark:text-primary-300"
                             >
@@ -526,7 +523,7 @@
                                 <p
                                     class="text-sm font-medium text-gray-800 break-words dark:text-white"
                                 >
-                                    {{ lovedOne.occupation }}
+                                    {{ lovedOne.occupation || "—" }}
                                 </p>
                                 <p
                                     class="text-xs text-gray-400 dark:text-gray-500"
@@ -536,10 +533,7 @@
                             </div>
                         </li>
 
-                        <li
-                            v-if="lovedOne.maritalStatus"
-                            class="flex items-start gap-3 min-w-0"
-                        >
+                        <li class="flex items-start gap-3 min-w-0">
                             <span
                                 class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 dark:bg-primary-500/10 dark:text-primary-300"
                             >
@@ -550,7 +544,7 @@
                                 <p
                                     class="text-sm font-medium text-gray-800 capitalize break-words dark:text-white"
                                 >
-                                    {{ lovedOne.maritalStatus }}
+                                    {{ lovedOne.maritalStatus || "—" }}
                                 </p>
                                 <p
                                     class="text-xs text-gray-400 dark:text-gray-500"

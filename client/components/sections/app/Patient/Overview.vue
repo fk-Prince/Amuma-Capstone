@@ -198,11 +198,42 @@ function statusClasses(status?: string) {
                         </p>
                     </div>
                 </div>
+
+                <div class="flex items-center gap-3">
+                    <Droplet class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Blood Type
+                        </p>
+                        <p
+                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
+                        >
+                            {{ patient.blood_type || "N/A" }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div
                 class="mt-6 grid gap-6 border-t border-muted-light pt-6 sm:grid-cols-3 dark:border-white/10"
             >
+                <div class="flex items-center gap-3">
+                    <MapPin class="h-4 w-4 shrink-0 text-primary" />
+                    <div>
+                        <p class="text-xs text-muted dark:text-gray-400">
+                            Address
+                        </p>
+                        <p
+                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
+                        >
+                            {{
+                                patient.location?.full_address ||
+                                "No address recorded."
+                            }}
+                        </p>
+                    </div>
+                </div>
+
                 <div class="flex items-center gap-3">
                     <Ruler class="h-4 w-4 shrink-0 text-primary" />
                     <div>
@@ -227,40 +258,6 @@ function statusClasses(status?: string) {
                             class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
                         >
                             {{ patient.weight ? patient.weight + " kg" : "N/A" }}
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div
-                class="mt-6 grid gap-6 border-t border-muted-light pt-6 sm:grid-cols-3 dark:border-white/10"
-            >
-                <div class="flex items-center gap-3">
-                    <MapPin class="h-4 w-4 shrink-0 text-primary" />
-                    <div>
-                        <p class="text-xs text-muted dark:text-gray-400">
-                            Location
-                        </p>
-                        <p
-                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
-                        >
-                            {{
-                                patient.location?.full_address ||
-                                "No address recorded."
-                            }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <Droplet class="h-4 w-4 shrink-0 text-primary" />
-                    <div>
-                        <p class="text-xs text-muted dark:text-gray-400">
-                            Blood Type
-                        </p>
-                        <p
-                            class="mt-0.5 text-sm font-medium text-secondary dark:text-white"
-                        >
-                            {{ patient.blood_type || "N/A" }}
                         </p>
                     </div>
                 </div>
