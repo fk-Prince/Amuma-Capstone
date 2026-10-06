@@ -122,7 +122,6 @@
                                 {{ agency.name }}
                             </h1>
 
-
                             <!-- <p
                             v-if="agency.description"
                             class="mt-1 max-w-2xl text-sm leading-6 text-slate-500 dark:text-gray-400"
@@ -387,7 +386,11 @@ import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { useRoute } from "vue-router";
 import logo from "~/assets/logo/logo.png";
-import { planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
+import {
+    planTypeBranchLimit,
+    planTypeLabel,
+    type PlanType,
+} from "~/utils/planType";
 
 definePageMeta({
     layout: "dashboard",
@@ -554,7 +557,6 @@ const onBranchResubmitted = (result: any) => {
     };
 };
 
-
 type Branch = {
     branch_id: number;
     uuid: string;
@@ -578,7 +580,7 @@ type AvailableSubscription = {
     uuid: string;
     plan_name: string | null;
     plan_code: string | null;
-    plan_type: string | null;
+    plan_type: PlanType | null;
     status?: string | null;
     end_date: string | null;
     branches_used: number;

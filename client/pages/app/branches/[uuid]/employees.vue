@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header w-full mx-auto lg:space-y-5 rounded-lg flex flex-col px-3 pb-4 sm:px-0 sm:pb-0"
+        class="min-h-screen-header w-full mx-auto lg:space-y-5 rounded-lg flex flex-col px-3 pb-4 sm:px-0 sm:pb-0 sm:p-1"
     >
         <div v-if="!addEmployeeTab" class="flex-1 min-h-0 flex flex-col">
             <EmployeeDashboard
