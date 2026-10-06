@@ -16,15 +16,43 @@
                 :class="{ 'lg:grid-cols-[1fr_220px]': !hideImage }"
             >
                 <div class="space-y-5">
-                    <LabelInput
-                        v-model="branch.name"
-                        label="Branch Name"
-                        required
-                        :disabled="lockVerification"
-                        @update:modelValue="clearError('branch_name')"
-                        :error="errors?.branch_name"
-                        data-field="branch_name"
-                    />
+                    <div class="space-y-2">
+                        <LabelInput
+                            v-model="branch.name"
+                            label="Branch Name"
+                            required
+                            :disabled="lockVerification"
+                            @update:modelValue="clearError('branch_name')"
+                            :error="errors?.branch_name"
+                            data-field="branch_name"
+                        />
+
+                        <label
+                            v-if="agencyPrefix && !lockVerification"
+                            class="flex w-fit cursor-pointer items-center gap-2"
+                        >
+                            <input
+                                type="checkbox"
+                                :checked="usePrefix"
+                                class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                @change="
+                                    togglePrefix(
+                                        ($event.target as HTMLInputElement)
+                                            .checked,
+                                    )
+                                "
+                            />
+                            <span
+                                class="text-xs text-slate-500 dark:text-gray-400"
+                            >
+                                Prefill with agency name
+                                <span
+                                    class="font-medium text-slate-700 dark:text-gray-300"
+                                    >"{{ agencyPrefix }}"</span
+                                >
+                            </span>
+                        </label>
+                    </div>
 
                     <LabelInput
                         v-model="branch.email"
@@ -431,11 +459,37 @@ const branch = computed({
 
 const errors = computed(() => props.errors);
 
-onMounted(() => {
-    const prefix = props.namePrefix?.trim();
+const agencyPrefix = computed(() => {
+    const name = props.namePrefix?.trim();
+    return name ? `${name} - ` : "";
+});
 
-    if (prefix && !props.branch.name?.trim()) {
-        branch.value = { ...props.branch, name: `${prefix} ` };
+const usePrefix = ref(true);
+
+function togglePrefix(enabled: boolean) {
+    const prefix = agencyPrefix.value;
+    const name = props.branch.name ?? "";
+    const hasPrefix = name.startsWith(prefix);
+
+    usePrefix.value = enabled;
+
+    if (enabled && !hasPrefix) {
+        branch.value = { ...props.branch, name: prefix + name.trimStart() };
+    } else if (!enabled && hasPrefix) {
+        branch.value = { ...props.branch, name: name.slice(prefix.length) };
+    }
+}
+
+onMounted(() => {
+    const prefix = agencyPrefix.value;
+    if (!prefix) return;
+
+    const name = props.branch.name ?? "";
+
+    if (!name.trim()) {
+        togglePrefix(true);
+    } else {
+        usePrefix.value = name.startsWith(prefix);
     }
 });
 
