@@ -1414,8 +1414,8 @@ async function runAction(
     }
 }
 
-function confirmCancelAdmission(reason: string) {
-    runAction("cancel", { note: reason });
+function confirmCancelAdmission(reason: string, keepAmount: number | null) {
+    runAction("cancel", { note: reason, keep_amount: keepAmount });
 }
 
 function confirmAdmit() {
