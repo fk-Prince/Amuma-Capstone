@@ -511,6 +511,8 @@ import LocationMapModal from "~/components/ui/LocationMapModal.vue";
 import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { Stethoscope } from "lucide-vue-next";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { Field } from "~/utils/fields";
 import { format24To12 } from "~/utils/time";
 import PatientDetails from "./PatientDetails.vue";
@@ -554,8 +556,10 @@ const homecareCoordinates = computed(() => {
 
 const hasHomecareCoordinates = computed(() => !!homecareCoordinates.value);
 
+const { hasModule } = usePermissions();
+
 const hasPatientUuid = computed(() => {
-    return !!props.booking?.patient?.uuid;
+    return !!props.booking?.patient?.uuid && hasModule(Modules.Patients);
 });
 
 const patientUuid = computed(() => {

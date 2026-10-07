@@ -700,6 +700,7 @@ onMounted(async () => {
                         :patient="patientData"
                         @print="showPrintModal = true"
                         @edit="showEditModal = true"
+                        @back="router.push(`/app/branches/${b_uuid}/patients`)"
                     />
 
                     <div class="min-w-0 space-y-4 px-3 sm:px-5">

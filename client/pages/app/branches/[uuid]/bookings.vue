@@ -382,10 +382,10 @@
 
                 <template v-else-if="selectedBooking">
                     <div
-                        class="w-full bg-[#EEF3FB] rounded-2xl shadow-sm ring-1 ring-black/5 overflow-hidden dark:bg-secondary"
+                        class="w-full bg-white rounded-2xl border border-[#E4EFED] shadow-sm overflow-hidden dark:bg-secondary dark:border-white/10"
                     >
                         <div
-                            class="px-5 py-4 border-b border-[#EDF4F3] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent dark:border-white/10"
+                            class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#0E7C7B]/[0.05] to-transparent dark:border-white/10"
                         >
                             <div
                                 class="flex items-center justify-between gap-3"

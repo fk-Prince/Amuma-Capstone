@@ -236,7 +236,7 @@
                                                 )
                                             "
                                             type="button"
-                                            class="flex-1 rounded-md bg-rose-50 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
+                                            class="flex-1 rounded-md border border-rose-600/20 bg-rose-50 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
                                             @click="$emit('assign', schedule)"
                                         >
                                             Assign now

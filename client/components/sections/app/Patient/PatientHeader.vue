@@ -5,6 +5,7 @@ import { calculateAge } from "~/utils/user";
 import {
     Calendar,
     MapPin,
+    MoveLeft,
     Pencil,
     Printer,
     Send,
@@ -29,7 +30,7 @@ const props = defineProps<{
     patient: PatientRetrieve;
 }>();
 
-const emit = defineEmits<{ print: []; edit: [] }>();
+const emit = defineEmits<{ print: []; edit: []; back: [] }>();
 
 function fullName(
     firstName?: string | null,
@@ -141,6 +142,14 @@ const actions = [
                     </div>
                 </dl>
             </div>
+
+            <button
+                type="button"
+                class="flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-slate-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                @click="emit('back')"
+            >
+                <MoveLeft class="h-4 w-4" /> Back
+            </button>
         </div>
 
         <!-- Below the details on a phone, where there is no room beside the

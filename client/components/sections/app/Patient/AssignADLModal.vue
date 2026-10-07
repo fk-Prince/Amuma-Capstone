@@ -252,6 +252,18 @@
                                     </label>
                                 </div>
 
+                                <p
+                                    v-if="isFullDay(entry)"
+                                    class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                                >
+                                    <TriangleAlert
+                                        class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                    />
+                                    {{ nameFor(entry.employee_id) }} might have
+                                    to work 24 hours on this shift. You can
+                                    still continue.
+                                </p>
+
                                 <div class="mt-3">
                                     <input
                                         v-model="entry.note"
@@ -280,12 +292,7 @@
                                                     ? 'border-primary bg-primary text-white'
                                                     : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                             "
-                                            @click="
-                                                entry.note =
-                                                    entry.note === preset
-                                                        ? ''
-                                                        : preset
-                                            "
+                                            @click="applyPreset(entry, preset)"
                                         >
                                             {{ preset }}
                                         </button>
@@ -695,7 +702,7 @@ import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
 import { formatDate, formatTime, formatDuration } from "~/utils/time";
-import { Check } from "lucide-vue-next";
+import { Check, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
@@ -719,6 +726,42 @@ interface AssignmentEntry {
     note: string;
     start_time: string;
     end_time: string;
+}
+
+const PRESET_HOURS: Record<string, { start: string; end: string }> = {
+    "AM Shift": { start: "00:00", end: "12:00" },
+    "PM Shift": { start: "12:00", end: "23:59" },
+    "Full Shift": { start: "00:00", end: "23:59" },
+};
+
+function isFullDay(entry: AssignmentEntry) {
+    return entry.start_time === "00:00" && entry.end_time === "23:59";
+}
+
+function applyPreset(entry: AssignmentEntry, preset: string) {
+    const hours = PRESET_HOURS[preset];
+
+    if (entry.note === preset) {
+        entry.note = "";
+
+        if (
+            hours &&
+            entry.start_time === hours.start &&
+            entry.end_time === hours.end
+        ) {
+            entry.start_time = "";
+            entry.end_time = "";
+        }
+
+        return;
+    }
+
+    entry.note = preset;
+
+    if (hours) {
+        entry.start_time = hours.start;
+        entry.end_time = hours.end;
+    }
 }
 
 const props = defineProps<{
