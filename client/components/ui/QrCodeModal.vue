@@ -87,7 +87,10 @@ const resolvedIcon = computed(() => modePresets[props.mode].icon);
 const accent = computed(() => modePresets[props.mode].accent);
 
 const accentClasses = computed(() => {
-    const map: Record<string, { chip: string; ring: string; text: string }> = {
+    const map: Record<
+        "accent" | "amber" | "primary",
+        { chip: string; ring: string; text: string }
+    > = {
         accent: {
             chip: "bg-accent-50 text-accent-600",
             ring: "border-accent-200",
@@ -105,7 +108,7 @@ const accentClasses = computed(() => {
         },
     };
 
-    return map[accent.value];
+    return map[accent.value as keyof typeof map] ?? map.accent;
 });
 
 const qrValue = computed(() => {
@@ -363,6 +366,7 @@ onUnmounted(() => {
                         </span>
                     </div>
 
+                    <!-- Demo clock-in/out, hidden for now
                     <div
                         v-if="pickingCaregiver && qrValue"
                         class="mt-4 rounded-xl border border-slate-200"
@@ -404,8 +408,10 @@ onUnmounted(() => {
                             </li>
                         </ul>
                     </div>
+                    -->
 
                     <div class="mt-6 flex justify-end gap-2">
+                        <!-- Demo clock-in/out, hidden for now
                         <ActionButton
                             v-if="qrValue && !pickingCaregiver"
                             variant="outline"
@@ -414,6 +420,7 @@ onUnmounted(() => {
                         >
                             Demo
                         </ActionButton>
+                        -->
 
                         <ActionButton
                             v-if="pickingCaregiver"
