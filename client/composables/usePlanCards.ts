@@ -45,29 +45,21 @@ export function usePlanCards() {
         }
     });
 
-    // The most the Hybrid plan saves against buying Homecare and In-house
-    // Facility separately, across plan types, as a whole percentage.
-    const hybridSavePercent = computed(() => {
-        const types = [...new Set(checkout.plans.map((p: any) => p.type))];
+    const hybridSavePercent = (type: string) => {
+        const price = (code: string) =>
+            planPrice(
+                checkout.plans.find(
+                    (p: any) => p.plan_code === code && p.type === type,
+                ),
+            );
 
-        const savings = types.map((type) => {
-            const price = (code: string) =>
-                planPrice(
-                    checkout.plans.find(
-                        (p: any) => p.plan_code === code && p.type === type,
-                    ),
-                );
+        const separate = price("A") + price("B");
+        const hybrid = price("C");
 
-            const separate = price("A") + price("B");
-            const hybrid = price("C");
-
-            return separate > 0 && hybrid > 0 && hybrid < separate
-                ? ((separate - hybrid) / separate) * 100
-                : 0;
-        });
-
-        return Math.round(Math.max(0, ...savings));
-    });
+        return separate > 0 && hybrid > 0 && hybrid < separate
+            ? Math.round(((separate - hybrid) / separate) * 100)
+            : 0;
+    };
 
     const formattedPlans = computed(() =>
         checkout.typedPlans.map((plan: any, index: number) => {
@@ -80,7 +72,7 @@ export function usePlanCards() {
                 branchNote: branchLimitText(plan.type),
                 ctaText: `Subscribe to ${plan.name}`,
                 featured: plan.plan_code === "C",
-                savePercent: plan.plan_code === "C" ? hybridSavePercent.value : 0,
+                savePercent: plan.plan_code === "C" ? hybridSavePercent(plan.type) : 0,
                 features: MODULE_FEATURES[plan.plan_code] ?? [],
             };
         }),
