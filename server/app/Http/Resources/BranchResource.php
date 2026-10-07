@@ -30,8 +30,7 @@ class BranchResource extends JsonResource
             $closingTime
         );
 
-        $reservedWalkinSlots = $settings['reserved_walkin_slots'] ?? 0;
-        $remainingReserved = $reservedWalkinSlots;
+        $reservedByType = $this->walkinReserveByType((int) ($settings['reserved_walkin_slots'] ?? 0));
 
         return [
             'branch_id' => $this->branch_id,
@@ -96,7 +95,7 @@ class BranchResource extends JsonResource
 
             'facility' => $this->activeContracts()
                 ->where('category', 'Facility')
-                ->map(function ($contract) use (&$remainingReserved) {
+                ->map(function ($contract) use ($reservedByType) {
 
                     $roomsOfType = $this->rooms
                         ->filter(function ($room) use ($contract) {
@@ -119,8 +118,7 @@ class BranchResource extends JsonResource
                         })
                         ->count();
 
-                    $deduction = min($availableBeds, $remainingReserved);
-                    $remainingReserved -= $deduction;
+                    $deduction = $reservedByType[strtoupper($contract->accommodation_type)] ?? 0;
 
                     $availableSlots = max(0, $availableBeds - $deduction);
 
@@ -219,6 +217,37 @@ class BranchResource extends JsonResource
         }
 
         return collect($candidates)->sortBy('amount')->first();
+    }
+
+
+    private function walkinReserveByType(int $reserve): array
+    {
+        $available = $this->rooms
+            ->groupBy(fn($room) => strtoupper($room->room_type))
+            ->map(fn($rooms) => $rooms
+                ->flatMap(fn($room) => $room->beds)
+                ->filter(fn($bed) => $bed->status === Bed::STATUS_AVAILABLE)
+                ->count())
+            ->filter(fn($count) => $count > 0);
+
+        $total = $available->sum();
+        $reserve = min(max($reserve, 0), $total);
+
+        if ($reserve === 0 || $total === 0) {
+            return [];
+        }
+
+        $shares = $available->map(fn($count) => $reserve * $count / $total);
+        $reserved = $shares->map(fn($share) => (int) floor($share));
+        $leftover = $reserve - $reserved->sum();
+
+        $shares
+            ->sortByDesc(fn($share, $type) => [$share - floor($share), $available[$type]])
+            ->keys()
+            ->take($leftover)
+            ->each(fn($type) => $reserved[$type] = $reserved[$type] + 1);
+
+        return $reserved->all();
     }
 
     private function activeContracts()

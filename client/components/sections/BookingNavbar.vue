@@ -10,6 +10,7 @@ import ThemeToggle from "../ui/ThemeToggle.vue";
 import DynamicSidebar from "./DynamicSidebar.vue";
 import { ChevronDown } from "lucide-vue-next";
 import Notification from "../ui/Notification.vue";
+import { navList as publicNavList } from "~/config/publicMenu";
 
 const user = useAuthUser();
 const route = useRoute();
@@ -197,6 +198,10 @@ const isActive = (to: string) => {
     if (to === "/") return route.path === "/";
     return route.path === to || route.path.startsWith(`${to}/`);
 };
+const sidebarMenu = computed(() =>
+    props.navList?.length ? props.navList : publicNavList,
+);
+
 const darkOnly = computed(() => !!route.meta.navThemeDarkOnly);
 
 const navTheme = computed(() =>
@@ -481,13 +486,34 @@ watch(() => route.path, closeMenu);
                     <BrandLogo />
                 </NuxtLink>
 
-                <NavbarProfileDropdown
-                    v-if="hydrated && user"
-                    :user="user"
-                    :scrolled="scrolled"
-                    :navTheme="navTheme"
-                    :theme-aware="true"
-                />
+                <div class="flex items-center gap-3">
+                    <NavbarProfileDropdown
+                        v-if="hydrated && user"
+                        :user="user"
+                        :scrolled="scrolled"
+                        :navTheme="navTheme"
+                        :theme-aware="true"
+                    />
+
+                    <button
+                        class="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-secondary transition-colors duration-300 hover:bg-primary-50 dark:text-white dark:hover:bg-white/10"
+                        aria-label="Open menu"
+                        @click="mobileMenuOpen = true"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            class="w-6 h-6"
+                        >
+                            <line x1="3" y1="6" x2="21" y2="6" />
+                            <line x1="3" y1="12" x2="21" y2="12" />
+                            <line x1="3" y1="18" x2="21" y2="18" />
+                        </svg>
+                    </button>
+                </div>
             </nav>
 
             <template
@@ -703,13 +729,17 @@ watch(() => route.path, closeMenu);
 
         <ClientOnly
             v-if="
-                variant === 1 || variant === 2 || variant === 3 || variant === 7
+                variant === 1 ||
+                variant === 2 ||
+                variant === 3 ||
+                variant === 6 ||
+                variant === 7
             "
         >
             <DynamicSidebar
                 :open="mobileMenuOpen"
                 :logo="logoIcon"
-                :authMenu="navList"
+                :authMenu="sidebarMenu"
                 :user="user"
                 :desktop-breakpoint="1024"
                 @close="mobileMenuOpen = false"
