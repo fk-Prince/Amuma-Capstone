@@ -838,6 +838,8 @@
                             <AdmissionTimeline
                                 flat
                                 :admissions="[timelineAdmission]"
+                                :period-actions="periodActions"
+                                @cancel-period="askCancelPeriod"
                             />
                         </div>
                     </div>
@@ -936,6 +938,23 @@
             :loading="actionLoading"
             @confirm="confirmNewAdmission"
             @cancel="cancelNewAdmissionConfirm"
+        />
+
+        <ConfirmDialog
+            :open="!!periodToCancel"
+            title="Cancel this billing period?"
+            :message="
+                periodToCancel
+                    ? `${formatDate(periodToCancel.period_start)} to ${formatDate(periodToCancel.period_end)}`
+                    : ''
+            "
+            description="Its invoice will be voided. Anything already paid on it goes back to the patient as credit."
+            confirm-label="Cancel Period"
+            cancel-label="Keep Period"
+            variant="danger"
+            :loading="actionLoading"
+            @confirm="confirmCancelPeriod"
+            @cancel="periodToCancel = null"
         />
 
         <ConfirmDialog
@@ -1042,7 +1061,11 @@ import { computed, ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { formatPhone } from "~/utils/phone";
 import { calculateAge } from "~/utils/user";
-import type { PatientRetrieve, Admission } from "~/types/patient";
+import type {
+    PatientRetrieve,
+    Admission,
+    InvoiceAccommodation,
+} from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { patientService } from "~/api/patient/PatientService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
@@ -1386,7 +1409,13 @@ async function fetchRoomContracts() {
 }
 
 async function runAction(
-    action: "admit" | "discharge" | "extend" | "change_room" | "cancel",
+    action:
+        | "admit"
+        | "discharge"
+        | "extend"
+        | "change_room"
+        | "cancel"
+        | "cancel_period",
     extra: Record<string, unknown> = {},
 ) {
     if (!latestAdmission.value) return;
@@ -1412,6 +1441,45 @@ async function runAction(
         extendModalOpen.value = false;
         cancelAdmissionDialogOpen.value = false;
     }
+}
+
+const periodToCancel = ref<InvoiceAccommodation | null>(null);
+
+const periodActions = computed(() => ({
+    enabled:
+        canUpdateAdmission.value &&
+        isAdmitted.value &&
+        timelineAdmission.value?.patient_admission_id ===
+            latestAdmission.value?.patient_admission_id,
+    reason: !canUpdateAdmission.value
+        ? "You need permission to update admissions."
+        : "The patient must be currently admitted.",
+}));
+
+function askCancelPeriod(payload: { invoice: InvoiceAccommodation }) {
+    periodToCancel.value = payload.invoice;
+}
+
+async function confirmCancelPeriod() {
+    const period = periodToCancel.value;
+
+    if (!period?.admission_period_id) return;
+
+    const openId = timelineAdmission.value?.patient_admission_id;
+
+    await runAction("cancel_period", {
+        period_id: period.admission_period_id,
+    });
+
+    periodToCancel.value = null;
+
+    // Reopen the modal on the refreshed record so its dates and periods match.
+    timelineAdmission.value =
+        [
+            latestAdmission.value,
+            ...(patient.value?.admissions ?? []),
+        ].find((admission) => admission?.patient_admission_id === openId) ??
+        null;
 }
 
 function confirmCancelAdmission(reason: string, keepAmount: number | null) {

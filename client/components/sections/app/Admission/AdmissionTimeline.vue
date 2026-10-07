@@ -258,6 +258,29 @@
                                     >
                                         {{ priceNote(invoice) }}
                                     </span>
+
+                                    <button
+                                        v-if="
+                                            periodActions &&
+                                            isLastUpcoming(invoice, admission)
+                                        "
+                                        type="button"
+                                        :disabled="!periodActions.enabled"
+                                        :title="
+                                            periodActions.enabled
+                                                ? ''
+                                                : periodActions.reason
+                                        "
+                                        class="ml-auto rounded-md border border-rose-200 px-2.5 py-1 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                                        @click="
+                                            emit('cancel-period', {
+                                                admission,
+                                                invoice,
+                                            })
+                                        "
+                                    >
+                                        Cancel period
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -312,9 +335,18 @@ const props = withDefaults(
         // Drops the card chrome so the timeline can sit inside a parent card
         // without stacking a second border around it.
         flat?: boolean;
+        // When given, the last upcoming billing period gets a Cancel button.
+        periodActions?: { enabled: boolean; reason?: string } | null;
     }>(),
-    { admissions: null, flat: false },
+    { admissions: null, flat: false, periodActions: null },
 );
+
+const emit = defineEmits<{
+    (
+        e: "cancel-period",
+        payload: { admission: Admission; invoice: InvoiceAccommodation },
+    ): void;
+}>();
 
 const allAdmissions = computed(() => props.admissions ?? []);
 
@@ -470,6 +502,35 @@ function isInEffect(invoice: InvoiceAccommodation, admission: Admission) {
 
 function isCancelled(invoice: InvoiceAccommodation) {
     return invoice.accommodation_status === "cancelled";
+}
+
+function isUpcoming(invoice: InvoiceAccommodation, admission: Admission) {
+    return (
+        !isCancelled(invoice) &&
+        !isInEffect(invoice, admission) &&
+        invoice.accommodation_status !== "inactive"
+    );
+}
+
+// Only the furthest period can go, so cancelling never leaves a gap.
+function isLastUpcoming(invoice: InvoiceAccommodation, admission: Admission) {
+    if (!isUpcoming(invoice, admission)) return false;
+
+    const upcoming = (admission.invoices ?? []).filter((row) =>
+        isUpcoming(row, admission),
+    );
+
+    const last = upcoming.reduce<InvoiceAccommodation | null>(
+        (furthest, row) =>
+            !furthest ||
+            new Date(row.period_end ?? 0).getTime() >=
+                new Date(furthest.period_end ?? 0).getTime()
+                ? row
+                : furthest,
+        null,
+    );
+
+    return last?.admission_period_id === invoice.admission_period_id;
 }
 
 function coverageLabel(invoice: InvoiceAccommodation, admission: Admission) {

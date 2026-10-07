@@ -98,6 +98,7 @@ class PatientAdmissionService
             'change_room' => $this->changeRoom($payload),
             'discharge' => $this->dischargeAdmission($payload),
             'cancel' => $this->cancelAdmission($payload),
+            'cancel_period' => $this->cancelPeriod($payload),
             'branch_contract' => $this->branchContractService->roomContract($payload),
             default => throw new Exception('Invalid admission action.'),
         };
@@ -420,6 +421,103 @@ class PatientAdmissionService
                     $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled. Charge voided.', $userId);
                 }
             });
+    }
+
+    /*
+        FOR CANCELLING AN UPCOMING BILLING PERIOD
+    */
+    public function cancelPeriod(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $admission = $this->patientAdmissionRepository->findByFields([
+                ['patient_admission_id', '=', $payload['admission_id']]
+            ]);
+
+            if (!$admission) {
+                throw new Exception('Admission not found.', 404);
+            }
+
+            if ($admission->status !== PatientAdmission::STATUS_ADMITTED) {
+                throw new Exception('Billing periods can only be cancelled while the patient is admitted.', 422);
+            }
+
+            $current = $this->periods->current($admission);
+
+            if (!$current) {
+                throw new Exception('No accommodation record found for this admission.', 400);
+            }
+
+            $upcoming = $this->periods->future($admission, $current);
+
+            $period = $upcoming->firstWhere('admission_period_id', (int) ($payload['period_id'] ?? 0));
+
+            if (!$period) {
+                throw new Exception('Only an upcoming billing period can be cancelled.', 422);
+            }
+
+            if ((int) $upcoming->last()->admission_period_id !== (int) $period->admission_period_id) {
+                throw new Exception('Cancel the later billing periods first.', 422);
+            }
+
+            $userId = $payload['user']->user_id ?? null;
+
+            $period->invoiceAdmissionLines->groupBy('invoice_id')->each(
+                function ($lines, $invoiceId) use ($period, $userId) {
+                    $invoice = Invoice::where('invoice_id', $invoiceId)->lockForUpdate()->first();
+
+                    if (!$invoice || in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+                        return;
+                    }
+
+                    $sharesInvoice = $invoice->invoiceAdmissionLines()
+                        ->where('admission_period_id', '!=', $period->admission_period_id)
+                        ->exists();
+
+                    if ($sharesInvoice) {
+                        InvoiceAdjustment::create([
+                            'invoice_id' => $invoice->invoice_id,
+                            'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                            'amount' => -round((float) $lines->sum('price'), 2),
+                            'reason' => 'Billing period cancelled.',
+                        ]);
+
+                        $invoice->syncStatus();
+
+                        return;
+                    }
+
+                    if ($invoice->status === Invoice::STATUS_PAID) {
+                        InvoiceAdjustment::create([
+                            'invoice_id' => $invoice->invoice_id,
+                            'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                            'amount' => -round((float) $invoice->adjusted_total, 2),
+                            'reason' => 'Billing period cancelled.',
+                        ]);
+
+                        $invoice->syncStatus();
+
+                        return;
+                    }
+
+                    $this->invoiceService->closeAsVoid($invoice, 'Billing period cancelled.', $userId);
+                }
+            );
+
+            $period->update(['status' => AdmissionPeriod::STATUS_CANCELLED]);
+
+            $coverageEnd = $admission->periods()
+                ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
+                ->max('end_date');
+
+            if ($coverageEnd) {
+                $admission->update(['discharged_at' => $coverageEnd]);
+            }
+
+            return [
+                'message' => 'Billing period cancelled.',
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
+            ];
+        });
     }
 
     private function lockOpenInvoice(?Invoice $invoice): ?Invoice
