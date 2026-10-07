@@ -49,13 +49,13 @@ class BookingController extends Controller
         if ($request->action === 'total') {
             return $this->bookingHelper->getTotal($request->all());
         } else if ($request->action === 'approve') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
             $request->merge([
                 'user' => $request->user(),
             ]);
             return $this->bookingService->bookingAction($request->all());
         } else if ($request->action === 'accept') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
             $request->merge([
                 'user' => $request->user(),
             ]);
@@ -64,7 +64,7 @@ class BookingController extends Controller
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
             return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all());
         } else if ($request->action === 'reject') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Update);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
             $request->merge([
                 'user' => $request->user(),
             ]);

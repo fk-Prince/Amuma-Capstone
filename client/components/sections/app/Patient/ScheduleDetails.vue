@@ -1231,7 +1231,7 @@
                         </button>
 
                         <button
-                            v-if="!isScheduleLocked"
+                            v-if="!isScheduleLocked && canUpdate(Modules.Schedules)"
                             class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
                             @click="startEdit"
                         >
@@ -1316,6 +1316,8 @@ import {
 } from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import type { AnyCaaRecord } from "node:dns";
 
 interface SaveConflict {
@@ -1367,6 +1369,7 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const { error: toastError } = useToast();
+const { canUpdate } = usePermissions();
 
 const patientUuid = computed(() => {
     const uuid = props.schedule?.patient?.patient_uuid;

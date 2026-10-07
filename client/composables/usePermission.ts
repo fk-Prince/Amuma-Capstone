@@ -38,6 +38,9 @@ export const usePermissions = () => {
     const canAssign = (module_name: string) =>
         can(module_name, PermissionAction.Assign);
 
+    const canReview = (module_name: string) =>
+        can(module_name, PermissionAction.Review);
+
     const canExport = (module_name: string) =>
         can(module_name, PermissionAction.Export);
 
@@ -73,6 +76,7 @@ export const usePermissions = () => {
         canCreate,
         canUpdate,
         canAssign,
+        canReview,
         canExport,
         canForceDischarge,
         role,

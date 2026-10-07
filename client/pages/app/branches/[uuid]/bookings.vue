@@ -209,8 +209,9 @@
                                     >
                                         <button
                                             v-if="
+                                                canReviewBookings &&
                                                 row.status?.toLowerCase() ===
-                                                'pending'
+                                                    'pending'
                                             "
                                             type="button"
                                             class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"
@@ -520,8 +521,9 @@
 
                             <div
                                 v-if="
+                                    canReviewBookings &&
                                     selectedBooking.status?.toLowerCase() ===
-                                    'pending'
+                                        'pending'
                                 "
                                 class="space-y-3"
                             >
@@ -572,8 +574,8 @@
 
                                             {{
                                                 isFacility
-                                                    ? "Approve Admission Booking"
-                                                    : "Approve Homecare Booking"
+                                                    ? "Accept Admission Booking"
+                                                    : "Accept Homecare Booking"
                                             }}
                                         </span>
                                     </ActionButton>
@@ -622,7 +624,10 @@
                             </div>
 
                             <div
-                                v-else
+                                v-else-if="
+                                    selectedBooking.status?.toLowerCase() !==
+                                    'pending'
+                                "
                                 class="rounded-xl border border-[#E4EFED] bg-[#F8FBFA] px-4 py-3 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div class="flex items-center gap-3">
@@ -821,7 +826,9 @@ const isSubmitting = ref(false);
 // Only for a branch on a Homecare Services or Hybrid plan, and for staff who
 // can create bookings.
 const { hasHomecarePlan } = useBranchPlan();
-const { canCreate } = usePermissions();
+const { canCreate, canReview } = usePermissions();
+
+const canReviewBookings = computed(() => canReview(Modules.Bookings));
 
 const showHomecareBooking = computed(
     () => hasHomecarePlan.value && canCreate(Modules.Bookings),

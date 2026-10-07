@@ -11,6 +11,7 @@ enum PermissionAction: string
     case Assign = 'can_assign';
     case ForceDischarge = 'can_force_discharge';
     case Renew = 'can_renew';
+    case Review = 'can_review';
 
     public static function columns(): array
     {

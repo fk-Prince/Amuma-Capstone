@@ -8,6 +8,7 @@ export const PermissionAction = {
     Assign: "can_assign",
     ForceDischarge: "can_force_discharge",
     Renew: "can_renew",
+    Review: "can_review",
 } as const;
 
 export type PermissionActionKey =
@@ -17,7 +18,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
     [Modules.Bookings]: [
         PermissionAction.Read,
         PermissionAction.Create,
-        PermissionAction.Update,
+        PermissionAction.Review,
     ],
     [Modules.Patients]: [
         PermissionAction.Read,
@@ -108,6 +109,7 @@ export const ACTION_LABELS: Record<PermissionActionKey, string> = {
     [PermissionAction.Assign]: "Assign",
     [PermissionAction.ForceDischarge]: "Force discharge",
     [PermissionAction.Renew]: "Renew",
+    [PermissionAction.Review]: "Accept/Reject",
 };
 
 type ActionCopy = Partial<Record<PermissionActionKey, string>>;
@@ -118,8 +120,8 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
             "See booking requests from families, including the service, dates and who sent them.",
         [PermissionAction.Create]:
             "Book a homecare service for a patient from the Homecare Booking button, which sends a request for review.",
-        [PermissionAction.Update]:
-            "Accept a request, which turns it into a schedule or admission and bills the family, or decline it so it never becomes one.",
+        [PermissionAction.Review]:
+            "Accept an admission or homecare booking request, which turns it into an admission or schedule and bills the family, or reject it so it never becomes one.",
     },
     [Modules.Patients]: {
         [PermissionAction.Read]:

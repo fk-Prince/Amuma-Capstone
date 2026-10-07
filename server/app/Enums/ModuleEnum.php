@@ -22,7 +22,7 @@ enum ModuleEnum: string
             self::Bookings => [
                 PermissionAction::Read,
                 PermissionAction::Create,
-                PermissionAction::Update,
+                PermissionAction::Review,
             ],
             self::Patients => [
                 PermissionAction::Read,
