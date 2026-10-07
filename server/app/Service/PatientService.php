@@ -23,6 +23,8 @@ class PatientService
 {
     public const REPORT_SECTIONS = [
         'profile',
+        'diagnosis',
+        'assessment',
         'admission',
         'billing',
         'schedule',
@@ -573,7 +575,7 @@ class PatientService
 
 
 
-    public function buildPatientReport(string $uuid, array $requestedSections)
+    public function buildPatientReport(string $uuid, array $requestedSections, ?string $diagnosisUuid = null)
     {
         $sections = array_values(array_intersect(
             array_map('strtolower', $requestedSections),
@@ -595,6 +597,8 @@ class PatientService
         foreach ($sections as $section) {
             $built[$section] = match ($section) {
                 'profile' => $this->reportProfile($patient),
+                'diagnosis' => $this->reportDiagnoses($patient, $diagnosisUuid),
+                'assessment' => $this->reportAssessment($patient),
                 'admission' => $this->reportAdmissions($patient),
                 'billing' => $this->reportBilling($patient),
                 'schedule' => $this->reportSchedules($patient),
@@ -610,7 +614,21 @@ class PatientService
         ]);
     }
 
-    private function reportProfile(mixed $patient)
+    private function reportDiagnoses(mixed $patient, ?string $diagnosisUuid = null)
+    {
+        return [
+            'diagnoses' => $patient->diagnoses
+                ->when($diagnosisUuid, fn($rows) => $rows->where('uuid', $diagnosisUuid))
+                ->sortByDesc(fn($diagnosis) => $diagnosis->diagnosis_date?->timestamp ?? 0)
+                ->map(fn($diagnosis) => [
+                    'diagnosis' => $diagnosis->diagnosis,
+                    'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                    'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                ])->values()->all(),
+        ];
+    }
+
+    private function reportAssessment(mixed $patient)
     {
         return [
             'assessment' => $patient->assessments->sortByDesc('patient_assessment_id')->map(fn($assessment) => [
@@ -622,13 +640,12 @@ class PatientService
                 'speech' => $assessment->speech,
                 'life_system_profile' => $assessment->life_system_profile,
             ])->values(),
-            'diagnoses' => $patient->diagnoses
-                ->sortByDesc(fn($diagnosis) => $diagnosis->diagnosis_date?->timestamp ?? 0)
-                ->map(fn($diagnosis) => [
-                    'diagnosis' => $diagnosis->diagnosis,
-                    'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
-                    'diagnosis_notes' => $diagnosis->diagnosis_notes,
-                ])->values()->all(),
+        ];
+    }
+
+    private function reportProfile(mixed $patient)
+    {
+        return [
             'guardians' => $patient->patientAccess->map(fn($access) => [
                 'full_name' => trim(collect([
                     $access->client?->first_name,

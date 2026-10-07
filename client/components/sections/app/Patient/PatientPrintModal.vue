@@ -139,8 +139,18 @@ const emit = defineEmits<{ close: [] }>();
 const sections = [
     {
         key: "profile",
-        label: "Patient Profile",
-        description: "Demographics, allergies, and initial assessment.",
+        label: "Patient Info",
+        description: "Demographics, allergies, and family & guardians.",
+    },
+    {
+        key: "diagnosis",
+        label: "Diagnosis",
+        description: "Recorded diagnoses with dates and notes.",
+    },
+    {
+        key: "assessment",
+        label: "Assessment",
+        description: "Condition, mental state, and daily-living scores.",
     },
     {
         key: "admission",
@@ -216,8 +226,12 @@ function waitForReportImages() {
     return Promise.race([loaded, timeout]);
 }
 
-async function generate() {
-    if (!selected.value.length) return;
+function generate() {
+    return run(selected.value);
+}
+
+async function run(sectionKeys: string[], extra: Record<string, unknown> = {}) {
+    if (!sectionKeys.length) return;
 
     loading.value = true;
     errorMessage.value = "";
@@ -225,7 +239,8 @@ async function generate() {
     try {
         const res = await patientService.report(props.patientUuid, {
             branch_uuid: props.branchUuid,
-            sections: selected.value.join(","),
+            sections: sectionKeys.join(","),
+            ...extra,
         });
 
         report.value = res.data ?? res;
@@ -256,6 +271,11 @@ async function generate() {
         loading.value = false;
     }
 }
+
+defineExpose({
+    printDiagnosis: (diagnosisUuid: string) =>
+        run(["diagnosis"], { diagnosis_uuid: diagnosisUuid }),
+});
 </script>
 
 <style scoped>

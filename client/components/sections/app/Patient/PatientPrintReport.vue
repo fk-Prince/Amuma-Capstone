@@ -102,7 +102,7 @@
                 </dl>
             </div>
 
-            <template v-if="section === 'profile'">
+            <template v-if="section === 'diagnosis'">
                 <h2 class="print-subhead">
                     <Stethoscope class="print-icon" />
                     Diagnoses
@@ -130,7 +130,9 @@
                         </tr>
                     </tbody>
                 </table>
+            </template>
 
+            <template v-if="section === 'assessment'">
                 <h2 class="print-subhead">
                     <ClipboardCheck class="print-icon" />
                     Assessment
@@ -193,6 +195,9 @@
                     </div>
                 </template>
 
+            </template>
+
+            <template v-if="section === 'profile'">
                 <template v-if="guardians.length">
                     <h2 class="print-subhead">
                         <Users class="print-icon" />
@@ -603,6 +608,8 @@ const props = defineProps<{ report: any }>();
 
 const SECTION_ORDER = [
     "profile",
+    "diagnosis",
+    "assessment",
     "admission",
     "billing",
     "schedule",
@@ -612,7 +619,9 @@ const SECTION_ORDER = [
 ];
 
 const SECTION_LABELS: Record<string, string> = {
-    profile: "Patient Profile",
+    profile: "Patient Information",
+    diagnosis: "Diagnosis Records",
+    assessment: "Assessment",
     admission: "Admission Records",
     billing: "Billing Statement",
     schedule: "Service Schedules",
@@ -623,6 +632,8 @@ const SECTION_LABELS: Record<string, string> = {
 
 const SECTION_ICONS: Record<string, Component> = {
     profile: UserRound,
+    diagnosis: Stethoscope,
+    assessment: ClipboardCheck,
     admission: BedDouble,
     billing: Receipt,
     schedule: CalendarClock,
@@ -659,7 +670,7 @@ const FREQUENCY_LABELS: Record<string, string> = {
 };
 
 const assessments = computed(() => {
-    const raw = props.report?.profile?.assessment;
+    const raw = props.report?.assessment?.assessment;
     if (!raw) return [];
 
     const entries: any[] = Array.isArray(raw) ? raw : [raw];
@@ -698,7 +709,7 @@ const assessments = computed(() => {
         .filter((entry) => entry.fields.length || entry.lifeSystem.length);
 });
 
-const diagnoses = computed<any[]>(() => props.report?.profile?.diagnoses ?? []);
+const diagnoses = computed<any[]>(() => props.report?.diagnosis?.diagnoses ?? []);
 
 const guardians = computed<any[]>(() => props.report?.profile?.guardians ?? []);
 

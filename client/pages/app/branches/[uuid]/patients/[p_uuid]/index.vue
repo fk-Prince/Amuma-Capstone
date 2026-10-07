@@ -129,6 +129,9 @@ const showRecordVital = ref(false);
 const showAddActivity = ref(false);
 const showScheduleModal = ref(false);
 const showPrintModal = ref(false);
+const printModalRef = ref<{ printDiagnosis: (uuid: string) => void } | null>(
+    null,
+);
 const showEditModal = ref(false);
 
 function onPatientSaved(updated: Record<string, any>) {
@@ -862,6 +865,10 @@ onMounted(async () => {
                                 patientData
                             "
                             :patient="patientData"
+                            @print-diagnosis="
+                                (diagnosisUuid: string) =>
+                                    printModalRef?.printDiagnosis(diagnosisUuid)
+                            "
                         />
                         <PatientAdmission
                             v-if="activeTab === 'Admission' && patientData"
@@ -995,6 +1002,7 @@ onMounted(async () => {
         />
 
         <PatientPrintModal
+            ref="printModalRef"
             :open="showPrintModal"
             :patient-uuid="uuid"
             :branch-uuid="b_uuid"

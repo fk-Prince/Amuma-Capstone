@@ -4,6 +4,7 @@ import {
     FileText,
     Pencil,
     Plus,
+    Printer,
     Stethoscope,
     UploadCloud,
 } from "lucide-vue-next";
@@ -25,7 +26,7 @@ import {
 } from "~/utils/assessment";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canCreate, canUpdate } = usePermissions();
+const { canCreate, canUpdate, canExport } = usePermissions();
 
 const canAddDiagnosis = computed(() => canCreate(Modules.Patients));
 const diagnosisBlockedReason =
@@ -35,9 +36,15 @@ const canEditRecords = computed(() => canUpdate(Modules.Patients));
 const editBlockedReason =
     "You need permission to update patients to edit this.";
 
+const canPrintRecords = computed(() => canExport(Modules.Patients));
+const printBlockedReason =
+    "You need permission to export patients to print this.";
+
 const props = defineProps<{
     patient: PatientRetrieve;
 }>();
+
+const emit = defineEmits<{ (e: "print-diagnosis", uuid: string): void }>();
 
 const assessmentEdits = reactive<Record<string, any>>({});
 const diagnosisEdits = reactive<Record<string, any>>({});
@@ -390,17 +397,32 @@ const activeAssessment = computed(
                         </template>
                     </p>
 
-                    <ActionButton
+                    <div
                         v-if="entry.uuid && !entry.condition"
-                        variant="outline"
-                        extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
-                        :disabled="!canEditRecords"
-                        :tooltip="canEditRecords ? '' : editBlockedReason"
-                        @click="editingDiagnosis = entry"
+                        class="flex items-center gap-2"
                     >
-                        <Pencil class="h-3.5 w-3.5" />
-                        Edit
-                    </ActionButton>
+                        <ActionButton
+                            variant="outline"
+                            extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                            :disabled="!canPrintRecords"
+                            :tooltip="canPrintRecords ? '' : printBlockedReason"
+                            @click="emit('print-diagnosis', entry.uuid)"
+                        >
+                            <Printer class="h-3.5 w-3.5" />
+                            Print
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="outline"
+                            extra-class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                            :disabled="!canEditRecords"
+                            :tooltip="canEditRecords ? '' : editBlockedReason"
+                            @click="editingDiagnosis = entry"
+                        >
+                            <Pencil class="h-3.5 w-3.5" />
+                            Edit
+                        </ActionButton>
+                    </div>
                 </div>
 
                 <div class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">

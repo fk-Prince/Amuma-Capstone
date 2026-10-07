@@ -128,6 +128,10 @@ class PatientController extends Controller
             $sections = array_filter(array_map('trim', explode(',', $sections)));
         }
 
-        return $this->patientService->buildPatientReport($uuid, (array) $sections);
+        return $this->patientService->buildPatientReport(
+            $uuid,
+            (array) $sections,
+            $request->input('diagnosis_uuid')
+        );
     }
 }
