@@ -184,9 +184,7 @@ class BranchResource extends JsonResource
         ];
     }
 
-    // Homecare branches start at their cheapest homecare service, in-house
-    // branches at their cheapest facility plan, and a hybrid at whichever of
-    // the two is lower. The hourly ADL rate is not a starting price.
+
     private function startingPrice(): ?array
     {
         $codes = $this->relationLoaded('subscriptions')
