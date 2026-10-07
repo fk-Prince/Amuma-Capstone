@@ -189,9 +189,10 @@
                     </div>
 
                     <ActionButton
-                        v-if="renewalAvailable"
                         variant="primary"
                         extra-class="!rounded-xl !px-5 !py-2.5 shrink-0"
+                        :disabled="!renewalAvailable"
+                        :tooltip="renewalBlockedReason"
                         @click="showRenewal = true"
                     >
                         <RefreshCw class="h-4 w-4" />
@@ -838,6 +839,18 @@ const renewalAvailable = computed(
             renewalSummary.value?.can_resubscribe,
         ),
 );
+
+const renewalBlockedReason = computed(() => {
+    if (renewalAvailable.value) return "";
+
+    if (!canUpdate(Modules.ManageSubscription)) {
+        return "You need permission to update Manage Subscription to renew.";
+    }
+
+    if (!renewalSummary.value) return "The subscription details couldn't be loaded.";
+
+    return "There's nothing to renew yet. Renewal opens 7 days before the plan ends.";
+});
 
 const fetchRenewal = async () => {
     try {
