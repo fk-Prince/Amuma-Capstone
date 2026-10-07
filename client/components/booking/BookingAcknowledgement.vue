@@ -298,7 +298,9 @@ onBeforeUnmount(() => {
                                 >
                                     Plan
                                 </p>
-                                <p class="mt-0.5 text-sm font-semibold capitalize">
+                                <p
+                                    class="mt-0.5 text-sm font-semibold capitalize"
+                                >
                                     {{ assignedRoom.plan }}
                                 </p>
                             </div>
@@ -314,7 +316,10 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div
-                            v-if="booking.valid_until && booking.status === 'pending'"
+                            v-if="
+                                booking.valid_until &&
+                                booking.status === 'pending'
+                            "
                             class="col-span-2"
                         >
                             <p
@@ -349,7 +354,7 @@ onBeforeUnmount(() => {
                                     <td
                                         class="py-1.5 text-slate-600 dark:text-gray-400"
                                     >
-                                        Total Contract Amount
+                                        Total Amount
                                     </td>
                                     <td class="py-1.5 text-right tabular-nums">
                                         ₱{{ peso(payment.total_amount) }}
