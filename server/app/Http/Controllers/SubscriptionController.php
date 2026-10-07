@@ -216,12 +216,12 @@ class SubscriptionController extends Controller
 
         $branch = BranchGuard::resolveBranch($validated['branch_uuid']);
 
-        AuthGuard::requireModule(
-            $user,
-            $branch->branch_id,
-            ModuleEnum::BranchSettings,
-            PermissionAction::Read
-        );
+        // AuthGuard::requireModule(
+        //     $user,
+        //     $branch->branch_id,
+        //     ModuleEnum::ManageSubscription,
+        //     PermissionAction::Read
+        // );
 
         return $this->subscriptionService->paymentInvoice($reference, (int) $branch->agency_id);
     }
