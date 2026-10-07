@@ -532,7 +532,7 @@ function mapTransactions(list: any[]): Transaction[] {
             type: isRefund ? "refund" : "payment",
             label: isRefund
                 ? entry.refund_code
-                    ? `Withdrawal · ${methodLabel(entry.refund_method)}`
+                    ? `Withdrawal · ${methodLabel(entry.refund_method, "CASH")}`
                     : "Credit issued"
                 : isCredit
                   ? amount < 0

@@ -87,6 +87,7 @@
                             @update:errors="patientErrors = $event"
                         />
 
+                        <div ref="guardianFormRef">
                         <GuardianForm
                             :isAdmission="true"
                             email-check
@@ -100,6 +101,7 @@
                             @check-email="checkGuardianEmail"
                             @reset-email="resetGuardianLink"
                         />
+                        </div>
 
                         <DiagnosisForm
                             :model="diagnosisData"
@@ -211,6 +213,7 @@ const emit = defineEmits<{
 }>();
 
 const { success, error: toastError } = useToast();
+const guardianFormRef = ref<HTMLElement | null>(null);
 
 const { branch, fetchBranch } = useBranch();
 const services = ref<Service[]>([]);
@@ -381,6 +384,13 @@ async function lookupGuardianEmail() {
     return Boolean(res?.exists);
 }
 
+// Shows the reason under the email field and brings the guardian form into view.
+function rejectGuardianEmail(message: string) {
+    guardianErrors.value = { ...guardianErrors.value, email: message };
+    toastError(message);
+    guardianFormRef.value?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 async function checkGuardianEmail() {
     if (!normalizedGuardianEmail.value || checkingEmail.value) return;
 
@@ -392,7 +402,7 @@ async function checkGuardianEmail() {
             showEmailExistsWarning.value = true;
         }
     } catch (err: any) {
-        toastError(err?.message ?? "Internal Server Error");
+        rejectGuardianEmail(err?.message ?? "Internal Server Error");
     } finally {
         checkingEmail.value = false;
     }

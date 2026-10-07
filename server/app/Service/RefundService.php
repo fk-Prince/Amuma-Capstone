@@ -431,7 +431,8 @@ class RefundService
             );
         }
 
-        $method = trim((string) ($payload['method'] ?? ''));
+        // A payout handed over at the branch has no online method, so it is cash.
+        $method = trim((string) ($payload['method'] ?? '')) ?: ($user?->client ? '' : 'CASH');
 
         $accountDetails = $method && !empty($payload['account_details'])
             ? MaskUtil::accountDetails($method, trim((string) $payload['account_details']))

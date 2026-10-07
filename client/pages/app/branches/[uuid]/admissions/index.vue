@@ -1041,6 +1041,13 @@ async function lookupGuardianEmail() {
     return Boolean(res?.exists);
 }
 
+// Shows the reason under the email field and brings the guardian section into view.
+function rejectGuardianEmail(message: string) {
+    guardianErrors.value = { ...guardianErrors.value, email: message };
+    error(message);
+    scrollTo("step3");
+}
+
 async function checkGuardianEmail() {
     if (!normalizedGuardianEmail.value || checkingEmail.value) return;
 
@@ -1052,7 +1059,7 @@ async function checkGuardianEmail() {
             showEmailExistsWarning.value = true;
         }
     } catch (err: any) {
-        error(err?.message ?? "Internal Server Error");
+        rejectGuardianEmail(err?.message ?? "Internal Server Error");
     } finally {
         checkingEmail.value = false;
     }
@@ -1136,7 +1143,9 @@ async function submit() {
                     return;
                 }
             } catch (err: any) {
-                error(err?.message ?? "Couldn't check the guardian's email.");
+                rejectGuardianEmail(
+                    err?.message ?? "Couldn't check the guardian's email.",
+                );
                 return;
             }
         }

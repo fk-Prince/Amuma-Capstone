@@ -399,7 +399,7 @@ class PatientAdmissionService
 
         return response()->json([
             'message' => 'Admission cancelled successfully.',
-            'data' => $this->patientService->showPatient($payload['uuid']),
+            'data' => $this->patientService->showPatient($payload['p_uuid'] ?? $payload['uuid']),
         ]);
     }
 

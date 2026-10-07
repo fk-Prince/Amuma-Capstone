@@ -2275,7 +2275,10 @@ const entryLabel = (
     code: string | null,
     type: string,
     method?: string | null,
-) => [code, type, methodLabel(method)].filter(Boolean).join(" · ");
+) =>
+    [code, type, methodLabel(method, type === "Withdrawal" ? "CASH" : undefined)]
+        .filter(Boolean)
+        .join(" · ");
 
 const tabPayments = computed(() =>
     (summary.value?.payments ?? [])

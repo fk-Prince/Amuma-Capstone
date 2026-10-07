@@ -63,7 +63,7 @@
                             rows="4"
                             :disabled="loading"
                             placeholder="Enter the reason for cancelling this admission..."
-                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-secondary dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
+                            class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-primary-900 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
                         />
 
                         <div class="mt-2 flex flex-wrap items-center gap-1.5">
@@ -116,17 +116,33 @@
                             Amount to keep (not refunded)
                         </label>
 
-                        <input
-                            id="keep-amount"
-                            v-model="keepAmount"
-                            type="number"
-                            min="0"
-                            :max="paidAmount"
-                            step="0.01"
-                            :disabled="loading"
-                            class="mt-1 w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-primary-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-white/10 dark:bg-secondary dark:text-white"
-                            @blur="clampKeepAmount"
-                        />
+                        <div class="relative mt-1">
+                            <span
+                                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-gray-500"
+                            >
+                                ₱
+                            </span>
+
+                            <input
+                                id="keep-amount"
+                                v-model="keepAmount"
+                                type="number"
+                                inputmode="decimal"
+                                min="0"
+                                :max="paidAmount"
+                                step="0.01"
+                                :disabled="loading"
+                                class="w-full rounded-xl border border-primary-100 bg-white py-2 pl-7 pr-3 text-sm text-secondary focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                @blur="clampKeepAmount"
+                            />
+                        </div>
+
+                        <p
+                            class="mt-1 text-[11px] text-amber-700/80 dark:text-amber-300/70"
+                        >
+                            Cannot exceed the {{ formatCurrency(paidAmount) }}
+                            paid.
+                        </p>
 
                         <p
                             v-if="keepAmountError"
