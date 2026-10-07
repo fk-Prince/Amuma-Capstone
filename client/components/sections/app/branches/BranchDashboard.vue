@@ -155,22 +155,9 @@
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
                     Still on free testing
-                </div>
-
-                <div
-                    v-if="isTesting && pendingPlan && !loading"
-                    class="mt-3 flex items-start gap-2 text-xs text-sky-600 dark:text-sky-300"
-                >
-                    <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
-                    <span>
-                        Pending: {{ pendingPlan.name }}
-                        <template v-if="pendingPlan.starts_at">
-                            · starts {{ formatDate(pendingPlan.starts_at) }}
-                        </template>
-                        <template v-if="pendingPlan.ends_at">
-                            · ends {{ formatDate(pendingPlan.ends_at) }}
-                        </template>
-                    </span>
+                    <template v-if="testingEndsLabel">
+                        · ends on {{ testingEndsLabel }}
+                    </template>
                 </div>
 
                 <div
@@ -273,15 +260,48 @@ const isTesting = computed(() =>
     Boolean(props.statsData.branch_capacity?.is_testing),
 );
 
+const hasPendingPlan = computed(
+    () => isTesting.value && Boolean(pendingPlan.value?.ends_at),
+);
+
+// While on free testing, the paid plan waiting to start takes over the
+// headline date and the countdown.
+const effectiveEndDate = computed(() =>
+    hasPendingPlan.value
+        ? pendingPlan.value?.ends_at
+        : props.statsData.subscription_end_date,
+);
+
+const testingEndsLabel = computed(() =>
+    hasPendingPlan.value && props.statsData.subscription_end_date
+        ? formatDate(props.statsData.subscription_end_date)
+        : null,
+);
+
 const expiresInLabel = computed(() => {
     if (props.loading) return "…";
 
-    return props.statsData.subscription_end_date
-        ? formatDate(props.statsData.subscription_end_date)
-        : "—";
+    return effectiveEndDate.value ? formatDate(effectiveEndDate.value) : "—";
 });
 
 const daysLeftLabel = computed(() => {
+    if (props.loading) return null;
+
+    if (hasPendingPlan.value && effectiveEndDate.value) {
+        const end = new Date(effectiveEndDate.value);
+        const today = new Date();
+
+        end.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+
+        const left = Math.max(
+            0,
+            Math.round((end.getTime() - today.getTime()) / 86_400_000),
+        );
+
+        return `${left} ${left === 1 ? "day" : "days"} left`;
+    }
+
     const days = props.statsData.expires_in_days;
 
     if (props.loading || days === null || days === undefined) return null;
