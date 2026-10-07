@@ -221,7 +221,7 @@ class SubscriptionController extends Controller
         //     $branch->branch_id,
         //     ModuleEnum::ManageSubscription,
         //     PermissionAction::Read
-        // );
+        // );       
 
         return $this->subscriptionService->paymentInvoice($reference, (int) $branch->agency_id);
     }
