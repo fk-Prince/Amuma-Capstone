@@ -110,7 +110,7 @@
                             </div>
 
                             <button
-                                v-if="patientUuid"
+                                v-if="patientUuid && hasModule(Modules.Patients)"
                                 type="button"
                                 class="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-white px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/5 dark:bg-secondary"
                                 @click="viewPatient"
@@ -1369,7 +1369,7 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const { error: toastError } = useToast();
-const { canUpdate } = usePermissions();
+const { canUpdate, hasModule } = usePermissions();
 
 const patientUuid = computed(() => {
     const uuid = props.schedule?.patient?.patient_uuid;

@@ -504,7 +504,10 @@
 
                                                 <span
                                                     v-if="
-                                                        shiftEnded(log, assignee) &&
+                                                        shiftEnded(
+                                                            log,
+                                                            assignee,
+                                                        ) &&
                                                         isOnDuty(
                                                             log,
                                                             assignee.employee_id,
@@ -1105,14 +1108,38 @@ onUnmounted(() => {
 });
 
 type Assignee = {
+    note?: string | null;
     start_time?: string | null;
     end_time?: string | null;
 };
 
-function shiftHours(assignee: Assignee): string | null {
-    if (!assignee.start_time || !assignee.end_time) return null;
+const PRESET_SHIFT_TIMES: Record<"am" | "pm", { start: string; end: string }> =
+    {
+        am: { start: "00:00", end: "12:00" },
+        pm: { start: "12:00", end: "00:00" },
+    };
 
-    return `${formatTime(assignee.start_time)} – ${formatTime(assignee.end_time)}`;
+function shiftWindow(
+    assignee: Assignee,
+): { start: string; end: string } | null {
+    if (assignee.start_time && assignee.end_time) {
+        return { start: assignee.start_time, end: assignee.end_time };
+    }
+
+    const text = (assignee.note ?? "").toLowerCase();
+
+    if (/\bam\b/.test(text)) return PRESET_SHIFT_TIMES.am;
+    if (/\bpm\b/.test(text)) return PRESET_SHIFT_TIMES.pm;
+
+    return null;
+}
+
+function shiftHours(assignee: Assignee): string | null {
+    const window = shiftWindow(assignee);
+
+    if (!window) return null;
+
+    return `${formatTime(window.start)} – ${formatTime(window.end)}`;
 }
 
 function toHour(time: string): number {
@@ -1124,17 +1151,14 @@ function toHour(time: string): number {
 function shiftEnded(log: AuditRow, assignee: Assignee): boolean {
     secondsTick.value;
 
-    if (
-        !assignee.start_time ||
-        !assignee.end_time ||
-        log.status?.toLowerCase() !== "ongoing"
-    )
-        return false;
+    const window = shiftWindow(assignee);
+
+    if (!window || log.status?.toLowerCase() !== "ongoing") return false;
 
     const now = new Date();
     const hour = now.getHours() + now.getMinutes() / 60;
-    const start = toHour(assignee.start_time);
-    const end = toHour(assignee.end_time);
+    const start = toHour(window.start);
+    const end = toHour(window.end);
 
     if (end > start) return hour < start || hour >= end;
 
@@ -1262,22 +1286,21 @@ async function submitDeductionRequest(payload: {
 
     try {
         await scheduleService.action({
-            type: "request_deduction",
+            type: "deduct_invoice",
             branch_uuid: route.params.uuid,
             schedule_id: log.schedule_id,
+            schedule_services_id: log.schedule_services_id,
             amount: payload.amount,
             reason: payload.reason,
         });
 
-        success(
-            "The cashier has been notified to review this deduction request.",
-        );
+        success("The deduction has been applied to the invoice.");
         closeDeductionModal();
     } catch (err: any) {
         error(
             err?.data?.message ||
                 err?.message ||
-                "Failed to send the deduction request.",
+                "Failed to apply the deduction.",
         );
     } finally {
         isSendingDeduction.value = false;

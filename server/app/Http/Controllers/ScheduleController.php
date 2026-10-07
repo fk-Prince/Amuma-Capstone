@@ -51,11 +51,11 @@ class ScheduleController extends Controller
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->overview($request->all());
-        } else if ($request->type === 'request_deduction') {
+        } else if ($request->type === 'deduct_invoice') {
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             // AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Assign);
             BranchGuard::mergeRequest($request, $branch);
-            return $this->scheduleService->requestInvoiceDeduction($request->all(), $request->user());
+            return $this->scheduleService->deductInvoice($request->all());
         }
     }
 

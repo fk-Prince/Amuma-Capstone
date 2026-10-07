@@ -26,7 +26,7 @@
                         <p
                             class="text-xs uppercase tracking-wide text-slate-400 dark:text-gray-500"
                         >
-                            Request Invoice Deduction
+                            Deduct From Invoice
                         </p>
 
                         <h2
@@ -60,9 +60,8 @@
 
                 <div class="space-y-4 p-6">
                     <p class="text-sm text-slate-500 dark:text-gray-400">
-                        This sends the cashier a request to review and adjust the
-                        invoice for this schedule — it does not change the
-                        invoice by itself.
+                        This deducts the amount from the invoice for this
+                        schedule right away.
                     </p>
 
                     <div
@@ -155,7 +154,7 @@
                         :disabled="!(amount > 0)"
                         @click="submit"
                     >
-                        Notify Cashier
+                        Deduct
                     </ActionButton>
                 </div>
             </div>

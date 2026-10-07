@@ -635,7 +635,7 @@ class ScheduleService
         return $this->scheduleRepository->getOverview($payload);
     }
 
-    public function requestInvoiceDeduction(array $payload, User $user)
+    public function deductInvoice(array $payload)
     {
         $schedule = $this->scheduleRepository->findByFields([
             ['schedule_id', '=', $payload['schedule_id']],
@@ -645,13 +645,7 @@ class ScheduleService
             throw new Exception('Schedule dont exists', 404);
         }
 
-        $branch = Branch::find($payload['branch_id']);
-
-        if (!$branch) {
-            throw new Exception('Branch not found.', 404);
-        }
-
-        $amount = (float) ($payload['amount'] ?? 0);
+        $amount = round((float) ($payload['amount'] ?? 0), 2);
 
         if ($amount <= 0) {
             throw new Exception('Enter a deduction amount greater than zero.', 422);
@@ -659,21 +653,47 @@ class ScheduleService
 
         $reason = trim((string) ($payload['reason'] ?? ''));
 
-        $message = "{$user->first_name} requested a ₱" . number_format($amount, 2)
-            . " deduction for the invoice for schedule {$schedule->schedule_code}"
-            . ($reason !== '' ? " due to {$reason}." : '.');
+        return DB::transaction(function () use ($payload, $schedule, $amount, $reason) {
+            $serviceIds = !empty($payload['schedule_services_id'])
+                ? [$payload['schedule_services_id']]
+                : $schedule->scheduleServices()->pluck('schedule_services_id')->all();
 
-        $this->notificationService->notifyCashierStaff(
-            $branch,
-            $message,
-            $user,
-            $schedule,
-            (string) $schedule->schedule_id,
-        );
+            $invoiceId = InvoiceServices::whereIn('schedule_services_id', $serviceIds)->value('invoice_id');
 
-        return response()->json([
-            'message' => 'The cashier has been notified to review this deduction request.',
-        ]);
+            $invoice = $invoiceId
+                ? Invoice::where('invoice_id', $invoiceId)
+                    ->where('branch_id', $payload['branch_id'])
+                    ->lockForUpdate()
+                    ->first()
+                : null;
+
+            if (!$invoice) {
+                throw new Exception('No invoice found for this schedule.', 404);
+            }
+
+            if (in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+                throw new Exception('This invoice is void or written off and can no longer be adjusted.', 422);
+            }
+
+            if ($amount > (float) $invoice->adjusted_total + 0.01) {
+                throw new Exception("The deduction can't exceed the invoice's billed total.", 422);
+            }
+
+            InvoiceAdjustment::create([
+                'invoice_id' => $invoice->invoice_id,
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => -$amount,
+                'reason' => "Late/gap deduction for schedule {$schedule->schedule_code}"
+                    . ($reason !== '' ? ": {$reason}" : '.'),
+            ]);
+
+            $invoice->syncStatus();
+
+            return response()->json([
+                'message' => 'The deduction has been applied to the invoice.',
+                'invoice_code' => $invoice->invoice_code,
+            ]);
+        });
     }
 
     public function retrieveSchedule(User $user, array $payload)
