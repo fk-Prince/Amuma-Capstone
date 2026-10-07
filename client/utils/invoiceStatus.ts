@@ -7,6 +7,7 @@ export function statusClasses(status: string | null | undefined) {
             return "bg-accent-50 text-accent-700 dark:bg-accent-500/15 dark:text-accent-300";
 
         case "pending":
+        case "unpaid":
             return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
 
         case "admitted":

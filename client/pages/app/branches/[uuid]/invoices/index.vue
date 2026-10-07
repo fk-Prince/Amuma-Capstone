@@ -156,7 +156,7 @@
 
                 <DataTable
                     v-else-if="activeTab === 'invoices'"
-                    class="flex-1 min-h-0"
+                    class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="invoiceColumns"
                     :rows="invoiceRows"
                     :pagination="invoicePagination"
@@ -216,7 +216,7 @@
 
                 <DataTable
                     v-else
-                    class="flex-1 min-h-0"
+                    class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="receiptColumns"
                     :rows="receipts"
                     :pagination="receiptPagination"
@@ -413,7 +413,7 @@ const invoiceColumns: DataTableColumn[] = [
 ];
 
 const receiptColumns: DataTableColumn[] = [
-    { key: "payment_code", label: "Receipt No.", sortable: false },
+    { key: "payment_code", label: "Transaction No.", sortable: false },
     { key: "issued_at", label: "Issued", sortable: false },
     { key: "patient", label: "Patient", sortable: false },
     { key: "channel", label: "Channel", sortable: false },
@@ -449,9 +449,9 @@ const voidingInvoice = ref(false);
 
 const searchPlaceholder = computed(() => {
     if (activeTab.value === "patients") return "Patient code or name...";
-    if (activeTab.value === "invoices") return "Search by invoice code...";
+    if (activeTab.value === "invoices") return "Search by invoice code or patient name...";
 
-    return "Receipt no., patient code, name, payor or invoice code...";
+    return "Transaction no., patient code, name, payor or invoice code...";
 });
 
 function switchTab(tab: TabKey) {

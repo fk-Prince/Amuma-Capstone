@@ -87,12 +87,24 @@ class InvoiceRepository
             ]);
 
         if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
+            $term = '%' . strtolower(trim($search)) . '%';
+
+            $patientName = fn($patient) => $patient->where(
+                fn($name) => $name
+                    ->whereRaw('LOWER(first_name) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(last_name) LIKE ?', [$term])
+                    ->orWhereRaw("LOWER(first_name || ' ' || last_name) LIKE ?", [$term])
+            );
+
+            $query->where(function ($q) use ($search, $patientName) {
                 $q->where(
                     'invoice_code',
                     'like',
                     "%{$search}%"
-                );
+                )
+                    ->orWhereHas('invoiceServices.scheduleService.schedule.patient', $patientName)
+                    ->orWhereHas('invoiceAdmissionLines.admissionPeriod.patientAdmission.patient', $patientName)
+                    ->orWhereHas('additionalCharges.patientAdmission.patient', $patientName);
             });
         }
 
@@ -445,7 +457,7 @@ class InvoiceRepository
             'status' => match (true) {
                 $overallBalance <= 0 && $overallPaid > 0 => 'Paid',
                 $overallPaid > 0 => 'Partial',
-                default => 'Pending',
+                default => 'Unpaid',
             },
 
             'invoice_count' => $patientInvoices->count(),
@@ -874,7 +886,7 @@ class InvoiceRepository
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
-                default => 'Pending',
+                default => 'Unpaid',
             },
 
             'write_off_reason' => $invoice->write_off_reason,
@@ -1018,7 +1030,7 @@ class InvoiceRepository
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
-                default => 'Pending',
+                default => 'Unpaid',
             },
             'write_off_reason' => $invoice->write_off_reason,
             'written_off_amount' => $invoice->status === Invoice::STATUS_WRITTEN_OFF
