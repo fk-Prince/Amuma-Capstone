@@ -921,6 +921,7 @@
         <AdmissionCancel
             :open="cancelAdmissionDialogOpen"
             :loading="actionLoading"
+            :paid-amount="admitPaidAmount"
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
         />
@@ -1076,6 +1077,11 @@ definePageMeta({
 });
 
 useHead({ title: "Patient Admission" });
+
+const admitPaidAmount = computed(() => {
+    const invoice = patient.value?.latest_admission?.invoices?.[0];
+    return Number(invoice?.net_paid_amount ?? invoice?.paid_amount ?? 0);
+});
 
 const unpaidAmount = computed(() => {
     if (patient.value?.latest_admission?.status !=='waiting') return 0;

@@ -71,6 +71,17 @@
                     </div>
 
                     <div
+                        v-if="paidAmount > 0"
+                        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300"
+                    >
+                        <span class="font-semibold">
+                            {{ formatCurrency(paidAmount) }}
+                        </span>
+                        was paid for this admission. This amount will not be
+                        refunded. Are you sure you want to continue?
+                    </div>
+
+                    <div
                         class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
                     >
                         <button
@@ -99,11 +110,16 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { formatCurrency } from "~/utils/currency";
 
-const props = defineProps<{
-    open: boolean;
-    loading?: boolean;
-}>();
+const props = withDefaults(
+    defineProps<{
+        open: boolean;
+        loading?: boolean;
+        paidAmount?: number;
+    }>(),
+    { paidAmount: 0 },
+);
 
 const emit = defineEmits<{
     (e: "confirm", reason: string): void;

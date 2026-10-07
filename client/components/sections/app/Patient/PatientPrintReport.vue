@@ -596,6 +596,7 @@ import {
 import { formatAmount } from "~/utils/currency";
 import { formatPhone } from "~/utils/phone";
 import { formatDate, formatTime } from "~/utils/time";
+import { calculateAge } from "~/utils/user";
 import { ROUTE_LABELS, DOSAGE_UNIT_LABELS } from "~/utils/medication";
 import {
     LIFE_SYSTEM_ACTIVITIES,
@@ -720,15 +721,7 @@ const birthLine = computed(() => {
     const birth = new Date(dob);
     if (Number.isNaN(birth.getTime())) return dob;
 
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const beforeBirthday =
-        today.getMonth() < birth.getMonth() ||
-        (today.getMonth() === birth.getMonth() &&
-            today.getDate() < birth.getDate());
-    if (beforeBirthday) age -= 1;
-
-    return `${formatDate(dob)} (${age} yrs)`;
+    return calculateAge(dob);
 });
 
 const hasRefunds = computed(() =>

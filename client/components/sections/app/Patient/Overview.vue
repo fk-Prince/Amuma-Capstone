@@ -84,7 +84,10 @@ function statusClasses(status?: string) {
                                     patient.latest_admission?.status.toLowerCase() ===
                                     "admitted"
                                         ? "Currently Admitted"
-                                        : patient.latest_admission?.status
+                                        : patient.latest_admission?.status.toLowerCase() ===
+                                            "waiting"
+                                          ? "Waiting to Admit"
+                                          : patient.latest_admission?.status
                                 }}
                             </span>
                         </div>

@@ -927,6 +927,8 @@ import { invoiceService } from "~/api/invoice/InvoiceService";
 import type { InvoiceDetail } from "~/types/invoice";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { useToast } from "~/composables/useToast";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
 definePageMeta({
@@ -954,8 +956,13 @@ const processingPayment = ref(false);
 
 const activeReceipt = ref<PaymentReceiptData | null>(null);
 
+const { canCreate } = usePermissions();
+
 const showPayment = computed(
-    () => !!invoice.value && invoice.value.balance_due > 0,
+    () =>
+        !!invoice.value &&
+        invoice.value.balance_due > 0 &&
+        canCreate(Modules.BillingAndInvoices),
 );
 
 const facilityCharges = computed(() => {

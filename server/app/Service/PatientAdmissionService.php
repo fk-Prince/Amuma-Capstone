@@ -1089,7 +1089,7 @@ class PatientAdmissionService
 
         if ($facilityType !== 'pre-admission') {
             throw new Exception(
-                'Only pre-admission bookings can be admitted here.',
+                'Only pre-admission can be loaded here.',
                 422
             );
         }
