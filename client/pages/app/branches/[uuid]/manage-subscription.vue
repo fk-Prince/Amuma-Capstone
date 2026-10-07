@@ -191,12 +191,10 @@
                     <ActionButton
                         variant="primary"
                         extra-class="!rounded-xl !px-5 !py-2.5 shrink-0"
-                        :disabled="!renewalAvailable"
-                        :tooltip="renewalBlockedReason"
                         @click="showRenewal = true"
                     >
-                        <RefreshCw class="h-4 w-4" />
-                        <span>Renewal</span>
+                        <Eye class="h-4 w-4" />
+                        <span>View Subscription</span>
                     </ActionButton>
                 </div>
 
@@ -377,7 +375,7 @@ import {
     CircleX,
     Clock,
     LayoutGrid,
-    RefreshCw,
+    Eye,
 } from "lucide-vue-next";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
@@ -829,28 +827,6 @@ onBeforeUnmount(() => clearTimeout(searchDebounce));
 const showRenewal = ref(false);
 const renewalSummary = ref<any>(null);
 const subscriptionPlan = ref<any>(null);
-
-const renewalAvailable = computed(
-    () =>
-        canUpdate(Modules.ManageSubscription) &&
-        Boolean(
-            renewalSummary.value?.can_renew ||
-            renewalSummary.value?.can_upgrade ||
-            renewalSummary.value?.can_resubscribe,
-        ),
-);
-
-const renewalBlockedReason = computed(() => {
-    if (renewalAvailable.value) return "";
-
-    if (!canUpdate(Modules.ManageSubscription)) {
-        return "You need permission to update Manage Subscription to renew.";
-    }
-
-    if (!renewalSummary.value) return "The subscription details couldn't be loaded.";
-
-    return "There's nothing to renew yet. Renewal opens 7 days before the plan ends.";
-});
 
 const fetchRenewal = async () => {
     try {
