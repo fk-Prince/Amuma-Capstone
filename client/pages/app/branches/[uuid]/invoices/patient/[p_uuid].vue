@@ -1300,7 +1300,7 @@
                     <aside class="xl:sticky xl:top-6 print:hidden">
                         <div
                             v-if="showPayment && canRecordPayment"
-                            class="overflow-hidden rounded-2xl border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                            class="overflow-hidden rounded-lg border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
                                 class="border-b border-primary-100 bg-primary-50/60 px-6 py-5 dark:border-primary-500/20 dark:bg-primary-500/10"
@@ -1541,7 +1541,7 @@
 
                         <div
                             v-else-if="showPayment"
-                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                            class="rounded-lg border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <p
                                 class="text-sm font-semibold text-secondary dark:text-white"
@@ -1686,7 +1686,7 @@
 
             <div
                 v-else
-                class="rounded-2xl border border-primary-100 bg-white p-12 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                class="rounded-lg border border-primary-100 bg-white p-12 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
             >
                 <p class="text-sm font-semibold text-secondary dark:text-white">
                     No patient data found

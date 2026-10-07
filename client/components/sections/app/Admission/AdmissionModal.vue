@@ -182,7 +182,12 @@
                                     />
                                     <InfoField
                                         label="Age"
-                                        :value="patient.age"
+                                        :value="
+                                            calculateAge(
+                                                patient.date_of_birth,
+                                                false,
+                                            )
+                                        "
                                     />
                                     <InfoField
                                         label="Blood type"
@@ -276,6 +281,7 @@
 import { computed, defineComponent, h } from "vue";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
+import { calculateAge } from "~/utils/user";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 const props = defineProps<{

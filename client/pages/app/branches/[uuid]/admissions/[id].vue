@@ -1041,6 +1041,7 @@
 import { computed, ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { formatPhone } from "~/utils/phone";
+import { calculateAge } from "~/utils/user";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
 import { patientService } from "~/api/patient/PatientService";
@@ -1185,11 +1186,13 @@ const initials = computed(() => {
 });
 
 const patientFacts = computed(() => {
-    const age = patient.value?.age;
+    const age = patient.value?.date_of_birth
+        ? calculateAge(patient.value.date_of_birth, false)
+        : null;
 
     return [
         { label: "Gender", value: patient.value?.gender },
-        { label: "Age", value: age ? `${age} years old` : null },
+        { label: "Age", value: age },
         { label: "Blood type", value: patient.value?.blood_type },
         { label: "Contact", value: formatPhone(patient.value?.phone_number) },
         {

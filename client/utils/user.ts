@@ -48,7 +48,7 @@ export function fullName(
         || "—";
 }
 
-export function calculateAge(date?: string, ba = true) {
+export function calculateAge(date?: string | null, ba = true) {
     if (!date) {
         return "—";
     }

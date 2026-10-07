@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen-header w-full p-3 rounded-lg">
+    <div class="min-h-screen-header w-full rounded-lg">
         <div class="w-full space-y-5 pb-8">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <button
@@ -583,7 +583,12 @@
                                 />
                                 <Field
                                     label="Age"
-                                    :value="invoice.patient.age"
+                                    :value="
+                                        calculateAge(
+                                            invoice.patient.date_of_birth,
+                                            false,
+                                        )
+                                    "
                                 />
                                 <Field
                                     label="Blood Type"
@@ -871,15 +876,33 @@
                 </div>
 
                 <div
+                    v-else-if="hasBalanceDue"
+                    class="rounded-lg border border-[#DDECEC] shadow-sm bg-white p-6 text-center xl:sticky xl:top-6 dark:border-white/10 dark:bg-secondary"
+                >
+                    <p
+                        class="text-sm font-semibold text-secondary dark:text-white"
+                    >
+                        {{ formatAmount(invoice?.balance_due ?? 0) }} still due
+                    </p>
+
+                    <p
+                        class="mt-1 text-xs leading-5 text-[#6B8A87] dark:text-gray-400"
+                    >
+                        You don't have permission to record payments for this
+                        branch.
+                    </p>
+                </div>
+
+                <div
                     v-else
-                    class="rounded-2xl shadow-sm ring-1 ring-black/5 bg-white p-6 text-center text-sm text-[#6B8A87] xl:sticky xl:top-6 dark:text-gray-400 dark:bg-secondary"
+                    class="rounded-lg border border-[#DDECEC] shadow-sm bg-white p-6 text-center text-sm text-[#6B8A87] xl:sticky xl:top-6 dark:text-gray-400 dark:border-white/10 dark:bg-secondary"
                 >
                     This invoice is fully paid.
                 </div>
 
                 <div
                     v-if="paymentChange > 0"
-                    class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                    class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-500/20 dark:bg-emerald-500/10"
                 >
                     <p
                         class="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
@@ -922,6 +945,7 @@ import { ref, reactive, computed, onMounted, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Stethoscope } from "lucide-vue-next";
 import { formatAmount } from "~/utils/currency";
+import { calculateAge } from "~/utils/user";
 import { formatDuration } from "~/utils/time";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
@@ -960,11 +984,12 @@ const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const { canCreate } = usePermissions();
 
+const hasBalanceDue = computed(
+    () => !!invoice.value && invoice.value.balance_due > 0,
+);
+
 const showPayment = computed(
-    () =>
-        !!invoice.value &&
-        invoice.value.balance_due > 0 &&
-        canCreate(Modules.BillingAndInvoices),
+    () => hasBalanceDue.value && canCreate(Modules.BillingAndInvoices),
 );
 
 const facilityCharges = computed(() => {

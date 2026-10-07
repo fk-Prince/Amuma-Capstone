@@ -995,6 +995,7 @@ const form = reactive({
         reserved_walkin_slots: 3,
         enable_booking_pre_admission: true,
         enable_booking_complete_admission: true,
+        complete_admission_booking_percent: 50,
         minimum_adl_hours: 8,
         is_open: true,
     } as BranchSettings,
