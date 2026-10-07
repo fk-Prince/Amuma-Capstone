@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Http\Resources\BookingResource;
+use App\Guard\GuardianEmailGuard;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
@@ -1079,11 +1080,15 @@ class PatientAdmissionService
         if (trim((string) $email) === '') {
             throw new Exception('A guardian email is required.', 422);
         }
+
+        GuardianEmailGuard::assertAllowed($email);
     }
 
     public function guardianEmailExists(?string $email): array
     {
         $email = trim((string) $email);
+
+        GuardianEmailGuard::assertAllowed($email);
 
         $user = $email === ''
             ? null

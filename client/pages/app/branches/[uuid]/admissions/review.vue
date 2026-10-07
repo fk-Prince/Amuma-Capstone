@@ -232,7 +232,9 @@ const balanceDue = ref<number | null>(null);
 const showPaymentWarning = ref(false);
 
 const requiresFullPaymentOnAdmit = computed(
-    () => branchStore.activeBranch?.settings?.requires_full_payment_on_admit ?? true,
+    () =>
+        branchStore.activeBranch?.settings?.requires_full_payment_on_admit ??
+        true,
 );
 
 const paymentIncomplete = computed(
@@ -274,6 +276,17 @@ async function fetchBalance() {
 }
 
 onMounted(() => {
+    if (!Object.keys(bookingStore.patient ?? {}).length) {
+        toast.error(
+            "Your admission details were lost. Please fill them in again.",
+        );
+        router.replace({
+            path: `/app/branches/${uuid}/admissions`,
+            query: route.query,
+        });
+        return;
+    }
+
     document.getElementById("dashboard-scroll")?.scrollTo({ top: 0 });
     fetchBalance();
 });

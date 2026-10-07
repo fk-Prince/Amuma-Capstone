@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Factories\BookingFactory;
 use App\Factories\PaymentFactory;
 use App\Http\Resources\BookingResource;
+use App\Guard\GuardianEmailGuard;
 use App\Models\Booking;
 use App\Models\Patient;
 use App\Models\PatientAccess;
@@ -344,6 +345,8 @@ class BookingService
         $patient = $this->bookingHelper->resolvePatient($payload['patient']);
         $guardian = $payload['guardian'];
         $assessments = $payload['assessment'] ?? [];
+
+        GuardianEmailGuard::assertAllowed($data['guardian']['email']);
 
         $owner = User::where('email', $data['guardian']['email'])->first();
 

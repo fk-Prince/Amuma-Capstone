@@ -1135,8 +1135,9 @@ async function submit() {
                     showEmailExistsWarning.value = true;
                     return;
                 }
-            } catch (err) {
-                console.error(err);
+            } catch (err: any) {
+                error(err?.message ?? "Couldn't check the guardian's email.");
+                return;
             }
         }
 
