@@ -725,8 +725,7 @@ class PatientAdmissionService
             $oldConsumed = round($oldPrice - $oldRemaining, 2);
 
             $newRemaining = round(
-                AdmissionHelper::dailyRate($newContract->billing_cycle, (float) $newContract->price)
-                    * $remainingDays,
+                ((float) $newContract->price / $totalDays) * $remainingDays,
                 2
             );
 
