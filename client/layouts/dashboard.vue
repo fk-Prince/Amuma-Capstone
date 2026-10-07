@@ -138,7 +138,10 @@ const menus = computed(() => {
         return [];
     }
 
-    if (branch?.agency?.status !== "verified" || branch?.status !== "verified") {
+    if (
+        branch?.agency?.status !== "verified" ||
+        branch?.status !== "verified"
+    ) {
         return authMenuList
             .filter((item) => item.label === "Dashboard")
             .map((item) => ({
