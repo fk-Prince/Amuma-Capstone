@@ -103,6 +103,23 @@
                                 }}
                             </span>
                         </div>
+
+                        <div
+                            v-if="hasPrices"
+                            class="flex items-center justify-between gap-3 border-t border-slate-200 px-3.5 pt-3 dark:border-white/10"
+                        >
+                            <p
+                                class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                            >
+                                Total
+                            </p>
+
+                            <p
+                                class="text-sm font-semibold text-primary-950 dark:text-primary-300"
+                            >
+                                {{ formatCurrency(total) }}
+                            </p>
+                        </div>
                     </div>
 
                     <div
@@ -125,12 +142,25 @@
 <script setup lang="ts">
 import type { DischargeChainPeriod } from "~/types/invoice";
 import { formatDate } from "~/utils/time";
+import { computed } from "vue";
 import { formatCurrency } from "~/utils/currency";
 
-defineProps<{
+const props = defineProps<{
     open: boolean;
     periods: DischargeChainPeriod[];
 }>();
+
+const hasPrices = computed(() =>
+    props.periods.some((period) => period.price !== undefined),
+);
+
+const total = computed(
+    () =>
+        Math.round(
+            props.periods.reduce((sum, period) => sum + (period.price ?? 0), 0) *
+                100,
+        ) / 100,
+);
 
 const emit = defineEmits<{
     close: [];

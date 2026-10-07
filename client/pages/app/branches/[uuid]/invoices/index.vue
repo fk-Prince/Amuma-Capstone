@@ -113,18 +113,6 @@
                         >
                     </template>
 
-                    <template #cell-total_refunded="{ row }">
-                        <span
-                            class="font-medium"
-                            :class="
-                                totalRefunded(row) > 0
-                                    ? 'text-amber-600 dark:text-amber-300'
-                                    : 'text-slate-400 dark:text-gray-500'
-                            "
-                            >₱{{ formatMoney(totalRefunded(row)) }}</span
-                        >
-                    </template>
-
                     <template #cell-total_refundable="{ row }">
                         <div class="leading-tight">
                             <span
@@ -388,12 +376,6 @@ const patientColumns: DataTableColumn[] = [
     { key: "total_amount", label: "Total", align: "right", sortable: false },
     { key: "total_paid", label: "Paid", align: "right", sortable: false },
     {
-        key: "total_refunded",
-        label: "Refunds",
-        align: "right",
-        sortable: false,
-    },
-    {
         key: "total_refundable",
         label: "Credit",
         align: "right",
@@ -656,10 +638,6 @@ function creditOnAccount(row: PatientSummaryRow) {
 }
 
 // Only money that has actually gone back.
-function totalRefunded(row: PatientSummaryRow) {
-    return Number(row.total_refunded ?? 0);
-}
-
 function refundProcessing(row: PatientSummaryRow) {
     return Number(row.total_refund_requested ?? 0);
 }

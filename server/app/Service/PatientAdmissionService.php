@@ -465,10 +465,6 @@ class PatientAdmissionService
                 throw new Exception('Only an upcoming billing period can be cancelled.', 422);
             }
 
-            if ((int) $upcoming->last()->admission_period_id !== (int) $period->admission_period_id) {
-                throw new Exception('Cancel the later billing periods first.', 422);
-            }
-
             $userId = $payload['user']->user_id ?? null;
 
             $period->invoiceAdmissionLines->groupBy('invoice_id')->each(
@@ -514,6 +510,25 @@ class PatientAdmissionService
             );
 
             $period->update(['status' => AdmissionPeriod::STATUS_CANCELLED]);
+
+            // Later periods move up to start where the cancelled one began, so
+            // the stay stays continuous.
+            $cursor = Carbon::parse($period->start_date);
+
+            $upcoming
+                ->filter(fn($next) => (int) $next->admission_period_id !== (int) $period->admission_period_id
+                    && Carbon::parse($next->start_date)->gte(Carbon::parse($period->end_date)))
+                ->sortBy('start_date')
+                ->each(function ($next) use (&$cursor) {
+                    $end = AdmissionHelper::calculateEndDate(
+                        $cursor->copy(),
+                        $next->branchContract->billing_cycle
+                    );
+
+                    $next->update(['start_date' => $cursor->copy(), 'end_date' => $end]);
+
+                    $cursor = $end->copy();
+                });
 
             $coverageEnd = $admission->periods()
                 ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)

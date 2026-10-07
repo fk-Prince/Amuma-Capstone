@@ -262,7 +262,7 @@
                                     <button
                                         v-if="
                                             periodActions &&
-                                            isLastUpcoming(invoice, admission)
+                                            isUpcoming(invoice, admission)
                                         "
                                         type="button"
                                         :disabled="!periodActions.enabled"
@@ -335,7 +335,7 @@ const props = withDefaults(
         // Drops the card chrome so the timeline can sit inside a parent card
         // without stacking a second border around it.
         flat?: boolean;
-        // When given, the last upcoming billing period gets a Cancel button.
+        // When given, every upcoming billing period gets a Cancel button.
         periodActions?: { enabled: boolean; reason?: string } | null;
     }>(),
     { admissions: null, flat: false, periodActions: null },
@@ -510,27 +510,6 @@ function isUpcoming(invoice: InvoiceAccommodation, admission: Admission) {
         !isInEffect(invoice, admission) &&
         invoice.accommodation_status !== "inactive"
     );
-}
-
-// Only the furthest period can go, so cancelling never leaves a gap.
-function isLastUpcoming(invoice: InvoiceAccommodation, admission: Admission) {
-    if (!isUpcoming(invoice, admission)) return false;
-
-    const upcoming = (admission.invoices ?? []).filter((row) =>
-        isUpcoming(row, admission),
-    );
-
-    const last = upcoming.reduce<InvoiceAccommodation | null>(
-        (furthest, row) =>
-            !furthest ||
-            new Date(row.period_end ?? 0).getTime() >=
-                new Date(furthest.period_end ?? 0).getTime()
-                ? row
-                : furthest,
-        null,
-    );
-
-    return last?.admission_period_id === invoice.admission_period_id;
 }
 
 function coverageLabel(invoice: InvoiceAccommodation, admission: Admission) {

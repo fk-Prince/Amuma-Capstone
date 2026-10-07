@@ -948,7 +948,7 @@
                     ? `${formatDate(periodToCancel.period_start)} to ${formatDate(periodToCancel.period_end)}`
                     : ''
             "
-            description="Its invoice will be voided. Anything already paid on it goes back to the patient as credit."
+            description="Its invoice will be voided. Anything already paid on it goes back to the patient as credit. Any later periods move up to start right after the previous one, and the stay's end date follows."
             confirm-label="Cancel Period"
             cancel-label="Keep Period"
             variant="danger"
