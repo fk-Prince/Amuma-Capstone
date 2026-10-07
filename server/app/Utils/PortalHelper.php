@@ -740,6 +740,8 @@ class PortalHelper
 
             'avatar' => $employee?->avatar,
             'note' => $assignment->note,
+            'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
+            'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
 
             'online' => $assignment->onlineSchedules
                 ->filter(fn($online) => $online->in_timestamp !== null)

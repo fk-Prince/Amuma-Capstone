@@ -496,37 +496,15 @@
                                                 </span>
 
                                                 <span
-                                                    v-if="assignee.note"
+                                                    v-if="shiftHours(assignee)"
                                                     class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
-                                                    :title="
-                                                        shiftHours(
-                                                            assignee.note,
-                                                        ) ?? undefined
-                                                    "
                                                 >
-                                                    {{ assignee.note }}
-                                                    <template
-                                                        v-if="
-                                                            shiftHours(
-                                                                assignee.note,
-                                                            )
-                                                        "
-                                                    >
-                                                        ·
-                                                        {{
-                                                            shiftHours(
-                                                                assignee.note,
-                                                            )
-                                                        }}
-                                                    </template>
+                                                    {{ shiftHours(assignee) }}
                                                 </span>
 
                                                 <span
                                                     v-if="
-                                                        shiftEnded(
-                                                            log,
-                                                            assignee.note,
-                                                        ) &&
+                                                        shiftEnded(log, assignee) &&
                                                         isOnDuty(
                                                             log,
                                                             assignee.employee_id,
@@ -539,6 +517,14 @@
                                                     />
                                                     Shift ended · still on duty
                                                 </span>
+
+                                                <p
+                                                    v-if="assignee.note"
+                                                    class="max-w-[14rem] truncate text-right text-[11px] text-muted dark:text-gray-400"
+                                                    :title="assignee.note"
+                                                >
+                                                    {{ assignee.note }}
+                                                </p>
                                             </div>
                                         </div>
 
@@ -886,7 +872,7 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
-import { formatDuration, formatDurationShort } from "~/utils/time";
+import { formatDuration, formatDurationShort, formatTime } from "~/utils/time";
 import AssignADLModal from "./AssignADLModal.vue";
 import InvoiceDeductionModal from "./InvoiceDeductionModal.vue";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
@@ -1118,46 +1104,41 @@ onUnmounted(() => {
     if (secondsTickInterval) clearInterval(secondsTickInterval);
 });
 
-type ShiftKey = "am" | "pm" | "full";
-
-const SHIFT_HOURS: Record<
-    ShiftKey,
-    { start: number; end: number; label: string }
-> = {
-    am: { start: 0, end: 12, label: "12:00 AM – 12:00 PM" },
-    pm: { start: 12, end: 24, label: "12:00 PM – 12:00 AM" },
-    full: { start: 0, end: 24, label: "Whole booking" },
+type Assignee = {
+    start_time?: string | null;
+    end_time?: string | null;
 };
 
-function shiftOf(note?: string | null): ShiftKey | null {
-    const text = (note ?? "").toLowerCase();
+function shiftHours(assignee: Assignee): string | null {
+    if (!assignee.start_time || !assignee.end_time) return null;
 
-    if (/\bfull\b/.test(text)) return "full";
-    if (/\bam\b/.test(text)) return "am";
-    if (/\bpm\b/.test(text)) return "pm";
-
-    return null;
+    return `${formatTime(assignee.start_time)} – ${formatTime(assignee.end_time)}`;
 }
 
-function shiftHours(note?: string | null): string | null {
-    const shift = shiftOf(note);
+function toHour(time: string): number {
+    const [hours, minutes] = time.split(":").map(Number);
 
-    return shift ? SHIFT_HOURS[shift].label : null;
+    return (hours || 0) + (minutes || 0) / 60;
 }
 
-function shiftEnded(log: AuditRow, note?: string | null): boolean {
+function shiftEnded(log: AuditRow, assignee: Assignee): boolean {
     secondsTick.value;
 
-    const shift = shiftOf(note);
-
-    if (!shift || shift === "full" || log.status?.toLowerCase() !== "ongoing")
+    if (
+        !assignee.start_time ||
+        !assignee.end_time ||
+        log.status?.toLowerCase() !== "ongoing"
+    )
         return false;
 
     const now = new Date();
     const hour = now.getHours() + now.getMinutes() / 60;
-    const { start, end } = SHIFT_HOURS[shift];
+    const start = toHour(assignee.start_time);
+    const end = toHour(assignee.end_time);
 
-    return hour < start || hour >= end;
+    if (end > start) return hour < start || hour >= end;
+
+    return hour >= end && hour < start;
 }
 
 function isReviewable(log: AuditRow): boolean {
