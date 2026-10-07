@@ -343,7 +343,7 @@ class DischargeCalculator
             'end' => $chain->last()->end_date,
             'total_days' => $totalDays,
             'consumed_days' => $consumedDays,
-            'price' => $chain->last()->chargedAmount(),
+            'price' => round((float) $chain->sum(fn(AdmissionPeriod $link) => $link->chargedAmount()), 2),
         ];
     }
 
