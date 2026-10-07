@@ -162,12 +162,11 @@ class SubscriptionController extends Controller
             AuthGuard::requireModule(
                 $request->user(),
                 $branch->branch_id,
-                ModuleEnum::BranchSettings,
+                ModuleEnum::ManageSubscription,
                 PermissionAction::Read
             );
             BranchGuard::mergeRequest($request, $branch);
         }
-
         return $this->subscriptionService->subscriptionList($request->all());
     }
 

@@ -9,7 +9,7 @@
                 class="border-b border-slate-100 px-3 py-5 dark:border-white/10"
             >
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="relative min-w-[220px] max-w-sm flex-1">
+                    <div class="relative w-full min-w-[220px] sm:max-w-sm sm:flex-1">
                         <svg
                             viewBox="0 0 24 24"
                             class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
@@ -31,10 +31,10 @@
                         />
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
                         <Combobox
                             v-model="statusFilter"
-                            class="w-56"
+                            class="w-full sm:w-56"
                             placeholder="Filter branches"
                             :items="statusOptions"
                         />
