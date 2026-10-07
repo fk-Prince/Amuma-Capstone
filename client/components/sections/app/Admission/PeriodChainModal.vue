@@ -79,6 +79,13 @@
                                     →
                                     {{ formatDate(period.end_date) }}
                                 </p>
+
+                                <p
+                                    v-if="period.price !== undefined"
+                                    class="mt-1 text-xs font-semibold text-slate-700 dark:text-gray-300"
+                                >
+                                    {{ formatCurrency(period.price) }}
+                                </p>
                             </div>
 
                             <span
@@ -118,6 +125,7 @@
 <script setup lang="ts">
 import type { DischargeChainPeriod } from "~/types/invoice";
 import { formatDate } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 
 defineProps<{
     open: boolean;

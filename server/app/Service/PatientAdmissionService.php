@@ -304,7 +304,17 @@ class PatientAdmissionService
             if ($currentPeriod) {
                 $force = !empty($payload['force']);
 
-                $this->refundService->settleDischarge($admission, $currentPeriod, $force);
+                $settled = $this->refundService->settleDischarge($admission, $currentPeriod, $force);
+
+                if ($settled['offset'] > 0 && $settled['owed_invoices']->isNotEmpty() && $admission->patient) {
+                    $this->invoiceService->applyCredit(
+                        $admission->patient,
+                        $settled['owed_invoices'],
+                        round((float) $settled['owed_invoices']->sum('balance_due'), 2),
+                        $payload['user'] ?? null,
+                        $settled['offset']
+                    );
+                }
 
                 if ($force) {
                     $this->writeOffOutstanding($admission, $payload['user'] ?? null);

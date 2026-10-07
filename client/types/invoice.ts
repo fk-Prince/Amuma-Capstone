@@ -295,6 +295,7 @@ export interface DischargeChainPeriod {
     billing_cycle: string | null;
     start_date: string | null;
     end_date: string | null;
+    price?: number;
     is_current: boolean;
 }
 

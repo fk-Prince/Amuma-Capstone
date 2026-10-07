@@ -253,11 +253,11 @@ class RefundService
         return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($period, $admission);
     }
 
-    public function settleDischarge(PatientAdmission $admission, AdmissionPeriod $period, bool $force = false): void
+    public function settleDischarge(PatientAdmission $admission, AdmissionPeriod $period, bool $force = false): array
     {
         $plan = DischargeCalculator::plan($admission, $period);
 
-        $shortfall = round((float) collect($plan['invoices'])->sum('owed'), 2);
+        $shortfall = round(max(0, (float) collect($plan['invoices'])->sum('owed') - (float) $plan['offset']), 2);
 
         if ($shortfall > 0 && !$force) {
             $paid = round((float) collect($plan['invoices'])->sum('net_paid'), 2);
@@ -287,6 +287,17 @@ class RefundService
                 $invoice->update(['status' => Invoice::STATUS_VOID]);
             }
         }
+
+        // What the refunds on paid invoices should now be spent on: the invoices
+        // that are still owed after the stay is cut down.
+        return [
+            'offset' => (float) $plan['offset'],
+            'owed_invoices' => collect($plan['invoices'])
+                ->filter(fn(array $entry) => $entry['owed'] > 0)
+                ->map(fn(array $entry) => $entry['invoice']->fresh())
+                ->filter()
+                ->values(),
+        ];
     }
 
     public function createRefundCurrentInvoice(Invoice $invoice, PatientAdmission $admission,  AdmissionPeriod $period)

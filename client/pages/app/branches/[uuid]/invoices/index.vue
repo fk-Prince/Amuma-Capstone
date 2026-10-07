@@ -223,7 +223,7 @@
                     :loading="receiptsLoading"
                     :searchable="false"
                     empty-title="No receipts found"
-                    empty-description="Search by receipt number, patient, payor, invoice code or gateway reference."
+                    empty-description="Search by transaction number, patient, payor or invoice code."
                     :on-row-click="openReceipt"
                     @page-change="fetchReceipts"
                 >
@@ -449,7 +449,8 @@ const voidingInvoice = ref(false);
 
 const searchPlaceholder = computed(() => {
     if (activeTab.value === "patients") return "Patient code or name...";
-    if (activeTab.value === "invoices") return "Search by invoice code or patient name...";
+    if (activeTab.value === "invoices")
+        return "Search by invoice code or patient name...";
 
     return "Transaction no., patient code, name, payor or invoice code...";
 });

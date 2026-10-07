@@ -55,6 +55,11 @@ class DischargeCalculator
         $totalPaid = round((float) collect($plan['invoices'])->sum('net_paid'), 2);
         $totalRefund = round((float) collect($plan['invoices'])->sum('refund'), 2);
 
+        $offset = (float) $plan['offset'];
+        $refundAmount = round(max(0, $refundAmount - $offset), 2);
+        $totalRefund = round(max(0, $totalRefund - $offset), 2);
+        $stillOwed = round(max(0, $stillOwed - $offset), 2);
+
         $eligibleForRefund = $refundAmount > 0;
 
         [$policy, $policyTitle, $policyDescription] = self::getDischargePolicyText(
@@ -93,6 +98,7 @@ class DischargeCalculator
                     'billing_cycle' => $link->branchContract?->billing_cycle,
                     'start_date' => $link->start_date,
                     'end_date' => $link->end_date,
+                    'price' => $link->chargedAmount(),
                     'is_current' => $link->admission_period_id === $period->admission_period_id,
                 ])
                 ->values()
@@ -178,8 +184,16 @@ class DischargeCalculator
             $periodKeep = round(min($periodPrice, $retainedHalf + $daysStayedAmount), 2);
         }
 
-        $periodCredit = round(max(0, $periodPrice - $periodKeep), 2);
-        $creditRate = $periodPrice > 0 ? $periodCredit / $periodPrice : 0.0;
+        // Everything charged across the chain (earlier periods included) is cut
+        // down to what is kept, so the retained amount is exactly the policy's
+        // figure and an earlier accommodation's charge is not added on top.
+        $chainTotal = round((float) $chain->sum(fn(AdmissionPeriod $link) => $link->chargedAmount()), 2);
+
+        $periodCredit = $withinWindow
+            ? round(max(0, $chainTotal - $periodKeep), 2)
+            : round(max(0, $periodPrice - $periodKeep), 2);
+
+        $creditRate = $chainTotal > 0 ? $periodCredit / $chainTotal : 0.0;
 
         $futurePeriods = $admission->periods()
             ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
@@ -270,7 +284,15 @@ class DischargeCalculator
             }
         }
 
+        // Money refundable on one invoice first settles what is still owed on
+        // another, so the resident is never refunded and billed for the same stay.
+        $offset = round(min(
+            (float) collect($invoices)->sum('refund'),
+            (float) collect($invoices)->sum('owed')
+        ), 2);
+
         return [
+            'offset' => $offset,
             'within_window' => $withinWindow,
             'period_start' => $window['start'],
             'period_end' => $window['end'],
