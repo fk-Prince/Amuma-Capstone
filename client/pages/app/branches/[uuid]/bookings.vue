@@ -207,18 +207,24 @@
                                     <div
                                         class="flex items-center justify-end gap-2"
                                     >
-                                        <button
+                                        <ActionButton
                                             v-if="
-                                                canReviewBookings &&
                                                 row.status?.toLowerCase() ===
-                                                    'pending'
+                                                'pending'
                                             "
                                             type="button"
-                                            class="px-3 py-1.5 text-xs font-medium rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition"
+                                            variant="danger"
+                                            :disabled="!canReviewBookings"
+                                            :tooltip="
+                                                canReviewBookings
+                                                    ? ''
+                                                    : reviewBlockedReason
+                                            "
+                                            extra-class="!px-3 !py-1.5 !text-xs"
                                             @click.stop="openRejectModal(row)"
                                         >
                                             Reject
-                                        </button>
+                                        </ActionButton>
 
                                         <button
                                             type="button"
@@ -521,9 +527,8 @@
 
                             <div
                                 v-if="
-                                    canReviewBookings &&
                                     selectedBooking.status?.toLowerCase() ===
-                                        'pending'
+                                    'pending'
                                 "
                                 class="space-y-3"
                             >
@@ -548,12 +553,17 @@
                                         type="button"
                                         variant="primary"
                                         :loading="isApproving"
-                                        :disabled="isReviewing"
+                                        :disabled="
+                                            isReviewing || !canReviewBookings
+                                        "
                                         extra-class="w-full"
                                         :tooltip="
-                                            !isApproving && !canApproveBooking
-                                                ? 'Please select an accommodation before approving this admission.'
-                                                : ''
+                                            !canReviewBookings
+                                                ? reviewBlockedReason
+                                                : !isApproving &&
+                                                    !canApproveBooking
+                                                  ? 'Please select an accommodation before approving this admission.'
+                                                  : ''
                                         "
                                         @click="confirmBooking(selectedBooking)"
                                     >
@@ -584,13 +594,18 @@
                                         type="button"
                                         variant="danger"
                                         :loading="isRejecting"
-                                        :disabled="isReviewing"
+                                        :disabled="
+                                            isReviewing || !canReviewBookings
+                                        "
                                         extra-class="w-full"
                                         :tooltip="
-                                            selectedBooking.payment
-                                                ?.payment_status === 'paid'
-                                                ? 'The payment will be refunded when this booking is rejected.'
-                                                : ''
+                                            !canReviewBookings
+                                                ? reviewBlockedReason
+                                                : selectedBooking.payment
+                                                        ?.payment_status ===
+                                                    'paid'
+                                                  ? 'The payment will be refunded when this booking is rejected.'
+                                                  : ''
                                         "
                                         @click="
                                             openRejectModal(selectedBooking)
@@ -624,10 +639,7 @@
                             </div>
 
                             <div
-                                v-else-if="
-                                    selectedBooking.status?.toLowerCase() !==
-                                    'pending'
-                                "
+                                v-else
                                 class="rounded-xl border border-[#E4EFED] bg-[#F8FBFA] px-4 py-3 dark:border-white/10 dark:bg-white/5"
                             >
                                 <div class="flex items-center gap-3">
@@ -829,6 +841,9 @@ const { hasHomecarePlan } = useBranchPlan();
 const { canCreate, canReview } = usePermissions();
 
 const canReviewBookings = computed(() => canReview(Modules.Bookings));
+
+const reviewBlockedReason =
+    "You need Accept/Reject permission on bookings to do this.";
 
 const showHomecareBooking = computed(
     () => hasHomecarePlan.value && canCreate(Modules.Bookings),

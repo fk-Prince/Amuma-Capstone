@@ -191,6 +191,8 @@ import { Clock, MapPin } from "lucide-vue-next";
 import type { ScheduleItem } from "~/types/schedule";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 
 const props = withDefaults(
     defineProps<{
@@ -215,8 +217,11 @@ const { dayGroups, schedulesForDay, scheduleStatusTheme, scheduleStatusLabel } =
 
 const CLOSED_STATUSES = ["missed", "completed", "cancelled"];
 
+const { canAssign: canAssignModule } = usePermissions();
+
 function canAssign(schedule: ScheduleItem) {
     return (
+        canAssignModule(Modules.Schedules) &&
         !CLOSED_STATUSES.includes(schedule.status?.toLowerCase() ?? "") &&
         !!schedule.services?.some((service) => !service.assignees?.length)
     );

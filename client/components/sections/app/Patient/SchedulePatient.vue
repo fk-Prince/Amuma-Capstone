@@ -220,6 +220,7 @@
 
                                         <button
                                             v-if="
+                                                canAssignSchedule &&
                                                 ![
                                                     'missed',
                                                     'completed',
@@ -267,10 +268,11 @@
                                             service.schedule_services_id ??
                                             sIndex
                                         "
-                                        class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
+                                        class="absolute flex cursor-pointer flex-col justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2 shadow-sm transition hover:border-primary/50 hover:shadow-md dark:border-white/25 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/50 dark:hover:shadow-none"
                                         :class="[
-                                            scheduleStatusTheme(schedule.status)
-                                                .card,
+                                            isCancelled(schedule)
+                                                ? 'opacity-60'
+                                                : '',
                                             highlightedScheduleId === schedule.schedule_id
                                                 ? 'ring-2 ring-primary/60'
                                                 : '',
@@ -283,152 +285,80 @@
                                         }"
                                         @click="$emit('view-details', schedule)"
                                     >
-                                        <div
-                                            class="flex items-center justify-between gap-2"
-                                        >
-                                            <span
-                                                class="truncate text-[13px] font-semibold text-slate-800 dark:text-white"
+                                        <div>
+                                            <p
+                                                v-if="schedule.scheduled_date"
+                                                class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                             >
-                                                {{ service.service_name }}
-                                            </span>
+                                                {{ formatDate(schedule.scheduled_date) }}
+                                            </p>
 
-                                            <span
-                                                class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                                                :class="
-                                                    scheduleStatusTheme(
-                                                        schedule.status,
-                                                    ).badge
-                                                "
-                                            >
-                                                {{
-                                                    scheduleStatusLabel(
-                                                        schedule.status,
-                                                    )
-                                                }}
-                                            </span>
-                                        </div>
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white">
+                                                    {{ schedule.start_time }} – {{ schedule.end_time }}
+                                                </span>
 
-                                        <div
-                                            class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
-                                        >
-                                            <svg
-                                                width="11"
-                                                height="11"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                class="shrink-0 opacity-60"
-                                            >
-                                                <circle cx="12" cy="12" r="9" />
-                                                <path d="M12 7v5l3 3" />
-                                            </svg>
-                                            <span class="truncate">
-                                                {{ schedule.start_time }} –
-                                                {{ schedule.end_time }}
-                                            </span>
-                                        </div>
-
-                                        <div class="flex items-center gap-1.5">
-                                            <span
-                                                v-if="service.assignees?.length"
-                                                class="flex items-center -space-x-1.5"
-                                            >
                                                 <span
-                                                    v-for="(
-                                                        assignee, aIndex
-                                                    ) in service.assignees.slice(
-                                                        0,
-                                                        3,
-                                                    )"
+                                                    class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium"
+                                                    :class="scheduleStatusTheme(schedule.status).accent"
+                                                >
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full"
+                                                        :class="scheduleStatusTheme(schedule.status).dot"
+                                                    />
+                                                    {{ scheduleStatusLabel(schedule.status) }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            v-if="service.assignees?.length"
+                                            class="flex min-w-0 items-center gap-2"
+                                        >
+                                            <span class="flex shrink-0 items-center -space-x-1.5">
+                                                <span
+                                                    v-for="assignee in service.assignees.slice(0, 3)"
                                                     :key="assignee.employee_id"
-                                                    class="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-primary text-[9px] font-bold text-white"
+                                                    class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white bg-primary text-[8px] font-bold text-white dark:border-secondary"
                                                     :title="assignee.full_name"
                                                 >
                                                     <img
                                                         v-if="assignee.avatar"
                                                         :src="assignee.avatar"
-                                                        :alt="
-                                                            assignee.full_name
-                                                        "
+                                                        :alt="assignee.full_name"
                                                         class="h-full w-full object-cover"
                                                     />
                                                     <template v-else>
-                                                        {{
-                                                            initials(
-                                                                assignee.full_name,
-                                                            )
-                                                        }}
+                                                        {{ initials(assignee.full_name) }}
                                                     </template>
                                                 </span>
-                                                <span
-                                                    v-if="
-                                                        (service.assignees
-                                                            ?.length ?? 0) > 3
-                                                    "
-                                                    class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-200 text-[9px] font-bold text-slate-600 dark:bg-white/15 dark:text-gray-400"
-                                                    :title="
-                                                        service.assignees
-                                                            .slice(3)
-                                                            .map(
-                                                                (a) =>
-                                                                    a.full_name,
-                                                            )
-                                                            .join(', ')
-                                                    "
-                                                >
-                                                    +{{
-                                                        (service.assignees
-                                                            ?.length ?? 0) - 3
-                                                    }}
-                                                </span>
                                             </span>
 
-                                            <span
-                                                v-if="service.assignees?.length"
-                                                class="truncate text-[11px] font-medium"
-                                                :class="
-                                                    scheduleStatusTheme(
-                                                        schedule.status,
-                                                    ).accent
-                                                "
-                                            >
-                                                {{
-                                                    service.assignees[0]
-                                                        ?.full_name
-                                                }}
+                                            <span class="truncate text-[12px] text-slate-600 dark:text-gray-300">
+                                                {{ service.assignees[0]?.full_name }}
                                                 <span
-                                                    v-if="
-                                                        (service.assignees
-                                                            ?.length ?? 0) > 1
-                                                    "
-                                                    class="text-slate-500 dark:text-gray-400"
+                                                    v-if="service.assignees.length > 1"
+                                                    class="text-slate-400 dark:text-gray-500"
                                                 >
-                                                    +{{
-                                                        (service.assignees
-                                                            ?.length ?? 0) - 1
-                                                    }}
+                                                    +{{ service.assignees.length - 1 }}
                                                 </span>
-                                            </span>
-
-                                            <span
-                                                v-if="
-                                                    !service.assignees?.length
-                                                "
-                                                class="italic text-[11px] text-slate-400 dark:text-gray-500"
-                                            >
-                                                Not assigned yet
                                             </span>
                                         </div>
+
+                                        <p
+                                            v-else
+                                            class="text-[12px] font-medium text-amber-600 dark:text-amber-400"
+                                        >
+                                            Unassigned
+                                        </p>
                                     </div>
                                 </template>
 
                                 <div
                                     v-else
-                                    class="group absolute flex cursor-pointer flex-col justify-center gap-1 rounded-xl border-r border-t border-b border-slate-200/60 px-4 py-2.5 text-xs shadow-sm transition-all duration-150 hover:z-10 hover:-translate-y-0.5 hover:shadow-md dark:border-white/10"
+                                    class="absolute flex cursor-pointer flex-col justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2 shadow-sm transition hover:border-primary/50 hover:shadow-md dark:border-white/25 dark:bg-white/[0.04] dark:shadow-none dark:hover:border-white/50 dark:hover:shadow-none"
                                     :class="[
-                                        scheduleStatusTheme(schedule.status)
-                                            .card,
+                                        isCancelled(schedule) ? 'opacity-60' : '',
                                         highlightedScheduleId === schedule.schedule_id
                                             ? 'ring-2 ring-primary/60'
                                             : '',
@@ -441,62 +371,35 @@
                                     }"
                                     @click="$emit('view-details', schedule)"
                                 >
-                                    <div
-                                        class="flex items-center justify-between gap-2"
-                                    >
-                                        <span
-                                            class="truncate text-[13px] font-semibold text-slate-800 dark:text-white"
+                                    <div>
+                                        <p
+                                            v-if="schedule.scheduled_date"
+                                            class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                         >
-                                            {{
-                                                schedule.category ||
-                                                schedule.type ||
-                                                "Schedule"
-                                            }}
-                                        </span>
+                                            {{ formatDate(schedule.scheduled_date) }}
+                                        </p>
 
-                                        <span
-                                            class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium"
-                                            :class="
-                                                scheduleStatusTheme(
-                                                    schedule.status,
-                                                ).badge
-                                            "
-                                        >
-                                            {{
-                                                scheduleStatusLabel(
-                                                    schedule.status,
-                                                )
-                                            }}
-                                        </span>
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white">
+                                                {{ schedule.start_time }} – {{ schedule.end_time }}
+                                            </span>
+
+                                            <span
+                                                class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium"
+                                                :class="scheduleStatusTheme(schedule.status).accent"
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full"
+                                                    :class="scheduleStatusTheme(schedule.status).dot"
+                                                />
+                                                {{ scheduleStatusLabel(schedule.status) }}
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div
-                                        class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-gray-400"
-                                    >
-                                        <svg
-                                            width="11"
-                                            height="11"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            class="shrink-0 opacity-60"
-                                        >
-                                            <circle cx="12" cy="12" r="9" />
-                                            <path d="M12 7v5l3 3" />
-                                        </svg>
-                                        <span class="truncate">
-                                            {{ schedule.start_time }} –
-                                            {{ schedule.end_time }}
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        v-if="schedule.patient?.full_name"
-                                        class="truncate text-[11px] font-medium text-slate-600 dark:text-gray-400"
-                                    >
-                                        {{ schedule.patient.full_name }}
-                                    </div>
+                                    <p class="truncate text-[12px] text-slate-600 dark:text-gray-300">
+                                        {{ schedule.patient?.full_name ?? schedule.category ?? "Schedule" }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -508,10 +411,20 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+    ref,
+    computed,
+    nextTick,
+    onMounted,
+    onBeforeUnmount,
+    watch,
+} from "vue";
 import type { ScheduleItem } from "~/types/schedule";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
+import { formatDate } from "~/utils/time";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { rem } from "~/utils/rem";
 
 const props = withDefaults(
@@ -537,6 +450,12 @@ defineEmits<{
     (e: "view-details", schedule: ScheduleItem): void;
     (e: "assign", schedule: ScheduleItem): void;
 }>();
+
+const { canAssign } = usePermissions();
+const canAssignSchedule = computed(() => canAssign(Modules.Schedules));
+
+const isCancelled = (schedule: ScheduleItem) =>
+    schedule.status?.toLowerCase() === "cancelled";
 
 const {
     labelWidth,

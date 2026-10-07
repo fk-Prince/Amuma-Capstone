@@ -233,6 +233,7 @@
 
                                 <ActionButton
                                     v-if="
+                                        canAssignSchedule &&
                                         !['cancelled', 'completed'].includes(
                                             log.status,
                                         )
@@ -1242,8 +1243,10 @@ async function requestScheduleReview(log: AuditRow) {
 
 const { canAssign } = usePermissions();
 
+const canAssignSchedule = computed(() => canAssign(Modules.Schedules));
+
 const canRequestDeduction = computed(
-    () => props.variant !== 3 && canAssign(Modules.Schedules),
+    () => props.variant !== 3 && canAssignSchedule.value,
 );
 
 const CLOSED_STATUSES = ["completed", "cancelled", "missed"];
@@ -1671,7 +1674,14 @@ function remainingMinutes(log: AuditRow) {
         return Math.max(log.total_hours * 60 - log.total_worked_minutes, 0);
     }
 
-    return Math.max(0, Math.round((end - Date.now()) / 60000));
+    const start = new Date(log.scheduled_at as string).getTime();
+    const now = Date.now() + secondsTick.value * 0;
+
+    if (now < start) {
+        return Math.max(0, Math.round((log.total_hours ?? 0) * 60));
+    }
+
+    return Math.max(0, Math.round((end - now) / 60000));
 }
 
 function formatMinutesLong(totalMinutes: number): string {

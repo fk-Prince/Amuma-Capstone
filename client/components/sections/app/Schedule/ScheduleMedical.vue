@@ -283,6 +283,7 @@
 
                                     <button
                                         v-if="
+                                            canAssignSchedule &&
                                             ![
                                                 'missed',
                                                 'completed',
@@ -473,12 +474,24 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+    ref,
+    computed,
+    nextTick,
+    onMounted,
+    onBeforeUnmount,
+    watch,
+} from "vue";
 
 import type { ScheduleItem } from "~/types/schedule";
 import { initials } from "~/utils/user";
 import { formatDate } from "~/utils/time";
 import { useSchedule } from "~/composables/useSchedule";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
+
+const { canAssign } = usePermissions();
+const canAssignSchedule = computed(() => canAssign(Modules.Schedules));
 
 const isCancelled = (schedule: ScheduleItem) =>
     schedule.status?.toLowerCase() === "cancelled";
