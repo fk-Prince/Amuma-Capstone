@@ -126,7 +126,7 @@ const header = computed(() => {
                 "fixed top-0 left-0 z-50 w-full h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`
+                    ? `bg-white border-b border-primary-200 ${DARK_CHROME_SOLID}`
                     : navTheme.value === "dark"
                       ? "bg-transparent border-b border-transparent"
                       : `bg-transparent border-b border-transparent ${DARK_CHROME_SOLID}`,
@@ -141,7 +141,7 @@ const header = computed(() => {
                 "rounded-[20px] h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
+                    ? `border border-primary-200 bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-transparent bg-transparent"
                       : `border border-transparent bg-transparent ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
@@ -155,10 +155,10 @@ const header = computed(() => {
                 "h-[90px] rounded-[20px]",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
+                    ? `border border-primary-200 bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-light/20 bg-light/10 "
-                      : `border border-muted-light bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
+                      : `border border-primary-200 bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -166,7 +166,7 @@ const header = computed(() => {
             return [
                 "relative w-full h-[70px] flex items-center",
                 "transition-all duration-300 ease-out",
-                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
+                `bg-white border-b border-primary-200 ${DARK_CHROME_SOLID}`,
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -189,7 +189,7 @@ const header = computed(() => {
         case 7:
             return [
                 "fixed top-0 left-0 z-50 w-full h-[90px] flex items-center",
-                `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`,
+                `bg-white border-b border-primary-200 ${DARK_CHROME_SOLID}`,
             ].join(" ");
     }
 });

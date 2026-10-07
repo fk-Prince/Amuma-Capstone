@@ -323,7 +323,7 @@ const selectPlan = (value: string) => {
 };
 
 const trustItems = [
-    { icon: ShieldCheck, label: "Trusted & Verified Caregivers" },
+    { icon: ShieldCheck, label: "Trusted & Verified Providers" },
     { icon: Home, label: "Home care services" },
     { icon: CalendarCheck, label: "Easy Online Booking" },
     { icon: Lock, label: "Safe & Secure Payments" },

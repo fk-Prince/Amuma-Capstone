@@ -496,9 +496,20 @@
                                                 </span>
 
                                                 <span
-                                                    v-if="shiftHours(assignee)"
+                                                    v-if="
+                                                        assignee.note ||
+                                                        shiftHours(assignee)
+                                                    "
                                                     class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
                                                 >
+                                                    {{ assignee.note }}
+                                                    <template
+                                                        v-if="
+                                                            assignee.note &&
+                                                            shiftHours(assignee)
+                                                        "
+                                                        >·</template
+                                                    >
                                                     {{ shiftHours(assignee) }}
                                                 </span>
 
@@ -520,14 +531,6 @@
                                                     />
                                                     Shift ended · still on duty
                                                 </span>
-
-                                                <p
-                                                    v-if="assignee.note"
-                                                    class="max-w-[14rem] truncate text-right text-[11px] text-muted dark:text-gray-400"
-                                                    :title="assignee.note"
-                                                >
-                                                    {{ assignee.note }}
-                                                </p>
                                             </div>
                                         </div>
 

@@ -119,7 +119,7 @@ const header = computed(() => {
                 "fixed top-0 left-0 z-50 w-full h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `bg-white border-b border-muted-light ${DARK_CHROME_SOLID}`
+                    ? `bg-white border-b border-primary-200 ${DARK_CHROME_SOLID}`
                     : navTheme.value === "dark"
                       ? "bg-transparent border-b border-transparent"
                       : `bg-transparent border-b border-transparent ${DARK_CHROME_SOLID}`,
@@ -134,7 +134,7 @@ const header = computed(() => {
                 "rounded-[20px] h-[90px] ",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
+                    ? `border border-primary-200 bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-transparent bg-transparent"
                       : `border border-transparent bg-transparent ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
@@ -149,10 +149,12 @@ const header = computed(() => {
                 "h-[90px] rounded-[20px]",
                 "transition-colors duration-200 ease-out",
                 scrolled.value
-                    ? `border border-muted-light bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
+                    ? `border border-primary-200 bg-light ${DARK_CHROME_SOLID} ${DARK_GLOW}`
                     : navTheme.value === "dark"
                       ? "border border-light/20 bg-light/10 "
-                      : `border border-muted-light bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
+                      : glass.value
+                        ? "border border-primary-200 bg-light shadow-sm dark:border-light/20 dark:bg-light/10 dark:shadow-none"
+                        : `border border-primary-200 bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
             ]
                 .filter(Boolean)
                 .join(" ");
@@ -195,13 +197,13 @@ const isActive = (to: string) => {
     if (to === "/") return route.path === "/";
     return route.path === to || route.path.startsWith(`${to}/`);
 };
-const isDark = useIsDark();
+const darkOnly = computed(() => !!route.meta.navThemeDarkOnly);
 
 const navTheme = computed(() =>
-    route.meta.navThemeDarkOnly && !isDark.value
-        ? "light"
-        : (route.meta.navTheme ?? "light"),
+    darkOnly.value ? "light" : (route.meta.navTheme ?? "light"),
 );
+
+const glass = computed(() => darkOnly.value && !scrolled.value);
 
 const isChromeSolid = computed(
     () => scrolled.value || navTheme.value !== "dark",
@@ -218,24 +220,40 @@ const navLinkClass = (to: string) => {
         return "text-light/90 hover:text-light";
     }
 
+    if (glass.value) {
+        return "text-secondary/80 hover:text-secondary dark:text-light/90 dark:hover:text-light";
+    }
+
     return isChromeSolid.value
         ? "text-secondary/80 hover:text-secondary dark:text-white/80 dark:hover:text-white"
         : "text-secondary/80 hover:text-secondary";
 };
 
-const indicatorColor = computed(() =>
-    navTheme.value === "dark" && !scrolled.value ? "bg-light" : "bg-primary",
-);
+const indicatorColor = computed(() => {
+    if (glass.value) return "bg-primary dark:bg-light";
+
+    return navTheme.value === "dark" && !scrolled.value
+        ? "bg-light"
+        : "bg-primary";
+});
 
 const signInLinkClass = computed(() => {
+    if (glass.value) {
+        return "text-primary hover:text-primary-600 dark:text-light/80 dark:hover:text-light";
+    }
+
     if (!isChromeSolid.value) return "text-light/80 hover:text-light";
 
     return "text-primary hover:text-primary-600 dark:text-primary-300 dark:hover:text-primary-200";
 });
 
-const dividerClass = computed(() =>
-    !isChromeSolid.value ? "bg-light/20" : "bg-muted-light dark:bg-white/15",
-);
+const dividerClass = computed(() => {
+    if (glass.value) return "bg-muted-light dark:bg-light/20";
+
+    return !isChromeSolid.value
+        ? "bg-light/20"
+        : "bg-muted-light dark:bg-white/15";
+});
 
 const menuIconClass = computed(() => {
     if (scrolled.value) {
@@ -244,6 +262,10 @@ const menuIconClass = computed(() => {
 
     if (navTheme.value === "dark") {
         return "text-light hover:bg-light/10";
+    }
+
+    if (glass.value) {
+        return "text-secondary hover:bg-primary-50 dark:text-light dark:hover:bg-light/10";
     }
 
     return isChromeSolid.value

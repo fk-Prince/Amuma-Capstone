@@ -333,7 +333,8 @@
                         <BaseButton
                             class="w-full py-3"
                             :loading="submitting"
-                            :disabled="submitting"
+                            :disabled="submitting || !canCreateAdmission"
+                            :title="canCreateAdmission ? '' : createBlockedReason"
                             @click="submit"
                         >
                             {{ submitting ? "Submitting..." : actionLabel }}
@@ -374,7 +375,8 @@
                 <BaseButton
                     class="w-full py-3"
                     :loading="submitting"
-                    :disabled="submitting"
+                    :disabled="submitting || !canCreateAdmission"
+                    :title="canCreateAdmission ? '' : createBlockedReason"
                     @click="submit"
                 >
                     {{ submitting ? "Submitting..." : actionLabel }}
@@ -451,6 +453,8 @@ import { admissionService } from "~/api/admission/AdmissionService";
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import { useToast } from "~/composables/useToast";
 import { useBranchPlan } from "~/composables/useBranchPlan";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 
@@ -462,6 +466,10 @@ definePageMeta({
 });
 
 const { success, error } = useToast();
+
+const { canCreate } = usePermissions();
+const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
+const createBlockedReason = "You need permission to create admissions to submit this.";
 const bookingStore = useBookingStore();
 const route = useRoute();
 const router = useRouter();
