@@ -25,7 +25,7 @@
                 class="grid animate-pulse items-start gap-5 xl:grid-cols-[minmax(0,1fr)_500px]"
             >
                 <div
-                    class="min-w-0 overflow-hidden rounded-[24px] border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-secondary"
+                    class="min-w-0 overflow-hidden rounded-lg border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-secondary"
                 >
                     <div
                         class="flex items-center justify-between gap-5 border-b border-[#EDF4F3] px-7 py-6 dark:border-white/10"
@@ -75,7 +75,7 @@
                                 class="h-3 w-32 rounded bg-[#EAF4F2] dark:bg-white/10"
                             />
                             <div
-                                class="divide-y divide-[#EDF4F3] rounded-xl border border-[#EDF4F3] px-5 dark:divide-white/10 dark:border-white/10"
+                                class="divide-y divide-[#EDF4F3] rounded-lg border border-[#EDF4F3] px-5 dark:divide-white/10 dark:border-white/10"
                             >
                                 <div
                                     v-for="row in 2"
@@ -95,7 +95,7 @@
                 </div>
 
                 <div
-                    class="space-y-4 rounded-3xl border border-[#DDECEC] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
+                    class="space-y-4 rounded-lg border border-[#DDECEC] bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
                 >
                     <div
                         class="h-5 w-40 rounded bg-[#EAF4F2] dark:bg-white/10"
@@ -115,7 +115,7 @@
 
             <div
                 v-else-if="errorLabel"
-                class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-10 text-center text-[#B3402F] dark:text-rose-300 dark:bg-secondary"
+                class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 p-10 text-center text-[#B3402F] dark:text-rose-300 dark:bg-secondary"
             >
                 {{ errorLabel }}
             </div>
@@ -856,7 +856,7 @@
 
                 <div
                     v-if="showPayment"
-                    class="xl:sticky xl:top-6 rounded-3xl border border-[#DDECEC] bg-white shadow-sm overflow-hidden dark:border-white/10 dark:bg-secondary"
+                    class="xl:sticky xl:top-6 rounded-lg border border-[#DDECEC] bg-white shadow-sm overflow-hidden dark:border-white/10 dark:bg-secondary"
                 >
                     <div class="p-6">
                         <PaymentForm
@@ -877,7 +877,7 @@
 
                 <div
                     v-else-if="hasBalanceDue"
-                    class="rounded-lg border border-[#DDECEC] shadow-sm bg-white p-6 text-center xl:sticky xl:top-6 dark:border-white/10 dark:bg-secondary"
+                    class="rounded-lg border border-[#DDECEC] shadow-sm bg-white p-6 text-center xl:sticky xl:top-6 dark:border-primary-500/20 dark:bg-secondary"
                 >
                     <p
                         class="text-sm font-semibold text-secondary dark:text-white"
@@ -888,7 +888,7 @@
                     <p
                         class="mt-1 text-xs leading-5 text-[#6B8A87] dark:text-gray-400"
                     >
-                        You don't have permission to record payments for this
+                        permission You don't have to record payments for this
                         branch.
                     </p>
                 </div>

@@ -121,7 +121,7 @@
                 </div>
 
                 <div
-                    class="space-y-4 rounded-2xl border border-primary-100 bg-white p-6 shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                    class="space-y-4 rounded-lg border border-primary-100 bg-white p-6 shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                 >
                     <div
                         class="h-4 w-28 rounded bg-primary-100/70 dark:bg-white/10"
@@ -140,7 +140,7 @@
 
             <div
                 v-else-if="errors"
-                class="rounded-2xl border border-danger/20 bg-white p-10 text-center shadow-sm dark:bg-secondary"
+                class="rounded-lg border border-danger/20 bg-white p-10 text-center shadow-sm dark:bg-secondary"
             >
                 <div
                     class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger/10 text-danger"
@@ -1297,7 +1297,7 @@
                         </section>
                     </main>
 
-                    <aside class="xl:sticky xl:top-6 print:hidden">
+                    <aside class="xl:sticky xl:top-6 print:hidden rounded-lg">
                         <div
                             v-if="showPayment && canRecordPayment"
                             class="overflow-hidden rounded-lg border border-primary-100 bg-white shadow-sm dark:border-primary-500/20 dark:bg-secondary"
@@ -1560,7 +1560,7 @@
 
                         <div
                             v-else
-                            class="rounded-2xl border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
+                            class="rounded-lg border border-primary-100 bg-white p-7 text-center shadow-sm dark:border-primary-500/20 dark:bg-secondary"
                         >
                             <div
                                 class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
