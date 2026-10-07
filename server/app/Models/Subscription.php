@@ -78,6 +78,9 @@ class Subscription extends Model
             'type' => $this->pendingPlan?->type,
             'branch_limit' => $this->pendingPlan?->branch_limit,
             'starts_at' => $this->pending_plan_starts_at?->toDateString(),
+            'ends_at' => $this->pending_plan_starts_at
+                ? self::termEnd($this->pending_plan_starts_at)->toDateString()
+                : null,
             'is_due' => $this->pendingPlanIsDue(),
         ];
     }

@@ -80,6 +80,13 @@ class AgencyRepository
                     : 0,
                 'maintenance_alerts' => $maintenanceAlerts,
                 'branch_capacity' => $this->branchCapacity($agencyId),
+                'pending_plan' => Subscription::query()
+                    ->with('pendingPlan')
+                    ->where('agency_id', $agencyId)
+                    ->whereNotNull('pending_plan_id')
+                    ->orderBy('pending_plan_starts_at')
+                    ->first()
+                    ?->pendingPlanSummary(),
             ],
         ]);
     }

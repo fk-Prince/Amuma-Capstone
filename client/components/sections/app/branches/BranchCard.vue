@@ -20,7 +20,7 @@
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
                         <p
-                            class="text-sm font-semibold text-slate-900 truncate dark:text-white"
+                            class="text-sm font-semibold text-slate-900 break-words dark:text-white"
                         >
                             {{ branch.name }}
                         </p>

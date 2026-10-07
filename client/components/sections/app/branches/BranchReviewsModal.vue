@@ -73,31 +73,46 @@
                                 class="py-4 border-b border-slate-100 last:border-b-0 dark:border-white/10"
                             >
                                 <div
-                                    class="flex items-center justify-between gap-2"
+                                    class="flex items-start justify-between gap-2"
                                 >
-                                    <p
-                                        class="text-sm font-medium text-secondary dark:text-white"
-                                    >
-                                        {{ fullName(review.user) }}
-                                    </p>
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <PatientAvatar
+                                            :src="review.user?.avatar"
+                                            :name="fullName(review.user)"
+                                            size-class="h-10 w-10 text-sm"
+                                        />
+
+                                        <div class="min-w-0">
+                                            <p
+                                                class="truncate text-sm font-medium text-secondary dark:text-white"
+                                            >
+                                                {{ fullName(review.user) }}
+                                            </p>
+
+                                            <p
+                                                class="mt-0.5 text-xs text-muted dark:text-gray-400"
+                                            >
+                                                {{ formatDate(review.created_at) }}
+                                            </p>
+                                        </div>
+                                    </div>
 
                                     <span
-                                        class="text-sm text-amber-500 dark:text-amber-300"
+                                        class="flex shrink-0 items-center gap-0.5"
+                                        :aria-label="`${review.rate} out of 5`"
                                     >
-                                        {{ "★".repeat(Math.round(review.rate))
-                                        }}{{
-                                            "☆".repeat(
-                                                5 - Math.round(review.rate),
-                                            )
-                                        }}
+                                        <Star
+                                            v-for="n in 5"
+                                            :key="n"
+                                            class="h-4 w-4"
+                                            :class="
+                                                n <= Math.round(review.rate)
+                                                    ? 'fill-amber-400 text-amber-400'
+                                                    : 'text-slate-300 dark:text-gray-600'
+                                            "
+                                        />
                                     </span>
                                 </div>
-
-                                <p
-                                    class="mt-0.5 text-xs text-muted dark:text-gray-400"
-                                >
-                                    {{ formatDate(review.created_at) }}
-                                </p>
 
                                 <p
                                     v-if="review.description"
@@ -178,6 +193,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { Star, X } from "lucide-vue-next";
+import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { reviewService } from "~/api/review/ReviewService";
 import { useToast } from "~/composables/useToast";
 import type { Review } from "~/types/review";

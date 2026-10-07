@@ -158,6 +158,22 @@
                 </div>
 
                 <div
+                    v-if="isTesting && pendingPlan && !loading"
+                    class="mt-3 flex items-start gap-2 text-xs text-sky-600 dark:text-sky-300"
+                >
+                    <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+                    <span>
+                        Pending: {{ pendingPlan.name }}
+                        <template v-if="pendingPlan.starts_at">
+                            · starts {{ formatDate(pendingPlan.starts_at) }}
+                        </template>
+                        <template v-if="pendingPlan.ends_at">
+                            · ends {{ formatDate(pendingPlan.ends_at) }}
+                        </template>
+                    </span>
+                </div>
+
+                <div
                     v-if="daysLeftLabel"
                     class="mt-3 flex items-center gap-2 text-xs text-fuchsia-600 dark:text-fuchsia-300"
                 >
@@ -233,6 +249,12 @@ interface BranchStatsData {
     expiring_soon_percent: number;
     maintenance_alerts: number;
     branch_capacity?: { is_testing?: boolean } | null;
+    pending_plan?: {
+        name?: string | null;
+        type?: string | null;
+        starts_at?: string | null;
+        ends_at?: string | null;
+    } | null;
 }
 
 import { computed } from "vue";
@@ -244,6 +266,8 @@ const props = defineProps<{
 }>();
 
 const MONTH_DAYS = 30;
+
+const pendingPlan = computed(() => props.statsData.pending_plan ?? null);
 
 const isTesting = computed(() =>
     Boolean(props.statsData.branch_capacity?.is_testing),
