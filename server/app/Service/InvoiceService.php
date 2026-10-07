@@ -640,7 +640,7 @@ class InvoiceService
         });
     }
 
-    private function closeAsVoid(Invoice $invoice, string $reason, ?int $userId): void
+    public function closeAsVoid(Invoice $invoice, string $reason, ?int $userId): void
     {
         InvoiceAdjustment::create([
             'invoice_id' => $invoice->invoice_id,

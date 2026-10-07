@@ -7,6 +7,7 @@ use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Invoice;
+use App\Models\InvoiceAdjustment;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Room;
@@ -362,6 +363,8 @@ class PatientAdmissionService
                 ]);
             }
 
+            $this->settleCancelledInvoices($admission, $payload['user']->user_id ?? null);
+
             AccommodationHelper::deactivate($admission);
         });
 
@@ -382,6 +385,75 @@ class PatientAdmissionService
             'message' => 'Admission cancelled successfully.',
             'data' => $this->patientService->showPatient($payload['uuid']),
         ]);
+    }
+
+
+    private function settleCancelledInvoices(PatientAdmission $admission, ?int $userId): void
+    {
+        $currentPeriodId = $this->periods->current($admission)?->admission_period_id;
+
+        $admission->invoiceAdmission()->with('invoice')->get()
+            ->each(function ($line) use ($currentPeriodId, $userId) {
+                $invoice = $this->lockOpenInvoice($line->invoice);
+
+                if (!$invoice) {
+                    return;
+                }
+
+                if ($line->admission_period_id === $currentPeriodId) {
+                    $this->keepReservationFee($invoice, $userId);
+                    return;
+                }
+
+                $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled.', $userId);
+            });
+
+        $admission->additionalCharges()->with('invoice')->get()
+            ->each(function ($charge) use ($userId) {
+                $invoice = $this->lockOpenInvoice($charge->invoice);
+
+                if ($invoice) {
+                    $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled. Charge voided.', $userId);
+                }
+            });
+    }
+
+    private function lockOpenInvoice(?Invoice $invoice): ?Invoice
+    {
+        if (!$invoice) {
+            return null;
+        }
+
+        $invoice = Invoice::where('invoice_id', $invoice->invoice_id)->lockForUpdate()->first();
+
+        if (!$invoice || in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    private function keepReservationFee(Invoice $invoice, ?int $userId): void
+    {
+        $collected = (float) $invoice->net_paid_amount;
+
+        if ($collected <= 0) {
+            $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled.', $userId);
+            return;
+        }
+
+        $uncollected = round((float) $invoice->adjusted_total - $collected, 2);
+
+        if ($uncollected > 0) {
+            InvoiceAdjustment::create([
+                'invoice_id' => $invoice->invoice_id,
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => -$uncollected,
+                'reason' => 'Reservation fee collected. Admission cancelled.',
+            ]);
+        }
+
+        $invoice->syncStatus();
     }
 
     /*
@@ -884,8 +956,8 @@ class PatientAdmissionService
         $user = $email === ''
             ? null
             : User::with('client.location')
-                ->whereRaw('LOWER(TRIM(email)) = ?', [Str::lower($email)])
-                ->first();
+            ->whereRaw('LOWER(TRIM(email)) = ?', [Str::lower($email)])
+            ->first();
 
         $client = $user?->client;
 

@@ -51,12 +51,12 @@ class AdditionalChargeService
         $patient = $this->resolvePatient($payload);
 
         $admission = PatientAdmission::where('patient_id', $patient->patient_id)
-            ->where('status', PatientAdmission::STATUS_ADMITTED)
+            ->whereIn('status', [PatientAdmission::STATUS_ADMITTED, PatientAdmission::STATUS_WAITING])
             ->latest('patient_admission_id')
             ->first();
 
         if (!$admission) {
-            throw new Exception('Charges can only be added while the patient is admitted.', 422);
+            throw new Exception('Charges can only be added while the patient is admitted or waiting to be admitted.', 422);
         }
 
         $lines = collect($payload['charges']);

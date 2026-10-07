@@ -1021,12 +1021,12 @@
             :patient-name="patient?.full_name"
             :branch-uuid="uuid"
             :current-admission-id="
-                isAdmitted
+                isAdmitted || isWaiting
                     ? (currentAdmission ?? latestAdmission)
                           ?.patient_admission_id
                     : null
             "
-            :can-add="isAdmitted && canUpdateAdmission"
+            :can-add="(isAdmitted || isWaiting) && canUpdateAdmission"
             :add-blocked-reason="
                 !canUpdateAdmission
                     ? 'You need permission to update admissions.'
