@@ -1250,7 +1250,7 @@ const unavailableWhileNotAdmitted = computed(() => {
 
 const { hasFacilityPlan } = useBranchPlan();
 const facilityLocked = computed(() => !hasFacilityPlan.value);
-const { hasModule, canCreate, canUpdate, canAssign } = usePermissions();
+const { hasModule, canCreate, canUpdate } = usePermissions();
 const canViewPatient = computed(() => hasModule(Modules.Patients));
 const addServiceModalOpen = ref(false);
 
@@ -1258,7 +1258,7 @@ const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
 const canAdmitAdmission = computed(() => canUpdate(Modules.Admissions));
 const canUpdateAdmission = computed(() => canUpdate(Modules.Admissions));
 const canDischargeAdmission = computed(() => canUpdate(Modules.Admissions));
-const canAddService = computed(() => canAssign(Modules.Schedules));
+const canAddService = computed(() => canUpdate(Modules.Admissions));
 const canViewCaregiver = computed(() =>
     hasModule(Modules.Admissions, Modules.Schedules),
 );

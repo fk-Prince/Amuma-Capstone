@@ -19,7 +19,6 @@ class ScheduleController extends Controller
     public function store(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->createSchedule($request->all());
     }
