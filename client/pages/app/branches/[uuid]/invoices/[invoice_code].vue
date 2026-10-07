@@ -125,7 +125,7 @@
                 class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_500px]"
             >
                 <div
-                    class="min-w-0 overflow-hidden rounded-[24px] border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-secondary"
+                    class="min-w-0 overflow-hidden rounded-lg border border-[#DDECEC] bg-white shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-secondary"
                 >
                     <div
                         class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 px-7 py-6 border-b border-[#EDF4F3] bg-gradient-to-b from-[#0E7C7B]/[0.04] to-transparent dark:border-white/10"
@@ -486,7 +486,9 @@
                                             <td
                                                 class="whitespace-nowrap px-4 py-3 align-top text-right font-semibold text-[#16302E] dark:text-white"
                                             >
-                                                ₱{{ formatMoney(charge.amount) }}
+                                                ₱{{
+                                                    formatMoney(charge.amount)
+                                                }}
                                             </td>
                                         </tr>
                                     </tbody>
