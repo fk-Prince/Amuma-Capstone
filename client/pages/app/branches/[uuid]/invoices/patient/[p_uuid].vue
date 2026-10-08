@@ -72,6 +72,7 @@
                         :total="statementTotal"
                         :issued-by="issuedBy"
                         :issued-on="statementIssuedOn"
+                        :transactions="statementReport?.transactions ?? []"
                     />
                 </div>
             </Teleport>
@@ -1931,6 +1932,8 @@
 import { computed, h, nextTick, onMounted, ref, watch } from "vue";
 import { FileSpreadsheet, Loader2, Printer, Receipt, Undo2 } from "lucide-vue-next";
 import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
+import { transactionsSheet } from "~/utils/patientReportExcel";
+import { patientService } from "~/api/patient/PatientService";
 import BalanceStatementSheet from "~/components/sections/app/Billing/BalanceStatementSheet.vue";
 import { useBranchStore } from "~/stores/branch";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -2031,6 +2034,21 @@ const canPrintStatement = computed(
 
 const preparingStatement = ref(false);
 const statementMode = ref<"print" | "excel">("print");
+const statementReport = ref<any>(null);
+
+async function loadStatementTransactions() {
+    try {
+        const res = await patientService.report(route.params.p_uuid as string, {
+            branch_uuid: route.params.uuid,
+            sections: "transactions",
+        });
+
+        statementReport.value = res.data ?? res;
+    } catch {
+        statementReport.value = null;
+        error("Transactions couldn't be loaded, so they are left out.");
+    }
+}
 
 onMounted(() => {
     watch(
@@ -2066,6 +2084,8 @@ async function exportStatement() {
 
         const patientName = summary.value?.patient?.full_name ?? "Patient";
 
+        await loadStatementTransactions();
+
         await downloadExcel(
             `${fileSafe(patientName)}_statement_${new Date().toISOString().slice(0, 10)}`,
             [
@@ -2087,6 +2107,14 @@ async function exportStatement() {
                         ["Total", moneyCell(statementTotal.value)],
                     ],
                 },
+                ...(statementReport.value
+                    ? [
+                          {
+                              name: "Transactions",
+                              rows: transactionsSheet(statementReport.value),
+                          },
+                      ]
+                    : []),
             ],
         );
     } catch (err: any) {
@@ -2109,6 +2137,8 @@ async function printStatement() {
             error("There are no balances to print for this patient.");
             return;
         }
+
+        await loadStatementTransactions();
 
         statementIssuedOn.value = stringToDateTime(new Date());
         document.body.classList.add("printing-statement");

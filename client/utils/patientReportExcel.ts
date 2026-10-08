@@ -321,7 +321,7 @@ function billingSheets(report: any): { billing: ExcelCell[][]; payments: ExcelCe
     };
 }
 
-function transactionsSheet(report: any): ExcelCell[][] {
+export function transactionsSheet(report: any): ExcelCell[][] {
     const transactions: any[] = report.transactions ?? [];
 
     return [

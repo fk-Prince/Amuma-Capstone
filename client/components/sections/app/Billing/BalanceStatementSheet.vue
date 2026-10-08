@@ -84,11 +84,89 @@
                 </p>
             </div>
         </footer>
+
+        <section
+            v-if="transactions?.length"
+            class="mt-8 break-before-page pt-2 [page-break-before:always]"
+        >
+            <header class="flex items-start justify-between gap-6 border-b border-gray-300 pb-4">
+                <div class="min-w-0">
+                    <p class="text-lg font-bold">{{ branch.name }}</p>
+                    <p class="mt-0.5 text-xs text-gray-600">{{ patientName }}</p>
+                </div>
+
+                <div class="shrink-0 text-right">
+                    <p class="text-base font-bold uppercase tracking-wide">
+                        Transaction History
+                    </p>
+                    <p class="mt-1 text-xs text-gray-600">{{ issuedOn }}</p>
+                </div>
+            </header>
+
+            <table class="mt-5 w-full border-collapse text-xs">
+                <thead>
+                    <tr class="border-b-2 border-gray-800">
+                        <th class="py-2 pr-2 text-left font-semibold">Date</th>
+                        <th class="py-2 pr-2 text-left font-semibold">Transaction</th>
+                        <th class="py-2 pr-2 text-left font-semibold">Type</th>
+                        <th class="py-2 pr-2 text-left font-semibold">Status</th>
+                        <th class="py-2 pr-2 text-left font-semibold">Method</th>
+                        <th class="py-2 text-right font-semibold">Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr
+                        v-for="(row, index) in transactions"
+                        :key="index"
+                        class="break-inside-avoid border-b border-gray-200"
+                    >
+                        <td class="py-2 pr-2 align-top">{{ formatDateTime(row.created_at) }}</td>
+                        <td class="py-2 pr-2 align-top font-semibold">
+                            {{ row.transaction_code ?? "—" }}
+                        </td>
+                        <td class="py-2 pr-2 align-top">
+                            {{ label(row.type) }} · {{ label(row.direction) }}
+                        </td>
+                        <td class="py-2 pr-2 align-top">{{ label(row.status) }}</td>
+                        <td class="py-2 pr-2 align-top">{{ label(row.method) }}</td>
+                        <td class="whitespace-nowrap py-2 text-right align-top tabular-nums">
+                            ₱{{ formatAmount(row.amount) }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
     </div>
 </template>
 
 <script setup lang="ts">
 import { formatAmount } from "~/utils/currency";
+
+function label(value?: string | null) {
+    if (!value) return "—";
+
+    return value
+        .replace(/[_-]+/g, " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatDateTime(value?: string | null) {
+    if (!value) return "—";
+
+    const parsed = new Date(value);
+
+    return Number.isNaN(parsed.getTime())
+        ? "—"
+        : parsed.toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+          });
+}
 
 defineProps<{
     branch: {
@@ -102,5 +180,14 @@ defineProps<{
     total: number;
     issuedBy: string;
     issuedOn: string;
+    transactions?: {
+        transaction_code?: string | null;
+        type?: string | null;
+        direction?: string | null;
+        status?: string | null;
+        method?: string | null;
+        amount: number;
+        created_at?: string | null;
+    }[];
 }>();
 </script>
