@@ -501,7 +501,7 @@ watch(() => route.path, closeMenu);
                 </div>
 
                 <div
-                    class="flex flex-1 items-center justify-end gap-4 xl:gap-6"
+                    class="flex flex-1 items-center justify-end gap-1 sm:gap-4 xl:gap-6"
                 >
                     <template v-if="!hydrated || !user">
                         <NuxtLink

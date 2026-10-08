@@ -4,7 +4,7 @@
             <template #trigger="{ toggle, open }">
                 <button
                     @click="toggle"
-                    class="flex flex-row-reverse items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none md:flex-row"
+                    class="flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-colors focus:outline-none sm:gap-2.5 sm:px-2"
                     :class="[
                         scrolled || navTheme !== 'dark'
                             ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
@@ -12,11 +12,11 @@
                         themeAware ? 'dark:hover:bg-white/10' : '',
                     ]"
                 >
-                    <div class="relative">
+                    <div class="relative h-9 w-9 shrink-0">
                         <img
                             :src="user.avatar"
                             referrerpolicy="no-referrer"
-                            class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                            class="h-9 w-9 rounded-full border-2 border-white shadow-sm object-cover"
                             :class="themeAware ? 'dark:border-white/20' : ''"
                             alt="Profile"
                         />
@@ -64,7 +64,7 @@
 
                     <ChevronIcon
                         :isOpen="open"
-                        class="block w-4 h-4 transition-colors duration-300"
+                        class="block h-4 w-4 shrink-0 transition-colors duration-300"
                         :class="[
                             scrolled || navTheme !== 'dark'
                                 ? 'text-muted dark:text-gray-400'
