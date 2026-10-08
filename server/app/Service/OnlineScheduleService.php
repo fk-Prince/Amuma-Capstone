@@ -139,13 +139,14 @@ class OnlineScheduleService
 
     private function verifyClockOutToken(array $payload)
     {
-        $data = Cache::pull($this->qrCacheKey('out', $payload['token']));
+        $cacheKey = $this->qrCacheKey('out', $payload['token']);
+        $data = Cache::get($cacheKey);
 
         if (!$data) {
             throw new Exception('This QR code is invalid or has expired.', 410);
         }
 
-        return DB::transaction(function () use ($payload, $data) {
+        return DB::transaction(function () use ($payload, $data, $cacheKey) {
             $session = OnlineSchedule::where('online_schedule_id', $data['online_schedule_id'])
                 ->lockForUpdate()
                 ->first();
@@ -154,7 +155,9 @@ class OnlineScheduleService
                 throw new Exception('This QR code is invalid or has expired.', 410);
             }
 
-            $this->guardScanningEmployee($session->assigned, $payload['employee_id']);
+            $this->guardClockOutEmployee($session->assigned, $payload['employee_id']);
+
+            Cache::forget($cacheKey);
 
             $session->update([
                 'out_timestamp' => now(),
@@ -209,10 +212,17 @@ class OnlineScheduleService
             ->first();
     }
 
-    private function guardScanningEmployee(?ScheduleAssigned $assigned, mixed $employeeId): void
+    private function guardClockOutEmployee(?ScheduleAssigned $assigned, mixed $employeeId): void
     {
-        if (!$assigned || (int) $assigned->employee_id !== (int) $employeeId) {
+        if (!$assigned) {
             throw new Exception('You are not assigned to this schedule.', 402);
+        }
+
+        if ((int) $assigned->employee_id !== (int) $employeeId) {
+            throw new Exception(
+                'Only the caregiver who clocked in can clock out of this visit.',
+                409
+            );
         }
     }
 

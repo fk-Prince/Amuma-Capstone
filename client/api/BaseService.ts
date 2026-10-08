@@ -208,9 +208,14 @@ export class BaseService {
                     : 'Internal Server Error';
 
             if (status === 403 && import.meta.client) {
+                const isGenericDenial =
+                    !serverMessage || /insufficient permissions/i.test(serverMessage);
+
                 useToast().error(
-                    "Insufficient permissions",
-                    "You don't have access to do this.",
+                    isGenericDenial ? "Insufficient permissions" : serverMessage,
+                    isGenericDenial
+                        ? "You don't have access to do this."
+                        : undefined,
                 );
             }
 
