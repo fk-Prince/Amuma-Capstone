@@ -168,14 +168,18 @@ class PatientRepository
                 $search = $payload['search'];
 
                 $query->where(function ($q) use ($search) {
-                    $q->where('patient_code', 'ilike', "{$search}%")
-                        ->orWhere('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('middle_name', 'like', "%{$search}%")
+                    $q->where('patient_code', 'ilike', "%{$search}%")
+                        ->orWhere('first_name', 'ilike', "%{$search}%")
+                        ->orWhere('last_name', 'ilike', "%{$search}%")
+                        ->orWhere('middle_name', 'ilike', "%{$search}%")
                         ->orWhereRaw(
                             "LOWER(CONCAT(first_name, ' ', last_name)) LIKE ?",
                             ['%' . strtolower($search) . '%']
                         );
+
+                    if (Str::isUuid($search)) {
+                        $q->orWhere('uuid', '=', $search);
+                    }
                 });
             })
 

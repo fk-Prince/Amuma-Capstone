@@ -8,7 +8,7 @@
                 :is-search="true"
                 :modelValue="search"
                 @update:modelValue="$emit('update:search', $event)"
-                placeholder="Search by patient name"
+                placeholder="Search by patient name or ID"
                 input-class="px-4 py-2.5 rounded-lg w-full"
             />
         </div>

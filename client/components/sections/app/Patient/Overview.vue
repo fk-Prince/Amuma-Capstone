@@ -21,6 +21,17 @@ defineProps<{
     isEdit?: boolean;
 }>();
 
+function admissionLabel(status?: string) {
+    const value = (status ?? "").toLowerCase();
+
+    if (value === "admitted") return "Currently Admitted";
+    if (value === "waiting") return "Waiting to Admit";
+    if (value === "cancelled") return "Cancelled Admission";
+    if (value === "discharged") return "Discharged";
+
+    return status ?? "";
+}
+
 function statusClasses(status?: string) {
     const value = (status ?? "").toLowerCase();
 
@@ -80,15 +91,7 @@ function statusClasses(status?: string) {
                                 v-if="patient.latest_admission"
                                 class="rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary dark:bg-primary-500/10"
                             >
-                                {{
-                                    patient.latest_admission?.status.toLowerCase() ===
-                                    "admitted"
-                                        ? "Currently Admitted"
-                                        : patient.latest_admission?.status.toLowerCase() ===
-                                            "waiting"
-                                          ? "Waiting to Admit"
-                                          : patient.latest_admission?.status
-                                }}
+                                {{ admissionLabel(patient.latest_admission?.status) }}
                             </span>
                         </div>
                     </div>
