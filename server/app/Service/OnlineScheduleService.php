@@ -212,7 +212,7 @@ class OnlineScheduleService
     private function guardScanningEmployee(?ScheduleAssigned $assigned, mixed $employeeId): void
     {
         if (!$assigned || (int) $assigned->employee_id !== (int) $employeeId) {
-            throw new Exception('You are not assigned to this schedule.', 403);
+            throw new Exception('You are not assigned to this schedule.', 402);
         }
     }
 
