@@ -646,13 +646,13 @@ const diagnosisItems = computed(() => {
               ]
             : []),
         ...diagnoses.value
-            .filter(
-                (item) => !item.charged && !takenDiagnosisIds.value.has(item.uuid),
-            )
+            .filter((item) => !takenDiagnosisIds.value.has(item.uuid))
             .map((item) => ({
-                label: item.diagnosis_date
-                    ? `${item.diagnosis} — ${formatDate(item.diagnosis_date)}`
-                    : item.diagnosis,
+                label: `${
+                    item.diagnosis_date
+                        ? `${item.diagnosis} — ${formatDate(item.diagnosis_date)}`
+                        : item.diagnosis
+                }${item.paid ? " (paid)" : item.charged ? " (charged)" : ""}`,
                 value: item.uuid,
             })),
         { label: "+ Add new diagnosis", value: NEW_DIAGNOSIS },

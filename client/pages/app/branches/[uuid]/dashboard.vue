@@ -78,7 +78,7 @@
                             <div
                                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-700 text-white shadow-md shadow-primary-500/30"
                             >
-                                <Users class="h-3.5 w-3.5" />
+                                <Users class="h-4 w-4" />
                             </div>
                         </div>
 
@@ -214,7 +214,7 @@
                             <div
                                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/30"
                             >
-                                <ClipboardList class="h-3.5 w-3.5" />
+                                <ClipboardList class="h-4 w-4" />
                             </div>
                         </div>
 

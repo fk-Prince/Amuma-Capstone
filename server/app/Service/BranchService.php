@@ -242,6 +242,10 @@ class BranchService
             ->count();
 
         $newAdmissionsThisMonth = $admissionsForBranch()
+            ->whereIn('status', [
+                PatientAdmission::STATUS_ADMITTED,
+                PatientAdmission::STATUS_DISCHARGED,
+            ])
             ->whereBetween('admitted_at', [
                 $now->copy()->startOfMonth(),
                 $now->copy()->endOfMonth(),

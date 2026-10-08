@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import BrandLogo from "~/components/ui/BrandLogo.vue";
 import SignupForm from "~/components/forms/SignupForm.vue";
+import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import signinLogo from "~/assets/logo/signinLogo2.png";
 import { ShieldCheck, Sparkles, UsersRound } from "lucide-vue-next";
 
@@ -53,11 +55,16 @@ const features = [
             ></div>
         </div>
 
-        <div
-            class="relative z-10 flex min-h-dvh w-full items-start pt-24 pb-8 sm:pt-[130px] lg:pb-6"
-        >
+        <div class="relative z-10 flex min-h-dvh w-full flex-col">
+            <div class="flex w-full items-center justify-between px-6 py-6 sm:px-10">
+                <NuxtLink to="/" aria-label="AMUMA home">
+                    <BrandLogo icon-class="h-10 w-10" />
+                </NuxtLink>
+                <ThemeToggle class="text-white" />
+            </div>
+
             <div
-                class="mx-auto my-auto flex w-[94%] max-w-[1400px] items-center justify-center px-6 lg:justify-between lg:gap-10"
+                class="mx-auto flex w-[94%] max-w-[1400px] flex-1 items-center justify-center px-6 pb-8 lg:justify-between lg:gap-10 lg:pb-6"
             >
                 <div
                     class="hidden w-full max-w-[520px] flex-col gap-8 text-white lg:flex"

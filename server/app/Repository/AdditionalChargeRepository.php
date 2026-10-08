@@ -43,12 +43,10 @@ class AdditionalChargeRepository
             ->get();
     }
 
-    public function findUnbilledDiagnosis(string $uuid, int $patientId): ?PatientDiagnosis
+    public function findPatientDiagnosis(string $uuid, int $patientId): ?PatientDiagnosis
     {
         return PatientDiagnosis::where('uuid', $uuid)
             ->where('patient_id', $patientId)
-            ->whereDoesntHave('additionalCharge', fn($query) => $query
-                ->whereHas('invoice', fn($invoice) => $invoice->where('status', '!=', Invoice::STATUS_VOID)))
             ->first();
     }
 

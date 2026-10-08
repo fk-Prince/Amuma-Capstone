@@ -15,7 +15,6 @@ return new class extends Migration
                 ->constrained('additional_charges', 'additional_charge_id')
                 ->cascadeOnDelete();
             $table->foreignId('patient_diagnosis_id')
-                ->unique()
                 ->constrained('patient_diagnosis', 'patient_diagnosis_id')
                 ->cascadeOnDelete();
             $table->foreignId('diagnosis_case_id')

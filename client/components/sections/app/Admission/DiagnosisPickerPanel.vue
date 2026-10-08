@@ -40,7 +40,7 @@
                             ? 'bg-primary/5'
                             : 'hover:bg-slate-50 dark:hover:bg-white/5'
                     "
-                    :disabled="item.charged || takenIds.has(item.uuid)"
+                    :disabled="takenIds.has(item.uuid)"
                     @click="$emit('select', item.uuid)"
                 >
                     <div class="min-w-0">

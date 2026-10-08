@@ -132,7 +132,9 @@ class AdditionalChargeService
             'data' => $this->additionalChargeRepository
                 ->listDiagnoses($patient->patient_id)
                 ->map(function ($diagnosis) {
-                    $charge = $diagnosis->additionalCharge->first();
+                    $charge = $diagnosis->additionalCharge
+                        ->sortByDesc('additional_charge_id')
+                        ->first();
 
                     return [
                         'uuid' => $diagnosis->uuid,
@@ -202,11 +204,11 @@ class AdditionalChargeService
 
             $diagnosis = $diagnoses->has($uuid)
                 ? null
-                : $this->additionalChargeRepository->findUnbilledDiagnosis($uuid, $patientId);
+                : $this->additionalChargeRepository->findPatientDiagnosis($uuid, $patientId);
 
             if (!$diagnosis) {
                 throw ValidationException::withMessages([
-                    "charges.$index.patient_diagnosis_uuid" => 'Choose a diagnosis that has not been charged yet.',
+                    "charges.$index.patient_diagnosis_uuid" => 'Choose a valid diagnosis.',
                 ]);
             }
 
