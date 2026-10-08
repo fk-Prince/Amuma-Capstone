@@ -96,8 +96,8 @@ class PatientActivityService
 
         $activity->update([
             'title' => $data['title'] ?? $activity->title,
-            'subtitle' => $data['subtitle'] ?? $activity->subtitle,
-            'description' => $data['description'] ?? $activity->description,
+            'subtitle' => array_key_exists('subtitle', $data) ? $data['subtitle'] : $activity->subtitle,
+            'description' => array_key_exists('description', $data) ? $data['description'] : $activity->description,
             'type' => $data['type'] ?? $activity->type,
             'occurred_at' => $data['occurredAt'] ?? $activity->occurred_at,
         ]);
