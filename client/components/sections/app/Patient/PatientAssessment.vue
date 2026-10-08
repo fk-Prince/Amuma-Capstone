@@ -409,7 +409,7 @@ const activeAssessment = computed(
                             @click="emit('print-diagnosis', entry.uuid)"
                         >
                             <Printer class="h-3.5 w-3.5" />
-                            Print
+                            Export PDF
                         </ActionButton>
 
                         <ActionButton

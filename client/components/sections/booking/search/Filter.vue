@@ -8,7 +8,7 @@
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"
-                        placeholder="Search by name or service..."
+                        placeholder="Search provider name"
                         input-class="px-4 py-2.5 rounded-full"
                     />
                 </div>

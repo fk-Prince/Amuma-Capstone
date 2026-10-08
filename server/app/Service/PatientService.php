@@ -27,6 +27,7 @@ class PatientService
         'assessment',
         'admission',
         'billing',
+        'transactions',
         'schedule',
         'medication',
         'vitals',
@@ -601,6 +602,7 @@ class PatientService
                 'assessment' => $this->reportAssessment($patient),
                 'admission' => $this->reportAdmissions($patient),
                 'billing' => $this->reportBilling($patient),
+                'transactions' => $this->reportTransactions($patient),
                 'schedule' => $this->reportSchedules($patient),
                 'medication' => $this->reportMedications($patient),
                 'vitals' => $this->reportVitals($patient),
@@ -701,6 +703,26 @@ class PatientService
                 ])->values()->all(),
             ])->values()->all(),
         ];
+    }
+
+    private function reportTransactions(mixed $patient)
+    {
+        return $this->patientRepository
+            ->transactionsForReport($patient->patient_id)
+            ->map(fn($transaction) => [
+                'transaction_code' => $transaction->transaction_code,
+                'reference_id' => $transaction->transaction_reference_id,
+                'type' => $transaction->type,
+                'direction' => $transaction->direction,
+                'status' => $transaction->status,
+                'method' => $transaction->method,
+                'party_name' => $transaction->party_name,
+                'description' => $transaction->description,
+                'amount' => (float) $transaction->amount,
+                'created_at' => $transaction->created_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
     }
 
     private function reportSchedules(mixed $patient)

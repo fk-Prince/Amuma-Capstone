@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-surface dark:via-surface dark:to-surface"
+        class="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-surface dark:via-surface dark:to-surface"
     >
         <div class="relative w-full z-30 shrink-0 overflow-hidden bg-[#EEF3FB] pt-[130px] pb-6 dark:bg-secondary">
             <img
@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        <div class="relative flex-1 min-h-0 overflow-hidden bg-[#EEF3FB] dark:bg-secondary">
+        <div class="relative h-[calc(100vh-4rem)] min-h-[700px] shrink-0 overflow-hidden bg-[#EEF3FB] dark:bg-secondary">
             <img
                 :src="finderBg"
                 class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-10 dark:opacity-20"

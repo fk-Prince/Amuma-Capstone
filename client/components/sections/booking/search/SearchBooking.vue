@@ -12,21 +12,43 @@
                 <div
                     v-for="n in 3"
                     :key="n"
-                    class="flex animate-pulse flex-col overflow-hidden rounded-2xl border border-muted-light bg-white md:flex-row dark:border-white/5 dark:bg-secondary"
+                    class="flex animate-pulse flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm md:flex-row dark:border-white/5 dark:bg-secondary dark:shadow-none"
                 >
-                    <div class="h-48 w-full shrink-0 bg-muted-light dark:bg-white/10 md:w-64"></div>
-
-                    <div class="flex flex-1 flex-col p-6">
-                        <div class="h-5 w-1/2 rounded bg-muted-light dark:bg-white/10"></div>
-                        <div class="mt-2.5 h-4 w-3/4 rounded bg-muted-light dark:bg-white/10"></div>
-                        <div class="mt-2.5 h-4 w-14 rounded bg-muted-light dark:bg-white/10"></div>
-                        <div class="mt-4 h-3 w-full rounded bg-muted-light dark:bg-white/10"></div>
-                        <div class="mt-2 h-3 w-4/5 rounded bg-muted-light dark:bg-white/10"></div>
-                        <div class="mt-4 flex gap-1.5">
-                            <div class="h-6 w-24 rounded-full bg-muted-light dark:bg-white/10"></div>
-                            <div class="h-6 w-20 rounded-full bg-muted-light dark:bg-white/10"></div>
+                    <div class="flex w-full shrink-0 flex-col md:w-64">
+                        <div class="relative h-48 w-full flex-1 bg-muted-light dark:bg-white/10">
+                            <div class="absolute left-3 top-3 h-6 w-20 rounded-full bg-white/60 dark:bg-white/10"></div>
+                            <div class="absolute right-3 top-3 h-7 w-7 rounded-full bg-white/60 dark:bg-white/10"></div>
                         </div>
-                        <div class="mt-4 h-5 w-32 rounded bg-muted-light dark:bg-white/10"></div>
+                    </div>
+
+                    <div class="flex min-w-0 flex-1 flex-col p-6">
+                        <div class="h-5 w-2/3 rounded bg-muted-light dark:bg-white/10"></div>
+
+                        <div class="mt-2.5 flex items-start gap-1.5">
+                            <div class="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="flex-1 space-y-1.5">
+                                <div class="h-3.5 w-full rounded bg-muted-light dark:bg-white/10"></div>
+                                <div class="h-3.5 w-1/2 rounded bg-muted-light dark:bg-white/10"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-2.5 flex items-center gap-1.5">
+                            <div class="h-3.5 w-3.5 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-3.5 w-10 rounded bg-muted-light dark:bg-white/10"></div>
+                        </div>
+
+                        <div class="mt-4 h-3.5 w-full rounded bg-muted-light dark:bg-white/10"></div>
+                        <div class="mt-2 h-3.5 w-4/5 rounded bg-muted-light dark:bg-white/10"></div>
+
+                        <div class="mt-4 flex gap-1.5">
+                            <div class="h-6 w-28 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-6 w-28 rounded-full bg-muted-light dark:bg-white/10"></div>
+                        </div>
+
+                        <div class="mt-4 flex items-center gap-2">
+                            <div class="h-4 w-4 rounded-full bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-6 w-28 rounded-md bg-muted-light dark:bg-white/10"></div>
+                        </div>
                     </div>
 
                     <div
@@ -34,7 +56,7 @@
                     >
                         <div class="space-y-2 md:flex md:flex-col md:items-end">
                             <div class="h-3 w-16 rounded bg-muted-light dark:bg-white/10"></div>
-                            <div class="h-6 w-28 rounded bg-muted-light dark:bg-white/10"></div>
+                            <div class="h-7 w-28 rounded bg-muted-light dark:bg-white/10"></div>
                         </div>
                         <div class="h-10 w-32 rounded-lg bg-muted-light dark:bg-white/10 md:w-full"></div>
                     </div>

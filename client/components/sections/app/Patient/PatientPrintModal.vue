@@ -14,7 +14,7 @@
                     >
                         <div>
                             <h2 class="text-base font-semibold text-slate-800 dark:text-white">
-                                Print patient records
+                                Export patient records
                             </h2>
                             <p class="mt-0.5 text-sm text-slate-500 dark:text-gray-400">
                                 Choose what to include. Each section prints on
@@ -100,16 +100,38 @@
 
                         <button
                             type="button"
+                            class="inline-flex items-center gap-2 rounded-lg border border-primary bg-white px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-secondary"
+                            :disabled="loading || !selected.length"
+                            @click="exportExcel"
+                        >
+                            <LoaderCircle
+                                v-if="loading && mode === 'excel'"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            <FileSpreadsheet v-else class="h-4 w-4" />
+                            {{
+                                loading && mode === "excel"
+                                    ? "Preparing..."
+                                    : "Export Excel"
+                            }}
+                        </button>
+
+                        <button
+                            type="button"
                             class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="loading || !selected.length"
                             @click="generate"
                         >
                             <LoaderCircle
-                                v-if="loading"
+                                v-if="loading && mode === 'print'"
                                 class="h-4 w-4 animate-spin"
                             />
                             <Printer v-else class="h-4 w-4" />
-                            {{ loading ? "Preparing..." : "Print" }}
+                            {{
+                                loading && mode === "print"
+                                    ? "Preparing..."
+                                    : "Export PDF"
+                            }}
                         </button>
                     </div>
                 </div>
@@ -124,8 +146,10 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue";
-import { X, Printer, LoaderCircle } from "lucide-vue-next";
+import { X, Printer, LoaderCircle, FileSpreadsheet } from "lucide-vue-next";
 import { patientService } from "~/api/patient/PatientService";
+import { downloadExcel, fileSafe } from "~/utils/excel";
+import { patientReportSheets } from "~/utils/patientReportExcel";
 import PatientPrintReport from "./PatientPrintReport.vue";
 
 const props = defineProps<{
@@ -163,6 +187,11 @@ const sections = [
         description: "Invoices, payments, and outstanding balance.",
     },
     {
+        key: "transactions",
+        label: "Transactions",
+        description: "Payments, deposits, refunds, and withdrawals on the account.",
+    },
+    {
         key: "schedule",
         label: "Schedules",
         description: "Booked services with dates and durations.",
@@ -186,6 +215,7 @@ const sections = [
 
 const selected = ref<string[]>(["profile", "medication", "vitals"]);
 const loading = ref(false);
+const mode = ref<"print" | "excel">("print");
 const errorMessage = ref("");
 const report = ref<any>(null);
 
@@ -230,9 +260,47 @@ function generate() {
     return run(selected.value);
 }
 
+async function exportExcel() {
+    if (!selected.value.length || loading.value) return;
+
+    mode.value = "excel";
+    loading.value = true;
+    errorMessage.value = "";
+
+    try {
+        const res = await patientService.report(props.patientUuid, {
+            branch_uuid: props.branchUuid,
+            sections: selected.value.join(","),
+        });
+
+        const data = res.data ?? res;
+        const sheets = patientReportSheets(data);
+
+        if (!sheets.length) {
+            errorMessage.value = "There is nothing to export for those sections.";
+            return;
+        }
+
+        await downloadExcel(
+            `${fileSafe(data.patient?.full_name ?? "patient")}_records_${new Date().toISOString().slice(0, 10)}`,
+            sheets,
+        );
+
+        emit("close");
+    } catch (err: any) {
+        errorMessage.value =
+            err?.response?.data?.message ??
+            err?.message ??
+            "Unable to export the records. Please try again.";
+    } finally {
+        loading.value = false;
+    }
+}
+
 async function run(sectionKeys: string[], extra: Record<string, unknown> = {}) {
     if (!sectionKeys.length) return;
 
+    mode.value = "print";
     loading.value = true;
     errorMessage.value = "";
 

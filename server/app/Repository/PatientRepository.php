@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Patient;
+use App\Models\Transaction;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -257,5 +258,13 @@ class PatientRepository
         ])
             ->where('uuid', $uuid)
             ->first();
+    }
+
+    public function transactionsForReport(int $patientId)
+    {
+        return Transaction::where('patient_id', $patientId)
+            ->orderByDesc('created_at')
+            ->orderByDesc('transaction_id')
+            ->get();
     }
 }

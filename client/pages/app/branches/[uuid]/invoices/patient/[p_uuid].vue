@@ -21,20 +21,43 @@
                     Back
                 </button>
 
-                <button
-                    v-if="canPrintStatement"
-                    type="button"
-                    :disabled="preparingStatement"
-                    class="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-white px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary-50 disabled:cursor-wait disabled:opacity-70 dark:border-primary-500/30 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
-                    @click="printStatement"
-                >
-                    <Loader2
-                        v-if="preparingStatement"
-                        class="h-4 w-4 animate-spin"
-                    />
-                    <Printer v-else class="h-4 w-4" />
-                    {{ preparingStatement ? "Preparing…" : "Print statement" }}
-                </button>
+                <div v-if="canPrintStatement" class="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        :disabled="preparingStatement"
+                        class="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-white px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary-50 disabled:cursor-wait disabled:opacity-70 dark:border-primary-500/30 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
+                        @click="exportStatement"
+                    >
+                        <Loader2
+                            v-if="preparingStatement && statementMode === 'excel'"
+                            class="h-4 w-4 animate-spin"
+                        />
+                        <FileSpreadsheet v-else class="h-4 w-4" />
+                        {{
+                            preparingStatement && statementMode === "excel"
+                                ? "Preparing…"
+                                : "Export Excel"
+                        }}
+                    </button>
+
+                    <button
+                        type="button"
+                        :disabled="preparingStatement"
+                        class="inline-flex items-center gap-2 rounded-lg border border-primary-200 bg-white px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary-50 disabled:cursor-wait disabled:opacity-70 dark:border-primary-500/30 dark:bg-secondary dark:text-primary-300 dark:hover:bg-primary-500/10"
+                        @click="printStatement"
+                    >
+                        <Loader2
+                            v-if="preparingStatement && statementMode === 'print'"
+                            class="h-4 w-4 animate-spin"
+                        />
+                        <Printer v-else class="h-4 w-4" />
+                        {{
+                            preparingStatement && statementMode === "print"
+                                ? "Preparing…"
+                                : "Export PDF"
+                        }}
+                    </button>
+                </div>
             </div>
 
             <Teleport to="body">
@@ -1906,7 +1929,8 @@
 
 <script lang="ts" setup>
 import { computed, h, nextTick, onMounted, ref, watch } from "vue";
-import { Loader2, Printer, Receipt, Undo2 } from "lucide-vue-next";
+import { FileSpreadsheet, Loader2, Printer, Receipt, Undo2 } from "lucide-vue-next";
+import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
 import BalanceStatementSheet from "~/components/sections/app/Billing/BalanceStatementSheet.vue";
 import { useBranchStore } from "~/stores/branch";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -2006,6 +2030,7 @@ const canPrintStatement = computed(
 );
 
 const preparingStatement = ref(false);
+const statementMode = ref<"print" | "excel">("print");
 
 onMounted(() => {
     watch(
@@ -2025,9 +2050,56 @@ async function ensureInvoicesLoaded() {
     }
 }
 
+async function exportStatement() {
+    if (preparingStatement.value) return;
+
+    statementMode.value = "excel";
+    preparingStatement.value = true;
+
+    try {
+        await ensureInvoicesLoaded();
+
+        if (!statementLines.value.length) {
+            error("There are no balances to export for this patient.");
+            return;
+        }
+
+        const patientName = summary.value?.patient?.full_name ?? "Patient";
+
+        await downloadExcel(
+            `${fileSafe(patientName)}_statement_${new Date().toISOString().slice(0, 10)}`,
+            [
+                {
+                    name: "Statement",
+                    rows: [
+                        [statementBranch.value.name],
+                        ["Statement of Account"],
+                        ["Patient", patientName],
+                        ["Issued on", stringToDateTime(new Date())],
+                        ["Issued by", issuedBy.value],
+                        [],
+                        ["Description", "Balance due"],
+                        ...statementLines.value.map((line) => [
+                            line.description,
+                            moneyCell(line.amount),
+                        ]),
+                        [],
+                        ["Total", moneyCell(statementTotal.value)],
+                    ],
+                },
+            ],
+        );
+    } catch (err: any) {
+        error(err?.message ?? "Unable to export the statement.");
+    } finally {
+        preparingStatement.value = false;
+    }
+}
+
 async function printStatement() {
     if (preparingStatement.value) return;
 
+    statementMode.value = "print";
     preparingStatement.value = true;
 
     try {

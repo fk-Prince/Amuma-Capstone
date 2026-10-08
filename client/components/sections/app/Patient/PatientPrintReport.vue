@@ -383,6 +383,58 @@
                 </template>
             </template>
 
+            <template v-else-if="section === 'transactions'">
+                <p v-if="!report.transactions?.length" class="print-empty">
+                    No transactions on record.
+                </p>
+
+                <table v-else class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Transaction</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Method</th>
+                            <th>Details</th>
+                            <th class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(row, i) in report.transactions" :key="i">
+                            <td>{{ formatDateTime(row.created_at) }}</td>
+                            <td class="print-strong">
+                                {{ row.transaction_code ?? "—" }}
+                                <span
+                                    v-if="row.reference_id"
+                                    class="print-subtle print-block"
+                                >
+                                    {{ row.reference_id }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ statusLabel(row.type) }}
+                                <span class="print-subtle print-block">
+                                    {{ statusLabel(row.direction) }}
+                                </span>
+                            </td>
+                            <td>{{ statusLabel(row.status) }}</td>
+                            <td>{{ statusLabel(row.method) }}</td>
+                            <td>
+                                {{
+                                    [row.party_name, row.description]
+                                        .filter(Boolean)
+                                        .join(" · ") || "—"
+                                }}
+                            </td>
+                            <td class="right print-strong">
+                                {{ money(row.amount) }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </template>
+
             <template v-else-if="section === 'schedule'">
                 <p v-if="!report.schedule?.length" class="print-empty">
                     No schedules on record.
@@ -575,6 +627,7 @@
 import { computed, type Component } from "vue";
 import {
     Activity,
+    ArrowLeftRight,
     BedDouble,
     CalendarClock,
     ClipboardCheck,
@@ -613,6 +666,7 @@ const SECTION_ORDER = [
     "assessment",
     "admission",
     "billing",
+    "transactions",
     "schedule",
     "medication",
     "vitals",
@@ -625,6 +679,7 @@ const SECTION_LABELS: Record<string, string> = {
     assessment: "Assessment",
     admission: "Admission Records",
     billing: "Billing Statement",
+    transactions: "Transaction History",
     schedule: "Service Schedules",
     medication: "Medication Records",
     vitals: "Vital Signs",
@@ -637,6 +692,7 @@ const SECTION_ICONS: Record<string, Component> = {
     assessment: ClipboardCheck,
     admission: BedDouble,
     billing: Receipt,
+    transactions: ArrowLeftRight,
     schedule: CalendarClock,
     medication: Pill,
     vitals: HeartPulse,

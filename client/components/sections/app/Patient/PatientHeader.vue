@@ -62,7 +62,7 @@ const actions = [
     { label: "Share", icon: Share2, permission: "export" },
     { label: "Send", icon: Send, permission: "export" },
     {
-        label: "Print",
+        label: "Export",
         icon: Printer,
         permission: "export",
         onClick: () => emit("print"),
