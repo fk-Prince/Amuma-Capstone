@@ -27,7 +27,7 @@ const tabs = [
 <template>
     <div class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="relative flex-1 min-w-[220px] max-w-sm">
+            <div class="relative w-full flex-1 sm:min-w-[220px] sm:max-w-sm">
                 <svg
                     viewBox="0 0 24 24"
                     class="w-4 h-4 text-slate-400 dark:text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"
@@ -47,19 +47,19 @@ const tabs = [
                 />
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex w-full items-center gap-3 sm:w-auto">
                 <Combobox
                     :items="tabs"
                     :model-value="activeTab"
                     @update:model-value="emit('update:activeTab', $event)"
                     placeholder="Select employee type"
-                    class="w-56"
+                    class="min-w-0 flex-1 sm:w-56 sm:flex-none"
                 />
 
                 <button
                     v-if="canCreate(Modules.EmployeeManagement)"
                     @click="emit('addEmployee')"
-                    class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 sm:px-5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"

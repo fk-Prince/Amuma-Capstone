@@ -14,7 +14,7 @@
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
                         >
-                            <div class="flex gap-3 items-center">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
                                 <BookingFilter
                                     :search="searchQuery"
                                     :type="typeFilter"
@@ -32,7 +32,7 @@
                                     @update:dateTo="dateTo = $event"
                                 />
 
-                                <div class="ml-auto flex shrink-0 items-center gap-2">
+                                <div class="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto">
                                     <button
                                         type="button"
                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
@@ -52,7 +52,7 @@
                                     <button
                                         v-if="showHomecareBooking"
                                         type="button"
-                                        class="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+                                        class="inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 sm:flex-none"
                                         @click="homecareBookingOpen = true"
                                     >
                                         <Plus class="h-4 w-4" />
