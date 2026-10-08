@@ -701,7 +701,12 @@ import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
-import { formatDate, formatTime, formatDuration } from "~/utils/time";
+import {
+    formatDate,
+    formatTime,
+    formatDuration,
+    bookingTimeWindow,
+} from "~/utils/time";
 import { Check, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
@@ -749,8 +754,8 @@ function applyPreset(entry: AssignmentEntry, preset: string) {
             entry.start_time === hours.start &&
             entry.end_time === hours.end
         ) {
-            entry.start_time = "";
-            entry.end_time = "";
+            entry.start_time = bookingWindow.value.start;
+            entry.end_time = bookingWindow.value.end;
         }
 
         return;
@@ -817,6 +822,15 @@ function assignmentTypeLabel(employee: Employee): string {
 const assignments = ref<AssignmentEntry[]>([]);
 
 const patientName = computed(() => props.schedule?.patient_full_name ?? "");
+
+const bookingWindow = computed(() =>
+    bookingTimeWindow(
+        props.schedule?.scheduled_at,
+        props.schedule?.total_hours
+            ? Math.round(Number(props.schedule.total_hours) * 60)
+            : null,
+    ),
+);
 
 const availableOnly = ref(false);
 
@@ -923,8 +937,8 @@ function restoreSavedAssignments(schedule: AuditRow) {
         return {
             employee_id: id,
             note,
-            start_time: match?.start_time ?? "",
-            end_time: match?.end_time ?? "",
+            start_time: match?.start_time || bookingWindow.value.start,
+            end_time: match?.end_time || bookingWindow.value.end,
         };
     });
 }
@@ -983,7 +997,12 @@ function toggleEmployee(employeeId: string) {
     if (index === -1) {
         assignments.value = [
             ...assignments.value,
-            { employee_id: employeeId, note: "", start_time: "", end_time: "" },
+            {
+                employee_id: employeeId,
+                note: "",
+                start_time: bookingWindow.value.start,
+                end_time: bookingWindow.value.end,
+            },
         ];
         return;
     }

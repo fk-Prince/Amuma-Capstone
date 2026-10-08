@@ -977,6 +977,95 @@
                                                     "
                                                     class="border-t border-primary/15 px-3 py-3"
                                                 >
+                                                    <div
+                                                        v-if="
+                                                            service.type ===
+                                                            'ADL'
+                                                        "
+                                                        class="mb-3 grid grid-cols-2 gap-3"
+                                                    >
+                                                        <label
+                                                            class="flex flex-col gap-1"
+                                                        >
+                                                            <span
+                                                                class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                Start time
+                                                            </span>
+                                                            <input
+                                                                :value="
+                                                                    entryFor(
+                                                                        service.schedule_services_id,
+                                                                        Number(
+                                                                            employee.employee_id,
+                                                                        ),
+                                                                    )?.start_time
+                                                                "
+                                                                type="time"
+                                                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                                                @input="
+                                                                    setTimes(
+                                                                        service.schedule_services_id,
+                                                                        Number(
+                                                                            employee.employee_id,
+                                                                        ),
+                                                                        {
+                                                                            start_time:
+                                                                                (
+                                                                                    $event.target as HTMLInputElement
+                                                                                ).value,
+                                                                        },
+                                                                    )
+                                                                "
+                                                            />
+                                                        </label>
+
+                                                        <label
+                                                            class="flex flex-col gap-1"
+                                                        >
+                                                            <span
+                                                                class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                                            >
+                                                                End time
+                                                            </span>
+                                                            <input
+                                                                :value="
+                                                                    entryFor(
+                                                                        service.schedule_services_id,
+                                                                        Number(
+                                                                            employee.employee_id,
+                                                                        ),
+                                                                    )?.end_time
+                                                                "
+                                                                type="time"
+                                                                :min="
+                                                                    entryFor(
+                                                                        service.schedule_services_id,
+                                                                        Number(
+                                                                            employee.employee_id,
+                                                                        ),
+                                                                    )?.start_time ||
+                                                                    undefined
+                                                                "
+                                                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                                                @input="
+                                                                    setTimes(
+                                                                        service.schedule_services_id,
+                                                                        Number(
+                                                                            employee.employee_id,
+                                                                        ),
+                                                                        {
+                                                                            end_time:
+                                                                                (
+                                                                                    $event.target as HTMLInputElement
+                                                                                ).value,
+                                                                        },
+                                                                    )
+                                                                "
+                                                            />
+                                                        </label>
+                                                    </div>
+
                                                     <input
                                                         :value="
                                                             noteFor(
@@ -1282,6 +1371,7 @@ import {
     generateAvailableAmPmTimes,
     formatDuration,
     formatDate,
+    bookingTimeWindow,
 } from "~/utils/time";
 
 function formatServiceDuration(minutes?: number | null): string {
@@ -1352,6 +1442,8 @@ const emit = defineEmits<{
             assignments: {
                 employee_id: number | null;
                 schedule_services_id: number;
+                start_time?: string | null;
+                end_time?: string | null;
             }[];
         },
     ): void;
@@ -1423,11 +1515,28 @@ const form = ref({
 interface AssignmentEntry {
     employee_id: number;
     note: string;
+    start_time: string;
+    end_time: string;
 }
 
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
 
 const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
+
+const PRESET_HOURS: Record<string, { start: string; end: string }> = {
+    "AM Shift": { start: "00:00", end: "12:00" },
+    "PM Shift": { start: "12:00", end: "23:59" },
+    "Full Shift": { start: "00:00", end: "23:59" },
+};
+
+function bookingWindowFor(service: ScheduleServiceItem) {
+    if (service.type !== "ADL") return { start: "", end: "" };
+
+    return bookingTimeWindow(
+        props.schedule?.scheduled_at,
+        service.duration_minutes,
+    );
+}
 const NOTE_PRESETS_OTHER = [
     "Primary",
     "Assistant",
@@ -1597,6 +1706,12 @@ function entriesFor(serviceId: number): AssignmentEntry[] {
     return assignments.value[serviceId] ?? [];
 }
 
+function entryFor(serviceId: number, employeeId: number) {
+    return entriesFor(serviceId).find(
+        (entry) => Number(entry.employee_id) === Number(employeeId),
+    );
+}
+
 function isAssigned(serviceId: number, employeeId: string | number) {
     return entriesFor(serviceId).some(
         (entry) => Number(entry.employee_id) === Number(employeeId),
@@ -1706,6 +1821,13 @@ function toggleAssignee(serviceId: number, employeeId: number) {
         return;
     }
 
+    const service = props.schedule?.services?.find(
+        (s) => s.schedule_services_id === serviceId,
+    );
+    const window = service
+        ? bookingWindowFor(service)
+        : { start: "", end: "" };
+
     assignments.value = {
         ...assignments.value,
         [serviceId]:
@@ -1717,9 +1839,26 @@ function toggleAssignee(serviceId: number, employeeId: number) {
                           note: isNoteLocked(serviceId, employeeId)
                               ? "Assistant"
                               : "",
+                          start_time: window.start,
+                          end_time: window.end,
                       },
                   ]
                 : current.filter((_, i) => i !== index),
+    };
+}
+
+function setTimes(
+    serviceId: number,
+    employeeId: number,
+    times: { start_time?: string; end_time?: string },
+) {
+    assignments.value = {
+        ...assignments.value,
+        [serviceId]: entriesFor(serviceId).map((entry) =>
+            Number(entry.employee_id) === Number(employeeId)
+                ? { ...entry, ...times }
+                : entry,
+        ),
     };
 }
 
@@ -1736,8 +1875,41 @@ function setNote(serviceId: number, employeeId: number, note: string) {
 
 function togglePreset(serviceId: number, employeeId: number, preset: string) {
     const current = noteFor(serviceId, employeeId);
+    const service = props.schedule?.services?.find(
+        (s) => s.schedule_services_id === serviceId,
+    );
+    const hours = service?.type === "ADL" ? PRESET_HOURS[preset] : undefined;
 
-    setNote(serviceId, employeeId, current === preset ? "" : preset);
+    if (current === preset) {
+        setNote(serviceId, employeeId, "");
+
+        const entry = entryFor(serviceId, employeeId);
+
+        if (
+            hours &&
+            service &&
+            entry?.start_time === hours.start &&
+            entry?.end_time === hours.end
+        ) {
+            const window = bookingWindowFor(service);
+
+            setTimes(serviceId, employeeId, {
+                start_time: window.start,
+                end_time: window.end,
+            });
+        }
+
+        return;
+    }
+
+    setNote(serviceId, employeeId, preset);
+
+    if (hours) {
+        setTimes(serviceId, employeeId, {
+            start_time: hours.start,
+            end_time: hours.end,
+        });
+    }
 }
 
 const availableTimeSlots = computed(() =>
@@ -1777,10 +1949,16 @@ function hydrateAssignments(schedule?: ScheduleItem | null) {
             service.assignees ?? []
         )
             .filter((assignee) => assignee.is_active !== false)
-            .map((assignee) => ({
-                employee_id: Number(assignee.employee_id),
-                note: assignee.note ?? "",
-            }));
+            .map((assignee) => {
+                const window = bookingWindowFor(service);
+
+                return {
+                    employee_id: Number(assignee.employee_id),
+                    note: assignee.note ?? "",
+                    start_time: assignee.start_time || window.start,
+                    end_time: assignee.end_time || window.end,
+                };
+            });
     });
 }
 
@@ -1851,6 +2029,27 @@ function validate() {
         errors.value.preferred_time = "Please select a preferred time.";
     }
 
+    for (const service of props.schedule?.services ?? []) {
+        if (service.type !== "ADL") continue;
+
+        for (const entry of entriesFor(service.schedule_services_id)) {
+            const employee = employeeById(entry.employee_id);
+            const name = employee ? employeeLabel(employee) : "the caregiver";
+
+            if (!!entry.start_time !== !!entry.end_time) {
+                toastError(`Pick both a start and an end time for ${name}.`);
+                return false;
+            }
+
+            if (entry.start_time && entry.end_time <= entry.start_time) {
+                toastError(
+                    `The end time for ${name} must be later than the start time.`,
+                );
+                return false;
+            }
+        }
+    }
+
     return !Object.keys(errors.value).length;
 }
 
@@ -1873,6 +2072,8 @@ function buildSchedulePayload() {
                 schedule_services_id: number;
                 employee_id: number | null;
                 note: string | null;
+                start_time?: string | null;
+                end_time?: string | null;
             }[] => {
                 const entries = entriesFor(service.schedule_services_id);
 
@@ -1895,6 +2096,12 @@ function buildSchedulePayload() {
                     )
                         ? "Assistant"
                         : entry.note.trim() || null,
+                    ...(service.type === "ADL"
+                        ? {
+                              start_time: entry.start_time || null,
+                              end_time: entry.end_time || null,
+                          }
+                        : {}),
                 }));
             },
         ),

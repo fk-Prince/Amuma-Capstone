@@ -365,6 +365,33 @@ export function formatTime(time?: string | number | null): string {
     );
 }
 
+// RESULT 2026-10-07T07:30Z + 4h -> { start: "15:30", end: "19:30" }. A booking
+// that runs past midnight ends at 23:59 since shift times are same-day.
+export function bookingTimeWindow(
+    startAt?: string | null,
+    durationMinutes?: number | null,
+): { start: string; end: string } {
+    if (!startAt) return { start: "", end: "" };
+
+    const start = new Date(startAt);
+
+    if (Number.isNaN(start.getTime())) return { start: "", end: "" };
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const toHHMM = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    if (!durationMinutes || durationMinutes <= 0) {
+        return { start: toHHMM(start), end: "" };
+    }
+
+    const end = new Date(start.getTime() + durationMinutes * 60000);
+
+    return {
+        start: toHHMM(start),
+        end: end.toDateString() === start.toDateString() ? toHHMM(end) : "23:59",
+    };
+}
+
 // RESULT 00:00 AM ── 11:59 PM
 export function formatHourLabel(hour24: number): string {
     const minutes = hour24 === 23 ? 59 : 0;

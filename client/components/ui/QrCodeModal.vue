@@ -366,7 +366,6 @@ onUnmounted(() => {
                         </span>
                     </div>
 
-                    <!-- Demo clock-in/out, hidden for now
                     <div
                         v-if="pickingCaregiver && qrValue"
                         class="mt-4 rounded-xl border border-slate-200"
@@ -408,10 +407,8 @@ onUnmounted(() => {
                             </li>
                         </ul>
                     </div>
-                    -->
 
                     <div class="mt-6 flex justify-end gap-2">
-                        <!-- Demo clock-in/out, hidden for now
                         <ActionButton
                             v-if="qrValue && !pickingCaregiver"
                             variant="outline"
@@ -420,7 +417,6 @@ onUnmounted(() => {
                         >
                             Demo
                         </ActionButton>
-                        -->
 
                         <ActionButton
                             v-if="pickingCaregiver"
