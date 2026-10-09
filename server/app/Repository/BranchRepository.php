@@ -86,8 +86,14 @@ class BranchRepository
             ->keyBy('branch_id');
     }
 
-    public function getFilterBranches(int $perPage, array $filters, string $sort = 'recommended',   ?float $lat = null,  ?float $long = null)
-    {
+    public function getFilterBranches(
+        int $perPage,
+        array $filters,
+        string $sort = 'recommended',
+        ?float $lat = null,
+        ?float $long = null,
+        ?array $viewerOrigin = null
+    ) {
         $query = Branch::with([
             'subscriptions.plans',
             'reviews',
@@ -138,33 +144,48 @@ class BranchRepository
 
         $this->prioritizeStartingPrice($query);
 
-        if ($sort === 'nearest' && $lat !== null && $long !== null) {
-            $distanceExpr = 'CASE
-                WHEN locations.latitude IS NULL OR locations.longitude IS NULL THEN NULL
-                ELSE (6371 * acos(LEAST(1, GREATEST(-1,
-                    cos(radians(?)) * cos(radians(locations.latitude)) * cos(radians(locations.longitude) - radians(?))
-                    + sin(radians(?)) * sin(radians(locations.latitude))
-                ))))
-            END';
+        $nearestOrigin = $lat !== null && $long !== null ? [$lat, $long] : $viewerOrigin;
 
-            $query
-                ->leftJoin('locations', 'locations.location_id', '=', 'branches.location_id')
-                ->selectRaw("{$distanceExpr} as distance_km", [$lat, $long, $lat])
-                ->orderByRaw(
-                    "({$distanceExpr}) IS NULL, ({$distanceExpr}) ASC",
-                    [$lat, $long, $lat, $lat, $long, $lat]
-                );
-        } elseif ($sort === 'highest_rated') {
+        $origin = match ($sort) {
+            'nearest' => $nearestOrigin,
+            'recommended' => $viewerOrigin,
+            default => null,
+        };
+
+        if ($origin !== null) {
+            $this->orderByDistance($query, ...$origin);
+        }
+
+        if ($sort === 'highest_rated') {
             $query->orderByDesc('reviews_avg_rate');
         } elseif ($sort === 'most_popular') {
             $query->orderByDesc('bookings_count');
-        } else {
+        } elseif ($sort !== 'nearest' || $origin === null) {
             $query->orderByDesc('reviews_avg_rate')
                 ->orderByDesc('bookings_count')
                 ->orderByDesc('reviews_count');
         }
 
         return $query->paginate($perPage);
+    }
+
+    private function orderByDistance($query, float $lat, float $long): void
+    {
+        $distanceExpr = 'CASE
+            WHEN locations.latitude IS NULL OR locations.longitude IS NULL THEN NULL
+            ELSE (6371 * acos(LEAST(1, GREATEST(-1,
+                cos(radians(?)) * cos(radians(locations.latitude)) * cos(radians(locations.longitude) - radians(?))
+                + sin(radians(?)) * sin(radians(locations.latitude))
+            ))))
+        END';
+
+        $query
+            ->leftJoin('locations', 'locations.location_id', '=', 'branches.location_id')
+            ->selectRaw("{$distanceExpr} as distance_km", [$lat, $long, $lat])
+            ->orderByRaw(
+                "({$distanceExpr}) IS NULL, ({$distanceExpr}) ASC",
+                [$lat, $long, $lat, $lat, $long, $lat]
+            );
     }
 
     private function prioritizeStartingPrice($query): void

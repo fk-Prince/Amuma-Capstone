@@ -17,10 +17,12 @@ use App\Http\Resources\BranchResource;
 use App\Models\BranchImage;
 use App\Models\User;
 use App\Service\External\SupabaseService;
+use App\Service\Geo\IpGeolocationService;
 use App\Service\Geo\NominatimService;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BranchService
@@ -29,6 +31,7 @@ class BranchService
     public function __construct(
         private BranchRepository $branchRepository,
         private NominatimService $nomaticeService,
+        private IpGeolocationService $ipGeolocation,
         private RoomRepository $roomRepository,
         private BookingRepository $bookingRepository,
         private BranchContractRepository $branchContractRepository,
@@ -72,9 +75,30 @@ class BranchService
             $payload['sort'] ?? 'recommended',
             !empty($payload['lat']) ? (float) $payload['lat'] : null,
             !empty($payload['long']) ? (float) $payload['long'] : null,
+            $this->viewerOrigin($payload['ip'] ?? null),
         );
 
         return BranchResource::collection($branch);
+    }
+
+    private function viewerOrigin(?string $ip): ?array
+    {
+        if (!$ip) {
+            return null;
+        }
+
+        try {
+            $position = Cache::remember(
+                "ip-locate:{$ip}",
+                now()->addHour(),
+                fn() => $this->ipGeolocation->locate($ip)
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return null;
+        }
+
+        return $position ? [(float) $position['lat'], (float) $position['lng']] : null;
     }
 
 

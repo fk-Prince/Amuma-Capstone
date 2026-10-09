@@ -30,7 +30,9 @@ class BranchController extends Controller
 
     public function retrieveFilteredBranch(Request $request)
     {
-        return $this->branchService->getBranchesByFilter($request->all());
+        return $this->branchService->getBranchesByFilter(
+            array_merge($request->all(), ['ip' => $request->ip()])
+        );
     }
 
     public function validate(BranchRequest $request)
