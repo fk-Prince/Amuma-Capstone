@@ -496,6 +496,16 @@
                             />
                         </div>
 
+                        <p
+                            v-if="
+                                form.status === 'cancelled' && !isScheduleLocked
+                            "
+                            class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                        >
+                            Cancelling voids this schedule's invoice. Anything
+                            already paid goes back to the patient's credit.
+                        </p>
+
                         <div>
                             <BaseInput
                                 :model-value="form.note"
@@ -1336,7 +1346,7 @@
         :open="cancelConfirmOpen"
         title="Cancel this schedule?"
         message="This action cannot be undone."
-        description="This schedule will be cancelled and the cashier will be notified to void its invoice."
+        description="This schedule will be cancelled and its invoice will be voided. Anything already paid goes back to the patient's credit."
         confirm-label="Cancel Schedule"
         cancel-label="Keep Schedule"
         variant="danger"

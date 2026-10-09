@@ -15,7 +15,8 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Invoice;
-use App\Models\Module;
+use App\Models\InvoiceAdjustment;
+use App\Models\InvoiceServices;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\NotificationRepository;
@@ -35,7 +36,8 @@ class ScheduleService
         private InvoiceRepository $invoiceRepository,
         private NotificationRepository $notificationRepository,
         private NotificationService $notificationService,
-        private OnlineScheduleRepository $onlineScheduleRepository
+        private OnlineScheduleRepository $onlineScheduleRepository,
+        private InvoiceService $invoiceService
     ) {}
 
     public function createSchedule(array $payload)
@@ -437,9 +439,9 @@ class ScheduleService
                 $this->onlineScheduleRepository->forceClockOutSchedule($schedule->schedule_id);
             }
 
-            if ($newStatus === Schedule::STATUS_CANCELLED) {
-                $this->cancelledSchedule($user, $schedule);
-            }
+            $voidedInvoices = $newStatus === Schedule::STATUS_CANCELLED
+                ? $this->cancelledSchedule($user, $schedule)
+                : [];
 
             $this->notifyAssignedStaff(
                 $user,
@@ -460,7 +462,10 @@ class ScheduleService
             });
 
             return response()->json([
-                'message' => 'Schedule updated successfully.',
+                'message' => $voidedInvoices
+                    ? 'Schedule cancelled. Invoice ' . implode(', ', $voidedInvoices) . ' was voided.'
+                    : 'Schedule updated successfully.',
+                'voided_invoices' => $voidedInvoices,
                 'data' => new ScheduleResource($schedule->fresh([
                     'scheduleServices.assigned.onlineSchedules',
                     'scheduleServices.service',
@@ -546,9 +551,9 @@ class ScheduleService
         );
     }
 
-    private function cancelledSchedule(User $user, Schedule $schedule)
+    private function cancelledSchedule(User $user, Schedule $schedule): array
     {
-        $schedule->load('scheduleServices.invoiceServices.invoice.allocations.refundAllocations');
+        $schedule->load('scheduleServices.invoiceServices');
 
         $invoiceIds = $schedule->scheduleServices
             ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices)
@@ -557,75 +562,61 @@ class ScheduleService
             ->unique();
 
         if ($invoiceIds->isEmpty()) {
-            return;
+            return [];
         }
 
-        $invoices = Invoice::with('allocations.refundAllocations.refund.transaction')
+        $invoices = Invoice::with('invoiceServices.scheduleService.schedule')
             ->whereIn('invoice_id', $invoiceIds)
-            ->where('status', '!=', Invoice::STATUS_VOID)
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
             ->get();
+
+        $voided = [];
 
         foreach ($invoices as $invoice) {
-            // $this->refundService->createRefundFull(
-            //     $invoice,
-            //     'Invoice refunded due to schedule cancellation.'
-            // );
+            $billsOtherSchedules = $invoice->invoiceServices
+                ->map(fn($line) => $line->scheduleService?->schedule)
+                ->filter()
+                ->contains(fn(Schedule $other) => $other->schedule_id !== $schedule->schedule_id
+                    && $other->status !== Schedule::STATUS_CANCELLED);
 
-            // $invoice->update([
-            //     'status' => Invoice::STATUS_VOID,
-            // ]);
-            $this->notifyCashier($user, $schedule, $invoice);
-        }
-    }
-
-    private function notifyCashier(User $user, Schedule $schedule, Invoice $invoice): void
-    {
-        $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)
-            ->first();
-
-        if (!$module) {
-            return;
-        }
-
-        $recipients = Employee::query()
-            ->with('users')
-            ->whereHas(
-                'employeeBranch',
-                fn($q) => $q->where('branch_id', $invoice->branch_id)
-            )
-            ->whereHas(
-                'permissions',
-                fn($q) => $q->where('module_id', $module->module_id)
-                    ->where('branch_id', $invoice->branch_id)
-                    ->where('can_read', true)
-            )
-            ->get();
-
-        $message = "Schedule {$schedule->schedule_code} was cancelled."
-            . " Please void invoice {$invoice->invoice_code}.";
-
-        foreach ($recipients as $employee) {
-            if (!$employee->user_id || !$employee->users?->uuid) {
+            if ($billsOtherSchedules) {
                 continue;
             }
 
-            $this->notificationRepository->create([
-                'branch_id' => $invoice->branch_id,
-                'to_user_id' => $employee->user_id,
-                'from_user_id' => $user->user_id,
-                'message_type' => 'Billing',
-                'message' => $message,
-            ]);
+            $paid = round((float) $invoice->net_paid_amount, 2);
 
-            event(new NotificationEvent(
-                $employee->users->uuid,
-                (string) $invoice->branch?->uuid,
-                $message,
-                (string) $invoice->invoice_id,
-                'Billing',
-                null,
-            ));
+            $this->invoiceService->closeAsVoid(
+                $invoice,
+                "Schedule {$schedule->schedule_code} was cancelled.",
+                $user->user_id
+            );
+
+            $this->notifyClientOfVoid($user, $schedule, $invoice, $paid);
+
+            $voided[] = $invoice->invoice_code;
         }
+
+        return $voided;
+    }
+
+    private function notifyClientOfVoid(User $user, Schedule $schedule, Invoice $invoice, float $paid): void
+    {
+        $schedule->loadMissing('patient');
+
+        if (!$schedule->patient) {
+            return;
+        }
+
+        $message = "Invoice {$invoice->invoice_code} for {$schedule->patient->display_name}'s schedule"
+            . " {$schedule->schedule_code} was voided because the schedule was cancelled."
+            . ($paid > 0 ? ' The ₱' . number_format($paid, 2) . ' already paid was added to your credit.' : '');
+
+        $this->notificationService->notifyPatientAccess(
+            $schedule->patient,
+            $message,
+            'Billing',
+            $user
+        );
     }
 
     public function overview(array $payload)
@@ -660,9 +651,9 @@ class ScheduleService
 
             $invoice = $invoiceId
                 ? Invoice::where('invoice_id', $invoiceId)
-                    ->where('branch_id', $payload['branch_id'])
-                    ->lockForUpdate()
-                    ->first()
+                ->where('branch_id', $payload['branch_id'])
+                ->lockForUpdate()
+                ->first()
                 : null;
 
             if (!$invoice) {
