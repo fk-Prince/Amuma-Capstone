@@ -56,7 +56,7 @@ class InvoiceMoney
 
     public static function adjustments(Invoice $invoice)
     {
-        return round((float) $invoice->invoiceAdjustments->sum('amount'), 2);
+        return (float) $invoice->total_adjustment;
     }
 
     private static function lines(Invoice $invoice)

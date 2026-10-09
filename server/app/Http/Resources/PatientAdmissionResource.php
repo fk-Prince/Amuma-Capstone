@@ -27,7 +27,9 @@ class PatientAdmissionResource extends JsonResource
             $allFacilities = $allFacilities->push($currentInvoice);
         }
 
-        $invoices = $allFacilities->map->invoice->filter();
+        $invoices = $allFacilities->map->invoice
+            ->filter()
+            ->reject(fn($invoice) => $invoice->status === \App\Models\Invoice::STATUS_VOID);
 
         $totalAmount   = (float) $invoices->sum('total_amount');
         $totalPaid     = (float) $invoices->sum(fn($inv) => $inv->net_paid_amount);

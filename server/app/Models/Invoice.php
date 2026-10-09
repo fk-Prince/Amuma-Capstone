@@ -318,7 +318,12 @@ class Invoice extends Model
 
     public function getTotalAdjustmentAttribute()
     {
-        return round((float) $this->invoiceAdjustments->sum('amount'),  2);
+        return round(
+            (float) $this->invoiceAdjustments
+                ->reject(fn($adjustment) => $adjustment->type === InvoiceAdjustment::TYPE_VOID)
+                ->sum('amount'),
+            2
+        );
     }
 
     public function getAdjustedTotalAttribute()

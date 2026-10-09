@@ -1010,6 +1010,7 @@ class InvoiceRepository
             'original_total' => (float) $invoice->total_amount,
 
             'adjustments' => $invoice->invoiceAdjustments
+                ->reject(fn($adjustment) => $adjustment->type === \App\Models\InvoiceAdjustment::TYPE_VOID)
                 ->map(fn($adjustment) => [
                     'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
                     'type' => $adjustment->type,
