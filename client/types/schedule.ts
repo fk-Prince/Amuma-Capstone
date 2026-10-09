@@ -205,6 +205,7 @@ export interface EmployeeScheduleRow {
     employee_id: number;
     full_name: string | null;
     avatar: string | null;
+    email: string | null;
     role_name: string | null;
     schedules: EmployeeScheduleEntry[];
 }

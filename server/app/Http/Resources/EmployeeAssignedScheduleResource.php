@@ -16,6 +16,7 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'employee_id' => $this->employee_id,
             'full_name' => $employee?->full_name,
             'avatar' => $employee?->avatar,
+            'email' => $employee?->users?->email,
             'role_name' => ucwords(str_replace('_', ' ', $this->role_name)),
             'schedules' => $this->scheduleAssignments
                 ->groupBy(fn($assignment) => $assignment->scheduleService->schedule_id)

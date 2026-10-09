@@ -305,7 +305,8 @@ class ScheduleRepository
                 fn($query) => $query->where('employee_id', $payload['employee_id'])
             )
             ->with([
-                'employees:employee_id,first_name,last_name,avatar',
+                'employees:employee_id,user_id,first_name,last_name,avatar',
+                'employees.users:user_id,email',
                 'scheduleAssignments' => function ($query) use ($scheduleScope) {
                     $query->where('is_active', true)
                         ->whereHas('scheduleService.schedule', $scheduleScope)

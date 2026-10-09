@@ -51,7 +51,9 @@ const rows = computed(() => {
     if (!searchTerm.value) return props.employees;
 
     return props.employees.flatMap((employee) => {
-        if (matches(employee.full_name, employee.role_name)) return [employee];
+        if (matches(employee.full_name, employee.role_name, employee.email)) {
+            return [employee];
+        }
 
         const schedules = employee.schedules.filter(entryMatches);
 
@@ -196,6 +198,13 @@ function timeLabel(entry: EmployeeScheduleEntry) {
                             class="truncate text-[11px] text-slate-400 dark:text-gray-500"
                         >
                             {{ employee.role_name }}
+                        </p>
+
+                        <p
+                            v-if="employee.email"
+                            class="truncate text-[11px] text-slate-400 dark:text-gray-500"
+                        >
+                            {{ employee.email }}
                         </p>
                     </div>
 
