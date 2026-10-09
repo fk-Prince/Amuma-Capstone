@@ -234,13 +234,6 @@
                                 >
                                     {{ initials(lo.name) }}
                                 </div>
-
-                                <button
-                                    type="button"
-                                    class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary-500 text-white flex items-center justify-center border-2 border-white hover:bg-primary-600"
-                                >
-                                    <Pencil class="w-3.5 h-3.5" />
-                                </button>
                             </div>
 
                             <div class="flex-1 min-w-0 w-full">
@@ -364,13 +357,13 @@
                                     </button>
 
                                     <button
-                                        v-if="lo.status === 'Admitted'"
+                                        v-if="lo.hasAdmission"
                                         type="button"
                                         class="flex items-center gap-1.5 px-4 py-2 rounded-full border border-primary-500 text-primary-600 text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors dark:text-primary-300"
                                         @click="openCaregiverShifts"
                                     >
                                         <HeartHandshake class="w-3.5 h-3.5" />
-                                        View Caregiver
+                                        View Caregiver Shifts
                                     </button>
 
                                     <button
@@ -962,7 +955,6 @@ import type { CaregiverShift } from "~/types/caregiver-shift";
 import EmptyState from "~/components/ui/EmptyState.vue";
 import { calculateAge } from "~/utils/user";
 import {
-    Pencil,
     Crown,
     Building2,
     MapPin,
@@ -1058,6 +1050,7 @@ interface LovedOne {
     admissionDate: string;
     admissionLabel: string;
     admissionStatus: string;
+    hasAdmission: boolean;
     dischargeDate: string;
     assignedCaregiver: string;
     conditions: string[];
@@ -1106,6 +1099,7 @@ function fallbackLovedOne(): LovedOne {
         admissionDate: "N/A",
         admissionLabel: "Admission",
         admissionStatus: "N/A",
+        hasAdmission: false,
         dischargeDate: "N/A",
         assignedCaregiver: "N/A",
         conditions: [],
@@ -1424,6 +1418,7 @@ function mapPatientRecord(item: any): LovedOne {
         admissionStatus: admission.status
             ? getAdmissionStatusLabel(admission.status)
             : statusLabel,
+        hasAdmission: Boolean(admission.patient_admission_id),
         dischargeDate: admission.end_date
             ? formatDate(admission.end_date)
             : "N/A",

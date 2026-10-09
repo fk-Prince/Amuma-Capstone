@@ -226,12 +226,6 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Up to 10 branches on one subscription",
-        homecare: true,
-        facility: true,
-        hybrid: true,
-    },
-    {
         name: "Per-branch staff, services & settings",
         homecare: true,
         facility: true,

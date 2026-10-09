@@ -9,7 +9,6 @@ const navSteps = [
     { to: "/portal/bookings", title: "Booking", description: "Track your booking requests, service details and status." },
     { to: "/portal/overview", title: "Overview", description: "A quick look at how your loved one is doing today." },
     { to: "/portal/loved-ones", title: "My Loved Ones", description: "View your loved one's profile and records." },
-    { to: "/portal/monitoring", title: "Monitoring", description: "Check in on your loved one's room, live and in real time." },
     { to: "/portal/schedule", title: "Schedule", description: "See upcoming appointments and the daily care schedule." },
     { to: "/portal/medications", title: "Medications", description: "Medication schedules, vital signs and care instructions." },
     { to: "/portal/messages", title: "Messages", description: "Chat directly with your loved one's care provider." },

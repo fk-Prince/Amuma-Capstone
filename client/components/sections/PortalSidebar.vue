@@ -106,7 +106,6 @@ import {
     ClipboardList,
     LayoutGrid,
     Users,
-    Camera,
     MessageSquare,
     CreditCard,
     Calendar,
@@ -148,7 +147,6 @@ const navGroups = [
     {
         label: "Care",
         items: [
-            { label: "Monitoring", to: "/portal/monitoring", icon: Camera },
             { label: "Schedule", to: "/portal/schedule", icon: Calendar },
             { label: "Medications", to: "/portal/medications", icon: Pill },
             { label: "Messages", to: "/portal/messages", icon: MessageSquare },

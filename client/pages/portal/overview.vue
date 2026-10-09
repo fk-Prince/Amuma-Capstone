@@ -320,89 +320,82 @@
 
         <div
             v-if="isAdmission && primaryLovedOne"
-            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
         >
-            <div class="flex items-center justify-between mb-3">
-                <p
-                    class="text-sm font-semibold text-gray-800 flex items-center gap-1.5 dark:text-white"
-                >
-                    <Camera class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    Live Camera
-                </p>
-
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-gray-400 dark:text-gray-500">
-                        {{ primaryLovedOne.room_label }}
-                    </span>
-
-                    <span
-                        class="flex items-center gap-1 text-primary-600 font-medium dark:text-primary-300"
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p
+                        class="text-sm font-semibold text-gray-800 flex items-center gap-1.5 dark:text-white"
                     >
-                        <span class="w-1.5 h-1.5 rounded-full bg-primary-500" />
-                        Live
-                    </span>
+                        <CalendarClock
+                            class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                        />
+                        Recent Schedule
+                    </p>
+
+                    <p
+                        v-if="attendanceVisit"
+                        class="text-xs text-gray-400 mt-0.5 dark:text-gray-500"
+                    >
+                        {{ recentScheduleSubtitle }}
+                    </p>
+                </div>
+
+                <span
+                    v-if="attendanceVisit"
+                    class="px-2.5 py-1 rounded-full text-[11px] font-medium shrink-0"
+                    :class="scheduleStatusTheme(attendanceVisit.status).badge"
+                >
+                    {{ scheduleStatusLabel(attendanceVisit.status) }}
+                </span>
+            </div>
+
+            <div
+                v-if="attendanceVisit && adlServices.length"
+                class="grid grid-cols-1 gap-3 content-start"
+            >
+                <div
+                    v-for="service in adlServices"
+                    :key="service.schedule_services_id"
+                    class="rounded-xl bg-gray-50 p-3.5 dark:bg-white/5"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <p
+                            class="text-sm font-medium text-gray-800 truncate dark:text-white"
+                        >
+                            {{ service.service_name || "Daily care" }}
+                        </p>
+
+                        <p
+                            class="text-xs text-gray-500 shrink-0 dark:text-gray-400"
+                        >
+                            {{ durationWithHours(service.duration_minutes ?? 0) }}
+                        </p>
+                    </div>
+
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        {{
+                            assigneesOf(service)
+                                .map((assignee) => assignee.full_name)
+                                .join(", ") || "No caregiver assigned yet"
+                        }}
+                    </p>
                 </div>
             </div>
 
             <div
-                class="relative rounded-xl overflow-hidden bg-gray-900 w-full h-[280px]"
+                v-else
+                class="flex-1 flex flex-col items-center justify-center text-center py-10"
             >
-                <img
-                    :src="roomFeedPhoto"
-                    class="w-full h-full object-cover"
-                    alt="Live room feed"
-                />
-
-                <div
-                    class="absolute top-3 left-3 bg-black/50 text-white text-[11px] px-2 py-1 rounded"
+                <span
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-2 dark:bg-white/5 dark:text-gray-500"
                 >
-                    {{
-                        now.toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "2-digit",
-                            year: "numeric",
-                        })
-                    }}
-                    · {{ formattedTime }}
-                </div>
+                    <CalendarClock class="w-5 h-5" />
+                </span>
 
-                <div
-                    class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3 flex items-center justify-between"
-                >
-                    <div class="flex items-center gap-3">
-                        <button
-                            @click="cameraPlaying = !cameraPlaying"
-                            class="text-white"
-                        >
-                            <component
-                                :is="cameraPlaying ? Pause : Play"
-                                class="w-4 h-4"
-                            />
-                        </button>
-
-                        <button class="text-white/80 hover:text-white">
-                            <SkipBack class="w-4 h-4" />
-                        </button>
-
-                        <button class="text-white/80 hover:text-white">
-                            <SkipForward class="w-4 h-4" />
-                        </button>
-
-                        <button
-                            @click="cameraMuted = !cameraMuted"
-                            class="text-white"
-                        >
-                            <component
-                                :is="cameraMuted ? VolumeX : Volume2"
-                                class="w-4 h-4"
-                            />
-                        </button>
-                    </div>
-
-                    <button class="text-white/80 hover:text-white">
-                        <Maximize class="w-4 h-4" />
-                    </button>
-                </div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Currently has no schedule
+                </p>
             </div>
         </div>
 
@@ -1131,13 +1124,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
-import { formatDuration, stringToDateTime } from "~/utils/time";
+import { formatDate, formatDuration, stringToDateTime } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { methodLabel } from "~/utils/payment-method";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
@@ -1146,14 +1139,6 @@ import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import type { PatientActivity } from "~/types/patient-activity";
 
 import {
-    Camera,
-    Play,
-    Pause,
-    SkipBack,
-    SkipForward,
-    Volume2,
-    VolumeX,
-    Maximize,
     Pill,
     Utensils,
     Activity,
@@ -1181,8 +1166,6 @@ definePageMeta({
     layout: "portal",
     middleware: "portal",
 });
-
-const roomFeedPhoto = "https://placehold.co/800x450?text=Live+Feed";
 
 interface PatientSchedule {
     adl: ScheduleItem | null;
@@ -1239,17 +1222,6 @@ interface UpdateItem {
 }
 
 const UPDATES_LIMIT = 5;
-
-const now = ref(new Date());
-
-let clockTimer: ReturnType<typeof setInterval> | undefined;
-
-const formattedTime = computed(() =>
-    now.value.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-    }),
-);
 
 const isLoading = ref(true);
 
@@ -1322,6 +1294,18 @@ const adlVisitSubtitle = computed(() => {
     });
 
     return `Schedule starts in ${date}${adl.start_time ? ` at ${adl.start_time}` : ""}`;
+});
+
+const recentScheduleSubtitle = computed(() => {
+    const visit = attendanceVisit.value;
+
+    if (!visit) {
+        return "";
+    }
+
+    const date = visit.scheduled_date ? formatDate(visit.scheduled_date) : "";
+
+    return [date, visit.start_time].filter(Boolean).join(" · ");
 });
 
 const { scheduleStatusTheme, scheduleStatusLabel } = useSchedule();
@@ -1430,10 +1414,6 @@ const updates = computed<UpdateItem[]>(() => {
     }));
 });
 
-const cameraPlaying = ref(true);
-
-const cameraMuted = ref(true);
-
 const isGeneratingQr = ref(false);
 
 const qrDirection = ref<"in" | "out" | null>(null);
@@ -1451,17 +1431,7 @@ const qrCheckedIn = ref<{
 const showQrModal = ref(false);
 
 onMounted(() => {
-    clockTimer = setInterval(() => {
-        now.value = new Date();
-    }, 1000 * 30);
-
     loadPatientData();
-});
-
-onUnmounted(() => {
-    if (clockTimer) {
-        clearInterval(clockTimer);
-    }
 });
 
 function peso(amount: number) {

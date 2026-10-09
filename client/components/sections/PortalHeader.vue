@@ -129,10 +129,6 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "My Loved Ones",
         subtitle: "View and manage your loved one's profile and records.",
     },
-    "/portal/monitoring": {
-        title: "Monitoring",
-        subtitle: "Check in on the room, live and in real time.",
-    },
     "/portal/schedule": {
         title: "Schedule",
         subtitle: "Upcoming appointments and daily care schedule.",
