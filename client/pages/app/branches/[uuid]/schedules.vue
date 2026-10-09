@@ -26,6 +26,17 @@
                         "
                     />
 
+                    <EmployeeScheduleBoard
+                        v-else-if="scheduleType === 'employees'"
+                        :employees="employeeBoard"
+                        :loading="pending"
+                        :search="
+                            typeof route.query.search === 'string'
+                                ? route.query.search
+                                : ''
+                        "
+                    />
+
                     <div v-else-if="pending" class="p-4 space-y-3">
                         <div
                             v-for="n in 6"
@@ -129,7 +140,12 @@
                     </template>
 
                     <div
-                        v-if="scheduleType !== 'shifts' && hasMore && !pending"
+                        v-if="
+                            scheduleType !== 'shifts' &&
+                            scheduleType !== 'employees' &&
+                            hasMore &&
+                            !pending
+                        "
                         class="flex justify-center mt-4"
                     >
                         <button
@@ -228,7 +244,7 @@ import ScheduleFilter from "~/components/sections/app/Schedule/ScheduleFilter.vu
 import ScheduleOverview from "~/components/sections/app/Schedule/ScheduleOverview.vue";
 import { usePatient } from "~/composables/usePatient";
 import { useRoute } from "vue-router";
-import type { ScheduleItem } from "~/types/schedule";
+import type { EmployeeScheduleRow, ScheduleItem } from "~/types/schedule";
 import ScheduleMedical from "~/components/sections/app/Schedule/ScheduleMedical.vue";
 import ScheduleMedicalCards from "~/components/sections/app/Schedule/ScheduleMedicalCards.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
@@ -238,6 +254,7 @@ import AssignEmployeeModal from "~/components/sections/app/Patient/AssignEmploye
 import { scheduleService } from "~/api/schedule/ScheduleService";
 import { caregiverShiftService } from "~/api/caregiver-shift/CaregiverShiftService";
 import FacilityShiftBoard from "~/components/sections/app/Schedule/FacilityShiftBoard.vue";
+import EmployeeScheduleBoard from "~/components/sections/app/Schedule/EmployeeScheduleBoard.vue";
 import type { ShiftBoard } from "~/types/caregiver-shift";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
@@ -293,15 +310,20 @@ function toTypeArray(value: unknown): string[] {
     return [];
 }
 
-const scheduleType = computed<"medical" | "homecare" | "shifts">(() => {
+const scheduleType = computed<
+    "medical" | "homecare" | "shifts" | "employees"
+>(() => {
     const types = toTypeArray(route.query.type);
 
     if (types.includes("shifts")) return "shifts";
+
+    if (types.includes("employees")) return "employees";
 
     return types.includes("adl") ? "homecare" : "medical";
 });
 
 const shiftBoard = ref<ShiftBoard | null>(null);
+const employeeBoard = ref<EmployeeScheduleRow[]>([]);
 
 const medicalView = computed(() =>
     route.query.view === "cards" ? "cards" : "timeline",
@@ -510,6 +532,34 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
         return;
     }
 
+    if (scheduleType.value === "employees") {
+        employeeBoard.value = [];
+
+        try {
+            const { search, type, ...employeeQuery } = restQuery;
+
+            const [employees, overview] = await Promise.all([
+                scheduleService.action({
+                    ...employeeQuery,
+                    type: "employee_schedules",
+                    branch_uuid: uuid.value,
+                    ...(assignment === "mine" && { assigned_only: 1 }),
+                }),
+                fetchScheduleOverview(uuid.value),
+            ]);
+
+            employeeBoard.value = employees?.data ?? [];
+            overviewData.value = overview?.data ?? overview ?? null;
+        } catch (err: any) {
+            error(err.error ?? err.message);
+        } finally {
+            pending.value = false;
+            overviewLoading.value = false;
+        }
+
+        return;
+    }
+
     const listParams = {
         ...restQuery,
         branch_uuid: route.params.uuid as string,
@@ -550,7 +600,9 @@ watch(
     () => {
         const { view, search, ...rest } = route.query;
         return JSON.stringify(
-            scheduleType.value === "shifts" ? rest : { ...rest, search },
+            scheduleType.value === "shifts" || scheduleType.value === "employees"
+                ? rest
+                : { ...rest, search },
         );
     },
     () => {

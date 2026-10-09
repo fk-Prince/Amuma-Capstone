@@ -38,7 +38,9 @@
                             {{
                                 isShifts
                                     ? "Daily facility caregiver shifts by resident and caregiver"
-                                    : "Refine appointments by date, status or schedule type"
+                                    : isEmployees
+                                      ? "Each employee with their assigned schedules"
+                                      : "Refine appointments by date, status or schedule type"
                             }}
                         </span>
                     </span>
@@ -46,7 +48,11 @@
 
                 <div class="flex shrink-0 items-center gap-2 pl-2">
                     <div
-                        v-if="!filters.type.includes('adl') && !isShifts"
+                        v-if="
+                            !filters.type.includes('adl') &&
+                            !isShifts &&
+                            !isEmployees
+                        "
                         class="flex items-center gap-1 rounded-xl bg-muted-light p-1 dark:bg-white/10"
                     >
                         <button
@@ -116,7 +122,9 @@
                         :placeholder="
                             isShifts
                                 ? 'Search resident, caregiver or room'
-                                : 'Search patient, assigned nurse or schedule code'
+                                : isEmployees
+                                  ? 'Search employee, patient or schedule code'
+                                  : 'Search patient, assigned nurse or schedule code'
                         "
                         class="w-full rounded-xl border border-muted-light bg-muted-light/40 py-2.5 pl-10 pr-9 text-sm text-secondary transition-colors focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/25 dark:focus:bg-secondary dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10"
                         @input="onSearchInput"
@@ -436,12 +444,14 @@ const { hasFacilityPlan } = useBranchPlan();
 const typeOptions = computed(() => [
     { label: "Medical Services", value: "medical" },
     { label: "Activities of Daily Living (ADL)", value: "adl" },
+    { label: "Employees", value: "employees" },
     ...(hasFacilityPlan.value
         ? [{ label: "Facility Caregiver Shifts", value: "shifts" }]
         : []),
 ]);
 
 const isShifts = computed(() => filters.type.includes("shifts"));
+const isEmployees = computed(() => filters.type.includes("employees"));
 
 const isDefaultDateRange = computed(
     () => filters.date_from === yesterday && !filters.date_to,

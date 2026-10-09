@@ -185,3 +185,26 @@ export interface AuditRow {
         notes: string | null;
     }[];
 }
+
+export interface EmployeeScheduleEntry {
+    schedule_id: number;
+    schedule_code: string;
+    status: string;
+    category: string | null;
+    type: "adl" | "medical";
+    patient_name: string | null;
+    services: string[];
+    scheduled_at: string | null;
+    ends_at: string | null;
+    duration_minutes: number;
+    start_time: string | null;
+    end_time: string | null;
+}
+
+export interface EmployeeScheduleRow {
+    employee_id: number;
+    full_name: string | null;
+    avatar: string | null;
+    role_name: string | null;
+    schedules: EmployeeScheduleEntry[];
+}

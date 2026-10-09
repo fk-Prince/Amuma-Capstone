@@ -106,6 +106,49 @@ class ScheduleRepository
         return Schedule::where($conditions)->first();
     }
 
+    private function filterByStatus($query, array $payload): void
+    {
+        if (!empty($payload['status'])) {
+            $query->whereIn('status', (array) $payload['status']);
+        }
+
+        if (!empty($payload['statuses'])) {
+            $statuses = is_array($payload['statuses'])
+                ? $payload['statuses']
+                : explode(',', (string) $payload['statuses']);
+
+            $query->whereIn('status', array_filter($statuses));
+        }
+    }
+
+    private function filterByDateRange($query, array $payload, bool $wantsMedical, bool $wantsAdl): void
+    {
+        if (!empty($payload['date_from'])) {
+            $dateFrom = $payload['date_from'];
+
+            $query->where(function ($q) use ($dateFrom, $wantsMedical, $wantsAdl) {
+                if ($wantsMedical) {
+                    $q->orWhereDate('scheduled_at', '>=', $dateFrom);
+                }
+
+                if ($wantsAdl) {
+
+                    $q->orWhereHas('scheduleServices', function ($sub) use ($dateFrom) {
+                        $sub->whereNotNull('hours_booked')
+                            ->whereRaw(
+                                "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') >= ?",
+                                [$dateFrom]
+                            );
+                    });
+                }
+            });
+        }
+
+        if (!empty($payload['date_to'])) {
+            $query->whereDate('scheduled_at', '<=', $payload['date_to']);
+        }
+    }
+
     public function retrievePaginate(array $payload)
     {
         $query = Schedule::query()
@@ -131,19 +174,7 @@ class ScheduleRepository
             });
         }
 
-        if (!empty($payload['status'])) {
-            $query->whereIn('status', (array) $payload['status']);
-        }
-
-
-        if (!empty($payload['statuses'])) {
-            $statuses = is_array($payload['statuses'])
-                ? $payload['statuses']
-                : explode(',', (string) $payload['statuses']);
-
-            $query->whereIn('status', array_filter($statuses));
-        }
-
+        $this->filterByStatus($query, $payload);
 
         if (!empty($payload['category'])) {
             $query->whereIn('category', (array) $payload['category']);
@@ -189,30 +220,7 @@ class ScheduleRepository
             });
         }
 
-        if (!empty($payload['date_from'])) {
-            $dateFrom = $payload['date_from'];
-
-            $query->where(function ($q) use ($dateFrom, $wantsMedical, $wantsAdl) {
-                if ($wantsMedical) {
-                    $q->orWhereDate('scheduled_at', '>=', $dateFrom);
-                }
-
-                if ($wantsAdl) {
-
-                    $q->orWhereHas('scheduleServices', function ($sub) use ($dateFrom) {
-                        $sub->whereNotNull('hours_booked')
-                            ->whereRaw(
-                                "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') >= ?",
-                                [$dateFrom]
-                            );
-                    });
-                }
-            });
-        }
-
-        if (!empty($payload['date_to'])) {
-            $query->whereDate('scheduled_at', '<=', $payload['date_to']);
-        }
+        $this->filterByDateRange($query, $payload, $wantsMedical, $wantsAdl);
 
         if (!empty($payload['search'])) {
             $term = '%' . trim($payload['search']) . '%';
@@ -276,6 +284,41 @@ class ScheduleRepository
     }
 
 
+
+    public function getEmployeesWithSchedules(array $payload)
+    {
+        $branchId = $payload['branch_id'];
+
+        $scheduleScope = function ($query) use ($payload, $branchId) {
+            $query->whereHas('patient', fn($q) => $q->where('branch_id', $branchId));
+
+            $this->filterByStatus($query, $payload);
+            $this->filterByDateRange($query, $payload, true, true);
+        };
+
+        return EmployeeBranch::query()
+            ->where('branch_id', $branchId)
+            ->where('status', EmployeeBranch::STATUS_ACTIVE)
+            ->whereIn('role_name', ['nurse', 'caregiver'])
+            ->when(
+                array_key_exists('employee_id', $payload),
+                fn($query) => $query->where('employee_id', $payload['employee_id'])
+            )
+            ->with([
+                'employees:employee_id,first_name,last_name,avatar',
+                'scheduleAssignments' => function ($query) use ($scheduleScope) {
+                    $query->where('is_active', true)
+                        ->whereHas('scheduleService.schedule', $scheduleScope)
+                        ->with([
+                            'scheduleService:schedule_services_id,schedule_id,service_id,hours_booked,type',
+                            'scheduleService.service:service_id,service_name,maximum_duration',
+                            'scheduleService.schedule:schedule_id,schedule_code,patient_id,scheduled_at,status,category',
+                            'scheduleService.schedule.patient:patient_id,first_name,last_name',
+                        ]);
+                },
+            ])
+            ->get();
+    }
 
     public function getEmployeesForReassignment(
         string $scheduleId,

@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Events\NotificationEvent;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Resources\EmployeeAssignedScheduleResource;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Repository\ScheduleRepository;
 use App\Http\Resources\ScheduleResource;
@@ -703,6 +704,19 @@ class ScheduleService
         }
 
         return ScheduleResource::collection($this->scheduleRepository->retrievePaginate($payload));
+    }
+
+    public function employeeSchedules(User $user, array $payload)
+    {
+        if (!empty($payload['assigned_only'])) {
+            $payload['employee_id'] = $user->employee?->employee_id;
+        }
+
+        $employees = $this->scheduleRepository->getEmployeesWithSchedules($payload)
+            ->sortBy(fn($employeeBranch) => strtolower($employeeBranch->employees?->full_name ?? ''))
+            ->values();
+
+        return EmployeeAssignedScheduleResource::collection($employees);
     }
 
     public function availableEmployee(array $payload)
