@@ -261,12 +261,6 @@ onClickOutside(careTypeRef, () => {
     careTypeOpen.value = false;
 });
 
-const DEFAULT_LOCATION = {
-    label: "Davao City",
-    lat: 7.1907,
-    long: 125.4553,
-};
-
 const handleLocation = async (data: any) => {
     searchLocation.value = data.label;
     lat.value = data.lat ?? data.latitude ?? "";
@@ -278,9 +272,9 @@ const searchClick = async () => {
         path: "/booking/search",
         query: {
             provider_name: searchName.value,
-            location: searchLocation.value || DEFAULT_LOCATION.label,
-            lat: lat.value || DEFAULT_LOCATION.lat,
-            long: long.value || DEFAULT_LOCATION.long,
+            location: searchLocation.value,
+            lat: lat.value,
+            long: long.value,
             plan_code: planCode.value,
             per_page: 6,
         },

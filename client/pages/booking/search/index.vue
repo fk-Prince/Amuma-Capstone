@@ -60,11 +60,18 @@
                         <span class="font-semibold text-secondary dark:text-white">{{
                             totalCount
                         }}</span>
-                        providers found in
-                        <span class="font-semibold text-secondary dark:text-white">{{
-                            (route.query.location as string) ??
-                            DEFAULT_LOCATION.label
-                        }}</span>
+                        providers found
+                        <template v-if="isNationwideSearch">
+                            <span class="font-semibold text-secondary dark:text-white"
+                                >nationwide</span
+                            >
+                        </template>
+                        <template v-else>
+                            in
+                            <span class="font-semibold text-secondary dark:text-white">{{
+                                route.query.location as string
+                            }}</span>
+                        </template>
                     </p>
 
                     <div
@@ -231,7 +238,7 @@ import SearchBooking from "~/components/sections/booking/search/SearchBooking.vu
 import { branchService } from "~/api/branch/BranchService";
 import type { BranchRetrieve } from "~/types/branch";
 import { ArrowLeft, List, Map as MapIcon, Columns2 } from "lucide-vue-next";
-import { useGeo, DAVAO_DEFAULT } from "~/composables/useGeo";
+import { useGeo } from "~/composables/useGeo";
 import finderBg from "~/assets/images/finder-bg.png";
 
 definePageMeta({
@@ -243,8 +250,7 @@ useHead({ title: "Search Homecare" });
 
 const route = useRoute();
 const router = useRouter();
-const { centerLat, centerLng, geocodeLocation, resolveDefaultCenter } =
-    useGeo();
+const { centerLat, centerLng, geocodeLocation } = useGeo();
 
 const branches = ref<BranchRetrieve[]>([]);
 const loading = ref(false);
@@ -257,18 +263,10 @@ const viewMode = ref<"list" | "map" | "both">("both");
 
 const PER_PAGE = 15;
 
-const DEFAULT_LOCATION = DAVAO_DEFAULT;
-
 const hasMore = computed(() => page.value < lastPage.value);
 
 const isNationwideSearch = computed(() => {
-    if (route.query.location_explicit === "1") return false;
-
-    const hasProviderName = !!route.query.provider_name;
-    const hasCareType =
-        !!route.query.plan_code && route.query.plan_code !== "C";
-
-    return hasProviderName || hasCareType;
+    return !route.query.location;
 });
 
 let requestId = 0;
@@ -288,27 +286,16 @@ const l = async (opts: { append?: boolean } = {}) => {
             await geocodeLocation(route.query.location as string);
         }
 
-        const payload = isNationwideSearch.value
-            ? {
-                  provider_name: route.query.provider_name ?? "",
-                  location: "",
-                  lat: "",
-                  long: "",
-                  plan_code: route.query.plan_code ?? "",
-                  sort: route.query.sort ?? "recommended",
-                  per_page: PER_PAGE,
-                  page: page.value,
-              }
-            : {
-                  provider_name: route.query.provider_name ?? "",
-                  location: route.query.location ?? DEFAULT_LOCATION.label,
-                  lat: route.query.lat ?? DEFAULT_LOCATION.lat,
-                  long: route.query.long ?? DEFAULT_LOCATION.long,
-                  plan_code: route.query.plan_code ?? "",
-                  sort: route.query.sort ?? "recommended",
-                  per_page: PER_PAGE,
-                  page: page.value,
-              };
+        const payload = {
+            provider_name: route.query.provider_name ?? "",
+            location: route.query.location ?? "",
+            lat: route.query.lat ?? "",
+            long: route.query.long ?? "",
+            plan_code: route.query.plan_code ?? "",
+            sort: route.query.sort ?? "recommended",
+            per_page: PER_PAGE,
+            page: page.value,
+        };
 
         const res = await branchService.filtered(payload);
 
@@ -340,14 +327,9 @@ const loadMore = () => {
     l({ append: true });
 };
 
-const resetFilters = async () => {
-    const center = await resolveDefaultCenter();
-
+const resetFilters = () => {
     router.replace({
         query: {
-            location: center.label,
-            lat: center.lat,
-            long: center.long,
             plan_code: "C",
             sort: "recommended",
         },
@@ -357,12 +339,8 @@ const resetFilters = async () => {
 onMounted(async () => {
     if (Object.keys(route.query).length === 0) {
         loading.value = true;
-        const defaultCenter = await resolveDefaultCenter();
         await router.replace({
             query: {
-                location: defaultCenter.label,
-                lat: defaultCenter.lat,
-                long: defaultCenter.long,
                 plan_code: "C",
                 sort: "recommended",
             },

@@ -472,7 +472,6 @@ border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40 dark:bg-second
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-import { useGeo } from "~/composables/useGeo";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Location from "~/components/icons/location.vue";
@@ -600,24 +599,6 @@ const sortOptions = [
     { label: "Nearest", value: "nearest" },
 ];
 
-const DEFAULT_LOCATION = {
-    label: "Davao City",
-    lat: 7.1907,
-    long: 125.4553,
-};
-
-const { resolveDefaultCenter } = useGeo();
-
-// Where a visitor starts and what Reset returns to: their own area, found the
-// same way the page picks it on a fresh visit, and Davao City if that fails.
-const defaultLocation = ref({ ...DEFAULT_LOCATION });
-
-// Kept for the session so every visit to this page doesn't repeat the lookup.
-const cachedCenter = useState<typeof DEFAULT_LOCATION | null>(
-    "search_default_center",
-    () => null,
-);
-
 const activeSortOption = ref((route.query.sort as string) ?? "recommended");
 
 const searchName = ref(
@@ -634,9 +615,7 @@ watch(searchName, () => {
 onBeforeUnmount(() => clearTimeout(searchDebounce));
 
 const searchLocation = ref(
-    (route.query.location as string) ??
-        props.searchLocation ??
-        DEFAULT_LOCATION.label,
+    (route.query.location as string) ?? props.searchLocation ?? "",
 );
 
 const planCodeType = ref(
@@ -644,15 +623,15 @@ const planCodeType = ref(
 );
 
 const lat = ref<string | number>(
-    (route.query.lat as string) ?? props.lat ?? DEFAULT_LOCATION.lat,
+    (route.query.lat as string) ?? props.lat ?? "",
 );
 
 const long = ref<string | number>(
-    (route.query.long as string) ?? props.long ?? DEFAULT_LOCATION.long,
+    (route.query.long as string) ?? props.long ?? "",
 );
 
 const locationLabel = computed(() => {
-    const loc = searchLocation.value || DEFAULT_LOCATION.label;
+    const loc = searchLocation.value || "Location";
     return loc.length > 15 ? loc.substring(0, 12) + "..." : loc;
 });
 
@@ -670,7 +649,7 @@ const sortLabel = computed(() => {
 function buildQuery() {
     return {
         provider_name: String(searchName.value ?? ""),
-        location: String(searchLocation.value || DEFAULT_LOCATION.label),
+        location: String(searchLocation.value ?? ""),
         lat: String(lat.value ?? ""),
         long: String(long.value ?? ""),
         plan_code: String(planCodeType.value ?? "C"),
@@ -682,7 +661,7 @@ const updateQuery = () => {
     const query = buildQuery();
     const current = {
         provider_name: String(route.query.provider_name ?? ""),
-        location: String(route.query.location ?? DEFAULT_LOCATION.label),
+        location: String(route.query.location ?? ""),
         lat: String(route.query.lat ?? ""),
         long: String(route.query.long ?? ""),
         plan_code: String(route.query.plan_code ?? "C"),
@@ -703,9 +682,9 @@ const onLocationInput = (value: string) => {
 };
 
 const handleLocation = (data: any) => {
-    searchLocation.value = data.label || DEFAULT_LOCATION.label;
-    lat.value = data.lat ?? DEFAULT_LOCATION.lat;
-    long.value = data.lng ?? DEFAULT_LOCATION.long;
+    searchLocation.value = data.label ?? "";
+    lat.value = data.lat ?? "";
+    long.value = data.lng ?? "";
     locating.value = false;
     updateQuery();
 };
@@ -732,17 +711,13 @@ function applyFilters() {
     closeMenus();
 }
 
-async function resetFilters() {
+function resetFilters() {
     closeMenus();
 
-    const center = await resolveDefaultCenter();
-    defaultLocation.value = center;
-    cachedCenter.value = center;
-
     searchName.value = "";
-    searchLocation.value = center.label;
-    lat.value = center.lat;
-    long.value = center.long;
+    searchLocation.value = "";
+    lat.value = "";
+    long.value = "";
     planCodeType.value = "C";
     activeSortOption.value = "recommended";
 
@@ -755,28 +730,19 @@ watch(
     () => route.query,
     (query) => {
         searchName.value = (query.provider_name as string) ?? "";
-        searchLocation.value =
-            (query.location as string) ?? defaultLocation.value.label;
-        lat.value = (query.lat as string) ?? defaultLocation.value.lat;
-        long.value = (query.long as string) ?? defaultLocation.value.long;
+        searchLocation.value = (query.location as string) ?? "";
+        lat.value = (query.lat as string) ?? "";
+        long.value = (query.long as string) ?? "";
         planCodeType.value = (query.plan_code as string) ?? "C";
         activeSortOption.value = (query.sort as string) ?? "recommended";
     },
 );
 
-onMounted(async () => {
-    if (!cachedCenter.value) {
-        cachedCenter.value = await resolveDefaultCenter();
-    }
-
-    defaultLocation.value = cachedCenter.value;
-});
-
 const hasActiveFilters = computed(
     () =>
         planCodeType.value !== "C" ||
         activeSortOption.value !== "recommended" ||
-        (searchLocation.value || "") !== defaultLocation.value.label,
+        !!searchLocation.value,
 );
 </script>
 
