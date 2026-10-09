@@ -8,7 +8,9 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\PatientAccess;
 use App\Models\Payment;
+use App\Models\User;
 use App\Repository\PaymentRepository;
+use App\Service\Payment\GCashPayment;
 use App\Repository\RefundRepository;
 use App\Utils\AccommodationHelper;
 use Exception;
@@ -63,6 +65,52 @@ class PaymentService
         return $response->json();
     }
 
+    public function startGCashBalance(User $user, Client $client, array $payload)
+    {
+        $access = PatientAccess::where('patient_id', $payload['patient_id'])
+            ->where('client_id', $client->client_id)
+            ->where('have_access', true)
+            ->first();
+
+        if (!$access) {
+            throw new Exception('You do not have access to this patient.', 403);
+        }
+
+        $amount = round((float) ($payload['amount'] ?? 0), 2);
+
+        if ($amount <= 0) {
+            throw new Exception('Enter an amount greater than 0.', 422);
+        }
+
+        $codes = array_filter((array) ($payload['invoice_codes'] ?? []));
+
+        $totalBalance = round((float) Invoice::whereIn(
+            'invoice_id',
+            $access->patient->patient_invoices->pluck('invoice_id')
+        )
+            ->whereIn('status', [Invoice::STATUS_PENDING, Invoice::STATUS_PARTIAL])
+            ->when($codes, fn($q) => $q->whereIn('invoice_code', $codes))
+            ->get()
+            ->sum('balance_due'), 2);
+
+        if ($totalBalance <= 0) {
+            throw new Exception('There is no outstanding balance to pay.', 422);
+        }
+
+        if ($amount > $totalBalance + 0.01) {
+            throw new Exception(
+                "Amount can't exceed the outstanding balance of {$totalBalance}.",
+                422
+            );
+        }
+
+        return app(GCashPayment::class)->portalBalanceInvoice($user, [
+            'patient_id' => (int) $payload['patient_id'],
+            'amount' => $amount,
+            'invoice_codes' => array_values($codes),
+        ]);
+    }
+
     public function payBalance(Client $client, array $payload): array
     {
         $access = PatientAccess::where('patient_id', $payload['patient_id'])
@@ -96,11 +144,17 @@ class PaymentService
             }
         }
 
-        $charge = $amount > 0 ? $this->chargeCard($client, $amount, $payload) : [];
+        $paidViaGCash = ($payload['paid_via'] ?? null) === 'GCASH';
 
-        $method = 'CREDIT-CARD';
+        $charge = $amount > 0 && !$paidViaGCash
+            ? $this->chargeCard($client, $amount, $payload)
+            : [];
+
+        $method = $paidViaGCash ? 'GCASH' : 'CREDIT-CARD';
         $maskedAccountDetails = $charge['masked_card_number'] ?? null;
-        $reference = $charge['id'] ?? null;
+        $reference = $paidViaGCash
+            ? ($payload['payment_reference'] ?? null)
+            : ($charge['id'] ?? null);
 
         $codes = array_filter((array) ($payload['invoice_codes'] ?? []));
 

@@ -4,6 +4,7 @@ namespace App\Factories;
 
 use App\Enums\PaymentWebhookEnum;
 use App\Hooks\FacilityWebhook;
+use App\Hooks\PortalBalanceWebhook;
 use App\Hooks\SubscriptionWebhook;
 
 class PaymentWebhook
@@ -19,6 +20,9 @@ class PaymentWebhook
 
             PaymentWebhookEnum::BOOKING_FACILITY =>
             app(FacilityWebhook::class),
+
+            PaymentWebhookEnum::PORTAL_BALANCE =>
+            app(PortalBalanceWebhook::class),
         };
     }
 }

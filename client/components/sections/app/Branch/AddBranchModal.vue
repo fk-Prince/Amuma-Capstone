@@ -724,6 +724,7 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { planService } from "~/api/plan/PlanService";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
+import { rememberPaymentReturn } from "~/utils/paymentReturn";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
@@ -1309,6 +1310,8 @@ const payGCash = async () => {
 
     try {
         const payload = buildPayload();
+
+        rememberPaymentReturn(window.location.pathname + window.location.search);
 
         await gcashPayment({
             createPayment: () =>

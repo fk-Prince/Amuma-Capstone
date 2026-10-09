@@ -25,7 +25,12 @@ class PaymentController extends Controller
             'authentication_id' => ['nullable', 'string'],
             'invoice_codes' => ['sometimes', 'array'],
             'invoice_codes.*' => ['string'],
+            'payment_method' => ['sometimes', 'in:GCASH,CREDIT-CARD'],
         ]);
+
+        if (($validated['payment_method'] ?? null) === 'GCASH') {
+            return $this->paymentService->startGCashBalance($user, $user->client, $validated);
+        }
 
         return $this->paymentService->payBalance($user->client, $validated);
     }

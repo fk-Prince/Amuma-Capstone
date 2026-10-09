@@ -4,7 +4,7 @@ import { patientAccessService } from "~/api/patient-access/PatientAccessService.
 import { refundService } from "~/api/refund/RefundService";
 import { paymentService } from "~/api/payment/PaymentService";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
-import { cardPayment } from "~/composables/usePayment";
+import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import type { CardDetails } from "~/types/payment";
 import EmptyState from "~/components/ui/EmptyState.vue";
@@ -1168,6 +1168,65 @@ async function payBalance() {
         });
     } catch (err: any) {
         error(err?.message || "Failed to process payment.");
+    } finally {
+        isPaying.value = false;
+    }
+}
+
+async function payGCash() {
+    const patientId = lovedOnes.value[selectedIndex.value]?.patient_id;
+
+    if (!patientId) {
+        error("Unable to determine which loved one this payment is for.");
+        return;
+    }
+
+    if (useCredit.value) {
+        error("Untick credit to pay with GCash.");
+        return;
+    }
+
+    const amount = round2(Number(payAmount.value) || 0);
+
+    if (amount <= 0) {
+        error("Enter an amount greater than ₱0.");
+        return;
+    }
+
+    if (amount > currentBalance.value) {
+        error(
+            `Amount can't exceed your balance of ${peso(currentBalance.value)}.`,
+        );
+        return;
+    }
+
+    payAmount.value = amount;
+    isPaying.value = true;
+
+    try {
+        await gcashPayment({
+            createPayment: () =>
+                paymentService.pay({
+                    patient_id: patientId,
+                    amount,
+                    payment_method: "GCASH",
+                }),
+
+            onClose: () => {
+                isPaying.value = false;
+            },
+
+            onSuccess: async (res: any) => {
+                showPaymentModal.value = false;
+
+                await navigateTo({
+                    path: "/portal/payment-complete",
+                    query: { status: "success", ref: res?.external_id },
+                });
+            },
+        });
+    } catch (err: any) {
+        error(err?.message || "GCash payment failed.");
     } finally {
         isPaying.value = false;
     }
@@ -2452,6 +2511,7 @@ async function openReceipt(receiptNo?: string | null) {
                 :credit-to-apply="creditToApply"
                 :processing="isPaying"
                 :on-card-pay="payBalance"
+                :on-g-cash-pay="payGCash"
                 @close="closePaymentModal"
             />
 

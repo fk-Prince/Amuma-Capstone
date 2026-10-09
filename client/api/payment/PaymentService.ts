@@ -22,6 +22,7 @@ class PaymentService extends BaseService {
         token_id?: string;
         authentication_id?: string;
         invoice_codes?: string[];
+        payment_method?: "GCASH" | "CREDIT-CARD";
     }): Promise<any> {
         return await this.request(this.resource + "/action", "POST", payload);
     }

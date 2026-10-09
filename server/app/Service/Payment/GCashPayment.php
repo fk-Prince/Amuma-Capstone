@@ -6,6 +6,7 @@ use App\Exceptions\ExternalServiceException;
 use App\Interfaces\IFacilityPayment;
 use App\Interfaces\ISubscriptionPayment;
 use App\Models\Branch;
+use App\Models\User;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Arr;
@@ -47,8 +48,8 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
                 'amount' => $subscription['total_amount'],
                 'payer_email' => $user->email,
                 'payment_methods' => ['GCASH'],
-                'success_redirect_url' => $this->subscriptionRedirectUrl($reference, 'success'),
-                'failure_redirect_url' => $this->subscriptionRedirectUrl($reference, 'failed'),
+                'success_redirect_url' => $this->subscriptionRedirectUrl($reference, 'success', $subscription),
+                'failure_redirect_url' => $this->subscriptionRedirectUrl($reference, 'failed', $subscription),
                 'metadata' => [
                     'payment_type' => $isRenewal ? 'RENEWAL' : 'SUBSCRIPTION',
                     'reference_id' => $reference,
@@ -94,9 +95,45 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
         return $this->invoiceResponse($response, $reference);
     }
 
-    private function subscriptionRedirectUrl(string $reference, string $status): string
+    public function portalBalanceInvoice(User $user, array $payload)
     {
-        return config('app.client_url') . "/product/payment-complete?status={$status}&ref={$reference}";
+        $reference = (string) Str::uuid();
+
+        Cache::put(
+            "xendit_payment_{$reference}",
+            ['user_id' => $user->user_id, 'payload' => $payload],
+            now()->addDay()
+        );
+
+        $returnUrl = fn(string $status) => config('app.client_url')
+            . "/portal/payment-complete?status={$status}&ref={$reference}";
+
+        $response = Http::withOptions([
+            'verify' => false
+        ])->withBasicAuth($this->secretKey, '')
+            ->post('https://api.xendit.co/v2/invoices', [
+                'external_id' => $reference,
+                'amount' => $payload['amount'],
+                'payer_email' => $user->email,
+                'payment_methods' => ['GCASH'],
+                'success_redirect_url' => $returnUrl('success'),
+                'failure_redirect_url' => $returnUrl('failed'),
+                'metadata' => [
+                    'payment_type' => 'PORTAL_BALANCE',
+                    'reference_id' => $reference,
+                ],
+            ]);
+
+        return $this->invoiceResponse($response, $reference);
+    }
+
+    private function subscriptionRedirectUrl(string $reference, string $status, array $subscription = []): string
+    {
+        $page = ($subscription['action'] ?? null) === 'additional_branch'
+            ? 'branch-payment-complete'
+            : 'payment-complete';
+
+        return config('app.client_url') . "/product/{$page}?status={$status}&ref={$reference}";
     }
 
     private function bookingRedirectUrl(Branch $branch, string $reference, string $status): string

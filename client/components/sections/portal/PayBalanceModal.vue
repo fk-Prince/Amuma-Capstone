@@ -17,6 +17,7 @@ const props = defineProps<{
     creditToApply: number;
     processing?: boolean;
     onCardPay: () => void | Promise<void>;
+    onGCashPay?: () => void | Promise<void>;
 }>();
 
 const emit = defineEmits<{
@@ -283,11 +284,10 @@ function peso(value: number) {
                             :total-amount="cardAmount"
                             :processing="processing"
                             :on-card-pay="onCardPay"
+                            :on-g-cash-pay="onGCashPay"
                             terms-context="balance"
-                            gcash-label="GCash is not available yet"
-                            gcash-description="GCash payments aren't available yet. Please use a card for now."
-                            title="Card details"
-                            description="Your card is charged securely through Xendit."
+                            title="Payment method"
+                            description="Pay by card or GCash. Payments are processed securely through Xendit."
                             submit-label="Pay now"
                             @update:card="emit('update:card', $event)"
                         />

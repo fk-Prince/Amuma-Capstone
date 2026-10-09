@@ -2,13 +2,13 @@
 
 namespace App\Enums;
 
-use Illuminate\Support\Facades\Log;
 
 enum PaymentWebhookEnum: string
 {
     case SUBSCRIPTION = 'SUBSCRIPTION';
     case RENEWAL = 'RENEWAL';
     case BOOKING_FACILITY = 'BOOKING_FACILITY';
+    case PORTAL_BALANCE = 'PORTAL_BALANCE';
     public static function fromPayload(array $payload): self
     {
         return self::tryFrom(
