@@ -73,7 +73,6 @@ class InvoiceRepository
         $search = $payload['search'];
 
         $query = Invoice::where('branch_id', $branchId)
-            ->where('status', '!=', Invoice::STATUS_VOID)
             ->with([
                 'allocations.refundAllocations.refund.transaction',
                 'allocations.payment.transaction',
@@ -880,6 +879,7 @@ class InvoiceRepository
             ),
 
             'status' => match (true) {
+                $invoice->status === Invoice::STATUS_VOID => 'Void',
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
@@ -1024,6 +1024,7 @@ class InvoiceRepository
             'refund_requested_amount' =>   $refundProcessing,
             'balance_due' => $balance,
             'status' => match (true) {
+                $invoice->status === Invoice::STATUS_VOID => 'Void',
                 $invoice->status === Invoice::STATUS_WRITTEN_OFF => 'Written Off',
                 $balance <= 0 => 'Paid',
                 $paid > 0 => 'Partial',
