@@ -95,6 +95,7 @@
                             :limit="limit"
                             :duty-limit="dutyLimit"
                             :busy-id="busyId"
+                            :readonly="readonly"
                             class="mt-3"
                             @unassign="
                                 (shift: CaregiverShift) =>
@@ -136,6 +137,7 @@
                                     </div>
 
                                     <button
+                                        v-if="!readonly"
                                         type="button"
                                         :disabled="
                                             busyId ===
@@ -158,6 +160,7 @@
                     </section>
 
                     <section
+                        v-if="!readonly"
                         class="border-t border-slate-100 pt-6 dark:border-white/10"
                     >
                         <p
@@ -396,6 +399,7 @@ const props = defineProps<{
     admissionId: number | null;
     patientName?: string | null;
     branchUuid: string;
+    readonly?: boolean;
 }>();
 
 const emit = defineEmits<{

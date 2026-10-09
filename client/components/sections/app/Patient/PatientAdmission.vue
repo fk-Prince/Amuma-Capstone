@@ -382,6 +382,7 @@
             :admission-id="latestAdmission?.patient_admission_id ?? null"
             :patient-name="patient?.full_name"
             :branch-uuid="String(route.params.uuid)"
+            readonly
             @close="caregiverModalOpen = false"
         />
 
@@ -393,12 +394,7 @@
             :current-admission-id="
                 isAdmitted ? latestAdmission?.patient_admission_id : null
             "
-            :can-add="isAdmitted && canAddCharge"
-            :add-blocked-reason="
-                !canAddCharge
-                    ? 'You need permission to update admissions.'
-                    : 'Charges can only be added while the patient is admitted.'
-            "
+            :addable="false"
             @close="chargesModalOpen = false"
         />
     </div>
@@ -438,10 +434,9 @@ const props = withDefaults(
 const router = useRouter();
 const route = useRoute();
 
-const { hasModule, canUpdate } = usePermissions();
+const { hasModule } = usePermissions();
 
 const canViewAdmissions = computed(() => hasModule("Admissions"));
-const canAddCharge = computed(() => canUpdate("Admissions"));
 
 const chargesModalOpen = ref(false);
 

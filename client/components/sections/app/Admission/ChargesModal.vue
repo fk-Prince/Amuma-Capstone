@@ -35,6 +35,7 @@
 
                         <div class="flex shrink-0 items-center gap-2">
                             <button
+                                v-if="addable"
                                 type="button"
                                 :disabled="!canAdd"
                                 :title="canAdd ? undefined : addBlockedReason"
@@ -189,6 +190,7 @@
         <ChargeSlipModal :slip="slip" @close="slip = null" />
 
         <AdditionalChargeModal
+            v-if="addable"
             :open="addOpen"
             :branch-uuid="branchUuid"
             :patient-uuid="patientUuid"
@@ -225,12 +227,14 @@ const props = withDefaults(
         patientUuid: string;
         patientName?: string | null;
         currentAdmissionId?: number | null;
+        addable?: boolean;
         canAdd?: boolean;
         addBlockedReason?: string;
     }>(),
     {
         patientName: null,
         currentAdmissionId: null,
+        addable: true,
         canAdd: false,
         addBlockedReason: "You can't add charges right now.",
     },
