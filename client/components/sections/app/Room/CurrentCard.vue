@@ -65,6 +65,7 @@ const admission = computed(() => props.bed.current_admission);
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-gray-800 truncate dark:text-white">
                     {{ patient.first_name }} {{ patient.last_name }}
+                    {{ patient.suffix }}
                 </p>
 
                 <div

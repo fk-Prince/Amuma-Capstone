@@ -11,6 +11,7 @@ export interface Patient {
     first_name: string;
     middle_name: string;
     last_name: string;
+    suffix?: string;
     gender: string;
     citizenship: string;
     occupation: string;
@@ -119,6 +120,7 @@ export interface PatientRetrieve {
     first_name: string;
     middle_name?: string;
     last_name: string;
+    suffix?: string | null;
     gender: string;
     date_of_birth: string;
     age: string;

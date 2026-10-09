@@ -132,6 +132,7 @@
                                                     row.patient?.first_name,
                                                     row.patient?.middle_name,
                                                     row.patient?.last_name,
+                                                    row.patient?.suffix,
                                                 )
                                             "
                                         >
@@ -140,6 +141,7 @@
                                                     row.patient?.first_name,
                                                     row.patient?.middle_name,
                                                     row.patient?.last_name,
+                                                    row.patient?.suffix,
                                                 )
                                             }}
                                         </p>

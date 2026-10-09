@@ -16,14 +16,11 @@ class PatientReportResource extends JsonResource
             'patient' => [
                 'patient_uuid' => $patient->uuid,
                 'patient_code' => $patient->patient_code,
-                'full_name' => trim(collect([
-                    $patient->first_name,
-                    $patient->middle_name,
-                    $patient->last_name,
-                ])->filter()->implode(' ')),
+                'full_name' => $patient->full_name,
                 'first_name' => $patient->first_name,
                 'middle_name' => $patient->middle_name,
                 'last_name' => $patient->last_name,
+                'suffix' => $patient->suffix,
                 'date_of_birth' => $patient->date_of_birth?->format('Y-m-d'),
                 'gender' => $patient->gender,
                 'phone_number' => $this->localPhone($patient->phone_number),

@@ -315,6 +315,7 @@ class BookingService
             'patient.first_name' => ['required', 'string', 'max:100'],
             'patient.middle_name' => ['nullable', 'string', 'max:100'],
             'patient.last_name' => ['required', 'string', 'max:100'],
+            'patient.suffix' => ['nullable', 'string', 'max:20'],
             'patient.gender' => ['required', 'string', 'max:20'],
             'patient.date_of_birth' => ['required', 'date', 'before:today'],
             'patient.address' => ['required', 'string', 'max:255'],

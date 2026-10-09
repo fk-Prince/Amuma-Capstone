@@ -69,8 +69,8 @@ class PatientActivityService
         $this->notificationService->notifyPatientAccess(
             $patient,
             $activity->title
-                ? "New update for {$patient->first_name} {$patient->last_name}: {$activity->title}"
-                : "There's a new update for {$patient->first_name} {$patient->last_name}.",
+                ? "New update for {$patient->display_name}: {$activity->title}"
+                : "There's a new update for {$patient->display_name}.",
             'Update',
             Auth::user()
         );

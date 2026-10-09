@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');
+            $table->string('suffix', 20)->nullable();
             $table->string('gender', 20);
             $table->decimal('height', 10, 2)->nullable();
             $table->decimal('weight', 10, 2)->nullable();

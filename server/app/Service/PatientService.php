@@ -91,6 +91,7 @@ class PatientService
             'first_name' => $payload['first_name'],
             'middle_name' => $payload['middle_name'] ?? null,
             'last_name' => $payload['last_name'],
+            'suffix' => $payload['suffix'] ?? null,
             'gender' => $payload['gender'],
             'date_of_birth' => $payload['date_of_birth'] ?? null,
             'phone_number' => $payload['phone_number'] ?? null,
@@ -120,7 +121,8 @@ class PatientService
                 'first_name' => $patient->first_name,
                 'middle_name' => $patient->middle_name,
                 'last_name' => $patient->last_name,
-                'full_name' => trim("{$patient->first_name} {$patient->middle_name} {$patient->last_name}"),
+                'suffix' => $patient->suffix,
+                'full_name' => $patient->full_name,
                 'gender' => $patient->gender,
                 'date_of_birth' => $patient->date_of_birth?->format('Y-m-d'),
                 'age' => $patient->date_of_birth?->age,
@@ -161,6 +163,7 @@ class PatientService
             'first_name'         => $patient['first_name'],
             'middle_name'        => $patient['middle_name'],
             'last_name'          => $patient['last_name'],
+            'suffix'             => $patient['suffix'] ?? null,
             'gender'             => $patient['gender'] ?? null,
             'height'             => $patient['height'] ?? null,
             'weight'             => $patient['weight'] ?? null,
@@ -277,6 +280,7 @@ class PatientService
             'first_name'         => $patient['first_name'],
             'middle_name'        => $patient['middle_name'],
             'last_name'          => $patient['last_name'],
+            'suffix'             => $patient['suffix'] ?? null,
             'gender'             => $patient['gender'] ?? null,
             'height'             => $patient['height'] ?? null,
             'weight'             => $patient['weight'] ?? null,
@@ -369,7 +373,7 @@ class PatientService
 
         $this->notificationService->notifyPatientAccess(
             $patient,
-            "A new diagnosis was added for {$patient->first_name} {$patient->last_name}.",
+            "A new diagnosis was added for {$patient->display_name}.",
             'Diagnosis',
             Auth::user()
         );

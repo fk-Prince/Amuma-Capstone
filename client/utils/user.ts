@@ -38,14 +38,15 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
 
 
 export function fullName(
-    firstName: string,
+    firstName: string | null | undefined,
     middleName: string | null | undefined,
-    lastName: string
+    lastName: string | null | undefined,
+    suffix?: string | null,
 ) {
-
-    return `${firstName ?? ""} ${middleName ?? ""} ${lastName ?? ""}`
-        .trim()
-        || "—";
+    return [firstName, middleName, lastName, suffix]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(" ") || "—";
 }
 
 export function calculateAge(date?: string | null, ba = true) {

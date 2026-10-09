@@ -319,7 +319,10 @@
         </div>
 
         <div
-            v-if="isAdmission && primaryLovedOne"
+            v-if="
+                primaryLovedOne &&
+                (isAdmission || (isHomecare && !attendanceVisit))
+            "
             class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
@@ -1593,7 +1596,12 @@ function mapPatientRecord(item: any): PatientData {
 
         full_name:
             patient?.full_name ??
-            [patient?.first_name, patient?.middle_name, patient?.last_name]
+            [
+                patient?.first_name,
+                patient?.middle_name,
+                patient?.last_name,
+                patient?.suffix,
+            ]
                 .filter(Boolean)
                 .join(" "),
 

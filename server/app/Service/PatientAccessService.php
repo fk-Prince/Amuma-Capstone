@@ -89,6 +89,7 @@ class PatientAccessService
                 'first_name'    => $patient->first_name,
                 'middle_name'   => $patient->middle_name,
                 'last_name'     => $patient->last_name,
+                'suffix'        => $patient->suffix,
                 'gender'        => $patient->gender,
                 'date_of_birth' => $patient->date_of_birth,
                 'phone_number'  => $patient->phone_number,
@@ -163,7 +164,7 @@ class PatientAccessService
             throw new Exception('Only pending or ongoing schedules can be sent for review.', 422);
         }
 
-        $patientName = trim("{$patient->first_name} {$patient->last_name}");
+        $patientName = $patient->display_name;
 
         $message = ($patientName !== '' ? "{$patientName}'s family" : 'A family member')
             . " requested a review of schedule {$schedule->schedule_code}.";

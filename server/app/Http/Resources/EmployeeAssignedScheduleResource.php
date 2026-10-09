@@ -18,6 +18,17 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'avatar' => $employee?->avatar,
             'email' => $employee?->users?->email,
             'role_name' => ucwords(str_replace('_', ' ', $this->role_name)),
+            'shifts' => $this->caregiverShifts
+                ->map(fn($shift) => [
+                    'caregiver_shift_id' => $shift->caregiver_shift_id,
+                    'start_time' => substr((string) $shift->start_time, 0, 5),
+                    'end_time' => substr((string) $shift->end_time, 0, 5),
+                    'note' => $shift->note,
+                    'resident_name' => $shift->admission?->patient?->display_name ?? '',
+                    'room_no' => $shift->admission?->bed?->room?->room_no,
+                    'bed_no' => $shift->admission?->bed?->bed_no,
+                ])
+                ->values(),
             'schedules' => $this->scheduleAssignments
                 ->groupBy(fn($assignment) => $assignment->scheduleService->schedule_id)
                 ->map(fn(Collection $assignments) => $this->schedule($assignments))
@@ -41,7 +52,7 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'status' => $schedule->status,
             'category' => $schedule->category,
             'type' => $services->contains(fn($service) => $service->hours_booked !== null) ? 'adl' : 'medical',
-            'patient_name' => $patient ? trim("{$patient->first_name} {$patient->last_name}") : null,
+            'patient_name' => $patient?->display_name,
             'services' => $services
                 ->map(fn($service) => $service->service?->service_name ?? 'ADL')
                 ->unique()

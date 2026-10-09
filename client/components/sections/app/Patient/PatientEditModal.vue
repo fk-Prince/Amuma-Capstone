@@ -54,7 +54,7 @@
                         @remove="removeAvatar = true"
                     />
 
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                    <div class="grid grid-cols-1 gap-5 md:grid-cols-4">
                         <BaseInput
                             label="First Name"
                             :model-value="form.first_name"
@@ -74,6 +74,13 @@
                             :error="errors.last_name"
                             required
                             @update:model-value="set('last_name', $event)"
+                        />
+                        <BaseInput
+                            label="Suffix"
+                            placeholder="e.g. Jr., Sr., III"
+                            :model-value="form.suffix"
+                            :error="errors.suffix"
+                            @update:model-value="set('suffix', $event)"
                         />
                     </div>
 
@@ -276,6 +283,7 @@ const form = reactive({
     first_name: "",
     middle_name: "",
     last_name: "",
+    suffix: "",
     gender: "Male",
     date_of_birth: "",
     phone_number: "",
@@ -310,6 +318,7 @@ function fill() {
         first_name: p.first_name ?? "",
         middle_name: p.middle_name ?? "",
         last_name: p.last_name ?? "",
+        suffix: p.suffix ?? "",
         gender: p.gender ?? "Male",
         date_of_birth: localDate(p.date_of_birth),
         phone_number: p.phone_number ?? "",

@@ -165,6 +165,7 @@ class NotificationService
         $patientName = trim(implode(' ', array_filter([
             $data['patient']['first_name'] ?? null,
             $data['patient']['last_name'] ?? null,
+            $data['patient']['suffix'] ?? null,
         ]))) ?: null;
 
         try {

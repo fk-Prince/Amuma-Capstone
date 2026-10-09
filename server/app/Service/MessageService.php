@@ -78,10 +78,7 @@ class MessageService
         return $accesses
             ->map(fn($access) => [
                 'patient_id' => $access->patient_id,
-                'patient_name' => trim(
-                    ($access->patient->first_name ?? '') . ' ' .
-                        ($access->patient->last_name ?? '')
-                ) ?: 'Resident',
+                'patient_name' => $access->patient?->display_name ?: 'Resident',
                 'branch' => [
                     'branch_id' => $access->patient->branch_id,
                     'name' => $access->patient->branch?->name,
@@ -355,10 +352,7 @@ class MessageService
                 $onlyPatientIds !== null,
                 fn($rows) => $rows->filter(fn($access) => $onlyPatientIds->contains($access->patient_id))
             )
-            ->map(fn($access) => trim(
-                ($access->patient?->first_name ?? '') . ' ' .
-                    ($access->patient?->last_name ?? '')
-            ))
+            ->map(fn($access) => $access->patient?->display_name)
             ->filter()
             ->unique()
             ->values()
@@ -482,10 +476,7 @@ class MessageService
             ->get()
             ->map(function ($client) use ($existing, $patientsByClient) {
                 $patients = $patientsByClient->get($client->client_id, collect())
-                    ->map(fn($access) => trim(
-                        ($access->patient?->first_name ?? '') . ' ' .
-                            ($access->patient?->last_name ?? '')
-                    ))
+                    ->map(fn($access) => $access->patient?->display_name)
                     ->filter()
                     ->unique()
                     ->values()

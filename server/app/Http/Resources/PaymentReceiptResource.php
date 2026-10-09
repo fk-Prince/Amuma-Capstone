@@ -33,10 +33,7 @@ class PaymentReceiptResource extends JsonResource
             'patient' => [
                 'patient_uuid' => $this->patient?->uuid,
                 'patient_code' => $this->patient?->patient_code,
-                'full_name'    => trim(
-                    ($this->patient?->first_name ?? '') . ' ' .
-                        ($this->patient?->last_name ?? '')
-                ) ?: null,
+                'full_name'    => $this->patient?->display_name ?: null,
             ],
 
             'payment' => [

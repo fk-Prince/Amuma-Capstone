@@ -429,13 +429,11 @@ class InvoiceRepository
                 'patient_id' => $patientModel->patient_id,
                 'patient_uuid' => $patientModel->uuid,
                 'patient_code' => $patientModel->patient_code,
-                'full_name' => trim(
-                    $patientModel->first_name . ' ' .
-                        $patientModel->last_name
-                ),
+                'full_name' => $patientModel->display_name,
                 'first_name' => $patientModel->first_name,
                 'middle_name' => $patientModel->middle_name,
                 'last_name' => $patientModel->last_name,
+                'suffix' => $patientModel->suffix,
                 'gender' => $patientModel->gender,
                 'date_of_birth' => $patientModel->date_of_birth,
                 'age' => $patientModel->age,
@@ -871,8 +869,7 @@ class InvoiceRepository
             'invoice_code' => $invoice->invoice_code,
 
             'patient' => $patient
-                ? $patient->first_name . ' ' .
-                $patient->last_name
+                ? $patient->display_name
                 : null,
 
             'schedule' => 'Not Applicable',

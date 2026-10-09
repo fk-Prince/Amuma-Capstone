@@ -459,7 +459,7 @@ const patientRows = computed<Row[]>(() => {
     return [
         {
             label: "Full Name",
-            value: fullName([p.first_name, p.middle_name, p.last_name]),
+            value: fullName([p.first_name, p.middle_name, p.last_name, p.suffix]),
         },
         { label: "Gender", value: p.gender ?? "" },
         { label: "Date of Birth", value: formatDate(p.date_of_birth) },

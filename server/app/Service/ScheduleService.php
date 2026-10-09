@@ -486,10 +486,7 @@ class ScheduleService
 
         $schedule->loadMissing('patient');
 
-        $patientName = trim(
-            ($schedule->patient?->first_name ?? '') . ' ' .
-                ($schedule->patient?->last_name ?? '')
-        );
+        $patientName = $schedule->patient?->display_name ?? '';
 
         $details = " {$schedule->schedule_code}"
             . ($patientName !== '' ? " for {$patientName}" : '')
@@ -543,7 +540,7 @@ class ScheduleService
 
         $this->notificationService->notifyPatientAccess(
             $patient,
-            "{$patient->first_name} {$patient->last_name}'s {$kind} schedule {$schedule->schedule_code} {$change}.",
+            "{$patient->display_name}'s {$kind} schedule {$schedule->schedule_code} {$change}.",
             'Schedule',
             $user
         );

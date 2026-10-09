@@ -381,9 +381,7 @@ class InvoiceService
             'Credit on the account applied to an outstanding invoice.',
             [
                 'method' => Payment::METHOD_CREDIT,
-                'party_name' => trim(
-                    ($patient->first_name ?? '') . ' ' . ($patient->last_name ?? '')
-                ) ?: null,
+                'party_name' => $patient->display_name ?: null,
             ]
         );
 

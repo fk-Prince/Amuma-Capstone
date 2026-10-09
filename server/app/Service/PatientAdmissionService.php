@@ -390,7 +390,7 @@ class PatientAdmissionService
         if ($patient) {
             $this->notificationService->notifyPatientAccess(
                 $patient,
-                "{$patient->first_name} {$patient->last_name}'s admission has been cancelled by the branch."
+                "{$patient->display_name}'s admission has been cancelled by the branch."
                     . ($note !== '' ? " Note: {$note}" : ''),
                 'Admission Cancelled',
                 Auth::user()
@@ -712,7 +712,7 @@ class PatientAdmissionService
             if ($patient) {
                 $this->notificationService->notifyPatientAccess(
                     $patient,
-                    "{$patient->first_name} {$patient->last_name}'s stay has been extended until "
+                    "{$patient->display_name}'s stay has been extended until "
                         . $endDate->toFormattedDateString() . '.',
                     'Admission Extended',
                     Auth::user()
@@ -814,7 +814,7 @@ class PatientAdmissionService
                 if ($patient) {
                     $this->notificationService->notifyPatientAccess(
                         $patient,
-                        "{$patient->first_name} {$patient->last_name} was moved to room { $newBed->bed_no}.",
+                        "{$patient->display_name} was moved to room { $newBed->bed_no}.",
                         'Bed Changed',
                         Auth::user()
                     );
@@ -907,7 +907,7 @@ class PatientAdmissionService
             if ($patient) {
                 $this->notificationService->notifyPatientAccess(
                     $patient,
-                    "{$patient->first_name} {$patient->last_name}'s accommodation was changed to room {$newRoom->room_no}.",
+                    "{$patient->display_name}'s accommodation was changed to room {$newRoom->room_no}.",
                     'Accommodation Changed',
                     Auth::user()
                 );
@@ -1127,9 +1127,7 @@ class PatientAdmissionService
 
             'patient' => [
                 'patient_uuid' => $patient?->uuid,
-                'full_name' => trim(
-                    ($patient?->first_name ?? '') . ' ' . ($patient?->last_name ?? '')
-                ),
+                'full_name' => $patient?->display_name ?? '',
                 'date_of_birth' => $patient?->date_of_birth,
                 'gender' => $patient?->gender,
                 'phone_number' => $patient?->phone_number,

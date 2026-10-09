@@ -76,7 +76,7 @@ class MedicationService
 
         $this->notificationService->notifyPatientAccess(
             $patient,
-            "A new medication, {$medication->name}, was added for {$patient->first_name} {$patient->last_name}.",
+            "A new medication, {$medication->name}, was added for {$patient->display_name}.",
             'Medication',
             $user
         );

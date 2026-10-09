@@ -46,6 +46,7 @@ class PortalHelper
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,
                 'last_name' => $data['patient']['last_name'] ?? null,
+                'suffix' => $data['patient']['suffix'] ?? null,
                 'gender' => $data['patient']['gender'] ?? null,
                 'citizenship' => $data['patient']['citizenship'] ?? null,
                 'occupation' => $data['patient']['occupation'] ?? null,
@@ -309,7 +310,7 @@ class PortalHelper
             'patient_id' => $patient->patient_id,
             'uuid' => $patient->uuid,
             'full_name' => trim(
-                preg_replace('/\s+/', ' ', "{$patient->first_name} {$patient->middle_name} {$patient->last_name}")
+                preg_replace('/\s+/', ' ', "{$patient->first_name} {$patient->middle_name} {$patient->last_name} {$patient->suffix}")
             ),
             'avatar' => $patient->avatar,
             'gender' => $patient->gender,
@@ -688,9 +689,7 @@ class PortalHelper
             'patient' => [
                 'patient_id' => $patient->patient_id,
                 'patient_uuid' => $patient->uuid,
-                'full_name' => trim(
-                    "{$patient->first_name} {$patient->last_name}"
-                ),
+                'full_name' => $patient->display_name,
                 'address' => $patient->location?->full_address,
             ],
 

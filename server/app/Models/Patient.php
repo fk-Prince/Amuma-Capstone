@@ -23,6 +23,7 @@ class Patient extends Model
         'first_name',
         'middle_name',
         'last_name',
+        'suffix',
         'gender',
         'height',
         'weight',
@@ -46,6 +47,20 @@ class Patient extends Model
     public function uniqueIds()
     {
         return ['uuid'];
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim(preg_replace(
+            '/\s+/',
+            ' ',
+            "{$this->first_name} {$this->middle_name} {$this->last_name} {$this->suffix}"
+        ));
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return implode(' ', array_filter([$this->first_name, $this->last_name, $this->suffix]));
     }
 
     public function getAvatarUrlAttribute(): string

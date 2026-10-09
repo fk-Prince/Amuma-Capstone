@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { CalendarDays, ChevronDown, Clock, Users } from "lucide-vue-next";
+import {
+    BedDouble,
+    CalendarDays,
+    ChevronDown,
+    Clock,
+    HeartHandshake,
+    Users,
+} from "lucide-vue-next";
 
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
 
 import type {
     EmployeeScheduleEntry,
     EmployeeScheduleRow,
+    EmployeeShiftEntry,
 } from "~/types/schedule";
 import { formatDate, formatDurationShort, formatTime } from "~/utils/time";
 import {
@@ -47,6 +55,10 @@ function entryMatches(entry: EmployeeScheduleEntry) {
     );
 }
 
+function shiftMatches(shift: EmployeeShiftEntry) {
+    return matches(shift.resident_name, shift.room_no);
+}
+
 const rows = computed(() => {
     if (!searchTerm.value) return props.employees;
 
@@ -56,8 +68,11 @@ const rows = computed(() => {
         }
 
         const schedules = employee.schedules.filter(entryMatches);
+        const shifts = employee.shifts.filter(shiftMatches);
 
-        return schedules.length ? [{ ...employee, schedules }] : [];
+        return schedules.length || shifts.length
+            ? [{ ...employee, schedules, shifts }]
+            : [];
     });
 });
 
@@ -65,9 +80,38 @@ const totalSchedules = computed(() =>
     rows.value.reduce((sum, employee) => sum + employee.schedules.length, 0),
 );
 
-const busyCount = computed(
-    () => rows.value.filter((employee) => employee.schedules.length).length,
+const totalShifts = computed(() =>
+    rows.value.reduce((sum, employee) => sum + employee.shifts.length, 0),
 );
+
+const busyCount = computed(
+    () =>
+        rows.value.filter(
+            (employee) => employee.schedules.length || employee.shifts.length,
+        ).length,
+);
+
+function countLabel(employee: EmployeeScheduleRow) {
+    const parts = [
+        employee.schedules.length
+            ? `${employee.schedules.length} schedule${employee.schedules.length === 1 ? "" : "s"}`
+            : null,
+        employee.shifts.length
+            ? `${employee.shifts.length} shift${employee.shifts.length === 1 ? "" : "s"}`
+            : null,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(" · ") : "No schedules";
+}
+
+function roomLabel(shift: EmployeeShiftEntry) {
+    return [
+        shift.room_no ? `Room ${shift.room_no}` : null,
+        shift.bed_no ? `Bed ${shift.bed_no}` : null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
+}
 
 function visibleSchedules(employee: EmployeeScheduleRow) {
     return expanded.value.has(employee.employee_id)
@@ -173,6 +217,11 @@ function timeLabel(entry: EmployeeScheduleEntry) {
                     scheduled · {{ totalSchedules }} schedule{{
                         totalSchedules === 1 ? "" : "s"
                     }}
+                    <template v-if="totalShifts">
+                        · {{ totalShifts }} shift{{
+                            totalShifts === 1 ? "" : "s"
+                        }}
+                    </template>
                 </p>
             </div>
 
@@ -211,18 +260,60 @@ function timeLabel(entry: EmployeeScheduleEntry) {
                     <span
                         class="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                         :class="
-                            employee.schedules.length
+                            employee.schedules.length || employee.shifts.length
                                 ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
                                 : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-400'
                         "
                     >
-                        {{
-                            employee.schedules.length
-                                ? `${employee.schedules.length} schedule${employee.schedules.length === 1 ? "" : "s"}`
-                                : "No schedules"
-                        }}
+                        {{ countLabel(employee) }}
                     </span>
                 </div>
+
+                <ul
+                    v-if="employee.shifts.length"
+                    class="divide-y divide-slate-100 border-t border-slate-100 dark:divide-white/10 dark:border-white/10"
+                >
+                    <li
+                        v-for="shift in employee.shifts"
+                        :key="shift.caregiver_shift_id"
+                        class="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                    >
+                        <div class="min-w-0 space-y-1">
+                            <p
+                                class="flex items-center gap-1 text-[12px] font-medium text-slate-700 dark:text-gray-300"
+                            >
+                                <Clock class="h-3.5 w-3.5 opacity-60" />
+                                {{ formatTime(shift.start_time) }} –
+                                {{ formatTime(shift.end_time) }}
+                                <span
+                                    class="font-normal text-slate-400 dark:text-gray-500"
+                                >
+                                    · Daily
+                                </span>
+                            </p>
+
+                            <p
+                                class="truncate text-sm text-slate-800 dark:text-white"
+                            >
+                                {{ shift.resident_name }}
+                                <span
+                                    v-if="roomLabel(shift)"
+                                    class="inline-flex items-center gap-1 text-[12px] text-slate-400 dark:text-gray-500"
+                                >
+                                    · <BedDouble class="h-3 w-3" />
+                                    {{ roomLabel(shift) }}
+                                </span>
+                            </p>
+                        </div>
+
+                        <span
+                            class="inline-flex w-fit shrink-0 items-center gap-1 rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
+                        >
+                            <HeartHandshake class="h-3 w-3" />
+                            Facility shift
+                        </span>
+                    </li>
+                </ul>
 
                 <ul
                     v-if="employee.schedules.length"

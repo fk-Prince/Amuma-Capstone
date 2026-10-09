@@ -11,7 +11,7 @@
         </div>
 
         <div class="space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <BaseInput
                     label="First Name"
                     :model-value="model.first_name"
@@ -31,6 +31,13 @@
                     @update:model-value="update('last_name', $event)"
                     :error="errors?.last_name"
                     required
+                />
+                <BaseInput
+                    label="Suffix"
+                    placeholder="e.g. Jr., Sr., III"
+                    :model-value="model.suffix"
+                    @update:model-value="update('suffix', $event)"
+                    :error="errors?.suffix"
                 />
             </div>
 

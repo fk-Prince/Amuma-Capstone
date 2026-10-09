@@ -16,6 +16,11 @@ trait CapitalizesNames
         $this->attributes['middle_name'] = NameFormatter::capitalize($value);
     }
 
+    public function setSuffixAttribute(?string $value): void
+    {
+        $this->attributes['suffix'] = NameFormatter::suffix($value);
+    }
+
     public function setLastNameAttribute(?string $value): void
     {
         $this->attributes['last_name'] = NameFormatter::capitalize($value);

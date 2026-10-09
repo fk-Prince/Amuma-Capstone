@@ -267,6 +267,7 @@ function patientName(booking: PortalBooking) {
             booking.patient?.first_name,
             booking.patient?.middle_name,
             booking.patient?.last_name,
+            booking.patient?.suffix,
         ) || "Unnamed Patient"
     );
 }

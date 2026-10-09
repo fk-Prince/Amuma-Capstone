@@ -105,10 +105,9 @@ class AdditionalChargeService
         $this->notificationService->notifyPatientAccess(
             $patient,
             sprintf(
-                'A new charge of ₱%s was added to %s %s\'s bill (%s): %s.',
+                'A new charge of ₱%s was added to %s\'s bill (%s): %s.',
                 number_format((float) $invoice->total_amount, 2),
-                $patient->first_name,
-                $patient->last_name,
+                $patient->display_name,
                 $invoice->invoice_code,
                 $invoice->paymentDescription()
             ),

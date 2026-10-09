@@ -26,6 +26,7 @@
                         patient?.first_name,
                         patient?.middle_name,
                         patient?.last_name,
+                        patient?.suffix,
                     )
                 "
             />

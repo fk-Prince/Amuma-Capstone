@@ -201,11 +201,22 @@ export interface EmployeeScheduleEntry {
     end_time: string | null;
 }
 
+export interface EmployeeShiftEntry {
+    caregiver_shift_id: number;
+    start_time: string;
+    end_time: string;
+    note: string | null;
+    resident_name: string;
+    room_no: string | null;
+    bed_no: string | null;
+}
+
 export interface EmployeeScheduleRow {
     employee_id: number;
     full_name: string | null;
     avatar: string | null;
     email: string | null;
     role_name: string | null;
+    shifts: EmployeeShiftEntry[];
     schedules: EmployeeScheduleEntry[];
 }

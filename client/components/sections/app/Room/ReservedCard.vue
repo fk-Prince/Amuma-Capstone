@@ -39,7 +39,7 @@ const reservedPatientName = computed(() => {
     const p: any = reservation.value?.patient;
     if (!p) return "Unnamed patient";
     if (p.first_name || p.last_name) {
-        return `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim();
+        return [p.first_name, p.last_name, p.suffix].filter(Boolean).join(" ");
     }
     if (p.name) return p.name;
     return "Unnamed patient";

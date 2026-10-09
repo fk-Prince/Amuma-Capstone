@@ -37,6 +37,15 @@ class EmployeeBranch extends Model
     }
 
 
+    public function caregiverShifts()
+    {
+        return $this->hasMany(
+            CaregiverShift::class,
+            'caregiver_id',
+            'employee_id'
+        );
+    }
+
     public function scheduleAssignments()
     {
         return $this->hasMany(

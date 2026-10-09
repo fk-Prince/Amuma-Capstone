@@ -71,7 +71,7 @@ class CaregiverShiftService
         return [
             'admission_id' => $admission->patient_admission_id,
             'patient_uuid' => $admission->patient?->uuid,
-            'full_name' => trim(($admission->patient?->first_name ?? '') . ' ' . ($admission->patient?->last_name ?? '')),
+            'full_name' => $admission->patient?->display_name ?? '',
             'room_no' => $admission->bed?->room?->room_no,
             'bed_no' => $admission->bed?->bed_no,
         ];

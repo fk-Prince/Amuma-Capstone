@@ -83,10 +83,7 @@ class InvoiceResource extends JsonResource
                     'description'          => $facility->description,
                     'patient_admission_id' =>$facility->patientAdmission?->patient_admission_id,
 
-                    'patient_name' => trim(
-                        ($facility->patientAdmission->patient->first_name ?? '') . ' ' .
-                        ($facility->patientAdmission->patient->last_name ?? '')
-                    ),
+                    'patient_name' => $facility->patientAdmission?->patient?->display_name ?? '',
                 ])
             ),
 
@@ -406,13 +403,11 @@ class InvoiceResource extends JsonResource
 
         return [
             'patient_id'    => $patient->patient_id,
-            'full_name'     => trim(
-                ($patient->first_name ?? '') . ' ' .
-                ($patient->last_name ?? '')
-            ) ?: null,
+            'full_name'     => $patient->display_name ?: null,
             'first_name'    => $patient->first_name,
             'middle_name'   => $patient->middle_name,
             'last_name'     => $patient->last_name,
+            'suffix'        => $patient->suffix,
             'gender'        => $patient->gender,
             'date_of_birth' => $patient->date_of_birth?->toDateString(),
             'age'           => $patient->date_of_birth?->age,

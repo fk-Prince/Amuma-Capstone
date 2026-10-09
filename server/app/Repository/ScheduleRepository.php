@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
+use App\Models\PatientAdmission;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\Service;
@@ -307,6 +308,21 @@ class ScheduleRepository
             ->with([
                 'employees:employee_id,user_id,first_name,last_name,avatar',
                 'employees.users:user_id,email',
+                'caregiverShifts' => fn($query) => $query
+                    ->where('is_active', true)
+                    ->whereHas(
+                        'admission',
+                        fn($admission) => $admission
+                            ->where('status', PatientAdmission::STATUS_ADMITTED)
+                            ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
+                    )
+                    ->with([
+                        'admission:patient_admission_id,patient_id,bed_id',
+                        'admission.patient:patient_id,first_name,last_name,suffix',
+                        'admission.bed:bed_id,room_id,bed_no',
+                        'admission.bed.room:room_id,room_no',
+                    ])
+                    ->orderBy('start_time'),
                 'scheduleAssignments' => function ($query) use ($scheduleScope) {
                     $query->where('is_active', true)
                         ->whereHas('scheduleService.schedule', $scheduleScope)
@@ -314,7 +330,7 @@ class ScheduleRepository
                             'scheduleService:schedule_services_id,schedule_id,service_id,hours_booked,type',
                             'scheduleService.service:service_id,service_name,maximum_duration',
                             'scheduleService.schedule:schedule_id,schedule_code,patient_id,scheduled_at,status,category',
-                            'scheduleService.schedule.patient:patient_id,first_name,last_name',
+                            'scheduleService.schedule.patient:patient_id,first_name,last_name,suffix',
                         ]);
                 },
             ])
@@ -524,7 +540,7 @@ class ScheduleRepository
         $today = (int) $counts->sum();
 
         $upcomingList = (clone $baseQuery)
-            ->with(['patient:patient_id,uuid,first_name,last_name'])
+            ->with(['patient:patient_id,uuid,first_name,last_name,suffix'])
             ->where('status', Schedule::STATUS_PENDING)
             ->where('scheduled_at', '>=', Carbon::now())
             ->orderBy('scheduled_at')
@@ -564,14 +580,14 @@ class ScheduleRepository
                 'today' => $today,
                 'next_slot_time' => $nextSlot?->scheduled_at?->format('h:i A'),
                 'next_slot_patient' => $nextSlot?->patient
-                    ? trim("{$nextSlot->patient->first_name} {$nextSlot->patient->last_name}")
+                    ? $nextSlot->patient->display_name
                     : null,
                 'upcoming_list' => $upcomingList->map(function ($schedule) {
                     return [
                         'schedule_id' => $schedule->schedule_id,
                         'reference_id' => $schedule->schedule_code,
                         'patient_name' => $schedule->patient
-                            ? trim("{$schedule->patient->first_name} {$schedule->patient->last_name}")
+                            ? $schedule->patient->display_name
                             : null,
                         'category' => $schedule->category,
                         'status' => $schedule->status,

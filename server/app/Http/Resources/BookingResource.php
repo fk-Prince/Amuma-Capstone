@@ -46,6 +46,7 @@ class BookingResource extends JsonResource
                 'first_name' => $data['patient']['first_name'] ?? null,
                 'middle_name' => $data['patient']['middle_name'] ?? null,
                 'last_name' => $data['patient']['last_name'] ?? null,
+                'suffix' => $data['patient']['suffix'] ?? null,
                 'gender' => $data['patient']['gender'] ?? null,
                 'citizenship' => $data['patient']['citizenship'] ?? null,
                 'occupation' => $data['patient']['occupation'] ?? null,

@@ -75,7 +75,7 @@ class VitalService
 
         $this->notificationService->notifyPatientAccess(
             $patient,
-            "New vital signs were recorded for {$patient->first_name} {$patient->last_name}.",
+            "New vital signs were recorded for {$patient->display_name}.",
             'Vitals',
             $user
         );

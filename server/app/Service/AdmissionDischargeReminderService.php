@@ -32,9 +32,8 @@ class AdmissionDischargeReminderService
             $this->notificationService->notifyPatientAccess(
                 $patient,
                 sprintf(
-                    "%s %s's stay at %s ends in %d %s (%s). Settle any balance or extend the stay before then, otherwise %s will be discharged.",
-                    $patient->first_name,
-                    $patient->last_name,
+                    "%s's stay at %s ends in %d %s (%s). Settle any balance or extend the stay before then, otherwise %s will be discharged.",
+                    $patient->display_name,
                     $patient->branch?->name ?? 'the facility',
                     $daysBefore,
                     $unit,

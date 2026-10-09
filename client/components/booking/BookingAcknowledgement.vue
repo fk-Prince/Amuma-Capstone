@@ -53,7 +53,12 @@ const patientName = computed(() => {
     const patient = props.booking.patient;
 
     return (
-        [patient?.first_name, patient?.middle_name, patient?.last_name]
+        [
+            patient?.first_name,
+            patient?.middle_name,
+            patient?.last_name,
+            patient?.suffix,
+        ]
             .filter(Boolean)
             .join(" ")
             .trim() || "—"

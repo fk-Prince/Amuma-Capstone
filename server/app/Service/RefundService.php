@@ -569,7 +569,7 @@ class RefundService
             )
             ->get();
 
-        $name = trim(($patient->first_name ?? '') . ' ' . ($patient->last_name ?? ''));
+        $name = $patient->display_name;
 
         $message = 'A withdrawal of ' . number_format($amount, 2)
             . ' in credit was requested'

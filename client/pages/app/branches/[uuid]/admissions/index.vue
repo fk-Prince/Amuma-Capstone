@@ -604,6 +604,7 @@ async function loadByReference() {
             first_name: booking.patient?.first_name ?? "",
             middle_name: booking.patient?.middle_name ?? "",
             last_name: booking.patient?.last_name ?? "",
+            suffix: booking.patient?.suffix ?? "",
             gender: booking.patient?.gender ?? "",
             citizenship: booking.patient?.citizenship ?? "",
             occupation: booking.patient?.occupation ?? "",
@@ -779,6 +780,7 @@ async function fetchBookings() {
                 patient_name: [
                     booking.patient.first_name,
                     booking.patient.last_name,
+                    booking.patient.suffix,
                 ]
                     .filter(Boolean)
                     .join(" "),

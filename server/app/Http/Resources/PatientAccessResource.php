@@ -53,6 +53,7 @@ class PatientAccessResource extends JsonResource
             'first_name' => $this->first_name,
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
+            'suffix' => $this->suffix,
             'gender' => $this->gender,
             'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'phone_number' => $this->phone_number,
@@ -61,7 +62,7 @@ class PatientAccessResource extends JsonResource
 
         if ($this->extended) {
             $data += [
-                'full_name' => trim("{$this->first_name} {$this->middle_name} {$this->last_name}"),
+                'full_name' => $this->full_name,
                 'full_address' => $this->location?->full_address,
                 'occupation' => $this->occupation,
                 'marital_status' => $this->marital_status,

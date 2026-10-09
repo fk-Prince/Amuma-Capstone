@@ -36,8 +36,9 @@ function fullName(
     firstName?: string | null,
     middleName?: string | null,
     lastName?: string | null,
+    suffix?: string | null,
 ) {
-    return [firstName, middleName, lastName].filter(Boolean).join(" ");
+    return [firstName, middleName, lastName, suffix].filter(Boolean).join(" ");
 }
 
 const facts = computed(() => [
@@ -99,6 +100,7 @@ const actions = [
                                 patient.first_name,
                                 patient.middle_name,
                                 patient.last_name,
+                                patient.suffix,
                             )
                         }}
                     </h1>
