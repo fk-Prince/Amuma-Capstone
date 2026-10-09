@@ -335,8 +335,13 @@ class PatientAdmissionService
 
     private function writeOffOutstanding(PatientAdmission $admission, ?User $user): void
     {
+        $invoiceIds = $admission->invoiceAdmission()->pluck('invoice_id')
+            ->merge($admission->additionalCharges()->pluck('invoice_id'))
+            ->filter()
+            ->unique();
+
         Invoice::with('allocations.refundAllocations', 'invoiceAdjustments')
-            ->whereIn('invoice_id', $admission->invoiceAdmission()->pluck('invoice_id')->unique())
+            ->whereIn('invoice_id', $invoiceIds)
             ->whereNotIn('status', Invoice::CLOSED_STATUSES)
             ->get()
             ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
