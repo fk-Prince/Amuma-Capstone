@@ -92,12 +92,8 @@ class RefundService
 
         $invoice->refresh()->load('allocations.refundAllocations.refund.transaction', 'invoiceAdjustments');
 
-        $creditable = $adjustment->type === InvoiceAdjustment::TYPE_VOID
-            ? $this->getNetPaidAmount($invoice)
-            : $this->getCreditableAmount($invoice);
-
         $amount = round(
-            min($creditable, abs((float) $adjustment->amount)),
+            min($this->getCreditableAmount($invoice), abs((float) $adjustment->amount)),
             2
         );
 

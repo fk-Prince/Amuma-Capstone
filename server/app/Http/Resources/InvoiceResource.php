@@ -81,7 +81,7 @@ class InvoiceResource extends JsonResource
                     'branch_contract_id'   => $facility->branchContract?->branch_contract_id,
                     'price'                => (float) $facility->price,
                     'description'          => $facility->description,
-                    'patient_admission_id' => $facility->patientAdmission?->patient_admission_id,
+                    'patient_admission_id' =>$facility->patientAdmission?->patient_admission_id,
 
                     'patient_name' => $facility->patientAdmission?->patient?->display_name ?? '',
                 ])
@@ -134,17 +134,20 @@ class InvoiceResource extends JsonResource
             'adjustments' => $this->whenLoaded(
                 'invoiceAdjustments',
                 fn() =>
-                $this->invoiceAdjustments
-                    ->reject(fn($adjustment) => $adjustment->type === \App\Models\InvoiceAdjustment::TYPE_VOID)
-                    ->map(fn($adjustment) => [
-                        'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
-                        'type'                  => $adjustment->type,
-                        'amount'                => (float) $adjustment->amount,
-                        'reason'                => $adjustment->reason,
-                        'created_at'            => $adjustment->created_at?->toIso8601String(),
-                    ])->values()
+                $this->invoiceAdjustments->map(fn($adjustment) => [
+                    'invoice_adjustment_id' => $adjustment->invoice_adjustment_id,
+                    'type'                  => $adjustment->type,
+                    'amount'                => (float) $adjustment->amount,
+                    'reason'                => $adjustment->reason,
+                    'created_at'            => $adjustment->created_at?->toIso8601String(),
+                ])
             ),
 
+            /*
+            |--------------------------------------------------------------------------
+            | DISCHARGE CALCULATION
+            |--------------------------------------------------------------------------
+            */
 
             'discharge_calculation' => $this->when(
                 $this->resource->relationLoaded('invoiceAdmissionLines'),
@@ -269,10 +272,10 @@ class InvoiceResource extends JsonResource
                 'refund_amount' => $dischargeTodayRefund,
 
                 'has_balance' =>
-                $dischargeTodayBalance > 0,
+                    $dischargeTodayBalance > 0,
 
                 'has_refund' =>
-                $dischargeTodayRefund > 0,
+                    $dischargeTodayRefund > 0,
             ],
         ];
     }
@@ -351,7 +354,7 @@ class InvoiceResource extends JsonResource
             $periodDays =
                 $admissionDate->diffInDays($periodEnd) + 1;
 
-            return round(
+            return round(   
                 ($contractPrice / $periodDays) * $daysUsed,
                 2
             );
