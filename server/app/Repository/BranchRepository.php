@@ -136,6 +136,8 @@ class BranchRepository
                 }
             );
 
+        $this->prioritizeStartingPrice($query);
+
         if ($sort === 'nearest' && $lat !== null && $long !== null) {
             $distanceExpr = 'CASE
                 WHEN locations.latitude IS NULL OR locations.longitude IS NULL THEN NULL
@@ -163,6 +165,32 @@ class BranchRepository
         }
 
         return $query->paginate($perPage);
+    }
+
+    private function prioritizeStartingPrice($query): void
+    {
+        $hasPlan = fn(string $codes) => "EXISTS (
+            SELECT 1 FROM branch_subscription bs
+            JOIN subscriptions s ON s.subscription_id = bs.subscription_id
+            JOIN plans p ON p.plan_id = s.plan_id
+            WHERE bs.branch_id = branches.branch_id AND p.plan_code IN ({$codes})
+        )";
+
+        $query->orderByRaw("(
+            ({$hasPlan("'A', 'C'")} AND EXISTS (
+                SELECT 1 FROM services sv
+                WHERE sv.branch_id = branches.branch_id
+                    AND sv.type IN ('online', 'both')
+                    AND sv.is_available = true
+            ))
+            OR
+            ({$hasPlan("'B', 'C'")} AND EXISTS (
+                SELECT 1 FROM branch_contracts bc
+                WHERE bc.branch_id = branches.branch_id
+                    AND bc.category = 'Facility'
+                    AND bc.is_active = true
+            ))
+        ) DESC");
     }
 
     public function getBranch(string $uuid)
