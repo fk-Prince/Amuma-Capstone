@@ -9,7 +9,9 @@ use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\InvoiceAdmission;
 use App\Models\InvoiceAdjustment;
+use App\Models\InvoiceServices;
 use App\Models\Patient;
+use App\Models\PatientAdmission;
 use App\Models\Payment;
 use App\Models\Refund;
 use App\Utils\InvoiceMoney;
@@ -161,6 +163,39 @@ class InvoiceRepository
             ->where('invoice_id', '>', $invoice->invoice_id)
             ->whereNotIn('status', Invoice::CLOSED_STATUSES)
             ->get();
+    }
+
+    public function owedAtDischarge(PatientAdmission $admission, array $exceptIds = [])
+    {
+        $invoiceIds = InvoiceAdmission::whereHas(
+            'admissionPeriod',
+            fn($query) => $query->where('patient_admission_id', $admission->patient_admission_id)
+        )->pluck('invoice_id')
+            ->merge($admission->additionalCharges()->pluck('invoice_id'))
+            ->merge(InvoiceServices::whereHas(
+                'scheduleService.schedule',
+                fn($query) => $query->where('patient_id', $admission->patient_id)
+            )->pluck('invoice_id'))
+            ->filter()
+            ->unique()
+            ->diff($exceptIds)
+            ->values();
+
+        if ($invoiceIds->isEmpty()) {
+            return collect();
+        }
+
+        return Invoice::with([
+            'allocations.refundAllocations.refund.transaction',
+            'invoiceAdjustments',
+            'invoiceAdmissionLines.admissionPeriod',
+        ])
+            ->whereIn('invoice_id', $invoiceIds)
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->get()
+            ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
+            ->sortBy(fn(Invoice $invoice) => $invoice->paymentOrder())
+            ->values();
     }
 
     public function getPatientWithUuid(array $payload)

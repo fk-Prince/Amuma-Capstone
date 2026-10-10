@@ -776,46 +776,115 @@
                             >
                                 <!-- e or a cancelled period -->
                                 Paid more than the invoices now ask for, usually
-                                after a downgrade. It stays on the account.
+                                after a downgrade.
+                                <template v-if="creditApplied <= 0">
+                                    It stays on the account.
+                                </template>
+                                <template
+                                    v-else-if="creditApplied >= accountCredit"
+                                >
+                                    All of it goes toward the balance below.
+                                </template>
+                                <template v-else>
+                                    {{ formatCurrency(creditApplied) }} of it
+                                    goes toward the balance below and the rest
+                                    stays on the account.
+                                </template>
                             </p>
                         </div>
 
                         <div
                             v-if="outstanding"
-                            class="mt-6 flex items-center justify-between gap-3 rounded-xl border px-5 py-4"
+                            class="mt-6 rounded-xl border px-5 py-4"
                             :class="
                                 overallBalance > 0
                                     ? 'border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10'
                                     : 'border-slate-200 bg-emerald-50 dark:border-white/10 dark:bg-emerald-500/10'
                             "
                         >
-                            <div>
-                                <p
-                                    class="text-sm font-semibold text-slate-700 dark:text-gray-300"
-                                >
-                                    Overall balance
-                                </p>
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <p
+                                        class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+                                    >
+                                        Overall balance
+                                    </p>
+
+                                    <p
+                                        class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    >
+                                        What this patient still owes, including
+                                        additional charges, services and
+                                        schedules, after any refund or account
+                                        credit is applied. Periods that have not
+                                        started are not counted.
+                                    </p>
+                                </div>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    class="shrink-0 text-lg font-bold"
+                                    :class="
+                                        overallBalance > 0
+                                            ? 'text-rose-600 dark:text-rose-300'
+                                            : 'text-emerald-600 dark:text-emerald-300'
+                                    "
                                 >
-                                    What this admission still owes, including
-                                    additional charges and not counting periods
-                                    that have not started. Services and
-                                    schedules are not included.
+                                    {{ formatCurrency(overallBalance) }}
                                 </p>
                             </div>
 
-                            <p
-                                class="shrink-0 text-lg font-bold"
-                                :class="
-                                    overallBalance > 0
-                                        ? 'text-rose-600 dark:text-rose-300'
-                                        : 'text-emerald-600 dark:text-emerald-300'
-                                "
+                            <div
+                                v-if="refundApplied > 0 || creditApplied > 0"
+                                class="mt-3 space-y-1.5 border-t border-slate-200/70 pt-3 text-xs dark:border-white/10"
                             >
-                                {{ formatCurrency(overallBalance) }}
-                            </p>
+                                <div class="flex justify-between gap-4">
+                                    <span
+                                        class="text-slate-500 dark:text-gray-400"
+                                    >
+                                        Owed
+                                    </span>
+
+                                    <span
+                                        class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                    >
+                                        {{ formatCurrency(balanceOwed) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-if="refundApplied > 0"
+                                    class="flex justify-between gap-4"
+                                >
+                                    <span
+                                        class="text-slate-500 dark:text-gray-400"
+                                    >
+                                        Paid from the refund
+                                    </span>
+
+                                    <span
+                                        class="shrink-0 font-medium text-emerald-600 dark:text-emerald-300"
+                                    >
+                                        −{{ formatCurrency(refundApplied) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-if="creditApplied > 0"
+                                    class="flex justify-between gap-4"
+                                >
+                                    <span
+                                        class="text-slate-500 dark:text-gray-400"
+                                    >
+                                        Paid from account credit
+                                    </span>
+
+                                    <span
+                                        class="shrink-0 font-medium text-emerald-600 dark:text-emerald-300"
+                                    >
+                                        −{{ formatCurrency(creditApplied) }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-6">
@@ -885,6 +954,11 @@
                                         Force discharge ends the stay and writes
                                         this admission's unpaid balance off as
                                         bad debt.
+                                        <template v-if="serviceBalance > 0">
+                                            Unpaid services and schedules are
+                                            not written off and stay on the
+                                            patient's account.
+                                        </template>
                                     </template>
 
                                     <template v-else>
@@ -1070,12 +1144,44 @@ const outstanding = computed(
     () => props.admission?.discharge_calculation?.outstanding ?? null,
 );
 
-const overallBalance = computed(() =>
-    getNumber(
-        outstanding.value?.admission_balance ??
-            outstanding.value?.accommodation_balance,
-    ),
+const calculation = computed(
+    () => props.admission?.discharge_calculation ?? null,
 );
+
+const serviceBalance = computed(() =>
+    getNumber(outstanding.value?.service_balance),
+);
+
+const balanceOwed = computed(() =>
+    getNumber(calculation.value?.balance_owed),
+);
+
+const refundApplied = computed(() =>
+    getNumber(calculation.value?.refund_applied),
+);
+
+const creditApplied = computed(() =>
+    getNumber(calculation.value?.credit_applied),
+);
+
+const overallBalance = computed(() => {
+    const balance = calculation.value?.overall_balance;
+
+    if (balance !== undefined && balance !== null) {
+        return getNumber(balance);
+    }
+
+    return (
+        Math.round(
+            (getNumber(
+                outstanding.value?.admission_balance ??
+                    outstanding.value?.accommodation_balance,
+            ) +
+                serviceBalance.value) *
+                100,
+        ) / 100
+    );
+});
 
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];

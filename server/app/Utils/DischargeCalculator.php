@@ -5,6 +5,8 @@ namespace App\Utils;
 use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\PatientAdmission;
+use App\Repository\InvoiceRepository;
+use App\Repository\RefundRepository;
 use Carbon\Carbon;
 
 
@@ -115,6 +117,10 @@ class DischargeCalculator
             'is_within_refund_window' => $plan['within_window'],
             'is_under_required_payment' => $stillOwed > 0,
             'payment_shortfall' => $stillOwed,
+            'balance_owed' => $plan['balance_owed'],
+            'refund_applied' => $plan['refund_applied'],
+            'credit_applied' => $plan['credit_applied'],
+            'overall_balance' => $plan['balance'],
 
             'period_code' => AdmissionPeriod::codeFor($period->admission_period_id),
             'invoice_codes' => $current
@@ -284,15 +290,34 @@ class DischargeCalculator
             }
         }
 
+        $refund = (float) collect($invoices)->sum('refund');
+        $owed = (float) collect($invoices)->sum('owed');
+
         // Money refundable on one invoice first settles what is still owed on
         // another, so the resident is never refunded and billed for the same stay.
-        $offset = round(min(
-            (float) collect($invoices)->sum('refund'),
-            (float) collect($invoices)->sum('owed')
+        $offset = round(min($refund, $owed), 2);
+
+        // What is left of the refund, then any credit already on the account,
+        // pays everything else the discharge leaves owing: the admission's other
+        // invoices and charges, and the patient's services and schedules.
+        $owedElsewhere = app(InvoiceRepository::class)
+            ->owedAtDischarge($admission, array_keys($invoices));
+
+        $balanceOwed = round($owed - $offset + (float) $owedElsewhere->sum('balance_due'), 2);
+        $refundApplied = round(min($refund - $offset, $balanceOwed), 2);
+
+        $creditApplied = round(min(
+            app(RefundRepository::class)->creditFor($admission->patient_id),
+            $balanceOwed - $refundApplied
         ), 2);
 
         return [
             'offset' => $offset,
+            'owed_elsewhere' => $owedElsewhere,
+            'balance_owed' => $balanceOwed,
+            'refund_applied' => $refundApplied,
+            'credit_applied' => $creditApplied,
+            'balance' => round($balanceOwed - $refundApplied - $creditApplied, 2),
             'within_window' => $withinWindow,
             'period_start' => $window['start'],
             'period_end' => $window['end'],
