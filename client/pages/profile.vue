@@ -621,27 +621,44 @@
                                         @click="openNotification(item)"
                                     >
                                         <img
-                                            v-if="item.branch?.image"
+                                            v-if="
+                                                item.branch?.image &&
+                                                !failedNotificationImages.has(
+                                                    item.id,
+                                                )
+                                            "
                                             :src="item.branch.image"
                                             :alt="item.branch.name ?? 'Branch'"
                                             class="mt-0.5 h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-slate-200 dark:ring-white/10"
+                                            @error="
+                                                failedNotificationImages.add(
+                                                    item.id,
+                                                )
+                                            "
                                         />
 
                                         <span
                                             v-else
                                             class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                                             :class="
-                                                notificationToneFor(
-                                                    item.message_type,
-                                                ).wrapper
+                                                item.branch
+                                                    ? 'bg-slate-100 text-blue-500 ring-1 ring-slate-200 dark:bg-white/5 dark:text-blue-400 dark:ring-white/10'
+                                                    : notificationToneFor(
+                                                          item.message_type,
+                                                      ).wrapper
                                             "
                                         >
+                                            <Building2
+                                                v-if="item.branch"
+                                                class="h-4 w-4"
+                                            />
                                             <component
                                                 :is="
                                                     notificationToneFor(
                                                         item.message_type,
                                                     ).icon
                                                 "
+                                                v-else
                                                 class="h-4 w-4"
                                             />
                                         </span>
@@ -791,6 +808,7 @@ import {
 import { useRoute, useRouter } from "vue-router";
 import {
     Bell,
+    Building2,
     CalendarClock,
     CheckCheck,
     ClipboardList,
@@ -1248,6 +1266,8 @@ const NOTIFICATION_TONES: Record<string, { icon: any; wrapper: string }> = {
             "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400",
     },
 };
+
+const failedNotificationImages = reactive(new Set<string | number>());
 
 const notificationToneFor = (type: string) =>
     NOTIFICATION_TONES[type] ?? {
