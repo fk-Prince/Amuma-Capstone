@@ -289,15 +289,12 @@ class RefundService
         }
 
         // What the refunds on paid invoices should now be spent on: the invoices
-        // that are still owed after the stay is cut down, then everything else
-        // the discharge leaves owing.
+        // that are still owed after the stay is cut down.
         return [
-            'offset' => round((float) $plan['offset'] + (float) $plan['balance_offset'], 2),
+            'offset' => (float) $plan['offset'],
             'owed_invoices' => collect($plan['invoices'])
                 ->filter(fn(array $entry) => $entry['owed'] > 0)
-                ->map(fn(array $entry) => $entry['invoice'])
-                ->merge($plan['owed_elsewhere'])
-                ->map(fn($invoice) => $invoice->fresh())
+                ->map(fn(array $entry) => $entry['invoice']->fresh())
                 ->filter()
                 ->values(),
         ];

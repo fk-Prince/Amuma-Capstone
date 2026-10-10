@@ -760,15 +760,8 @@
                                     <PatientAdmissions
                                         v-else
                                         :admissions="admissions"
-                                        :discharge-calculation="
-                                            summary.discharge_calculation ??
-                                            null
-                                        "
                                         @view-admission-invoices="
                                             openAdmissionInvoices
-                                        "
-                                        @view-discharge-termination="
-                                            viewDischargeTermination
                                         "
                                         :can-extend="canRecordPayment"
                                         @extend-stay="openExtendModal"
@@ -1880,13 +1873,6 @@
             @close="cancelExtendPayment"
         />
 
-        <DischargeCalculationModal
-            :calculation="
-                dischargeModalOpen ? selectedDischargeCalculation : null
-            "
-            @close="closeDischargeTermination"
-        />
-
         <PaymentReceipt
             v-if="activeReceipt"
             :receipt="activeReceipt"
@@ -1948,7 +1934,6 @@ import { amountFor as resolveInvoiceAmount } from "~/utils/invoiceSelection";
 import BillingCycleModal from "~/components/sections/app/Patient/BillingCycleModal.vue";
 import BillingHistoryModal from "~/components/sections/app/Billing/BillingHistoryModal.vue";
 import WithdrawCreditsModal from "~/components/sections/app/Billing/WithdrawCreditsModal.vue";
-import DischargeCalculationModal from "~/components/sections/app/Billing/DischargeCalculationModal.vue";
 import EntityInvoicesModal from "~/components/sections/app/Billing/EntityInvoicesModal.vue";
 import ExtendPaymentModal from "~/components/sections/app/Billing/ExtendPaymentModal.vue";
 import InvoicePickerModal from "~/components/sections/app/Billing/InvoicePickerModal.vue";
@@ -3276,34 +3261,6 @@ function viewInvoice(invoiceCode: string) {
         },
     });
 }
-const dischargeModalOpen = ref(false);
-const selectedDischargeAdmissionId = ref<number | null>(null);
-
-const selectedDischargeCalculation = computed(() => {
-    if (!summary.value?.discharge_calculation) {
-        return null;
-    }
-
-    if (
-        selectedDischargeAdmissionId.value !==
-        summary.value.discharge_calculation.admission_id
-    ) {
-        return null;
-    }
-
-    return summary.value.discharge_calculation;
-});
-
-function viewDischargeTermination(admissionId: number) {
-    selectedDischargeAdmissionId.value = admissionId;
-    dischargeModalOpen.value = true;
-}
-
-function closeDischargeTermination() {
-    dischargeModalOpen.value = false;
-    selectedDischargeAdmissionId.value = null;
-}
-
 const extendModalOpen = ref(false);
 const extendAdmissionId = ref<number | null>(null);
 const extending = ref(false);

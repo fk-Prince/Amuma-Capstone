@@ -107,14 +107,10 @@
                     </div>
 
                     <div
-                        v-if="
-                            canViewDischarge(admission) ||
-                            (canExtend && isCurrentAdmission(admission))
-                        "
+                        v-if="canExtend && isCurrentAdmission(admission)"
                         class="mt-5 flex flex-wrap justify-end gap-2"
                     >
                         <button
-                            v-if="canExtend && isCurrentAdmission(admission)"
                             type="button"
                             class="inline-flex items-center gap-2 rounded-xl border border-primary-200 px-4 py-2.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
                             @click="
@@ -125,20 +121,6 @@
                             "
                         >
                             Extend Stay
-                        </button>
-
-                        <button
-                            v-if="canViewDischarge(admission)"
-                            type="button"
-                            class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-danger/90"
-                            @click="
-                                emit(
-                                    'view-discharge-termination',
-                                    admission.patient_admission_id,
-                                )
-                            "
-                        >
-                            View Discharge
                         </button>
                     </div>
 
@@ -194,39 +176,20 @@
 import { formatAmount } from "~/utils/currency";
 import { statusClasses } from "~/utils/invoiceStatus";
 import { formatDate } from "~/utils/time";
-import type { DischargeCalculation, PatientAdmission } from "~/types/invoice";
+import type { PatientAdmission } from "~/types/invoice";
 
-const props = defineProps<{
+defineProps<{
     admissions: PatientAdmission[];
-    dischargeCalculation?: DischargeCalculation | null;
     canExtend?: boolean;
 }>();
 
 const emit = defineEmits<{
     (event: "view-admission-invoices", admissionId: number): void;
-    (event: "view-discharge-termination", admissionId: number): void;
     (event: "extend-stay", admissionId: number): void;
 }>();
 
 function isCurrentAdmission(admission: PatientAdmission) {
     return admission.status?.toLowerCase() === "admitted";
-}
-
-function canViewDischarge(admission: PatientAdmission) {
-    const calculation = props.dischargeCalculation;
-
-    if (!isCurrentAdmission(admission) || !calculation) {
-        return false;
-    }
-
-    if (calculation.admission_id !== admission.patient_admission_id) {
-        return false;
-    }
-
-    return (
-        
-        calculation.is_within_refund_window === true
-    );
 }
 
 function formatMoney(amount: number | string | null | undefined) {

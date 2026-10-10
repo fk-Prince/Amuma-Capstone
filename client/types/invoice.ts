@@ -280,8 +280,6 @@ export interface DischargeCalculation {
     is_within_refund_window: boolean;
     is_under_required_payment: boolean;
     payment_shortfall: number;
-    refund_toward_balance?: number;
-    balance_after_refund?: number;
     // True once the invoice itself is void or written off: it is closed, so no
     // payment is required and no refund is worked out against it.
     is_closed_invoice?: boolean;
@@ -427,7 +425,6 @@ export interface PatientInvoiceSummary {
     refunds: PatientRefund[];
     admissions: PatientAdmission[];
     services: InvoiceServiceLine[];
-    discharge_calculation: DischargeCalculation | null;
 }
 
 //  0000000000000000000000

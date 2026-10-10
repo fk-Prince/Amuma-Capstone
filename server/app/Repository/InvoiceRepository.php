@@ -9,14 +9,10 @@ use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\InvoiceAdmission;
 use App\Models\InvoiceAdjustment;
-use App\Models\InvoiceServices;
 use App\Models\Patient;
-use App\Models\PatientAdmission;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Utils\DischargeCalculator;
 use App\Utils\InvoiceMoney;
-use App\Utils\OutstandingBalance;
 use Carbon\Carbon;
 
 class InvoiceRepository
@@ -165,39 +161,6 @@ class InvoiceRepository
             ->where('invoice_id', '>', $invoice->invoice_id)
             ->whereNotIn('status', Invoice::CLOSED_STATUSES)
             ->get();
-    }
-
-    public function owedAtDischarge(PatientAdmission $admission, array $exceptIds = [])
-    {
-        $invoiceIds = InvoiceAdmission::whereHas(
-            'admissionPeriod',
-            fn($query) => $query->where('patient_admission_id', $admission->patient_admission_id)
-        )->pluck('invoice_id')
-            ->merge($admission->additionalCharges()->pluck('invoice_id'))
-            ->merge(InvoiceServices::whereHas(
-                'scheduleService.schedule',
-                fn($query) => $query->where('patient_id', $admission->patient_id)
-            )->pluck('invoice_id'))
-            ->filter()
-            ->unique()
-            ->diff($exceptIds)
-            ->values();
-
-        if ($invoiceIds->isEmpty()) {
-            return collect();
-        }
-
-        return Invoice::with([
-            'allocations.refundAllocations.refund.transaction',
-            'invoiceAdjustments',
-            'invoiceAdmissionLines.admissionPeriod',
-        ])
-            ->whereIn('invoice_id', $invoiceIds)
-            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
-            ->get()
-            ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
-            ->sortBy(fn(Invoice $invoice) => $invoice->paymentOrder())
-            ->values();
     }
 
     public function getPatientWithUuid(array $payload)
@@ -529,7 +492,6 @@ class InvoiceRepository
 
         if ($wantsAdmissions) {
             $summary['admissions'] = $this->formatAdmissions($patientInvoices);
-            $summary['discharge_calculation'] = $this->getPatientDischargeCalculation($patientInvoices);
         }
 
         if ($wantsServices) {
@@ -764,76 +726,6 @@ class InvoiceRepository
                 ];
             })
             ->values();
-    }
-
-
-    private function getPatientDischargeCalculation(
-        mixed $patientInvoices
-    ): ?array {
-        $admissionItems = $patientInvoices
-            ->flatMap(
-                fn($invoice) =>
-                $invoice->invoiceAdmissionLines->map(
-                    fn($invoiceAdmissionLines) => [
-                        'invoice' => $invoice,
-                        'period' => $invoiceAdmissionLines->admissionPeriod,
-                        'admission' => $invoiceAdmissionLines->patientAdmission,
-                    ]
-                )
-            )
-            ->filter(
-                fn($item) =>
-                $item['admission'] !== null &&
-                    $item['period'] !== null &&
-                    strtolower($item['admission']->status) === 'admitted'
-            )
-            ->sortBy(fn($item) => $item['period']->start_date)
-            ->values();
-
-        if ($admissionItems->isEmpty()) {
-            return null;
-        }
-
-        // Read through the admission so the screen and the discharge itself
-        // agree on which period is current. Sorting the lines here instead
-        // picked whichever invoice came back first, which could show a prepaid
-        // future period in place of the stay being ended.
-        $currentPeriodId = $admissionItems->first()['admission']
-            ->currentPeriod()
-            ->value('admission_period_id');
-
-        $item = $admissionItems->first(
-            fn($item) => $item['period']->admission_period_id === $currentPeriodId
-        ) ?? $admissionItems->first();
-
-        $calculation = DischargeCalculator::getDischargeCalculation(
-            $item['invoice'],
-            $item['admission'],
-            $item['period']
-        );
-
-        $futurePeriodIds = $admissionItems
-            ->filter(
-                fn($row) =>
-                $row['admission']->patient_admission_id === $item['admission']->patient_admission_id
-                    && $row['period']->admission_period_id !== $currentPeriodId
-                    && !in_array($row['period']->status, \App\Models\AdmissionPeriod::CLOSED_STATUSES, true)
-                    && Carbon::parse($row['period']->start_date)
-                    ->gte(Carbon::parse($item['period']->end_date))
-            )
-            ->map(fn($row) => $row['period']->admission_period_id)
-            ->unique()
-            ->values()
-            ->all();
-
-        $calculation['outstanding'] = OutstandingBalance::forInvoices(
-            $patientInvoices,
-            $item['invoice'],
-            $futurePeriodIds,
-            $item['admission']->patient_admission_id
-        );
-
-        return $calculation;
     }
 
     private function refundsIssuedBetween(

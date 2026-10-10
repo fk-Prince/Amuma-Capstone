@@ -36,7 +36,6 @@ class PatientInvoiceSummaryResource extends JsonResource
             'services',
             'admission_invoices',
             'service_invoices',
-            'discharge_calculation',
         ] as $section) {
             if (array_key_exists($section, $this->resource)) {
                 $summary[$section] = $this->resource[$section];
