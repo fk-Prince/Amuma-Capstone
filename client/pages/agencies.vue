@@ -78,6 +78,17 @@ const features = [
 
 const roles = [
     {
+        id: "agency_owner",
+        label: "Agency owner",
+        summary: "Every branch under one account, with full control over each of them.",
+        sees: [
+            "All branches, switched from one login",
+            "Full access to every module in every branch",
+            "Branch managers, staff and their permissions",
+            "Subscription plans and branch settings",
+        ],
+    },
+    {
         id: "branch_manager",
         label: "Branch manager",
         summary: "The whole branch at a glance, with the controls to run it.",
@@ -86,6 +97,17 @@ const roles = [
             "Bookings, patients, schedules and admissions",
             "Rooms, beds and services",
             "Employees, billing and reports",
+        ],
+    },
+    {
+        id: "admission",
+        label: "Admission staff",
+        summary: "The front desk: bookings, new patients and admissions, without billing or clinical charting.",
+        sees: [
+            "Booking requests to approve or reply to",
+            "Patient records, created and updated",
+            "Admissions, room changes and discharges",
+            "Schedules, with rooms, beds and services to view",
         ],
     },
     {
@@ -107,7 +129,6 @@ const roles = [
             "Invoices, balances and payments",
             "Adjustments, refunds and write-offs",
             "Balance statements for families",
-            "Subscription and contract billing",
         ],
     },
     {

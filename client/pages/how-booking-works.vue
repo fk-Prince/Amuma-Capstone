@@ -68,7 +68,7 @@ const steps = [
     {
         title: "The agency responds",
         text: "Admission staff review the request and assign a caregiver or a room. You follow the outcome in your family portal.",
-        link: { label: "Explore the family portal", to: "/for-families" },
+        link: { label: "Explore the family portal", to: "/families" },
         mock: {
             title: "Booking status",
             rows: [
@@ -126,7 +126,7 @@ onBeforeUnmount(clearTimer);
             highlight="five steps"
             subtitle="Booking care with AMUMA happens online. Here is exactly what to expect, from finding a provider to following the visit in your portal."
             :primary="{ label: 'Find a care provider', to: '/booking/search' }"
-            :secondary="{ label: 'Explore the family portal', to: '/for-families' }"
+            :secondary="{ label: 'Explore the family portal', to: '/families' }"
         />
 
         <section class="bg-white py-24 dark:bg-secondary">

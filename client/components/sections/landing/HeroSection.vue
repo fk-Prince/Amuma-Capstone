@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { Star } from "lucide-vue-next";
 import { heroImage } from "~/composables/useHeroImages";
+
+const reviewers = [
+    { initials: "BS", tone: "bg-rose-400" },
+    { initials: "AW", tone: "bg-primary" },
+    { initials: "AM", tone: "bg-teal-500" },
+    { initials: "JR", tone: "bg-violet-400" },
+];
 
 
 const lightImg = heroImage("agency", "light");
@@ -103,7 +111,7 @@ const badges = [
                     </NuxtLink>
 
                     <NuxtLink
-                        to="/for-agencies"
+                        to="/agencies"
                         class="rounded-xl border border-primary px-7 py-3.5 text-[0.95rem] font-bold text-primary transition hover:bg-primary hover:text-white"
                     >
                         Scale Your Agency Today
@@ -117,7 +125,7 @@ const badges = [
                     <NuxtLink
                         v-for="badge in badges"
                         :key="badge.label"
-                        to="/for-agencies#features"
+                        to="/agencies#features"
                         class="group flex items-center gap-2 text-xs text-muted transition-colors hover:text-primary dark:text-gray-400"
                     >
                         <span
@@ -144,35 +152,57 @@ const badges = [
                     style="animation-delay: 360ms"
                     @click.prevent="scrollToId('testimonials')"
                 >
-                    <div class="flex">
-                        <div
-                            class="ml-0 h-9 w-9 rounded-full border-2 border-white bg-danger dark:border-secondary"
-                        ></div>
+                    <div class="flex items-center">
+                        <span
+                            v-for="(person, i) in reviewers"
+                            :key="person.initials"
+                            class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-0.5 dark:border-secondary"
+                            :class="[person.tone, i > 0 ? '-ml-3' : '']"
+                            :style="{ transitionDelay: `${i * 40}ms` }"
+                        >
+                            {{ person.initials }}
+                        </span>
 
-                        <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-primary dark:border-secondary"
-                        ></div>
-
-                        <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-accent dark:border-secondary"
-                        ></div>
-
-                        <div
-                            class="-ml-3 h-9 w-9 rounded-full border-2 border-white bg-purple-400 dark:border-secondary"
-                        ></div>
+                        <span
+                            class="-ml-3 flex h-10 min-w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 px-1.5 text-[11px] font-bold text-muted-dark shadow-sm ring-1 ring-black/5 dark:border-secondary dark:bg-secondary-800 dark:text-gray-300"
+                        >
+                            +124
+                        </span>
                     </div>
 
-                    <div>
-                        <div class="text-yellow-400">★★★★★</div>
+                    <div class="h-10 w-px bg-gray-200 dark:bg-white/10"></div>
 
-                        <p class="text-sm text-muted-dark dark:text-gray-300">
-                            <strong>4.9/5</strong> from 128+ reviews
-                        </p>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="text-xl font-black leading-none text-secondary dark:text-white"
+                            >
+                                4.9
+                            </span>
+
+                            <div
+                                class="flex gap-0.5"
+                                role="img"
+                                aria-label="Rated 4.9 out of 5 stars"
+                            >
+                                <Star
+                                    v-for="n in 5"
+                                    :key="n"
+                                    class="h-4 w-4 fill-amber-400 text-amber-400"
+                                />
+                            </div>
+                        </div>
 
                         <p
-                            class="text-xs text-muted transition-colors group-hover:text-primary dark:text-gray-400"
+                            class="mt-1 text-xs text-muted-dark dark:text-gray-300"
                         >
-                            Loved by caregivers and agencies
+                            from 128+ reviews
+                            <span class="text-muted dark:text-gray-500">·</span>
+                            <span
+                                class="text-muted transition-colors group-hover:text-primary dark:text-gray-400"
+                            >
+                                Loved by caregivers and agencies
+                            </span>
                         </p>
                     </div>
                 </a>
@@ -263,20 +293,26 @@ const badges = [
                         </div>
 
                         <div
-                            class="w-[240px] rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] motion-safe:animate-floatB dark:border-white/10 dark:bg-secondary-800"
+                            class="w-[280px] rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_18px_40px_rgba(15,23,42,0.14)] motion-safe:animate-floatB dark:border-white/10 dark:bg-secondary-800"
                         >
                             <div class="mb-3 flex items-center gap-3">
                                 <div
-                                    class="relative h-11 w-11 rounded-full bg-gradient-to-br from-yellow-500 to-amber-700"
+                                    class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-600 text-sm font-bold text-white shadow-md shadow-amber-500/25"
                                 >
+                                    BW
+
                                     <span
-                                        class="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-secondary-800"
-                                    ></span>
+                                        class="absolute right-0 bottom-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500 dark:border-secondary-800"
+                                    >
+                                        <span
+                                            class="absolute inset-0 rounded-full bg-green-500 opacity-60 motion-safe:animate-ping"
+                                        ></span>
+                                    </span>
                                 </div>
 
-                                <div>
+                                <div class="min-w-0">
                                     <h4
-                                        class="text-sm font-bold text-secondary dark:text-white"
+                                        class="truncate text-sm font-bold text-secondary dark:text-white"
                                     >
                                         Bunny Wawa
                                     </h4>
@@ -286,19 +322,30 @@ const badges = [
                                     >
                                         Caregiver
                                     </p>
-
-                                    <span
-                                        class="mt-1 inline-flex rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600"
-                                    >
-                                        Available
-                                    </span>
                                 </div>
+
+                                <span
+                                    class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600 dark:bg-green-500/15 dark:text-green-400"
+                                >
+                                    <span
+                                        class="h-1.5 w-1.5 rounded-full bg-green-500"
+                                    ></span>
+                                    Available
+                                </span>
                             </div>
 
                             <div
-                                class="mb-3 text-xs text-muted-dark dark:text-gray-300"
+                                class="mb-3 flex items-center gap-1.5 text-xs text-muted-dark dark:text-gray-300"
                             >
-                                ⭐ 4.9 (128 reviews)
+                                <Star
+                                    class="h-3.5 w-3.5 fill-amber-400 text-amber-400"
+                                />
+                                <strong class="text-secondary dark:text-white"
+                                    >4.9</strong
+                                >
+                                <span class="text-muted dark:text-gray-400"
+                                    >(128 reviews)</span
+                                >
                             </div>
 
                             <div class="flex gap-2">

@@ -32,7 +32,7 @@ const content = {
     agency: {
         title: "Less time on admin, more time on care.",
         text: "Everything your team does between a booking and a paid invoice lives in one system, with each person seeing only what their role needs.",
-        cta: { label: "See AMUMA for agencies", to: "/for-agencies" },
+        cta: { label: "See AMUMA for agencies", to: "/agencies" },
         items: [
             {
                 icon: CalendarCheck,
@@ -59,7 +59,7 @@ const content = {
     family: {
         title: "Care you can see, from wherever you are.",
         text: "Find a provider, book a visit, and follow your loved one's care in a portal made for families.",
-        cta: { label: "See AMUMA for families", to: "/for-families" },
+        cta: { label: "See AMUMA for families", to: "/families" },
         items: [
             {
                 icon: Search,

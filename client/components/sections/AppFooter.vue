@@ -143,8 +143,8 @@ const linkClass =
 const learnLinks = [
     { label: "About us", to: "/company" },
     { label: "Reviews", to: "/company/reviews" },
-    { label: "For agencies", to: "/for-agencies" },
-    { label: "For families", to: "/for-families" },
+    { label: "For agencies", to: "/agencies" },
+    { label: "For families", to: "/families" },
     { label: "How booking works", to: "/how-booking-works" },
     { label: "FAQ", to: "/faq" },
 ];

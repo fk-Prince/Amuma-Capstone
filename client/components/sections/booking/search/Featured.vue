@@ -26,10 +26,7 @@
                 </p>
             </div>
 
-            <div
-                v-if="loading"
-                class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
+            <div v-if="loading" :class="gridClass">
                 <div
                     v-for="n in 3"
                     :key="n"
@@ -52,7 +49,7 @@
                 </div>
             </div>
 
-            <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-else :class="gridClass">
                 <CardBooking
                     :variant="1"
                     v-for="branch in branches"
@@ -60,6 +57,28 @@
                     :branch="branch"
                     @select="handleSelect"
                 />
+
+                <NuxtLink
+                    v-if="branches.length > 0 && branches.length < 3"
+                    to="/booking/search"
+                    class="group flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-primary-200 bg-white/60 p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-xl dark:border-primary-500/30 dark:bg-white/5"
+                >
+                    <span
+                        class="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300"
+                    >
+                        <Search class="h-5 w-5" />
+                    </span>
+                    <span class="font-semibold text-secondary dark:text-white">
+                        Browse all providers
+                    </span>
+                    <span class="max-w-[220px] text-xs leading-relaxed text-muted dark:text-gray-400">
+                        Search by location, service and availability.
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary dark:text-primary-300">
+                        Start searching
+                        <ArrowRight class="h-3 w-3 transition-transform group-hover:translate-x-1" />
+                    </span>
+                </NuxtLink>
             </div>
 
             <div
@@ -74,6 +93,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { Search, ArrowRight } from "lucide-vue-next";
 import { branchService } from "~/api/branch/BranchService";
 import CardBooking from "./CardBooking.vue";
 import type { BranchRetrieve } from "~/types/branch";
@@ -82,6 +102,8 @@ defineEmits(["select"]);
 
 const branches = ref<BranchRetrieve[]>([]);
 const loading = ref(true);
+
+const gridClass = "grid gap-5 sm:grid-cols-2 lg:grid-cols-3";
 
 const handleSelect = (branch: BranchRetrieve) => {
     navigateTo({

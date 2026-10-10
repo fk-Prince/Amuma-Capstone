@@ -42,7 +42,7 @@ const faqs: Faq[] = [
     {
         q: "Who sees what inside AMUMA?",
         a: "Access follows roles. Nurses and caregivers see their patients and schedules, cashiers see invoices and balances, branch managers see the whole branch, and a family member sees only their own loved one.",
-        link: { label: "See each role's view", to: "/for-agencies#roles" },
+        link: { label: "See each role's view", to: "/agencies#roles" },
     },
     {
         q: "How do payments work?",
@@ -51,7 +51,7 @@ const faqs: Faq[] = [
     {
         q: "What can a family see after booking?",
         a: "The family portal shows your loved one's profile, upcoming schedule, medications, vital signs, care updates, messages and balance.",
-        link: { label: "Explore the family portal", to: "/for-families" },
+        link: { label: "Explore the family portal", to: "/families" },
     },
     {
         q: "How does an agency get started?",

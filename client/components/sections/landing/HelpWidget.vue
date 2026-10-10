@@ -24,7 +24,7 @@ const links = [
         icon: Building2,
         label: "I run a care agency",
         hint: "See what AMUMA does for you",
-        to: "/for-agencies",
+        to: "/agencies",
     },
     {
         icon: MessageCircleQuestion,

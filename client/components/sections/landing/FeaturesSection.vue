@@ -11,7 +11,7 @@ const cards = [
         title: "scheduling that works",
         text: "Assign shifts and manage availability seamlessly.",
         image: scheduleImg,
-        to: "/for-agencies#scheduling",
+        to: "/agencies#scheduling",
         wide: false,
     },
     {
@@ -20,7 +20,7 @@ const cards = [
         title: "and billing plans",
         text: "Handle payments and invoicing automatically.",
         image: billingImg,
-        to: "/for-agencies#billing",
+        to: "/agencies#billing",
         wide: false,
     },
     {
@@ -29,7 +29,7 @@ const cards = [
         title: "coverage that captures",
         text: "Integrated, seamless 24/7 security recording and retrieval.",
         image: securityImg,
-        to: "/for-agencies#security",
+        to: "/agencies#security",
         wide: true,
     },
 ];
@@ -73,7 +73,7 @@ const cards = [
                 </p>
 
                 <NuxtLink
-                    to="/for-agencies#features"
+                    to="/agencies#features"
                     class="group inline-flex items-center gap-2 font-semibold text-primary"
                 >
                     Explore

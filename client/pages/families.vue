@@ -103,7 +103,6 @@ const activeItem = computed(
 
 // "Which kind of care?" picker
 const place = ref<"home" | "facility" | "unsure" | null>(null);
-const frequency = ref<"visits" | "daily" | "round-the-clock" | null>(null);
 
 const placeOptions = [
     { id: "home", label: "At home" },
@@ -111,47 +110,36 @@ const placeOptions = [
     { id: "unsure", label: "I'm not sure yet" },
 ] as const;
 
-const frequencyOptions = [
-    { id: "visits", label: "A few visits a week" },
-    { id: "daily", label: "Help every day" },
-    { id: "round-the-clock", label: "Around the clock" },
-] as const;
-
 const recommendation = computed(() => {
-    if (!place.value || !frequency.value) return null;
-
-    if (
-        place.value === "facility" ||
-        (place.value === "unsure" && frequency.value === "round-the-clock")
-    ) {
+    if (place.value === "facility") {
         return {
             title: "A care facility may suit best",
             text: "A facility gives your loved one a room and a care team close by, with admission, monitoring and daily care handled in one place. Look for providers that offer in-house care.",
             to: "/booking/search?plan_code=B",
-            label: "Find in-house facilities",
         };
     }
 
-    if (place.value === "home" && frequency.value === "round-the-clock") {
+    if (place.value === "home") {
         return {
-            title: "Look for live-in home care",
-            text: "Some home-care agencies offer live-in caregivers so help is there around the clock without leaving home.",
+            title: "Home care visits could be a good fit",
+            text: "Caregivers come to your loved one on a schedule, from a few visits a week to daily support.",
             to: "/booking/search?plan_code=A",
-            label: "Find home care providers",
         };
     }
 
-    return {
-        title: "Home care visits could be a good fit",
-        text: "Caregivers come to your loved one on a schedule, from a few visits a week to daily support.",
-        to: "/booking/search?plan_code=A",
-        label: "Find home care providers",
-    };
+    if (place.value === "unsure") {
+        return {
+            title: "Look at both options",
+            text: "Browse home care and in-house facilities side by side, then talk with a provider about what your loved one needs.",
+            to: "/booking/search",
+        };
+    }
+
+    return null;
 });
 
 function resetPicker() {
     place.value = null;
-    frequency.value = null;
 }
 
 const reasons = [
@@ -283,7 +271,7 @@ const reasons = [
                     <p
                         class="mx-auto max-w-[520px] text-sm leading-7 text-muted dark:text-gray-400"
                     >
-                        Answer two quick questions for a starting point. It's a
+                        Answer one quick question for a starting point. It's a
                         general guide, so talk with the provider about your
                         loved one's needs.
                     </p>
@@ -293,7 +281,7 @@ const reasons = [
                     <div
                         class="rounded-3xl border border-gray-200 bg-white p-8 dark:border-white/10 dark:bg-white/[0.03] md:p-10"
                     >
-                        <fieldset class="mb-8">
+                        <fieldset>
                             <legend
                                 class="mb-3 text-sm font-bold text-secondary dark:text-white"
                             >
@@ -312,31 +300,6 @@ const reasons = [
                                             : 'border-gray-200 text-muted-dark hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-300'
                                     "
                                     @click="place = option.id"
-                                >
-                                    {{ option.label }}
-                                </button>
-                            </div>
-                        </fieldset>
-
-                        <fieldset class="mb-2">
-                            <legend
-                                class="mb-3 text-sm font-bold text-secondary dark:text-white"
-                            >
-                                How much help is needed?
-                            </legend>
-                            <div class="flex flex-wrap gap-2">
-                                <button
-                                    v-for="option in frequencyOptions"
-                                    :key="option.id"
-                                    type="button"
-                                    :aria-pressed="frequency === option.id"
-                                    class="rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-200"
-                                    :class="
-                                        frequency === option.id
-                                            ? 'border-primary bg-primary text-white'
-                                            : 'border-gray-200 text-muted-dark hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-300'
-                                    "
-                                    @click="frequency = option.id"
                                 >
                                     {{ option.label }}
                                 </button>
@@ -363,18 +326,11 @@ const reasons = [
 
                                 <div class="flex flex-wrap items-center gap-3">
                                     <NuxtLink
-                                        to="/booking/search"
+                                        :to="recommendation.to"
                                         class="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white transition hover:bg-primary-600"
                                     >
                                         <Search class="h-4 w-4" />
                                         Find providers
-                                    </NuxtLink>
-
-                                    <NuxtLink
-                                        :to="recommendation.to"
-                                        class="text-sm font-semibold text-primary underline-offset-4 hover:underline"
-                                    >
-                                        {{ recommendation.label }}
                                     </NuxtLink>
 
                                     <button

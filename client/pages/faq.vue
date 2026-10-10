@@ -28,8 +28,8 @@ definePageMeta({
         <CtaSection
             title="Didn't find your answer?"
             text="See how it all fits together for agencies or for families."
-            :primary="{ label: 'For agencies', to: '/for-agencies' }"
-            :secondary="{ label: 'For families', to: '/for-families' }"
+            :primary="{ label: 'For agencies', to: '/agencies' }"
+            :secondary="{ label: 'For families', to: '/families' }"
         />
     </div>
 </template>
