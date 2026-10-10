@@ -799,10 +799,18 @@
                                 <p
                                     class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                 >
-                                    What this admission still owes, including
-                                    additional charges and not counting periods
-                                    that have not started. Services and
-                                    schedules are not included.
+                                    What this patient still owes, including
+                                    additional charges and services, after the
+                                    refund is taken off. Periods that have not
+                                    started are not counted.
+                                </p>
+
+                                <p
+                                    v-if="refundTowardBalance > 0"
+                                    class="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300"
+                                >
+                                    {{ formatCurrency(refundTowardBalance) }}
+                                    of the refund goes toward this.
                                 </p>
                             </div>
 
@@ -885,6 +893,10 @@
                                         Force discharge ends the stay and writes
                                         this admission's unpaid balance off as
                                         bad debt.
+                                        <template v-if="serviceBalance > 0">
+                                            Unpaid services are not written off
+                                            and stay on the patient's account.
+                                        </template>
                                     </template>
 
                                     <template v-else>
@@ -1070,12 +1082,33 @@ const outstanding = computed(
     () => props.admission?.discharge_calculation?.outstanding ?? null,
 );
 
-const overallBalance = computed(() =>
-    getNumber(
-        outstanding.value?.admission_balance ??
-            outstanding.value?.accommodation_balance,
-    ),
+const serviceBalance = computed(() =>
+    getNumber(outstanding.value?.service_balance),
 );
+
+const refundTowardBalance = computed(() =>
+    getNumber(props.admission?.discharge_calculation?.refund_toward_balance),
+);
+
+const overallBalance = computed(() => {
+    const afterRefund =
+        props.admission?.discharge_calculation?.balance_after_refund;
+
+    if (afterRefund !== undefined && afterRefund !== null) {
+        return getNumber(afterRefund);
+    }
+
+    return (
+        Math.round(
+            (getNumber(
+                outstanding.value?.admission_balance ??
+                    outstanding.value?.accommodation_balance,
+            ) +
+                serviceBalance.value) *
+                100,
+        ) / 100
+    );
+});
 
 const futureInvoices = computed(() => {
     return props.futureInvoices ?? [];

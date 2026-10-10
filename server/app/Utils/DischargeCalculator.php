@@ -5,6 +5,7 @@ namespace App\Utils;
 use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\PatientAdmission;
+use App\Repository\InvoiceRepository;
 use Carbon\Carbon;
 
 
@@ -115,6 +116,8 @@ class DischargeCalculator
             'is_within_refund_window' => $plan['within_window'],
             'is_under_required_payment' => $stillOwed > 0,
             'payment_shortfall' => $stillOwed,
+            'refund_toward_balance' => $plan['balance_offset'],
+            'balance_after_refund' => $plan['balance'],
 
             'period_code' => AdmissionPeriod::codeFor($period->admission_period_id),
             'invoice_codes' => $current
@@ -286,13 +289,25 @@ class DischargeCalculator
 
         // Money refundable on one invoice first settles what is still owed on
         // another, so the resident is never refunded and billed for the same stay.
-        $offset = round(min(
-            (float) collect($invoices)->sum('refund'),
-            (float) collect($invoices)->sum('owed')
-        ), 2);
+        $refund = (float) collect($invoices)->sum('refund');
+        $owed = (float) collect($invoices)->sum('owed');
+
+        $offset = round(min($refund, $owed), 2);
+
+        // Whatever is left then pays the admission's other invoices and charges
+        // and the patient's services.
+        $owedElsewhere = app(InvoiceRepository::class)
+            ->owedAtDischarge($admission, array_keys($invoices));
+
+        $elsewhereBalance = round((float) $owedElsewhere->sum('balance_due'), 2);
+
+        $balanceOffset = round(min(max(0, $refund - $offset), $elsewhereBalance), 2);
 
         return [
             'offset' => $offset,
+            'owed_elsewhere' => $owedElsewhere,
+            'balance_offset' => $balanceOffset,
+            'balance' => round(max(0, $owed - $offset) + $elsewhereBalance - $balanceOffset, 2),
             'within_window' => $withinWindow,
             'period_start' => $window['start'],
             'period_end' => $window['end'],
