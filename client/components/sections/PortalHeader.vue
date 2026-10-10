@@ -83,6 +83,7 @@
                 <NavbarProfileDropdown
                     v-if="user"
                     :user="user"
+                    role="family_member"
                     :theme-aware="true"
                 />
             </ClientOnly>

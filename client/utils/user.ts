@@ -8,11 +8,11 @@ export const formatRole = (role: string) => {
 export const roleMeta: Record<string, { label: string; class: string }> = {
     owner: {
         label: 'Owner',
-        class: 'bg-purple-50 text-purple-600 border-purple-200',
+        class: 'border-primary/25 bg-primary/10 text-primary backdrop-blur-md dark:border-primary/30 dark:bg-primary/20 dark:text-primary-300',
     },
     agency_owner: {
         label: 'Agency Owner',
-        class: 'bg-purple-50 text-purple-600 border-purple-200',
+        class: 'border-primary/25 bg-primary/10 text-primary backdrop-blur-md dark:border-primary/30 dark:bg-primary/20 dark:text-primary-300',
     },
     branch_manager: {
         label: 'Branch Manager',
@@ -29,6 +29,10 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
     nurse: {
         label: 'Nurse',
         class: 'bg-green-50 text-green-600 border-green-200',
+    },
+    family_member: {
+        label: 'Family Member',
+        class: 'border-primary/25 bg-primary/10 text-primary backdrop-blur-md dark:border-primary/30 dark:bg-primary/20 dark:text-primary-300',
     },
     caregiver: {
         label: 'Caregiver',

@@ -30,11 +30,11 @@
                 </div>
 
                 <div class="flex flex-col gap-4">
-                    <h4 :class="headingClass">Company</h4>
+                    <h4 :class="headingClass">Learn more</h4>
                     <nav class="flex flex-col gap-2">
                         <NuxtLink
-                            v-for="item in companyLinks"
-                            :key="item.label"
+                            v-for="item in learnLinks"
+                            :key="item.to"
                             :to="item.to"
                             :class="linkClass"
                         >
@@ -140,8 +140,11 @@ const headingClass =
 const linkClass =
     "w-fit text-sm leading-6 text-gray-400 transition-colors hover:text-white";
 
-const companyLinks = [
-    { label: "About", to: "/" },
-    { label: "Contact", to: "/" },
+const learnLinks = [
+    { label: "About us", to: "/company" },
+    { label: "For agencies", to: "/for-agencies" },
+    { label: "For families", to: "/for-families" },
+    { label: "How booking works", to: "/how-booking-works" },
+    { label: "FAQ", to: "/faq" },
 ];
 </script>

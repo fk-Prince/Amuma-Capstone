@@ -1,8 +1,8 @@
 <template>
-    <section class="py-20 font-sans">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <div class="flex items-center justify-center gap-2.5">
+    <section class="py-16 font-sans">
+        <div class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10">
+            <div class="mb-12">
+                <div class="flex items-center gap-2.5">
                     <span class="relative flex h-2 w-2">
                         <span
                             class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"
@@ -23,7 +23,7 @@
                 </h2>
 
                 <p
-                    class="mt-4 text-sm text-muted max-w-xl mx-auto leading-relaxed dark:text-gray-400"
+                    class="mt-4 text-sm text-muted max-w-xl leading-relaxed dark:text-gray-400"
                 >
                     Easily find caregivers, book services, monitor care
                     activities, and manage payments all in one simple and secure
@@ -32,13 +32,15 @@
             </div>
 
             <div class="relative">
-                <div
-                    class="hidden lg:block absolute top-7 left-[12.5%] right-[12.5%] border-t-2 border-primary-200 dark:border-primary-500/25"
-                    aria-hidden="true"
-                ></div>
 
                 <div class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-                    <div v-for="(module, index) in modules" :key="module.title">
+                    <div v-for="(module, index) in modules" :key="module.title" class="relative">
+                        <div
+                            v-if="index < modules.length - 1"
+                            class="absolute top-7 left-[4.5rem] right-[-1rem] hidden border-t-2 border-primary-200 lg:block dark:border-primary-500/25"
+                            aria-hidden="true"
+                        ></div>
+
                         <div class="relative inline-flex">
                             <div
                                 class="flex h-14 w-14 items-center justify-center rounded-full border border-muted-light bg-white dark:bg-secondary dark:border-white/10"
@@ -56,11 +58,11 @@
                             </span>
                         </div>
 
-                        <h3 class="mt-4 text-sm font-bold text-secondary dark:text-white">
+                        <h3 class="mt-5 text-base font-bold text-secondary dark:text-white">
                             {{ module.title }}
                         </h3>
 
-                        <p class="mt-1.5 text-xs text-muted leading-relaxed dark:text-gray-400">
+                        <p class="mt-2 max-w-[300px] text-sm text-muted leading-relaxed dark:text-gray-400">
                             {{ module.description }}
                         </p>
                     </div>

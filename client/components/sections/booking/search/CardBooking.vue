@@ -4,7 +4,7 @@
         class="group rounded-2xl border border-primary-200 bg-white overflow-hidden cursor-pointer shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-secondary dark:border-primary-500/20"
         @click="$emit('select', branch)"
     >
-        <div class="relative h-40 overflow-hidden bg-muted-light dark:bg-white/10">
+        <div class="relative h-44 overflow-hidden bg-muted-light dark:bg-white/10">
             <img
                 v-if="branch?.image && !imageBroken"
                 :src="branch.image"
