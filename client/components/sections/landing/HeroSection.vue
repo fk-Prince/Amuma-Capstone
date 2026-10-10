@@ -283,7 +283,7 @@ const badges = [
 
                             <div>
                                 <h3 class="text-lg font-extrabold text-white">
-                                    Amuma
+                                    AMUMA
                                 </h3>
 
                                 <p class="text-xs text-white/70">
