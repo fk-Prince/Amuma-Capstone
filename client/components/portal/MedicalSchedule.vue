@@ -427,7 +427,7 @@ async function requestScheduleReview(schedule: ScheduleItem) {
     try {
         await patientAccessService.executeAction({
             action: "request_schedule_review",
-            patient_id: (schedule as any).patient?.patient_id ?? schedule.patient_id,
+            patient_id: schedule.patient?.patient_id,
             schedule_id: schedule.schedule_id,
         });
 
