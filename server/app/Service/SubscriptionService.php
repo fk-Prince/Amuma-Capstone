@@ -1121,6 +1121,10 @@ class SubscriptionService
                     throw new Exception(__('Subscription not found.'), 404);
                 }
 
+                if (!empty($meta['branch']['resubmit_uuid'])) {
+                    return $this->resubmitAsAdditionalBranch($payload, $meta, $subscription);
+                }
+
                 [$branch, $location] = $this->storeBranch(
                     $agency,
                     $subscription,
@@ -1227,7 +1231,7 @@ class SubscriptionService
 
             if (!$this->subscriptionHasRoomFor($subscription, $branch)) {
                 throw new Exception(
-                    'This branch\'s subscription has no free slot. Purchase a new subscription to resubmit it.',
+                    'There\'s no free branch slot left on your subscription.',
                     409
                 );
             }
@@ -1286,9 +1290,65 @@ class SubscriptionService
         $payload['resubmit_branch_uuid'] = $branch->uuid;
 
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
-        $detail = $this->createSubscription($user, $payload);
+
+        if (!empty($payload['subscription_uuid'])) {
+            $detail = $this->createAdditionalBranch($user, $payload);
+            $detail['branch'] = [
+                ...$detail['branch'],
+                'tin' => $payload['branch_tin'] ?? null,
+                'resubmit_uuid' => $branch->uuid,
+            ];
+        } else {
+            $detail = $this->createSubscription($user, $payload);
+        }
 
         return $paymentMethod->subscriptionInvoice($payload, $detail);
+    }
+
+    private function resubmitAsAdditionalBranch(array $payload, array $meta, Subscription $subscription)
+    {
+        $branch = Branch::with('location')->where('uuid', $meta['branch']['resubmit_uuid'])->first();
+
+        if (!$branch || (int) $branch->agency_id !== (int) $subscription->agency_id) {
+            throw new Exception('Branch not found.', 404);
+        }
+
+        $link = $this->lockRejectedLink($branch);
+
+        $this->applyResubmission($branch, $meta['branch']);
+
+        $link->update([
+            'subscription_id' => $subscription->subscription_id,
+            'status' => BranchSubscription::STATUS_PENDING,
+            'type' => BranchSubscription::TYPE_ADDITIONAL,
+        ]);
+
+        $subscription->payments()->create([
+            'subscription_id' => $subscription->subscription_id,
+            'user_id' => $meta['user']['user_id'] ?? null,
+            'plan_id' => $subscription->plan_id,
+            'branch_id' => $branch->branch_id,
+            'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
+            'payment_reference_id' => $payload['external_id'] ?? null,
+            'masked_card_number' => $payload['masked_card_number'] ?? null,
+            'price' => $meta['total_amount'],
+            'status' => SubscriptionPayment::STATUS_PAID,
+            'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
+            'payment_method' => $meta['payment_method'] ?? null,
+        ]);
+
+        $this->notifyAdmins(
+            $branch,
+            $subscription,
+            $meta['user']['user_id'],
+            "{$branch->name} paid for an additional branch and was resubmitted for review."
+        );
+
+        return $this->resubmissionResponse(
+            $branch,
+            $subscription->load('plans'),
+            __('Payment received. Branch resubmitted for review.')
+        );
     }
 
     private function resubmitIntoNewSubscription(array $meta, ?string $reference, ?string $invoiceId, ?string $maskedCard)
@@ -2043,12 +2103,19 @@ class SubscriptionService
         $email = $branch->email ?: ($agency?->email ?: $owner?->email);
 
         if ($email) {
-            Mail::to($email)->send(new BranchRejectedMailer(
-                recipientName: $recipientName,
-                branchName: $branch->name,
-                agencyName: $agency?->name ?? 'your agency',
-                reason: $reason ?: 'No reason was provided.',
-            ));
+            try {
+                Mail::to($email)->send(new BranchRejectedMailer(
+                    recipientName: $recipientName,
+                    branchName: $branch->name,
+                    agencyName: $agency?->name ?? 'your agency',
+                    reason: $reason ?: 'No reason was provided.',
+                ));
+            } catch (\Throwable $e) {
+                Log::error('Branch rejection email failed', [
+                    'branch_id' => $branch->branch_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         if (!$owner) {

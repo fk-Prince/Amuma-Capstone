@@ -342,16 +342,25 @@
             :rejection-reason="resubmitTarget.reason"
             :requires-purchase="!!resubmitTarget.purchaseReason"
             :purchase-reason="resubmitTarget.purchaseReason"
+            :capacity="statsData.branch_capacity"
             @close="resubmitTarget = null"
             @resubmitted="onBranchResubmitted"
         />
 
         <ConfirmDialog
             :open="!!purchasePrompt"
-            title="Purchase a new subscription?"
-            :message="`${purchasePrompt?.purchaseReason ?? ''} To resubmit ${purchasePrompt?.branch.name ?? 'this branch'}, it needs a new subscription.`"
-            description="You'll update the branch details first, then choose a plan and pay. The branch moves onto the new subscription and goes back for review."
-            confirm-label="Buy subscription"
+            :title="
+                purchaseIsAdditional
+                    ? 'Pay for an additional branch?'
+                    : 'New subscription required'
+            "
+            :message="`${purchasePrompt?.purchaseReason ?? ''} To resubmit ${purchasePrompt?.branch.name ?? 'this branch'}, you need to ${purchaseIsAdditional ? 'pay for an additional branch' : 'buy a new subscription'}.`"
+            :description="
+                purchaseIsAdditional
+                    ? 'First update the branch details, then complete the payment. Once paid, the branch is sent back for review.'
+                    : 'First update the branch details, then choose a plan and pay. Once paid, the branch is sent back for review.'
+            "
+            confirm-label="Continue"
             @confirm="confirmPurchasePrompt"
             @cancel="purchasePrompt = null"
         />
@@ -420,7 +429,7 @@ const purchaseReasonFor = (branch: Branch): string | null => {
     }
 
     if (!branch.slot_available) {
-        return "This branch's subscription has no free slot left.";
+        return "There's no free branch slot left on your subscription.";
     }
 
     return null;
@@ -454,6 +463,10 @@ function onResubmitBranch(branch: Branch) {
 
 const purchasePrompt = ref<typeof resubmitTarget.value>(null);
 
+const purchaseIsAdditional = computed(
+    () => !!statsData.value.branch_capacity?.additional_options?.length,
+);
+
 const confirmPurchasePrompt = () => {
     resubmitTarget.value = purchasePrompt.value;
     purchasePrompt.value = null;
@@ -466,6 +479,7 @@ const onBranchResubmitted = (result: any) => {
     if (!updated) return;
 
     const purchased = result.purchased && result.subscription;
+    const additional = result.additional && result.subscription;
 
     branches.value =
         statusFilter.value === "rejected"
@@ -476,15 +490,18 @@ const onBranchResubmitted = (result: any) => {
                             ...updated,
                             staff_count: b.staffs,
                             patients_count: b.patients,
-                            plan: purchased
-                                ? {
-                                      plan_code: result.subscription.plan_code,
-                                      name: result.subscription.plan_name,
-                                  }
-                                : b.plan,
-                            subscription_status: purchased
-                                ? result.subscription.status
-                                : b.subscription_status,
+                            plan:
+                                purchased || additional
+                                    ? {
+                                          plan_code:
+                                              result.subscription.plan_code,
+                                          name: result.subscription.plan_name,
+                                      }
+                                    : b.plan,
+                            subscription_status:
+                                purchased || additional
+                                    ? result.subscription.status
+                                    : b.subscription_status,
                             slot_available: true,
                         })
                       : b,
@@ -519,7 +536,8 @@ const onBranchResubmitted = (result: any) => {
     const capacity = statsData.value.branch_capacity;
     const branchLimit = planTypeBranchLimit(result.subscription?.plan_type);
     const nextUsed = capacity.used + 1;
-    const nextCapacity = capacity.capacity + (purchased ? branchLimit : 0);
+    const nextCapacity =
+        capacity.capacity + (purchased ? branchLimit : additional ? 1 : 0);
 
     const existing = (capacity.available_subscriptions ?? [])
         .map((option) =>
@@ -681,6 +699,7 @@ const statsData = ref({
         remaining: 0,
         has_room: false,
         available_subscriptions: [] as AvailableSubscription[],
+        additional_options: [] as any[],
         is_testing: false,
     },
 });

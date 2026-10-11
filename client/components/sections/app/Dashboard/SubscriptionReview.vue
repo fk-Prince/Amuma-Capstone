@@ -263,7 +263,7 @@ const purchaseReason = computed(() => {
         case "expired":
             return "This branch's subscription has expired.";
         default:
-            return "This branch's subscription has no free slot left.";
+            return "There's no free branch slot left on your subscription.";
     }
 });
 

@@ -40,7 +40,9 @@
                                             ? "Fix your agency details, then send"
                                             : step === "details"
                                               ? "Fix the details below and send"
-                                              : "Choose a plan and pay to send"
+                                              : usesAdditional
+                                                ? "Pay for an additional branch to send"
+                                                : "Choose a plan and pay to send"
                                     }}
                                     <span
                                         class="font-medium text-secondary dark:text-white"
@@ -95,11 +97,20 @@
                                 class="mb-5 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
                             >
                                 <CreditCard class="mt-0.5 h-4 w-4 shrink-0" />
-                                <span>
-                                    {{ purchaseNotice }} You'll choose a
-                                    subscription after the details, and the
-                                    branch goes back for review once paid.
-                                </span>
+                                <div>
+                                    <p class="font-semibold">
+                                        {{
+                                            hasAdditionalOptions
+                                                ? "Additional branch payment required"
+                                                : "New subscription required"
+                                        }}
+                                    </p>
+                                    <p class="mt-0.5">
+                                        {{ purchaseNotice }} Update the details
+                                        below, then pay to send this branch back
+                                        for review.
+                                    </p>
+                                </div>
                             </div>
                         </template>
 
@@ -115,7 +126,150 @@
                             v-model:errors="errors"
                         />
 
-                        <template v-if="step === 'payment'">
+                        <div
+                            v-if="step === 'payment' && usesAdditional"
+                            class="mx-auto w-full max-w-2xl space-y-4"
+                        >
+                            <template v-if="additionalOptions.length > 1">
+                                <button
+                                    v-for="option in additionalOptions"
+                                    :key="option.uuid"
+                                    type="button"
+                                    class="flex w-full items-start gap-4 rounded-xl border p-5 text-left transition dark:border-white/10"
+                                    :class="
+                                        selectedSubscriptionUuid === option.uuid
+                                            ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                            : 'border-slate-200 hover:border-primary hover:bg-primary-50/40 dark:hover:border-primary-500/40'
+                                    "
+                                    @click="selectedSubscriptionUuid = option.uuid"
+                                >
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                    >
+                                        <Building2 class="h-5 w-5" />
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            Add an additional branch to my
+                                            {{ option.plan_name }}
+                                            {{ planTypeLabel(option.plan_type) }}
+                                            subscription
+                                        </p>
+                                        <p
+                                            class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                        >
+                                            Runs until
+                                            {{ formatDate(option.end_date) }}.
+                                        </p>
+                                    </div>
+
+                                    <span
+                                        class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
+                                    >
+                                        ₱{{ formatAmount(option.amount) }}
+                                    </span>
+                                </button>
+                            </template>
+
+                            <div
+                                v-if="additionalOption"
+                                class="rounded-xl border border-slate-200 p-5 dark:border-white/10"
+                            >
+                                <p
+                                    class="text-sm font-semibold text-secondary dark:text-white"
+                                >
+                                    {{ additionalOption.plan_name }} —
+                                    additional branch
+                                </p>
+                                <p
+                                    class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                >
+                                    This branch joins your existing
+                                    subscription and expires with it on
+                                    {{ formatDate(additionalOption.end_date) }}.
+                                    You pay
+                                    ₱{{ formatAmount(additionalOption.amount) }},
+                                    prorated for the time left. It renews with
+                                    the subscription at
+                                    ₱{{
+                                        formatAmount(
+                                            additionalOption.additional_branch_price,
+                                        )
+                                    }}
+                                    / year.
+                                </p>
+
+                                <div
+                                    class="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
+                                >
+                                    <div class="flex justify-between">
+                                        <span
+                                            class="text-muted dark:text-gray-400"
+                                        >
+                                            Additional branch (yearly)
+                                        </span>
+                                        <span
+                                            class="font-medium text-secondary dark:text-white"
+                                        >
+                                            ₱{{
+                                                formatAmount(
+                                                    additionalOption.additional_branch_price,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span
+                                            class="text-muted dark:text-gray-400"
+                                        >
+                                            Months left on subscription
+                                        </span>
+                                        <span
+                                            class="font-medium text-secondary dark:text-white"
+                                        >
+                                            {{ additionalOption.months }} of 12
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex justify-between border-t border-slate-100 pt-1.5 dark:border-white/10"
+                                    >
+                                        <span
+                                            class="font-semibold text-secondary dark:text-white"
+                                        >
+                                            You pay today
+                                        </span>
+                                        <span class="font-bold text-primary">
+                                            ₱{{
+                                                formatAmount(
+                                                    additionalOption.amount,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <PaymentForm
+                                v-if="additionalOption"
+                                v-model:card="card"
+                                :total-amount="total"
+                                :processing="processing"
+                                :onCardPay="payCard"
+                                :onGCashPay="payGCash"
+                                :enableGCash="true"
+                                title="Additional branch payment"
+                                description="Pay for the additional branch to send it back for review."
+                                submit-label="Pay & resubmit"
+                                terms-context="subscription"
+                            />
+                        </div>
+
+                        <template v-else-if="step === 'payment'">
                             <div v-if="loadingPlans" class="space-y-4">
                                 <div class="grid gap-4 sm:grid-cols-3">
                                     <div
@@ -180,7 +334,7 @@
                                     :onGCashPay="payGCash"
                                     :enableGCash="true"
                                     title="Subscription payment"
-                                    description="Pay for the new subscription to send this branch back for review."
+                                    description="Pay for a new subscription to send this branch back for review."
                                     submit-label="Pay & resubmit"
                                     terms-context="subscription"
                                 />
@@ -254,8 +408,12 @@
             :open="!!slotPrompt"
             title="No free slot"
             :message="slotPrompt ?? ''"
-            description="Buy a new subscription to send this branch back for review. Your changes to the details are kept."
-            confirm-label="Buy subscription"
+            :description="
+                hasAdditionalOptions
+                    ? 'Pay for an additional branch to send this branch back for review. Your changes to the details are kept.'
+                    : 'Buy a new subscription to send this branch back for review. Your changes to the details are kept.'
+            "
+            confirm-label="Continue"
             @confirm="switchToPurchase"
             @cancel="slotPrompt = null"
         />
@@ -265,6 +423,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
+    Building2,
     ChevronLeft,
     ChevronRight,
     CreditCard,
@@ -286,9 +445,26 @@ import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
 import { formatAmount } from "~/utils/currency";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
-import { DEFAULT_PLAN_TYPE, planPrice, plansOfType, type PlanType } from "~/utils/planType";
+import {
+    DEFAULT_PLAN_TYPE,
+    planPrice,
+    plansOfType,
+    planTypeLabel,
+    type PlanType,
+} from "~/utils/planType";
 import type { Branch } from "~/types/branch";
 import type { CardDetails } from "~/types/payment";
+
+interface AdditionalOption {
+    uuid: string;
+    plan_name: string | null;
+    plan_code: string | null;
+    plan_type: PlanType | null;
+    end_date: string | null;
+    additional_branch_price: number;
+    months: number;
+    amount: number;
+}
 
 const props = defineProps<{
     branch: Branch;
@@ -297,6 +473,9 @@ const props = defineProps<{
     requiresPurchase?: boolean;
     purchaseReason?: string | null;
     agency?: Agency | null;
+    capacity?: {
+        additional_options?: AdditionalOption[];
+    } | null;
 }>();
 
 const emit = defineEmits<{
@@ -478,7 +657,42 @@ watch(planType, () => {
         null;
 });
 
-const total = computed(() => priceOf(selectedPlan.value));
+const additionalOptions = computed<AdditionalOption[]>(
+    () => props.capacity?.additional_options ?? [],
+);
+
+const hasAdditionalOptions = computed(() => additionalOptions.value.length > 0);
+
+const selectedSubscriptionUuid = ref<string | null>(
+    additionalOptions.value[0]?.uuid ?? null,
+);
+
+const additionalOption = computed(
+    () =>
+        additionalOptions.value.find(
+            (option) => option.uuid === selectedSubscriptionUuid.value,
+        ) ?? null,
+);
+
+const usesAdditional = computed(
+    () => purchaseMode.value && hasAdditionalOptions.value,
+);
+
+const total = computed(() =>
+    usesAdditional.value
+        ? Number(additionalOption.value?.amount) || 0
+        : priceOf(selectedPlan.value),
+);
+
+const formatDate = (date?: string | null) => {
+    if (!date) return "—";
+
+    return new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+};
 
 const clientKeys: Record<string, string> = {
     name: "branch_name",
@@ -592,7 +806,7 @@ const handleServerError = async (err: any, fallback: string) => {
 };
 
 const loadPlans = async () => {
-    if (plans.value.length) return;
+    if (usesAdditional.value || plans.value.length) return;
 
     loadingPlans.value = true;
 
@@ -649,7 +863,7 @@ const submit = async () => {
 const slotPrompt = ref<string | null>(null);
 
 const switchToPurchase = () => {
-    purchaseNotice.value = "This branch's subscription has no free slot left.";
+    purchaseNotice.value = "There's no free branch slot left on your subscription.";
     purchaseMode.value = true;
     slotPrompt.value = null;
     step.value = "payment";
@@ -658,20 +872,31 @@ const switchToPurchase = () => {
 
 const purchasePayload = (paymentMethod: "CREDIT-CARD" | "GCASH") => ({
     ...buildPayload(),
-    plan_code: selectedPlan.value?.plan_code,
-    plan_type: selectedPlan.value?.type,
+    ...(usesAdditional.value
+        ? { subscription_uuid: additionalOption.value?.uuid }
+        : {
+              plan_code: selectedPlan.value?.plan_code,
+              plan_type: selectedPlan.value?.type,
+          }),
     payment_method: paymentMethod,
 });
+
+const canPay = () =>
+    usesAdditional.value ? !!additionalOption.value : !!selectedPlan.value;
 
 const onPaid = async (result: any) => {
     success(
         result?.message ?? "Payment received. Branch resubmitted for review.",
     );
-    emit("resubmitted", { ...result, purchased: true });
+    emit("resubmitted", {
+        ...result,
+        purchased: !usesAdditional.value,
+        additional: usesAdditional.value,
+    });
 };
 
 const payCard = async () => {
-    if (processing.value || !selectedPlan.value) return;
+    if (processing.value || !canPay()) return;
 
     processing.value = true;
     formError.value = null;
@@ -700,7 +925,7 @@ const payCard = async () => {
 };
 
 const payGCash = async () => {
-    if (processing.value || !selectedPlan.value) return;
+    if (processing.value || !canPay()) return;
 
     processing.value = true;
     formError.value = null;

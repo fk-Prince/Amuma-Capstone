@@ -11,8 +11,9 @@ class BranchResubmitPurchaseRequest extends BranchResubmitRequest
     {
         return [
             ...parent::rules(),
-            'plan_code' => ['required', 'string', 'exists:plans,plan_code'],
-            'plan_type' => ['required', Rule::in(Plan::TYPES)],
+            'subscription_uuid' => ['nullable', 'string', 'exists:subscriptions,uuid'],
+            'plan_code' => ['required_without:subscription_uuid', 'nullable', 'string', 'exists:plans,plan_code'],
+            'plan_type' => ['required_without:subscription_uuid', 'nullable', Rule::in(Plan::TYPES)],
             'payment_method' => ['required', 'in:GCASH,CREDIT-CARD'],
             'token_id' => ['nullable', 'string'],
             'authentication_id' => ['nullable', 'string'],
