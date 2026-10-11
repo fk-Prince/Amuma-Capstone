@@ -1169,7 +1169,9 @@ function shiftEnded(log: AuditRow, assignee: Assignee): boolean {
 }
 
 function isReviewable(log: AuditRow): boolean {
-    return ["pending", "ongoing"].includes((log.status ?? "").toLowerCase());
+    return ["pending", "ongoing", "missed"].includes(
+        (log.status ?? "").toLowerCase(),
+    );
 }
 
 function reviewNotifyKey(log: AuditRow) {

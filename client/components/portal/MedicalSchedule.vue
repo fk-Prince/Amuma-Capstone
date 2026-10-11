@@ -376,7 +376,7 @@ onUnmounted(() => {
 });
 
 function isReviewable(schedule: ScheduleItem): boolean {
-    return ["pending", "ongoing"].includes(
+    return ["pending", "ongoing", "missed"].includes(
         (schedule.status ?? "").toLowerCase(),
     );
 }

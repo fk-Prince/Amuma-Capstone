@@ -160,8 +160,8 @@ class PatientAccessService
             ->where('patient_id', $patient->patient_id)
             ->firstOrFail();
 
-        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
-            throw new Exception('Only pending or ongoing schedules can be sent for review.', 422);
+        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING, Schedule::STATUS_MISSED], true)) {
+            throw new Exception('Only pending, ongoing or missed schedules can be sent for review.', 422);
         }
 
         $patientName = $patient->display_name;
