@@ -92,7 +92,7 @@
                         </button>
                         <button
                             type="button"
-                            class="hidden lg:flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                            class="hidden xl:flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
                             :class="
                                 viewMode === 'both'
                                     ? 'bg-primary text-white shadow-sm'
@@ -120,13 +120,13 @@
                 </div>
 
                 <div
-                    class="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row items-stretch"
+                    class="flex min-h-0 flex-1 flex-col gap-6 xl:flex-row items-stretch"
                 >
                     <div
-                        class="flex-col min-h-0 overflow-hidden rounded-2xl lg:shrink-0"
+                        class="flex-col min-h-0 overflow-hidden rounded-2xl xl:shrink-0"
                         :class="[
                             viewMode === 'map' ? 'hidden' : 'flex w-full',
-                            viewMode === 'both' ? 'lg:w-[58%]' : 'lg:w-full',
+                            viewMode === 'both' ? 'xl:w-[58%]' : 'xl:w-full',
                         ]"
                     >
                         <div class="flex-1 overflow-y-auto">
@@ -232,6 +232,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useMediaQuery } from "@vueuse/core";
 import Filter from "~/components/sections/booking/search/Filter.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import SearchBooking from "~/components/sections/booking/search/SearchBooking.vue";
@@ -260,6 +261,11 @@ const page = ref(1);
 const lastPage = ref(1);
 const totalCount = ref(0);
 const viewMode = ref<"list" | "map" | "both">("both");
+const isSplitScreen = useMediaQuery("(min-width: 1280px)");
+
+watch(isSplitScreen, (canSplit) => {
+    if (!canSplit && viewMode.value === "both") viewMode.value = "list";
+});
 
 const PER_PAGE = 15;
 
@@ -337,6 +343,8 @@ const resetFilters = () => {
 };
 
 onMounted(async () => {
+    if (!isSplitScreen.value) viewMode.value = "list";
+
     if (Object.keys(route.query).length === 0) {
         loading.value = true;
         await router.replace({
