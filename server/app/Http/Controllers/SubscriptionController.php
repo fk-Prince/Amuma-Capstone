@@ -202,6 +202,14 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->cancelTest($request->all());
     }
 
+    public function endTest(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->subscriptionService->endTest($request->all());
+    }
+
     public function paymentInvoice(Request $request, string $reference)
     {
         $user = AuthGuard::requireUser($request->user());

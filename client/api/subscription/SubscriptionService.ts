@@ -60,6 +60,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-cancel-test', 'POST', payload);
     }
 
+    async endTest(payload: any): Promise<any> {
+        return await this.request(this.resource + '-end-test', 'POST', payload);
+    }
+
 
     async list(payload: any): Promise<any> {
         return await this.request(this.resource, 'GET', payload);

@@ -388,6 +388,58 @@
 
                 <div
                     v-if="canCancel"
+                    class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4"
+                >
+                    <div
+                        v-if="!confirmEnd"
+                        class="flex flex-wrap items-center justify-between gap-3"
+                    >
+                        <p class="text-xs text-primary">
+                            Done testing? Start your paid year now instead of
+                            waiting until {{ formatDate(pendingPlan?.starts_at) }}.
+                        </p>
+
+                        <button
+                            type="button"
+                            class="rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 dark:bg-secondary"
+                            @click="confirmEnd = true"
+                        >
+                            End testing now
+                        </button>
+                    </div>
+
+                    <div v-else>
+                        <p class="text-xs text-primary">
+                            Ending free testing starts your paid year of
+                            {{ pendingPlan?.name }} today. You'll no longer be
+                            able to cancel for a full refund. This can't be
+                            undone.
+                        </p>
+
+                        <div class="mt-3 flex flex-wrap justify-end gap-2">
+                            <button
+                                type="button"
+                                :disabled="ending"
+                                class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/10"
+                                @click="confirmEnd = false"
+                            >
+                                Keep testing
+                            </button>
+
+                            <button
+                                type="button"
+                                :disabled="ending"
+                                class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
+                                @click="endTest"
+                            >
+                                {{ ending ? "Ending…" : "Yes, end testing" }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    v-if="canCancel"
                     class="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-500/30 dark:bg-rose-500/10"
                 >
                     <div
@@ -1053,6 +1105,9 @@ const canCancel = computed(
 const confirmCancel = ref(false);
 const cancelling = ref(false);
 
+const confirmEnd = ref(false);
+const ending = ref(false);
+
 const refundAmount = computed(() =>
     payments.value
         .filter((payment: any) => payment.status === "paid")
@@ -1522,6 +1577,35 @@ const cancelTest = async () => {
         error(err?.message ?? "Could not cancel the subscription.");
     } finally {
         cancelling.value = false;
+    }
+};
+
+const endTest = async () => {
+    if (ending.value) return;
+
+    ending.value = true;
+
+    try {
+        const result = await subscriptionService.endTest({
+            branch_uuid: props.uuid,
+        });
+
+        subscription.value = {
+            ...subscription.value,
+            ...result.subscription,
+            subscription: {
+                ...subscription.value?.subscription,
+                status: result.subscription?.status,
+            },
+        };
+
+        confirmEnd.value = false;
+        syncBranchMode();
+        success(result?.message ?? "Free testing ended.");
+    } catch (err: any) {
+        error(err?.message ?? "Could not end free testing.");
+    } finally {
+        ending.value = false;
     }
 };
 

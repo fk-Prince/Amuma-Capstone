@@ -544,6 +544,45 @@ class SubscriptionService
         });
     }
 
+    public function endTest(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $subscription = $this->subscriptionRepository
+                ->findLatestForBranch($payload['branch_id']);
+
+            if (!$subscription) {
+                throw new Exception(__('This branch has no subscription.'), 404);
+            }
+
+            if (!$subscription->canCancelTest() || $subscription->status !== Subscription::STATUS_ACTIVE) {
+                throw new Exception(__('Only an active subscription still in its free testing month can be ended early.'), 422);
+            }
+
+            $subscription->update([
+                ...$subscription->pendingPlanChanges(Carbon::now()),
+                'status' => Subscription::STATUS_ACTIVE,
+            ]);
+
+            $subscription->refresh()->load(['plans', 'payments.plan']);
+
+            return response()->json([
+                'status' => true,
+                'message' => __('Free testing ended. Your paid year starts today.'),
+                'subscription' => [
+                    'uuid' => $subscription->uuid,
+                    'status' => $subscription->status,
+                    'mode' => $subscription->mode,
+                    'start_date' => $subscription->start_date,
+                    'end_date' => $subscription->end_date,
+                    'renewal' => $subscription->renewalSummary(),
+                    'plan' => $subscription->planSummary(),
+                    'pending_plan' => null,
+                    'payments' => $subscription->payments->map(fn($payment) => $payment->historyRow())->values(),
+                ],
+            ], 200);
+        });
+    }
+
     public function createSubscription(?User $user, array $payload)
     {
         $planType = $payload['plan_type'] ?? null;

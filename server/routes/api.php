@@ -158,6 +158,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
     Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
     Route::post('/subscriptions-cancel-test', [SubscriptionController::class, 'cancelTest']);
+    Route::post('/subscriptions-end-test', [SubscriptionController::class, 'endTest']);
     Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
     Route::get('/subscriptions/payments/{reference}/invoice', [SubscriptionController::class, 'paymentInvoice']);
 
