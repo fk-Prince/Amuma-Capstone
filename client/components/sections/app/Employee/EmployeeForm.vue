@@ -16,6 +16,7 @@ import { useBranchStore } from "~/stores/branch";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import EmployeeSlipModal from "~/components/sections/app/Employee/EmployeeSlipModal.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import EmployeeAchievements from "~/components/sections/app/Employee/EmployeeAchievements.vue";
 import {
     MoveLeft,
@@ -202,8 +203,15 @@ function goToPrevious() {
         activeTab.value === "permissions" ? "achievements" : "information";
 }
 
+const confirmingSave = ref(false);
+
+function requestSave() {
+    confirmingSave.value = true;
+}
+
 async function handleSave() {
     const ok = await saveEmployee();
+    confirmingSave.value = false;
     if (!ok) {
         activeTab.value = "information";
     }
@@ -1062,7 +1070,7 @@ init();
                         v-else
                         type="button"
                         :disabled="saving"
-                        @click="handleSave"
+                        @click="requestSave"
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {{
@@ -1076,6 +1084,20 @@ init();
                 </div>
             </div>
         </template>
+
+        <ConfirmDialog
+            :open="confirmingSave"
+            :title="isEditMode ? 'Update employee?' : 'Create employee?'"
+            :message="
+                isEditMode
+                    ? 'Are you sure you want to save changes to this employee?'
+                    : 'Are you sure you want to create this employee?'
+            "
+            :confirm-label="isEditMode ? 'Yes, update' : 'Yes, create'"
+            :loading="saving"
+            @confirm="handleSave"
+            @cancel="confirmingSave = false"
+        />
 
         <EmployeeSlipModal :slip="employeeSlip" @close="dismissSlip" />
     </div>
