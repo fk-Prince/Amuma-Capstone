@@ -23,9 +23,9 @@ class BranchController extends Controller
         return $this->branchService->getBranch($uuid);
     }
 
-    public function staffAchievements(string $uuid)
+    public function healthProviders(string $uuid)
     {
-        return $this->branchService->getStaffAchievements($uuid);
+        return $this->branchService->getHealthProviders($uuid);
     }
 
     public function retrieveFeaturedBranch(Request $request)

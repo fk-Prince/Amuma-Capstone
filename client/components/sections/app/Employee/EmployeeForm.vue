@@ -221,7 +221,7 @@ init();
 </script>
 
 <template>
-    <div class="flex w-full flex-col relative bg-slate-50/40 dark:bg-secondary">
+    <div class="relative flex w-full flex-1 flex-col bg-slate-50/40 dark:bg-secondary">
         <div
             class="flex flex-wrap items-center justify-between gap-4 border-b bg-white px-8 py-6 dark:border-white/10 dark:bg-secondary"
         >

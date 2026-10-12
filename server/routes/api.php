@@ -71,7 +71,7 @@ Route::prefix('branches')->group(function () {
     // PUBLIC BRANCHES
     Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
     Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
-    Route::get('/{uuid}/achievements', [BranchController::class, 'staffAchievements']);
+    Route::get('/{uuid}/health-providers', [BranchController::class, 'healthProviders']);
 
     // AUTHENTICATED BRACNHES ACCESS
     Route::middleware('auth:sanctum')->group(function () {

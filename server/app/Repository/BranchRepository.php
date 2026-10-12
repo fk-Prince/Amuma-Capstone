@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Enums\RoleEnum;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\BranchImage;
@@ -242,11 +243,12 @@ class BranchRepository
             ->first();
     }
 
-    public function getBranchStaffAchievements(string $uuid)
+    public function getBranchHealthProviders(string $uuid)
     {
         return EmployeeBranch::query()
             ->select(['employee_branch_id', 'employee_id', 'role_name'])
             ->whereHas('branches', fn($query) => $query->where('uuid', $uuid))
+            ->whereIn('role_name', [RoleEnum::Nurse->value, RoleEnum::Caregiver->value])
             ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
             ->with('employees:employee_id,first_name,last_name,avatar,achievements')
             ->get();

@@ -36,7 +36,14 @@
 
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Left column -->
-            <div class="flex flex-col gap-5 lg:col-span-2">
+            <div
+                v-if="activeTab === 'providers'"
+                class="flex flex-col gap-5 lg:col-span-2"
+            >
+                <HealthProviders :branch-uuid="uuid" />
+            </div>
+
+            <div v-else class="flex flex-col gap-5 lg:col-span-2">
                 <!-- About -->
                 <section ref="overviewRef" :class="[cardClass, 'scroll-mt-40']">
                     <template v-if="loading">
@@ -239,10 +246,6 @@
                 <div v-else ref="reviewsRef" class="scroll-mt-40">
                     <ReviewSection :branch-uuid="uuid" />
                 </div>
-
-                <div v-if="!loading" ref="achievementsRef" class="scroll-mt-40">
-                    <StaffAchievements :branch-uuid="uuid" />
-                </div>
             </div>
 
             <!-- Right column -->
@@ -323,7 +326,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import {
     ExternalLink,
     HeartHandshake,
@@ -338,7 +341,7 @@ import {
 import ProviderBanner from "~/components/sections/booking/provider/ProviderBanner.vue";
 import BookingCard from "~/components/sections/booking/provider/BookingCard.vue";
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
-import StaffAchievements from "~/components/sections/booking/provider/StaffAchievements.vue";
+import HealthProviders from "~/components/sections/booking/provider/HealthProviders.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { providerNavList } from "~/config/publicMenu";
@@ -450,23 +453,22 @@ const overviewRef = ref<HTMLElement | null>(null);
 const servicesRef = ref<HTMLElement | null>(null);
 const reviewsRef = ref<HTMLElement | null>(null);
 const locationRef = ref<HTMLElement | null>(null);
-const achievementsRef = ref<HTMLElement | null>(null);
 
 type TabKey =
     | "overview"
     | "services"
     | "reviews"
     | "location"
-    | "achievements"
-    | "gallery";
+    | "gallery"
+    | "providers";
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "services", label: "Services" },
     { key: "reviews", label: "Reviews" },
     { key: "location", label: "Location" },
-    { key: "achievements", label: "Achievements" },
     { key: "gallery", label: "Gallery" },
+    { key: "providers", label: "Health Providers" },
 ];
 
 const activeTab = ref<TabKey>("overview");
@@ -474,30 +476,38 @@ const activeTab = ref<TabKey>("overview");
 const scrollTo = (el: HTMLElement | null) =>
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-const goToTab = (key: TabKey) => {
+const goToTab = async (key: TabKey) => {
     if (key === "gallery") {
         bannerRef.value?.openGallery?.();
         return;
     }
 
+    const wasProviders = activeTab.value === "providers";
+
     activeTab.value = key;
+
+    if (key === "providers") return;
+
+    // The service card is a bottom sheet on small screens.
+    if (key === "services" && window.innerWidth < 1024) {
+        bookingCardRef.value?.openSheet?.();
+        return;
+    }
+
+    if (wasProviders) return;
+
+    await nextTick();
 
     if (key === "overview") scrollTo(overviewRef.value);
     if (key === "reviews") scrollTo(reviewsRef.value);
     if (key === "location") scrollTo(locationRef.value);
-    if (key === "achievements") scrollTo(achievementsRef.value);
-
-    if (key === "services") {
-        // The service card is a bottom sheet on small screens.
-        if (window.innerWidth < 1024) bookingCardRef.value?.openSheet?.();
-        else scrollTo(servicesRef.value);
-    }
+    if (key === "services") scrollTo(servicesRef.value);
 };
 
 // Keeps the highlighted tab in step with the section being read.
 let ticking = false;
 const onScroll = () => {
-    if (ticking) return;
+    if (ticking || activeTab.value === "providers") return;
     ticking = true;
 
     requestAnimationFrame(() => {
@@ -507,7 +517,6 @@ const onScroll = () => {
             ["overview", overviewRef.value],
             ["location", locationRef.value],
             ["reviews", reviewsRef.value],
-            ["achievements", achievementsRef.value],
         ];
 
         let current: TabKey = "overview";

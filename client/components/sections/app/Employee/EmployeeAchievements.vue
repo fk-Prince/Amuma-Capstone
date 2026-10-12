@@ -31,7 +31,7 @@ const todayStr = new Date().toISOString().split("T")[0];
             </div>
 
             <button
-                v-if="!disabled"
+                v-if="!disabled && items.length"
                 type="button"
                 @click="emit('add')"
                 class="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-2"
@@ -42,9 +42,35 @@ const todayStr = new Date().toISOString().split("T")[0];
 
         <div
             v-if="!items.length"
-            class="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+            class="flex flex-col items-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center dark:border-white/15 dark:bg-white/5"
         >
-            No certificates or achievements added.
+            <span
+                class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"
+            >
+                <Award class="h-6 w-6" />
+            </span>
+
+            <p
+                class="mt-4 text-sm font-semibold text-gray-900 dark:text-white"
+            >
+                No certificates or achievements yet
+            </p>
+            <p class="mt-1 max-w-sm text-xs text-slate-400 dark:text-gray-500">
+                {{
+                    disabled
+                        ? "This employee has no certificates or achievements on record."
+                        : "Add licenses, trainings, or awards along with a copy of the file and the date received."
+                }}
+            </p>
+
+            <button
+                v-if="!disabled"
+                type="button"
+                @click="emit('add')"
+                class="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            >
+                <Plus class="h-4 w-4" /> Add certificate / achievement
+            </button>
         </div>
 
         <div v-else class="space-y-4">
@@ -55,7 +81,7 @@ const todayStr = new Date().toISOString().split("T")[0];
             >
                 <BaseInput
                     v-model="item.label"
-                    label="Label"
+                    label="Title"
                     placeholder="e.g. BLS Certification, Employee of the Month"
                     :disabled="disabled"
                 />

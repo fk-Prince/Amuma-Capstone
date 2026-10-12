@@ -26,8 +26,8 @@ class BranchService extends BaseService {
     async get(uuid: string) {
         return await this.request(`${this.resource}/fetchBranch/${uuid}`, "GET");
     }
-    async staffAchievements(uuid: string) {
-        return await this.request(`${this.resource}/${uuid}/achievements`, "GET");
+    async healthProviders(uuid: string) {
+        return await this.request(`${this.resource}/${uuid}/health-providers`, "GET");
     }
     async validate(params: Branch): Promise<any> {
         return await this.request(this.getBackendApi + '/api/validate/branches', 'POST', params);

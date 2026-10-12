@@ -43,16 +43,18 @@ class BranchService
         return new BranchResource($branch);
     }
 
-    public function getStaffAchievements(string $uuid)
+    public function getHealthProviders(string $uuid)
     {
         $staff = $this->branchRepository
-            ->getBranchStaffAchievements($uuid)
-            ->filter(fn($row) => !empty($row->employees?->achievements))
+            ->getBranchHealthProviders($uuid)
+            ->filter(fn($row) => $row->employees)
             ->map(fn($row) => [
                 'name' => trim("{$row->employees->first_name} {$row->employees->last_name}"),
                 'avatar' => $row->employees->avatar,
                 'role_name' => ucwords(str_replace('_', ' ', $row->role_name)),
-                'achievements' => $row->employees->achievements,
+                'achievements' => collect($row->employees->achievements ?? [])
+                    ->map(fn($item) => Arr::only($item, ['label']))
+                    ->values(),
             ])
             ->values();
 
