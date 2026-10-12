@@ -127,11 +127,45 @@
                                 </div>
 
                                 <p
-                                    class="mt-3 line-clamp-3 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                    :title="item.description"
+                                    :ref="
+                                        (el) =>
+                                            setDescriptionRef(
+                                                item.value,
+                                                el as HTMLElement | null,
+                                            )
+                                    "
+                                    class="mt-3 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    :class="
+                                        expandedTypes[item.value]
+                                            ? ''
+                                            : 'line-clamp-3'
+                                    "
                                 >
                                     {{ item.description }}
                                 </p>
+
+                                <span
+                                    v-if="
+                                        overflowingTypes[item.value] ||
+                                        expandedTypes[item.value]
+                                    "
+                                    role="button"
+                                    tabindex="0"
+                                    class="mt-1 self-start text-xs font-semibold text-primary hover:underline"
+                                    @click.stop="toggleDescription(item.value)"
+                                    @keydown.enter.stop.prevent="
+                                        toggleDescription(item.value)
+                                    "
+                                    @keydown.space.stop.prevent="
+                                        toggleDescription(item.value)
+                                    "
+                                >
+                                    {{
+                                        expandedTypes[item.value]
+                                            ? "Show less"
+                                            : "Show more"
+                                    }}
+                                </span>
 
                                 <div class="mt-auto pt-4">
                                     <div
@@ -576,7 +610,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from "vue";
 import { Check, Stethoscope, Clock, Infinity } from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
@@ -615,6 +656,39 @@ const { bookingTypes } = useMedicalServices(
     () => adlRatePerHour.value,
     () => minAdlHours.value,
     props.homecare?.description,
+);
+
+const descriptionRefs: Record<string, HTMLElement> = {};
+const expandedTypes = ref<Record<string, boolean>>({});
+const overflowingTypes = ref<Record<string, boolean>>({});
+
+const setDescriptionRef = (key: string, el: HTMLElement | null) => {
+    if (!el) {
+        delete descriptionRefs[key];
+        return;
+    }
+
+    if (descriptionRefs[key] !== el) {
+        descriptionRefs[key] = el;
+        nextTick(measureDescriptions);
+    }
+};
+
+const measureDescriptions = () => {
+    for (const [key, el] of Object.entries(descriptionRefs)) {
+        if (expandedTypes.value[key]) continue;
+        overflowingTypes.value[key] = el.scrollHeight > el.clientHeight + 1;
+    }
+};
+
+const toggleDescription = (key: string) => {
+    expandedTypes.value[key] = !expandedTypes.value[key];
+};
+
+onMounted(() => window.addEventListener("resize", measureDescriptions));
+
+onBeforeUnmount(() =>
+    window.removeEventListener("resize", measureDescriptions),
 );
 
 function update<K extends keyof HomecareBooking>(
