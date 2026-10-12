@@ -76,9 +76,9 @@ class StoreEmployeeRequest extends FormRequest
 
             'achievements' => ['nullable', 'array'],
             'achievements.*.label' => ['required', 'string', 'max:255'],
-            'achievements.*.file' => ['nullable', 'file', 'max:10240'],
+            'achievements.*.file' => ['required_without:achievements.*.url', 'nullable', 'file', 'max:10240'],
             'achievements.*.url' => ['nullable', 'string'],
-            'achievements.*.date' => ['nullable', 'date'],
+            'achievements.*.date' => ['required', 'date'],
         ];
     }
 

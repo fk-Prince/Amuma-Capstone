@@ -4,10 +4,14 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import type { EmployeeAchievement } from "~/types/employee";
 
-defineProps<{
+const props = defineProps<{
     items: EmployeeAchievement[];
+    errors?: Record<string, string>;
     disabled?: boolean;
 }>();
+
+const errorFor = (index: number, field: "label" | "date" | "file") =>
+    props.errors?.[`achievements.${index}.${field}`] ?? "";
 
 const emit = defineEmits<{
     add: [];
@@ -77,12 +81,13 @@ const todayStr = new Date().toISOString().split("T")[0];
             <div
                 v-for="(item, index) in items"
                 :key="index"
-                class="grid items-end gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_14rem_14rem_auto] dark:border-white/10 dark:bg-secondary"
+                class="grid items-start gap-4 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_14rem_14rem_auto] dark:border-white/10 dark:bg-secondary"
             >
                 <BaseInput
                     v-model="item.label"
                     label="Title"
                     placeholder="e.g. BLS Certification, Employee of the Month"
+                    :error="errorFor(index, 'label')"
                     :disabled="disabled"
                 />
 
@@ -93,6 +98,7 @@ const todayStr = new Date().toISOString().split("T")[0];
                     :max="todayStr"
                     :default-to-today="false"
                     placeholder="Select date"
+                    :error="errorFor(index, 'date')"
                     :disabled="disabled"
                 />
 
@@ -104,12 +110,15 @@ const todayStr = new Date().toISOString().split("T")[0];
                     </p>
                     <div class="flex items-center gap-2">
                         <label
-                            class="flex-1 truncate rounded-lg border border-dashed border-slate-300 px-3 py-2.5 text-center text-sm text-slate-500 dark:border-white/20 dark:text-gray-400"
-                            :class="
+                            class="flex-1 truncate rounded-lg border border-dashed px-3 py-2.5 text-center text-sm"
+                            :class="[
+                                errorFor(index, 'file')
+                                    ? 'border-red-400 text-red-500 dark:border-red-500/60 dark:text-red-400'
+                                    : 'border-slate-300 text-slate-500 dark:border-white/20 dark:text-gray-400',
                                 disabled
                                     ? 'cursor-default'
-                                    : 'cursor-pointer hover:border-primary hover:text-primary'
-                            "
+                                    : 'cursor-pointer hover:border-primary hover:text-primary',
+                            ]"
                         >
                             {{
                                 item.file?.name ||
@@ -133,17 +142,32 @@ const todayStr = new Date().toISOString().split("T")[0];
                             View
                         </a>
                     </div>
+                    <p
+                        v-if="errorFor(index, 'file')"
+                        class="mt-1 text-xs text-red-500 dark:text-red-400"
+                    >
+                        {{ errorFor(index, "file") }}
+                    </p>
                 </div>
 
                 <button
                     v-if="!disabled"
                     type="button"
                     @click="emit('remove', index)"
-                    class="mb-2.5 shrink-0 text-slate-400 transition hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                    class="shrink-0 justify-self-end text-slate-400 transition hover:text-red-500 md:mt-10 dark:text-gray-500 dark:hover:text-red-400"
                 >
                     <X class="h-4 w-4" />
                 </button>
             </div>
+
+            <button
+                v-if="!disabled"
+                type="button"
+                @click="emit('add')"
+                class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-3 text-sm font-medium text-primary transition hover:border-primary hover:bg-primary/5 dark:border-white/15"
+            >
+                <Plus class="h-4 w-4" /> Add another
+            </button>
         </div>
     </div>
 </template>

@@ -332,6 +332,59 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         return Object.keys(fieldErrors).length === 0;
     }
 
+    function achievementErrors() {
+        const fieldErrors: Record<string, string> = {};
+
+        employee.value.achievements.forEach((item, index) => {
+            const hasTitle = !!item.label?.trim();
+            const hasDate = !!item.date;
+            const hasFile = !!(item.file || item.url);
+
+            if (!hasTitle && !hasDate && !hasFile) return;
+
+            if (!hasTitle) {
+                fieldErrors[`achievements.${index}.label`] = "Title is required.";
+            }
+            if (!hasDate) {
+                fieldErrors[`achievements.${index}.date`] = "Date is required.";
+            }
+            if (!hasFile) {
+                fieldErrors[`achievements.${index}.file`] = "File is required.";
+            }
+        });
+
+        return fieldErrors;
+    }
+
+    function validateAchievements() {
+        const fieldErrors = achievementErrors();
+
+        errors.value = {
+            ...Object.fromEntries(
+                Object.entries(errors.value).filter(
+                    ([key]) => !key.startsWith("achievements."),
+                ),
+            ),
+            ...fieldErrors,
+        };
+
+        return Object.keys(fieldErrors).length === 0;
+    }
+
+    const hasAchievementErrors = computed(() =>
+        Object.keys(errors.value).some((key) =>
+            key.startsWith("achievements."),
+        ),
+    );
+
+    watch(
+        () => employee.value.achievements,
+        () => {
+            if (hasAchievementErrors.value) validateAchievements();
+        },
+        { deep: true },
+    );
+
     function buildPayload() {
         const permissionPayload = Object.entries(permissions.value)
             .filter(([, actions]) => actions.length)
@@ -356,7 +409,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 (doc) => doc.label.trim() && (doc.file || doc.url),
             ),
             achievements: employee.value.achievements.filter(
-                (item) => item.label.trim() && (item.file || item.url),
+                (item) => item.label.trim() && item.date && (item.file || item.url),
             ),
             permissions: permissionPayload,
             type: "employee",
@@ -418,7 +471,10 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
     }
 
     async function saveEmployee() {
-        if (!validate()) {
+        const detailsValid = validate();
+        const achievementsValid = validateAchievements();
+
+        if (!detailsValid || !achievementsValid) {
             return false;
         }
 
@@ -528,6 +584,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         avatarPreview,
         initials,
         validate,
+        validateAchievements,
+        hasAchievementErrors,
         saveEmployee,
         isOnLeave,
         toggleLeave,

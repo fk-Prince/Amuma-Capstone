@@ -76,6 +76,8 @@ const {
     avatarPreview,
     initials,
     validate,
+    validateAchievements,
+    hasAchievementErrors,
     saveEmployee,
     isOnLeave,
     toggleLeave,
@@ -206,6 +208,19 @@ function goToPrevious() {
 const confirmingSave = ref(false);
 
 function requestSave() {
+    const detailsValid = validate();
+    const achievementsValid = validateAchievements();
+
+    if (!detailsValid) {
+        activeTab.value = "information";
+        return;
+    }
+
+    if (!achievementsValid) {
+        activeTab.value = "achievements";
+        return;
+    }
+
     confirmingSave.value = true;
 }
 
@@ -213,7 +228,9 @@ async function handleSave() {
     const ok = await saveEmployee();
     confirmingSave.value = false;
     if (!ok) {
-        activeTab.value = "information";
+        activeTab.value = hasAchievementErrors.value
+            ? "achievements"
+            : "information";
     }
 }
 
@@ -818,6 +835,7 @@ init();
                     v-else-if="activeTab === 'achievements'"
                     key="achievements"
                     :items="employee.achievements"
+                    :errors="errors"
                     :disabled="isViewMode || isAgencyOwner"
                     @add="addAchievement"
                     @remove="removeAchievement"
