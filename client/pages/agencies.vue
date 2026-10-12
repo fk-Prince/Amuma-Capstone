@@ -71,7 +71,7 @@ const features = [
             "eMAR and vital signs charting",
             "Admission and discharge records",
             "Room and bed tracking for facilities",
-            "VIP room CCTV access on the Facility plan",
+            "VIP and Common room contracts on the Facility plan",
         ],
     },
 ];

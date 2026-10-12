@@ -21,7 +21,6 @@ const MODULE_FEATURES: Record<string, string[]> = {
         "Admission & discharge management",
         "Room, bed & occupancy tracking",
         "VIP & Common room contracts",
-        "VIP room CCTV access",
         "eMAR & vital signs charting",
         "Family portal & messaging",
         "Billing, invoices & online payments",

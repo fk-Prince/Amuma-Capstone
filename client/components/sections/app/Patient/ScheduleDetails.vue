@@ -651,6 +651,22 @@
                                                 "Activity of Daily Living (ADL)"
                                             }}
                                         </p>
+
+                                        <p
+                                            v-if="service.type"
+                                            class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                                        >
+                                            Performed by:
+                                            {{ performedByLabel(service) }}
+                                        </p>
+
+                                        <p
+                                            v-if="service.description"
+                                            :title="service.description"
+                                            class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ service.description }}
+                                        </p>
                                     </div>
 
                                     <span
@@ -705,7 +721,7 @@
                                             </p>
 
                                             <div
-                                                v-if="service.type === 'Medical'"
+                                                v-if="showRoleFilter(service)"
                                                 class="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
                                             >
                                                 <button
@@ -1599,15 +1615,43 @@ function activeAssigneesFor(service: ScheduleServiceItem) {
     );
 }
 
+type PerformedBy = "both" | "nurse" | "caregiver";
+
+const PERFORMED_BY_LABELS: Record<PerformedBy, string> = {
+    both: "Nurse & Caregiver",
+    nurse: "Nurse",
+    caregiver: "Caregiver",
+};
+
+function performedByOf(service: ScheduleServiceItem): PerformedBy {
+    return service.performed_by ?? "both";
+}
+
+function performedByLabel(service: ScheduleServiceItem) {
+    if (service.type === "ADL") return "Caregiver";
+
+    return PERFORMED_BY_LABELS[performedByOf(service)];
+}
+
+function showRoleFilter(service: ScheduleServiceItem) {
+    return service.type === "Medical" && performedByOf(service) === "both";
+}
+
 function requiredRoleFor(service: ScheduleServiceItem): string | null {
-    if (service.type === "Medical") return "nurse";
+    if (service.type === "Medical") {
+        return performedByOf(service) === "caregiver" ? "caregiver" : "nurse";
+    }
     if (service.type === "ADL") return "caregiver";
 
     return null;
 }
 
 function requiredRoleLabel(service: ScheduleServiceItem) {
-    if (service.type === "Medical") return "Nurse or Caregiver";
+    if (service.type === "Medical") {
+        return performedByOf(service) === "both"
+            ? "Nurse or Caregiver"
+            : PERFORMED_BY_LABELS[performedByOf(service)];
+    }
 
     const role = requiredRoleFor(service);
 
@@ -1615,7 +1659,11 @@ function requiredRoleLabel(service: ScheduleServiceItem) {
 }
 
 function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
-    if (service.type === "Medical") return ["nurse", "caregiver"];
+    if (service.type === "Medical") {
+        const by = performedByOf(service);
+
+        return by === "both" ? ["nurse", "caregiver"] : [by];
+    }
     if (service.type === "ADL") return ["caregiver"];
 
     return null;
@@ -1624,6 +1672,7 @@ function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
 function isAssistant(service: ScheduleServiceItem, employee: Employee) {
     return (
         service.type === "Medical" &&
+        performedByOf(service) === "both" &&
         (employee.role_name ?? "").toLowerCase() === "caregiver"
     );
 }
@@ -1631,6 +1680,7 @@ function isAssistant(service: ScheduleServiceItem, employee: Employee) {
 const missingNurseLines = computed(() =>
     (props.schedule?.services ?? [])
         .filter((service) => service.type === "Medical")
+        .filter((service) => performedByOf(service) === "both")
         .filter((service) => {
             const picked = entriesFor(service.schedule_services_id);
 
@@ -1690,7 +1740,7 @@ function eligibleFor(service: ScheduleServiceItem) {
         }
 
         if (
-            service.type === "Medical" &&
+            showRoleFilter(service) &&
             roleFilter.value !== "all" &&
             (employee.role_name ?? "").toLowerCase() !== roleFilter.value &&
             !isAssigned(service.schedule_services_id, employee.employee_id)

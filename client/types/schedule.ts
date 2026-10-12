@@ -30,6 +30,8 @@ export interface ScheduleServiceItem {
     schedule_services_id: number;
     service_id: number;
     service_name: string | null;
+    description?: string | null;
+    performed_by?: "both" | "nurse" | "caregiver" | null;
     hours_booked: number | null;
     price: number;
     duration_minutes: number;

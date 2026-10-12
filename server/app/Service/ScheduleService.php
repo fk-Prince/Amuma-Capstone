@@ -181,11 +181,16 @@ class ScheduleService
 
     private const ASSISTANT_NOTE = 'Assistant';
 
-    private function assistingIds(?string $type, $employeeIds, $branchId)
+    private function performedBy($scheduleService): string
+    {
+        return $scheduleService->service?->performed_by ?? 'both';
+    }
+
+    private function assistingIds(?string $type, $employeeIds, $branchId, string $performedBy = 'both')
     {
         $employeeIds = collect($employeeIds);
 
-        if ($type !== 'Medical' || $employeeIds->isEmpty()) {
+        if ($type !== 'Medical' || $performedBy !== 'both' || $employeeIds->isEmpty()) {
             return collect();
         }
 
@@ -228,7 +233,7 @@ class ScheduleService
         }
     }
 
-    private function assertStaffing(?string $type, $employeeIds, $branchId): void
+    private function assertStaffing(?string $type, $employeeIds, $branchId, string $performedBy = 'both'): void
     {
         $employeeIds = collect($employeeIds);
 
@@ -237,7 +242,11 @@ class ScheduleService
         }
 
         $allowed = match ($type) {
-            'Medical' => ['nurse', 'caregiver'],
+            'Medical' => match ($performedBy) {
+                'nurse' => ['nurse'],
+                'caregiver' => ['caregiver'],
+                default => ['nurse', 'caregiver'],
+            },
             'ADL' => ['caregiver'],
             default => null,
         };
@@ -253,15 +262,18 @@ class ScheduleService
         foreach ($employeeIds as $employeeId) {
             if (!in_array($roles[$employeeId] ?? null, $allowed, true)) {
                 throw new Exception(
-                    $type === 'Medical'
-                        ? 'Only a nurse, or a caregiver assisting a nurse, can be assigned to a Medical service.'
-                        : 'Only a caregiver can be assigned to an ADL service.',
+                    match (true) {
+                        $type !== 'Medical' => 'Only a caregiver can be assigned to an ADL service.',
+                        $performedBy === 'nurse' => 'Only a nurse can be assigned to this service.',
+                        $performedBy === 'caregiver' => 'Only a caregiver can be assigned to this service.',
+                        default => 'Only a nurse, or a caregiver assisting a nurse, can be assigned to a Medical service.',
+                    },
                     422
                 );
             }
         }
 
-        if ($type === 'Medical' && !$employeeIds->contains(fn($id) => ($roles[$id] ?? null) === 'nurse')) {
+        if ($type === 'Medical' && $performedBy === 'both' && !$employeeIds->contains(fn($id) => ($roles[$id] ?? null) === 'nurse')) {
             throw new Exception(
                 'A medical service needs a nurse. A caregiver can only assist, not be assigned alone.',
                 422
@@ -347,7 +359,7 @@ class ScheduleService
                 $rowEmployeeIds = collect($rows)->pluck('employee_id')->filter()->map(fn($id) => (int) $id)->unique()->values();
 
                 if (!$isFinalizing) {
-                    $this->assertStaffing($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
+                    $this->assertStaffing($scheduleService->type, $rowEmployeeIds, $branch->branch_id, $this->performedBy($scheduleService));
 
                     $activeIds = $scheduleService->assigned()
                         ->where('is_active', true)
@@ -361,7 +373,7 @@ class ScheduleService
                     );
                 }
 
-                $assisting = $this->assistingIds($scheduleService->type, $rowEmployeeIds, $branch->branch_id);
+                $assisting = $this->assistingIds($scheduleService->type, $rowEmployeeIds, $branch->branch_id, $this->performedBy($scheduleService));
 
                 foreach ($scheduleService->assigned()->get() as $existing) {
                     if ($existing->is_active) {
@@ -837,7 +849,7 @@ class ScheduleService
                     ->pluck('employee_id')
                     ->map(fn($id) => (int) $id);
 
-                $this->assertStaffing($scheduleService->type, $desiredEmployeeIds, $branchId);
+                $this->assertStaffing($scheduleService->type, $desiredEmployeeIds, $branchId, $this->performedBy($scheduleService));
 
                 $this->assertAssignmentType(
                     $schedule,
@@ -845,7 +857,7 @@ class ScheduleService
                     $branchId
                 );
 
-                $assisting = $this->assistingIds($scheduleService->type, $desiredEmployeeIds, $branchId);
+                $assisting = $this->assistingIds($scheduleService->type, $desiredEmployeeIds, $branchId, $this->performedBy($scheduleService));
 
                 $timesByEmployee = $assignments
                     ->filter(fn($row) => !empty($row['employee_id']))

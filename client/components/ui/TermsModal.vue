@@ -15,7 +15,7 @@ withDefaults(
     { showAccept: false },
 );
 
-const LAST_UPDATED = "September 2, 2026";
+const LAST_UPDATED = "October 13, 2026";
 
 function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") emit("close");
@@ -90,8 +90,9 @@ onBeforeUnmount(() => {
                             bill for care. Families use it to search verified
                             providers, book homecare visits or facility stays,
                             follow a loved one's care, and settle payments
-                            online. By creating an account you agree to these
-                            terms.
+                            online. Families can also send an inquiry to a
+                            provider from its page. By creating an account you
+                            agree to these terms.
                         </p>
                     </section>
 
@@ -149,6 +150,15 @@ onBeforeUnmount(() => {
                             patient information only to deliver or arrange care,
                             and never for any other purpose.
                         </p>
+                        <p class="mt-2">
+                            When you send an inquiry to a provider, the name,
+                            email address, phone number, city, and message you
+                            enter are shared with that branch's staff so they
+                            can answer you, and the reply is sent to the email
+                            address you gave. Do not include sensitive health
+                            details in an inquiry; share them only once you
+                            book.
+                        </p>
                     </section>
 
                     <section>
@@ -166,6 +176,13 @@ onBeforeUnmount(() => {
                             of its staff, and for its own licensing. AMUMA is
                             not a substitute for emergency services — in an
                             emergency, contact emergency responders directly.
+                        </p>
+                        <p class="mt-2">
+                            To help the branch prepare suitable care, a booking
+                            asks for the patient's diagnosis, made within the
+                            past six months, together with a basic assessment.
+                            You agree to provide this accurately and to keep
+                            the information current.
                         </p>
                     </section>
 
@@ -202,7 +219,7 @@ onBeforeUnmount(() => {
                         <h3
                             class="mb-1.5 text-sm font-bold text-slate-900 dark:text-white"
                         >
-                            7. QR check-in codes and CCTV access
+                            7. QR check-in codes
                         </h3>
                         <p>
                             A QR code generated for a homecare visit proves that
@@ -217,26 +234,12 @@ onBeforeUnmount(() => {
                             patient received care they never received.
                         </p>
                         <p class="mt-2">
-                            CCTV access in VIP rooms is granted only to the
-                            patient's authorised family members and to branch
-                            staff whose duties require it, and only for the
-                            duration of that patient's stay. You may not record,
-                            screenshot, download, re-stream, or otherwise share
-                            any footage or still image with anyone outside that
-                            group, and you may not pass your account or viewing
-                            link to another person. Cameras may capture other
-                            patients, visitors, and staff, so sharing footage
-                            exposes people who never consented to it.
-                        </p>
-                        <p class="mt-2">
                             We may suspend or permanently close any account
-                            involved in either practice, void the affected visit
+                            involved in this practice, void the affected visit
                             records, and notify the agency and the patient's
-                            family. Depending on what was shared, these acts may
-                            also carry liability under the Data Privacy Act of
-                            2012 and the Anti-Photo and Video Voyeurism Act of
-                            2009 (Republic Act No. 9995), and we will cooperate
-                            with lawful investigations.
+                            family. These acts may also carry liability under
+                            the law, and we will cooperate with lawful
+                            investigations.
                         </p>
                     </section>
 

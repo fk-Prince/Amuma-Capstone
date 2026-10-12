@@ -204,7 +204,7 @@ class EmployeeRepository
 
         return Employee::with([
             'locations',
-            'employeeBranch' => function ($query) use ($branchId, $allowedRoles) {
+            'employeeBranch' => function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
                     ->with([
@@ -212,6 +212,8 @@ class EmployeeRepository
                         'employeeServices' => function ($q) {
                             $q->where('is_active', true)->with('services');
                         },
+                        'scheduleAssignments' => $activeScheduleAssignments,
+                        'scheduleAssignments.scheduleService.schedule',
                     ]);
             },
         ])

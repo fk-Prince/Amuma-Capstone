@@ -270,6 +270,8 @@ class ScheduleResource extends JsonResource
                         'schedule_services_id' => $scheduleService->schedule_services_id,
                         'service_id' => $scheduleService->service_id,
                         'service_name' => $scheduleService->service?->service_name,
+                        'description' => $scheduleService->service?->description,
+                        'performed_by' => $scheduleService->service?->performed_by,
 
                         'hours_booked' => $scheduleService->hours_booked !== null
                             ? (float) $scheduleService->hours_booked

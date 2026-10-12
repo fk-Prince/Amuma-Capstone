@@ -32,7 +32,7 @@ const faqs: Faq[] = [
     },
     {
         q: "What's the difference between Homecare, Facility and Hybrid?",
-        a: "Homecare covers home visits, caregiver assignment and charting. Facility covers admissions, rooms and beds, and VIP room CCTV. Hybrid includes everything in both under one subscription.",
+        a: "Homecare covers home visits, caregiver assignment and charting. Facility covers admissions, rooms and beds, and room contracts. Hybrid includes everything in both under one subscription.",
         link: { label: "Compare the three", to: "/product" },
     },
     {

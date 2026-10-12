@@ -143,10 +143,18 @@
                                         </span>
 
                                         <span v-if="service.type">
+                                            Performed by:
                                             {{ requiredRoleLabelFor(service) }}
-                                            only
                                         </span>
                                     </div>
+
+                                    <p
+                                        v-if="service.description"
+                                        :title="service.description"
+                                        class="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{ service.description }}
+                                    </p>
                                 </div>
 
                                 <span
@@ -406,7 +414,7 @@
                                  assignment is multi-select, so the list has to
                                  stay open while several people are picked. -->
                             <div
-                                v-if="isActiveServiceMedical"
+                                v-if="showRoleFilter"
                                 class="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
                             >
                                 <button
@@ -1093,10 +1101,46 @@ const isActiveServiceAdl = computed(
     () => serviceTypeFor(activeService.value) === "ADL",
 );
 
+type PerformedBy = "both" | "nurse" | "caregiver";
+
+function performedByFor(serviceId: number | null): PerformedBy {
+    return (
+        props.schedule?.services?.find(
+            (s) => s.schedule_services_id === serviceId,
+        )?.performed_by ?? "both"
+    );
+}
+
+const PERFORMED_BY_LABELS: Record<PerformedBy, string> = {
+    both: "Nurse & Caregiver",
+    nurse: "Nurse",
+    caregiver: "Caregiver",
+};
+
+const showRoleFilter = computed(
+    () =>
+        isActiveServiceMedical.value &&
+        performedByFor(activeService.value) === "both",
+);
+
+function medicalRoleMessage(serviceId: number | null) {
+    const by = performedByFor(serviceId);
+
+    if (by === "nurse") return "Only a nurse can be assigned to this service.";
+    if (by === "caregiver")
+        return "Only a caregiver can be assigned to this service.";
+
+    return "Only a nurse, or a caregiver assisting a nurse, can be assigned to this service.";
+}
+
 function allowedRolesFor(serviceId: number | null): string[] | null {
     const type = serviceTypeFor(serviceId);
 
-    if (type === "Medical") return ["nurse", "caregiver"];
+    if (type === "Medical") {
+        const by = performedByFor(serviceId);
+
+        return by === "both" ? ["nurse", "caregiver"] : [by];
+    }
     if (type === "ADL") return ["caregiver"];
 
     return null;
@@ -1111,6 +1155,7 @@ function isNoteLocked(entry: AssignmentEntry, serviceId: number) {
 function isAssistant(employee: Employee, serviceId: number | null) {
     return (
         serviceTypeFor(serviceId) === "Medical" &&
+        performedByFor(serviceId) === "both" &&
         (employee.role_name ?? "").toLowerCase() === "caregiver"
     );
 }
@@ -1118,6 +1163,7 @@ function isAssistant(employee: Employee, serviceId: number | null) {
 const missingNurseLines = computed(() =>
     (props.schedule?.services ?? [])
         .filter((service) => service.type === "Medical")
+        .filter((service) => (service.performed_by ?? "both") === "both")
         .filter((service) => {
             const picked = selectionFor(service.schedule_services_id);
 
@@ -1140,7 +1186,11 @@ const missingNurseLines = computed(() =>
 function requiredRoleFor(serviceId: number | null): string | null {
     const type = serviceTypeFor(serviceId);
 
-    if (type === "Medical") return "nurse";
+    if (type === "Medical") {
+        const by = performedByFor(serviceId);
+
+        return by === "caregiver" ? "caregiver" : "nurse";
+    }
     if (type === "ADL") return "caregiver";
 
     return null;
@@ -1168,13 +1218,21 @@ function assignmentTypeLabel(employee: Employee): string {
 }
 
 function requiredRoleLabelFor(service: ScheduleServiceItem) {
+    if (service.type === "Medical") {
+        return PERFORMED_BY_LABELS[service.performed_by ?? "both"];
+    }
+
     const role = requiredRoleFor(service.schedule_services_id);
 
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
 }
 
 const requiredRoleLabel = computed(() => {
-    if (isActiveServiceMedical.value) return "Nurse or Caregiver";
+    if (isActiveServiceMedical.value) {
+        const by = performedByFor(activeService.value);
+
+        return by === "both" ? "Nurse or Caregiver" : PERFORMED_BY_LABELS[by];
+    }
 
     const role = requiredRoleFor(activeService.value);
 
@@ -1293,7 +1351,7 @@ function requestToggle(serviceId: number | null, employee: Employee) {
     if (hasRoleMismatch(employee, serviceId)) {
         toastError(
             serviceTypeFor(serviceId) === "Medical"
-                ? "Only a nurse, or a caregiver assisting a nurse, can be assigned to this service."
+                ? medicalRoleMessage(serviceId)
                 : "Only a caregiver can be assigned to this service.",
         );
         return;

@@ -573,7 +573,7 @@ const categories = [
             "Patient Admissions & Homecare Visits",
             "Room & Bed Assignment",
             "Staff Scheduling",
-            "CCTV Access Policy & QR-Based Attendance",
+            "QR-Based Attendance",
         ],
         cta: "View Facility Tools",
         tint: "bg-primary-50 text-primary",
