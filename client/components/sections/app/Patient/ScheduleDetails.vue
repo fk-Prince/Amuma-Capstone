@@ -2136,7 +2136,7 @@ function validate() {
 
 const cancelConfirmOpen = ref(false);
 const completeConfirmOpen = ref(false);
-const voidInvoice = ref(true);
+const voidInvoice = ref(false);
 
 function buildSchedulePayload() {
     if (!props.schedule) return null;
@@ -2203,7 +2203,7 @@ function handleSchedule() {
     }
 
     if (form.value.status === "cancelled") {
-        voidInvoice.value = true;
+        voidInvoice.value = false;
         cancelConfirmOpen.value = true;
         return;
     }
