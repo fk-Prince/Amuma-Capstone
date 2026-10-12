@@ -131,6 +131,7 @@ const toggleStaffRole = (role: "nurse" | "caregiver") => {
 
     if (!nurse && !caregiver) {
         staffRoleError.value = "Select at least one role.";
+        setTimeout(() => (staffRoleError.value = ""), 2500);
         return;
     }
 
@@ -251,7 +252,7 @@ watch(
                                         label="Service Category"
                                         placeholder="Search service category..."
                                         searchBar
-                                        searchBarPlaceHolder="Select category or Add Service"
+                                        searchBarPlaceHolder="Select or add a category"
                                         :allowCustom="true"
                                         :error="errors?.category_name"
                                         @update:modelValue="
@@ -448,20 +449,20 @@ watch(
                                     >
                                         Performed by
                                     </p>
-                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div class="flex flex-wrap items-center gap-x-8 gap-y-2">
                                         <label
                                             v-for="option in staffRoleOptions"
                                             :key="option.value"
-                                            class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition"
+                                            class="inline-flex cursor-pointer select-none items-center gap-2.5 text-sm"
                                             :class="
                                                 option.checked
-                                                    ? 'border-primary bg-primary/5 text-gray-900 dark:bg-primary-500/10 dark:text-white'
-                                                    : 'border-gray-200 text-gray-600 hover:border-primary/40 dark:border-white/10 dark:text-gray-400'
+                                                    ? 'text-gray-900 dark:text-white'
+                                                    : 'text-gray-500 dark:text-gray-400'
                                             "
                                         >
                                             <input
                                                 type="checkbox"
-                                                class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
+                                                class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-white/5"
                                                 :checked="option.checked"
                                                 @change="onStaffRoleChange(option.value, $event)"
                                             />
