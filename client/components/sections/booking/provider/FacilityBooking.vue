@@ -544,11 +544,12 @@
 
                                 <div
                                     v-else
-                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md"
+                                    :class="room.accent"
                                 >
                                     <component
                                         :is="room.icon"
-                                        class="h-7 w-7"
+                                        class="h-5 w-5"
                                     />
                                 </div>
 
@@ -785,7 +786,7 @@ import type { BranchImage, BranchRetrieve } from "~/types/branch";
 import ClampedText from "~/components/ui/ClampedText.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
-    Star,
+    Crown,
     CalendarDays,
     CalendarRange,
     Users,
@@ -888,18 +889,21 @@ const roomTypeDefs: {
     title: string;
     description: string;
     icon: Component;
+    accent: string;
 }[] = [
     {
         value: "Common",
         title: "Common Room",
         description: "Shared ward",
         icon: Users,
+        accent: "from-sky-400 to-blue-500 shadow-sky-500/20",
     },
     {
         value: "VIP",
         title: "VIP Room",
         description: "Private premium room",
-        icon: Star,
+        icon: Crown,
+        accent: "from-amber-400 to-orange-500 shadow-amber-500/20",
     },
 ];
 

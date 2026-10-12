@@ -108,7 +108,7 @@
             <span
                 class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
                 :class="
-                    branch.settings.is_open
+                    branch.is_available !== false && branch.settings.is_open
                         ? 'bg-accent-50 text-accent-700'
                         : 'bg-danger/10 text-danger'
                 "
@@ -116,10 +116,18 @@
                 <span
                     class="h-1.5 w-1.5 rounded-full"
                     :class="
-                        branch.settings.is_open ? 'bg-accent-500' : 'bg-danger'
+                        branch.is_available !== false && branch.settings.is_open
+                            ? 'bg-accent-500'
+                            : 'bg-danger'
                     "
                 />
-                {{ branch.settings.is_open ? "Open" : "Closed" }}
+                {{
+                    branch.is_available === false
+                        ? "Unavailable"
+                        : branch.settings.is_open
+                          ? "Open"
+                          : "Closed"
+                }}
             </span>
 
             <button
@@ -162,16 +170,22 @@
                 <span
                     class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
                     :class="
-                        branch.settings.is_open
+                        branch.is_available !== false && branch.settings.is_open
                             ? 'bg-emerald-500 text-white'
                             : 'bg-white/90 text-danger dark:bg-secondary/90 dark:text-danger'
                     "
                 >
                     <span
-                        v-if="branch.settings.is_open"
+                        v-if="branch.is_available !== false && branch.settings.is_open"
                         class="h-1.5 w-1.5 shrink-0 rounded-full bg-white"
                     />
-                    {{ branch.settings.is_open ? "Open Now" : "Closed" }}
+                    {{
+                        branch.is_available === false
+                            ? "Service unavailable"
+                            : branch.settings.is_open
+                              ? "Open Now"
+                              : "Closed"
+                    }}
                 </span>
 
                 <button
@@ -370,16 +384,22 @@
             <span
                 class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm"
                 :class="
-                    branch.settings.is_open
+                    branch.is_available !== false && branch.settings.is_open
                         ? 'bg-emerald-500 text-white'
                         : 'bg-white/90 text-danger dark:bg-secondary/90 dark:text-danger'
                 "
             >
                 <span
-                    v-if="branch.settings.is_open"
+                    v-if="branch.is_available !== false && branch.settings.is_open"
                     class="h-1.5 w-1.5 shrink-0 rounded-full bg-white"
                 />
-                {{ branch.settings.is_open ? "Open Now" : "Closed" }}
+                {{
+                        branch.is_available === false
+                            ? "Service unavailable"
+                            : branch.settings.is_open
+                              ? "Open Now"
+                              : "Closed"
+                    }}
             </span>
 
             <button
