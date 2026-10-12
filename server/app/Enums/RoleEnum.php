@@ -16,7 +16,7 @@ enum RoleEnum: string
         return match ($this) {
             self::AgencyOwner => collect(ModuleEnum::cases())
                 ->mapWithKeys(fn(ModuleEnum $module) => [
-                    $module->value => $module->actionColumns(),
+                    $module->value => PermissionAction::columns(),
                 ])
                 ->all(),
 

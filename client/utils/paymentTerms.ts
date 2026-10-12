@@ -146,7 +146,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "These Terms are governed by the laws of the Republic of the Philippines. Any dispute arising from your subscription will be resolved in the courts of [City — e.g. Davao City], without prejudice to any mandatory consumer-protection venue.",
+                    text: "These Terms are governed by the laws of the Republic of the Philippines. Any dispute arising from your subscription will be resolved in the courts of Davao City, without prejudice to any mandatory consumer-protection venue.",
                 },
             ],
         },
@@ -159,7 +159,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
                 },
                 {
                     type: "paragraph",
-                    text: "Questions about a charge or these Terms may be directed to [amuma@gmail.com].",
+                    text: "Questions about a charge or these Terms may be directed to amuma@gmail.com.",
                 },
             ],
         },
@@ -268,7 +268,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Questions about a booking charge may be directed to [amuma@gmail.com].",
+                    text: "Questions about a booking charge may be directed to amuma@gmail.com.",
                 },
             ],
         },

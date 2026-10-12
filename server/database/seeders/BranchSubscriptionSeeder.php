@@ -191,7 +191,7 @@ class BranchSubscriptionSeeder extends Seeder
         $plans = Plan::all()->keyBy(fn($plan) => "{$plan->plan_code}-{$plan->type}");
         $modules = Module::all();
         $reference = Agency::whereNotNull('document')->first();
-        $ownerPermissions = RoleEnum::BranchManager->permissions();
+        $ownerPermissions = RoleEnum::AgencyOwner->permissions();
         $adminId = PlatformAdmin::query()->value('user_id');
 
         if ($plans->isEmpty() || $modules->isEmpty()) {

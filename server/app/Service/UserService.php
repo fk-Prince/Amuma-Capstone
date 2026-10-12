@@ -4,6 +4,7 @@ namespace App\Service;
 
 
 use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Enums\RoleEnum;
 use App\Models\Branch;
 use App\Models\BranchSubscription;
@@ -62,7 +63,7 @@ class UserService
 
         $fullPermissions = collect(ModuleEnum::cases())->map(fn($module) => [
             'module_name' => $module->value,
-            'actions' => $module->actionColumns(),
+            'actions' => PermissionAction::columns(),
         ])->values();
 
         $impliedEmployeeBranches = $impliedBranchIds->map(fn($branchId) => (object) [

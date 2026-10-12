@@ -74,7 +74,8 @@ class SubscriptionService
 
     private function grantOwnerPermissions(int $employeeId, int $branchId): void
     {
-        $owner = RoleEnum::BranchManager->permissions();
+        $owner = RoleEnum::AgencyOwner->permissions();
+
         foreach ($this->moduleRepository->getAllModules() as $module) {
             EmployeePermission::updateOrCreate(
                 [
