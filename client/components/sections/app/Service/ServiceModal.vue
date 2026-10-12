@@ -115,6 +115,30 @@ onUnmounted(() => {
     document.removeEventListener("keydown", onKeydown, true);
 });
 
+const staffRoleError = ref("");
+
+const allowsNurse = computed(
+    () => (props.form.staff_role ?? "both") !== "caregiver",
+);
+const allowsCaregiver = computed(
+    () => (props.form.staff_role ?? "both") !== "nurse",
+);
+
+const toggleStaffRole = (role: "nurse" | "caregiver") => {
+    const nurse = role === "nurse" ? !allowsNurse.value : allowsNurse.value;
+    const caregiver =
+        role === "caregiver" ? !allowsCaregiver.value : allowsCaregiver.value;
+
+    if (!nurse && !caregiver) {
+        staffRoleError.value = "Select at least one role.";
+        return;
+    }
+
+    staffRoleError.value = "";
+    props.form.staff_role =
+        nurse && caregiver ? "both" : nurse ? "nurse" : "caregiver";
+};
+
 const onSubmit = () => {
     if (!validate()) return;
     emit("submit");
@@ -402,6 +426,66 @@ watch(
                                         },
                                     ]"
                                 />
+
+                                <div>
+                                    <p
+                                        class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    >
+                                        Performed by
+                                    </p>
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <label
+                                            v-for="option in [
+                                                {
+                                                    value: 'nurse' as const,
+                                                    label: 'Nurse',
+                                                    checked: allowsNurse,
+                                                },
+                                                {
+                                                    value: 'caregiver' as const,
+                                                    label: 'Caregiver',
+                                                    checked: allowsCaregiver,
+                                                },
+                                            ]"
+                                            :key="option.value"
+                                            class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition"
+                                            :class="
+                                                option.checked
+                                                    ? 'border-primary bg-primary/5 text-gray-900 dark:bg-primary-500/10 dark:text-white'
+                                                    : 'border-gray-200 text-gray-600 hover:border-primary/40 dark:border-white/10 dark:text-gray-400'
+                                            "
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
+                                                :checked="option.checked"
+                                                @change="
+                                                    toggleStaffRole(option.value);
+                                                    ($event.target as HTMLInputElement).checked =
+                                                        option.value === 'nurse'
+                                                            ? allowsNurse
+                                                            : allowsCaregiver;
+                                                "
+                                            />
+                                            <span class="font-medium">{{
+                                                option.label
+                                            }}</span>
+                                        </label>
+                                    </div>
+                                    <p
+                                        v-if="staffRoleError"
+                                        class="mt-1.5 text-xs text-red-500"
+                                    >
+                                        {{ staffRoleError }}
+                                    </p>
+                                    <p
+                                        v-else
+                                        class="mt-1.5 text-xs text-gray-400 dark:text-gray-500"
+                                    >
+                                        Only staff with a checked role can be
+                                        assigned to this service.
+                                    </p>
+                                </div>
                             </div>
 
                             <div

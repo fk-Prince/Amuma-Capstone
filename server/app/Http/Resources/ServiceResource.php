@@ -19,6 +19,7 @@ class ServiceResource extends JsonResource
             'price' => $this->price,
             'maximum_duration' => $this->maximum_duration,
             'is_available' => $this->is_available,
+            'staff_role' => $this->staff_role,
             'type' => $this->type,
             'type_formatted' => match ($this->type) {
                 'online' => 'Homecare Services',

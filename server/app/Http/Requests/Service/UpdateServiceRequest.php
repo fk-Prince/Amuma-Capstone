@@ -30,6 +30,7 @@ class UpdateServiceRequest extends FormRequest
             'price' => ['required', 'numeric', 'min:1'],
             'maximum_duration' => ['required', 'date_format:H:i:s',],
             'is_available' => ['boolean'],
+            'staff_role' => ['nullable', 'in:both,nurse,caregiver'],
             'type' => ['required', Rule::in(['online', 'facility', 'both'])],
         ];
     }

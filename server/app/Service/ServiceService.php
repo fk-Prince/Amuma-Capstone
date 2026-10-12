@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Guard\BranchGuard;
 use App\Http\Resources\ServiceResource;
 use App\Models\EmployeeBranch;
+use App\Models\Service;
 use App\Repository\ServiceRepository;
 use App\Models\User;
 use App\Repository\CategoryRepository;
@@ -56,6 +57,7 @@ class ServiceService
                 'description'      => $payload['description'] ?? null,
                 'maximum_duration' => $payload['maximum_duration'],
                 'is_available'     => $payload['is_available'] ?? true,
+                'staff_role'       => $payload['staff_role'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
 
@@ -101,6 +103,7 @@ class ServiceService
                 'description'      => $payload['description'] ?? null,
                 'maximum_duration' => $payload['maximum_duration'],
                 'is_available'     => $payload['is_available'] ?? true,
+                'staff_role'       => $payload['staff_role'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
 
@@ -135,6 +138,7 @@ class ServiceService
                         : ($service->type == 'both' ? 'Homecare and Inhouse Services' : 'Inhouse Services'),
                     'maximum_duration' => date('H:i:s', strtotime($service->maximum_duration)),
                     'is_available' => $service->is_available,
+                    'staff_role' => $service->staff_role,
                 ];
             }),
         ]);
@@ -181,6 +185,7 @@ class ServiceService
                             default => '',
                         },
                         'is_available' => $service->is_available,
+                        'staff_role' => $service->staff_role,
                     ];
                 }),
         ]);
@@ -201,6 +206,14 @@ class ServiceService
             }
 
             if ($item['action'] === 'assign') {
+
+                $service = Service::where('service_id', $item['service_id'])
+                    ->where('branch_id', $payload['branch_id'])
+                    ->first();
+
+                if (!$service || !in_array($employeeBranch->role_name, $service->allowedStaffRoles(), true)) {
+                    throw new Exception('This staff member\'s role cannot perform this service.', 422);
+                }
 
                 $exists = $this->serviceRepository->existsEmployeeService(
                     $item['service_id'],

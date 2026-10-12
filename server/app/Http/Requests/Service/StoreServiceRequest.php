@@ -30,6 +30,7 @@ class StoreServiceRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000'],
             'maximum_duration' => ['required', 'date_format:H:i:s',],
             'is_available' => ['boolean'],
+            'staff_role' => ['nullable', 'in:both,nurse,caregiver'],
             'type' => ['required', 'in:online,facility,both'],
         ];
     }

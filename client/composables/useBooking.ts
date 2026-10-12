@@ -75,10 +75,10 @@ export function useMedicalServices(
 
     const medicalDescription = computed(() => {
         if (!serviceList.value.length) {
-            return "No medical services available";
+            return "No services available";
         }
 
-        return "Professional medical care delivered at home by licensed nurses. Choose the specific treatment the patient needs and book it as a single visit, paying only for that service. Ideal for recovering after a hospital stay or managing an ongoing condition from the comfort of home.";
+        return "Professional care delivered at home by licensed nurses or caregivers. Choose the specific treatment the patient needs and book it as a single visit, paying only for that service. Ideal for recovering after a hospital stay or managing an ongoing condition from the comfort of home.";
     });
 
     // const medicalDescription = computed(() => {

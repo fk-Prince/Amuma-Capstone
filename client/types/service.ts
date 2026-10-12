@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 
+export type ServiceStaffRole = "both" | "nurse" | "caregiver";
+
 export interface Service {
     branch_uuid: string;
     service_uuid?: string;
@@ -13,6 +15,7 @@ export interface Service {
     description?: string | null;
     maximum_duration: string;
     is_available?: boolean;
+    staff_role?: ServiceStaffRole;
     type: 'online' | 'facility' | 'both';
     type_formatted?: "Homecare Services" | "Inhouse Services" | 'Homecare and Inhouse Services';
 }
@@ -32,6 +35,7 @@ export const createServiceForm = (): Service => ({
     description: "",
     maximum_duration: "",
     is_available: true,
+    staff_role: "both",
     type: "both",
 });
 

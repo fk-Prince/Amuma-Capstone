@@ -281,7 +281,8 @@ class EmployeeRepository
         $employees = EmployeeBranch::query()
             ->where('branch_id', $branchId)
             ->whereIn('assignment_type', $this->eligibleAssignmentTypes($service->type))
-            ->whereIn('role_name', ['nurse'])
+            ->whereIn('role_name', $service->allowedStaffRoles())
+            ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
             ->with([
                 'employees',
                 'employeeServices' => function ($query) use ($payload) {

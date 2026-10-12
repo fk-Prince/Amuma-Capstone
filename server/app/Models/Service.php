@@ -20,11 +20,25 @@ class Service extends Model
         'description',
         'maximum_duration',
         'is_available',
+        'staff_role',
         'type',
     ];
+    public const STAFF_ROLE_BOTH = 'both';
+    public const STAFF_ROLE_NURSE = 'nurse';
+    public const STAFF_ROLE_CAREGIVER = 'caregiver';
+
     public function uniqueIds()
     {
         return ['service_uuid'];
+    }
+
+    public function allowedStaffRoles(): array
+    {
+        return match ($this->staff_role) {
+            self::STAFF_ROLE_NURSE => [self::STAFF_ROLE_NURSE],
+            self::STAFF_ROLE_CAREGIVER => [self::STAFF_ROLE_CAREGIVER],
+            default => [self::STAFF_ROLE_NURSE, self::STAFF_ROLE_CAREGIVER],
+        };
     }
 
     protected $casts = [
