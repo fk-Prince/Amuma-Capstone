@@ -24,7 +24,7 @@
                 >
                     <div
                         v-if="branchStore.showModal"
-                        class="w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
+                        class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
                         role="dialog"
                         aria-modal="true"
                         :aria-label="
@@ -56,7 +56,7 @@
 
                                 <div class="min-w-0">
                                     <h2
-                                        class="truncate text-sm font-semibold leading-tight text-primary-900 dark:text-white sm:text-base"
+                                        class="truncate text-sm font-semibold leading-tight text-primary-900 dark:text-white sm:text-lg"
                                     >
                                         {{
                                             agencyStep
@@ -128,7 +128,7 @@
 
                         <div
                             v-if="agencyStep"
-                            class="branch-scroll grid content-start items-start max-h-[calc(100vh-11rem)] gap-2.5 overflow-y-auto p-2.5 sm:min-h-[22rem] sm:max-h-[40rem] sm:grid-cols-2 sm:p-3"
+                            class="branch-scroll grid content-start items-start max-h-[calc(100vh-11rem)] gap-2.5 overflow-y-auto p-2.5 sm:min-h-[26rem] sm:max-h-[44rem] sm:grid-cols-2 sm:gap-3.5 sm:p-4"
                         >
                             <button
                                 v-for="agency in filteredAgencies"
@@ -348,13 +348,13 @@
 
                             <div
                                 v-if="filteredBranchesForView.length"
-                                class="branch-scroll grid content-start items-start max-h-[calc(100vh-11rem)] gap-2.5 overflow-y-auto p-2.5 sm:min-h-[22rem] sm:max-h-[40rem] sm:grid-cols-2 sm:p-3"
+                                class="branch-scroll grid content-start items-start max-h-[calc(100vh-11rem)] gap-2.5 overflow-y-auto p-2.5 sm:min-h-[26rem] sm:max-h-[44rem] sm:grid-cols-2 sm:gap-3.5 sm:p-4"
                             >
                                 <button
                                     v-for="branch in filteredBranchesForView"
                                     :key="branch.uuid"
                                     type="button"
-                                    class="group w-full min-w-0 rounded-xl border p-3 text-left transition-all duration-200 sm:p-3.5"
+                                    class="group w-full min-w-0 rounded-xl border p-3 text-left transition-all duration-200 sm:p-4"
                                     :class="[
                                         branch.uuid ===
                                         branchStore.activeBranch?.uuid
@@ -370,7 +370,7 @@
                                         class="flex w-full min-w-0 items-start gap-2.5 sm:gap-3"
                                     >
                                         <div
-                                            class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-11 sm:w-11 dark:bg-primary-500/10 dark:ring-primary-500/20"
+                                            class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-14 sm:w-14 dark:bg-primary-500/10 dark:ring-primary-500/20"
                                         >
                                             <img
                                                 v-if="
@@ -415,7 +415,7 @@
                                                 class="flex min-w-0 items-start justify-between gap-2"
                                             >
                                                 <p
-                                                    class="flex min-w-0 flex-1 items-center gap-1 text-[13px] font-semibold text-primary-900 dark:text-white sm:text-sm"
+                                                    class="flex min-w-0 flex-1 items-start gap-1 text-[13px] font-semibold text-primary-900 dark:text-white sm:text-base"
                                                 >
                                                     <span
                                                         class="min-w-0 break-words"
@@ -428,36 +428,26 @@
                                                             branch.status ===
                                                             'verified'
                                                         "
-                                                        class="h-3.5 w-3.5 shrink-0 text-emerald-500 dark:text-emerald-300"
+                                                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500 sm:mt-1 sm:h-4 sm:w-4 dark:text-emerald-300"
                                                     />
                                                     <Clock
                                                         v-else-if="
                                                             branch.status ===
                                                             'pending'
                                                         "
-                                                        class="h-3.5 w-3.5 shrink-0 text-amber-500 dark:text-amber-400"
+                                                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500 sm:mt-1 sm:h-4 sm:w-4 dark:text-amber-400"
                                                     />
                                                     <Ban
                                                         v-else-if="
                                                             branch.status ===
                                                             'rejected'
                                                         "
-                                                        class="h-3.5 w-3.5 shrink-0 text-rose-500 dark:text-rose-400"
+                                                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500 sm:mt-1 sm:h-4 sm:w-4 dark:text-rose-400"
                                                     />
                                                 </p>
 
                                                 <span
                                                     v-if="
-                                                        branch.uuid ===
-                                                        branchStore.activeBranch
-                                                            ?.uuid
-                                                    "
-                                                    class="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[9px] font-semibold text-primary-600 sm:px-2 sm:text-[10px] dark:bg-primary-500/15 dark:text-primary-300"
-                                                >
-                                                    Selected
-                                                </span>
-                                                <span
-                                                    v-else-if="
                                                         branch.status ===
                                                         'pending'
                                                     "
@@ -477,7 +467,7 @@
                                             </div>
 
                                             <p
-                                                class="mt-1 flex min-h-[2rem] w-full min-w-0 items-center gap-1.5 text-[11px] leading-4 text-muted dark:text-gray-400 sm:text-xs"
+                                                class="mt-1 flex min-h-[2rem] w-full min-w-0 items-center gap-1.5 text-[11px] leading-4 text-muted dark:text-gray-400 sm:min-h-[2.5rem] sm:text-sm sm:leading-5"
                                             >
                                                 <Location
                                                     class="h-3.5 w-3.5 shrink-0"
@@ -503,7 +493,7 @@
                                                     <span
                                                         v-for="plan in branch.plan"
                                                         :key="plan.plan_code"
-                                                        class="rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:px-2 sm:text-[11px]"
+                                                        class="rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:px-2.5 sm:py-1 sm:text-xs"
                                                         :class="{
                                                             'border-primary-200 bg-primary-50 text-primary dark:border-primary-500/20 dark:bg-primary-500/10':
                                                                 plan.plan_code ===
@@ -521,7 +511,7 @@
                                                 </div>
 
                                                 <span
-                                                    class="max-w-[45%] shrink-0 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:max-w-[50%] sm:px-2 sm:text-[11px]"
+                                                    class="max-w-[45%] shrink-0 truncate rounded-full border px-1.5 py-0.5 text-[10px] font-medium sm:max-w-[50%] sm:px-2.5 sm:py-1 sm:text-xs"
                                                     :class="
                                                         roleMeta[
                                                             branch?.role_name ??
@@ -553,7 +543,7 @@
                                     </div>
 
                                     <div
-                                        class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted dark:text-gray-400 sm:grid-cols-2 sm:text-[11px] dark:border-primary-500/20"
+                                        class="mt-2.5 grid w-full min-w-0 grid-cols-1 gap-x-3 gap-y-1 border-t border-primary-100/70 pt-2.5 text-[10px] text-muted dark:text-gray-400 sm:grid-cols-2 sm:text-xs dark:border-primary-500/20"
                                     >
                                         <span
                                             v-if="branch.contact_number"
