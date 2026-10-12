@@ -166,7 +166,7 @@
                 :icon="isNew ? ShieldCheck : undefined"
             />
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+            <div class="grid grid-cols-1 gap-5">
                 <LabelInput
                     v-model="tin"
                     label="TIN (Taxpayer Identification Number)"
