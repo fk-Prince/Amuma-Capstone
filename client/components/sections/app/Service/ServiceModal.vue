@@ -139,6 +139,21 @@ const toggleStaffRole = (role: "nurse" | "caregiver") => {
         nurse && caregiver ? "both" : nurse ? "nurse" : "caregiver";
 };
 
+const staffRoleOptions = computed(() => [
+    { value: "nurse" as const, label: "Nurse", checked: allowsNurse.value },
+    {
+        value: "caregiver" as const,
+        label: "Caregiver",
+        checked: allowsCaregiver.value,
+    },
+]);
+
+const onStaffRoleChange = (role: "nurse" | "caregiver", event: Event) => {
+    toggleStaffRole(role);
+    (event.target as HTMLInputElement).checked =
+        role === "nurse" ? allowsNurse.value : allowsCaregiver.value;
+};
+
 const onSubmit = () => {
     if (!validate()) return;
     emit("submit");
@@ -435,18 +450,7 @@ watch(
                                     </p>
                                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <label
-                                            v-for="option in [
-                                                {
-                                                    value: 'nurse' as const,
-                                                    label: 'Nurse',
-                                                    checked: allowsNurse,
-                                                },
-                                                {
-                                                    value: 'caregiver' as const,
-                                                    label: 'Caregiver',
-                                                    checked: allowsCaregiver,
-                                                },
-                                            ]"
+                                            v-for="option in staffRoleOptions"
                                             :key="option.value"
                                             class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition"
                                             :class="
@@ -459,13 +463,7 @@ watch(
                                                 type="checkbox"
                                                 class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-white/5"
                                                 :checked="option.checked"
-                                                @change="
-                                                    toggleStaffRole(option.value);
-                                                    ($event.target as HTMLInputElement).checked =
-                                                        option.value === 'nurse'
-                                                            ? allowsNurse
-                                                            : allowsCaregiver;
-                                                "
+                                                @change="onStaffRoleChange(option.value, $event)"
                                             />
                                             <span class="font-medium">{{
                                                 option.label

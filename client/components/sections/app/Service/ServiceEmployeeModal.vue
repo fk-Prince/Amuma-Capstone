@@ -29,7 +29,7 @@
                     v-if="open"
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Assign Nurse"
+                    :aria-label="`Assign ${staffTitle}`"
                     class="relative flex h-[85vh] max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
@@ -46,15 +46,16 @@
                                 <h2
                                     class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                 >
-                                    Assign Nurse
+                                    Assign {{ staffTitle }}
                                 </h2>
 
                                 <p
                                     class="mt-0.5 text-xs text-gray-400 max-w-md dark:text-gray-500"
                                 >
-                                    Select an nurse to handle this service. Only
-                                    the assigned nurse will be responsible for
-                                    processing requests related to this service.
+                                    Select {{ staffNounWithArticle }} to handle this
+                                    service. Only the assigned {{ staffPlural }}
+                                    will be responsible for processing requests
+                                    related to this service.
                                 </p>
                             </div>
                         </div>
@@ -105,7 +106,7 @@
                             <BaseInput
                                 v-model="searchQuery"
                                 mode="text"
-                                placeholder="Search nurse..."
+                                :placeholder="`Search ${staffNoun}...`"
                                 inputClass="pl-[2.3rem]"
                             />
                         </div>
@@ -495,18 +496,48 @@ const unassignedCount = computed(
     () => employeeData.value.length - assignedCount.value,
 );
 
+const staffRole = computed(() => props.service?.staff_role ?? "both");
+
+const staffTitle = computed(() =>
+    staffRole.value === "nurse"
+        ? "Nurse"
+        : staffRole.value === "caregiver"
+          ? "Caregiver"
+          : "Staff",
+);
+
+const staffNoun = computed(() =>
+    staffRole.value === "nurse"
+        ? "nurse"
+        : staffRole.value === "caregiver"
+          ? "caregiver"
+          : "nurse or caregiver",
+);
+
+const staffNounWithArticle = computed(() =>
+    staffRole.value === "both" ? "a nurse or caregiver" : `a ${staffNoun.value}`,
+);
+
+const staffPlural = computed(() =>
+    staffRole.value === "nurse"
+        ? "nurses"
+        : staffRole.value === "caregiver"
+          ? "caregivers"
+          : "staff",
+);
+
 const emptyStateTitle = computed(() => {
     if (searchQuery.value) return "No matching employees";
     return viewFilter.value === "assigned"
-        ? "No nurse assigned yet"
-        : "No unassigned nurse";
+        ? `No ${staffNoun.value} assigned yet`
+        : `No unassigned ${staffNoun.value}`;
 });
 
 const emptyStateSubtitle = computed(() => {
     if (searchQuery.value) return "Try a different name or role.";
     return viewFilter.value === "assigned"
-        ? "Select nurse from the Unassigned tab to assign them."
-        : "Every available nurse has already been assigned.";
+        ? `Select ${staffPlural.value} from the Unassigned tab to assign them.`
+        : `Every available ${staffNoun.value} has already been assigned.`;
 });
 
 const allSelected = computed(
@@ -537,7 +568,7 @@ const serviceTypeBadgeClass = computed(() => {
         case "Inhouse Services":
             return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         case "Homecare and Inhouse Services":
-            return "bg-purple-100 text-purple-700";
+            return "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300";
         default:
             return "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400";
     }
@@ -550,7 +581,8 @@ function assignmentBadgeClass(type?: string) {
         case "Inhouse Facility":
             return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         case "Homecare + Inhouse Facility":
-            return "bg-purple-100 text-purple-700";
+        case "Homecare & Inhouse Facility":
+            return "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300";
         default:
             return "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400";
     }
