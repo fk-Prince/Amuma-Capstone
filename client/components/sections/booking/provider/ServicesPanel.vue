@@ -78,12 +78,12 @@ const openServices = ref<Record<string, boolean>>({});
 const serviceKey = (service: any) =>
     String(service.service_uuid ?? service.service_id);
 
-const isOpen = (service: any) => !!openServices.value[serviceKey(service)];
+const isOpen = (service: any) =>
+    !!service.description && openServices.value[serviceKey(service)] !== false;
 
 const toggleService = (service: any) => {
     if (!service.description) return;
-    const key = serviceKey(service);
-    openServices.value[key] = !openServices.value[key];
+    openServices.value[serviceKey(service)] = !isOpen(service);
 };
 
 const descriptionRef = ref<HTMLElement | null>(null);

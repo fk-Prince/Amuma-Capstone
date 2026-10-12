@@ -368,6 +368,8 @@
                 </div>
             </div>
         </main>
+
+        <ProviderInquiry :branch="branch" />
     </div>
 </template>
 <script lang="ts" setup>
@@ -386,6 +388,7 @@ import PatientForm from "~/components/forms/PatientForm.vue";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
 import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
+import ProviderInquiry from "~/components/sections/booking/provider/ProviderInquiry.vue";
 
 import {
     patientData,

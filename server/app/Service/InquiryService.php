@@ -88,6 +88,10 @@ class InquiryService
     {
         [, $inquiry] = $this->resolveForUpdate($uuid, $payload['branch_uuid'], $user);
 
+        if ($inquiry->status === Inquiry::STATUS_RESOLVED) {
+            throw new Exception('This inquiry is already resolved.', 422);
+        }
+
         $inquiry = $this->inquiryRepository->update($inquiry, [
             'status' => $payload['status'],
         ]);

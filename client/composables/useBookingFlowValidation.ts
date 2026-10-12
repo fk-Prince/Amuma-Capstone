@@ -48,7 +48,6 @@ export function useBookingFlowValidation(opts: {
 
     const assessmentErrors = ref<Record<string, string>>({});
 
-    // always carry a default, so there is nothing to fail on.
     const ASSESSMENT_FIELDS = [
         "diagnosis",
         "diagnosis_date",
@@ -56,30 +55,21 @@ export function useBookingFlowValidation(opts: {
         "diagnosis_file",
     ] as const;
 
-    function isAssessmentTouched(item: Diagnosis): boolean {
-        return ASSESSMENT_FIELDS.some((key) => {
-            const value = (item as any)[key];
-            return value !== "" && value !== undefined && value !== null;
-        });
-    }
-
     const assessmentIsValid = computed(() => {
         const items = opts.diagnosisData ?? [];
 
-        return items.every((item) => {
-            if (!isAssessmentTouched(item)) return true;
-            return opts.assessmentSchema.safeParse(item).success;
-        });
+        return (
+            items.length > 0 &&
+            items.every((item) => opts.assessmentSchema.safeParse(item).success)
+        );
     });
 
     function validateAssessment(): boolean {
         const items = opts.diagnosisData ?? [];
         const next: Record<string, string> = {};
-        let valid = true;
+        let valid = items.length > 0;
 
         items.forEach((item, index) => {
-            if (!isAssessmentTouched(item)) return;
-
             const result = opts.assessmentSchema.safeParse(item);
 
             if (result.success) return;

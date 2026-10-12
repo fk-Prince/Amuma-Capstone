@@ -4,14 +4,7 @@
             <span class="text-2xl text-primary">04</span>
 
             <div>
-                <h2 class="text-xl text-primary">
-                    Diagnosis
-                    <span
-                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
-                    >
-                        (Optional)
-                    </span>
-                </h2>
+                <h2 class="text-xl text-primary">Diagnosis</h2>
 
                 <p class="text-[13px] text-muted dark:text-gray-400">
                     Any conditions the patient has already been diagnosed with,
@@ -107,6 +100,7 @@
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <BaseInput
                         label="Primary Diagnosis"
+                        required
                         :model-value="activeDiagnosis.diagnosis"
                         @update:model-value="
                             update(activeIndex, 'diagnosis', $event)
@@ -115,17 +109,28 @@
                         placeholder="e.g. Type 2 Diabetes"
                     />
 
-                    <DatePickerField
-                        label="Date Diagnosed"
-                        :model-value="activeDiagnosis.diagnosis_date"
-                        @update:model-value="
-                            update(activeIndex, 'diagnosis_date', $event)
-                        "
-                        placeholder="Select date diagnosed"
-                        :max="todayStr"
-                        :default-to-today="false"
-                        :error="errors?.[`diagnosis_date.${activeIndex}`]"
-                    />
+                    <div>
+                        <DatePickerField
+                            label="Date Diagnosed"
+                            required
+                            :model-value="activeDiagnosis.diagnosis_date"
+                            @update:model-value="
+                                update(activeIndex, 'diagnosis_date', $event)
+                            "
+                            placeholder="Select date diagnosed"
+                            :min="windowStart"
+                            :max="todayStr"
+                            :default-to-today="false"
+                            :error="errors?.[`diagnosis_date.${activeIndex}`]"
+                        />
+                        <p
+                            v-if="!errors?.[`diagnosis_date.${activeIndex}`]"
+                            class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                        >
+                            Must be within the past
+                            {{ DIAGNOSIS_WINDOW_MONTHS }} months.
+                        </p>
+                    </div>
                 </div>
 
                 <BaseInput
@@ -232,6 +237,11 @@ import BaseInput from "../ui/BaseInput.vue";
 import DatePickerField from "../ui/DatePickerField.vue";
 import DiagnosisPriceNotice from "./DiagnosisPriceNotice.vue";
 import type { Diagnosis } from "~/types/patient";
+import { getLocalDateStr } from "~/utils/time";
+import {
+    DIAGNOSIS_WINDOW_MONTHS,
+    diagnosisWindowStart,
+} from "~/schema/patient-schema";
 
 const props = defineProps<{
     model: Diagnosis[];
@@ -247,7 +257,8 @@ const emit = defineEmits<{
     (e: "update:errors", value: Record<string, string>): void;
 }>();
 
-const todayStr = new Date().toISOString().split("T")[0];
+const todayStr = getLocalDateStr(new Date());
+const windowStart = diagnosisWindowStart();
 
 function createDiagnosis(): Diagnosis {
     return {

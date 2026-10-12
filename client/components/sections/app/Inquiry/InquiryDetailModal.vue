@@ -7,7 +7,6 @@ import {
     MapPin,
     Phone,
     Reply,
-    RotateCcw,
     Send,
     X,
 } from "lucide-vue-next";
@@ -249,37 +248,20 @@ const sendReply = () => {
                             Close
                         </button>
 
-                        <template v-if="canUpdate">
-                            <button
-                                v-if="inquiry.status === 'resolved'"
-                                type="button"
-                                :disabled="saving"
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/5"
-                                @click="emit('status', 'read')"
-                            >
-                                <LoaderCircle
-                                    v-if="saving"
-                                    class="h-4 w-4 animate-spin"
-                                />
-                                <RotateCcw v-else class="h-4 w-4" />
-                                Reopen
-                            </button>
-
-                            <button
-                                v-else
-                                type="button"
-                                :disabled="saving"
-                                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
-                                @click="emit('status', 'resolved')"
-                            >
-                                <LoaderCircle
-                                    v-if="saving"
-                                    class="h-4 w-4 animate-spin"
-                                />
-                                <CheckCircle2 v-else class="h-4 w-4" />
-                                Mark as resolved
-                            </button>
-                        </template>
+                        <button
+                            v-if="canUpdate && inquiry.status !== 'resolved'"
+                            type="button"
+                            :disabled="saving"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+                            @click="emit('status', 'resolved')"
+                        >
+                            <LoaderCircle
+                                v-if="saving"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            <CheckCircle2 v-else class="h-4 w-4" />
+                            Mark as resolved
+                        </button>
                     </div>
                 </div>
             </div>

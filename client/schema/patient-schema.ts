@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Assessment, Diagnosis, Guardian, Patient } from "~/types/patient";
 import { optionalPhoneNumber, phoneNumber } from "~/schema/phone-schema";
+import { getLocalDateStr } from "~/utils/time";
 
 const decimalString = z
     .string()
@@ -65,10 +66,26 @@ const dateStringSchema = z
         message: "Enter a valid date",
     });
 
-const pastDateStringSchema = dateStringSchema.refine(
-    (val) => val === "" || new Date(val) <= new Date(),
-    { message: "Diagnosis date cannot be in the future" },
-);
+export const DIAGNOSIS_WINDOW_MONTHS = 6;
+
+export const diagnosisWindowStart = (): string => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - DIAGNOSIS_WINDOW_MONTHS);
+    return getLocalDateStr(date);
+};
+
+const recentDiagnosisDateSchema = z
+    .string()
+    .min(1, "Date Diagnosed is required")
+    .refine((val) => !isNaN(Date.parse(val)), {
+        message: "Enter a valid date",
+    })
+    .refine((val) => val <= getLocalDateStr(new Date()), {
+        message: "Diagnosis date cannot be in the future",
+    })
+    .refine((val) => val >= diagnosisWindowStart(), {
+        message: `Diagnosis must be from the past ${DIAGNOSIS_WINDOW_MONTHS} months`,
+    });
 
 const FILE_TYPE_MESSAGE = "Upload a PDF, PNG, or JPG file.";
 
@@ -88,6 +105,28 @@ const diagnosisFileSchema = z
             message: "File must be a PDF, PNG, or JPG",
         },
     );
+const requiredDiagnosisSchema = z
+    .object({
+        diagnosis: z
+            .string()
+            .trim()
+            .min(1, "Primary Diagnosis is required")
+            .max(
+                MAX_DIAGNOSIS_LENGTH,
+                `Diagnosis must be ${MAX_DIAGNOSIS_LENGTH} characters or fewer`,
+            ),
+        diagnosis_date: recentDiagnosisDateSchema,
+        diagnosis_notes: z
+            .string()
+            .trim()
+            .max(
+                MAX_NOTES_LENGTH,
+                `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
+            ),
+        diagnosis_file: diagnosisFileSchema,
+        diagnosis_file_name: z.string().optional(),
+    });
+
 const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
     z
         .object({
@@ -136,7 +175,7 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
             }
         });
 
-export const assessmentSchema = buildDiagnosisSchema(pastDateStringSchema);
+export const assessmentSchema = requiredDiagnosisSchema;
 
 export const patientDiagnosisSchema = buildDiagnosisSchema(dateStringSchema);
 

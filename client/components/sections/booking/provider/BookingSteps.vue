@@ -148,13 +148,11 @@ const steps = computed(() => {
             key: "step4",
             title: "Diagnosis",
             desc: "Known diagnoses and documents",
-            optional: true,
         },
         {
             key: "step5",
             title: "Assessment",
             desc: "Condition, mental state and daily activities",
-            optional: true,
         },
         {
             key: "step6",

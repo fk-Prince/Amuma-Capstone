@@ -163,6 +163,8 @@ class BookingService
     //DONE
     public function completePayment(User $user, array $payload)
     {
+        $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
+
         $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
         $payload['total'] = $breakdown['booking_amount'];
         $payload['breakdown'] = $breakdown;
@@ -252,6 +254,8 @@ class BookingService
     // DONE 
     public function createBooking(User $user, array $payload)
     {
+        $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
+
         return DB::transaction(function () use ($user, $payload) {
             $branch = $payload['branch'];
             $bookingData = $payload['booking_data'];
@@ -340,6 +344,8 @@ class BookingService
             'diagnoses' => ['nullable', 'array'],
             'assessment' => ['nullable', 'array'],
         ])->validate();
+
+        $this->bookingHelper->assertDiagnoses($payload['diagnoses'] ?? []);
 
         // Only the keys named above survive validation, so the full patient,
         // guardian, diagnosis and assessment forms are taken from the payload.

@@ -5,14 +5,7 @@
             <span class="text-2xl text-primary">05</span>
 
             <div>
-                <h2 class="text-xl text-primary">
-                    Patient Assessment
-                    <span
-                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
-                    >
-                        (Optional)
-                    </span>
-                </h2>
+                <h2 class="text-xl text-primary">Patient Assessment</h2>
 
                 <p class="text-[13px] text-muted dark:text-gray-400">
                     Condition, mental state, and how much help daily activities

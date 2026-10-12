@@ -308,7 +308,6 @@ const DIAGNOSIS_FIELDS = [
     "diagnosis_file",
 ] as const;
 
-// A diagnosis is optional: an untouched entry is skipped, a started one must be complete.
 function filledDiagnoses(): Diagnosis[] {
     return diagnosisData.filter((item) =>
         DIAGNOSIS_FIELDS.some((key) => {
@@ -322,8 +321,6 @@ function validateDiagnoses(): boolean {
     const next: Record<string, string> = {};
 
     diagnosisData.forEach((item, index) => {
-        if (!filledDiagnoses().includes(item)) return;
-
         const result = assessmentSchema.safeParse(item);
 
         if (result.success) return;

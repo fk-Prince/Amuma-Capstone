@@ -185,11 +185,7 @@ const changeStatus = async (status: InquiryStatus) => {
 
     try {
         await updateStatus(selectedInquiry.value, status);
-        success(
-            status === "resolved"
-                ? "Inquiry marked as resolved."
-                : "Inquiry reopened.",
-        );
+        success("Inquiry marked as resolved.");
     } catch (err: any) {
         error(err?.data?.message || err?.message || "Unable to update inquiry.");
     } finally {

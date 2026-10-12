@@ -10,6 +10,8 @@ use Illuminate\Http\UploadedFile;
 
 class BookingHelper
 {
+    public const DIAGNOSIS_WINDOW_MONTHS = 6;
+
     public function __construct(
         private BranchContractRepository $branchContractRepository,
         private ServiceRepository $serviceRepository
@@ -207,6 +209,33 @@ class BookingHelper
         }
 
         return $patient;
+    }
+
+    public function assertDiagnoses(mixed $diagnoses): void
+    {
+        $windowStart = now()->subMonths(self::DIAGNOSIS_WINDOW_MONTHS)->toDateString();
+
+        validator(
+            ['diagnoses' => is_array($diagnoses) ? array_values($diagnoses) : []],
+            [
+                'diagnoses' => ['required', 'array', 'min:1'],
+                'diagnoses.*.diagnosis' => ['required', 'string', 'max:200'],
+                'diagnoses.*.diagnosis_date' => [
+                    'required',
+                    'date',
+                    'before_or_equal:today',
+                    'after_or_equal:' . $windowStart,
+                ],
+            ],
+            [
+                'diagnoses.required' => 'At least one diagnosis is required.',
+                'diagnoses.min' => 'At least one diagnosis is required.',
+                'diagnoses.*.diagnosis.required' => 'Primary Diagnosis is required.',
+                'diagnoses.*.diagnosis_date.required' => 'Date Diagnosed is required.',
+                'diagnoses.*.diagnosis_date.before_or_equal' => 'Diagnosis date cannot be in the future.',
+                'diagnoses.*.diagnosis_date.after_or_equal' => 'Diagnosis must be from the past ' . self::DIAGNOSIS_WINDOW_MONTHS . ' months.',
+            ],
+        )->validate();
     }
 
     public function resolveDiagnoses(mixed $diagnoses): array
