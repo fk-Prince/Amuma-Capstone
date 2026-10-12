@@ -173,7 +173,7 @@ class BranchResource extends JsonResource
                             'price' => $service->price,
                             'maximum_duration' => $service->maximum_duration,
                             'is_available' => $service->is_available,
-                            'staff_role' => $service->staff_role,
+                            'performed_by' => $service->performed_by,
                             'type' => $service->type,
                             'category' => $service->categories ? [
                                 'category_id' => $service->categories->category_id,

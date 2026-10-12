@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->time('maximum_duration');
             $table->boolean('is_available')->default(true);
-            $table->enum('staff_role', ['both', 'nurse', 'caregiver'])->default('both');
+            $table->enum('performed_by', ['both', 'nurse', 'caregiver'])->default('both');
             $table->enum('type', ['online', 'facility', 'both'])->default('both');
             $table->timestamps();
         });

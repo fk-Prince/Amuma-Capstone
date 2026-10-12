@@ -47,7 +47,7 @@ class ServiceRequest extends FormRequest
                 'date_format:H:i:s',
             ],
             'is_available' => ['boolean'],
-            'staff_role' => ['nullable', 'in:both,nurse,caregiver'],
+            'performed_by' => ['nullable', 'in:both,nurse,caregiver'],
             'type' => ['required', 'in:online,facility,both'],
         ];
     }

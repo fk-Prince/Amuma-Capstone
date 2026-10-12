@@ -118,10 +118,10 @@ onUnmounted(() => {
 const staffRoleError = ref("");
 
 const allowsNurse = computed(
-    () => (props.form.staff_role ?? "both") !== "caregiver",
+    () => (props.form.performed_by ?? "both") !== "caregiver",
 );
 const allowsCaregiver = computed(
-    () => (props.form.staff_role ?? "both") !== "nurse",
+    () => (props.form.performed_by ?? "both") !== "nurse",
 );
 
 const toggleStaffRole = (role: "nurse" | "caregiver") => {
@@ -136,7 +136,7 @@ const toggleStaffRole = (role: "nurse" | "caregiver") => {
     }
 
     staffRoleError.value = "";
-    props.form.staff_role =
+    props.form.performed_by =
         nurse && caregiver ? "both" : nurse ? "nurse" : "caregiver";
 };
 

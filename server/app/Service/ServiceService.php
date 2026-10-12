@@ -57,7 +57,7 @@ class ServiceService
                 'description'      => $payload['description'] ?? null,
                 'maximum_duration' => $payload['maximum_duration'],
                 'is_available'     => $payload['is_available'] ?? true,
-                'staff_role'       => $payload['staff_role'] ?? 'both',
+                'performed_by'       => $payload['performed_by'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
 
@@ -103,7 +103,7 @@ class ServiceService
                 'description'      => $payload['description'] ?? null,
                 'maximum_duration' => $payload['maximum_duration'],
                 'is_available'     => $payload['is_available'] ?? true,
-                'staff_role'       => $payload['staff_role'] ?? 'both',
+                'performed_by'       => $payload['performed_by'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
 
@@ -138,7 +138,7 @@ class ServiceService
                         : ($service->type == 'both' ? 'Homecare and Inhouse Services' : 'Inhouse Services'),
                     'maximum_duration' => date('H:i:s', strtotime($service->maximum_duration)),
                     'is_available' => $service->is_available,
-                    'staff_role' => $service->staff_role,
+                    'performed_by' => $service->performed_by,
                 ];
             }),
         ]);
@@ -185,7 +185,7 @@ class ServiceService
                             default => '',
                         },
                         'is_available' => $service->is_available,
-                        'staff_role' => $service->staff_role,
+                        'performed_by' => $service->performed_by,
                     ];
                 }),
         ]);

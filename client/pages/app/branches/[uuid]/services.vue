@@ -177,7 +177,7 @@ const editServiceClicked = (service: Service) => {
         price: service.price,
         maximum_duration: service.maximum_duration,
         is_available: service.is_available ?? true,
-        staff_role: service.staff_role ?? "both",
+        performed_by: service.performed_by ?? "both",
         type: service.type,
         branch_uuid: uuid,
     });

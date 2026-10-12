@@ -92,7 +92,7 @@
                                 class="shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
                                 :class="serviceTypeBadgeClass"
                             >
-                                {{ service?.type_formatted ?? "Service" }}
+                                {{ serviceTypeLabel }}
                             </span>
                         </div>
                     </div>
@@ -496,7 +496,7 @@ const unassignedCount = computed(
     () => employeeData.value.length - assignedCount.value,
 );
 
-const staffRole = computed(() => props.service?.staff_role ?? "both");
+const staffRole = computed(() => props.service?.performed_by ?? "both");
 
 const staffTitle = computed(() =>
     staffRole.value === "nurse"
@@ -548,13 +548,26 @@ const allSelected = computed(
         ),
 );
 
+const serviceTypeLabel = computed(() => {
+    switch (props.service?.type) {
+        case "online":
+            return "Homecare Services";
+        case "facility":
+            return "Inhouse Services";
+        case "both":
+            return "Homecare and Inhouse Services";
+        default:
+            return props.service?.type_formatted ?? "Service";
+    }
+});
+
 const employeeGroupLabel = computed(() => {
-    switch (props.service?.type_formatted) {
-        case "Homecare Services":
+    switch (props.service?.type) {
+        case "online":
             return "Homecare Employees";
-        case "Inhouse Services":
+        case "facility":
             return "Inhouse Employees";
-        case "Homecare and Inhouse Services":
+        case "both":
             return "Homecare + Inhouse Employees";
         default:
             return "Employees";
@@ -562,12 +575,12 @@ const employeeGroupLabel = computed(() => {
 });
 
 const serviceTypeBadgeClass = computed(() => {
-    switch (props.service?.type_formatted) {
-        case "Homecare Services":
+    switch (props.service?.type) {
+        case "online":
             return "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300";
-        case "Inhouse Services":
+        case "facility":
             return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
-        case "Homecare and Inhouse Services":
+        case "both":
             return "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300";
         default:
             return "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400";

@@ -20,7 +20,7 @@ class Service extends Model
         'description',
         'maximum_duration',
         'is_available',
-        'staff_role',
+        'performed_by',
         'type',
     ];
     public const STAFF_ROLE_BOTH = 'both';
@@ -34,7 +34,7 @@ class Service extends Model
 
     public function allowedStaffRoles(): array
     {
-        return match ($this->staff_role) {
+        return match ($this->performed_by) {
             self::STAFF_ROLE_NURSE => [self::STAFF_ROLE_NURSE],
             self::STAFF_ROLE_CAREGIVER => [self::STAFF_ROLE_CAREGIVER],
             default => [self::STAFF_ROLE_NURSE, self::STAFF_ROLE_CAREGIVER],

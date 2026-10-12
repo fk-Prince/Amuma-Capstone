@@ -15,7 +15,7 @@ export interface Service {
     description?: string | null;
     maximum_duration: string;
     is_available?: boolean;
-    staff_role?: ServiceStaffRole;
+    performed_by?: ServiceStaffRole;
     type: 'online' | 'facility' | 'both';
     type_formatted?: "Homecare Services" | "Inhouse Services" | 'Homecare and Inhouse Services';
 }
@@ -35,7 +35,7 @@ export const createServiceForm = (): Service => ({
     description: "",
     maximum_duration: "",
     is_available: true,
-    staff_role: "both",
+    performed_by: "both",
     type: "both",
 });
 

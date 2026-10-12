@@ -4,7 +4,11 @@ import type { Service } from "~/types/service";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import { formatCurrency } from "~/utils/currency";
-import { categoryLabel, categoryStyle, type CategoryStyle } from "~/utils/category";
+import {
+    categoryLabel,
+    categoryStyle,
+    type CategoryStyle,
+} from "~/utils/category";
 import {
     ChevronDown,
     Pencil,
@@ -16,6 +20,8 @@ import {
     Stethoscope,
     CheckCircle2,
     XCircle,
+    UsersRound,
+    FileText,
 } from "lucide-vue-next";
 
 const { canUpdate, canCreate, canAssign } = usePermissions();
@@ -53,6 +59,12 @@ const openEditService = (service: Service) => {
     emit("edit", service);
 };
 
+const assignLabel = (service: Service) => {
+    if (service.performed_by === "nurse") return "Assign Nurse";
+    if (service.performed_by === "caregiver") return "Assign Caregiver";
+    return "Assign Staff";
+};
+
 const openAssignService = (service: Service) => {
     emit("assign", service);
 };
@@ -70,7 +82,8 @@ const formatDurationLong = (duration: string) => {
     const parts = [];
 
     if (h != null && h > 0) parts.push(`${h} ${h === 1 ? "hour" : "hours"}`);
-    if (m != null && m > 0) parts.push(`${m} ${m === 1 ? "minute" : "minutes"}`);
+    if (m != null && m > 0)
+        parts.push(`${m} ${m === 1 ? "minute" : "minutes"}`);
 
     return parts.length ? parts.join(" ") : "Not set";
 };
@@ -93,14 +106,18 @@ const SERVICE_TYPE_STYLES: Record<string, CategoryStyle> = {
     },
 };
 
+const SERVICE_TYPE_LABELS: Record<string, string> = {
+    online: "Homecare Services",
+    facility: "Inhouse Services",
+    both: "Homecare and Inhouse Services",
+};
+
+const serviceTypeLabel = (service: Service) =>
+    SERVICE_TYPE_LABELS[service.type] ?? service.type_formatted ?? "";
+
 const serviceTypeStyle = (service: Service): CategoryStyle => {
-    const label = String(service.type_formatted ?? "").toLowerCase();
-    const isHomecare = label.includes("homecare");
-    const isInhouse = label.includes("inhouse") || label.includes("in-house");
-
-    if (isHomecare && isInhouse) return SERVICE_TYPE_STYLES.both!;
-    if (isInhouse) return SERVICE_TYPE_STYLES.inhouse!;
-
+    if (service.type === "both") return SERVICE_TYPE_STYLES.both!;
+    if (service.type === "facility") return SERVICE_TYPE_STYLES.inhouse!;
     return SERVICE_TYPE_STYLES.homecare!;
 };
 
@@ -131,10 +148,22 @@ const serviceDetails = (service: Service) => [
     {
         label: "Service Type",
         icon: Stethoscope,
-        value: service.type_formatted,
+        value: serviceTypeLabel(service),
+        caption: "",
+    },
+    {
+        label: "Performed by",
+        icon: UsersRound,
+        value: performedByLabel(service),
         caption: "",
     },
 ];
+
+const performedByLabel = (service: Service) => {
+    if (service.performed_by === "nurse") return "Nurse";
+    if (service.performed_by === "caregiver") return "Caregiver";
+    return "Nurse & Caregiver";
+};
 
 const groupedServices = computed(() => {
     const groups = new Map<string, Service[]>();
@@ -172,18 +201,30 @@ const groupedServices = computed(() => {
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="h-5 w-32 bg-slate-100 rounded-md dark:bg-white/10" />
+                            <div
+                                class="h-5 w-32 bg-slate-100 rounded-md dark:bg-white/10"
+                            />
 
                             <div class="flex gap-2 mt-3">
-                                <div class="h-3 w-20 bg-slate-100 rounded dark:bg-white/10" />
-                                <div class="h-3 w-16 bg-slate-100 rounded dark:bg-white/10" />
-                                <div class="h-3 w-24 bg-slate-100 rounded dark:bg-white/10" />
+                                <div
+                                    class="h-3 w-20 bg-slate-100 rounded dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-16 bg-slate-100 rounded dark:bg-white/10"
+                                />
+                                <div
+                                    class="h-3 w-24 bg-slate-100 rounded dark:bg-white/10"
+                                />
                             </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-5 rounded-full bg-slate-100 dark:bg-white/10" />
-                            <div class="w-4 h-4 rounded bg-slate-100 dark:bg-white/10" />
+                            <div
+                                class="w-14 h-5 rounded-full bg-slate-100 dark:bg-white/10"
+                            />
+                            <div
+                                class="w-4 h-4 rounded bg-slate-100 dark:bg-white/10"
+                            />
                         </div>
                     </div>
                 </div>
@@ -211,239 +252,286 @@ const groupedServices = computed(() => {
                         </svg>
                     </div>
 
-                    <p class="text-sm font-medium text-[#16302E] dark:text-white">
+                    <p
+                        class="text-sm font-medium text-[#16302E] dark:text-white"
+                    >
                         No services found
                     </p>
-                    <p class="text-xs text-[#6B8A87] mt-1 max-w-xs dark:text-gray-400">
+                    <p
+                        class="text-xs text-[#6B8A87] mt-1 max-w-xs dark:text-gray-400"
+                    >
                         Try adjusting your search or filters, or add a new
                         service.
                     </p>
                 </div>
 
                 <template v-else>
-                <section
-                    v-for="group in groupedServices"
-                    :key="group.name"
-                    class="space-y-3"
-                >
-                    <p
-                        class="px-1 text-[11px] font-semibold uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
+                    <section
+                        v-for="group in groupedServices"
+                        :key="group.name"
+                        class="space-y-3"
                     >
-                        {{ group.name }} ({{ group.services.length }})
-                    </p>
-
-                    <div
-                        v-for="service in group.services"
-                        :key="service.service_id"
-                        class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:bg-secondary dark:border-white/10"
-                    >
-                        <button
-                            type="button"
-                            @click="toggleService(service.service_id)"
-                            class="w-full flex items-center justify-between gap-4 p-5 text-left"
-                            :class="
-                                isExpanded(service.service_id)
-                                    ? 'bg-[#F7FAF9] dark:bg-white/5'
-                                    : 'hover:bg-[#FAFCFB] dark:hover:bg-white/5'
-                            "
+                        <p
+                            class="px-1 text-[11px] font-semibold uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
                         >
-                            <div class="flex items-center gap-4 min-w-0">
-                                <div
-                                    class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
-                                >
-                                    <Stethoscope class="w-5 h-5 text-primary" />
-                                </div>
+                            {{ group.name }} ({{ group.services.length }})
+                        </p>
 
-                                <div class="min-w-0">
-                                    <div
-                                        class="flex items-center gap-2 flex-wrap"
-                                    >
-                                        <p
-                                            class="font-semibold text-[#16302E] truncate dark:text-white"
-                                        >
-                                            {{ service.service_name }}
-                                        </p>
-                                    </div>
-
-                                    <div
-                                        class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87] dark:text-gray-400"
-                                    >
-                                        <span class="flex items-center gap-1">
-                                            <Tag class="w-3.5 h-3.5" />
-                                            {{ service.type_formatted }}
-                                        </span>
-
-                                        <span class="flex items-center gap-1">
-                                            <Clock class="w-3.5 h-3.5" />
-                                            {{
-                                                formatDuration(
-                                                    service.maximum_duration,
-                                                )
-                                            }}
-                                        </span>
-
-                                        <span
-                                            class="flex items-center gap-1 font-semibold text-primary"
-                                        >
-                                            <Banknote class="w-3.5 h-3.5" />
-                                            {{ formatPrice(service.price) }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3 shrink-0">
-                                <span
-                                    class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
-                                    :class="
-                                        service.is_available
-                                            ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300'
-                                            : 'bg-muted-light text-muted-dark dark:bg-white/10 dark:text-gray-300'
-                                    "
-                                >
-                                    <CheckCircle2
-                                        v-if="service.is_available"
-                                        class="w-3.5 h-3.5"
-                                    />
-
-                                    <XCircle v-else class="w-3.5 h-3.5" />
-
-                                    {{
-                                        service.is_available
-                                            ? "Available"
-                                            : "Unavailable"
-                                    }}
-                                </span>
-
-                                <ChevronDown
-                                    class="w-4 h-4 text-muted transition-transform dark:text-gray-400"
-                                    :class="{
-                                        'rotate-180': isExpanded(
-                                            service.service_id,
-                                        ),
-                                    }"
-                                />
-                            </div>
-                        </button>
-
-                        <Transition name="slide">
-                            <div
-                                v-if="isExpanded(service.service_id)"
-                                class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6 dark:border-white/10 dark:bg-white/5"
+                        <div
+                            v-for="service in group.services"
+                            :key="service.service_id"
+                            class="group rounded-2xl border border-[#E4EFED] bg-white overflow-hidden transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:bg-secondary dark:border-white/10"
+                        >
+                            <button
+                                type="button"
+                                @click="toggleService(service.service_id)"
+                                class="w-full flex items-center justify-between gap-4 p-5 text-left"
+                                :class="
+                                    isExpanded(service.service_id)
+                                        ? 'bg-[#F7FAF9] dark:bg-white/5'
+                                        : 'hover:bg-[#FAFCFB] dark:hover:bg-white/5'
+                                "
                             >
-                                <div
-                                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                                >
-                                    <div>
-                                        <h4
-                                            class="text-sm font-semibold text-[#16302E] dark:text-white"
-                                        >
-                                            Service Management
-                                        </h4>
-
-                                        <p class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500">
-                                            Manage service settings and
-                                            assignments
-                                        </p>
-                                    </div>
-
-                                    <div class="flex flex-wrap gap-2">
-                                        <button
-                                            v-if="canUpdate(Modules.Services)"
-                                            @click.stop="
-                                                openEditService(service)
-                                            "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
-                                        >
-                                            <Pencil class="w-4 h-4" />
-                                            Edit
-                                        </button>
-
-                                        <button
-                                            v-if="canAssign(Modules.Services)"
-                                            @click.stop="
-                                                openAssignService(service)
-                                            "
-                                            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
-                                        >
-                                            <UserPlus class="w-4 h-4" />
-                                            Assign Nurse
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div
-                                    class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm dark:bg-secondary dark:border-white/10"
-                                >
+                                <div class="flex items-center gap-4 min-w-0">
                                     <div
-                                        class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
+                                        class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
                                     >
-                                        <div class="flex items-center gap-2">
-                                            <Stethoscope
-                                                class="w-4 h-4 text-primary"
-                                            />
-
-                                            <h3
-                                                class="text-sm font-semibold text-[#16302E] dark:text-white"
-                                            >
-                                                Service Information
-                                            </h3>
-                                        </div>
-
-                                        <p class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500">
-                                            Overview of service configuration
-                                        </p>
+                                        <Stethoscope
+                                            class="w-5 h-5 text-primary"
+                                        />
                                     </div>
 
-                                    <dl
-                                        class="grid grid-cols-2 lg:grid-cols-4 divide-y divide-[#E4EFED] sm:divide-y-0 sm:divide-x dark:divide-white/10"
-                                    >
+                                    <div class="min-w-0">
                                         <div
-                                            v-for="detail in serviceDetails(service)"
-                                            :key="detail.label"
-                                            class="p-5"
+                                            class="flex items-center gap-2 flex-wrap"
                                         >
-                                            <dt
-                                                class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
+                                            <p
+                                                class="font-semibold text-[#16302E] truncate dark:text-white"
                                             >
-                                                <component
-                                                    :is="detail.icon"
-                                                    class="w-3.5 h-3.5"
-                                                />
-                                                {{ detail.label }}
-                                            </dt>
-
-                                            <dd
-                                                class="mt-2 text-sm font-semibold text-[#16302E] dark:text-white"
-                                            >
-                                                {{ detail.value }}
-                                            </dd>
-
-                                            <dd
-                                                v-if="detail.caption"
-                                                class="mt-0.5 text-[11px] font-normal text-[#9AB3AF] dark:text-gray-500"
-                                            >
-                                                {{ detail.caption }}
-                                            </dd>
+                                                {{ service.service_name }}
+                                            </p>
                                         </div>
-                                    </dl>
+
+                                        <div
+                                            class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87] dark:text-gray-400"
+                                        >
+                                            <span
+                                                class="flex items-center gap-1"
+                                            >
+                                                <Tag class="w-3.5 h-3.5" />
+                                                {{ serviceTypeLabel(service) }}
+                                            </span>
+
+                                            <span
+                                                class="flex items-center gap-1"
+                                            >
+                                                <Clock class="w-3.5 h-3.5" />
+                                                {{
+                                                    formatDuration(
+                                                        service.maximum_duration,
+                                                    )
+                                                }}
+                                            </span>
+
+                                            <span
+                                                class="flex items-center gap-1 font-semibold text-primary"
+                                            >
+                                                <Banknote class="w-3.5 h-3.5" />
+                                                {{ formatPrice(service.price) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="flex flex-wrap gap-3">
-                                    <div
-                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87] dark:bg-secondary dark:border-white/10 dark:text-gray-400"
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span
+                                        class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
+                                        :class="
+                                            service.is_available
+                                                ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300'
+                                                : 'bg-muted-light text-muted-dark dark:bg-white/10 dark:text-gray-300'
+                                        "
                                     >
-                                        <span
-                                            class="w-2 h-2 rounded-full bg-accent"
+                                        <CheckCircle2
+                                            v-if="service.is_available"
+                                            class="w-3.5 h-3.5"
                                         />
 
-                                        Available for booking
+                                        <XCircle v-else class="w-3.5 h-3.5" />
+
+                                        {{
+                                            service.is_available
+                                                ? "Available"
+                                                : "Unavailable"
+                                        }}
+                                    </span>
+
+                                    <ChevronDown
+                                        class="w-4 h-4 text-muted transition-transform dark:text-gray-400"
+                                        :class="{
+                                            'rotate-180': isExpanded(
+                                                service.service_id,
+                                            ),
+                                        }"
+                                    />
+                                </div>
+                            </button>
+
+                            <Transition name="slide">
+                                <div
+                                    v-if="isExpanded(service.service_id)"
+                                    class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6 dark:border-white/10 dark:bg-white/5"
+                                >
+                                    <div
+                                        class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                    >
+                                        <div>
+                                            <h4
+                                                class="text-sm font-semibold text-[#16302E] dark:text-white"
+                                            >
+                                                Service Management
+                                            </h4>
+
+                                            <p
+                                                class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500"
+                                            >
+                                                Manage service settings and
+                                                assignments
+                                            </p>
+                                        </div>
+
+                                        <div class="flex flex-wrap gap-2">
+                                            <button
+                                                v-if="
+                                                    canUpdate(Modules.Services)
+                                                "
+                                                @click.stop="
+                                                    openEditService(service)
+                                                "
+                                                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                                            >
+                                                <Pencil class="w-4 h-4" />
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                v-if="
+                                                    canAssign(Modules.Services)
+                                                "
+                                                @click.stop="
+                                                    openAssignService(service)
+                                                "
+                                                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                                            >
+                                                <UserPlus class="w-4 h-4" />
+                                                {{ assignLabel(service) }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="rounded-2xl border border-[#E4EFED] bg-white overflow-hidden shadow-sm dark:bg-secondary dark:border-white/10"
+                                    >
+                                        <div
+                                            class="px-5 py-4 border-b border-[#E4EFED] bg-gradient-to-r from-[#F7FAF9] to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
+                                                <Stethoscope
+                                                    class="w-4 h-4 text-primary"
+                                                />
+
+                                                <h3
+                                                    class="text-sm font-semibold text-[#16302E] dark:text-white"
+                                                >
+                                                    Service Information
+                                                </h3>
+                                            </div>
+
+                                            <p
+                                                class="text-xs text-[#9AB3AF] mt-1 dark:text-gray-500"
+                                            >
+                                                Overview of service
+                                                configuration
+                                            </p>
+                                        </div>
+
+                                        <dl
+                                            class="grid grid-cols-2 lg:grid-cols-5 divide-y divide-[#E4EFED] sm:divide-y-0 sm:divide-x dark:divide-white/10"
+                                        >
+                                            <div
+                                                v-for="detail in serviceDetails(
+                                                    service,
+                                                )"
+                                                :key="detail.label"
+                                                class="p-5"
+                                            >
+                                                <dt
+                                                    class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
+                                                >
+                                                    <component
+                                                        :is="detail.icon"
+                                                        class="w-3.5 h-3.5"
+                                                    />
+                                                    {{ detail.label }}
+                                                </dt>
+
+                                                <dd
+                                                    class="mt-2 text-sm font-semibold text-[#16302E] dark:text-white"
+                                                >
+                                                    {{ detail.value }}
+                                                </dd>
+
+                                                <dd
+                                                    v-if="detail.caption"
+                                                    class="mt-0.5 text-[11px] font-normal text-[#9AB3AF] dark:text-gray-500"
+                                                >
+                                                    {{ detail.caption }}
+                                                </dd>
+                                            </div>
+                                        </dl>
+
+                                        <div
+                                            class="border-t border-[#E4EFED] px-5 py-4 dark:border-white/10"
+                                        >
+                                            <p
+                                                class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"
+                                            >
+                                                <FileText class="w-3.5 h-3.5" />
+                                                Description
+                                            </p>
+                                            <p
+                                                class="mt-2 whitespace-pre-line text-sm leading-6"
+                                                :class="
+                                                    service.description
+                                                        ? 'text-[#16302E] dark:text-gray-200'
+                                                        : 'italic text-[#9AB3AF] dark:text-gray-500'
+                                                "
+                                            >
+                                                {{
+                                                    service.description ||
+                                                    "No description added yet."
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-3">
+                                        <div
+                                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87] dark:bg-secondary dark:border-white/10 dark:text-gray-400"
+                                        >
+                                            <span
+                                                class="w-2 h-2 rounded-full bg-accent"
+                                            />
+
+                                            Available for booking
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Transition>
-                    </div>
-                </section>
+                            </Transition>
+                        </div>
+                    </section>
                 </template>
             </template>
         </div>
