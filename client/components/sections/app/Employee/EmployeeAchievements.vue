@@ -120,33 +120,40 @@ const todayStr = new Date().toISOString().split("T")[0];
                                     : 'cursor-pointer hover:border-primary hover:text-primary',
                             ]"
                         >
-                            {{
-                                item.file?.name ||
-                                (item.url ? "File attached" : "Choose file")
-                            }}
+                            <template v-if="item.file">
+                                {{ item.file.name }}
+                            </template>
+                            <a
+                                v-else-if="item.url"
+                                :href="item.url"
+                                target="_blank"
+                                rel="noopener"
+                                class="font-medium text-primary hover:underline"
+                                @click.stop
+                            >
+                                View
+                            </a>
+                            <template v-else>Choose file</template>
                             <input
                                 type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                 class="hidden"
                                 :disabled="disabled"
                                 @change="emit('fileSelected', index, $event)"
                             />
                         </label>
-
-                        <a
-                            v-if="item.url"
-                            :href="item.url"
-                            target="_blank"
-                            rel="noopener"
-                            class="shrink-0 text-sm font-medium text-primary hover:underline"
-                        >
-                            View
-                        </a>
                     </div>
                     <p
                         v-if="errorFor(index, 'file')"
                         class="mt-1 text-xs text-red-500 dark:text-red-400"
                     >
                         {{ errorFor(index, "file") }}
+                    </p>
+                    <p
+                        v-else-if="!disabled"
+                        class="mt-1 text-xs text-slate-400 dark:text-gray-500"
+                    >
+                        Supports PDF, JPG, JPEG, PNG · Max 10MB
                     </p>
                 </div>
 

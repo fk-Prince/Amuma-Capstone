@@ -75,7 +75,7 @@ class UpdateEmployeeRequest extends FormRequest
 
             'achievements' => ['nullable', 'array'],
             'achievements.*.label' => ['required', 'string', 'max:255'],
-            'achievements.*.file' => ['required_without:achievements.*.url', 'nullable', 'file', 'max:10240'],
+            'achievements.*.file' => ['required_without:achievements.*.url', 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
             'achievements.*.url' => ['nullable', 'string'],
             'achievements.*.date' => ['required', 'date'],
         ];

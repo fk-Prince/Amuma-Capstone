@@ -277,13 +277,34 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         employee.value.achievements.splice(index, 1);
     }
 
+    const ACHIEVEMENT_FILE_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"];
+    const ACHIEVEMENT_MAX_BYTES = 10 * 1024 * 1024;
+
     function onAchievementFileSelected(index: number, e: Event) {
-        const file = (e.target as HTMLInputElement).files?.[0];
+        const input = e.target as HTMLInputElement;
+        const file = input.files?.[0];
         const achievement = employee.value.achievements[index];
 
-        if (file && achievement) {
-            achievement.file = file;
+        if (!file || !achievement) return;
+
+        const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+        const fileError = !ACHIEVEMENT_FILE_EXTENSIONS.includes(extension)
+            ? "Only PDF, JPG, JPEG or PNG files are allowed."
+            : file.size > ACHIEVEMENT_MAX_BYTES
+              ? "File must be 10MB or smaller."
+              : "";
+
+        if (fileError) {
+            errors.value = {
+                ...errors.value,
+                [`achievements.${index}.file`]: fileError,
+            };
+            input.value = "";
+            return;
         }
+
+        achievement.file = file;
     }
 
     const avatarPreview = computed(() => {
