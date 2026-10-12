@@ -693,6 +693,8 @@ const statsData = ref({
     expiring_soon: 0,
     expiring_soon_percent: 0,
     maintenance_alerts: 0,
+    cancelled_subscriptions: 0,
+    rejected_branches: 0,
     branch_capacity: {
         used: 0,
         capacity: 0,

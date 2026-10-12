@@ -171,19 +171,24 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-secondary"
+            :class="alerts.length ? alertTone.cardHover : 'hover:border-emerald-200 dark:hover:border-emerald-500/40'"
         >
             <div
-                class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/10"
+                class="absolute -top-10 -right-10 h-28 w-28 rounded-full blur-2xl"
+                :class="alertTone.glow"
             />
 
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
+                        class="h-10 w-10 rounded-xl flex items-center justify-center"
+                        :class="alertTone.tile"
                     >
                         <svg
-                            class="h-5 w-5 text-rose-500 dark:text-rose-300"
+                            v-if="alerts.length"
+                            class="h-5 w-5"
+                            :class="alertTone.icon"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -195,29 +200,61 @@
                             <line x1="12" y1="9" x2="12" y2="13" />
                             <line x1="12" y1="17" x2="12.01" y2="17" />
                         </svg>
+
+                        <svg
+                            v-else
+                            class="h-5 w-5"
+                            :class="alertTone.icon"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
                     </div>
 
                     <span
-                        class="px-2.5 py-1 rounded-full bg-rose-50 text-rose-500 text-xs font-semibold dark:bg-rose-500/10 dark:text-rose-300"
+                        class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                        :class="alertTone.badge"
                     >
-                        Attention
+                        {{ alerts.length ? "Attention" : "All good" }}
                     </span>
                 </div>
 
                 <p
                     class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
-                    Maintenance Alerts
+                    Alerts
                 </p>
 
                 <p
                     class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
                 >
-                    {{ statsData.maintenance_alerts }}
+                    {{ loading ? "…" : alertTotal }}
                 </p>
 
-                <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
-                    Subscription expired
+                <ul v-if="alerts.length && !loading" class="mt-3 space-y-1.5">
+                    <li
+                        v-for="alert in alerts"
+                        :key="alert.key"
+                        class="flex items-center gap-2 text-xs"
+                        :class="alertTone.text"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 shrink-0 rounded-full"
+                            :class="alertTone.dot"
+                        />
+                        {{ alert.label }}
+                    </li>
+                </ul>
+
+                <p
+                    v-else-if="!loading"
+                    class="mt-3 text-xs"
+                    :class="alertTone.text"
+                >
+                    Every branch is in good standing
                 </p>
             </div>
         </div>
@@ -235,6 +272,8 @@ interface BranchStatsData {
     expiring_soon: number;
     expiring_soon_percent: number;
     maintenance_alerts: number;
+    cancelled_subscriptions?: number;
+    rejected_branches?: number;
     branch_capacity?: { is_testing?: boolean } | null;
     pending_plan?: {
         name?: string | null;
@@ -253,6 +292,70 @@ const props = defineProps<{
 }>();
 
 const MONTH_DAYS = 30;
+
+const plural = (count: number, singular: string, pluralForm = singular + "s") =>
+    `${count} ${count === 1 ? singular : pluralForm}`;
+
+const alerts = computed(() => {
+    const list: { key: string; label: string }[] = [];
+
+    const rejected = props.statsData.rejected_branches ?? 0;
+    const expired = props.statsData.maintenance_alerts ?? 0;
+    const cancelled = props.statsData.cancelled_subscriptions ?? 0;
+
+    if (rejected > 0) {
+        list.push({
+            key: "rejected",
+            label: `${plural(rejected, "branch", "branches")} rejected`,
+        });
+    }
+
+    if (expired > 0) {
+        list.push({
+            key: "expired",
+            label: `${plural(expired, "subscription")} expired`,
+        });
+    }
+
+    if (cancelled > 0) {
+        list.push({
+            key: "cancelled",
+            label: `${plural(cancelled, "subscription")} cancelled`,
+        });
+    }
+
+    return list;
+});
+
+const alertTotal = computed(
+    () =>
+        (props.statsData.rejected_branches ?? 0) +
+        (props.statsData.maintenance_alerts ?? 0) +
+        (props.statsData.cancelled_subscriptions ?? 0),
+);
+
+const alertTone = computed(() =>
+    alerts.value.length
+        ? {
+              cardHover:
+                  "hover:border-rose-200 dark:hover:border-rose-500/40",
+              glow: "bg-rose-100/50 dark:bg-rose-500/10",
+              tile: "bg-rose-50 dark:bg-rose-500/10",
+              icon: "text-rose-500 dark:text-rose-300",
+              badge: "bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300",
+              text: "text-rose-500 dark:text-rose-300",
+              dot: "bg-rose-500",
+          }
+        : {
+              cardHover: "",
+              glow: "bg-emerald-100/50 dark:bg-emerald-500/10",
+              tile: "bg-emerald-50 dark:bg-emerald-500/10",
+              icon: "text-emerald-600 dark:text-emerald-300",
+              badge: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+              text: "text-emerald-600 dark:text-emerald-300",
+              dot: "bg-emerald-500",
+          },
+);
 
 const pendingPlan = computed(() => props.statsData.pending_plan ?? null);
 

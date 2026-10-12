@@ -55,8 +55,22 @@ class AgencyRepository
             ->min('end_date');
 
         $maintenanceAlerts = Subscription::query()
-            ->where('status', 'active')
-            ->where('end_date', '<', today())
+            ->where(function ($q) {
+                $q->where('status', Subscription::STATUS_EXPIRED)
+                    ->orWhere(fn($active) => $active
+                        ->where('status', Subscription::STATUS_ACTIVE)
+                        ->where('end_date', '<', today()));
+            })
+            ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
+            ->count();
+
+        $cancelledSubscriptions = Subscription::query()
+            ->where('status', Subscription::STATUS_CANCELLED)
+            ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
+            ->count();
+
+        $rejectedBranches = Branch::query()
+            ->where('status', Branch::STATUS_REJECTED)
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
@@ -79,6 +93,8 @@ class AgencyRepository
                     ? round(($expiringSoon / $totalBranches) * 100)
                     : 0,
                 'maintenance_alerts' => $maintenanceAlerts,
+                'cancelled_subscriptions' => $cancelledSubscriptions,
+                'rejected_branches' => $rejectedBranches,
                 'branch_capacity' => $this->branchCapacity($agencyId),
                 'pending_plan' => Subscription::query()
                     ->with('pendingPlan')
