@@ -638,6 +638,16 @@
                                                 v-if="conflict.estimated_end"
                                                 class="mt-1 font-medium text-amber-700 dark:text-amber-300"
                                             >
+                                                <template
+                                                    v-if="isOverdue(conflict.estimated_end)"
+                                                >
+                                                    Past its estimated end ({{
+                                                        formatTime(
+                                                            conflict.estimated_end,
+                                                        )
+                                                    }}) but still {{ conflict.status }}. Complete it to free this staff.
+                                                </template>
+                                                <template v-else>
                                                 Est. free
                                                 {{
                                                     formatDate(
@@ -650,6 +660,7 @@
                                                         conflict.estimated_end,
                                                     )
                                                 }}
+                                                </template>
                                                 <span
                                                     v-if="conflict.remaining_minutes"
                                                 >
@@ -944,6 +955,10 @@ function restoreSavedAssignments(schedule: AuditRow) {
 }
 
 const expandedConflicts = ref<Set<string | number>>(new Set());
+
+function isOverdue(estimatedEnd?: string | null) {
+    return !!estimatedEnd && new Date(estimatedEnd).getTime() < Date.now();
+}
 
 function toggleConflicts(employeeId: string | number) {
     if (expandedConflicts.value.has(employeeId)) {

@@ -800,18 +800,29 @@
                                             <Clock
                                                 class="h-3.5 w-3.5 shrink-0"
                                             />
-                                            Est. free
-                                            {{
-                                                formatDate(
-                                                    conflict.estimated_end,
-                                                )
-                                            }}
-                                            at
-                                            {{
-                                                formatTime(
-                                                    conflict.estimated_end,
-                                                )
-                                            }}
+                                            <template
+                                                v-if="isOverdue(conflict.estimated_end)"
+                                            >
+                                                Past its estimated end ({{
+                                                    formatTime(
+                                                        conflict.estimated_end,
+                                                    )
+                                                }}) but still {{ conflict.status }}. Complete it to free this staff.
+                                            </template>
+                                            <template v-else>
+                                                Est. free
+                                                {{
+                                                    formatDate(
+                                                        conflict.estimated_end,
+                                                    )
+                                                }}
+                                                at
+                                                {{
+                                                    formatTime(
+                                                        conflict.estimated_end,
+                                                    )
+                                                }}
+                                            </template>
                                         </p>
                                     </div>
                                 </div>
@@ -937,6 +948,10 @@ const assignments = ref<Record<number, AssignmentEntry[]>>({});
 const activeService = ref<number | null>(null);
 const employeeSearch = ref("");
 const expandedConflicts = ref<Set<string | number>>(new Set());
+
+function isOverdue(estimatedEnd?: string | null) {
+    return !!estimatedEnd && new Date(estimatedEnd).getTime() < Date.now();
+}
 
 function toggleConflicts(employeeId: string | number) {
     if (expandedConflicts.value.has(employeeId)) {

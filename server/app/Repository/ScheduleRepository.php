@@ -30,12 +30,16 @@ class ScheduleRepository
             END
         ";
 
-        return "(
+        $estimatedEnd = "(
             SELECT MAX(schedules.scheduled_at + ({$durationMinutes}) * INTERVAL '1 minute')
             FROM schedule_services ss
             LEFT JOIN services sv ON sv.service_id = ss.service_id
             WHERE ss.schedule_id = schedules.schedule_id
-        ) >= ?";
+        )";
+
+        $now = Carbon::now()->format('Y-m-d H:i:s');
+
+        return "({$estimatedEnd} >= ? OR {$estimatedEnd} < '{$now}')";
     }
 
 

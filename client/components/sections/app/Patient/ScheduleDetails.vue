@@ -641,8 +641,10 @@
                                 :key="service.schedule_services_id"
                                 class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
                             >
-                                <div class="flex items-center justify-between">
-                                    <div>
+                                <div
+                                    class="flex items-start justify-between gap-3"
+                                >
+                                    <div class="min-w-0 flex-1">
                                         <p
                                             class="text-sm font-semibold text-slate-800 dark:text-white"
                                         >
@@ -671,7 +673,7 @@
 
                                     <span
                                         v-if="!isEditing"
-                                        class="rounded-full px-2 py-1 text-[11px] font-medium"
+                                        class="shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-medium"
                                         :class="
                                             activeAssigneesFor(service).length
                                                 ? 'bg-primary/10 text-primary'
