@@ -3,18 +3,21 @@
 namespace Database\Seeders;
 
 use App\Enums\RoleEnum;
+use App\Models\AdditionalCharge;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\BranchContract;
 use App\Models\Client;
+use App\Models\DiagnosisCase;
 use App\Models\EmployeeBranch;
 use App\Models\Invoice;
 use App\Models\Location;
 use App\Models\Medication;
 use App\Models\MedicationSchedule;
 use App\Models\Patient;
+use App\Models\Payment;
 use App\Models\PatientAccess;
 use App\Models\PatientActivity;
 use App\Models\PatientAdmission;
@@ -24,6 +27,8 @@ use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\User;
 use App\Models\Vital;
+use App\Service\TransactionService;
+use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -32,45 +37,45 @@ use RuntimeException;
 
 class PatientSeeder extends Seeder
 {
-    private const BRANCH_NAME = 'AMUMA Davao City';
-
     public function run(): void
     {
-        $branch = Branch::where('name', self::BRANCH_NAME)->first();
+        $branches = Branch::orderBy('branch_id')->limit(1)->get();
 
-        if (!$branch) {
-            $this->command->warn('Branch "' . self::BRANCH_NAME . '" not found. Seed branches first.');
+        if ($branches->isEmpty()) {
+            $this->command->warn('No branches found. Seed branches first.');
             return;
         }
 
-        foreach ($this->patients() as $data) {
-            $exists = Patient::where('branch_id', $branch->branch_id)
-                ->where('first_name', $data['profile']['first_name'])
-                ->where('last_name', $data['profile']['last_name'])
-                ->exists();
+        foreach ($branches as $branch) {
+            foreach ($this->patients() as $data) {
+                $exists = Patient::where('branch_id', $branch->branch_id)
+                    ->where('first_name', $data['profile']['first_name'])
+                    ->where('last_name', $data['profile']['last_name'])
+                    ->exists();
 
-            if ($exists) {
-                continue;
+                if ($exists) {
+                    continue;
+                }
+
+                DB::transaction(function () use ($branch, $data) {
+                    $patient = $this->createPatient($branch, $data);
+
+                    $this->createAssessment($patient, $data['assessment']);
+                    $this->createDiagnoses($patient, $data['diagnoses']);
+                    $this->createMedications($patient, $data['medications']);
+                    $this->createVitals($patient, $data['vitals']);
+                    $this->createActivities($patient, $data['activities']);
+                    $this->createGuardian($patient, $data['guardian']);
+
+                    if (isset($data['admission'])) {
+                        $this->createAdmission($branch, $patient, $data['admission'], $data);
+                    }
+
+                    if (isset($data['homecare'])) {
+                        $this->createHomecare($branch, $patient, $data);
+                    }
+                });
             }
-
-            DB::transaction(function () use ($branch, $data) {
-                $patient = $this->createPatient($branch, $data);
-
-                $this->createAssessment($patient, $data['assessment']);
-                $this->createDiagnoses($patient, $data['diagnoses']);
-                $this->createMedications($patient, $data['medications']);
-                $this->createVitals($patient, $data['vitals']);
-                $this->createActivities($patient, $data['activities']);
-                $this->createGuardian($patient, $data['guardian']);
-
-                if (isset($data['admission'])) {
-                    $this->createAdmission($branch, $patient, $data['admission']);
-                }
-
-                if (isset($data['homecare'])) {
-                    $this->createHomecare($branch, $patient, $data);
-                }
-            });
         }
     }
 
@@ -233,7 +238,7 @@ class PatientSeeder extends Seeder
         );
     }
 
-    private function createAdmission(Branch $branch, Patient $patient, array $admission): void
+    private function createAdmission(Branch $branch, Patient $patient, array $admission, array $data = []): void
     {
         $contract = BranchContract::where('branch_id', $branch->branch_id)
             ->where('category', BranchContract::CAREGORY_FACILITY)
@@ -301,6 +306,203 @@ class PatientSeeder extends Seeder
         DB::table('patients')
             ->where('patient_id', $patient->patient_id)
             ->update(['created_at' => $admittedAt->copy()->subDay(), 'updated_at' => $admittedAt]);
+
+        if ($admission['complete'] ?? false) {
+            $this->createCompleteBooking($branch, $patient, $data, $contract, $invoice, $admittedAt);
+            $this->payInvoice($invoice, $patient, $data['guardian']['email'], $admittedAt->copy()->subHours(2));
+        }
+
+        $this->createCharges($branch, $patient, $patientAdmission, $admission['charges'] ?? [], $data);
+    }
+
+    private function createCharges(
+        Branch $branch,
+        Patient $patient,
+        PatientAdmission $admission,
+        array $charges,
+        array $data
+    ): void {
+        if (!$charges) {
+            return;
+        }
+
+        $loadCases = fn() => DiagnosisCase::where('branch_id', $branch->branch_id)->get()->keyBy('title');
+
+        $cases = $loadCases();
+
+        if ($cases->isEmpty()) {
+            $this->call(DiagnosisCaseSeeder::class);
+            $cases = $loadCases();
+        }
+
+        $diagnoses = PatientDiagnosis::where('patient_id', $patient->patient_id)
+            ->orderBy('patient_diagnosis_id')
+            ->get()
+            ->values();
+
+        foreach ($charges as $spec) {
+            $case = isset($spec['case']) ? $cases->get($spec['case']) : null;
+            $amount = round((float) ($spec['amount'] ?? $case?->price ?? 0), 2);
+            $chargedAt = now()->subDays($spec['days_ago'])->setTime(11, 0);
+
+            $invoice = Invoice::create([
+                'branch_id' => $branch->branch_id,
+                'total_amount' => $amount,
+                'status' => Invoice::STATUS_PENDING,
+            ]);
+
+            $charge = AdditionalCharge::create([
+                'patient_admission_id' => $admission->patient_admission_id,
+                'invoice_id' => $invoice->invoice_id,
+                'type' => $spec['type'],
+                'description' => $spec['description'] ?? $case?->title,
+                'amount' => $amount,
+            ]);
+
+            $diagnosis = isset($spec['diagnosis']) ? $diagnoses->get($spec['diagnosis']) : null;
+
+            if ($spec['type'] === AdditionalCharge::TYPE_DIAGNOSIS_CASE && $diagnosis) {
+                $charge->patientDiagnosis()->attach($diagnosis->patient_diagnosis_id, [
+                    'diagnosis_case_id' => $case?->diagnosis_case_id,
+                ]);
+            }
+
+            DB::table('invoices')
+                ->where('invoice_id', $invoice->invoice_id)
+                ->update(['created_at' => $chargedAt]);
+
+            DB::table('additional_charges')
+                ->where('additional_charge_id', $charge->additional_charge_id)
+                ->update(['created_at' => $chargedAt, 'updated_at' => $chargedAt]);
+
+            if ($spec['paid'] ?? false) {
+                $this->payInvoice($invoice, $patient, $data['guardian']['email'], $chargedAt->copy()->addHours(2));
+            }
+        }
+    }
+
+    private function createCompleteBooking(
+        Branch $branch,
+        Patient $patient,
+        array $data,
+        BranchContract $contract,
+        Invoice $invoice,
+        Carbon $admittedAt
+    ): void {
+        $guardianUser = User::where('email', $data['guardian']['email'])->first();
+        $client = $guardianUser?->client;
+        $bookedAt = $admittedAt->copy()->subDays(2)->setTime(14, 30);
+
+        $booking = Booking::create([
+            'user_id' => $guardianUser?->user_id,
+            'branch_id' => $branch->branch_id,
+            'category' => Booking::CATEGORY_FACILITY,
+            'booking_type' => Booking::BOOKINGTYPE_ONLINE,
+            'status' => Booking::STATUS_APPROVED,
+            'reviewed_by' => EmployeeBranch::where('branch_id', $branch->branch_id)
+                ->where('role_name', RoleEnum::AgencyOwner->value)
+                ->value('employee_id'),
+            'valid_until' => $admittedAt->copy()->endOfDay(),
+            'booking_data' => [
+                'patient' => [
+                    'first_name' => $patient->first_name,
+                    'middle_name' => $patient->middle_name,
+                    'last_name' => $patient->last_name,
+                    'gender' => $patient->gender,
+                    'citizenship' => $patient->citizenship,
+                    'date_of_birth' => $patient->date_of_birth?->toDateString(),
+                    'phone_number' => $patient->phone_number,
+                    'height' => $patient->height,
+                    'weight' => $patient->weight,
+                    'blood_type' => $patient->blood_type,
+                    'address' => $patient->location?->full_address,
+                    'allergies' => $patient->allergies,
+                ],
+                'guardian' => [
+                    'first_name' => $client?->first_name,
+                    'middle_name' => $client?->middle_name,
+                    'last_name' => $client?->last_name,
+                    'phone_number' => $client?->phone_number,
+                    'email' => $data['guardian']['email'],
+                    'relationship' => $data['guardian']['relationship'],
+                    'occupation' => $client?->occupation,
+                    'address' => $client?->location?->full_address,
+                ],
+                'facility' => [
+                    'type' => Booking::TYPE_COMPLETEADMISSION,
+                    'plan' => $contract->accommodation_type,
+                    'billing_cycle' => $contract->billing_cycle,
+                    'admission_date' => $admittedAt->toDateString(),
+                ],
+                'homecare' => [],
+                'assessment' => [$data['assessment']],
+                'diagnoses' => array_map(fn($diagnosis) => [
+                    'diagnosis' => $diagnosis[0],
+                    'diagnosis_date' => now()->subMonths($diagnosis[1])->toDateString(),
+                    'diagnosis_notes' => $diagnosis[2],
+                ], $data['diagnoses']),
+                'reserved' => [
+                    'contract_id' => $contract->branch_contract_id,
+                    'accommodation_plan' => $contract->accommodation_type,
+                    'billing_cycle' => $contract->billing_cycle,
+                    'admitted_at' => $admittedAt->toDateTimeString(),
+                ],
+                'payment' => [
+                    'total_amount' => (float) $invoice->total_amount,
+                    'booking_percent' => 100,
+                    'booking_amount' => (float) $invoice->total_amount,
+                    'balance_amount' => 0,
+                    'payment_status' => 'paid',
+                    'payment_method' => 'GCASH',
+                ],
+            ],
+        ]);
+
+        $booking->patientBookings()->create([
+            'patient_id' => $patient->patient_id,
+            'invoice_id' => $invoice->invoice_id,
+        ]);
+
+        DB::table('bookings')
+            ->where('booking_id', $booking->booking_id)
+            ->update(['created_at' => $bookedAt, 'updated_at' => $bookedAt->copy()->addHours(3)]);
+    }
+
+    private function payInvoice(Invoice $invoice, Patient $patient, string $guardianEmail, Carbon $paidAt): void
+    {
+        $client = User::where('email', $guardianEmail)->first()?->client;
+        $amount = round((float) $invoice->total_amount, 2);
+
+        $transaction = app(TransactionService::class)->forPayment(
+            $amount,
+            $invoice->branch_id,
+            $patient->patient_id,
+            'Payment received online.',
+            [
+                'client_id' => $client?->client_id,
+                'method' => 'GCASH',
+                'party_name' => $client ? trim("{$client->first_name} {$client->last_name}") : null,
+                'created_at' => $paidAt,
+            ]
+        );
+
+        $payment = Payment::create([
+            'transaction_id' => $transaction->transaction_id,
+            'prior_balance' => $amount,
+            'new_balance' => 0,
+            'created_at' => $paidAt,
+        ]);
+
+        $payment->allocations()->create([
+            'invoice_id' => $invoice->invoice_id,
+            'amount' => $amount,
+            'description' => $invoice->paymentDescription(),
+            'created_at' => $paidAt,
+        ]);
+
+        $invoice->refresh()->syncStatus();
+
+        AccommodationHelper::activate($invoice);
     }
 
     private function createHomecare(Branch $branch, Patient $patient, array $data): void
@@ -337,18 +539,22 @@ class PatientSeeder extends Seeder
         $adlRate = null;
 
         if ($homecare['type'] === 'Medical') {
-            $findService = fn() => Service::where('branch_id', $branch->branch_id)
+            $findServices = fn() => Service::where('branch_id', $branch->branch_id)
                 ->whereIn('type', ['online', 'both'])
                 ->where('is_available', true)
                 ->orderBy('service_id')
-                ->first();
+                ->get();
 
-            $service = $findService();
+            $services = $findServices();
 
-            if (!$service) {
+            if ($services->isEmpty()) {
                 $this->call(ServiceSeeder::class);
-                $service = $findService();
+                $services = $findServices();
             }
+
+            $service = $services->isEmpty()
+                ? null
+                : $services->get(($homecare['service_offset'] ?? 0) % $services->count());
 
 
             if (!$service) {
@@ -492,7 +698,7 @@ class PatientSeeder extends Seeder
 
     private function patients(): array
     {
-        return [
+        return array_merge([
             [
                 'profile' => [
                     'first_name' => 'Lourdes',
@@ -539,8 +745,11 @@ class PatientSeeder extends Seeder
                     ['activity', 'Garden stroll', 'Wheelchair assisted', 'Enjoyed 20 minutes outside with a caregiver.', 1, '16:00'],
                     ['appointment', 'Neurology follow-up', 'Dr. Reyes, SPMC', 'Cognitive screening repeated; no change in plan.', 0, '09:30'],
                 ],
-                'guardian' => ['email' => 'princesestoso6@gmail.com', 'relationship' => 'Daughter'],
-                'admission' => ['accommodation' => 'COMMON', 'billing_cycle' => 'MONTHLY', 'days_ago' => 12, 'note' => 'Needs supervision at night due to wandering.'],
+                'guardian' => ['email' => 'princesestoso5@gmail.com', 'relationship' => 'Daughter'],
+                'admission' => ['accommodation' => 'COMMON', 'billing_cycle' => 'MONTHLY', 'days_ago' => 12, 'note' => 'Needs supervision at night due to wandering.', 'charges' => [
+                    ['type' => 'diagnosis_case', 'case' => 'Dementia & Alzheimer\'s Care', 'diagnosis' => 0, 'days_ago' => 8, 'paid' => true],
+                    ['type' => 'medication', 'description' => 'Donepezil refill (30 tablets)', 'amount' => 1800, 'days_ago' => 3],
+                ]],
             ],
             [
                 'profile' => [
@@ -588,8 +797,11 @@ class PatientSeeder extends Seeder
                     ['therapy', 'Speech therapy', 'Swallow training', 'Practised chin-tuck swallow with the therapist.', 1, '14:00'],
                     ['appointment', 'Diabetes review', 'Dr. Lim, Davao Doctors Hospital', 'Insulin dose kept the same; HbA1c due next month.', 0, '10:00'],
                 ],
-                'guardian' => ['email' => 'princesestoso3@gmail.com', 'relationship' => 'Son'],
-                'admission' => ['accommodation' => 'VIP', 'billing_cycle' => 'MONTHLY', 'days_ago' => 5, 'note' => 'Turn every 2 hours to prevent pressure sores.'],
+                'guardian' => ['email' => 'princesestoso5@gmail.com', 'relationship' => 'Son'],
+                'admission' => ['accommodation' => 'VIP', 'billing_cycle' => 'MONTHLY', 'days_ago' => 5, 'note' => 'Turn every 2 hours to prevent pressure sores.', 'charges' => [
+                    ['type' => 'diagnosis_case', 'case' => 'Stroke Recovery', 'diagnosis' => 0, 'days_ago' => 3],
+                    ['type' => 'diagnosis_case', 'case' => 'Dysphagia Management', 'diagnosis' => 2, 'days_ago' => 4, 'paid' => true],
+                ]],
             ],
             [
                 'profile' => [
@@ -636,8 +848,11 @@ class PatientSeeder extends Seeder
                     ['meal', 'Dinner', 'Regular diet', 'Ate well; asked for a second serving of soup.', 1, '18:00'],
                     ['appointment', 'Psychiatry check-in', 'Dr. Santos, via teleconsult', 'Mood improving; continue sertraline.', 0, '11:00'],
                 ],
-                'guardian' => ['email' => 'princesestoso4@gmail.com', 'relationship' => 'Niece'],
-                'admission' => ['accommodation' => 'COMMON', 'billing_cycle' => 'YEARLY', 'days_ago' => 60, 'note' => 'Keep inhaler at bedside.'],
+                'guardian' => ['email' => 'princesestoso5@gmail.com', 'relationship' => 'Niece'],
+                'admission' => ['accommodation' => 'COMMON', 'billing_cycle' => 'YEARLY', 'days_ago' => 60, 'note' => 'Keep inhaler at bedside.', 'complete' => true, 'charges' => [
+                    ['type' => 'diagnosis_case', 'case' => 'COPD Management', 'diagnosis' => 0, 'days_ago' => 40, 'paid' => true],
+                    ['type' => 'supplies', 'description' => 'Oxygen cannula and nebulizer kit', 'amount' => 2400, 'days_ago' => 10],
+                ]],
             ],
             [
                 'profile' => [
@@ -681,7 +896,7 @@ class PatientSeeder extends Seeder
                     ['appointment', 'Cardiology follow-up', 'Dr. Tan, Southern Philippines Heart Center', 'Echo stable; continue current dose.', 9, '09:00'],
                     ['activity', 'Morning walk', 'Neighbourhood', '15-minute walk with family.', 2, '06:30'],
                 ],
-                'guardian' => ['email' => 'princesestoso5@gmail.com', 'relationship' => 'Wife'],
+                'guardian' => ['email' => 'princesestoso4@gmail.com', 'relationship' => 'Wife'],
                 'homecare' => [
                     'type' => 'Medical',
                     'in_days' => 2,
@@ -735,7 +950,7 @@ class PatientSeeder extends Seeder
                     ['therapy', 'Balance training', 'Home physical therapy', 'Sit-to-stand practice with walker.', 7, '10:00'],
                     ['meal', 'Merienda', 'Soft foods', 'Needed help holding the cup due to tremor.', 1, '15:00'],
                 ],
-                'guardian' => ['email' => 'princesestoso6@gmail.com', 'relationship' => 'Granddaughter'],
+                'guardian' => ['email' => 'princesestoso4@gmail.com', 'relationship' => 'Granddaughter'],
                 'homecare' => [
                     'type' => 'ADL',
                     'hours' => 8,
@@ -748,6 +963,104 @@ class PatientSeeder extends Seeder
                     'note' => 'Assist with bathing, dressing and meals. Use the shower chair.',
                 ],
             ],
+        ], $this->homecarePatients());
+    }
+
+    private function homecarePatients(): array
+    {
+        $assessment = [
+            'condition' => 'ambulatory',
+            'mental_state' => 'alert',
+            'affect' => 'cheerful',
+            'behavior' => 'cooperative',
+            'communication' => 'Coherent & Logical',
+            'speech' => 'clear',
+            'bathing' => 4,
+            'transferring' => 4,
+            'toileting' => 4,
+            'grooming' => 4,
+            'eating' => 5,
+            'locomotion' => 4,
+            'dressing' => 4,
         ];
+
+        $guardian = ['email' => 'princesestoso4@gmail.com', 'relationship' => 'Daughter'];
+
+        $specs = [
+            [
+                'name' => ['Fe', 'Dizon', 'Alcantara'],
+                'gender' => 'Female',
+                'dob' => '1948-05-17',
+                'phone' => '9171100006',
+                'blood' => 'A-',
+                'street' => ['5 Ecoland Drive', 'Ecoland', 7.0527, 125.6013],
+                'diagnosis' => ['Type 2 diabetes mellitus', 84, 'Monitor blood glucose before meals.'],
+                'medication' => ['Metformin', '500 mg', 'Diabetes', '08:00'],
+                'vitals' => [130, 82, 74, 128],
+                'homecare' => ['type' => 'Medical', 'in_days' => 3, 'booked_days_ago' => 2, 'time' => [10, 0], 'service_offset' => 1, 'note' => 'Check blood sugar and review the diet log.'],
+            ],
+            [
+                'name' => ['Armando', 'Soriano', 'Tiu'],
+                'gender' => 'Male',
+                'dob' => '1945-12-03',
+                'phone' => '9171100007',
+                'blood' => 'B-',
+                'street' => ['88 Torres Street', 'Poblacion District', 7.0647, 125.6089],
+                'diagnosis' => ['Chronic obstructive pulmonary disease', 48, 'Keep rescue inhaler within reach; watch for breathlessness.'],
+                'medication' => ['Salbutamol', '100 mcg', 'Breathing', '07:00'],
+                'vitals' => [126, 78, 80, 98],
+                'homecare' => ['type' => 'Medical', 'in_days' => 4, 'booked_days_ago' => 1, 'time' => [14, 0], 'service_offset' => 2, 'note' => 'Check oxygen saturation and inhaler technique.'],
+            ],
+            [
+                'name' => ['Concepcion', 'Reyes', 'Palma'],
+                'gender' => 'Female',
+                'dob' => '1941-02-26',
+                'phone' => '9171100008',
+                'blood' => 'O+',
+                'street' => ['31 Sandawa Road', 'Matina Pangi', 7.0561, 125.5974],
+                'diagnosis' => ['Osteoarthritis of the hips', 96, 'Needs help with transfers and long walks.'],
+                'medication' => ['Paracetamol', '500 mg', 'Joint pain', '09:00'],
+                'vitals' => [124, 76, 70, 96],
+                'homecare' => ['type' => 'ADL', 'hours' => 6, 'in_days' => 2, 'booked_days_ago' => 1, 'time' => [9, 0], 'note' => 'Assist with bathing, grooming and lunch.'],
+            ],
+        ];
+
+        return array_map(function (array $spec) use ($assessment, $guardian) {
+            [$first, $middle, $last] = $spec['name'];
+            [$street, $barangay, $latitude, $longitude] = $spec['street'];
+            [$diagnosis, $monthsAgo, $notes] = $spec['diagnosis'];
+            [$medication, $strength, $takenFor, $time] = $spec['medication'];
+
+            return [
+                'profile' => [
+                    'first_name' => $first,
+                    'middle_name' => $middle,
+                    'last_name' => $last,
+                    'gender' => $spec['gender'],
+                    'height' => 155,
+                    'weight' => 60.0,
+                    'blood_type' => $spec['blood'],
+                    'date_of_birth' => $spec['dob'],
+                    'phone_number' => $spec['phone'],
+                    'allergies' => [],
+                ],
+                'address' => ['street' => $street, 'barangay' => $barangay],
+                'assessment' => $assessment,
+                'diagnoses' => [[$diagnosis, $monthsAgo, $notes]],
+                'medications' => [
+                    ['name' => $medication, 'strength' => $strength, 'dosage_amount' => 1, 'dosage_unit' => 'tablet', 'route' => 'oral', 'instructions' => 'Take as prescribed.', 'taken_for' => $takenFor, 'kind' => 'Scheduled', 'times' => [$time]],
+                ],
+                'vitals' => $spec['vitals'],
+                'activities' => [
+                    ['activity', 'Morning walk', 'Neighbourhood', '15-minute walk with family.', 2, '06:30'],
+                ],
+                'guardian' => $guardian,
+                'homecare' => $spec['homecare'] + [
+                    'street' => "{$street}, {$barangay}",
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
+                ],
+            ];
+        }, $specs);
     }
 }
