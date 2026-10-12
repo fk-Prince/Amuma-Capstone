@@ -516,18 +516,6 @@ const groupedServices = computed(() => {
                                             </p>
                                         </div>
                                     </div>
-
-                                    <div class="flex flex-wrap gap-3">
-                                        <div
-                                            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4EFED] text-xs text-[#6B8A87] dark:bg-secondary dark:border-white/10 dark:text-gray-400"
-                                        >
-                                            <span
-                                                class="w-2 h-2 rounded-full bg-accent"
-                                            />
-
-                                            Available for booking
-                                        </div>
-                                    </div>
                                 </div>
                             </Transition>
                         </div>

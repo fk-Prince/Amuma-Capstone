@@ -220,12 +220,6 @@ const features = [
         hybrid: true,
     },
     {
-        name: "VIP CCTV access",
-        homecare: false,
-        facility: true,
-        hybrid: true,
-    },
-    {
         name: "Per-branch staff, services & settings",
         homecare: true,
         facility: true,
