@@ -151,7 +151,7 @@ export function useMedicalServices(
 
             {
                 value: "ADL",
-                title: "Caregiver (ADL Services)",
+                title: "Activities of Daily Living (ADL Services)",
                 description:
                     adlDescription ||
                     "Assistance with daily living activities",

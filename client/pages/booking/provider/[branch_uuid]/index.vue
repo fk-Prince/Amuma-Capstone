@@ -43,7 +43,7 @@
                 <ServicesPanel
                     :branch="branch"
                     :has-homecare="hasHomecare"
-                    @homecare="homecare"
+                    @homecare="bookAdl"
                 />
             </div>
 
@@ -445,6 +445,12 @@ const mapsUrl = computed(() => {
 
 const homecare = () => {
     navigateTo(`/booking/provider/${uuid.value}/details?category=homecare`);
+};
+
+const bookAdl = () => {
+    navigateTo(
+        `/booking/provider/${uuid.value}/details?category=homecare&type=ADL`,
+    );
 };
 
 const facility = () => {

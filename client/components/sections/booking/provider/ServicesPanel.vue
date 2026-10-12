@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import {
     Bath,
-    Clock,
     HandHeart,
     Home,
     Shirt,
@@ -37,7 +36,6 @@ const adl = computed(() => {
 
     return {
         rate,
-        minHours: homecare?.adl_min_hour ?? 8,
         description: homecare?.description,
     };
 });
@@ -167,20 +165,12 @@ const peso = (value: number | string) =>
                     <div
                         class="flex shrink-0 flex-col gap-3 rounded-xl bg-white/15 p-4 backdrop-blur md:items-end md:text-right"
                     >
-                        <div>
-                            <p class="text-3xl font-extrabold leading-none">
-                                {{ peso(adl.rate) }}
-                                <span class="text-sm font-medium text-white/75"
-                                    >/ hour</span
-                                >
-                            </p>
-                            <p
-                                class="mt-1.5 inline-flex items-center gap-1 text-xs text-white/80"
+                        <p class="text-3xl font-extrabold leading-none">
+                            {{ peso(adl.rate) }}
+                            <span class="text-sm font-medium text-white/75"
+                                >/ hour</span
                             >
-                                <Clock class="h-3.5 w-3.5" />
-                                Minimum of {{ adl.minHours }} hours
-                            </p>
-                        </div>
+                        </p>
 
                         <button
                             type="button"

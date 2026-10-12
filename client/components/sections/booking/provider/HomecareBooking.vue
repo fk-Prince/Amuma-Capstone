@@ -71,11 +71,11 @@
                                 )"
                                 :key="item.value"
                                 type="button"
-                                class="group relative overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200"
+                                class="group relative flex h-full flex-col overflow-hidden rounded-2xl border p-5 text-left transition-all duration-200"
                                 :class="
                                     model.type === item.value
-                                        ? 'border-primary-300 bg-primary-50/60 shadow-sm ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
-                                        : 'border-slate-200 bg-white hover:border-primary-200 hover:bg-primary-50/30 hover:shadow-sm dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
+                                        ? 'border-primary bg-primary-50/60 shadow-md shadow-primary/10 ring-2 ring-primary/15 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                        : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md dark:bg-secondary dark:border-white/10 dark:hover:border-primary-500/40'
                                 "
                                 @click="
                                     update(
@@ -84,52 +84,73 @@
                                     )
                                 "
                             >
-                                <div
-                                    v-if="model.type === item.value"
-                                    class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white"
+                                <span
+                                    class="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border-2 transition"
+                                    :class="
+                                        model.type === item.value
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-slate-300 bg-white dark:border-white/20 dark:bg-transparent'
+                                    "
                                 >
-                                    <Check class="h-3.5 w-3.5" />
-                                </div>
+                                    <Check
+                                        v-if="model.type === item.value"
+                                        class="h-3.5 w-3.5"
+                                    />
+                                </span>
 
-                                <div class="flex items-start gap-4">
+                                <div class="flex items-center gap-3 pr-8">
                                     <div
-                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10"
+                                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition"
                                         :class="
                                             model.type === item.value
-                                                ? 'bg-primary text-white'
-                                                : ''
+                                                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                                                : 'bg-primary/10 text-primary'
                                         "
                                     >
                                         <component
                                             v-if="typeof item.icon !== 'string'"
                                             :is="item.icon"
-                                            class="h-6 w-6"
+                                            class="h-5 w-5"
                                         />
                                     </div>
 
-                                    <div class="min-w-0 pr-8">
-                                        <h4
-                                            class="text-sm font-bold text-slate-900 dark:text-white"
-                                            :class="
-                                                model.type === item.value
-                                                    ? 'text-primary'
-                                                    : ''
-                                            "
-                                        >
-                                            {{ item.title }}
-                                        </h4>
+                                    <h4
+                                        class="text-sm font-bold leading-snug"
+                                        :class="
+                                            model.type === item.value
+                                                ? 'text-primary'
+                                                : 'text-slate-900 dark:text-white'
+                                        "
+                                    >
+                                        {{ item.title }}
+                                    </h4>
+                                </div>
 
-                                        <p
-                                            class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{ item.description }}
-                                        </p>
+                                <p
+                                    class="mt-3 line-clamp-3 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                    :title="item.description"
+                                >
+                                    {{ item.description }}
+                                </p>
 
-                                        <p
-                                            class="mt-3 text-xs font-bold text-primary"
+                                <div class="mt-auto pt-4">
+                                    <div
+                                        class="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-white/10"
+                                    >
+                                        <span
+                                            class="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                        >
+                                            {{
+                                                item.value === "ADL"
+                                                    ? "Rate"
+                                                    : "Price range"
+                                            }}
+                                        </span>
+                                        <span
+                                            class="text-sm font-bold text-primary"
                                         >
                                             {{ item.rateLabel }}
-                                        </p>
+                                        </span>
                                     </div>
                                 </div>
                             </button>
@@ -237,10 +258,7 @@
                                     :items="availableTimeSlots"
                                 />
 
-                                <div
-                                    v-if="model.type === 'Medical'"
-                                    class="mt-1.5"
-                                >
+                                <div class="mt-1.5">
                                     <span
                                         v-if="branchStatus.is24Hours"
                                         class="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 py-1 pl-2 pr-3 text-[11px] font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-100"

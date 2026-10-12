@@ -481,6 +481,15 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
+
+    if (
+        category.value === "homecare" &&
+        route.query.type === "ADL" &&
+        Number(branch.value?.homecare?.adl_hourly_rate ?? 0) > 0
+    ) {
+        await nextTick();
+        homecareData.type = "ADL";
+    }
 });
 
 const loadServices = async () => {
