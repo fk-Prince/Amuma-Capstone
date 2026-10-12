@@ -26,6 +26,9 @@ class BranchService extends BaseService {
     async get(uuid: string) {
         return await this.request(`${this.resource}/fetchBranch/${uuid}`, "GET");
     }
+    async sendInquiry(uuid: string, payload: object) {
+        return await this.request(`${this.resource}/${uuid}/inquiries`, "POST", payload);
+    }
     async healthProviders(uuid: string) {
         return await this.request(`${this.resource}/${uuid}/health-providers`, "GET");
     }

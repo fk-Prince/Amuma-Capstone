@@ -15,4 +15,5 @@ export enum Modules {
     BillingAndInvoices = "Billing & Invoices",
     BranchSettings = "Branch Settings",
     ManageSubscription = "Manage Subscription",
+    Inquiries = "Inquiries",
 }

@@ -12,7 +12,8 @@ import {
     Settings,
     CreditCard,
     BookOpen,
-    MessageSquare
+    MessageSquare,
+    MessageCircleQuestion
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -79,6 +80,13 @@ export const authMenuList: MenuItems[] = [
         label: "Messages",
         icon: MessageSquare,
         to: "/app/branches/[uuid]/messages",
+        group: "Communication",
+    },
+    {
+        label: "Inquiries",
+        icon: MessageCircleQuestion,
+        to: "/app/branches/[uuid]/inquiries",
+        modules: ["Inquiries"],
         group: "Communication",
     },
     {

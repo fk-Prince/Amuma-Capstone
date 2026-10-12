@@ -7,6 +7,7 @@ use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchContractController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\BranchSettingController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DiagnosisCaseController;
@@ -72,6 +73,7 @@ Route::prefix('branches')->group(function () {
     Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
     Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
     Route::get('/{uuid}/health-providers', [BranchController::class, 'healthProviders']);
+    Route::post('/{uuid}/inquiries', [InquiryController::class, 'store'])->middleware('throttle:5,1');
 
     // AUTHENTICATED BRACNHES ACCESS
     Route::middleware('auth:sanctum')->group(function () {
@@ -85,6 +87,11 @@ Route::middleware('auth:sanctum')->post('/qr/demo-verify', [OnlineScheduleContro
 
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
+
+    // INQUIRIES
+    Route::get('/inquiries', [InquiryController::class, 'index']);
+    Route::patch('/inquiries/{uuid}/status', [InquiryController::class, 'updateStatus']);
+    Route::post('/inquiries/{uuid}/reply', [InquiryController::class, 'reply']);
 
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);

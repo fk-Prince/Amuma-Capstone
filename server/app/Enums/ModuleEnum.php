@@ -15,6 +15,7 @@ enum ModuleEnum: string
     case BillingAndInvoices = 'Billing & Invoices';
     case ManageSubscription = 'Manage Subscription';
     case BranchSettings = 'Branch Settings';
+    case Inquiries = 'Inquiries';
 
     public function actions(): array
     {
@@ -66,6 +67,10 @@ enum ModuleEnum: string
             self::BranchSettings => [
                 PermissionAction::Read,
                 PermissionAction::Create,
+                PermissionAction::Update,
+            ],
+            self::Inquiries => [
+                PermissionAction::Read,
                 PermissionAction::Update,
             ],
         };

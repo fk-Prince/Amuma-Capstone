@@ -276,7 +276,19 @@ class NotificationService
         mixed $reference = null,
         ?string $referenceId = null,
     ) {
-        $module = Module::where('module_name', ModuleEnum::BillingAndInvoices->value)
+        $this->notifyModuleStaff($branch, ModuleEnum::BillingAndInvoices, 'Billing', $message, $actor, $reference, $referenceId);
+    }
+
+    public function notifyModuleStaff(
+        Branch $branch,
+        ModuleEnum $moduleEnum,
+        string $messageType,
+        string $message,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null,
+    ): void {
+        $module = Module::where('module_name', $moduleEnum->value)
             ->first();
 
         if (!$module) {
@@ -306,7 +318,7 @@ class NotificationService
                 'branch_id' => $branch->branch_id,
                 'to_user_id' => $employee->user_id,
                 'from_user_id' => $actor?->user_id ?? $employee->user_id,
-                'message_type' => 'Billing',
+                'message_type' => $messageType,
                 'message' => $message,
             ]);
 
@@ -315,7 +327,7 @@ class NotificationService
                 (string) $branch->uuid,
                 $message,
                 $referenceId ?? '',
-                'Billing',
+                $messageType,
                 $reference,
             ));
         }

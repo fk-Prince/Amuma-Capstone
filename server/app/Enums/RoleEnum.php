@@ -59,6 +59,7 @@ enum RoleEnum: string
                 ModuleEnum::Services->value => [PermissionAction::Read->value],
                 ModuleEnum::Contracts->value => [PermissionAction::Read->value],
                 ModuleEnum::EmployeeManagement->value => [PermissionAction::Read->value],
+                ModuleEnum::Inquiries->value => ModuleEnum::Inquiries->actionColumns(),
             ],
 
             self::Cashier => [

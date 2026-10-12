@@ -334,6 +334,8 @@
                 </div>
             </div>
         </div>
+
+        <ProviderInquiry :branch="branch" />
     </div>
 </template>
 
@@ -355,6 +357,7 @@ import BookingCard from "~/components/sections/booking/provider/BookingCard.vue"
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import HealthProviders from "~/components/sections/booking/provider/HealthProviders.vue";
 import ServicesPanel from "~/components/sections/booking/provider/ServicesPanel.vue";
+import ProviderInquiry from "~/components/sections/booking/provider/ProviderInquiry.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { providerNavList } from "~/config/publicMenu";
@@ -517,8 +520,6 @@ const goToTab = async (key: TabKey) => {
 const onServiceSelect = (value: "homecare" | "facility") => {
     if (value === "homecare") {
         activeTab.value = "services";
-    } else if (activeTab.value === "services") {
-        activeTab.value = "overview";
     }
 };
 

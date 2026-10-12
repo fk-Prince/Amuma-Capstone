@@ -74,6 +74,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Create,
         PermissionAction.Update,
     ],
+    [Modules.Inquiries]: [PermissionAction.Read, PermissionAction.Update],
 };
 
 export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
@@ -99,6 +100,8 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
         "See the subscription status of the branches on this account, subscribe new branches, and resubmit rejected ones.",
     [Modules.BranchSettings]:
         "View and change branch details such as address, hours, currency and policies, and upload branch photos.",
+    [Modules.Inquiries]:
+        "Read questions sent by families from the branch's provider page and track which ones have been answered.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -207,6 +210,12 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Create]: "Upload photos of the branch and its rooms.",
         [PermissionAction.Update]: "Change those branch details.",
     },
+    [Modules.Inquiries]: {
+        [PermissionAction.Read]:
+            "See inquiries sent from the provider page, with the sender's contact details and message.",
+        [PermissionAction.Update]:
+            "Mark inquiries as read or resolved once they have been followed up.",
+    },
 };
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<
@@ -230,6 +239,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
             MODULE_ACTIONS[Modules.BillingAndInvoices],
         [Modules.ManageSubscription]: [PermissionAction.Read],
         [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
+        [Modules.Inquiries]: [PermissionAction.Read],
     },
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],
@@ -247,6 +257,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.Services]: [PermissionAction.Read],
         [Modules.Contracts]: [PermissionAction.Read],
         [Modules.EmployeeManagement]: [PermissionAction.Read],
+        [Modules.Inquiries]: MODULE_ACTIONS[Modules.Inquiries],
     },
     cashier: {
         [Modules.BillingAndInvoices]:

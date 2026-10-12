@@ -338,8 +338,6 @@ export const stringToDateTime = (
     }).format(new Date(date));
 };
 
-// RESULT 18:45 -> 6:45 PM. Accepts a bare time ("14:30"), an hour number, or a
-// full date/datetime string (e.g. a schedule's scheduled_at) transparently.
 export function formatTime(time?: string | number | null): string {
     if (!time) return "";
 
