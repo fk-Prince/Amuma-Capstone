@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
 use App\Models\EmployeeBranch;
+use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 
 class BranchRepository
@@ -54,6 +55,7 @@ class BranchRepository
                 'bookings' => fn($query) => $query->where('status', Booking::STATUS_APPROVED),
                 'patients',
             ])
+            ->tap(fn($query) => $this->prioritizeActiveSubscription($query))
             ->orderByRaw('reviews_avg_rate DESC NULLS LAST')
             ->orderByDesc('bookings_count')
             ->orderByDesc('patients_count')
@@ -144,6 +146,7 @@ class BranchRepository
                 }
             );
 
+        $this->prioritizeActiveSubscription($query);
         $this->prioritizeStartingPrice($query);
 
         $nearestOrigin = $lat !== null && $long !== null ? [$lat, $long] : $viewerOrigin;
@@ -188,6 +191,21 @@ class BranchRepository
                 "({$distanceExpr}) IS NULL, ({$distanceExpr}) ASC",
                 [$lat, $long, $lat, $lat, $long, $lat]
             );
+    }
+
+    private function prioritizeActiveSubscription($query): void
+    {
+        $query->orderByRaw("CASE WHEN EXISTS (
+            SELECT 1 FROM branch_subscription bs
+            JOIN subscriptions s ON s.subscription_id = bs.subscription_id
+            WHERE bs.branch_id = branches.branch_id
+              AND bs.status = ?
+              AND s.status = ?
+              AND s.end_date >= CURRENT_DATE
+        ) THEN 0 ELSE 1 END", [
+            BranchSubscription::STATUS_APPROVED,
+            Subscription::STATUS_ACTIVE,
+        ]);
     }
 
     private function prioritizeStartingPrice($query): void

@@ -204,6 +204,7 @@ definePageMeta({
     middleware: [
         "auth-client",
         "prevent-staff-booking",
+        "branch-available-guard",
         "booking-review-guard",
     ],
 });

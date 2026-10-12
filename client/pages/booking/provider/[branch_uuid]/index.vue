@@ -40,7 +40,37 @@
                 v-if="activeTab === 'services' && !loading"
                 class="flex flex-col gap-5 lg:col-span-2"
             >
+                <div
+                    v-if="hasHomecare && hasFacility"
+                    class="inline-flex w-fit rounded-xl border border-gray-100 bg-white p-1 shadow-sm dark:border-white/10 dark:bg-secondary"
+                    role="tablist"
+                >
+                    <button
+                        v-for="option in panelOptions"
+                        :key="option.value"
+                        type="button"
+                        role="tab"
+                        :aria-selected="panelMode === option.value"
+                        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition"
+                        :class="
+                            panelMode === option.value
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/5'
+                        "
+                        @click="chosenPanel = option.value"
+                    >
+                        <component :is="option.icon" class="h-4 w-4" />
+                        {{ option.label }}
+                    </button>
+                </div>
+
+                <FacilityPanel
+                    v-if="panelMode === 'facility'"
+                    :branch="branch"
+                    @facility="facility"
+                />
                 <ServicesPanel
+                    v-else
                     :branch="branch"
                     :has-homecare="hasHomecare"
                     @homecare="bookAdl"
@@ -292,6 +322,7 @@
                         ref="bookingCardRef"
                         :has-homecare="hasHomecare"
                         :has-facility="hasFacility"
+                        :selection="chosenPanel"
                         @homecare="homecare"
                         @facility="facility"
                         @select="onServiceSelect"
@@ -342,8 +373,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import {
+    Building2,
     ExternalLink,
     HeartHandshake,
+    Home,
     Info,
     Clock,
     Mail,
@@ -357,6 +390,7 @@ import BookingCard from "~/components/sections/booking/provider/BookingCard.vue"
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import HealthProviders from "~/components/sections/booking/provider/HealthProviders.vue";
 import ServicesPanel from "~/components/sections/booking/provider/ServicesPanel.vue";
+import FacilityPanel from "~/components/sections/booking/provider/FacilityPanel.vue";
 import ProviderInquiry from "~/components/sections/booking/provider/ProviderInquiry.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
@@ -517,10 +551,22 @@ const goToTab = async (key: TabKey) => {
     if (key === "location") scrollTo(locationRef.value);
 };
 
+const chosenPanel = ref<"homecare" | "facility" | null>(null);
+
+const panelMode = computed(
+    () =>
+        chosenPanel.value ??
+        (!hasHomecare.value && hasFacility.value ? "facility" : "homecare"),
+);
+
+const panelOptions = [
+    { value: "homecare", label: "Homecare Services", icon: Home },
+    { value: "facility", label: "Facility Admission", icon: Building2 },
+] as const;
+
 const onServiceSelect = (value: "homecare" | "facility") => {
-    if (value === "homecare") {
-        activeTab.value = "services";
-    }
+    chosenPanel.value = value;
+    activeTab.value = "services";
 };
 
 const isPanelTab = (key: TabKey) => key === "services" || key === "providers";

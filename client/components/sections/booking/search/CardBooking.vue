@@ -32,9 +32,18 @@
             />
 
             <span
-                class="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold text-accent-700 shadow-sm backdrop-blur-sm dark:bg-secondary/90 dark:text-accent-400"
+                class="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm dark:bg-secondary/90"
+                :class="
+                    branch.is_available === false
+                        ? 'text-rose-600 dark:text-rose-300'
+                        : 'text-accent-700 dark:text-accent-400'
+                "
             >
-                {{ hoursLabel(branch.settings) }}
+                {{
+                    branch.is_available === false
+                        ? "Service unavailable"
+                        : hoursLabel(branch.settings)
+                }}
             </span>
 
             <div
@@ -276,9 +285,11 @@
                 <svg
                     class="h-4 w-4 shrink-0"
                     :class="
-                        getTime(branch.settings).is24Hours
-                            ? 'text-accent-600 dark:text-accent-300'
-                            : 'text-muted dark:text-gray-500'
+                        branch.is_available === false
+                            ? 'text-rose-500 dark:text-rose-300'
+                            : getTime(branch.settings).is24Hours
+                              ? 'text-accent-600 dark:text-accent-300'
+                              : 'text-muted dark:text-gray-500'
                     "
                     fill="none"
                     viewBox="0 0 24 24"
@@ -293,7 +304,14 @@
                 </svg>
 
                 <span
-                    v-if="getTime(branch.settings).is24Hours"
+                    v-if="branch.is_available === false"
+                    class="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 font-semibold text-rose-600 dark:bg-rose-500/15 dark:text-rose-300"
+                >
+                    Service unavailable
+                </span>
+
+                <span
+                    v-else-if="getTime(branch.settings).is24Hours"
                     class="inline-flex items-center gap-1 rounded-md bg-accent-50 px-2 py-0.5 font-semibold text-accent-700 dark:bg-accent-500/15 dark:text-accent-400"
                 >
                     Open 24 Hours

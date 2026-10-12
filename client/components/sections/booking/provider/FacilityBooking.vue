@@ -586,11 +586,10 @@
                                     {{ room.title }}
                                 </h4>
 
-                                <p
+                                <ClampedText
                                     class="mt-1 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                >
-                                    {{ getRoomDescription(room.value) }}
-                                </p>
+                                    :text="getRoomDescription(room.value)"
+                                />
                             </div>
 
                             <div
@@ -783,6 +782,7 @@ import { getFacilityPrice, getAnnualDiscount } from "~/utils/calculation";
 import { formatAmount } from "~/utils/currency";
 import type { FacilityBooking } from "~/types/booking";
 import type { BranchImage, BranchRetrieve } from "~/types/branch";
+import ClampedText from "~/components/ui/ClampedText.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
     Star,

@@ -24,7 +24,15 @@
                 </p>
 
                 <div class="flex items-center gap-2 text-sm">
+                    <span
+                        v-if="unavailable"
+                        class="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
+                    >
+                        Service unavailable
+                    </span>
+
                     <svg
+                        v-if="!unavailable"
                         class="h-4 w-4 shrink-0"
                         :class="
                             getBranchTimeDisplay(branch?.settings).is24Hours
@@ -44,13 +52,19 @@
                     </svg>
 
                     <span
-                        v-if="getBranchTimeDisplay(branch?.settings).is24Hours"
+                        v-if="
+                            !unavailable &&
+                            getBranchTimeDisplay(branch?.settings).is24Hours
+                        "
                         class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                     >
                         Open 24 Hours
                     </span>
 
-                    <span v-else class="font-medium text-slate-600 dark:text-gray-300">
+                    <span
+                        v-else-if="!unavailable"
+                        class="font-medium text-slate-600 dark:text-gray-300"
+                    >
                         {{ getBranchTimeDisplay(branch?.settings).label }}
                     </span>
                 </div>
@@ -190,7 +204,7 @@
             <button
                 v-if="hasHomecare || hasFacility"
                 type="button"
-                :disabled="!selected"
+                :disabled="!selected || unavailable"
                 @click="confirm"
                 class="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -237,7 +251,7 @@
 
                 <button
                     type="button"
-                    :disabled="!selected"
+                    :disabled="!selected || unavailable"
                     @click="confirm"
                     class="shrink-0 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white disabled:opacity-40"
                 >
@@ -421,7 +435,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watchEffect } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import {
     House,
     Building2,
@@ -436,6 +450,7 @@ import { useBranch } from "~/composables/useBranchProvider";
 const props = defineProps<{
     hasHomecare: boolean;
     hasFacility: boolean;
+    selection?: "homecare" | "facility" | null;
 }>();
 const emit = defineEmits<{
     (e: "homecare"): void;
@@ -448,6 +463,13 @@ const { branch, loading, has, canUseHomecare, canUseFacility, availableSlots } =
 
 const selected = ref<"homecare" | "facility" | null>(null);
 const mobileSheetOpen = ref(false);
+
+watch(
+    () => props.selection,
+    (value) => {
+        if (value) selected.value = value;
+    },
+);
 
 const serviceOptions = computed(() => {
     const options: {
@@ -496,7 +518,11 @@ function selectAndClose(value: "homecare" | "facility") {
     mobileSheetOpen.value = false;
 }
 
+const unavailable = computed(() => branch.value?.is_available === false);
+
 const confirm = () => {
+    if (unavailable.value) return;
+
     if (selected.value === "homecare") {
         emit("homecare");
     }

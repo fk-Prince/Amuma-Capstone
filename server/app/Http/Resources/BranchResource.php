@@ -6,6 +6,8 @@ use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\BranchImage;
+use App\Models\BranchSubscription;
+use App\Models\Subscription;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -41,6 +43,11 @@ class BranchResource extends JsonResource
             'email' => $this->email,
             'image' => $this->image,
             'is_verified' => $this->status === Branch::STATUS_VERIFIED,
+            'is_available' => $this->subscriptions->contains(
+                fn($subscription) => $subscription->pivot?->status === BranchSubscription::STATUS_APPROVED
+                    && $subscription->status === Subscription::STATUS_ACTIVE
+                    && $subscription->end_date?->copy()->startOfDay()->gte(now()->startOfDay())
+            ),
             'cover_image' => $this->whenLoaded('images', function () {
                 return $this->images
                     ->where('type', BranchImage::IMAGE_COVER)

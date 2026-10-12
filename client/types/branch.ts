@@ -70,6 +70,7 @@ export interface BranchRetrieve {
     email?: string | null;
     image: string | undefined;
     is_verified?: boolean;
+    is_available?: boolean;
     cover_image?: string | null;
     diagnosis_case_prices?: { min: number; max: number } | null;
     starting_price?: {

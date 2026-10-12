@@ -426,7 +426,12 @@ useHead({ title: "Patient Details" });
 definePageMeta({
     navVariant: 6,
     navTheme: "light",
-    middleware: ["auth-client", "prevent-staff-booking", "provider-guard"],
+    middleware: [
+        "auth-client",
+        "prevent-staff-booking",
+        "branch-available-guard",
+        "provider-guard",
+    ],
 });
 
 const user = useAuthUser();
