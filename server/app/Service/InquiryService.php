@@ -56,7 +56,7 @@ class InquiryService
         }
 
         return response()->json([
-            'message' => 'Your inquiry has been sent. The provider will get back to you soon.',
+            'message' => 'Your inquiry has been sent. The provider will reply to you through email.',
             'data' => ['uuid' => $inquiry->uuid],
         ], 201);
     }
@@ -85,7 +85,7 @@ class InquiryService
 
     public function updateStatus(string $uuid, array $payload, User $user)
     {
-        [$branch, $inquiry] = $this->resolveForUpdate($uuid, $payload['branch_uuid'], $user);
+        [, $inquiry] = $this->resolveForUpdate($uuid, $payload['branch_uuid'], $user);
 
         $inquiry = $this->inquiryRepository->update($inquiry, [
             'status' => $payload['status'],

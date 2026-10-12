@@ -187,8 +187,8 @@ onBeforeUnmount(() => {
 
                     <p class="text-base font-bold">Send an Inquiry</p>
                     <p class="mt-0.5 pr-6 text-xs text-white/80">
-                        Fill in the form below and {{ branch.name }} will get
-                        back to you.
+                        Fill in the form below and {{ branch.name }} will reply
+                        to you through email.
                     </p>
                 </div>
 
@@ -209,8 +209,8 @@ onBeforeUnmount(() => {
                     <p
                         class="mt-1 max-w-xs text-sm text-gray-500 dark:text-gray-400"
                     >
-                        Thanks for reaching out. {{ branch.name }} will contact
-                        you soon.
+                        Thanks for reaching out. {{ branch.name }} will send
+                        their reply to your email.
                     </p>
                     <button
                         type="button"
