@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from "vue";
 import {
     Bath,
     HandHeart,
@@ -63,6 +70,27 @@ const medicalGroups = computed(() => {
 
 const serviceCount = computed(() =>
     medicalGroups.value.reduce((sum, group) => sum + group.services.length, 0),
+);
+
+const descriptionRef = ref<HTMLElement | null>(null);
+const descriptionExpanded = ref(false);
+const descriptionOverflows = ref(false);
+
+const measureDescription = () => {
+    const el = descriptionRef.value;
+    if (!el || descriptionExpanded.value) return;
+    descriptionOverflows.value = el.scrollHeight > el.clientHeight + 1;
+};
+
+watch(adl, () => nextTick(measureDescription));
+
+onMounted(() => {
+    nextTick(measureDescription);
+    window.addEventListener("resize", measureDescription);
+});
+
+onBeforeUnmount(() =>
+    window.removeEventListener("resize", measureDescription),
 );
 
 const peso = (value: number | string) =>
@@ -140,12 +168,24 @@ const peso = (value: number | string) =>
                         <h3 class="mt-3 text-xl font-bold">
                             Activities of Daily Living (ADL)
                         </h3>
-                        <p class="mt-1.5 line-clamp-3 text-sm text-white/85">
+                        <p
+                            ref="descriptionRef"
+                            class="mt-1.5 text-sm text-white/85"
+                            :class="descriptionExpanded ? '' : 'line-clamp-3'"
+                        >
                             {{
                                 adl.description ||
                                 "A dedicated caregiver at home to help your loved one with everyday routines."
                             }}
                         </p>
+                        <button
+                            v-if="descriptionOverflows || descriptionExpanded"
+                            type="button"
+                            class="mt-1 text-xs font-semibold text-white underline-offset-2 hover:underline"
+                            @click="descriptionExpanded = !descriptionExpanded"
+                        >
+                            {{ descriptionExpanded ? "Show less" : "Show more" }}
+                        </button>
 
                         <div class="mt-4 flex flex-wrap gap-2">
                             <span
@@ -177,7 +217,7 @@ const peso = (value: number | string) =>
                             class="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
                             @click="emit('homecare')"
                         >
-                            Book Homecare
+                            Book
                         </button>
                     </div>
                 </div>
