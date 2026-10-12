@@ -40,6 +40,7 @@ class ServiceRequest extends FormRequest
                 'string',
                 'max:255',
             ],
+            'description' => ['nullable', 'string', 'max:1000'],
 
             'maximum_duration' => [
                 'required',

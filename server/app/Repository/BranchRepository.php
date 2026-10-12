@@ -223,7 +223,7 @@ class BranchRepository
             'location',
             'contracts',
             'agencies',
-            'services',
+            'services.categories',
             'bookings',
             'rooms',
             'images' => function ($query) {

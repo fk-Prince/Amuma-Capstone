@@ -193,17 +193,26 @@
                                         v-show="!isCollapsed(group.category)"
                                         class="space-y-2 p-3"
                                     >
-                                        <button
+                                        <div
                                             v-for="service in group.items"
                                             :key="service.service_uuid"
-                                            type="button"
-                                            :aria-pressed="isSelected(service)"
-                                            :disabled="!service.is_available"
-                                            class="flex w-full items-center justify-between gap-3 rounded-lg border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="overflow-hidden rounded-lg border transition"
                                             :class="
                                                 isSelected(service)
                                                     ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                                                    : 'border-slate-200 hover:border-primary/40 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5'
+                                                    : 'border-slate-200 hover:border-primary/40 dark:border-white/10'
+                                            "
+                                        >
+                                        <div class="flex items-center">
+                                        <button
+                                            type="button"
+                                            :aria-pressed="isSelected(service)"
+                                            :disabled="!service.is_available"
+                                            class="flex min-w-0 flex-1 items-center justify-between gap-3 p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50"
+                                            :class="
+                                                isSelected(service)
+                                                    ? ''
+                                                    : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                             "
                                             @click="toggleService(service)"
                                         >
@@ -240,6 +249,48 @@
                                                 }}
                                             </span>
                                         </button>
+
+                                        <button
+                                            v-if="service.description"
+                                            type="button"
+                                            class="mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                                            :aria-expanded="isDescriptionOpen(service)"
+                                            :aria-label="
+                                                isDescriptionOpen(service)
+                                                    ? 'Hide description'
+                                                    : 'Show description'
+                                            "
+                                            @click="toggleDescription(service)"
+                                        >
+                                            <ChevronDown
+                                                class="h-4 w-4 transition-transform duration-200"
+                                                :class="
+                                                    isDescriptionOpen(service)
+                                                        ? 'rotate-180 text-primary'
+                                                        : ''
+                                                "
+                                            />
+                                        </button>
+                                        </div>
+
+                                        <div
+                                            v-if="service.description"
+                                            class="grid transition-all duration-200 ease-out"
+                                            :class="
+                                                isDescriptionOpen(service)
+                                                    ? 'grid-rows-[1fr] opacity-100'
+                                                    : 'grid-rows-[0fr] opacity-0'
+                                            "
+                                        >
+                                            <div class="overflow-hidden">
+                                                <p
+                                                    class="border-t border-slate-100 px-3 py-2.5 text-xs leading-5 text-slate-500 dark:border-white/10 dark:text-gray-400"
+                                                >
+                                                    {{ service.description }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -482,6 +533,7 @@ const submitting = ref(false);
 const searchQuery = ref("");
 const selectedService = ref<BookedService | null>(null);
 const collapsedCategories = reactive<Record<string, boolean>>({});
+const openDescriptions = reactive<Record<string, boolean>>({});
 
 const todayStr = getLocalDateStr(new Date());
 
@@ -551,6 +603,15 @@ function toggleCategory(category: string) {
     collapsedCategories[category] = !collapsedCategories[category];
 }
 
+function isDescriptionOpen(service: Service) {
+    return !!openDescriptions[String(service.service_uuid)];
+}
+
+function toggleDescription(service: Service) {
+    const key = String(service.service_uuid);
+    openDescriptions[key] = !openDescriptions[key];
+}
+
 function isSelected(service: Service) {
     return selectedService.value?.service_id === service.service_id;
 }
@@ -579,6 +640,10 @@ function resetForm() {
 
     for (const key of Object.keys(collapsedCategories)) {
         delete collapsedCategories[key];
+    }
+
+    for (const key of Object.keys(openDescriptions)) {
+        delete openDescriptions[key];
     }
 }
 

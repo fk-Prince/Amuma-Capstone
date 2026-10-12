@@ -238,6 +238,40 @@ watch(
                                     "
                                 />
 
+                                <div>
+                                    <label
+                                        for="service-description"
+                                        class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    >
+                                        Description
+                                        <span
+                                            class="font-normal text-slate-400 dark:text-gray-500"
+                                        >
+                                            (optional)
+                                        </span>
+                                    </label>
+                                    <textarea
+                                        id="service-description"
+                                        v-model="form.description"
+                                        rows="3"
+                                        maxlength="1000"
+                                        placeholder="What does this service include?"
+                                        class="w-full resize-none rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500"
+                                        :class="
+                                            errors?.description
+                                                ? 'border-red-400'
+                                                : 'border-slate-200 dark:border-white/10'
+                                        "
+                                        @input="clearError('description')"
+                                    />
+                                    <p
+                                        v-if="errors?.description"
+                                        class="mt-1 text-xs text-red-500"
+                                    >
+                                        {{ errors.description }}
+                                    </p>
+                                </div>
+
                                 <div
                                     class="grid grid-cols-1 gap-4 sm:grid-cols-2 items-center"
                                 >

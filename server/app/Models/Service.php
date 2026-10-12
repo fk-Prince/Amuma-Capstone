@@ -17,6 +17,7 @@ class Service extends Model
         'branch_id',
         'price',
         'service_name',
+        'description',
         'maximum_duration',
         'is_available',
         'type',

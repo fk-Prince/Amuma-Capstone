@@ -132,53 +132,109 @@
                                 {{ group.category }}
                             </p>
 
-                            <button
+                            <div
                                 v-for="service in group.items"
                                 :key="service.service_id"
-                                type="button"
-                                :aria-pressed="isChecked(service)"
-                                class="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition-all"
+                                class="overflow-hidden rounded-xl border transition-all"
                                 :class="
                                     isChecked(service)
                                         ? 'border-primary bg-primary/5 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/5'
+                                        : 'border-gray-200 hover:border-gray-300 dark:border-white/10 dark:hover:border-white/20'
                                 "
-                                @click="select(service)"
                             >
-                                <div class="min-w-0">
-                                    <p
-                                        class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
-                                    >
-                                        {{ service.service_name }}
-                                    </p>
-
-                                    <p
-                                        v-if="
-                                            groupedServices.length <= 1 &&
-                                            service.category_name
+                                <div class="flex items-center">
+                                    <button
+                                        type="button"
+                                        :aria-pressed="isChecked(service)"
+                                        class="flex min-w-0 flex-1 items-center justify-between gap-3 p-3 text-left transition-colors"
+                                        :class="
+                                            isChecked(service)
+                                                ? ''
+                                                : 'hover:bg-gray-50 dark:hover:bg-white/5'
                                         "
-                                        class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                                        @click="select(service)"
                                     >
-                                        {{ service.category_name }}
-                                    </p>
+                                        <div class="min-w-0">
+                                            <p
+                                                class="truncate text-sm font-medium leading-tight text-gray-900 dark:text-white"
+                                            >
+                                                {{ service.service_name }}
+                                            </p>
+
+                                            <p
+                                                v-if="
+                                                    groupedServices.length <=
+                                                        1 &&
+                                                    service.category_name
+                                                "
+                                                class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                                            >
+                                                {{ service.category_name }}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="flex shrink-0 items-center gap-3"
+                                        >
+                                            <span
+                                                class="whitespace-nowrap text-sm font-semibold text-primary"
+                                            >
+                                                {{
+                                                    formatCurrency(service.price)
+                                                }}
+                                            </span>
+
+                                            <span
+                                                v-if="isChecked(service)"
+                                                class="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-white"
+                                            >
+                                                <Check class="h-3 w-3" />
+                                                Selected
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        v-if="service.description"
+                                        type="button"
+                                        class="mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                                        :aria-expanded="isExpanded(service)"
+                                        :aria-label="
+                                            isExpanded(service)
+                                                ? 'Hide description'
+                                                : 'Show description'
+                                        "
+                                        @click="toggleDescription(service)"
+                                    >
+                                        <ChevronDown
+                                            class="h-4 w-4 transition-transform duration-200"
+                                            :class="
+                                                isExpanded(service)
+                                                    ? 'rotate-180 text-primary'
+                                                    : ''
+                                            "
+                                        />
+                                    </button>
                                 </div>
 
-                                <div class="flex shrink-0 items-center gap-3">
-                                    <span
-                                        class="whitespace-nowrap text-sm font-semibold text-primary"
-                                    >
-                                        {{ formatCurrency(service.price) }}
-                                    </span>
-
-                                    <span
-                                        v-if="isChecked(service)"
-                                        class="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-white"
-                                    >
-                                        <Check class="h-3 w-3" />
-                                        Selected
-                                    </span>
+                                <div
+                                    v-if="service.description"
+                                    class="grid transition-all duration-200 ease-out"
+                                    :class="
+                                        isExpanded(service)
+                                            ? 'grid-rows-[1fr] opacity-100'
+                                            : 'grid-rows-[0fr] opacity-0'
+                                    "
+                                >
+                                    <div class="overflow-hidden">
+                                        <p
+                                            class="border-t border-gray-100 px-3 py-2.5 text-xs leading-5 text-gray-500 dark:border-white/10 dark:text-gray-400"
+                                        >
+                                            {{ service.description }}
+                                        </p>
+                                    </div>
                                 </div>
-                            </button>
+                            </div>
                         </div>
                     </div>
 
@@ -226,7 +282,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Check, PackageSearch, Search, X } from "lucide-vue-next";
+import {
+    Check,
+    ChevronDown,
+    PackageSearch,
+    Search,
+    X,
+} from "lucide-vue-next";
 import type { Service } from "~/types/service";
 import type { BookedService } from "~/types/booking";
 import Combobox from "~/components/ui/Combobox.vue";
@@ -253,6 +315,15 @@ const localSelected = ref<number | null>(null);
 
 const searchQuery = ref("");
 const selectedCategory = ref<string | null>(null);
+const expandedServices = ref<Record<number, boolean>>({});
+
+const isExpanded = (service: Service) =>
+    service.service_id != null && !!expandedServices.value[service.service_id];
+
+function toggleDescription(service: Service) {
+    if (service.service_id == null) return;
+    expandedServices.value[service.service_id] = !isExpanded(service);
+}
 
 watch(
     () => props.modelValue,
@@ -269,6 +340,7 @@ watch(
         if (isOpen) {
             searchQuery.value = "";
             selectedCategory.value = null;
+            expandedServices.value = {};
 
             localSelected.value =
                 props.modelValue.length &&

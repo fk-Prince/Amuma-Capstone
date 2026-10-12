@@ -171,6 +171,7 @@ const editServiceClicked = (service: Service) => {
 
     Object.assign(serviceForm, {
         service_name: service.service_name,
+        description: service.description ?? "",
         category_id: service.category_id,
         category_name: service.category_name,
         price: service.price,

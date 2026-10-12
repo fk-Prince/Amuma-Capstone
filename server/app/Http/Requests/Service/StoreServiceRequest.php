@@ -27,6 +27,7 @@ class StoreServiceRequest extends FormRequest
             'category_name' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'decimal:0,2', 'min:0'],
             'service_name' => ['required', 'string', 'max:255',],
+            'description' => ['nullable', 'string', 'max:1000'],
             'maximum_duration' => ['required', 'date_format:H:i:s',],
             'is_available' => ['boolean'],
             'type' => ['required', 'in:online,facility,both'],

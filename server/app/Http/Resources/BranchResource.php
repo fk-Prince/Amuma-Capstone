@@ -169,13 +169,14 @@ class BranchResource extends JsonResource
                             'service_id' => $service->service_id,
                             'service_uuid' => $service->service_uuid,
                             'service_name' => $service->service_name,
+                            'description' => $service->description,
                             'price' => $service->price,
                             'maximum_duration' => $service->maximum_duration,
                             'is_available' => $service->is_available,
                             'type' => $service->type,
-                            'category' => $service->category ? [
-                                'category_id' => $service->category->category_id,
-                                'category_name' => $service->category->category_name,
+                            'category' => $service->categories ? [
+                                'category_id' => $service->categories->category_id,
+                                'category_name' => $service->categories->category_name,
                             ] : null,
                         ];
                     })

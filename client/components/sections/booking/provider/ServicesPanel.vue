@@ -9,6 +9,7 @@ import {
 } from "vue";
 import {
     Bath,
+    ChevronDown,
     HandHeart,
     Home,
     Shirt,
@@ -71,6 +72,19 @@ const medicalGroups = computed(() => {
 const serviceCount = computed(() =>
     medicalGroups.value.reduce((sum, group) => sum + group.services.length, 0),
 );
+
+const openServices = ref<Record<string, boolean>>({});
+
+const serviceKey = (service: any) =>
+    String(service.service_uuid ?? service.service_id);
+
+const isOpen = (service: any) => !!openServices.value[serviceKey(service)];
+
+const toggleService = (service: any) => {
+    if (!service.description) return;
+    const key = serviceKey(service);
+    openServices.value[key] = !openServices.value[key];
+};
 
 const descriptionRef = ref<HTMLElement | null>(null);
 const descriptionExpanded = ref(false);
@@ -217,13 +231,13 @@ const peso = (value: number | string) =>
                             class="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
                             @click="emit('homecare')"
                         >
-                            Book
+                            Book Homecare
                         </button>
                     </div>
                 </div>
             </article>
 
-            <div v-if="medicalGroups.length" class="mt-8">
+            <div v-if="medicalGroups.length" :class="adl ? 'mt-8' : 'mt-6'">
                 <div class="flex items-center gap-2">
                     <Stethoscope class="h-4 w-4 text-primary" />
                     <h3
@@ -260,42 +274,83 @@ const peso = (value: number | string) =>
                         >
                             <li
                                 v-for="service in group.services"
-                                :key="service.service_uuid ?? service.service_id"
-                                class="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-gray-50 dark:hover:bg-white/5"
+                                :key="serviceKey(service)"
                             >
-                                <div class="flex min-w-0 items-center gap-3">
-                                    <span
-                                        class="h-2 w-2 shrink-0 rounded-full"
-                                        :class="
-                                            service.is_available === false
-                                                ? 'bg-gray-300 dark:bg-white/20'
-                                                : 'bg-emerald-400'
-                                        "
-                                    />
-                                    <p
-                                        class="truncate text-sm font-medium text-gray-800 dark:text-gray-100"
-                                        :class="
-                                            service.is_available === false
-                                                ? 'opacity-50'
-                                                : ''
-                                        "
-                                    >
-                                        {{ service.service_name }}
-                                    </p>
-                                </div>
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition"
+                                    :class="[
+                                        service.description
+                                            ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
+                                            : 'cursor-default',
+                                        isOpen(service)
+                                            ? 'bg-primary-50/50 dark:bg-primary/10'
+                                            : '',
+                                    ]"
+                                    :aria-expanded="isOpen(service)"
+                                    @click="toggleService(service)"
+                                >
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <span
+                                            class="h-2 w-2 shrink-0 rounded-full"
+                                            :class="
+                                                service.is_available === false
+                                                    ? 'bg-gray-300 dark:bg-white/20'
+                                                    : 'bg-emerald-400'
+                                            "
+                                        />
+                                        <p
+                                            class="truncate text-sm font-medium text-gray-800 dark:text-gray-100"
+                                            :class="
+                                                service.is_available === false
+                                                    ? 'opacity-50'
+                                                    : ''
+                                            "
+                                        >
+                                            {{ service.service_name }}
+                                        </p>
+                                    </div>
 
-                                <div class="flex shrink-0 items-center gap-3">
-                                    <span
-                                        v-if="service.is_available === false"
-                                        class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400"
-                                    >
-                                        Unavailable
-                                    </span>
-                                    <span
-                                        class="text-sm font-bold text-secondary dark:text-white"
-                                    >
-                                        {{ peso(service.price) }}
-                                    </span>
+                                    <div class="flex shrink-0 items-center gap-3">
+                                        <span
+                                            v-if="service.is_available === false"
+                                            class="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500 dark:bg-white/10 dark:text-gray-400"
+                                        >
+                                            Unavailable
+                                        </span>
+                                        <span
+                                            class="text-sm font-bold text-secondary dark:text-white"
+                                        >
+                                            {{ peso(service.price) }}
+                                        </span>
+                                        <ChevronDown
+                                            v-if="service.description"
+                                            class="h-4 w-4 text-gray-400 transition-transform duration-200"
+                                            :class="
+                                                isOpen(service)
+                                                    ? 'rotate-180 text-primary'
+                                                    : ''
+                                            "
+                                        />
+                                        <span v-else class="w-4" />
+                                    </div>
+                                </button>
+
+                                <div
+                                    class="grid transition-all duration-200 ease-out"
+                                    :class="
+                                        isOpen(service)
+                                            ? 'grid-rows-[1fr] opacity-100'
+                                            : 'grid-rows-[0fr] opacity-0'
+                                    "
+                                >
+                                    <div class="overflow-hidden">
+                                        <p
+                                            class="bg-primary-50/50 px-4 pb-3.5 pl-9 text-sm leading-6 text-gray-600 dark:bg-primary/10 dark:text-gray-300"
+                                        >
+                                            {{ service.description }}
+                                        </p>
+                                    </div>
                                 </div>
                             </li>
                         </ul>

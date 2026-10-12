@@ -26,6 +26,7 @@ class UpdateServiceRequest extends FormRequest
                 Rule::unique('services', 'service_name')
                     ->ignore($id, 'service_id'),
             ],
+            'description' => ['nullable', 'string', 'max:1000'],
             'price' => ['required', 'numeric', 'min:1'],
             'maximum_duration' => ['required', 'date_format:H:i:s',],
             'is_available' => ['boolean'],

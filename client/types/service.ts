@@ -10,6 +10,7 @@ export interface Service {
     category_name?: string | null;
     price: number;
     service_name: string;
+    description?: string | null;
     maximum_duration: string;
     is_available?: boolean;
     type: 'online' | 'facility' | 'both';
@@ -28,6 +29,7 @@ export const createServiceForm = (): Service => ({
     category_name: "",
     price: 1,
     service_name: "",
+    description: "",
     maximum_duration: "",
     is_available: true,
     type: "both",
@@ -36,6 +38,11 @@ export const createServiceForm = (): Service => ({
 export const serviceSchema = z
     .object({
         service_name: z.string().min(1, "Service name is required"),
+        description: z
+            .string()
+            .max(1000, "Description must be 1,000 characters or less")
+            .nullable()
+            .optional(),
         category_name: z
             .string()
             .min(1, "Category name is required"),
