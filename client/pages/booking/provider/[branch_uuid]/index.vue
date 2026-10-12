@@ -37,7 +37,18 @@
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Left column -->
             <div
-                v-if="activeTab === 'providers'"
+                v-if="activeTab === 'services' && !loading"
+                class="flex flex-col gap-5 lg:col-span-2"
+            >
+                <ServicesPanel
+                    :branch="branch"
+                    :has-homecare="hasHomecare"
+                    @homecare="homecare"
+                />
+            </div>
+
+            <div
+                v-else-if="activeTab === 'providers'"
                 class="flex flex-col gap-5 lg:col-span-2"
             >
                 <HealthProviders :branch-uuid="uuid" />
@@ -283,6 +294,7 @@
                         :has-facility="hasFacility"
                         @homecare="homecare"
                         @facility="facility"
+                        @select="onServiceSelect"
                     />
 
                     <div
@@ -342,6 +354,7 @@ import ProviderBanner from "~/components/sections/booking/provider/ProviderBanne
 import BookingCard from "~/components/sections/booking/provider/BookingCard.vue";
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import HealthProviders from "~/components/sections/booking/provider/HealthProviders.vue";
+import ServicesPanel from "~/components/sections/booking/provider/ServicesPanel.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { providerNavList } from "~/config/publicMenu";
@@ -482,32 +495,33 @@ const goToTab = async (key: TabKey) => {
         return;
     }
 
-    const wasProviders = activeTab.value === "providers";
+    const wasPanel = isPanelTab(activeTab.value);
 
     activeTab.value = key;
 
-    if (key === "providers") return;
-
-    // The service card is a bottom sheet on small screens.
-    if (key === "services" && window.innerWidth < 1024) {
-        bookingCardRef.value?.openSheet?.();
-        return;
-    }
-
-    if (wasProviders) return;
+    if (isPanelTab(key) || wasPanel) return;
 
     await nextTick();
 
     if (key === "overview") scrollTo(overviewRef.value);
     if (key === "reviews") scrollTo(reviewsRef.value);
     if (key === "location") scrollTo(locationRef.value);
-    if (key === "services") scrollTo(servicesRef.value);
 };
+
+const onServiceSelect = (value: "homecare" | "facility") => {
+    if (value === "homecare") {
+        activeTab.value = "services";
+    } else if (activeTab.value === "services") {
+        activeTab.value = "overview";
+    }
+};
+
+const isPanelTab = (key: TabKey) => key === "services" || key === "providers";
 
 // Keeps the highlighted tab in step with the section being read.
 let ticking = false;
 const onScroll = () => {
-    if (ticking || activeTab.value === "providers") return;
+    if (ticking || isPanelTab(activeTab.value)) return;
     ticking = true;
 
     requestAnimationFrame(() => {
@@ -524,8 +538,7 @@ const onScroll = () => {
             if (el && el.getBoundingClientRect().top <= 180) current = key;
         }
 
-        if (activeTab.value !== "services") activeTab.value = current;
-        else if (current !== "overview") activeTab.value = current;
+        activeTab.value = current;
     });
 };
 

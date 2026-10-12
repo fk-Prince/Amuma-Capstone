@@ -61,7 +61,7 @@
                     v-if="hasHomecare"
                     type="button"
                     :disabled="!canUseHomecare"
-                    @click="selected = 'homecare'"
+                    @click="choose('homecare')"
                     class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
                     :class="[
                         selected === 'homecare'
@@ -110,7 +110,7 @@
                     v-if="hasFacility"
                     type="button"
                     :disabled="!canUseFacility"
-                    @click="selected = 'facility'"
+                    @click="choose('facility')"
                     class="flex items-center gap-3 rounded-xl border p-4 text-left transition-all"
                     :class="[
                         selected === 'facility'
@@ -440,6 +440,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: "homecare"): void;
     (e: "facility"): void;
+    (e: "select", value: "homecare" | "facility"): void;
 }>();
 
 const { branch, loading, has, canUseHomecare, canUseFacility, availableSlots } =
@@ -485,8 +486,13 @@ const selectedLabel = computed(
     () => serviceOptions.value.find((o) => o.value === selected.value)?.label ?? "",
 );
 
-function selectAndClose(value: "homecare" | "facility") {
+function choose(value: "homecare" | "facility") {
     selected.value = value;
+    emit("select", value);
+}
+
+function selectAndClose(value: "homecare" | "facility") {
+    choose(value);
     mobileSheetOpen.value = false;
 }
 
