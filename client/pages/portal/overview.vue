@@ -202,10 +202,10 @@
 
     <div
         v-else
-        class="grid gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+        class="grid gap-5 items-stretch grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="self-stretch bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
+            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm font-semibold text-gray-800 dark:text-white">
@@ -323,7 +323,7 @@
                 primaryLovedOne &&
                 (isAdmission || (isHomecare && !attendanceVisit))
             "
-            class="self-stretch md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 lg:h-0 lg:min-h-full lg:overflow-y-auto bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div>
