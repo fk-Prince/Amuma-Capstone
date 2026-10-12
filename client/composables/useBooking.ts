@@ -78,7 +78,7 @@ export function useMedicalServices(
             return "No medical services available";
         }
 
-        return "Professional medical care and nursing services tailored to the patient's needs.";
+        return "Professional medical care delivered at home by licensed nurses. Choose the specific treatment the patient needs and book it as a single visit, paying only for that service. Ideal for recovering after a hospital stay or managing an ongoing condition from the comfort of home.";
     });
 
     // const medicalDescription = computed(() => {
