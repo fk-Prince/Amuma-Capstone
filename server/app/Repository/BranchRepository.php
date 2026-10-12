@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
+use App\Models\EmployeeBranch;
 use App\Models\SubscriptionPayment;
 
 class BranchRepository
@@ -239,5 +240,15 @@ class BranchRepository
             ->withCount('reviews')
             ->where('uuid', $uuid)
             ->first();
+    }
+
+    public function getBranchStaffAchievements(string $uuid)
+    {
+        return EmployeeBranch::query()
+            ->select(['employee_branch_id', 'employee_id', 'role_name'])
+            ->whereHas('branches', fn($query) => $query->where('uuid', $uuid))
+            ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+            ->with('employees:employee_id,first_name,last_name,avatar,achievements')
+            ->get();
     }
 }

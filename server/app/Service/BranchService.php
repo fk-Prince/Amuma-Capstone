@@ -43,6 +43,22 @@ class BranchService
         return new BranchResource($branch);
     }
 
+    public function getStaffAchievements(string $uuid)
+    {
+        $staff = $this->branchRepository
+            ->getBranchStaffAchievements($uuid)
+            ->filter(fn($row) => !empty($row->employees?->achievements))
+            ->map(fn($row) => [
+                'name' => trim("{$row->employees->first_name} {$row->employees->last_name}"),
+                'avatar' => $row->employees->avatar,
+                'role_name' => ucwords(str_replace('_', ' ', $row->role_name)),
+                'achievements' => $row->employees->achievements,
+            ])
+            ->values();
+
+        return response()->json(['data' => $staff]);
+    }
+
     public function getFeaturedBranches(array $payload)
     {
         $branch = $this->branchRepository->getHighestReviewPaginate($payload['per_page']);

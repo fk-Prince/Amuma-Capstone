@@ -239,6 +239,10 @@
                 <div v-else ref="reviewsRef" class="scroll-mt-40">
                     <ReviewSection :branch-uuid="uuid" />
                 </div>
+
+                <div v-if="!loading" ref="achievementsRef" class="scroll-mt-40">
+                    <StaffAchievements :branch-uuid="uuid" />
+                </div>
             </div>
 
             <!-- Right column -->
@@ -334,6 +338,7 @@ import {
 import ProviderBanner from "~/components/sections/booking/provider/ProviderBanner.vue";
 import BookingCard from "~/components/sections/booking/provider/BookingCard.vue";
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
+import StaffAchievements from "~/components/sections/booking/provider/StaffAchievements.vue";
 import LocationPin from "~/components/ui/LocationPin.vue";
 import Location from "~/components/icons/location.vue";
 import { providerNavList } from "~/config/publicMenu";
@@ -445,14 +450,22 @@ const overviewRef = ref<HTMLElement | null>(null);
 const servicesRef = ref<HTMLElement | null>(null);
 const reviewsRef = ref<HTMLElement | null>(null);
 const locationRef = ref<HTMLElement | null>(null);
+const achievementsRef = ref<HTMLElement | null>(null);
 
-type TabKey = "overview" | "services" | "reviews" | "location" | "gallery";
+type TabKey =
+    | "overview"
+    | "services"
+    | "reviews"
+    | "location"
+    | "achievements"
+    | "gallery";
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "services", label: "Services" },
     { key: "reviews", label: "Reviews" },
     { key: "location", label: "Location" },
+    { key: "achievements", label: "Achievements" },
     { key: "gallery", label: "Gallery" },
 ];
 
@@ -472,6 +485,7 @@ const goToTab = (key: TabKey) => {
     if (key === "overview") scrollTo(overviewRef.value);
     if (key === "reviews") scrollTo(reviewsRef.value);
     if (key === "location") scrollTo(locationRef.value);
+    if (key === "achievements") scrollTo(achievementsRef.value);
 
     if (key === "services") {
         // The service card is a bottom sheet on small screens.
@@ -493,6 +507,7 @@ const onScroll = () => {
             ["overview", overviewRef.value],
             ["location", locationRef.value],
             ["reviews", reviewsRef.value],
+            ["achievements", achievementsRef.value],
         ];
 
         let current: TabKey = "overview";
