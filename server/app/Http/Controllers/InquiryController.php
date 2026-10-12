@@ -27,6 +27,8 @@ class InquiryController extends Controller
             'branch_uuid' => ['required', 'string'],
             'status' => ['nullable', Rule::in([Inquiry::STATUS_NEW, Inquiry::STATUS_READ, Inquiry::STATUS_RESOLVED])],
             'search' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);

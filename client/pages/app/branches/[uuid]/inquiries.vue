@@ -1,63 +1,52 @@
 <template>
-    <div class="flex min-h-screen-header flex-col dark:bg-surface">
+    <div
+        class="min-h-screen-header bg-[#EEF3FB] dark:bg-surface flex flex-col"
+    >
         <div
-            class="mx-auto flex w-full flex-1 flex-col space-y-4 px-3 pb-4 sm:px-0 sm:pb-0 sm:pt-2"
+            class="rounded-lg bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col flex-1 min-h-0 dark:bg-secondary dark:border-white/10"
         >
-            <div class="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                    <h1
-                        class="text-xl font-bold text-slate-900 dark:text-white"
-                    >
-                        Inquiries
-                    </h1>
-                    <p class="mt-0.5 text-sm text-slate-500 dark:text-gray-400">
-                        Questions sent by families from your provider page.
-                    </p>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.value ?? 'all'"
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition"
-                        :class="
-                            activeStatus === tab.value
-                                ? 'border-primary bg-primary text-white'
-                                : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-white/10 dark:bg-secondary dark:text-gray-300'
-                        "
-                        @click="selectStatus(tab.value)"
-                    >
-                        {{ tab.label }}
-                        <span
-                            v-if="tab.count"
-                            class="rounded-full px-1.5 text-xs font-semibold"
-                            :class="
-                                activeStatus === tab.value
-                                    ? 'bg-white/20 text-white'
-                                    : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-400'
-                            "
-                        >
-                            {{ tab.count }}
-                        </span>
-                    </button>
-                </div>
-            </div>
-
             <div
-                class="flex flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
             >
-                <InquiryList
-                    :inquiries="inquiries"
-                    :loading="loading"
-                    :current-page="currentPage"
-                    :total-items="totalItems"
-                    :page-size="PAGE_SIZE"
-                    @select="openInquiry"
-                    @search="onSearch"
-                    @page-change="onPageChange"
-                />
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <InquiryFilter
+                        :search="search"
+                        :status="statusFilter"
+                        :date-from="dateFrom"
+                        :date-to="dateTo"
+                        :counts="statusCounts"
+                        @update:search="search = $event"
+                        @update:status="statusFilter = $event"
+                        @update:dateFrom="dateFrom = $event"
+                        @update:dateTo="dateTo = $event"
+                    />
+
+                    <div class="flex shrink-0 items-center gap-2 sm:ml-auto">
+                        <button
+                            type="button"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                            aria-label="Refresh inquiries"
+                            :disabled="loading"
+                            @click="fetchInquiries"
+                        >
+                            <RefreshCw
+                                class="h-4 w-4"
+                                :class="{ 'animate-spin': loading }"
+                            />
+                        </button>
+                    </div>
+                </div>
             </div>
+
+            <InquiryList
+                :inquiries="inquiries"
+                :loading="loading"
+                :current-page="currentPage"
+                :total-items="totalItems"
+                :page-size="PAGE_SIZE"
+                @select="openInquiry"
+                @page-change="onPageChange"
+            />
         </div>
 
         <InquiryDetailModal
@@ -73,9 +62,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import { useDebounceFn } from "@vueuse/core";
+import { RefreshCw } from "lucide-vue-next";
 import InquiryList from "~/components/sections/app/Inquiry/InquiryList.vue";
+import InquiryFilter from "~/components/sections/app/Inquiry/InquiryFilter.vue";
 import InquiryDetailModal from "~/components/sections/app/Inquiry/InquiryDetailModal.vue";
 import { inquiryService } from "~/api/inquiry/InquiryService";
 import type { Inquiry, InquiryStatus } from "~/types/inquiry";
@@ -106,7 +98,9 @@ const saving = ref(false);
 const currentPage = ref(1);
 const totalItems = ref(0);
 const search = ref("");
-const activeStatus = ref<InquiryStatus | null>(null);
+const statusFilter = ref<InquiryStatus | "all">("all");
+const dateFrom = ref("");
+const dateTo = ref("");
 const selectedInquiry = ref<Inquiry | null>(null);
 
 const statusCounts = reactive<Record<InquiryStatus, number>>({
@@ -114,21 +108,6 @@ const statusCounts = reactive<Record<InquiryStatus, number>>({
     read: 0,
     resolved: 0,
 });
-
-const tabs = computed(() => [
-    {
-        label: "All",
-        value: null,
-        count: statusCounts.new + statusCounts.read + statusCounts.resolved,
-    },
-    { label: "New", value: "new" as const, count: statusCounts.new },
-    { label: "Read", value: "read" as const, count: statusCounts.read },
-    {
-        label: "Resolved",
-        value: "resolved" as const,
-        count: statusCounts.resolved,
-    },
-]);
 
 const fetchInquiries = async () => {
     loading.value = true;
@@ -138,8 +117,10 @@ const fetchInquiries = async () => {
             branch_uuid: uuid,
             page: currentPage.value,
             per_page: PAGE_SIZE,
-            search: search.value || undefined,
-            status: activeStatus.value || undefined,
+            search: search.value.trim() || undefined,
+            status: statusFilter.value === "all" ? undefined : statusFilter.value,
+            date_from: dateFrom.value || undefined,
+            date_to: dateTo.value || undefined,
         });
 
         inquiries.value = res.data ?? [];
@@ -153,17 +134,15 @@ const fetchInquiries = async () => {
     }
 };
 
-const selectStatus = (status: InquiryStatus | null) => {
-    activeStatus.value = status;
+const refetchFromFirstPage = () => {
     currentPage.value = 1;
     fetchInquiries();
 };
 
-const onSearch = (query: string) => {
-    search.value = query;
-    currentPage.value = 1;
-    fetchInquiries();
-};
+const debouncedSearch = useDebounceFn(refetchFromFirstPage, 400);
+
+watch(search, debouncedSearch);
+watch([statusFilter, dateFrom, dateTo], refetchFromFirstPage);
 
 const onPageChange = (page: number) => {
     currentPage.value = page;

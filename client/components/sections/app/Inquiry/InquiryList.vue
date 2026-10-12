@@ -28,7 +28,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     select: [inquiry: Inquiry];
-    search: [query: string];
     "page-change": [page: number];
 }>();
 
@@ -82,14 +81,14 @@ const rows = computed(() =>
         :rows="rows"
         :pagination="pagination"
         :loading="loading"
-        search-placeholder="Search by name, email, phone or city…"
-        empty-title="No inquiries yet"
+        :searchable="false"
+        empty-title="No inquiries found"
         empty-description="Questions sent from your provider page will show up here."
         :row-key="(row) => row.id"
         :on-row-click="(row) => emit('select', row.raw)"
-        @search="emit('search', $event)"
         @page-change="emit('page-change', $event)"
     >
+
         <template #cell-name="{ row }">
             <div class="flex items-center gap-3">
                 <span

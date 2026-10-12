@@ -30,6 +30,8 @@ class InquiryRepository
             ])
             ->where('branch_id', $branchId)
             ->when($filters['status'] ?? null, fn($query, $status) => $query->where('status', $status))
+            ->when($filters['date_from'] ?? null, fn($query, $from) => $query->whereDate('created_at', '>=', $from))
+            ->when($filters['date_to'] ?? null, fn($query, $to) => $query->whereDate('created_at', '<=', $to))
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $term = '%' . trim($search) . '%';
 

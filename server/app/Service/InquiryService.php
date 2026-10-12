@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\InquiryResource;
@@ -40,14 +41,14 @@ class InquiryService
         ]);
 
         try {
-            $this->notificationService->notifyModuleStaff(
+            $this->notificationService->notifyBranchStaff(
                 $branch,
-                ModuleEnum::Inquiries,
-                'Inquiry',
                 "New inquiry from {$inquiry->first_name} {$inquiry->last_name} is waiting for a response.",
+                'Inquiry',
                 $user,
                 null,
                 (string) $inquiry->uuid,
+                [RoleEnum::Admission->value],
             );
         } catch (\Throwable $e) {
             Log::error('Inquiry notification failed: ' . $e->getMessage(), [
