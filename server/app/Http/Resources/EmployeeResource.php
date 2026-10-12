@@ -24,6 +24,7 @@ class EmployeeResource extends JsonResource
             'last_name' => $this->last_name,
             'avatar' => $this->avatar,
             'documents' => $this->employee?->documents ?? [],
+            'achievements' => $this->employee?->achievements ?? [],
             'birth_date' => $this->employee->birth_date,
             'location' => $this->employee->locations,
             'role_name' => ucwords(str_replace('_', ' ', $employeeBranch?->role_name)),

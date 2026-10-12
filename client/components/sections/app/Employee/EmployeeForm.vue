@@ -16,6 +16,7 @@ import { useBranchStore } from "~/stores/branch";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import EmployeeSlipModal from "~/components/sections/app/Employee/EmployeeSlipModal.vue";
+import EmployeeAchievements from "~/components/sections/app/Employee/EmployeeAchievements.vue";
 import {
     MoveLeft,
     CalendarCheck,
@@ -68,6 +69,9 @@ const {
     addDocument,
     removeDocument,
     onDocumentFileSelected,
+    addAchievement,
+    removeAchievement,
+    onAchievementFileSelected,
     avatarPreview,
     initials,
     validate,
@@ -165,8 +169,13 @@ const todayStr = new Date().toISOString().split("T")[0];
 
 const tabs = [
     { label: "Employee Information", value: "information" },
+    { label: "Certificates & Achievements", value: "achievements" },
     { label: "Permissions", value: "permissions" },
 ];
+
+const activeTabIndex = computed(() =>
+    tabs.findIndex((tab) => tab.value === activeTab.value),
+);
 
 function openFilePicker() {
     if (isViewMode.value || isAgencyOwner.value) return;
@@ -178,9 +187,19 @@ function removePhoto() {
 }
 
 function goToNext() {
-    if (validate()) {
-        activeTab.value = "permissions";
+    if (activeTab.value === "information") {
+        if (validate()) {
+            activeTab.value = "achievements";
+        }
+        return;
     }
+
+    activeTab.value = "permissions";
+}
+
+function goToPrevious() {
+    activeTab.value =
+        activeTab.value === "permissions" ? "achievements" : "information";
 }
 
 async function handleSave() {
@@ -279,17 +298,13 @@ init();
                         <span
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors dark:border-white/10"
                             :class="[
-                                activeTab === tab.value
+                                activeTab === tab.value || index < activeTabIndex
                                     ? 'border-primary bg-primary text-white'
-                                    : index === 0 && activeTab === 'permissions'
-                                      ? 'border-primary bg-primary text-white'
-                                      : 'border-slate-300 bg-white text-slate-400 group-hover:border-slate-400 dark:border-white/20 dark:bg-secondary dark:text-gray-500 dark:group-hover:border-white/40',
+                                    : 'border-slate-300 bg-white text-slate-400 group-hover:border-slate-400 dark:border-white/20 dark:bg-secondary dark:text-gray-500 dark:group-hover:border-white/40',
                             ]"
                         >
                             <Check
-                                v-if="
-                                    index === 0 && activeTab === 'permissions'
-                                "
+                                v-if="index < activeTabIndex"
                                 class="h-3.5 w-3.5"
                             />
                             <template v-else>{{ index + 1 }}</template>
@@ -791,6 +806,16 @@ init();
                     </div>
                 </div>
 
+                <EmployeeAchievements
+                    v-else-if="activeTab === 'achievements'"
+                    key="achievements"
+                    :items="employee.achievements"
+                    :disabled="isViewMode || isAgencyOwner"
+                    @add="addAchievement"
+                    @remove="removeAchievement"
+                    @file-selected="onAchievementFileSelected"
+                />
+
                 <div v-else key="permissions" class="space-y-5 p-8">
                     <div
                         class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
@@ -1004,15 +1029,15 @@ init();
                 class="sticky bottom-0 mt-auto flex items-center justify-between gap-3 border-t bg-white/95 px-8 py-5 shadow-[0_-4px_12px_-8px_rgba(0,0,0,0.15)] backdrop-blur dark:border-white/10 dark:bg-secondary/95"
             >
                 <button
-                    v-if="activeTab === 'permissions'"
+                    v-if="activeTab !== 'information'"
                     type="button"
-                    @click="activeTab = 'information'"
+                    @click="goToPrevious"
                     class="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
                 >
                     Back
                 </button>
                 <span v-else class="text-xs text-slate-400 dark:text-gray-500">
-                    Step {{ activeTab === "information" ? 1 : 2 }} of 2
+                    Step {{ activeTabIndex + 1 }} of {{ tabs.length }}
                 </span>
 
                 <div class="flex gap-3">
@@ -1025,7 +1050,7 @@ init();
                     </button>
 
                     <button
-                        v-if="activeTab === 'information'"
+                        v-if="activeTab !== 'permissions'"
                         type="button"
                         @click="goToNext"
                         class="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"

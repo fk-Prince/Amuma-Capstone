@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('phone_number')->nullable();
             $table->string('avatar')->nullable();
             $table->json('documents')->nullable();
+            $table->json('achievements')->nullable();
             $table->timestamps();
         });
     }

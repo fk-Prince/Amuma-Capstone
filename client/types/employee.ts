@@ -8,6 +8,13 @@ export interface EmployeeDocument {
     url?: string | null;
 }
 
+export interface EmployeeAchievement {
+    label: string;
+    file?: File | null;
+    url?: string | null;
+    date?: string | null;
+}
+
 export interface Employee {
     employee_id: string;
     uuid: string;
@@ -18,6 +25,7 @@ export interface Employee {
     last_name: string;
     avatar: string;
     documents?: EmployeeDocument[];
+    achievements?: EmployeeAchievement[];
     location: Location;
     birth_date: string;
     phone_number: string;
@@ -56,6 +64,7 @@ export interface EmployeePayload {
     last_name: string;
     avatar: File | string | null;
     documents: EmployeeDocument[];
+    achievements: EmployeeAchievement[];
     location: {
         street: string;
         city: string;
@@ -95,6 +104,7 @@ export const createEmployee = (): EmployeePayload => ({
     last_name: "",
     avatar: null,
     documents: [],
+    achievements: [],
     location: {
         street: "",
         city: "",

@@ -208,6 +208,12 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 url: doc.url ?? null,
                 file: null,
             })),
+            achievements: (current.achievements ?? []).map((item) => ({
+                label: item.label,
+                url: item.url ?? null,
+                date: item.date ?? "",
+                file: null,
+            })),
             location: {
                 ...createEmployee().location,
                 ...(current.location ?? {}),
@@ -255,6 +261,28 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
         if (file && document) {
             document.file = file;
+        }
+    }
+
+    function addAchievement() {
+        employee.value.achievements.push({
+            label: "",
+            file: null,
+            url: null,
+            date: "",
+        });
+    }
+
+    function removeAchievement(index: number) {
+        employee.value.achievements.splice(index, 1);
+    }
+
+    function onAchievementFileSelected(index: number, e: Event) {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        const achievement = employee.value.achievements[index];
+
+        if (file && achievement) {
+            achievement.file = file;
         }
     }
 
@@ -326,6 +354,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 : {}),
             documents: employee.value.documents.filter(
                 (doc) => doc.label.trim() && (doc.file || doc.url),
+            ),
+            achievements: employee.value.achievements.filter(
+                (item) => item.label.trim() && (item.file || item.url),
             ),
             permissions: permissionPayload,
             type: "employee",
@@ -491,6 +522,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         addDocument,
         removeDocument,
         onDocumentFileSelected,
+        addAchievement,
+        removeAchievement,
+        onAchievementFileSelected,
         avatarPreview,
         initials,
         validate,

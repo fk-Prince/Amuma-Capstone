@@ -65,6 +65,33 @@ class EmployeeService
         return $documents;
     }
 
+    private function resolveAchievements(array $payload): array
+    {
+        $achievements = [];
+
+        foreach ($payload['achievements'] ?? [] as $achievement) {
+            $url = null;
+
+            if (!empty($achievement['file']) && $achievement['file'] instanceof UploadedFile) {
+                $url = SupabaseService::store($achievement['file'])['url'];
+            } elseif (!empty($achievement['url'])) {
+                $url = $achievement['url'];
+            }
+
+            if (!$url) {
+                continue;
+            }
+
+            $achievements[] = [
+                'label' => $achievement['label'],
+                'url' => $url,
+                'date' => $achievement['date'] ?? null,
+            ];
+        }
+
+        return $achievements;
+    }
+
     public function updateStatus(array $payload, string $uuid, User $user)
     {
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
@@ -245,6 +272,7 @@ class EmployeeService
                 'birth_date' => $payload['birth_date'],
                 'avatar' => $image,
                 'documents' => $this->resolveDocuments($payload),
+                'achievements' => $this->resolveAchievements($payload),
             ]);
 
             if (!$employee) {
@@ -347,6 +375,7 @@ class EmployeeService
                 'avatar' => $image,
                 'location_id' => $employee->location_id,
                 'documents' => $this->resolveDocuments($payload),
+                'achievements' => $this->resolveAchievements($payload),
             ]);
 
 

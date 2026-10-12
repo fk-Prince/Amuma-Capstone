@@ -73,6 +73,12 @@ class StoreEmployeeRequest extends FormRequest
             'documents.*.label' => ['required', 'string', 'max:255'],
             'documents.*.file' => ['nullable', 'file', 'max:10240'],
             'documents.*.url' => ['nullable', 'string'],
+
+            'achievements' => ['nullable', 'array'],
+            'achievements.*.label' => ['required', 'string', 'max:255'],
+            'achievements.*.file' => ['nullable', 'file', 'max:10240'],
+            'achievements.*.url' => ['nullable', 'string'],
+            'achievements.*.date' => ['nullable', 'date'],
         ];
     }
 

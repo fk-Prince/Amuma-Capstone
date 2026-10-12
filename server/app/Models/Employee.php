@@ -24,10 +24,12 @@ class Employee extends Model
         'phone_number',
         'avatar',
         'documents',
+        'achievements',
     ];
 
     protected $casts = [
         'documents' => 'array',
+        'achievements' => 'array',
     ];
 
     protected static function booted()
