@@ -237,6 +237,10 @@
                         class="text-sm font-semibold text-slate-800 dark:text-white"
                     >
                         Diagnosis
+                        <span
+                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                            >(Optional)</span
+                        >
                     </h3>
                     <button
                         type="button"

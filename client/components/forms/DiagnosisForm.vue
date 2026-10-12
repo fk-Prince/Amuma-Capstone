@@ -4,11 +4,19 @@
             <span class="text-2xl text-primary">04</span>
 
             <div>
-                <h2 class="text-xl text-primary">Diagnosis</h2>
+                <h2 class="text-xl text-primary">
+                    Diagnosis
+                    <span
+                        class="ml-1 align-middle text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                    >
+                        (Optional)
+                    </span>
+                </h2>
 
                 <p class="text-[13px] text-muted dark:text-gray-400">
-                    Any conditions the patient has already been diagnosed with,
-                    and the documents that support them
+                    Conditions the patient was diagnosed with in the last
+                    {{ DIAGNOSIS_WINDOW_MONTHS }} months, and the documents that
+                    support them
                 </p>
             </div>
         </div>
@@ -100,7 +108,6 @@
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <BaseInput
                         label="Primary Diagnosis"
-                        required
                         :model-value="activeDiagnosis.diagnosis"
                         @update:model-value="
                             update(activeIndex, 'diagnosis', $event)
@@ -112,7 +119,6 @@
                     <div>
                         <DatePickerField
                             label="Date Diagnosed"
-                            required
                             :model-value="activeDiagnosis.diagnosis_date"
                             @update:model-value="
                                 update(activeIndex, 'diagnosis_date', $event)

@@ -74,16 +74,17 @@ export const diagnosisWindowStart = (): string => {
     return getLocalDateStr(date);
 };
 
+// A diagnosis is optional, so an empty date passes; one that is filled in has
+// to fall within the last few months.
 const recentDiagnosisDateSchema = z
     .string()
-    .min(1, "Date Diagnosed is required")
-    .refine((val) => !isNaN(Date.parse(val)), {
+    .refine((val) => val === "" || !isNaN(Date.parse(val)), {
         message: "Enter a valid date",
     })
-    .refine((val) => val <= getLocalDateStr(new Date()), {
+    .refine((val) => val === "" || val <= getLocalDateStr(new Date()), {
         message: "Diagnosis date cannot be in the future",
     })
-    .refine((val) => val >= diagnosisWindowStart(), {
+    .refine((val) => val === "" || val >= diagnosisWindowStart(), {
         message: `Diagnosis must be from the past ${DIAGNOSIS_WINDOW_MONTHS} months`,
     });
 
@@ -105,28 +106,6 @@ const diagnosisFileSchema = z
             message: "File must be a PDF, PNG, or JPG",
         },
     );
-const requiredDiagnosisSchema = z
-    .object({
-        diagnosis: z
-            .string()
-            .trim()
-            .min(1, "Primary Diagnosis is required")
-            .max(
-                MAX_DIAGNOSIS_LENGTH,
-                `Diagnosis must be ${MAX_DIAGNOSIS_LENGTH} characters or fewer`,
-            ),
-        diagnosis_date: recentDiagnosisDateSchema,
-        diagnosis_notes: z
-            .string()
-            .trim()
-            .max(
-                MAX_NOTES_LENGTH,
-                `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
-            ),
-        diagnosis_file: diagnosisFileSchema,
-        diagnosis_file_name: z.string().optional(),
-    });
-
 const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
     z
         .object({
@@ -175,7 +154,7 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
             }
         });
 
-export const assessmentSchema = requiredDiagnosisSchema;
+export const assessmentSchema = buildDiagnosisSchema(recentDiagnosisDateSchema);
 
 export const patientDiagnosisSchema = buildDiagnosisSchema(dateStringSchema);
 

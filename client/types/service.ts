@@ -15,7 +15,7 @@ export interface Service {
     description?: string | null;
     maximum_duration: string;
     is_available?: boolean;
-    performed_by?: ServiceStaffRole;
+    performed_by?: ServiceStaffRole | "";
     type: 'online' | 'facility' | 'both';
     type_formatted?: "Homecare Services" | "Inhouse Services" | 'Homecare and Inhouse Services';
 }

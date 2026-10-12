@@ -452,6 +452,7 @@ class ScheduleService
             }
 
             $voidedInvoices = $newStatus === Schedule::STATUS_CANCELLED
+                && filter_var($payload['void_invoice'] ?? false, FILTER_VALIDATE_BOOLEAN)
                 ? $this->cancelledSchedule($user, $schedule)
                 : [];
 
@@ -476,7 +477,9 @@ class ScheduleService
             return response()->json([
                 'message' => $voidedInvoices
                     ? 'Schedule cancelled. Invoice ' . implode(', ', $voidedInvoices) . ' was voided.'
-                    : 'Schedule updated successfully.',
+                    : ($newStatus === Schedule::STATUS_CANCELLED
+                        ? 'Schedule cancelled.'
+                        : 'Schedule updated successfully.'),
                 'voided_invoices' => $voidedInvoices,
                 'data' => new ScheduleResource($schedule->fresh([
                     'scheduleServices.assigned.onlineSchedules',

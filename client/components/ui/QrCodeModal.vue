@@ -336,8 +336,8 @@ onUnmounted(() => {
                     <p
                         class="mt-5 text-center text-xs text-gray-400"
                     >
-                        This code expires once scanned or when you close this
-                        window.
+                        This code expires once scanned or after two minutes.
+                        You can close this window and show it again until then.
                     </p>
 
                     <div

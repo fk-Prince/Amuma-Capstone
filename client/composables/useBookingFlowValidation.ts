@@ -55,21 +55,32 @@ export function useBookingFlowValidation(opts: {
         "diagnosis_file",
     ] as const;
 
+    // A diagnosis is optional: an untouched entry is skipped, a started one
+    // has to be complete.
+    function isAssessmentTouched(item: Diagnosis): boolean {
+        return ASSESSMENT_FIELDS.some((key) => {
+            const value = (item as any)[key];
+            return value !== "" && value !== undefined && value !== null;
+        });
+    }
+
     const assessmentIsValid = computed(() => {
         const items = opts.diagnosisData ?? [];
 
-        return (
-            items.length > 0 &&
-            items.every((item) => opts.assessmentSchema.safeParse(item).success)
-        );
+        return items.every((item) => {
+            if (!isAssessmentTouched(item)) return true;
+            return opts.assessmentSchema.safeParse(item).success;
+        });
     });
 
     function validateAssessment(): boolean {
         const items = opts.diagnosisData ?? [];
         const next: Record<string, string> = {};
-        let valid = items.length > 0;
+        let valid = true;
 
         items.forEach((item, index) => {
+            if (!isAssessmentTouched(item)) return;
+
             const result = opts.assessmentSchema.safeParse(item);
 
             if (result.success) return;

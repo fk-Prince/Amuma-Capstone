@@ -502,8 +502,8 @@
                             "
                             class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            Cancelling voids this schedule's invoice. Anything
-                            already paid goes back to the patient's credit.
+                            You'll be asked whether to void this schedule's
+                            invoice when you cancel.
                         </p>
 
                         <div>
@@ -1364,14 +1364,33 @@
         :open="cancelConfirmOpen"
         title="Cancel this schedule?"
         message="This action cannot be undone."
-        description="This schedule will be cancelled and its invoice will be voided. Anything already paid goes back to the patient's credit."
+        description="The schedule will be cancelled and can no longer be edited."
         confirm-label="Cancel Schedule"
         cancel-label="Keep Schedule"
         variant="danger"
         :loading="submitLoading"
         @confirm="confirmCancelSchedule"
         @cancel="cancelConfirmOpen = false"
-    />
+    >
+        <label
+            class="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 p-3 dark:border-white/10"
+        >
+            <input
+                v-model="voidInvoice"
+                type="checkbox"
+                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+            />
+            <span class="text-sm text-gray-700 dark:text-gray-300">
+                Void this schedule's invoice
+                <span
+                    class="mt-0.5 block text-xs text-gray-400 dark:text-gray-500"
+                >
+                    Anything already paid goes back to the patient's credit. If
+                    unchecked, the invoice stays open.
+                </span>
+            </span>
+        </label>
+    </ConfirmDialog>
 
     <ConfirmDialog
         :open="completeConfirmOpen"
@@ -2117,6 +2136,7 @@ function validate() {
 
 const cancelConfirmOpen = ref(false);
 const completeConfirmOpen = ref(false);
+const voidInvoice = ref(true);
 
 function buildSchedulePayload() {
     if (!props.schedule) return null;
@@ -2183,6 +2203,7 @@ function handleSchedule() {
     }
 
     if (form.value.status === "cancelled") {
+        voidInvoice.value = true;
         cancelConfirmOpen.value = true;
         return;
     }
@@ -2205,7 +2226,7 @@ function confirmCancelSchedule() {
     const payload = buildSchedulePayload();
 
     if (payload) {
-        emit("schedule", payload);
+        emit("schedule", { ...payload, void_invoice: voidInvoice.value });
     }
 }
 

@@ -205,7 +205,7 @@
         class="grid gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
+            class="self-stretch bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm font-semibold text-gray-800 dark:text-white">
@@ -323,7 +323,7 @@
                 primaryLovedOne &&
                 (isAdmission || (isHomecare && !attendanceVisit))
             "
-            class="md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
+            class="self-stretch md:col-span-2 bg-white rounded-lg border border-gray-100 shadow-sm p-5 flex flex-col dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div>
@@ -730,29 +730,21 @@
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <button
-                            @click="generateAttendanceQr('in')"
+                            @click="onQrButton('in')"
                             :disabled="isGeneratingQr || !canTimeIn"
                             class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-300"
                         >
                             <QrCode class="h-3.5 w-3.5" />
-                            {{
-                                isGeneratingQr && qrDirection === "in"
-                                    ? "Generating…"
-                                    : "Time-In QR"
-                            }}
+                            {{ qrButtonLabel("in", "Time-In QR") }}
                         </button>
 
                         <button
-                            @click="generateAttendanceQr('out')"
+                            @click="onQrButton('out')"
                             :disabled="isGeneratingQr"
                             class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-xs font-semibold text-gray-600 transition hover:border-primary-600 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-400 dark:hover:text-primary-300 dark:border-white/10"
                         >
                             <QrCode class="h-3.5 w-3.5" />
-                            {{
-                                isGeneratingQr && qrDirection === "out"
-                                    ? "Generating…"
-                                    : "Time-Out QR"
-                            }}
+                            {{ qrButtonLabel("out", "Time-Out QR") }}
                         </button>
                     </div>
                 </template>
@@ -764,6 +756,7 @@
                     :caregivers="qrCaregivers"
                     :checked-in="qrCheckedIn"
                     description="Show this code to the caregiver to scan on arrival."
+                    @scanned="clearQr"
                     @close="closeQrModal"
                 />
             </div>
@@ -1127,7 +1120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
@@ -1433,6 +1426,69 @@ const qrCheckedIn = ref<{
 
 const showQrModal = ref(false);
 
+const qrExpiresAt = ref<number | null>(null);
+
+const qrNow = ref(Date.now());
+
+let qrTimer: ReturnType<typeof setInterval> | null = null;
+
+const qrSecondsLeft = computed(() =>
+    qrExpiresAt.value
+        ? Math.max(0, Math.ceil((qrExpiresAt.value - qrNow.value) / 1000))
+        : 0,
+);
+
+const hasLiveQr = computed(() => !!qrToken.value && qrSecondsLeft.value > 0);
+
+function stopQrTimer() {
+    if (qrTimer) {
+        clearInterval(qrTimer);
+        qrTimer = null;
+    }
+}
+
+function startQrTimer() {
+    stopQrTimer();
+
+    qrNow.value = Date.now();
+
+    qrTimer = setInterval(() => {
+        qrNow.value = Date.now();
+
+        if (qrSecondsLeft.value <= 0) clearQr();
+    }, 1000);
+}
+
+function formatQrCountdown(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+
+    return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function qrButtonLabel(direction: "in" | "out", idle: string) {
+    if (isGeneratingQr.value && qrDirection.value === direction) {
+        return "Generating…";
+    }
+
+    if (hasLiveQr.value && qrDirection.value === direction) {
+        return `Show QR · ${formatQrCountdown(qrSecondsLeft.value)}`;
+    }
+
+    return idle;
+}
+
+function onQrButton(direction: "in" | "out") {
+    if (hasLiveQr.value && qrDirection.value === direction) {
+        showQrModal.value = true;
+
+        return;
+    }
+
+    generateAttendanceQr(direction);
+}
+
+onBeforeUnmount(stopQrTimer);
+
 onMounted(() => {
     loadPatientData();
 });
@@ -1689,7 +1745,7 @@ watch(selectedIndex, (idx) => {
         updateBillingFromRecord(record);
     }
 
-    closeQrModal();
+    clearQr();
 });
 
 async function generateAttendanceQr(direction: "in" | "out") {
@@ -1719,8 +1775,13 @@ async function generateAttendanceQr(direction: "in" | "out") {
         qrToken.value = res?.token ?? res?.data?.token ?? null;
         qrCaregivers.value = res?.caregivers ?? [];
         qrCheckedIn.value = res?.checked_in ?? null;
+        qrExpiresAt.value = qrToken.value
+            ? Date.now() + (Number(res?.expires_in) || 120) * 1000
+            : null;
 
         showQrModal.value = Boolean(qrToken.value);
+
+        if (qrToken.value) startQrTimer();
     } catch (err: any) {
         const message =
             err?.response?.data?.message ??
@@ -1735,12 +1796,22 @@ async function generateAttendanceQr(direction: "in" | "out") {
     }
 }
 
+// Closing the window only hides the code; it stays valid, and can be shown
+// again from the button, until it is scanned or runs out.
 function closeQrModal() {
+    showQrModal.value = false;
+}
+
+function clearQr() {
+    stopQrTimer();
+
     showQrModal.value = false;
 
     qrToken.value = null;
 
     qrDirection.value = null;
+
+    qrExpiresAt.value = null;
 }
 
 async function loadPatientData() {

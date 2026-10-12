@@ -340,6 +340,7 @@
                                         </div>
 
                                         <div
+                                            v-if="showsProgress(log)"
                                             class="mt-2 flex items-center justify-between gap-2 whitespace-nowrap text-[11px] font-semibold"
                                         >
                                             <span
@@ -1587,13 +1588,25 @@ function statusPill(status: string) {
     );
 }
 
-function elapsedMinutes(log: AuditRow): number {
-    if (!log.scheduled_at) return log.total_worked_minutes;
-
-    return Math.max(
-        0,
-        Math.round((Date.now() - new Date(log.scheduled_at).getTime()) / 60000),
+function showsProgress(log: AuditRow) {
+    return ["pending", "ongoing", "completed"].includes(
+        log.status?.toLowerCase(),
     );
+}
+
+function elapsedMinutes(log: AuditRow): number {
+    const booked = (log.total_hours ?? 0) * 60;
+
+    const elapsed = log.scheduled_at
+        ? Math.max(
+              0,
+              Math.round(
+                  (Date.now() - new Date(log.scheduled_at).getTime()) / 60000,
+              ),
+          )
+        : log.total_worked_minutes;
+
+    return booked > 0 ? Math.min(elapsed, booked) : elapsed;
 }
 
 function progressPercent(log: AuditRow) {
@@ -1606,7 +1619,7 @@ function progressPercent(log: AuditRow) {
 }
 
 function progressWidth(log: AuditRow) {
-    const percent = progressPercent(log);
+    const percent = showsProgress(log) ? progressPercent(log) : 0;
 
     return `${percent > 0 ? Math.max(percent, 6) : 0}%`;
 }
@@ -1620,19 +1633,7 @@ function scheduledEndTime(log: AuditRow) {
     );
 }
 
-function overtimeMinutes(log: AuditRow) {
-    const end = scheduledEndTime(log);
-
-    if (end === null) {
-        return Math.max(log.total_worked_minutes - log.total_hours * 60, 0);
-    }
-
-    return Math.max(0, Math.round((Date.now() - end) / 60000));
-}
-
 function progressFill(log: AuditRow) {
-    if (overtimeMinutes(log) > 0) return "bg-amber-400";
-
     switch (log.status?.toLowerCase()) {
         case "ongoing":
             return "bg-emerald-500";
@@ -1648,7 +1649,6 @@ function progressFill(log: AuditRow) {
 }
 
 function progressTextTone(log: AuditRow) {
-    if (overtimeMinutes(log) > 0) return "text-amber-600 dark:text-amber-300";
     if (elapsedMinutes(log) <= 0) return "text-muted dark:text-gray-400";
 
     return log.status?.toLowerCase() === "ongoing"
@@ -1667,11 +1667,7 @@ function progressLabel(log: AuditRow) {
 }
 
 function remainingLabel(log: AuditRow) {
-    const overtime = overtimeMinutes(log);
-
-    if (overtime > 0) {
-        return `+${formatDurationShort(overtime / 60)} over`;
-    }
+    if (remainingMinutes(log) <= 0) return "Time reached";
 
     return `${remainingShort(log)} left`;
 }

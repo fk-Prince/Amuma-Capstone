@@ -117,27 +117,31 @@ onUnmounted(() => {
 
 const staffRoleError = ref("");
 
-const allowsNurse = computed(
-    () => (props.form.performed_by ?? "both") !== "caregiver",
+const STAFF_ROLE_REQUIRED = "Select at least one role.";
+
+const allowsNurse = computed(() =>
+    ["both", "nurse"].includes(props.form.performed_by ?? "both"),
 );
-const allowsCaregiver = computed(
-    () => (props.form.performed_by ?? "both") !== "nurse",
+const allowsCaregiver = computed(() =>
+    ["both", "caregiver"].includes(props.form.performed_by ?? "both"),
 );
 
+// Both boxes may be unchecked; the form then can't be saved until one is.
 const toggleStaffRole = (role: "nurse" | "caregiver") => {
     const nurse = role === "nurse" ? !allowsNurse.value : allowsNurse.value;
     const caregiver =
         role === "caregiver" ? !allowsCaregiver.value : allowsCaregiver.value;
 
-    if (!nurse && !caregiver) {
-        staffRoleError.value = "Select at least one role.";
-        setTimeout(() => (staffRoleError.value = ""), 2500);
-        return;
-    }
-
-    staffRoleError.value = "";
     props.form.performed_by =
-        nurse && caregiver ? "both" : nurse ? "nurse" : "caregiver";
+        nurse && caregiver
+            ? "both"
+            : nurse
+              ? "nurse"
+              : caregiver
+                ? "caregiver"
+                : "";
+
+    staffRoleError.value = nurse || caregiver ? "" : STAFF_ROLE_REQUIRED;
 };
 
 const staffRoleOptions = computed(() => [
@@ -156,7 +160,15 @@ const onStaffRoleChange = (role: "nurse" | "caregiver", event: Event) => {
 };
 
 const onSubmit = () => {
-    if (!validate()) return;
+    const valid = validate();
+
+    if (!props.form.performed_by) {
+        staffRoleError.value = STAFF_ROLE_REQUIRED;
+        return;
+    }
+
+    if (!valid) return;
+
     emit("submit");
 };
 

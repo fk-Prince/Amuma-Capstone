@@ -361,8 +361,19 @@
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"
                         />
                         <span>
-                            You'll be notified in the app and by email once your
-                            booking request has been reviewed and accepted.
+                            We'll let you know in the app and by email as soon
+                            as the branch has reviewed your booking request.
+                        </span>
+                    </div>
+                    <div
+                        class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
+                    >
+                        <CircleAlert
+                            class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                        />
+                        <span>
+                            Please double-check your details before you submit.
+                            A booking can't be cancelled once it's made.
                         </span>
                     </div>
                 </div>
@@ -375,7 +386,7 @@
 <script lang="ts" setup>
 import { computed, ref, onMounted, nextTick, toRaw } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ShieldCheck, BellRing } from "lucide-vue-next";
+import { ShieldCheck, BellRing, CircleAlert } from "lucide-vue-next";
 import { ClipboardCheck, Info, ChevronRight, X } from "lucide-vue-next";
 import { useBookingFlowValidation } from "~/composables/useBookingFlowValidation";
 

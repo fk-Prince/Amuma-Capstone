@@ -62,6 +62,8 @@ const emit = defineEmits<{
                         {{ description }}
                     </p>
 
+                    <slot />
+
                     <div class="mt-5 flex justify-end gap-2.5">
                         <button
                             v-if="!hideCancel"

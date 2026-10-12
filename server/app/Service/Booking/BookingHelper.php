@@ -215,10 +215,22 @@ class BookingHelper
     {
         $windowStart = now()->subMonths(self::DIAGNOSIS_WINDOW_MONTHS)->toDateString();
 
+        // A diagnosis is optional: an untouched entry is skipped, a started one
+        // has to be complete and recent.
+        $started = collect(is_array($diagnoses) ? $diagnoses : [])
+            ->filter(fn($entry) => is_array($entry) && collect([
+                'diagnosis',
+                'diagnosis_date',
+                'diagnosis_notes',
+                'diagnosis_file',
+            ])->contains(fn($key) => filled($entry[$key] ?? null)))
+            ->values()
+            ->all();
+
         validator(
-            ['diagnoses' => is_array($diagnoses) ? array_values($diagnoses) : []],
+            ['diagnoses' => $started],
             [
-                'diagnoses' => ['required', 'array', 'min:1'],
+                'diagnoses' => ['nullable', 'array'],
                 'diagnoses.*.diagnosis' => ['required', 'string', 'max:200'],
                 'diagnoses.*.diagnosis_date' => [
                     'required',
@@ -228,8 +240,6 @@ class BookingHelper
                 ],
             ],
             [
-                'diagnoses.required' => 'At least one diagnosis is required.',
-                'diagnoses.min' => 'At least one diagnosis is required.',
                 'diagnoses.*.diagnosis.required' => 'Primary Diagnosis is required.',
                 'diagnoses.*.diagnosis_date.required' => 'Date Diagnosed is required.',
                 'diagnoses.*.diagnosis_date.before_or_equal' => 'Diagnosis date cannot be in the future.',
