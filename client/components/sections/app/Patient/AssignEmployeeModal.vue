@@ -1135,17 +1135,18 @@ const PERFORMED_BY_LABELS: Record<PerformedBy, string> = {
 const showRoleFilter = computed(
     () =>
         isActiveServiceMedical.value &&
-        performedByFor(activeService.value) === "both",
+        performedByFor(activeService.value) !== "caregiver",
 );
 
 function medicalRoleMessage(serviceId: number | null) {
     const by = performedByFor(serviceId);
 
-    if (by === "nurse") return "Only a nurse can be assigned to this service.";
     if (by === "caregiver")
         return "Only a caregiver can be assigned to this service.";
+    if (by === "nurse")
+        return "Only a nurse, or a caregiver assisting a nurse, can be assigned to this service.";
 
-    return "Only a nurse, or a caregiver assisting a nurse, can be assigned to this service.";
+    return "Only a nurse or a caregiver can be assigned to this service.";
 }
 
 function allowedRolesFor(serviceId: number | null): string[] | null {
@@ -1154,7 +1155,7 @@ function allowedRolesFor(serviceId: number | null): string[] | null {
     if (type === "Medical") {
         const by = performedByFor(serviceId);
 
-        return by === "both" ? ["nurse", "caregiver"] : [by];
+        return by === "caregiver" ? ["caregiver"] : ["nurse", "caregiver"];
     }
     if (type === "ADL") return ["caregiver"];
 
@@ -1170,7 +1171,7 @@ function isNoteLocked(entry: AssignmentEntry, serviceId: number) {
 function isAssistant(employee: Employee, serviceId: number | null) {
     return (
         serviceTypeFor(serviceId) === "Medical" &&
-        performedByFor(serviceId) === "both" &&
+        performedByFor(serviceId) === "nurse" &&
         (employee.role_name ?? "").toLowerCase() === "caregiver"
     );
 }
@@ -1178,7 +1179,7 @@ function isAssistant(employee: Employee, serviceId: number | null) {
 const missingNurseLines = computed(() =>
     (props.schedule?.services ?? [])
         .filter((service) => service.type === "Medical")
-        .filter((service) => (service.performed_by ?? "both") === "both")
+        .filter((service) => service.performed_by === "nurse")
         .filter((service) => {
             const picked = selectionFor(service.schedule_services_id);
 

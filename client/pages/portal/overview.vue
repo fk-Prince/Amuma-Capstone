@@ -1776,7 +1776,7 @@ async function generateAttendanceQr(direction: "in" | "out") {
         qrCaregivers.value = res?.caregivers ?? [];
         qrCheckedIn.value = res?.checked_in ?? null;
         qrExpiresAt.value = qrToken.value
-            ? Date.now() + (Number(res?.expires_in) || 120) * 1000
+            ? Date.now() + (Number(res?.expires_in) || 300) * 1000
             : null;
 
         showQrModal.value = Boolean(qrToken.value);

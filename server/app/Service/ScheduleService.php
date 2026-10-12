@@ -190,7 +190,7 @@ class ScheduleService
     {
         $employeeIds = collect($employeeIds);
 
-        if ($type !== 'Medical' || $performedBy !== 'both' || $employeeIds->isEmpty()) {
+        if ($type !== 'Medical' || $performedBy !== 'nurse' || $employeeIds->isEmpty()) {
             return collect();
         }
 
@@ -243,7 +243,6 @@ class ScheduleService
 
         $allowed = match ($type) {
             'Medical' => match ($performedBy) {
-                'nurse' => ['nurse'],
                 'caregiver' => ['caregiver'],
                 default => ['nurse', 'caregiver'],
             },
@@ -264,16 +263,15 @@ class ScheduleService
                 throw new Exception(
                     match (true) {
                         $type !== 'Medical' => 'Only a caregiver can be assigned to an ADL service.',
-                        $performedBy === 'nurse' => 'Only a nurse can be assigned to this service.',
                         $performedBy === 'caregiver' => 'Only a caregiver can be assigned to this service.',
-                        default => 'Only a nurse, or a caregiver assisting a nurse, can be assigned to a Medical service.',
+                        default => 'Only a nurse or a caregiver can be assigned to a Medical service.',
                     },
                     422
                 );
             }
         }
 
-        if ($type === 'Medical' && $performedBy === 'both' && !$employeeIds->contains(fn($id) => ($roles[$id] ?? null) === 'nurse')) {
+        if ($type === 'Medical' && $performedBy === 'nurse' && !$employeeIds->contains(fn($id) => ($roles[$id] ?? null) === 'nurse')) {
             throw new Exception(
                 'A medical service needs a nurse. A caregiver can only assist, not be assigned alone.',
                 422

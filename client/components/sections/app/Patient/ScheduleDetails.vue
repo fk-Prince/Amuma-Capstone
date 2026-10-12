@@ -1655,7 +1655,7 @@ function performedByLabel(service: ScheduleServiceItem) {
 }
 
 function showRoleFilter(service: ScheduleServiceItem) {
-    return service.type === "Medical" && performedByOf(service) === "both";
+    return service.type === "Medical" && performedByOf(service) !== "caregiver";
 }
 
 function requiredRoleFor(service: ScheduleServiceItem): string | null {
@@ -1683,7 +1683,7 @@ function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
     if (service.type === "Medical") {
         const by = performedByOf(service);
 
-        return by === "both" ? ["nurse", "caregiver"] : [by];
+        return by === "caregiver" ? ["caregiver"] : ["nurse", "caregiver"];
     }
     if (service.type === "ADL") return ["caregiver"];
 
@@ -1693,7 +1693,7 @@ function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
 function isAssistant(service: ScheduleServiceItem, employee: Employee) {
     return (
         service.type === "Medical" &&
-        performedByOf(service) === "both" &&
+        performedByOf(service) === "nurse" &&
         (employee.role_name ?? "").toLowerCase() === "caregiver"
     );
 }
@@ -1701,7 +1701,7 @@ function isAssistant(service: ScheduleServiceItem, employee: Employee) {
 const missingNurseLines = computed(() =>
     (props.schedule?.services ?? [])
         .filter((service) => service.type === "Medical")
-        .filter((service) => performedByOf(service) === "both")
+        .filter((service) => performedByOf(service) === "nurse")
         .filter((service) => {
             const picked = entriesFor(service.schedule_services_id);
 

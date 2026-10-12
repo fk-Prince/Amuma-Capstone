@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 class OnlineScheduleService
 {
 
-    public const QR_TTL_MINUTES = 2;
+    public const QR_TTL_MINUTES = 5;
 
     public function __construct() {}
 
