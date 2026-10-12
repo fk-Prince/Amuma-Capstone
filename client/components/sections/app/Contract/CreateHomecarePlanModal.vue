@@ -356,25 +356,12 @@ const existingPackageDescription = computed(() => {
     return isEditMode.value ? props.data?.description : null;
 });
 
-const suggestedDescription = computed(() => {
-    if (
-        isEditMode.value ||
-        !form.accommodation_type ||
-        !props.allPlans ||
-        props.allPlans.length === 0
-    ) {
-        return null;
-    }
+const DEFAULT_DESCRIPTION =
+    "This package provides dedicated, hourly support for essential personal care and fundamental physical needs. Services include hands-on assistance with dressing, bathing, personal hygiene, and grooming. Caregivers also support safe mobility, transfers (e.g., bed to chair), mealtime feeding assistance, and sensitive toileting or continence care to maintain client comfort and dignity.";
 
-    const matchingPlan = props.allPlans.find(
-        (plan: any) =>
-            plan.accommodation_type === form.accommodation_type &&
-            plan.category &&
-            plan.category.toLowerCase() === "homecare",
-    );
-
-    return matchingPlan?.description || null;
-});
+const suggestedDescription = computed(() =>
+    isEditMode.value ? null : DEFAULT_DESCRIPTION,
+);
 
 const form = reactive({
     ...homecarePlanForm(),

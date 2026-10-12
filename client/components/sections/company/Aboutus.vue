@@ -296,7 +296,7 @@ const team = [
             "Functional Testing",
         ],
         email: "magsipoc.357005@davao.sti.edu.ph",
-        phone: "+63 909 332 491",
+        phone: "+63 909 332 4911",
         badge: "bg-accent-50 text-accent",
     },
 ];
