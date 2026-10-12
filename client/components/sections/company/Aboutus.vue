@@ -294,6 +294,7 @@ const team = [
         roles: [
             "Documentation Assistance",
             "Functional Testing",
+            "Figma Design",
         ],
         email: "magsipoc.357005@davao.sti.edu.ph",
         phone: "+63 909 332 4911",
