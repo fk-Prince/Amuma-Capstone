@@ -276,6 +276,17 @@
                                             >
                                                 {{ employee.role_name }}
                                             </p>
+
+                                            <p
+                                                v-if="employee.email"
+                                                class="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-400 dark:text-gray-500"
+                                                :title="employee.email"
+                                            >
+                                                <Mail class="h-3 w-3 shrink-0" />
+                                                <span class="truncate">{{
+                                                    employee.email
+                                                }}</span>
+                                            </p>
                                         </div>
                                     </div>
 
@@ -363,6 +374,7 @@ import {
     Check,
     CheckCheck,
     LoaderCircle,
+    Mail,
     Search,
     UserMinus,
     UserRoundSearch,

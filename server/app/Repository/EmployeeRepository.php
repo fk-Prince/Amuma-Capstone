@@ -286,7 +286,7 @@ class EmployeeRepository
             ->whereIn('role_name', $service->allowedStaffRoles())
             ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
             ->with([
-                'employees',
+                'employees.users:user_id,email',
                 'employeeServices' => function ($query) use ($payload) {
                     $query->where('service_id', $payload['service_id'])
                         ->where('is_active', true);
@@ -306,6 +306,7 @@ class EmployeeRepository
 
             $employee->role_name = ucwords(str_replace('_', ' ', $employeeBranch->role_name));
             $employee->assignment_type = $employeeBranch->assignment_type;
+            $employee->email = $employee->users?->email;
 
             $employee->assigned = [
                 [
