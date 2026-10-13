@@ -5,18 +5,43 @@
                 <button
                     @click="toggle"
                     class="flex flex-row-reverse items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none md:flex-row"
+                    :aria-label="avatarOnly ? 'Open profile menu' : undefined"
                     :class="[
                         scrolled || navTheme !== 'dark'
                             ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
                             : 'hover:bg-light/10',
                         themeAware ? 'dark:hover:bg-white/10' : '',
+                        avatarOnly ? '!p-0 !rounded-full hover:!bg-transparent' : '',
                     ]"
                 >
-                    <div class="relative">
+                    <!-- Phone / tablet badge: the photo, or gradient initials when there is no real photo -->
+                    <div v-if="avatarOnly" class="relative h-[52px] w-[52px] sm:h-16 sm:w-16">
+                        <img
+                            v-if="showPhoto"
+                            :src="user.avatar"
+                            alt="Profile"
+                            class="h-full w-full rounded-full object-cover shadow-md ring-2 ring-white dark:ring-white/15"
+                            @error="avatarFailed = true"
+                        />
+                        <span
+                            v-else
+                            class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-[15px] font-semibold tracking-wide text-white shadow-md shadow-primary-500/20 ring-2 ring-white/70 dark:ring-white/15 sm:text-lg"
+                        >
+                            {{ initialsText }}
+                        </span>
+                        <span
+                            class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white dark:ring-secondary"
+                        />
+                    </div>
+
+                    <div v-else class="relative">
                         <img
                             :src="user.avatar"
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
-                            :class="themeAware ? 'dark:border-white/20' : ''"
+                            :class="[
+                                themeAware ? 'dark:border-white/20' : '',
+                                avatarOnly ? '!h-[50px] !w-[50px] sm:!h-16 sm:!w-16 !border-0 !shadow-none' : '',
+                            ]"
                             alt="Profile"
                         />
                         <span
@@ -26,6 +51,7 @@
                     </div>
 
                     <div
+                        v-if="!avatarOnly"
                         class="hidden md:flex flex-col items-start leading-tight"
                     >
                         <span
@@ -62,6 +88,7 @@
                     </div>
 
                     <ChevronIcon
+                        v-if="!avatarOnly"
                         :isOpen="open"
                         class="block w-4 h-4 transition-colors duration-300"
                         :class="[
@@ -220,14 +247,32 @@ const props = withDefaults(
         navTheme?: any;
         themeAware?: boolean;
         role?: string | null;
+        // Just the round avatar, no name or chevron (used as a floating circle on phones).
+        avatarOnly?: boolean;
     }>(),
     {
         scrolled: true,
         navTheme: "light",
         themeAware: false,
         role: null,
+        avatarOnly: false,
     },
 );
+
+// Avatar-only mode (phones/tablets): use the photo when there is a real one, otherwise draw initials.
+const avatarFailed = ref(false);
+
+const initialsText = computed(() =>
+    `${props.user.first_name?.[0] ?? ""}${props.user.last_name?.[0] ?? ""}`.toUpperCase(),
+);
+
+const isPlaceholderAvatar = computed(
+    () =>
+        !props.user.avatar ||
+        /ui-avatars|initials|default|placeholder|dicebear|identicon/i.test(props.user.avatar),
+);
+
+const showPhoto = computed(() => !isPlaceholderAvatar.value && !avatarFailed.value);
 
 const roleLabel = computed(() => {
     const role = props.role?.trim();

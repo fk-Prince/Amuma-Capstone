@@ -2,7 +2,7 @@
     <UnauthorizedSection v-if="mounted && access === 'no-branch'" full-page />
     <div
         v-else
-        class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
+        class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
     >
         <ClientOnly>
             <AuthTransitionScreen
@@ -17,19 +17,19 @@
             aria-hidden="true"
         >
             <div
-                class="lg:flex hidden absolute -bottom-20 left-1/3 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
+                class="md:flex hidden absolute -bottom-20 left-1/3 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
             ></div>
 
             <div
-                class="lg:flex hidden absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
+                class="md:flex hidden absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[140px]"
             ></div>
 
             <div
-                class="lg:flex hidden absolute -top-60 left-1/2 -translate-x-1/2 h-[560px] w-[560px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[150px]"
+                class="md:flex hidden absolute -top-60 left-1/2 -translate-x-1/2 h-[560px] w-[560px] rounded-full bg-sky-200/25 dark:bg-primary-500/10 blur-[150px]"
             ></div>
 
             <div
-                class="lg:flex hidden absolute -top-72 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-accent-500/10 blur-[150px]"
+                class="md:flex hidden absolute -top-72 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-accent-500/10 blur-[150px]"
             ></div>
         </div>
 
@@ -38,11 +38,12 @@
                 :open="isOpen"
                 :menus="menus"
                 @close="isOpen = false"
+                @open="isOpen = true"
             />
         </div>
 
         <div
-            class="relative flex-1 flex flex-col min-w-0 h-full lg:gap-3 print:gap-0"
+            class="relative flex-1 flex flex-col min-w-0 h-full gap-3 print:gap-0"
         >
             <div class="print:hidden">
                 <DashboardHeader @open="isOpen = true" />
@@ -50,7 +51,7 @@
 
             <main
                 id="dashboard-scroll"
-                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative lg:-mt-1 lg:pt-1"
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative -mt-1 pt-1"
             >
                 <div class="relative min-h-full flex flex-col">
                     <template v-if="mounted">

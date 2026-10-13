@@ -1,79 +1,91 @@
 <template>
-    <header
-        class="min-h-[88px] sm:min-h-[104px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary lg:rounded-2xl lg:border lg:shadow-sm"
-    >
-        <button
-            type="button"
-            class="-ml-1 shrink-0 rounded-lg p-2 text-gray-600 hover:bg-gray-50 hover:text-primary-500 dark:text-white/70 dark:hover:bg-white/10 lg:hidden dark:hover:text-primary-300"
-            aria-label="Open navigation"
-            @click="emit('open')"
+    <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:block">
+        <header
+            :class="{ 'di-header': intro }"
+            class="min-w-0 flex-1 min-h-[64px] sm:min-h-[96px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 rounded-3xl lg:rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary max-lg:bg-gradient-to-br max-lg:from-white max-lg:to-primary-50/70 dark:max-lg:from-secondary dark:max-lg:to-secondary-800 shadow-[0_8px_30px_rgba(15,23,42,0.06)] lg:shadow-sm"
         >
-            <Menu class="h-5 w-5" />
-        </button>
+            <div class="min-w-0 flex-1">
+                <h1
+                    class="text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight truncate"
+                >
+                    {{ pageTitle }}
+                </h1>
 
-        <div class="min-w-0 flex-1">
-            <h1
-                class="text-lg sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight truncate"
-            >
-                {{ pageTitle }}
-            </h1>
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400">
+                    {{ pageSubtitle }}
+                </p>
 
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-500">
-                {{ pageSubtitle }}
-            </p>
+                <div
+                    class="hidden sm:flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
+                >
+                    <span class="flex items-center gap-1.5 whitespace-nowrap">
+                        <Calendar
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                        />
+                        <span class="hidden sm:inline">{{ formattedDate }}</span>
+                        <span class="sm:hidden">{{ formattedShortDate }}</span>
+                    </span>
+
+                    <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
+
+                    <span class="flex items-center gap-1.5 whitespace-nowrap">
+                        <Clock
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                        />
+                        {{ formattedTime }}
+                    </span>
+                </div>
+            </div>
 
             <div
-                class="flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
+                class="flex items-center gap-2 sm:gap-6 lg:gap-8 shrink-0 max-lg:[&>div>button]:h-10 max-lg:[&>div>button]:w-10 max-lg:[&>div>button]:rounded-full max-lg:[&>div>button]:bg-gray-100/80 dark:max-lg:[&>div>button]:bg-white/10 max-lg:[&>div>button]:ring-1 max-lg:[&>div>button]:ring-black/5 dark:max-lg:[&>div>button]:ring-white/10 max-lg:[&>button]:h-10 max-lg:[&>button]:w-10 max-lg:[&>button]:rounded-full max-lg:[&>button]:bg-gray-100/80 dark:max-lg:[&>button]:bg-white/10 max-lg:[&>button]:ring-1 max-lg:[&>button]:ring-black/5 dark:max-lg:[&>button]:ring-white/10"
             >
-                <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Calendar
-                        class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
-                    />
-                    <span class="hidden sm:inline">{{ formattedDate }}</span>
-                    <span class="sm:hidden">{{ formattedShortDate }}</span>
-                </span>
+                <Notification />
 
-                <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
+                <div class="hidden lg:block">
+                    <ClientOnly>
+                        <ThemeToggle
+                            class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
+                        />
+                    </ClientOnly>
+                </div>
 
-                <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock
-                        class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
-                    />
-                    {{ formattedTime }}
-                </span>
+                <div class="hidden lg:block">
+                    <ClientOnly>
+                        <NavbarProfileDropdown
+                            v-if="user"
+                            :user="user"
+                            :theme-aware="true"
+                        />
+                    </ClientOnly>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <div class="flex items-center gap-1 sm:gap-6 lg:gap-8 shrink-0">
-            <Notification />
-
-            <div class="hidden lg:block">
-                <ClientOnly>
-                    <ThemeToggle
-                        class="text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
-                    />
-                </ClientOnly>
-            </div>
-
+        <!-- Profile: its own floating circle next to the header on phones and tablets -->
+        <div v-if="user" class="shrink-0 lg:hidden" :class="{ 'di-pop': intro }">
             <ClientOnly>
                 <NavbarProfileDropdown
-                    v-if="user"
                     :user="user"
                     :theme-aware="true"
+                    avatar-only
                 />
             </ClientOnly>
         </div>
-    </header>
+    </div>
 </template>
 
 <script setup lang="ts">
+import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import { Calendar, Clock, Menu } from "lucide-vue-next";
+import { Calendar, Clock } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
+
+const intro = useDashboardIntro();
 
 const user = useAuthUser();
 
