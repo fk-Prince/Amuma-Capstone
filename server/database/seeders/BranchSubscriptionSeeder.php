@@ -496,6 +496,7 @@ class BranchSubscriptionSeeder extends Seeder
             'enable_booking_complete_admission' => $index % 3 === 0 ? '0' : '1',
             'requires_full_payment_on_admit' => $index % 2 === 0 ? '1' : '0',
             'complete_admission_booking_percent' => (string) [100, 50, 30][$index % 3],
+            'homecare_downpayment_percent' => (string) [50, 30, 50][$index % 3],
             'minimum_adl_hours' => (string) [8, 6, 4][$index % 3],
             'tin' => sprintf('%03d-%03d-%03d-%03d', 100 + $index, 200 + $index, 300 + $index, 1),
             'is_open' => '1',

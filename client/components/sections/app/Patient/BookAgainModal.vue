@@ -16,10 +16,11 @@
             />
 
             <div
-                class="relative z-10 flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                class="relative z-10 flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                :class="step === 'payment' ? 'max-w-3xl' : 'max-w-5xl'"
             >
                 <div
-                    class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-4 dark:border-white/10"
                 >
                     <div class="min-w-0">
                         <p
@@ -72,44 +73,161 @@
                     </div>
 
                     <HomecareBooking
-                        v-else
+                        v-else-if="step === 'details'"
                         :model="model"
                         :services="services"
                         :homecare="branch?.homecare"
                         :settings="branch?.settings"
                         :errors="errors"
+                        show-downpayment
                         @update:model="(value) => Object.assign(model, value)"
                         @update:errors="(value) => (errors = value)"
                     />
+
+                    <div
+                        v-else
+                        class="grid gap-4 p-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:items-start"
+                    >
+                        <div
+                            class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 dark:border-white/10 dark:bg-white/5"
+                        >
+                            <dl class="space-y-2 text-xs">
+                                <div class="flex justify-between gap-3">
+                                    <dt
+                                        class="text-slate-400 dark:text-gray-500"
+                                    >
+                                        Service
+                                    </dt>
+
+                                    <dd
+                                        class="text-right font-medium text-slate-800 dark:text-white"
+                                    >
+                                        {{ serviceLabel }}
+                                    </dd>
+                                </div>
+
+                                <div class="flex justify-between gap-3">
+                                    <dt
+                                        class="text-slate-400 dark:text-gray-500"
+                                    >
+                                        Schedule
+                                    </dt>
+
+                                    <dd
+                                        class="text-right font-medium text-slate-800 dark:text-white"
+                                    >
+                                        {{ scheduleLabel }}
+                                    </dd>
+                                </div>
+                            </dl>
+
+                            <div
+                                class="mt-3 space-y-1.5 border-t border-slate-200 pt-3 dark:border-white/10"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    >
+                                        Total
+                                    </span>
+
+                                    <span
+                                        class="text-base font-bold tabular-nums text-slate-800 dark:text-white"
+                                    >
+                                        {{ formatCurrency(totalAmount) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-if="downpaymentPercent < 100"
+                                    class="flex items-center justify-between"
+                                >
+                                    <span
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    >
+                                        Downpayment ({{ downpaymentPercent }}%)
+                                    </span>
+
+                                    <span
+                                        class="text-base font-bold tabular-nums text-primary"
+                                    >
+                                        {{ formatCurrency(downpaymentAmount) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-if="downpaymentPercent < 100"
+                                    class="flex items-center justify-between"
+                                >
+                                    <span
+                                        class="text-xs text-slate-400 dark:text-gray-500"
+                                    >
+                                        Remaining balance
+                                    </span>
+
+                                    <span
+                                        class="text-xs font-medium tabular-nums text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            formatCurrency(
+                                                totalAmount - downpaymentAmount,
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <PaymentForm
+                            compact
+                            :card="card"
+                            :total-amount="downpaymentAmount"
+                            :processing="paying"
+                            title="Pay the downpayment"
+                            description="Pay securely to send your booking request."
+                            submit-label="Confirm & Pay"
+                            processing-label="Confirming payment..."
+                            gcash-label="Pay with GCash"
+                            gcash-processing-label="Redirecting to GCash..."
+                            terms-context="booking"
+                            @update:card="(value) => Object.assign(card, value)"
+                            @card-pay="handleCardPay"
+                            @g-cash-pay="handleGCashPay"
+                        />
+                    </div>
                 </div>
 
                 <div
-                    class="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-white/10"
+                    class="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-3 dark:border-white/10"
                 >
                     <button
+                        v-if="step === 'payment'"
                         type="button"
-                        class="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10"
-                        @click="close"
+                        class="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:text-gray-400 dark:hover:bg-white/10"
+                        :disabled="paying"
+                        @click="step = 'details'"
                     >
-                        Cancel
+                        Back
                     </button>
 
-                    <button
-                        type="button"
-                        class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                        :disabled="submitting || loadingBranch || !!loadError"
-                        @click="submit"
-                    >
-                        <Loader2
-                            v-if="submitting"
-                            class="h-4 w-4 animate-spin"
-                        />
-                        {{
-                            submitting
-                                ? "Submitting..."
-                                : "Submit Booking Request"
-                        }}
-                    </button>
+                    <template v-else>
+                        <button
+                            type="button"
+                            class="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10"
+                            @click="close"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                            :disabled="loadingBranch || !!loadError"
+                            @click="continueToPayment"
+                        >
+                            Continue to Payment
+                        </button>
+                    </template>
                 </div>
             </div>
         </div>
@@ -118,15 +236,20 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
-import { X, Loader2 } from "lucide-vue-next";
+import { X } from "lucide-vue-next";
 import HomecareBooking from "~/components/sections/booking/provider/HomecareBooking.vue";
+import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useBranch } from "~/composables/useBranchProvider";
 import { serviceService } from "~/api/service/ServiceService";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
+import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 import { createHomecareBookingSchema } from "~/schema/booking-schema";
+import { formatCurrency } from "~/utils/currency";
+import { formatDate, formatTime } from "~/utils/time";
 import type { HomecareBooking as HomecareBookingModel } from "~/types/booking";
+import type { CardDetails } from "~/types/payment";
 import type { Service } from "~/types/service";
 
 const props = defineProps<{
@@ -163,6 +286,22 @@ function emptyModel(): HomecareBookingModel {
 
 const model = reactive<HomecareBookingModel>(emptyModel());
 
+const step = ref<"details" | "payment">("details");
+
+function emptyCard(): CardDetails {
+    return {
+        number: "",
+        expMonth: "",
+        expYear: "",
+        cvc: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+    };
+}
+
+const card = reactive<CardDetails>(emptyCard());
+
 const homecareSchema = computed(() =>
     createHomecareBookingSchema(branch.value?.homecare?.adl_min_hour ?? 0),
 );
@@ -194,7 +333,9 @@ watch(
         if (!isOpen) return;
 
         Object.assign(model, emptyModel());
+        Object.assign(card, emptyCard());
         errors.value = {};
+        step.value = "details";
 
         if (props.branchUuid) {
             loadBranchOptions(props.branchUuid);
@@ -205,68 +346,141 @@ watch(
     { immediate: true },
 );
 
-const submitting = ref(false);
+const paying = ref(false);
 
-function priceFor(booking: HomecareBookingModel): number {
-    if (booking.type === "Medical") {
-        return (booking.services ?? []).reduce(
+const totalAmount = computed(() => {
+    if (model.type === "Medical") {
+        return (model.services ?? []).reduce(
             (total, item) => total + Number(item.price || 0),
             0,
         );
     }
 
-    const hours = Number(booking.time_span) || 0;
+    const hours = Number(model.time_span) || 0;
     const rate = Number(branch.value?.homecare?.adl_hourly_rate ?? 0);
 
     return hours * rate;
-}
+});
 
-async function submit() {
-    if (submitting.value) return;
+const downpaymentPercent = computed(
+    () => branch.value?.settings?.homecare_downpayment_percent ?? 50,
+);
 
+const downpaymentAmount = computed(
+    () =>
+        Math.round(totalAmount.value * (downpaymentPercent.value / 100) * 100) /
+        100,
+);
+
+const serviceLabel = computed(() =>
+    model.type === "ADL"
+        ? "Activities of Daily Living (ADL)"
+        : (model.services?.[0]?.service_name ?? "Medical service"),
+);
+
+const scheduleLabel = computed(() =>
+    [formatDate(`${model.date}T00:00:00`), formatTime(model.prefered_time)]
+        .filter(Boolean)
+        .join(" · "),
+);
+
+function continueToPayment() {
     if (!validate()) return;
 
-    submitting.value = true;
+    step.value = "payment";
+}
+
+function bookingPayload() {
+    return {
+        action: "book_again",
+        patient_id: props.patientId,
+        category: "Homecare",
+        type: model.type,
+        date: model.date,
+        prefered_time: model.prefered_time,
+        time_span: model.time_span,
+        address: model.address,
+        latitude: model.latitude,
+        longitude: model.longitude,
+        services: model.services,
+        rate:
+            model.type === "ADL"
+                ? Number(branch.value?.homecare?.adl_hourly_rate ?? 0)
+                : undefined,
+    };
+}
+
+function errorMessage(err: any, fallback: string) {
+    return err?.response?.data?.message ?? err?.message ?? fallback;
+}
+
+function onPaid(message?: string) {
+    paying.value = false;
+
+    success(
+        message ??
+            "Payment received. Your booking request has been sent to the branch.",
+    );
+
+    emit("booked");
+    close();
+}
+
+async function handleCardPay() {
+    if (paying.value) return;
+
+    paying.value = true;
 
     try {
-        const res: any = await patientAccessService.executeAction({
-            action: "book_again",
-            patient_id: props.patientId,
-            category: "Homecare",
-            type: model.type,
-            date: model.date,
-            prefered_time: model.prefered_time,
-            time_span: model.time_span,
-            address: model.address,
-            latitude: model.latitude,
-            longitude: model.longitude,
-            services: model.services,
-            price: priceFor(model),
-            rate:
-                model.type === "ADL"
-                    ? Number(branch.value?.homecare?.adl_hourly_rate ?? 0)
-                    : undefined,
+        await cardPayment({
+            card,
+            amount: downpaymentAmount.value,
+            onClose: () => {
+                paying.value = false;
+            },
+            createPayment: ({ token_id, authentication_id }) =>
+                patientAccessService.executeAction({
+                    ...bookingPayload(),
+                    payment_method: "CREDIT-CARD",
+                    token_id,
+                    authentication_id,
+                }),
+            onSuccess: async (res) => onPaid(res?.message),
         });
-
-        success(
-            res?.message ??
-                "Booking request submitted. The branch will review and confirm it shortly.",
-        );
-
-        emit("booked");
-        close();
     } catch (err: any) {
-        toastError(
-            err?.response?.data?.message ??
-                err?.message ??
-                "Failed to submit the booking request.",
-        );
+        toastError(errorMessage(err, "Payment failed."));
     } finally {
-        submitting.value = false;
+        paying.value = false;
+    }
+}
+
+async function handleGCashPay() {
+    if (paying.value) return;
+
+    paying.value = true;
+
+    try {
+        await gcashPayment({
+            createPayment: () =>
+                patientAccessService.executeAction({
+                    ...bookingPayload(),
+                    payment_method: "GCASH",
+                }),
+            onSuccess: async () => onPaid(),
+            onClose: () => {
+                paying.value = false;
+            },
+        });
+    } catch (err: any) {
+        toastError(errorMessage(err, "GCash payment failed."));
+    } finally {
+        paying.value = false;
     }
 }
 
 function close() {
+    if (paying.value) return;
+
     emit("close");
 }
 </script>

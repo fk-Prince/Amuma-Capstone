@@ -256,6 +256,7 @@
 
                             <PaymentForm
                                 v-if="additionalOption"
+                                compact
                                 v-model:card="card"
                                 :total-amount="total"
                                 :processing="processing"
@@ -326,6 +327,7 @@
 
                                 <PaymentForm
                                     v-if="selectedPlan"
+                                    compact
                                     v-model:card="card"
                                     class="mt-6"
                                     :total-amount="total"

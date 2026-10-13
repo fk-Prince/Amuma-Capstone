@@ -104,9 +104,9 @@
                     >
                         <Wallet class="h-4 w-4 shrink-0 mt-0.5 text-primary" />
                         <span>
-                            This reservation fee will be credited toward your
-                            total bill, or automatically refunded if your
-                            booking is rejected or expires.
+                            This payment will be credited toward your total
+                            bill, or automatically refunded if your booking is
+                            rejected or expires.
                         </span>
                     </div>
                     <div
@@ -248,7 +248,7 @@ const description = computed(() => {
     return {
         checking: "We're verifying your payment. This will only take a moment.",
         submitted:
-            "Thank you. Your reservation fee has been received and your booking has been sent to the care team for review.",
+            "Thank you. Your payment has been received and your booking has been sent to the care team for review.",
         failed: "We couldn't confirm your payment. If you were charged, it will be automatically refunded.",
     }[confirmState.value];
 });

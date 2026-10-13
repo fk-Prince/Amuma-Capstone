@@ -2,6 +2,7 @@
 
 namespace App\Service\Booking;
 
+use App\Models\Booking;
 use App\Repository\BranchContractRepository;
 use App\Repository\ServiceRepository;
 use App\Service\External\SupabaseService;
@@ -126,21 +127,41 @@ class BookingHelper
             && ($payload['booking_data']['facility']['type'] ?? null) === 'Complete';
     }
 
+    public function isHomecare(array $payload): bool
+    {
+        return ($payload['category'] ?? null) === Booking::CATEGORY_ONLINE;
+    }
+
+    public function requiresPayment(array $payload): bool
+    {
+        return $this->isCompleteAdmission($payload) || $this->isHomecare($payload);
+    }
+
     public function getBookingPercent(array $payload): int
     {
-        if (!$this->isCompleteAdmission($payload)) {
-            return 100;
-        }
-
         $branch = $payload['branch'] ?? null;
         $settings = $branch?->settings ?? [];
 
-        return min(100, max(1, (int) ($settings['complete_admission_booking_percent'] ?? 100)));
+        if ($this->isCompleteAdmission($payload)) {
+            return min(100, max(1, (int) ($settings['complete_admission_booking_percent'] ?? 100)));
+        }
+
+        if ($this->isHomecare($payload)) {
+            return min(100, max(1, (int) ($settings['homecare_downpayment_percent'] ?? 50)));
+        }
+
+        return 100;
     }
 
     public function resolveBookingPayment(array $payload): array
     {
-        $totalAmount = (float) ($this->getTotal($payload) ?? 0);
+        $total = $this->getTotal($payload);
+        $totalAmount = (float) (is_array($total) ? ($total['total'] ?? 0) : ($total ?? 0));
+
+        if ($totalAmount <= 0) {
+            throw new Exception('The booking amount could not be determined.', 422);
+        }
+
         $percent = $this->getBookingPercent($payload);
         $bookingAmount = round($totalAmount * $percent / 100, 2);
 

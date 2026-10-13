@@ -162,14 +162,23 @@
                         <PaymentForm
                             :card="card"
                             :total-amount="bookingAmount"
-                            :processing="processingPayment || loadingTotal"
+                            :processing="
+                                processingPayment ||
+                                loadingTotal ||
+                                !branch?.settings
+                            "
                             title="Complete Your Booking"
-                            description="Choose your payment method to confirm your facility reservation."
+                            :description="
+                                isHomecare
+                                    ? 'Choose your payment method to pay the downpayment and confirm your homecare booking.'
+                                    : 'Choose your payment method to confirm your facility reservation.'
+                            "
                             submit-label="Confirm & Pay"
                             processing-label="Confirming payment..."
                             gcash-label="Pay with GCash"
                             gcash-processing-label="Redirecting to GCash..."
                             terms-context="booking"
+                            @update:card="(value) => Object.assign(card, value)"
                             @card-pay="handleCardPay"
                             @g-cash-pay="handleGCashPay"
                         />
@@ -266,10 +275,17 @@ const card = reactive<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
+const isHomecare = computed(() => bookingStore.category === "homecare");
+
 const showPayment = computed(
     () =>
-        bookingStore.category === "facility" &&
-        bookingStore.facility?.type === "Complete",
+        isHomecare.value ||
+        (bookingStore.category === "facility" &&
+            bookingStore.facility?.type === "Complete"),
+);
+
+const paymentAction = computed(() =>
+    isHomecare.value ? "homecare" : "complete-admission",
 );
 
 const bookingPercent = computed(() => {
@@ -278,7 +294,9 @@ const bookingPercent = computed(() => {
     const settings = branch.value?.settings;
     if (!settings) return 100;
 
-    return settings.complete_admission_booking_percent ?? 100;
+    return isHomecare.value
+        ? (settings.homecare_downpayment_percent ?? 50)
+        : (settings.complete_admission_booking_percent ?? 100);
 });
 
 const bookingAmount = computed(() => {
@@ -334,7 +352,7 @@ async function handleCardPay() {
             },
             createPayment: ({ token_id, authentication_id }) =>
                 bookingService.create({
-                    action: "complete-admission",
+                    action: paymentAction.value,
                     branch_uuid: uuid,
                     token_id,
                     authentication_id,
@@ -366,7 +384,7 @@ async function handleGCashPay() {
             closeModal,
             createPayment: () =>
                 bookingService.create({
-                    action: "complete-admission",
+                    action: paymentAction.value,
                     branch_uuid: uuid,
                     booking_data: booking_data,
                     payment_method: "GCASH",

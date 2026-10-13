@@ -35,7 +35,7 @@ class BookingController extends Controller
 
         if ($request->action === 'regular') {
             return $this->bookingService->createBooking($request->user(), $request->all());
-        } else if ($request->action === 'complete-admission') {
+        } else if (in_array($request->action, ['complete-admission', 'homecare'], true)) {
             return $this->bookingService->completePayment($request->user(), $request->all());
         }
     }

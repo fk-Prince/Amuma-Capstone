@@ -66,6 +66,7 @@ class BranchResource extends JsonResource
                 'enable_booking_complete_admission' => $settings['enable_booking_complete_admission'] ?? false,
                 'requires_full_payment_on_admit' => $settings['requires_full_payment_on_admit'] ?? true,
                 'complete_admission_booking_percent' => $settings['complete_admission_booking_percent'] ?? 100,
+                'homecare_downpayment_percent' => $settings['homecare_downpayment_percent'] ?? 50,
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'currency' => $settings['currency'] ?? 'PHP',
                 'tin' => $settings['tin'] ?? null,

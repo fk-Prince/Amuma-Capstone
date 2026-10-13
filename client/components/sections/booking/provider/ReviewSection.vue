@@ -5,15 +5,17 @@
             <div>
                 <h2 class="text-xl text-primary">
                     {{
-                        category === "facility" && facility.type === "Complete"
+                        showPayment
                             ? "Review & Proceed to Payment"
                             : "Review & Submit"
                     }}
                 </h2>
                 <p class="text-[13px] text-muted dark:text-gray-400">
                     {{
-                        category === "facility" && facility.type === "Complete"
-                            ? "Check that everything below is correct, then complete payment to confirm your reservation."
+                        showPayment
+                            ? category === "homecare"
+                                ? "Check that everything below is correct, then pay the downpayment to confirm your booking."
+                                : "Check that everything below is correct, then complete payment to confirm your reservation."
                             : "Check that everything below is correct before sending your request"
                     }}
                 </p>
@@ -71,7 +73,12 @@
                                 <span
                                     class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                 >
-                                    Reservation Fee ({{ bookingPercent }}%)
+                                    {{
+                                        category === "homecare"
+                                            ? "Downpayment"
+                                            : "Reservation Fee"
+                                    }}
+                                    ({{ bookingPercent }}%)
                                 </span>
                                 <span
                                     class="text-lg font-bold text-primary tabular-nums"
@@ -86,7 +93,11 @@
                                 <span
                                     class="text-xs text-slate-400 dark:text-gray-500"
                                 >
-                                    Balance (settled at the branch)
+                                    {{
+                                        category === "homecare"
+                                            ? "Remaining balance"
+                                            : "Balance (settled at the branch)"
+                                    }}
                                 </span>
                                 <span
                                     class="text-sm font-medium text-slate-500 tabular-nums dark:text-gray-400"
@@ -488,14 +499,28 @@ const facilityTotal = computed<number>(() => {
     return Number(facility?.price ?? 0);
 });
 
+const bookingTotal = computed<number>(() => {
+    if (props.category !== "homecare") {
+        return facilityTotal.value;
+    }
+
+    if (props.homecare?.type === "ADL") {
+        return (
+            Number(props.homecare.time_span ?? 0) * adlRatePerHour.value
+        );
+    }
+
+    return selectedServicesTotal.value;
+});
+
 const bookingPercent = computed(() => props.bookingPercent ?? 100);
 
 const bookingAmount = computed(() =>
-    Math.round(facilityTotal.value * (bookingPercent.value / 100) * 100) / 100,
+    Math.round(bookingTotal.value * (bookingPercent.value / 100) * 100) / 100,
 );
 
 const balanceAmount = computed(() =>
-    Math.max(facilityTotal.value - bookingAmount.value, 0),
+    Math.max(bookingTotal.value - bookingAmount.value, 0),
 );
 
 const preferredTime = computed(() => {

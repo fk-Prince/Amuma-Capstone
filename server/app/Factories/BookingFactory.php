@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Payment;
+use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
 use App\Service\PatientAdmissionService;
@@ -67,40 +68,14 @@ class BookingFactory
             'admission_period_id' => $admissionPeriod->admission_period_id,
         ]);
 
-        $amount = (float) ($payload['payment']['booking_amount'] ?? $totalAmount);
-
-        $transaction = $this->transactions->forPayment(
-            $amount,
-            $payload['branch_id'],
+        $receipt = $this->recordBookingPayment(
+            $invoice,
+            $payload,
             $patient['patient_id'],
-            'Payment received with the admission booking.',
-            [
-                'client_id' => $client->client_id,
-                'method' => $payload['payment']['payment_method'] ?? 'cash',
-                'party_name' => trim(
-                    ($client->first_name ?? '') . ' ' . ($client->last_name ?? '')
-                ) ?: null,
-                'masked_account_number' => $payload['payment']['masked_card_number'] ?? null,
-                'transaction_reference_id' => $payload['payment']['xendit_invoice_id'] ?? null,
-            ]
+            $client,
+            'Payment received with the admission booking.'
         );
 
-        $receipt = $this->paymentRepository->create([
-            'transaction_id' => $transaction->transaction_id,
-            'prior_balance' => $totalAmount,
-            'new_balance' => round(max($totalAmount - $amount, 0), 2),
-            'cash_tendered' => $amount,
-            'created_at' => now(),
-        ]);
-
-        $receipt->allocations()->create([
-            'invoice_id' => $invoice->invoice_id,
-            'amount' => $amount,
-            'description' => $invoice->paymentDescription(),
-            'created_at' => now(),
-        ]);
-
-        $invoice->syncStatus();
         AccommodationHelper::activate($invoice);
 
         return [
@@ -131,10 +106,84 @@ class BookingFactory
 
         $invoice->invoiceServices()->createMany($invoiceServices);
 
+        $this->recordHomecareDownpayment(
+            $invoice,
+            $payload,
+            $data['patient']['patient_id'],
+            $data['patientAccess']
+        );
+
         return [
             'invoice' => $invoice,
             'patient' => $data['patient'],
         ];
+    }
+
+    private function recordHomecareDownpayment(Invoice $invoice, array $payload, mixed $patientId, mixed $client): void
+    {
+        $payment = $payload['payment'] ?? [];
+
+        $paid = in_array($payment['payment_status'] ?? null, ['paid', 'partial'], true)
+            && (float) ($payment['booking_amount'] ?? 0) > 0;
+
+        if (!$paid) {
+            return;
+        }
+
+        $this->recordBookingPayment(
+            $invoice,
+            $payload,
+            $patientId,
+            $client,
+            'Downpayment received with the homecare booking.'
+        );
+    }
+
+    private function recordBookingPayment(
+        Invoice $invoice,
+        array $payload,
+        mixed $patientId,
+        mixed $client,
+        string $description
+    ) {
+        $payment = $payload['payment'] ?? [];
+        $totalAmount = (float) ($payment['total_amount'] ?? 0);
+        $amount = (float) ($payment['booking_amount'] ?? $totalAmount);
+
+        $transaction = $this->transactions->forPayment(
+            $amount,
+            $payload['branch_id'],
+            $patientId,
+            $description,
+            [
+                'client_id' => $client?->client_id,
+                'method' => $payment['payment_method'] ?? 'cash',
+                'party_name' => trim(
+                    ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
+                ) ?: null,
+                'masked_account_number' => $payment['masked_card_number'] ?? null,
+                'transaction_reference_id' => $payment['xendit_invoice_id'] ?? null,
+            ]
+        );
+
+        $receipt = $this->paymentRepository->create([
+            'transaction_id' => $transaction->transaction_id,
+            'prior_balance' => $totalAmount,
+            'new_balance' => round(max($totalAmount - $amount, 0), 2),
+            'cash_tendered' => $amount,
+            'created_at' => now(),
+        ]);
+
+        $receipt->allocations()->create([
+            'invoice_id' => $invoice->invoice_id,
+            'amount' => $amount,
+            'description' => $invoice->paymentDescription(),
+            'created_at' => now(),
+        ]);
+
+        $invoice->syncStatus();
+
+        return $receipt;
     }
 
 
@@ -156,6 +205,13 @@ class BookingFactory
         ]);
 
         $invoice->invoiceServices()->createMany($data['invoiceServices']);
+
+        $this->recordHomecareDownpayment(
+            $invoice,
+            $payload + ['branch_id' => $invoice->branch_id],
+            $patient->patient_id,
+            User::where('email', $payload['guardian']['email'] ?? null)->first()?->client
+        );
 
         return [
             'invoice' => $invoice,

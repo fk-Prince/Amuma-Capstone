@@ -163,6 +163,10 @@ class BookingService
     //DONE
     public function completePayment(User $user, array $payload)
     {
+        if (!$this->bookingHelper->requiresPayment($payload)) {
+            throw new Exception('This booking does not take a payment.', 422);
+        }
+
         $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
 
         $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
@@ -254,6 +258,10 @@ class BookingService
     // DONE 
     public function createBooking(User $user, array $payload)
     {
+        if ($this->bookingHelper->isHomecare($payload)) {
+            throw new Exception('Homecare bookings require a downpayment before they can be submitted.', 422);
+        }
+
         $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
 
         return DB::transaction(function () use ($user, $payload) {
@@ -411,26 +419,38 @@ class BookingService
         return new BookingResource($booking);
     }
 
+    private function refundBookingPayment(array &$bookingData): bool
+    {
+        $payment = $bookingData['payment'] ?? [];
+        $amount = (float) ($payment['booking_amount'] ?? $payment['total_amount'] ?? 0);
+
+        $refundable = in_array($payment['payment_status'] ?? null, ['paid', 'partial'], true)
+            && !empty($payment['xendit_invoice_id'])
+            && $amount > 0;
+
+        if (!$refundable) {
+            return false;
+        }
+
+        $refunded = XenditService::refundXenditPayment(
+            $payment['xendit_invoice_id'],
+            $amount,
+            (bool) ($payment['masked_card_number'] ?? null)
+        );
+
+        if ($refunded) {
+            $bookingData['payment']['payment_status'] = 'refunded';
+        }
+
+        return $refunded;
+    }
+
     //USED
     public function expire(Booking $booking): bool
     {
         return DB::transaction(function () use ($booking) {
             $bookingData = $booking->booking_data;
-            $payment = $bookingData['payment'] ?? [];
-
-            $refundable = ($payment['payment_status'] ?? null) === 'paid'
-                && !empty($payment['xendit_invoice_id'])
-                && (float) ($payment['total_amount'] ?? 0) > 0;
-
-            $refunded = $refundable && XenditService::refundXenditPayment(
-                $payment['xendit_invoice_id'],
-                (float) $payment['total_amount'],
-                (bool) ($payment['masked_card_number'] ?? null)
-            );
-
-            if ($refunded) {
-                $bookingData['payment']['payment_status'] = 'refunded';
-            }
+            $refunded = $this->refundBookingPayment($bookingData);
 
             $booking->update([
                 'booking_data' => $bookingData,
@@ -455,19 +475,7 @@ class BookingService
             }
 
 
-            $payment = $payload['payment'] ?? null;
-
-            if (
-                $payment &&
-                !empty($payment['xendit_invoice_id']) &&
-                !empty($payment['total_amount'])
-            ) {
-                $bookingData['payment']['payment_status'] = 'refunded';
-                XenditService::refundXenditPayment(
-                    $payment['xendit_invoice_id'],
-                    $payment['total_amount']
-                );
-            }
+            $this->refundBookingPayment($bookingData);
 
             $reason = trim((string) ($payload['reason'] ?? '')) ?: null;
 

@@ -436,6 +436,25 @@
                         {{ formatCurrency(selectedService.price) }}
                     </span>
                 </div>
+
+                <div
+                    v-if="selectedService && downpaymentVisible"
+                    class="mt-2 flex items-center justify-between px-4 text-xs"
+                >
+                    <span class="text-slate-500 dark:text-gray-400">
+                        Downpayment ({{ downpaymentPercent }}%)
+                    </span>
+
+                    <span
+                        class="font-semibold text-slate-700 dark:text-gray-300"
+                    >
+                        {{
+                            formatCurrency(
+                                downpaymentOf(selectedService.price),
+                            )
+                        }}
+                    </span>
+                </div>
             </div>
 
             <div
@@ -537,6 +556,21 @@
 
                         <span class="text-base font-bold text-primary">
                             {{ formatCurrency(adlTotal) }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="adlTotal && downpaymentVisible"
+                        class="mt-2 flex items-center justify-between text-xs"
+                    >
+                        <span class="text-slate-500 dark:text-gray-400">
+                            Downpayment ({{ downpaymentPercent }}%)
+                        </span>
+
+                        <span
+                            class="font-semibold text-slate-700 dark:text-gray-300"
+                        >
+                            {{ formatCurrency(downpaymentOf(adlTotal)) }}
                         </span>
                     </div>
                 </div>
@@ -643,6 +677,7 @@ const props = defineProps<{
     errors?: Record<string, string> | null;
     homecare?: BranchHomecare;
     settings?: BranchSettings;
+    showDownpayment?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -774,6 +809,22 @@ const adlTotal = computed(() => {
 
     return hours * adlRatePerHour.value;
 });
+
+const downpaymentPercent = computed<number>(
+    () => props.settings?.homecare_downpayment_percent ?? 50,
+);
+
+const downpaymentVisible = computed(
+    () => !!props.showDownpayment && downpaymentPercent.value < 100,
+);
+
+function downpaymentOf(amount: number) {
+    return (
+        Math.round(
+            Number(amount ?? 0) * (downpaymentPercent.value / 100) * 100,
+        ) / 100
+    );
+}
 
 const branchStatus = computed(() => getBranchTimeDisplay(props.settings));
 

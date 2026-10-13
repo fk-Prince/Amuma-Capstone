@@ -637,6 +637,7 @@
 
                             <PaymentForm
                                 v-else
+                                compact
                                 v-model:card="card"
                                 :total-amount="total"
                                 :processing="processing || loadingTotal"
@@ -997,6 +998,7 @@ const form = reactive({
         enable_booking_pre_admission: true,
         enable_booking_complete_admission: true,
         complete_admission_booking_percent: 50,
+        homecare_downpayment_percent: 50,
         minimum_adl_hours: 8,
         is_open: true,
     } as BranchSettings,

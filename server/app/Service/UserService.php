@@ -108,11 +108,10 @@ class UserService
                     }
                 }
 
-                if (array_key_exists('complete_admission_booking_percent', $settings)) {
-                    $settings['complete_admission_booking_percent'] = min(
-                        100,
-                        max(1, (int) $settings['complete_admission_booking_percent'])
-                    );
+                foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent'] as $key) {
+                    if (array_key_exists($key, $settings)) {
+                        $settings[$key] = min(100, max(1, (int) $settings[$key]));
+                    }
                 }
 
                 return [

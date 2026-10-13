@@ -690,9 +690,15 @@ const paymentRows = computed(() => {
         ? Number(payment.booking_amount) || 0
         : Number(payment.total_amount) || 0;
 
+    const paidLabel = isFacility.value
+        ? "Reservation Fee Paid"
+        : payment.booking_percent
+          ? `Downpayment Paid (${payment.booking_percent}%)`
+          : "Downpayment Paid";
+
     return [
         {
-            label: hasBalance ? "Reservation Fee Paid" : "Amount paid",
+            label: hasBalance ? paidLabel : "Amount paid",
             value: formatCurrency(amountPaid),
         },
         hasBalance && {

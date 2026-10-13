@@ -280,6 +280,7 @@ function peso(value: number) {
 
                         <PaymentForm
                             v-else
+                            compact
                             :card="card"
                             :total-amount="cardAmount"
                             :processing="processing"

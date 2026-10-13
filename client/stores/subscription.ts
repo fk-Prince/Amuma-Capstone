@@ -107,6 +107,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
             requires_full_payment_on_admit: true,
             complete_admission_booking_percent: 50,
             activation_payment_percent: 100,
+            homecare_downpayment_percent: 50,
             minimum_adl_hours: 8,
             is_open: true,
             tin: ""
@@ -210,6 +211,7 @@ export const useSubscriptionCheckout = defineStore("subscriptionCheckout", {
                 requires_full_payment_on_admit: true,
                 complete_admission_booking_percent: 50,
                 activation_payment_percent: 100,
+                homecare_downpayment_percent: 50,
                 minimum_adl_hours: 8,
                 is_open: true,
                 online_additional_fee: 0,

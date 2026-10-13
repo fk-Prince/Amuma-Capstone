@@ -168,6 +168,25 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
+                    v-model="setting.homecare_downpayment_percent"
+                    label="Downpayment Percentage"
+                    mode="number"
+                    placeholder="Example: 50"
+                    :error="errors.homecare_downpayment_percent"
+                    @update:modelValue="
+                        clearError('homecare_downpayment_percent')
+                    "
+                />
+
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
+                    Percentage of the homecare price collected as a downpayment
+                    when a client books a visit (1-100). The remaining balance
+                    is settled after the visit.
+                </p>
+            </div>
+
+            <div class="bg-white p-1 dark:bg-transparent">
+                <BaseInput
                     v-model="setting.minimum_adl_hours"
                     label="Minimum Homecare Hours"
                     mode="number"
@@ -361,6 +380,8 @@ const setting = reactive<OperationSetting>({
         activeBranch.value?.settings?.requires_full_payment_on_admit ?? true,
     complete_admission_booking_percent:
         activeBranch.value?.settings?.complete_admission_booking_percent ?? 100,
+    homecare_downpayment_percent:
+        activeBranch.value?.settings?.homecare_downpayment_percent ?? 50,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
     // billing_due_date: activeBranch.value?.settings?.billing_due_date ?? 31,
     is_open: activeBranch.value?.settings?.is_open ?? false,

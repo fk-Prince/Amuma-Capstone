@@ -81,6 +81,7 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.enable_booking_complete_admission' => ['required', 'boolean'],
             'branch_settings.requires_full_payment_on_admit' => ['nullable', 'boolean'],
             'branch_settings.complete_admission_booking_percent' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'branch_settings.homecare_downpayment_percent' => ['nullable', 'integer', 'min:1', 'max:100'],
             'branch_settings.minimum_adl_hours' => ['required', 'integer'],
             'branch_settings.tin' => ['required', 'string', new ValidTin()],
             'branch_settings.is_open' => ['required', 'boolean'],
@@ -101,6 +102,7 @@ class SubscriptionRequest extends FormRequest
             'branch_settings.enable_booking_complete_admission' => 'complete-admission booking',
             'branch_settings.requires_full_payment_on_admit' => 'full payment on admit',
             'branch_settings.complete_admission_booking_percent' => 'booking percentage',
+            'branch_settings.homecare_downpayment_percent' => 'homecare downpayment percentage',
             'branch_settings.is_open' => 'branch availability',
         ];
     }

@@ -49,6 +49,7 @@ export interface BranchSettings {
     enable_booking_complete_admission: boolean;
     requires_full_payment_on_admit: boolean;
     complete_admission_booking_percent: number;
+    homecare_downpayment_percent: number;
     minimum_adl_hours: number | null;
     is_open: boolean;
     status?: "OPEN" | "CLOSED";

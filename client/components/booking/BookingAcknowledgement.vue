@@ -99,6 +99,20 @@ const isCompleteAdmission = computed(
     () => props.booking.facility?.type === "Complete",
 );
 
+const hasDownpayment = computed(
+    () => !isFacility.value && payment.value?.booking_amount != null,
+);
+
+const paidLabel = computed(() => {
+    if (balanceDue.value <= 0) return "Amount paid";
+
+    if (!hasDownpayment.value) return "Reservation Fee Paid";
+
+    const percent = payment.value?.booking_percent;
+
+    return percent ? `Downpayment Paid (${percent}%)` : "Downpayment Paid";
+});
+
 const displayBranchName = computed(
     () => props.branchName ?? (props.booking as any)?.branch_name ?? "—",
 );
@@ -343,7 +357,10 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div v-if="payment && isCompleteAdmission" class="mt-7">
+                    <div
+                        v-if="payment && (isCompleteAdmission || hasDownpayment)"
+                        class="mt-7"
+                    >
                         <p
                             class="border-b border-slate-300 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400 dark:border-white/10"
                         >
@@ -372,11 +389,7 @@ onBeforeUnmount(() => {
                                     <td
                                         class="py-1.5 text-slate-600 dark:text-gray-400"
                                     >
-                                        {{
-                                            balanceDue > 0
-                                                ? "Reservation Fee Paid"
-                                                : "Amount paid"
-                                        }}
+                                        {{ paidLabel }}
                                     </td>
                                     <td
                                         class="py-1.5 text-right font-semibold tabular-nums"

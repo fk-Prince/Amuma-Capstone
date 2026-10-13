@@ -3,21 +3,18 @@
 namespace App\Service;
 
 use App\Repository\PatientAccessRepository;
-use App\Repository\BookingRepository;
 use App\Http\Resources\PatientAccessResource;
 use App\Models\Booking;
 use App\Models\PatientAdmission;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Models\User;
-use Carbon\Carbon;
 use Exception;
 
 class PatientAccessService
 {
     public function __construct(
         private PatientAccessRepository $patientAccessRepository,
-        private BookingRepository $bookingRepository,
         private NotificationService $notificationService,
         private BookingService $bookingService,
         private PatientAdmissionService $patientAdmissionService,
@@ -83,6 +80,10 @@ class PatientAccessService
             throw new Exception('This branch no longer support homecare service, so a new homecare service can\'t be requested right now.', 422);
         }
 
+        if (!in_array($payload['payment_method'] ?? null, ['CREDIT-CARD', 'GCASH'], true)) {
+            throw new Exception('Choose a payment method to pay the downpayment.', 422);
+        }
+
         $bookingData = [
             'patient' => [
                 'patient_id'    => $patient->patient_id,
@@ -118,33 +119,18 @@ class PatientAccessService
                     ? ($payload['rate'] ?? null)
                     : null,
             ],
-            'payment' => [
-                'total_amount' => $payload['price'] ?? 0,
-            ],
         ];
 
-        $validUntil = Carbon::parse($payload['date'] . ' ' . $payload['prefered_time']);
-
-        $booking = $this->bookingRepository->create([
-            'user_id'      => $user->user_id,
-            'branch_id'    => $patient->branch_id,
-            'category'     => Booking::CATEGORY_ONLINE,
-            'booking_data' => $bookingData,
-            'status'       => Booking::STATUS_PENDING,
-            'valid_until'  => $validUntil,
-            'booking_type' => Booking::BOOKINGTYPE_ONLINE,
+        return $this->bookingService->completePayment($user, [
+            'category'          => Booking::CATEGORY_ONLINE,
+            'branch'            => $patient->branch,
+            'branch_id'         => $patient->branch->branch_id,
+            'branch_uuid'       => $patient->branch->uuid,
+            'booking_data'      => $bookingData,
+            'payment_method'    => $payload['payment_method'] ?? null,
+            'token_id'          => $payload['token_id'] ?? null,
+            'authentication_id' => $payload['authentication_id'] ?? null,
         ]);
-
-        $this->notificationService->notifyNewBooking($patient->branch, $user, $booking);
-
-        return [
-            'success' => true,
-            'message' => 'Booking request submitted. The branch will review and confirm it shortly.',
-            'data' => [
-                'booking_id'   => $booking->booking_id,
-                'reference_id' => $booking->reference_id,
-            ],
-        ];
     }
 
     public function requestScheduleReview(array $payload, User $user)

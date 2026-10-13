@@ -168,14 +168,14 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
 
 const BOOKING_TERMS: PaymentTerms = {
     heading: "Booking & Payment Terms",
-    lastUpdated: "September 19, 2026",
+    lastUpdated: "October 14, 2026",
     sections: [
         {
             title: "Scope & acceptance",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "These Booking & Payment Terms apply to any booking submitted through AMUMA for facility (Complete Admission or Pre-Admission) or homecare services. By submitting a booking and, where applicable, completing payment, you confirm the information provided is accurate and agree to these Terms and to the reservation fee, balance, and schedule shown to you at checkout.",
+                    text: "These Booking & Payment Terms apply to any booking submitted through AMUMA for facility (Complete Admission or Pre-Admission) or homecare services. By submitting a booking and, where applicable, completing payment, you confirm the information provided is accurate and agree to these Terms and to the reservation fee or downpayment, balance, and schedule shown to you at checkout.",
                 },
             ],
         },
@@ -194,8 +194,9 @@ const BOOKING_TERMS: PaymentTerms = {
                 {
                     type: "list",
                     items: [
-                        "Homecare bookings (Medical/ADL) and Facility Pre-Admission bookings do not require payment at the time of booking. These are submitted free of charge; payment is arranged later as part of the admission or service process.",
+                        "Facility Pre-Admission bookings do not require payment at the time of booking. These are submitted free of charge; payment is arranged later as part of the admission process.",
                         "Facility Complete Admission bookings require payment of a reservation fee before the booking is submitted. This fee is a percentage of the total contract amount, set by the branch, and is not the full cost of admission. The remaining balance is due separately as part of completing the admission.",
+                        "Homecare bookings (Medical/ADL) require payment of a downpayment before the booking is submitted. The downpayment is a percentage of the total service amount, set by the branch, and is not the full cost of the service. The remaining balance is due separately.",
                     ],
                 },
             ],
@@ -205,7 +206,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Reservation fee payments are processed securely through our payment partner, Xendit, using Credit/Debit Card or GCash. Cash is not accepted as a booking payment method; cash payments, where applicable, are handled in person by the branch as part of the admission process.",
+                    text: "Reservation fee and downpayment payments are processed securely through our payment partner, Xendit, using Credit/Debit Card or GCash. Cash is not accepted as a booking payment method; cash payments, where applicable, are handled in person by the branch as part of the admission process.",
                 },
             ],
         },
@@ -214,7 +215,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Every booking has a review deadline, shown to you as the booking's valid-until date. If the branch does not approve or reject the booking before that deadline, the booking automatically expires. If a reservation fee was paid on an expired booking, it is automatically refunded to your original payment method.",
+                    text: "Every booking has a review deadline, shown to you as the booking's valid-until date. If the branch does not approve or reject the booking before that deadline, the booking automatically expires. If a reservation fee or downpayment was paid on an expired booking, it is automatically refunded to your original payment method.",
                 },
             ],
         },
@@ -223,7 +224,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "If the branch rejects your booking, any reservation fee paid is automatically refunded to your original payment method, subject to the processing time required by our payment partner.",
+                    text: "If the branch rejects your booking, any reservation fee or downpayment paid is automatically refunded to your original payment method, subject to the processing time required by our payment partner.",
                 },
             ],
         },
@@ -232,7 +233,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "If your booking is approved, the reservation fee already paid is credited toward your total contract amount, and the remaining balance becomes payable as part of completing the admission. The reservation fee itself is not separately refundable once the booking is approved, except as otherwise required by law.",
+                    text: "If your booking is approved, the reservation fee or downpayment already paid is credited toward your total amount, and the remaining balance becomes payable as part of completing the admission or service. The reservation fee or downpayment itself is not separately refundable once the booking is approved, except as otherwise required by law.",
                 },
             ],
         },
@@ -241,7 +242,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "The total contract amount, reservation fee, and balance shown to you before payment are calculated from the plan, service, and dates you selected. Changing these details after payment may change the amount due and will be communicated to you before any additional charge.",
+                    text: "The total amount, reservation fee or downpayment, and balance shown to you before payment are calculated from the plan, service, and dates you selected. Changing these details after payment may change the amount due and will be communicated to you before any additional charge.",
                 },
             ],
         },
@@ -250,7 +251,7 @@ const BOOKING_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "AMUMA facilitates booking and payment between you and the care branch; it is not itself the care provider. To the extent permitted by law, our liability arising from a booking is limited to the reservation fee you paid for that booking.",
+                    text: "AMUMA facilitates booking and payment between you and the care branch; it is not itself the care provider. To the extent permitted by law, our liability arising from a booking is limited to the reservation fee or downpayment you paid for that booking.",
                 },
             ],
         },

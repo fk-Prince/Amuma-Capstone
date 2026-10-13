@@ -52,6 +52,7 @@ interface Props {
     currency?: string;
     allowShortCash?: boolean;
     termsContext?: string;
+    compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -108,6 +109,14 @@ const allMethods: {
 ];
 
 const methods = computed(() => allMethods.filter((m) => m.enabled));
+
+const bodyClass = computed(() =>
+    props.compact
+        ? "space-y-3 px-5 py-4"
+        : "space-y-6 px-6 py-6 sm:px-7 sm:py-7",
+);
+
+const fieldClass = computed(() => (props.compact ? "!py-2" : ""));
 
 const terms = computed(() => getPaymentTerms(props.termsContext));
 const agreedToTerms = ref(false);
@@ -288,12 +297,36 @@ watch(isCash, (active) => {
 </script>
 
 <template>
-    <div class="w-full max-w-2xl mx-auto">
+    <div :class="compact ? 'w-full' : 'w-full max-w-2xl mx-auto'">
         <div
-            class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:bg-secondary dark:border-white/10"
+            class="overflow-hidden border border-slate-200 bg-white dark:bg-secondary dark:border-white/10"
+            :class="
+                compact
+                    ? 'rounded-xl'
+                    : 'rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]'
+            "
         >
             <!-- Header -->
             <div
+                v-if="compact"
+                class="border-b border-slate-100 px-5 py-3 dark:border-white/10"
+            >
+                <h2
+                    class="text-sm font-bold text-slate-900 dark:text-white"
+                >
+                    {{ title }}
+                </h2>
+
+                <p
+                    v-if="description"
+                    class="mt-0.5 text-xs leading-4 text-slate-500 dark:text-gray-400"
+                >
+                    {{ description }}
+                </p>
+            </div>
+
+            <div
+                v-else
                 class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-6 py-5 sm:px-7 dark:border-white/10 dark:from-secondary dark:to-secondary"
             >
                 <div class="flex items-start gap-4">
@@ -321,7 +354,41 @@ watch(isCash, (active) => {
 
             <!-- Payment Methods -->
             <div
-                v-if="methods.length > 1"
+                v-if="methods.length > 1 && compact"
+                class="grid gap-2 border-b border-slate-100 px-5 py-3 dark:border-white/10"
+                :class="methods.length > 2 ? 'grid-cols-3' : 'grid-cols-2'"
+            >
+                <button
+                    v-for="method in methods"
+                    :key="method.value"
+                    type="button"
+                    class="flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition"
+                    :class="
+                        checkout.payment_method === method.value
+                            ? 'border-primary bg-primary/[0.04] text-primary ring-1 ring-primary/20'
+                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5'
+                    "
+                    @click="selectMethod(method.value)"
+                >
+                    <img
+                        v-if="method.image"
+                        :src="method.image"
+                        :alt="method.label"
+                        class="h-4 w-auto max-w-[2.5rem] object-contain"
+                    />
+
+                    <component
+                        v-else-if="method.icon"
+                        :is="method.icon"
+                        class="h-4 w-4"
+                    />
+
+                    {{ method.label }}
+                </button>
+            </div>
+
+            <div
+                v-else-if="methods.length > 1"
                 class="border-b border-slate-100 px-6 py-5 dark:border-white/10"
             >
                 <div class="mb-4">
@@ -423,9 +490,9 @@ watch(isCash, (active) => {
             <form
                 v-if="isCard && card"
                 @submit.prevent="handleCardPay"
-                class="space-y-6 px-6 py-6 sm:px-7 sm:py-7"
+                :class="bodyClass"
             >
-                <div>
+                <div v-if="!compact">
                     <h3
                         class="text-sm font-bold text-slate-800 dark:text-white"
                     >
@@ -437,14 +504,14 @@ watch(isCash, (active) => {
                     </p>
                 </div>
 
-                <div class="space-y-4">
+                <div :class="compact ? 'space-y-3' : 'space-y-4'">
                     <LabelInput
                         label="Card number"
                         placeholder="1234 5678 9012 3456"
                         :error="errors.number"
                         :text-max="23"
                         :model-value="card.number"
-                        inputClass="pr-20 tracking-[0.08em] font-medium"
+                        :inputClass="`pr-20 tracking-[0.08em] font-medium ${fieldClass}`"
                         @update:model-value="handleCardNumberInput"
                     >
                         <template #suffix v-if="cardBrand">
@@ -472,7 +539,7 @@ watch(isCash, (active) => {
                         <LabelInput
                             label="MM"
                             placeholder="04"
-                            input-class="text-center"
+                            :input-class="`text-center ${fieldClass}`"
                             :text-max="2"
                             :error="errors.expMonth"
                             :model-value="card.expMonth"
@@ -482,7 +549,7 @@ watch(isCash, (active) => {
                         <LabelInput
                             label="YYYY"
                             placeholder="2029"
-                            input-class="text-center"
+                            :input-class="`text-center ${fieldClass}`"
                             :text-max="4"
                             :error="errors.expYear"
                             :model-value="card.expYear"
@@ -492,7 +559,7 @@ watch(isCash, (active) => {
                         <LabelInput
                             label="CVC"
                             placeholder="123"
-                            input-class="text-center"
+                            :input-class="`text-center ${fieldClass}`"
                             :text-max="4"
                             :error="errors.cvc"
                             :model-value="card.cvc"
@@ -504,6 +571,7 @@ watch(isCash, (active) => {
                         <LabelInput
                             label="First name"
                             placeholder="Juan"
+                            :input-class="fieldClass"
                             :error="errors.firstName"
                             :model-value="card.firstName"
                             @update:model-value="
@@ -514,6 +582,7 @@ watch(isCash, (active) => {
                         <LabelInput
                             label="Last name"
                             placeholder="Dela Cruz"
+                            :input-class="fieldClass"
                             :error="errors.lastName"
                             :model-value="card.lastName"
                             @update:model-value="updateCard('lastName', $event)"
@@ -524,6 +593,7 @@ watch(isCash, (active) => {
                         label="Email"
                         mode="email"
                         placeholder="you@email.com"
+                        :input-class="fieldClass"
                         :error="errors.email"
                         :model-value="card.email"
                         @update:model-value="updateCard('email', $event)"
@@ -553,7 +623,8 @@ watch(isCash, (active) => {
                 <button
                     type="submit"
                     :disabled="processing || termsBlocked"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="compact ? 'py-2.5' : 'py-3.5'"
                 >
                     <LoaderCircle
                         v-if="processing"
@@ -564,6 +635,7 @@ watch(isCash, (active) => {
                 </button>
 
                 <div
+                    v-if="!compact"
                     class="flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-gray-500"
                 >
                     <ShieldCheck class="h-4 w-4" />
@@ -572,11 +644,26 @@ watch(isCash, (active) => {
             </form>
 
             <!-- GCash -->
-            <div
-                v-else-if="isGCash"
-                class="space-y-6 px-6 py-6 sm:px-7 sm:py-7"
-            >
+            <div v-else-if="isGCash" :class="bodyClass">
                 <div
+                    v-if="compact"
+                    class="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5 dark:border-blue-500/20 dark:bg-blue-500/10"
+                >
+                    <img
+                        :src="gcashIcon"
+                        alt="GCash"
+                        class="h-5 w-auto max-w-7 shrink-0 object-contain"
+                    />
+
+                    <p
+                        class="text-xs leading-4 text-slate-600 dark:text-gray-300"
+                    >
+                        {{ gcashDescription }}
+                    </p>
+                </div>
+
+                <div
+                    v-else
                     class="rounded-2xl border border-blue-100 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 to-white dark:from-blue-500/10 dark:to-secondary p-5"
                 >
                     <div class="flex items-start gap-4">
@@ -607,7 +694,8 @@ watch(isCash, (active) => {
                 </div>
 
                 <div
-                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-secondary"
+                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-secondary"
+                    :class="compact ? 'py-2' : 'py-3'"
                 >
                     <span class="text-sm text-slate-500 dark:text-gray-400">
                         Amount to pay
@@ -644,7 +732,8 @@ watch(isCash, (active) => {
                     type="button"
                     @click="handleGCashPay"
                     :disabled="processing || !onGCashPay || termsBlocked"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="compact ? 'py-2.5' : 'py-3.5'"
                 >
                     <LoaderCircle
                         v-if="processing"
@@ -655,6 +744,7 @@ watch(isCash, (active) => {
                 </button>
 
                 <div
+                    v-if="!compact"
                     class="flex items-center justify-center gap-2 text-[11px] text-slate-400 dark:text-gray-500"
                 >
                     <ShieldCheck class="h-4 w-4" />
@@ -663,7 +753,7 @@ watch(isCash, (active) => {
             </div>
 
             <!-- Cash -->
-            <div v-else-if="isCash" class="space-y-6 px-6 py-6 sm:px-7 sm:py-7">
+            <div v-else-if="isCash" :class="bodyClass">
                 <div
                     class="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/10 dark:to-secondary p-5"
                 >

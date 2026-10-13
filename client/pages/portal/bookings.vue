@@ -167,6 +167,25 @@ function isCompleteAdmission(booking: PortalBooking) {
     return booking.facility?.type === "Complete";
 }
 
+function hasDownpayment(booking: PortalBooking) {
+    return (
+        !isFacility(booking) &&
+        (booking.payment as any)?.booking_amount != null
+    );
+}
+
+function paidAmountLabel(booking: PortalBooking) {
+    const payment = booking.payment as any;
+
+    if (!(payment?.balance_amount > 0)) return "Amount";
+
+    if (!hasDownpayment(booking)) return "Reservation Fee";
+
+    return payment.booking_percent
+        ? `Downpayment (${payment.booking_percent}%)`
+        : "Downpayment";
+}
+
 function assignedRoom(booking: PortalBooking) {
     if (!["approved", "completed"].includes(booking.status)) return null;
 
@@ -729,7 +748,8 @@ onMounted(() => {
                                 <div
                                     v-if="
                                         booking.payment &&
-                                        isCompleteAdmission(booking)
+                                        (isCompleteAdmission(booking) ||
+                                            hasDownpayment(booking))
                                     "
                                     class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
                                 >
@@ -794,12 +814,7 @@ onMounted(() => {
                                             <p
                                                 class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                             >
-                                                {{
-                                                    (booking.payment as any)
-                                                        .balance_amount > 0
-                                                        ? "Reservation Fee"
-                                                        : "Amount"
-                                                }}
+                                                {{ paidAmountLabel(booking) }}
                                             </p>
 
                                             <p

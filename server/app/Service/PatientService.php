@@ -199,6 +199,7 @@ class PatientService
             'invoiceServices' => $scheduleData['invoiceServices'],
             'schedule'        => $scheduleData['schedule'],
             'patient'         => $patient,
+            'patientAccess'   => $patientAccess,
         ];
     }
 

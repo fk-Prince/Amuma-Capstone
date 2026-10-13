@@ -144,6 +144,14 @@ export const settingSchema = z.object({
             .max(100, "Booking percentage must be between 1 and 100."),
     ),
 
+    homecare_downpayment_percent: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.coerce
+            .number({ message: "Downpayment percentage is required." })
+            .min(1, "Downpayment percentage must be between 1 and 100.")
+            .max(100, "Downpayment percentage must be between 1 and 100."),
+    ),
+
     minimum_adl_hours: z.preprocess(
         (value) => (value === "" ? undefined : value),
         z.coerce

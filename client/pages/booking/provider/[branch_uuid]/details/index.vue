@@ -242,6 +242,7 @@
                         @update:errors="homecareErrors = $event"
                         :settings="branch?.settings"
                         :homecare="branch?.homecare"
+                        show-downpayment
                     />
                     <FacilityBooking
                         v-else

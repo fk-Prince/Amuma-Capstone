@@ -603,9 +603,10 @@
                                         :tooltip="
                                             !canReviewBookings
                                                 ? reviewBlockedReason
-                                                : selectedBooking.payment
-                                                        ?.payment_status ===
-                                                    'paid'
+                                                : ['paid', 'partial'].includes(
+                                                        selectedBooking.payment
+                                                            ?.payment_status,
+                                                    )
                                                   ? 'The payment will be refunded when this booking is rejected.'
                                                   : ''
                                         "
@@ -1097,8 +1098,10 @@ function syncBookingStatus(
 
 const rejectTarget = ref<any>(null);
 
-const rejectWillRefund = computed(
-    () => rejectTarget.value?.payment?.payment_status === "paid",
+const rejectWillRefund = computed(() =>
+    ["paid", "partial"].includes(
+        rejectTarget.value?.payment?.payment_status ?? "",
+    ),
 );
 
 const openRejectModal = (booking: any) => {

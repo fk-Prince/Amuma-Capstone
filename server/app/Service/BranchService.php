@@ -235,6 +235,7 @@ class BranchService
             'enable_booking_complete_admission',
             'requires_full_payment_on_admit',
             'complete_admission_booking_percent',
+            'homecare_downpayment_percent',
             'minimum_adl_hours',
             'is_open',
             'time_zone',
@@ -261,12 +262,12 @@ class BranchService
             }
         }
 
-        if (array_key_exists('complete_admission_booking_percent', $settingPayload)) {
-            $settingPayload['complete_admission_booking_percent'] = min(
-                100,
-                max(1, (int) $settingPayload['complete_admission_booking_percent'])
-            );
+        foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent'] as $key) {
+            if (array_key_exists($key, $settingPayload)) {
+                $settingPayload[$key] = min(100, max(1, (int) $settingPayload[$key]));
+            }
         }
+
         $branch->update([
             'settings' => array_merge($branch->settings ?? [], $settingPayload),
         ]);
