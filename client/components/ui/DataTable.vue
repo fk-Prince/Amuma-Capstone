@@ -3,7 +3,7 @@
         class="h-full rounded-2xl border border-[#E4EFED] bg-white shadow-sm overflow-hidden flex flex-col dark:border-white/10 dark:bg-secondary"
     >
         <div
-            v-if="searchable || $slots.actions"
+            v-if="searchable || $slots.actions || showToggle"
             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
         >
             <div v-if="searchable" class="w-full sm:max-w-sm">
@@ -15,20 +15,22 @@
                 />
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 sm:ml-auto">
                 <slot name="actions" />
+
+                <ViewModeToggle
+                    v-if="showToggle"
+                    :model-value="currentView"
+                    @update:model-value="setView"
+                />
             </div>
         </div>
 
         <div class="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)_auto]">
         <div class="min-h-0 overflow-auto">
             <div
-                v-if="showCards"
-                :class="
-                    view === 'card'
-                        ? 'grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-3'
-                        : 'space-y-3 p-3 md:hidden'
-                "
+                v-if="currentView === 'card'"
+                class="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-3"
             >
                 <template v-if="loading">
                     <div
@@ -134,13 +136,7 @@
 
             <table
                 class="w-full min-w-[42rem] text-sm"
-                :class="
-                    view === 'card'
-                        ? 'hidden'
-                        : mobileCards
-                          ? 'hidden md:table'
-                          : ''
-                "
+                :class="currentView === 'card' ? 'hidden' : ''"
             >
                 <thead class="sticky top-0 z-10">
                     <tr class="bg-slate-50/70 dark:bg-white/5">
@@ -355,6 +351,8 @@
 import { ref, computed, watch } from "vue";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
 import type { usePagination } from "~/composables/usePagination";
 
 export interface DataTableColumn {
@@ -381,10 +379,11 @@ const props = withDefaults(
         emptyTitle?: string;
         emptyDescription?: string;
         onRowClick?: (row: T) => void;
-        // "card" lists the rows as cards at every width.
+        // Leave unset and the table remembers its own view (cards on phones,
+        // the table elsewhere); set it to let the page decide.
         view?: "table" | "card";
-        // Below the md breakpoint a wide table cannot fit, so rows become cards.
-        mobileCards?: boolean;
+        // The table / card switch in the toolbar.
+        viewToggle?: boolean;
     }>(),
     {
         loading: false,
@@ -393,12 +392,21 @@ const props = withDefaults(
         searchDebounce: 400,
         emptyTitle: "No results found",
         emptyDescription: "",
-        view: "table",
-        mobileCards: true,
+        viewToggle: true,
     },
 );
 
-const showCards = computed(() => props.view === "card" || props.mobileCards);
+const { view: sharedView, setView: setSharedView } = useListView();
+
+const currentView = computed(() => props.view ?? sharedView.value);
+
+// A page that sets the view itself puts its own switch where it wants it.
+const showToggle = computed(() => props.viewToggle && props.view === undefined);
+
+function setView(view: "table" | "card") {
+    setSharedView(view);
+    emit("update:view", view);
+}
 
 const titleColumn = computed(
     () =>
@@ -432,6 +440,7 @@ const detailColumns = computed(() =>
 const emit = defineEmits<{
     search: [query: string];
     "page-change": [page: number];
+    "update:view": [view: "table" | "card"];
 }>();
 
 const searchInput = ref("");

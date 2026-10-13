@@ -34,8 +34,8 @@
 
                                 <div class="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto">
                                     <ViewModeToggle
-                                        v-model="viewMode"
-                                        class="hidden md:inline-flex"
+                                        :model-value="viewMode"
+                                        @update:model-value="setViewMode"
                                     />
 
                                     <button
@@ -784,6 +784,7 @@ import RejectBookingModal from "~/components/sections/app/Booking/RejectBookingM
 import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
 import DataTable from "~/components/ui/DataTable.vue";
 import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
 import { useToast } from "~/composables/useToast";
 import { useBookingList } from "~/composables/useBookingList";
 import type { RoomContract, Reserved } from "~/types/contract";
@@ -803,7 +804,7 @@ const OVERVIEW_WIDTH = 1280;
 const OVERVIEW_INLINE_WIDTH = 1024;
 
 const showOverview = ref(true);
-const viewMode = ref<"table" | "card">("table");
+const { view: viewMode, setView: setViewMode } = useListView();
 
 function closeOverviewWhenNarrow() {
     if (window.innerWidth < OVERVIEW_INLINE_WIDTH) showOverview.value = false;

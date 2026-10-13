@@ -29,11 +29,7 @@
                 <div
                     class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
-                    <p
-                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)] dark:text-primary-300"
-                    >
-                        AMUMA
-                    </p>
+                    <p class="brand-shine text-2xl font-extrabold tracking-wide">AMUMA</p>
                 </div>
             </NuxtLink>
 

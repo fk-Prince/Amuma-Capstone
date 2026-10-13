@@ -22,6 +22,7 @@ import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import PatientFilter from "~/components/sections/app/Patient/PatientFilter.vue";
 import BaseDropdownMenu from "~/components/ui/BaseDropdownMenu.vue";
 import { usePagination } from "~/composables/usePagination";
+import { useListView } from "~/composables/useListView";
 
 definePageMeta({
     layout: "dashboard",
@@ -33,7 +34,7 @@ useHead({ title: "Patients" });
 const route = useRoute();
 const router = useRouter();
 
-const viewMode = ref<"table" | "card">("table");
+const { view: viewMode, setView } = useListView();
 
 const patients = ref<PatientRetrieve[]>([]);
 const isLoading = ref(true);
@@ -124,11 +125,6 @@ watch(
 );
 
 onMounted(() => {
-    // A wide table cannot fit a phone, so cards are the starting view there.
-    if (window.matchMedia("(max-width: 767px)").matches) {
-        viewMode.value = "card";
-    }
-
     fetchPatients(1);
 });
 
@@ -225,7 +221,7 @@ const emptyStateSubtitle = computed(() =>
                                         ? 'bg-primary text-white'
                                         : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
                                 "
-                                @click="viewMode = 'table'"
+                                @click="setView('table')"
                             >
                                 <List class="h-4 w-4" />
                             </button>
@@ -238,7 +234,7 @@ const emptyStateSubtitle = computed(() =>
                                         ? 'bg-primary text-white'
                                         : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
                                 "
-                                @click="viewMode = 'card'"
+                                @click="setView('card')"
                             >
                                 <LayoutGrid class="h-4 w-4" />
                             </button>
