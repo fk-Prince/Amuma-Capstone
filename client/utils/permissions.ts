@@ -242,8 +242,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.RoomsAndBeds]: MODULE_ACTIONS[Modules.RoomsAndBeds],
         [Modules.Services]: MODULE_ACTIONS[Modules.Services],
         [Modules.EmployeeManagement]: MODULE_ACTIONS[Modules.EmployeeManagement],
-        [Modules.BillingAndInvoices]:
-            MODULE_ACTIONS[Modules.BillingAndInvoices],
+        [Modules.BillingAndInvoices]: [
+            PermissionAction.Read,
+            PermissionAction.Export,
+        ],
         [Modules.ManageSubscription]: [PermissionAction.Read],
         [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
         [Modules.Inquiries]: [PermissionAction.Read],
