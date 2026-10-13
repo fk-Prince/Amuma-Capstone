@@ -480,6 +480,8 @@ const {
 });
 
 onMounted(async () => {
+    if (!route.query.step) window.scrollTo({ top: 0, behavior: "instant" });
+
     loading.value = true;
     bookingStore.clear();
     try {
@@ -499,6 +501,11 @@ onMounted(async () => {
         console.error(err);
     } finally {
         loading.value = false;
+    }
+
+    if (!route.query.step) {
+        await nextTick();
+        window.scrollTo({ top: 0, behavior: "instant" });
     }
 
     if (

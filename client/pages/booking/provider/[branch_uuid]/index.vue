@@ -34,7 +34,10 @@
             </button>
         </div>
 
-        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div
+            ref="panelTopRef"
+            class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3"
+        >
             <!-- Left column -->
             <div
                 v-if="activeTab === 'services' && !loading"
@@ -564,9 +567,23 @@ const panelOptions = [
     { value: "facility", label: "Facility Admission", icon: Building2 },
 ] as const;
 
+const panelTopRef = ref<HTMLElement | null>(null);
+
+const scrollToPanelTop = async () => {
+    await nextTick();
+
+    const el = panelTopRef.value;
+    if (!el) return;
+
+    const top = el.getBoundingClientRect().top + window.scrollY - 140;
+
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+};
+
 const onServiceSelect = (value: "homecare" | "facility") => {
     chosenPanel.value = value;
     activeTab.value = "services";
+    scrollToPanelTop();
 };
 
 const isPanelTab = (key: TabKey) => key === "services" || key === "providers";

@@ -54,13 +54,22 @@ const accommodations = computed(() => {
                 CYCLE_ORDER.indexOf(String(b.billing_cycle).toUpperCase()),
         );
 
+        const distinct = [
+            ...new Set(
+                sorted
+                    .map((plan) => (plan.description ?? "").trim())
+                    .filter(Boolean),
+            ),
+        ];
+
         return {
             type,
             label: meta?.label ?? type,
             blurb: meta?.blurb ?? "",
             icon: meta?.icon ?? BedDouble,
             accent: meta?.accent ?? "from-sky-400 to-blue-500 shadow-sky-500/20",
-            description: sorted.find((plan) => plan.description)?.description,
+            description: distinct.length === 1 ? distinct[0] : null,
+            perPlanDescriptions: distinct.length > 1,
             slots: Math.max(...sorted.map((plan) => Number(plan.available_slot ?? 0))),
             plans: sorted,
         };
@@ -173,36 +182,44 @@ const peso = (value: number | string) =>
                         class="text-sm leading-6 text-gray-600 dark:text-gray-300"
                     />
 
-                    <ul class="flex flex-col gap-2">
+                    <ul class="mt-auto flex flex-col gap-2">
                         <li
                             v-for="plan in room.plans"
                             :key="plan.billing_cycle"
-                            class="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5 dark:bg-white/5"
+                            class="rounded-xl bg-gray-50 px-3.5 py-2.5 dark:bg-white/5"
                         >
-                            <span
-                                class="text-sm font-medium capitalize text-gray-700 dark:text-gray-200"
-                            >
-                                {{ String(plan.billing_cycle).toLowerCase() }}
-                            </span>
-                            <span
-                                class="text-sm font-bold text-secondary dark:text-white"
-                            >
-                                {{ peso(plan.price) }}
+                            <div class="flex items-center justify-between gap-3">
                                 <span
-                                    class="text-xs font-medium text-gray-400"
-                                    >{{
-                                        CYCLE_LABELS[
-                                            String(plan.billing_cycle).toUpperCase()
-                                        ]
-                                    }}</span
+                                    class="text-sm font-medium capitalize text-gray-700 dark:text-gray-200"
                                 >
-                            </span>
+                                    {{ String(plan.billing_cycle).toLowerCase() }}
+                                </span>
+                                <span
+                                    class="text-sm font-bold text-secondary dark:text-white"
+                                >
+                                    {{ peso(plan.price) }}
+                                    <span
+                                        class="text-xs font-medium text-gray-400"
+                                        >{{
+                                            CYCLE_LABELS[
+                                                String(plan.billing_cycle).toUpperCase()
+                                            ]
+                                        }}</span
+                                    >
+                                </span>
+                            </div>
+
+                            <ClampedText
+                                v-if="room.perPlanDescriptions && plan.description"
+                                :text="plan.description"
+                                class="mt-1.5 text-xs leading-5 text-gray-500 dark:text-gray-400"
+                            />
                         </li>
                     </ul>
 
                     <button
                         type="button"
-                        class="mt-auto rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                         :disabled="room.slots <= 0"
                         @click="emit('facility')"
                     >
