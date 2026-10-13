@@ -106,10 +106,19 @@ export class BaseService {
 
         const config = useRuntimeConfig();
 
-        await $fetch('/sanctum/csrf-cookie', {
-            baseURL: config.public.backendApi,
-            credentials: 'include',
-        });
+        try {
+            await $fetch('/sanctum/csrf-cookie', {
+                baseURL: config.public.backendApi,
+                credentials: 'include',
+            });
+        } catch (error: any) {
+            throw {
+                status: error?.response?.status,
+                message: 'Internal Server Error',
+                errors: {},
+                data: error?.response?._data,
+            };
+        }
 
         this.csrfReady = true;
     }
