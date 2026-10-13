@@ -61,7 +61,7 @@ watch(
 
 const columns: DataTableColumn[] = [
     { key: "employee_code", label: "ID" },
-    { key: "name", label: "Name", sortable: true },
+    { key: "name", label: "Name", sortable: true, primary: true },
     { key: "email", label: "Email", sortable: true },
     { key: "phone", label: "Phone Number" },
     { key: "assignment", label: "Assignment" },

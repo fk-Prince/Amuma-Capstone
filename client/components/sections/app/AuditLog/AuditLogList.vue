@@ -53,8 +53,8 @@ watch(
 
 const columns: DataTableColumn[] = [
     { key: "when", label: "When" },
-    { key: "actor", label: "User" },
-    { key: "action", label: "Action" },
+    { key: "actor", label: "User", primary: true },
+    { key: "action", label: "Action", badge: true },
     { key: "module", label: "Module" },
     { key: "summary", label: "Details" },
     { key: "actions", label: "", align: "right" },
@@ -122,7 +122,7 @@ const rows = computed(() =>
 
         <template #cell-summary="{ row }">
             <p
-                class="max-w-sm truncate text-slate-600 dark:text-gray-300"
+                class="line-clamp-2 max-w-sm text-slate-600 md:line-clamp-none md:truncate dark:text-gray-300"
                 :title="row.summary"
             >
                 {{ row.summary }}

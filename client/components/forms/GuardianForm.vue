@@ -1,5 +1,5 @@
 <!-- <template>
-    <section class="rounded-2xl p-8 md:p-10">
+    <section class="rounded-2xl p-4 sm:p-8 md:p-10">
         <div class="flex gap-3 mb-8 items-baseline">
             <span class="text-2xl text-primary">03</span>
             <div>
@@ -199,7 +199,7 @@ onMounted(() => {
 </script> -->
 
 <template>
-    <section class="rounded-2xl p-8 md:p-10">
+    <section class="rounded-2xl p-4 sm:p-8 md:p-10">
         <div class="flex gap-3 mb-8 items-baseline">
             <span class="text-2xl text-primary">03</span>
             <div>

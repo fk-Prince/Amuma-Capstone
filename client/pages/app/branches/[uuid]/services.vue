@@ -16,8 +16,8 @@
                     />
                 </div>
 
-                <div class="flex flex-1 flex-col p-5">
-                    <div class="mb-5 flex justify-end">
+                <div class="flex flex-1 flex-col p-3 sm:p-5">
+                    <div class="mb-3 flex justify-end sm:mb-5">
                         <span
                             class="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
                         >

@@ -1,6 +1,6 @@
 <!-- components/forms/AssessmentForm.vue -->
 <template>
-    <section ref="assessmentSection" class="rounded-2xl p-8 md:p-10">
+    <section ref="assessmentSection" class="rounded-2xl p-4 sm:p-8 md:p-10">
         <div class="flex items-baseline gap-3 mb-8">
             <span class="text-2xl text-primary">05</span>
 

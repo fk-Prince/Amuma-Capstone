@@ -118,7 +118,7 @@ const rows = computed(() =>
 
         <template #cell-message="{ row }">
             <p
-                class="max-w-xs truncate"
+                class="line-clamp-2 max-w-xs md:line-clamp-none md:truncate"
                 :class="
                     row.status === 'new'
                         ? 'text-slate-700 dark:text-gray-200'

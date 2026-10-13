@@ -1,5 +1,5 @@
 <template>
-    <section class="p-8 md:p-10">
+    <section class="p-4 sm:p-8 md:p-10">
         <div class="flex items-baseline gap-3 mb-8">
             <span class="text-2xl text-primary">02</span>
             <div>

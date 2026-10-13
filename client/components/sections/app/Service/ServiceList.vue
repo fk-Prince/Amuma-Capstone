@@ -285,36 +285,72 @@ const groupedServices = computed(() => {
                             <button
                                 type="button"
                                 @click="toggleService(service.service_id)"
-                                class="w-full flex items-center justify-between gap-4 p-5 text-left"
+                                class="flex w-full items-start gap-3 p-4 text-left sm:items-center sm:justify-between sm:gap-4 sm:p-5"
                                 :class="
                                     isExpanded(service.service_id)
                                         ? 'bg-[#F7FAF9] dark:bg-white/5'
                                         : 'hover:bg-[#FAFCFB] dark:hover:bg-white/5'
                                 "
                             >
-                                <div class="flex items-center gap-4 min-w-0">
+                                <div
+                                    class="flex min-w-0 flex-1 items-start gap-3 sm:items-center sm:gap-4"
+                                >
                                     <div
-                                        class="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-11 sm:w-11"
                                     >
                                         <Stethoscope
                                             class="w-5 h-5 text-primary"
                                         />
                                     </div>
 
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <div
-                                            class="flex items-center gap-2 flex-wrap"
+                                            class="flex items-start justify-between gap-2"
                                         >
                                             <p
-                                                class="font-semibold text-[#16302E] truncate dark:text-white"
+                                                class="line-clamp-2 break-words font-semibold text-[#16302E] sm:line-clamp-none sm:truncate dark:text-white"
                                             >
                                                 {{ service.service_name }}
                                             </p>
+
+                                            <ChevronDown
+                                                class="mt-0.5 h-4 w-4 shrink-0 text-muted transition-transform sm:hidden dark:text-gray-400"
+                                                :class="{
+                                                    'rotate-180': isExpanded(
+                                                        service.service_id,
+                                                    ),
+                                                }"
+                                            />
                                         </div>
 
                                         <div
-                                            class="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B8A87] dark:text-gray-400"
+                                            class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-[#6B8A87] dark:text-gray-400"
                                         >
+                                            <span
+                                                class="flex items-center gap-1 rounded-full px-2.5 py-0.5 font-medium sm:hidden"
+                                                :class="
+                                                    service.is_available
+                                                        ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/15 dark:text-accent-300'
+                                                        : 'bg-muted-light text-muted-dark dark:bg-white/10 dark:text-gray-300'
+                                                "
+                                            >
+                                                <CheckCircle2
+                                                    v-if="service.is_available"
+                                                    class="h-3 w-3"
+                                                />
+
+                                                <XCircle
+                                                    v-else
+                                                    class="h-3 w-3"
+                                                />
+
+                                                {{
+                                                    service.is_available
+                                                        ? "Available"
+                                                        : "Unavailable"
+                                                }}
+                                            </span>
+
                                             <span
                                                 class="flex items-center gap-1"
                                             >
@@ -343,7 +379,9 @@ const groupedServices = computed(() => {
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-3 shrink-0">
+                                <div
+                                    class="hidden shrink-0 items-center gap-3 sm:flex"
+                                >
                                     <span
                                         class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
                                         :class="
@@ -380,7 +418,7 @@ const groupedServices = computed(() => {
                             <Transition name="slide">
                                 <div
                                     v-if="isExpanded(service.service_id)"
-                                    class="border-t border-[#E4EFED] bg-[#FAFCFB] p-5 space-y-6 dark:border-white/10 dark:bg-white/5"
+                                    class="space-y-4 border-t border-[#E4EFED] bg-[#FAFCFB] p-3 sm:space-y-6 sm:p-5 dark:border-white/10 dark:bg-white/5"
                                 >
                                     <div
                                         class="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -408,7 +446,7 @@ const groupedServices = computed(() => {
                                                 @click.stop="
                                                     openEditService(service)
                                                 "
-                                                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                                                class="inline-flex flex-1 items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium sm:flex-none text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                                             >
                                                 <Pencil class="w-4 h-4" />
                                                 Edit
@@ -421,7 +459,7 @@ const groupedServices = computed(() => {
                                                 @click.stop="
                                                     openAssignService(service)
                                                 "
-                                                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+                                                class="inline-flex flex-1 items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium sm:flex-none text-[#16302E] bg-white border border-[#E4EFED] hover:border-primary/40 hover:text-primary hover:bg-[#F7FAF9] transition dark:bg-secondary dark:border-white/10 dark:text-white dark:hover:bg-white/5"
                                             >
                                                 <UserPlus class="w-4 h-4" />
                                                 {{ assignLabel(service) }}
@@ -458,14 +496,14 @@ const groupedServices = computed(() => {
                                         </div>
 
                                         <dl
-                                            class="grid grid-cols-2 lg:grid-cols-5 divide-y divide-[#E4EFED] sm:divide-y-0 sm:divide-x dark:divide-white/10"
+                                            class="grid grid-cols-2 gap-4 p-4 lg:grid-cols-5 lg:gap-0 lg:divide-x lg:divide-[#E4EFED] lg:p-0 dark:lg:divide-white/10"
                                         >
                                             <div
                                                 v-for="detail in serviceDetails(
                                                     service,
                                                 )"
                                                 :key="detail.label"
-                                                class="p-5"
+                                                class="min-w-0 lg:p-5"
                                             >
                                                 <dt
                                                     class="flex items-center gap-2 text-[11px] uppercase tracking-wide text-[#9AB3AF] dark:text-gray-500"

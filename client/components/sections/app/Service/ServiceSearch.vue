@@ -21,14 +21,17 @@ const emit = defineEmits<{
 const tabs = [
     {
         label: "All Services",
+        shortLabel: "All",
         icon: Stethoscope,
     },
     {
         label: "Homecare Services",
+        shortLabel: "Homecare",
         icon: Globe2,
     },
     {
         label: "Facility Services",
+        shortLabel: "Facility",
         icon: Building2,
     },
 ];
@@ -62,12 +65,13 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
             <button
                 v-if="canCreate(Modules.Services)"
                 type="button"
+                aria-label="Add service"
                 @click="emit('addService')"
-                class="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-3 sm:px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98]"
+                class="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:opacity-90 hover:shadow-md active:scale-[0.98] sm:w-auto sm:px-5"
             >
                 <Plus class="h-4 w-4" />
 
-                Add Service
+                <span class="hidden sm:inline">Add Service</span>
             </button>
         </div>
 
@@ -99,7 +103,8 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                 >
                     <component :is="tab.icon" class="hidden h-4 w-4 sm:block" />
 
-                    {{ tab.label }}
+                    <span class="sm:hidden">{{ tab.shortLabel }}</span>
+                    <span class="hidden sm:inline">{{ tab.label }}</span>
                 </button>
             </div>
 

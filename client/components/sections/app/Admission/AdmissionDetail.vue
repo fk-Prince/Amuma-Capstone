@@ -14,7 +14,7 @@
             :class="
                 variant === 'modal' || variant === 'new'
                     ? 'relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 md:p-8 shadow-xl dark:bg-secondary'
-                    : 'rounded-2xl bg-white p-6 md:p-8 dark:bg-secondary'
+                    : 'rounded-2xl bg-white p-4 sm:p-6 md:p-8 dark:bg-secondary'
             "
         >
             <button

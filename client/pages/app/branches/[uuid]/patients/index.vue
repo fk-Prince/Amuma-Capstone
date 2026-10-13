@@ -124,6 +124,11 @@ watch(
 );
 
 onMounted(() => {
+    // A wide table cannot fit a phone, so cards are the starting view there.
+    if (window.matchMedia("(max-width: 767px)").matches) {
+        viewMode.value = "card";
+    }
+
     fetchPatients(1);
 });
 

@@ -22,7 +22,126 @@
 
         <div class="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)_auto]">
         <div class="min-h-0 overflow-auto">
-            <table class="w-full min-w-[42rem] text-sm">
+            <div
+                v-if="showCards"
+                :class="
+                    view === 'card'
+                        ? 'grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-3'
+                        : 'space-y-3 p-3 md:hidden'
+                "
+            >
+                <template v-if="loading">
+                    <div
+                        v-for="n in 4"
+                        :key="`skeleton-card-${n}`"
+                        class="animate-pulse space-y-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary"
+                    >
+                        <div class="h-4 w-2/3 rounded bg-slate-200 dark:bg-white/10" />
+                        <div class="h-3 w-1/2 rounded bg-slate-100 dark:bg-white/5" />
+                        <div class="h-3 w-full rounded bg-slate-100 dark:bg-white/5" />
+                    </div>
+                </template>
+
+                <div
+                    v-else-if="!sortedRows.length"
+                    class="col-span-full flex flex-col items-center px-4 py-14 text-center"
+                >
+                    <p class="text-sm font-medium text-slate-600 dark:text-gray-300">
+                        {{ emptyTitle }}
+                    </p>
+
+                    <p
+                        v-if="emptyDescription"
+                        class="mt-1 text-sm text-slate-400 dark:text-gray-500"
+                    >
+                        {{ emptyDescription }}
+                    </p>
+                </div>
+
+                <template v-else>
+                    <article
+                        v-for="row in sortedRows"
+                        :key="String(rowKey(row))"
+                        class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/20"
+                        :class="onRowClick ? 'cursor-pointer' : ''"
+                        @click="onRowClick?.(row)"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div
+                                v-if="titleColumn"
+                                class="min-w-0 flex-1 text-sm text-slate-800 dark:text-white"
+                            >
+                                <slot
+                                    :name="`cell-${titleColumn.key}`"
+                                    :row="row"
+                                    :value="row[titleColumn.key]"
+                                >
+                                    {{ row[titleColumn.key] ?? "—" }}
+                                </slot>
+                            </div>
+
+                            <div v-if="statusColumn" class="shrink-0">
+                                <slot
+                                    :name="`cell-${statusColumn.key}`"
+                                    :row="row"
+                                    :value="row[statusColumn.key]"
+                                >
+                                    {{ row[statusColumn.key] ?? "—" }}
+                                </slot>
+                            </div>
+                        </div>
+
+                        <dl
+                            v-if="detailColumns.length"
+                            class="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
+                        >
+                            <div
+                                v-for="col in detailColumns"
+                                :key="col.key"
+                                class="min-w-0"
+                            >
+                                <dt class="text-slate-400 dark:text-gray-500">
+                                    {{ col.label }}
+                                </dt>
+
+                                <dd
+                                    class="mt-0.5 break-words font-medium text-slate-700 dark:text-gray-300"
+                                >
+                                    <slot
+                                        :name="`cell-${col.key}`"
+                                        :row="row"
+                                        :value="row[col.key]"
+                                    >
+                                        {{ row[col.key] ?? "—" }}
+                                    </slot>
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <div
+                            v-if="actionsColumn"
+                            class="mt-3 border-t border-slate-100 pt-3 dark:border-white/10"
+                        >
+                            <slot
+                                :name="`cell-${actionsColumn.key}`"
+                                :row="row"
+                                :value="row[actionsColumn.key]"
+                            />
+                        </div>
+                    </article>
+                </template>
+            </div>
+
+            <table
+                class="w-full min-w-[42rem] text-sm"
+                :class="
+                    view === 'card'
+                        ? 'hidden'
+                        : mobileCards
+                          ? 'hidden md:table'
+                          : ''
+                "
+            >
                 <thead class="sticky top-0 z-10">
                     <tr class="bg-slate-50/70 dark:bg-white/5">
                         <th
@@ -243,6 +362,10 @@ export interface DataTableColumn {
     label: string;
     sortable?: boolean;
     align?: "left" | "center" | "right";
+    // The column shown as the card heading; the first column when none is marked.
+    primary?: boolean;
+    // Shown at the top right of the card; the status column when none is marked.
+    badge?: boolean;
 }
 
 const props = withDefaults(
@@ -258,6 +381,10 @@ const props = withDefaults(
         emptyTitle?: string;
         emptyDescription?: string;
         onRowClick?: (row: T) => void;
+        // "card" lists the rows as cards at every width.
+        view?: "table" | "card";
+        // Below the md breakpoint a wide table cannot fit, so rows become cards.
+        mobileCards?: boolean;
     }>(),
     {
         loading: false,
@@ -266,7 +393,40 @@ const props = withDefaults(
         searchDebounce: 400,
         emptyTitle: "No results found",
         emptyDescription: "",
+        view: "table",
+        mobileCards: true,
     },
+);
+
+const showCards = computed(() => props.view === "card" || props.mobileCards);
+
+const titleColumn = computed(
+    () =>
+        props.columns.find((col) => col.primary) ??
+        props.columns.find((col) => !["status", "actions"].includes(col.key)) ??
+        null,
+);
+
+const statusColumn = computed(() => {
+    const column =
+        props.columns.find((col) => col.badge) ??
+        props.columns.find((col) => col.key === "status") ??
+        null;
+
+    return column && column.key !== titleColumn.value?.key ? column : null;
+});
+
+const actionsColumn = computed(
+    () => props.columns.find((col) => col.key === "actions") ?? null,
+);
+
+const detailColumns = computed(() =>
+    props.columns.filter(
+        (col) =>
+            col.key !== titleColumn.value?.key &&
+            col.key !== statusColumn.value?.key &&
+            col.key !== actionsColumn.value?.key,
+    ),
 );
 
 const emit = defineEmits<{
