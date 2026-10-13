@@ -9,7 +9,6 @@ use Illuminate\Support\Str;
 /**
  * @method static void created(\Closure|string $callback)
  * @method static void updated(\Closure|string $callback)
- * @method static void deleted(\Closure|string $callback)
  */
 trait Auditable
 {
@@ -17,7 +16,6 @@ trait Auditable
     {
         static::created(fn($model) => app(AuditService::class)->model($model, AuditLog::ACTION_CREATED));
         static::updated(fn($model) => app(AuditService::class)->model($model, AuditLog::ACTION_UPDATED));
-        static::deleted(fn($model) => app(AuditService::class)->model($model, AuditLog::ACTION_DELETED));
     }
 
     public function auditExclude(): array

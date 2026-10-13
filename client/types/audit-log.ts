@@ -22,7 +22,6 @@ export interface AuditLogDetail extends AuditLog {
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
     created: "Created",
     updated: "Updated",
-    deleted: "Deleted",
     login: "Login",
     login_failed: "Failed login",
     logout: "Logout",
@@ -34,7 +33,6 @@ export const AUDIT_ACTION_CLASSES: Record<string, string> = {
         "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
     updated:
         "bg-primary-100 text-primary-700 dark:bg-primary-500/10 dark:text-primary-300",
-    deleted: "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300",
     login: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
     login_failed:
         "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",

@@ -29,9 +29,6 @@ class AuditService
         if ($action === AuditLog::ACTION_CREATED) {
             $old = [];
             $new = $this->values($model, array_diff(array_keys($model->getAttributes()), $exclude));
-        } elseif ($action === AuditLog::ACTION_DELETED) {
-            $old = $this->values($model, array_diff(array_keys($model->getAttributes()), $exclude));
-            $new = [];
         } else {
             $keys = array_diff(array_keys($model->getChanges()), $exclude);
 
