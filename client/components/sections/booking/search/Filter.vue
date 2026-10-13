@@ -111,8 +111,11 @@
             <transition name="fade-slide">
                 <div
                     v-if="locationOpen"
-                    class="fixed z-[70] w-72 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
-                    :style="{ top: menuPos.top + 'px', left: menuPos.left + 'px' }"
+                    class="fixed z-[70] w-[26rem] overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
+                    :style="{
+                        top: menuPos.top + 'px',
+                        left: `min(${menuPos.left}px, calc(100vw - 27rem))`,
+                    }"
                 >
                     <p
                         class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"

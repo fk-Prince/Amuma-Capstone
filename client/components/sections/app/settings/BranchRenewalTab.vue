@@ -1002,6 +1002,7 @@ import { paymentService } from "~/api/payment/PaymentService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
+import { useSubscriptionVersion } from "~/composables/useSubscriptionVersion";
 import type { CardDetails } from "~/types/payment";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import {
@@ -1032,6 +1033,13 @@ const subscription = ref<any>(null);
 const plans = ref<any[]>([]);
 
 const branchStore = useBranchStore();
+
+// Held from setup so it still works when a GCash payment confirms after this
+// dialog has been closed.
+const subscriptionVersion = useSubscriptionVersion();
+const announceChange = () => {
+    subscriptionVersion.value++;
+};
 
 const isTest = computed(() => subscription.value?.mode === "test");
 
@@ -1449,6 +1457,7 @@ const payCard = async () => {
                 }
 
                 showRenew.value = false;
+                announceChange();
             },
         });
     } catch (err: any) {
@@ -1484,6 +1493,7 @@ const finishGcashPayment = async (reference?: string) => {
     if (outcome.status === "submitted") {
         await fetchSubscription(true);
         syncBranchMode();
+        announceChange();
         success(outcome.message ?? "Subscription renewed.");
     } else if (outcome.status === "failed") {
         error(
@@ -1543,6 +1553,7 @@ const cancelPendingPlan = async () => {
         };
 
         confirmCancelPending.value = false;
+        announceChange();
         success(result?.message ?? "Plan change cancelled.");
     } catch (err: any) {
         error(err?.message ?? "Could not cancel the plan change.");
@@ -1572,6 +1583,7 @@ const cancelTest = async () => {
 
         confirmCancel.value = false;
         syncBranchMode();
+        announceChange();
         success(result?.message ?? "Subscription cancelled.");
     } catch (err: any) {
         error(err?.message ?? "Could not cancel the subscription.");
@@ -1601,6 +1613,7 @@ const endTest = async () => {
 
         confirmEnd.value = false;
         syncBranchMode();
+        announceChange();
         success(result?.message ?? "Free trial ended.");
     } catch (err: any) {
         error(err?.message ?? "Could not end free trial.");

@@ -13,6 +13,7 @@ export interface AuditLog {
 }
 
 export interface AuditLogDetail extends AuditLog {
+    record_code: string | null;
     old_values: Record<string, unknown> | null;
     new_values: Record<string, unknown> | null;
     ip_address: string | null;
@@ -89,6 +90,22 @@ export const auditSummary = (log: AuditLog): string => {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?/;
 
+// Plain lowercase words only, so emails, links and codes are left as they are.
+const PLAIN_WORDS = /^[a-z][a-z0-9 _-]*$/;
+
+const titleCase = (value: string) =>
+    value.replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+
+const capitalizeValue = (value: string): string => {
+    if (!PLAIN_WORDS.test(value)) return value;
+
+    const spaced = value.replace(/_/g, " ");
+
+    return value.includes("_") || !value.includes(" ")
+        ? titleCase(spaced)
+        : capitalize(spaced);
+};
+
 export const auditValue = (value: unknown): string => {
     if (value === null || value === undefined || value === "") return "—";
     if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -96,6 +113,7 @@ export const auditValue = (value: unknown): string => {
         return stringToDateTime(value) || value;
     }
     if (typeof value === "object") return JSON.stringify(value);
+    if (typeof value === "string") return capitalizeValue(value);
 
     return String(value);
 };

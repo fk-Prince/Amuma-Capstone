@@ -127,6 +127,12 @@ const actor = computed(
                                 </dt>
                                 <dd class="text-slate-800 dark:text-white">
                                     {{ humanize(log.record) }}
+                                    <span
+                                        v-if="detail?.record_code"
+                                        class="text-slate-400 dark:text-gray-500"
+                                    >
+                                        · {{ detail.record_code }}
+                                    </span>
                                 </dd>
                             </div>
                             <div v-if="detail?.ip_address">

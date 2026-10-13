@@ -9,7 +9,9 @@
                 class="border-b border-slate-100 px-3 py-5 dark:border-white/10"
             >
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="relative w-full min-w-[220px] sm:max-w-sm sm:flex-1">
+                    <div
+                        class="relative w-full min-w-[220px] sm:max-w-sm sm:flex-1"
+                    >
                         <svg
                             viewBox="0 0 24 24"
                             class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
@@ -31,7 +33,9 @@
                         />
                     </div>
 
-                    <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+                    <div
+                        class="flex w-full flex-wrap items-center gap-3 sm:w-auto"
+                    >
                         <Combobox
                             v-model="statusFilter"
                             class="w-full sm:w-56"
@@ -379,16 +383,11 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import {
-    CircleCheck,
-    CircleX,
-    Clock,
-    LayoutGrid,
-    Eye,
-} from "lucide-vue-next";
+import { CircleCheck, CircleX, Clock, LayoutGrid, Eye } from "lucide-vue-next";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
+import { useSubscriptionVersion } from "~/composables/useSubscriptionVersion";
 import { useToast } from "~/composables/useToast";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
@@ -798,11 +797,11 @@ const agency = computed(() => {
 
 let requestId = 0;
 
-const fetchBranches = async (page = 1) => {
+const fetchBranches = async (page = 1, silent = false) => {
     const thisRequest = ++requestId;
 
-    if (page === 1) loading.value = true;
-    else loadingMore.value = true;
+    if (page > 1) loadingMore.value = true;
+    else if (!silent) loading.value = true;
 
     try {
         const res = await agencyService.list({
@@ -868,6 +867,15 @@ const closeRenewal = () => {
     showRenewal.value = false;
     fetchRenewal();
 };
+
+const subscriptionVersion = useSubscriptionVersion();
+
+watch(subscriptionVersion, () => {
+    fetchRenewal();
+    fetchStats();
+    fetchBranches(1, true);
+    branchStore.refreshBranch().catch(() => {});
+});
 
 onMounted(async () => {
     await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);
