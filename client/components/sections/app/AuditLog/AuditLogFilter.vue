@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import BaseInput from "~/components/ui/BaseInput.vue";
+import Combobox from "~/components/ui/Combobox.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import {
     AUDIT_ACTION_OPTIONS,
@@ -22,8 +23,15 @@ defineEmits<{
     (e: "update:dateTo", value: string): void;
 }>();
 
-const selectClass =
-    "w-full sm:w-auto rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary dark:border-white/10 dark:bg-secondary dark:text-gray-200";
+const moduleItems = [
+    { label: "All modules", value: "" },
+    ...AUDIT_MODULE_OPTIONS,
+];
+
+const actionItems = [
+    { label: "All actions", value: "" },
+    ...AUDIT_ACTION_OPTIONS,
+];
 </script>
 
 <template>
@@ -36,52 +44,28 @@ const selectClass =
                 :is-search="true"
                 :modelValue="search"
                 @update:modelValue="$emit('update:search', $event)"
-                placeholder="Description or user email"
+                placeholder="User name, email or details"
                 input-class="px-4 py-2.5 rounded-lg w-full"
             />
         </div>
 
-        <select
-            :value="module"
-            :class="selectClass"
-            aria-label="Filter by module"
-            @change="
-                $emit(
-                    'update:module',
-                    ($event.target as HTMLSelectElement).value,
-                )
-            "
-        >
-            <option value="">All modules</option>
-            <option
-                v-for="option in AUDIT_MODULE_OPTIONS"
-                :key="option.value"
-                :value="option.value"
-            >
-                {{ option.label }}
-            </option>
-        </select>
+        <Combobox
+            :modelValue="module"
+            :items="moduleItems"
+            placeholder="All modules"
+            class="w-full sm:w-48"
+            input-class="px-4 py-2.5 rounded-lg"
+            @update:modelValue="$emit('update:module', $event ?? '')"
+        />
 
-        <select
-            :value="action"
-            :class="selectClass"
-            aria-label="Filter by action"
-            @change="
-                $emit(
-                    'update:action',
-                    ($event.target as HTMLSelectElement).value,
-                )
-            "
-        >
-            <option value="">All actions</option>
-            <option
-                v-for="option in AUDIT_ACTION_OPTIONS"
-                :key="option.value"
-                :value="option.value"
-            >
-                {{ option.label }}
-            </option>
-        </select>
+        <Combobox
+            :modelValue="action"
+            :items="actionItems"
+            placeholder="All actions"
+            class="w-full sm:w-44"
+            input-class="px-4 py-2.5 rounded-lg"
+            @update:modelValue="$emit('update:action', $event ?? '')"
+        />
 
         <div class="flex items-center gap-2">
             <DatePickerField

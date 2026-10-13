@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class BranchSubscription extends Pivot
 {
-    use HasUuids;
+    use Auditable, HasUuids;
+
+    protected string $auditModule = 'subscriptions';
 
     protected $table = 'branch_subscription';
     protected $primaryKey = 'branch_subscription_id';

@@ -40,7 +40,11 @@ class AuditLogRepository
 
                 $query->where(function ($inner) use ($term) {
                     $inner->where('description', 'ilike', $term)
-                        ->orWhereHas('user', fn($user) => $user->where('email', 'ilike', $term));
+                        ->orWhereHas('user', function ($user) use ($term) {
+                            $user->where('email', 'ilike', $term)
+                                ->orWhereHas('employee', fn($employee) => $employee->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term]))
+                                ->orWhereHas('client', fn($client) => $client->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term]));
+                        });
                 });
             })
             ->orderByDesc('audit_log_id')

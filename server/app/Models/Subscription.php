@@ -2,14 +2,25 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use App\Service\AuditService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Subscription extends Model
 {
-    use HasUuids;
+    use Auditable, HasUuids;
+
+    protected string $auditModule = 'subscriptions';
+
     protected $primaryKey = 'subscription_id';
+
+    public function auditBranchId(): ?int
+    {
+        return app(AuditService::class)->requestBranchId()
+            ?? $this->branchLinks()->value('branch_id');
+    }
 
     public const RENEWAL_WINDOW_DAYS = 7;
     public const STATUS_ACTIVE = 'active';

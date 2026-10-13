@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Agency extends Model
 {
-    use HasUuids;
+    use Auditable, HasUuids;
+
+    protected string $auditModule = 'branch_settings';
+
+    public function auditExclude(): array
+    {
+        return ['updated_at', 'id_front', 'id_back', 'document'];
+    }
+
     protected $primaryKey = 'agency_id';
 
     public const STATUS_PENDING = 'pending';

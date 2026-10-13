@@ -47,6 +47,12 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
     auth: "Authentication",
     bookings: "Bookings",
     billing: "Billing",
+    rooms: "Rooms & Beds",
+    services: "Services",
+    employees: "Employee Management",
+    contracts: "Contracts",
+    branch_settings: "Branch Settings",
+    subscriptions: "Subscription",
 };
 
 export const AUDIT_ACTION_OPTIONS = Object.entries(AUDIT_ACTION_LABELS).map(
@@ -64,6 +70,7 @@ export const humanize = (value: string): string =>
     capitalize(
         value
             .replace(/([a-z])([A-Z])/g, "$1 $2")
+            .replace(/\./g, " › ")
             .replace(/_/g, " ")
             .toLowerCase(),
     );

@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Bed extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'rooms';
+
     protected $primaryKey = 'bed_id';
     protected $fillable = [
         'bed_no',
@@ -17,6 +22,15 @@ class Bed extends Model
     public const STATUS_RESERVED = 'Reserved';
     public const STATUS_OCCUPIED = 'Occupied';
     public const STATUS_MAINTENANCE = 'Maintenance';
+
+    public function auditBranchId(): ?int
+    {
+        $branchId = $this->relationLoaded('room')
+            ? $this->room?->branch_id
+            : Room::whereKey($this->room_id)->value('branch_id');
+
+        return is_numeric($branchId) ? (int) $branchId : null;
+    }
 
     public function room()
     {

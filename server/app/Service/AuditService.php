@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Models\AuditLog;
+use App\Models\Branch;
 use App\Models\User;
 use App\Repository\AuditLogRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -11,29 +12,36 @@ use Illuminate\Support\Str;
 
 class AuditService
 {
+    public const ADDRESS_FIELDS = ['street', 'city', 'province', 'country', 'full_address', 'longitude', 'latitude'];
+
     private ?string $batchUuid = null;
 
     private array $roles = [];
+
+    private array $branchIds = [];
 
     public function __construct(private AuditLogRepository $logs) {}
 
     public function model(Model $model, string $action): void
     {
-        $exclude = array_flip($model->auditExclude());
+        $exclude = $model->auditExclude();
 
         if ($action === AuditLog::ACTION_CREATED) {
             $old = [];
-            $new = array_diff_key($model->getAttributes(), $exclude);
+            $new = $this->values($model, array_diff(array_keys($model->getAttributes()), $exclude));
         } elseif ($action === AuditLog::ACTION_DELETED) {
-            $old = array_diff_key($model->getAttributes(), $exclude);
+            $old = $this->values($model, array_diff(array_keys($model->getAttributes()), $exclude));
             $new = [];
         } else {
-            $new = array_diff_key($model->getChanges(), $exclude);
-            $old = array_intersect_key($model->getOriginal(), $new);
+            $keys = array_diff(array_keys($model->getChanges()), $exclude);
 
-            if (!$new) {
+            if (!$keys) {
                 return;
             }
+
+            $new = $this->values($model, $keys);
+            $old = $this->values($model, $keys, true);
+            [$old, $new] = $this->flatten($old, $new);
         }
 
         $this->write(
@@ -52,8 +60,118 @@ class AuditService
         ?Model $subject = null,
         ?string $description = null,
         ?User $actor = null,
+        ?array $old = null,
+        ?array $new = null,
     ): void {
-        $this->write($action, $module, $subject, description: $description, actor: $actor);
+        $this->write($action, $module, $subject, $old, $new, $description, actor: $actor);
+    }
+
+    public function addressChange(Model $owner, string $module, array $old, array $new, ?int $branchId = null): void
+    {
+        $oldChanges = [];
+        $newChanges = [];
+
+        foreach (self::ADDRESS_FIELDS as $field) {
+            if (!array_key_exists($field, $new)) {
+                continue;
+            }
+
+            $before = $old[$field] ?? null;
+            $after = $new[$field] ?? null;
+
+            $same = is_numeric($before) && is_numeric($after)
+                ? abs((float) $before - (float) $after) < 0.0000001
+                : (string) $before === (string) $after;
+
+            if ($same) {
+                continue;
+            }
+
+            if ($before !== null && $before !== '') {
+                $oldChanges["address.{$field}"] = $before;
+            }
+
+            if ($after !== null && $after !== '') {
+                $newChanges["address.{$field}"] = $after;
+            }
+        }
+
+        if (!$oldChanges && !$newChanges) {
+            return;
+        }
+
+        $this->write(
+            AuditLog::ACTION_UPDATED,
+            $module,
+            $owner,
+            $oldChanges ?: null,
+            $newChanges ?: null,
+            'Changed the address.',
+            $branchId,
+        );
+    }
+
+    private function values(Model $model, array $keys, bool $original = false): array
+    {
+        $values = [];
+
+        foreach ($keys as $key) {
+            $values[$key] = $original ? $model->getOriginal($key) : $model->getAttribute($key);
+        }
+
+        return $values;
+    }
+
+    private function flatten(array $old, array $new): array
+    {
+        foreach (array_keys($new) as $key) {
+            if (
+                is_array($old[$key] ?? null)
+                && is_array($new[$key])
+                && !array_is_list($old[$key])
+                && !array_is_list($new[$key])
+            ) {
+                $diff = $this->arrayDiff($old[$key], $new[$key], $key);
+                unset($old[$key], $new[$key]);
+                $old += $diff['old'];
+                $new += $diff['new'];
+            }
+        }
+
+        return [$old, $new];
+    }
+
+    private function arrayDiff(array $old, array $new, string $prefix): array
+    {
+        $changedOld = [];
+        $changedNew = [];
+
+        foreach (array_unique([...array_keys($old), ...array_keys($new)]) as $key) {
+            $path = "{$prefix}.{$key}";
+            $before = $old[$key] ?? null;
+            $after = $new[$key] ?? null;
+
+            if (
+                is_array($before)
+                && is_array($after)
+                && !array_is_list($before)
+                && !array_is_list($after)
+            ) {
+                $nested = $this->arrayDiff($before, $after, $path);
+                $changedOld += $nested['old'];
+                $changedNew += $nested['new'];
+            } elseif ($before !== $after) {
+                if (array_key_exists($key, $old)) {
+                    $changedOld[$path] = $before;
+                }
+
+                if (array_key_exists($key, $new)) {
+                    $changedNew[$path] = $after;
+                }
+            }
+        }
+
+        return ['old' => $changedOld, 'new' => $changedNew];
     }
 
     private function write(
@@ -82,7 +200,7 @@ class AuditService
             'module' => $module,
             'auditable_type' => $subject ? $subject::class : null,
             'auditable_id' => $subject?->getKey(),
-            'auditable_uuid' => $subject?->getAttribute('uuid'),
+            'auditable_uuid' => $this->subjectUuid($subject),
             'old_values' => $old,
             'new_values' => $new,
             'description' => $description,
@@ -92,11 +210,40 @@ class AuditService
         ]);
     }
 
-    private function requestBranchId(): ?int
+    private function subjectUuid(?Model $subject): ?string
     {
-        $branchId = request()->input('branch_id');
+        if (!$subject) {
+            return null;
+        }
 
-        return is_numeric($branchId) ? (int) $branchId : null;
+        $column = collect(method_exists($subject, 'uniqueIds') ? $subject->uniqueIds() : [])
+            ->first(fn($name) => str_contains($name, 'uuid')) ?? 'uuid';
+
+        $value = $subject->getAttribute($column);
+
+        return is_string($value) && Str::isUuid($value) ? $value : null;
+    }
+
+    public function requestBranchId(): ?int
+    {
+        $request = request();
+        $branchId = $request->input('branch_id');
+
+        if (is_numeric($branchId)) {
+            return (int) $branchId;
+        }
+
+        $branchUuid = $request->input('branch_uuid');
+
+        if (!is_string($branchUuid) || !Str::isUuid($branchUuid)) {
+            return null;
+        }
+
+        if (!array_key_exists($branchUuid, $this->branchIds)) {
+            $this->branchIds[$branchUuid] = Branch::where('uuid', $branchUuid)->value('branch_id');
+        }
+
+        return $this->branchIds[$branchUuid];
     }
 
     private function roleFor(?User $user, ?int $branchId): ?string

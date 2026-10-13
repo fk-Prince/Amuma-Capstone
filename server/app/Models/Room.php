@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'rooms';
+
     protected $primaryKey = 'room_id';
     protected $fillable = [
         'branch_id',

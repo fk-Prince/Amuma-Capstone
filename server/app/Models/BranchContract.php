@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BranchContract extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'contracts';
+
     protected $table = 'branch_contracts';
 
     public const CAREGORY_HOMECARE = 'Homecare';

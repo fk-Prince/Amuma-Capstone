@@ -35,6 +35,7 @@ class BranchService
         private RoomRepository $roomRepository,
         private BookingRepository $bookingRepository,
         private BranchContractRepository $branchContractRepository,
+        private AuditService $auditService,
     ) {}
 
     public function getBranch(string $uuid)
@@ -141,6 +142,8 @@ class BranchService
                 'email' => $payload['email'] ?? null
             ]);
 
+            $oldAddress = $branch->location?->only(AuditService::ADDRESS_FIELDS) ?? [];
+
             $branch->location()->updateOrCreate(
                 [],
                 [
@@ -152,6 +155,14 @@ class BranchService
                     'longitude' => $payload['location']['longitude'] ?? null,
                     'latitude' => $payload['location']['latitude'] ?? null,
                 ]
+            );
+
+            $this->auditService->addressChange(
+                $branch,
+                'branch_settings',
+                $oldAddress,
+                array_merge(array_fill_keys(AuditService::ADDRESS_FIELDS, null), $payload['location']),
+                $branch->branch_id
             );
 
             return response()->json([

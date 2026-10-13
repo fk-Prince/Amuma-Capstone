@@ -9,6 +9,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
+use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
@@ -31,12 +32,15 @@ class EmployeeService
     private EmployeeRepository $employeeRepository;
     private UserRepository $userRepository;
     private LocationRepository $locationRepository;
+    private AuditService $auditService;
 
     public function __construct(
         EmployeeRepository $employeeRepository,
         UserRepository $userRepository,
-        LocationRepository $locationRepository
+        LocationRepository $locationRepository,
+        AuditService $auditService
     ) {
+        $this->auditService = $auditService;
         $this->employeeRepository = $employeeRepository;
         $this->userRepository = $userRepository;
         $this->locationRepository = $locationRepository;
@@ -148,6 +152,38 @@ class EmployeeService
                 'employee.permissions.modules',
             ])
         );
+    }
+
+    private function permissionSnapshot(Employee $employee, int $branchId): array
+    {
+        return $employee->permissions()
+            ->where('branch_id', $branchId)
+            ->with('modules:module_id,module_name')
+            ->get()
+            ->mapWithKeys(fn(EmployeePermission $permission) => [
+                $permission->modules->module_name => implode(', ', array_map(
+                    fn(string $action) => str_replace('can_', '', $action),
+                    $permission->grantedActions()
+                )) ?: 'No access',
+            ])
+            ->all();
+    }
+
+    private function permissionChanges(array $other, array $current): array
+    {
+        $changes = [];
+
+        foreach ($current as $module => $actions) {
+            if (($other[$module] ?? null) !== $actions) {
+                $changes["permissions.{$module}"] = $actions;
+            }
+        }
+
+        foreach (array_diff_key($other, $current) as $module => $actions) {
+            $changes["permissions.{$module}"] = 'No access';
+        }
+
+        return $changes;
     }
 
     private function savePermissions(object $employee, int $branchId, array $permissions): void
@@ -290,6 +326,14 @@ class EmployeeService
             //INSERT PERMISSION
             $this->savePermissions($employee, $branch->branch_id, $payload['permissions'] ?? []);
 
+            $this->auditService->log(
+                AuditLog::ACTION_CREATED,
+                'employees',
+                $employee,
+                'Granted module permissions.',
+                new: $this->permissionChanges([], $this->permissionSnapshot($employee, $branch->branch_id))
+            );
+
             return response()->json([
                 'message' => 'Successfully Created Employee.',
                 'data' => $this->employeeSlip($employee, $user, $branch, $payload, $password),
@@ -338,8 +382,19 @@ class EmployeeService
 
             $user = $this->userRepository->update($employee->user_id, $userChanges);
 
+            if (!empty($payload['password'])) {
+                $this->auditService->log(
+                    AuditLog::ACTION_UPDATED,
+                    'employees',
+                    $employee,
+                    'Changed the account password.'
+                );
+            }
+
 
             // UPDATE LOCATION
+            $oldAddress = $employee->locations?->only(AuditService::ADDRESS_FIELDS) ?? [];
+
             if ($employee->locations) {
                 $employee->locations()->update([
                     'street' => $payload['location']['street'],
@@ -357,6 +412,14 @@ class EmployeeService
                 $employee->location_id = $location->location_id;
                 $employee->save();
             }
+
+            $this->auditService->addressChange(
+                $employee,
+                'employees',
+                $oldAddress,
+                $payload['location'],
+                $branch->branch_id
+            );
 
 
             $image = $employee->avatar;
@@ -393,8 +456,23 @@ class EmployeeService
 
             // UPDATE PERMISSIONS
             if (isset($payload['permissions'])) {
+                $before = $this->permissionSnapshot($employee, $branch->branch_id);
+
                 $employee->permissions()->delete();
                 $this->savePermissions($employee, $branch->branch_id, $payload['permissions']);
+
+                $after = $this->permissionSnapshot($employee, $branch->branch_id);
+
+                if ($before !== $after) {
+                    $this->auditService->log(
+                        AuditLog::ACTION_UPDATED,
+                        'employees',
+                        $employee,
+                        'Changed module permissions.',
+                        old: $this->permissionChanges($after, $before),
+                        new: $this->permissionChanges($before, $after)
+                    );
+                }
             }
 
             return response()->json([

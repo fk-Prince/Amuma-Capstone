@@ -18,7 +18,11 @@ use Illuminate\Support\Facades\Log;
 class AgencyService
 {
 
-    public function __construct(private AgencyRepository $agencyRepository, private BranchRepository $branchRepository) {}
+    public function __construct(
+        private AgencyRepository $agencyRepository,
+        private BranchRepository $branchRepository,
+        private AuditService $auditService,
+    ) {}
 
     public function listAgency(array $payload)
     {
@@ -64,6 +68,8 @@ class AgencyService
             ]);
 
 
+            $oldAddress = $agency->locations?->only(AuditService::ADDRESS_FIELDS) ?? [];
+
             $agency->locations()->updateOrCreate(
                 [],
                 [
@@ -75,6 +81,14 @@ class AgencyService
                     'longitude' => $payload['location']['longitude'] ?? null,
                     'latitude' => $payload['location']['latitude'] ?? null,
                 ]
+            );
+
+            $this->auditService->addressChange(
+                $agency,
+                'branch_settings',
+                $oldAddress,
+                array_merge(array_fill_keys(AuditService::ADDRESS_FIELDS, null), $payload['location']),
+                $payload['branch_id'] ?? null
             );
 
             return response()->json([

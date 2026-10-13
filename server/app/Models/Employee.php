@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\CapitalizesNames;
 use App\Models\Location;
 use App\Utils\BranchCode;
@@ -10,7 +11,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
 {
-    use CapitalizesNames;
+    use Auditable, CapitalizesNames;
+
+    protected string $auditModule = 'employees';
+
+    public function auditExclude(): array
+    {
+        return ['updated_at', 'documents', 'achievements'];
+    }
 
     protected $primaryKey = 'employee_id';
 

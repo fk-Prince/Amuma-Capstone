@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Branch extends Model
 {
-    use HasUuids;
+    use Auditable, HasUuids;
+
+    protected string $auditModule = 'branch_settings';
     protected $primaryKey = 'branch_id';
 
     public const STATUS_PENDING = 'pending';

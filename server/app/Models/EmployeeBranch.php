@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class EmployeeBranch extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'employees';
+
     protected $primaryKey = 'employee_branch_id';
     public $timestamps = false;
 

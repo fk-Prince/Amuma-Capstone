@@ -33,7 +33,7 @@
             ></div>
         </div>
 
-        <div class="relative z-20 print:hidden">
+        <div class="relative z-50 print:hidden">
             <DashboardSidebar
                 :open="isOpen"
                 :menus="menus"
