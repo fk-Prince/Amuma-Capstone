@@ -26,6 +26,10 @@ export const roleMeta: Record<string, { label: string; class: string }> = {
         label: 'Nurse',
         class: 'bg-green-50 text-green-600 border-green-200',
     },
+    family_member: {
+        label: 'Family Member',
+        class: 'border-primary/25 bg-primary/10 text-primary backdrop-blur-md dark:border-primary/30 dark:bg-primary/20 dark:text-primary-300',
+    },
     caregiver: {
         label: 'Caregiver',
         class: 'bg-teal-50 text-teal-600 border-teal-200',

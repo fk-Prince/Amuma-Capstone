@@ -36,6 +36,7 @@ export interface BranchImage {
     branch_image_id: number;
     image_url: string;
     type: "branch" | "vip_room" | "common_room" | "other" | "cover";
+    visibility?: "public" | "private";
     description: string | null;
 }
 

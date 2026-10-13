@@ -61,6 +61,14 @@
                     class="w-full aspect-square object-cover"
                 />
 
+                <span
+                    v-if="image.visibility === 'private'"
+                    class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm"
+                >
+                    <Lock class="h-3 w-3" />
+                    Private
+                </span>
+
                 <div
                     class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3 pt-10 pb-3"
                 >
@@ -167,6 +175,53 @@
                             required
                         />
 
+                        <div>
+                            <p
+                                class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                                Visibility
+                            </p>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <button
+                                    v-for="option in visibilityOptions"
+                                    :key="option.value"
+                                    type="button"
+                                    class="flex items-start gap-3 rounded-xl border px-3.5 py-3 text-left transition"
+                                    :class="
+                                        form.visibility === option.value
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                                            : 'border-gray-200 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5'
+                                    "
+                                    @click="form.visibility = option.value"
+                                >
+                                    <component
+                                        :is="option.icon"
+                                        class="mt-0.5 h-4 w-4 shrink-0"
+                                        :class="
+                                            form.visibility === option.value
+                                                ? 'text-primary'
+                                                : 'text-gray-400 dark:text-gray-500'
+                                        "
+                                    />
+
+                                    <span class="min-w-0">
+                                        <span
+                                            class="block text-sm font-semibold text-gray-900 dark:text-white"
+                                        >
+                                            {{ option.label }}
+                                        </span>
+
+                                        <span
+                                            class="mt-0.5 block text-xs leading-4 text-gray-500 dark:text-gray-400"
+                                        >
+                                            {{ option.hint }}
+                                        </span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
                         <BaseInput
                             v-model="form.description"
                             label="Description"
@@ -247,10 +302,11 @@ import { branchSettingService } from "~/api/branch-setting/BranchSettingService"
 import type { BranchImageRetrieve } from "~/types/branch-utils";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { Plus, ImageIcon } from "lucide-vue-next";
+import { Globe, ImageIcon, Lock, Plus } from "lucide-vue-next";
 import { useToast } from "~/composables/useToast";
 interface ImageForm {
     type: string;
+    visibility: "public" | "private";
     description: string;
     image: File | null;
 }
@@ -292,8 +348,24 @@ const imageTypes = ref([
     { label: "Other", value: "other" },
 ]);
 
+const visibilityOptions = [
+    {
+        value: "public" as const,
+        label: "Public",
+        hint: "Shown in your branch gallery.",
+        icon: Globe,
+    },
+    {
+        value: "private" as const,
+        label: "Private",
+        hint: "Only your team can see it.",
+        icon: Lock,
+    },
+];
+
 const form = ref<ImageForm>({
     type: "",
+    visibility: "public",
     description: "",
     image: null,
 });
@@ -358,6 +430,7 @@ const clearError = (field: keyof FormErrors) => {
 const resetForm = () => {
     form.value = {
         type: "",
+        visibility: "public",
         description: "",
         image: null,
     };
@@ -408,6 +481,7 @@ const submit = async () => {
             action: "image",
             branch_uuid: props.uuid,
             type: form.value.type,
+            visibility: form.value.visibility,
             description: form.value.description ?? "",
             image: form.value.image,
         };

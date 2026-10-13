@@ -91,6 +91,7 @@ export function generateAvailableAmPmTimesBySchedule(
     selectedDate: string,
     stepMinutes = 60,
     now: Date = new Date(),
+    leadMinutes = 0,
 ) {
     let openingMinutes = 0;
     let closingMinutes = 24 * 60;
@@ -107,6 +108,15 @@ export function generateAvailableAmPmTimesBySchedule(
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const isToday = selectedDate === getLocalDateStr(now);
 
+    const dayOffset = selectedDate
+        ? Math.round(
+            (Date.parse(`${selectedDate}T00:00:00Z`) -
+                Date.parse(`${getLocalDateStr(now)}T00:00:00Z`)) /
+            86_400_000,
+        )
+        : 0;
+    const cutoff = currentMinutes + leadMinutes - dayOffset * 24 * 60;
+
     const times: { label: string; value: string }[] = [];
 
     for (
@@ -114,7 +124,9 @@ export function generateAvailableAmPmTimesBySchedule(
         totalMinutes < closingMinutes;
         totalMinutes += stepMinutes
     ) {
-        if (isToday && totalMinutes <= currentMinutes) {
+        if (leadMinutes > 0) {
+            if (totalMinutes < cutoff) continue;
+        } else if (isToday && totalMinutes <= currentMinutes) {
             continue;
         }
 

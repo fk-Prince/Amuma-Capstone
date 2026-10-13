@@ -18,6 +18,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
             $table->string('image_url');
             $table->string('type');
+            $table->enum('visibility', ['public', 'private'])->default('public');
             $table->text('description')->nullable();
             $table->timestamps();
         });

@@ -20,12 +20,21 @@ class BranchImage extends Model
     public const IMAGE_OTHER = 'other';
     public const IMAGE_COVER = 'cover';
 
+    public const VISIBILITY_PUBLIC = 'public';
+    public const VISIBILITY_PRIVATE = 'private';
+
     protected $fillable = [
         'branch_id',
         'image_url',
         'type',
+        'visibility',
         'description',
     ];
+
+    public function scopePublic($query)
+    {
+        return $query->where('visibility', self::VISIBILITY_PUBLIC);
+    }
 
     public function branch()
     {

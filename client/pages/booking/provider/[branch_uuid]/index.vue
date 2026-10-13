@@ -3,7 +3,6 @@
         class="mx-auto w-full max-w-[100rem] px-4 pb-28 pt-[144px] sm:px-6 lg:pb-16"
     >
         <ProviderBanner
-            ref="bannerRef"
             :branch="branch"
             :loading="loading"
             @back="goBack"
@@ -85,6 +84,16 @@
                 class="flex flex-col gap-5 lg:col-span-2"
             >
                 <HealthProviders :branch-uuid="uuid" />
+            </div>
+
+            <div
+                v-else-if="activeTab === 'gallery'"
+                class="flex flex-col gap-5 lg:col-span-2"
+            >
+                <ProviderGallery
+                    :images="branch?.images ?? []"
+                    :loading="loading"
+                />
             </div>
 
             <div v-else class="flex flex-col gap-5 lg:col-span-2">
@@ -392,6 +401,7 @@ import ProviderBanner from "~/components/sections/booking/provider/ProviderBanne
 import BookingCard from "~/components/sections/booking/provider/BookingCard.vue";
 import ReviewSection from "~/components/sections/booking/provider/Review.vue";
 import HealthProviders from "~/components/sections/booking/provider/HealthProviders.vue";
+import ProviderGallery from "~/components/sections/booking/provider/ProviderGallery.vue";
 import ServicesPanel from "~/components/sections/booking/provider/ServicesPanel.vue";
 import FacilityPanel from "~/components/sections/booking/provider/FacilityPanel.vue";
 import ProviderInquiry from "~/components/sections/booking/provider/ProviderInquiry.vue";
@@ -506,7 +516,6 @@ const toggleFavorite = () => {
 };
 
 /* ---------- tabs ---------- */
-const bannerRef = ref<any>(null);
 const bookingCardRef = ref<any>(null);
 const overviewRef = ref<HTMLElement | null>(null);
 const servicesRef = ref<HTMLElement | null>(null);
@@ -536,11 +545,6 @@ const scrollTo = (el: HTMLElement | null) =>
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 const goToTab = async (key: TabKey) => {
-    if (key === "gallery") {
-        bannerRef.value?.openGallery?.();
-        return;
-    }
-
     const wasPanel = isPanelTab(activeTab.value);
 
     activeTab.value = key;
@@ -586,7 +590,8 @@ const onServiceSelect = (value: "homecare" | "facility") => {
     scrollToPanelTop();
 };
 
-const isPanelTab = (key: TabKey) => key === "services" || key === "providers";
+const isPanelTab = (key: TabKey) =>
+    key === "services" || key === "providers" || key === "gallery";
 
 // Keeps the highlighted tab in step with the section being read.
 let ticking = false;

@@ -6,12 +6,15 @@ use App\Models\Booking;
 use App\Repository\BranchContractRepository;
 use App\Repository\ServiceRepository;
 use App\Service\External\SupabaseService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 
 class BookingHelper
 {
     public const DIAGNOSIS_WINDOW_MONTHS = 6;
+
+    public const HOMECARE_LEAD_MINUTES = 60;
 
     public function __construct(
         private BranchContractRepository $branchContractRepository,
@@ -130,6 +133,24 @@ class BookingHelper
     public function isHomecare(array $payload): bool
     {
         return ($payload['category'] ?? null) === Booking::CATEGORY_ONLINE;
+    }
+
+    public function assertHomecareLeadTime(array $homecare, mixed $branch): void
+    {
+        $timezone = ($branch?->settings ?? [])['time_zone'] ?? config('app.timezone');
+
+        $scheduled = Carbon::parse(
+            ($homecare['date'] ?? '') . ' ' . ($homecare['prefered_time'] ?? ''),
+            $timezone
+        );
+
+        $earliest = Carbon::now($timezone)
+            ->startOfMinute()
+            ->addMinutes(self::HOMECARE_LEAD_MINUTES);
+
+        if ($scheduled->lt($earliest)) {
+            throw new Exception('Homecare must be booked at least 1 hour ahead. Please choose a later time.', 422);
+        }
     }
 
     public function requiresPayment(array $payload): bool

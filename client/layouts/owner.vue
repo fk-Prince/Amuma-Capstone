@@ -1,6 +1,6 @@
 <template>
     <div
-        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden lg:gap-3 lg:p-3"
+        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3"
     >
         <ClientOnly>
             <AuthTransitionScreen
@@ -10,9 +10,13 @@
             />
         </ClientOnly>
 
-        <OwnerSidebar :open="isOpen" @close="isOpen = false" />
+        <OwnerSidebar
+            :open="isOpen"
+            @close="isOpen = false"
+            @open="isOpen = true"
+        />
 
-        <div class="flex-1 flex flex-col min-w-0 h-full lg:gap-3">
+        <div class="flex-1 flex flex-col min-w-0 h-full gap-3">
             <OwnerHeader @open="isOpen = true" />
 
             <main

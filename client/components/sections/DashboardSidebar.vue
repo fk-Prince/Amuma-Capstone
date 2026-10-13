@@ -7,8 +7,10 @@
     />
 
     <aside
-        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:rounded-2xl lg:border lg:shadow-sm lg:transition-[width] lg:hover:w-64"
-        :class="open ? 'translate-x-0' : '-translate-x-full'"
+        class="group fixed inset-y-2 left-2 z-40 flex w-[min(17rem,calc(100vw-1rem))] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary shadow-2xl shadow-primary-500/10 dark:shadow-black/40 transition-[transform,visibility] duration-300 ease-out lg:static lg:z-20 lg:h-full lg:w-[76px] lg:translate-x-0 lg:shadow-sm lg:transition-[width] lg:hover:w-64"
+        :class="[
+            open ? 'translate-x-0' : '-translate-x-[120%] max-lg:invisible',
+        ]"
     >
         <div
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
@@ -100,6 +102,11 @@
         </div>
     </aside>
 
+    <MobileBottomNav
+        :items="props.menus"
+        @more="emit('open')"
+    />
+
     <AuthTransitionScreen v-if="loadingLogout" />
 </template>
 
@@ -112,6 +119,7 @@ import { authService } from "~/api/auth/AuthService";
 import { resetAuth } from "~/composables/useAuthUser";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import SidebarNavGroup from "~/components/ui/SidebarNavGroup.vue";
+import MobileBottomNav from "~/components/ui/MobileBottomNav.vue";
 
 interface MenuItem {
     label: string;
@@ -119,6 +127,7 @@ interface MenuItem {
     icon?: any;
     group?: string;
 }
+
 
 const props = withDefaults(
     defineProps<{
@@ -134,6 +143,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
     close: [];
+    open: [];
 }>();
 
 const route = useRoute();

@@ -144,7 +144,8 @@ class BranchResource extends JsonResource
 
             'images' => $this->whenLoaded('images', function () {
                 return $this->images
-                    ->whereIn('type', [BranchImage::IMAGE_BRANCH, BranchImage::IMAGE_COMMON_ROOM, BranchImage::IMAGE_VIP_ROOM])
+                    ->whereIn('type', [BranchImage::IMAGE_BRANCH, BranchImage::IMAGE_COMMON_ROOM, BranchImage::IMAGE_VIP_ROOM, BranchImage::IMAGE_OTHER])
+                    ->where('visibility', BranchImage::VISIBILITY_PUBLIC)
                     ->map(function ($image) {
                         return [
                             'branch_image_id' => $image->branch_image_id,

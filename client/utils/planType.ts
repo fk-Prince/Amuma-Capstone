@@ -1,8 +1,13 @@
 export type PlanType = "sme" | "enterprise";
 
-export const PLAN_TYPES: { value: PlanType; label: string; branchLimit: number }[] = [
-    { value: "sme", label: "Small-Medium Enterprise", branchLimit: 1 },
-    { value: "enterprise", label: "Enterprise", branchLimit: 10 },
+export const PLAN_TYPES: {
+    value: PlanType;
+    label: string;
+    shortLabel: string;
+    branchLimit: number;
+}[] = [
+    { value: "sme", label: "Small-Medium Enterprise", shortLabel: "SME", branchLimit: 1 },
+    { value: "enterprise", label: "Enterprise", shortLabel: "Enterprise", branchLimit: 10 },
 ];
 
 export const DEFAULT_PLAN_TYPE: PlanType = "sme";

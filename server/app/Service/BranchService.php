@@ -192,10 +192,16 @@ class BranchService
                     ->delete();
             }
 
+            $isPrivate = ($payload['visibility'] ?? null) === BranchImage::VISIBILITY_PRIVATE
+                && ($payload['type'] ?? null) !== BranchImage::IMAGE_COVER;
+
             $data = BranchImage::create([
                 'image_url' => $stored['url'],
                 'branch_id' => $payload['branch_id'],
                 'type' => $payload['type'],
+                'visibility' => $isPrivate
+                    ? BranchImage::VISIBILITY_PRIVATE
+                    : BranchImage::VISIBILITY_PUBLIC,
                 'description' => $payload['description'] ?? '',
             ]);
 

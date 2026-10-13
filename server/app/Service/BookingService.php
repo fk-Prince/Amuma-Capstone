@@ -167,6 +167,13 @@ class BookingService
             throw new Exception('This booking does not take a payment.', 422);
         }
 
+        if ($this->bookingHelper->isHomecare($payload)) {
+            $this->bookingHelper->assertHomecareLeadTime(
+                $payload['booking_data']['homecare'] ?? [],
+                $payload['branch'] ?? null
+            );
+        }
+
         $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
 
         $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
@@ -353,10 +360,10 @@ class BookingService
             'assessment' => ['nullable', 'array'],
         ])->validate();
 
+        $this->bookingHelper->assertHomecareLeadTime($data, $branch);
+
         $this->bookingHelper->assertDiagnoses($payload['diagnoses'] ?? []);
 
-        // Only the keys named above survive validation, so the full patient,
-        // guardian, diagnosis and assessment forms are taken from the payload.
         $patient = $this->bookingHelper->resolvePatient($payload['patient']);
         $guardian = $payload['guardian'];
         $assessments = $payload['assessment'] ?? [];
@@ -387,7 +394,6 @@ class BookingService
         ];
 
         $booking = $this->bookingRepository->create([
-            // The family sees it in their portal; with no guardian account it stays with staff.
             'user_id'      => $owner?->user_id ?? $staff->user_id,
             'branch_id'    => $branch->branch_id,
             'category'     => Booking::CATEGORY_ONLINE,

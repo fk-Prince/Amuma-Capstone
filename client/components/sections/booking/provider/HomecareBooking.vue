@@ -845,12 +845,26 @@ const locationSelectorRef = ref<InstanceType<typeof LocationSelector> | null>(
 
 const todayStr = getLocalDateStr(new Date());
 
+const HOMECARE_LEAD_MINUTES = 60;
+
+const now = ref(new Date());
+let clock: ReturnType<typeof setInterval> | undefined;
+
+onMounted(() => {
+    now.value = new Date();
+    clock = setInterval(() => (now.value = new Date()), 60_000);
+});
+
+onBeforeUnmount(() => clearInterval(clock));
+
 const availableTimeSlots = computed(() =>
     generateAvailableAmPmTimesBySchedule(
         props.settings?.opening ?? "00:00",
         props.settings?.closing ?? "00:00",
         props.model.date,
         30,
+        now.value,
+        HOMECARE_LEAD_MINUTES,
     ),
 );
 

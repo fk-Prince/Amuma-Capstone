@@ -11,7 +11,7 @@ useHead({ title: "Subscription Details" });
 <template>
     <ClientOnly>
         <div class="min-h-screen bg-slate-50 pt-[124px] dark:bg-secondary">
-            <div class="w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-4">
+            <div class="w-full sm:w-[88%] max-w-[1600px] mx-auto px-4 sm:px-10 py-4">
                 <div class="grid grid-cols-1 gap-3 items-start">
                     <div class="max-w-2xl">
                         <!-- <span

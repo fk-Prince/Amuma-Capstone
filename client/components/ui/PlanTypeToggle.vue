@@ -2,7 +2,7 @@
     <div
         role="radiogroup"
         aria-label="Plan type"
-        class="relative inline-grid grid-cols-2 rounded-full bg-slate-100/80 p-1.5 ring-1 ring-slate-200/70 dark:bg-white/5 dark:ring-white/10"
+        class="relative grid w-full max-w-sm grid-cols-2 rounded-full bg-slate-100/80 p-1.5 ring-1 ring-slate-200/70 sm:inline-grid sm:w-auto sm:max-w-none dark:bg-white/5 dark:ring-white/10"
     >
         <span
             aria-hidden="true"
@@ -16,7 +16,7 @@
             type="button"
             role="radio"
             :aria-checked="modelValue === type.value"
-            class="relative z-10 whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-semibold transition-colors duration-200"
+            class="relative z-10 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold transition-colors duration-200 sm:px-6"
             :class="
                 modelValue === type.value
                     ? 'text-white'
@@ -24,7 +24,8 @@
             "
             @click="emit('update:modelValue', type.value)"
         >
-            {{ type.label }}
+            <span class="sm:hidden">{{ type.shortLabel }}</span>
+            <span class="hidden sm:inline">{{ type.label }}</span>
         </button>
     </div>
 </template>

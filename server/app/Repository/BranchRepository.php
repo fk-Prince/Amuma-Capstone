@@ -245,10 +245,11 @@ class BranchRepository
             'bookings',
             'rooms',
             'images' => function ($query) {
-                $query->whereIn('type', [
+                $query->public()->whereIn('type', [
                     BranchImage::IMAGE_BRANCH,
                     BranchImage::IMAGE_COMMON_ROOM,
                     BranchImage::IMAGE_VIP_ROOM,
+                    BranchImage::IMAGE_OTHER,
                     BranchImage::IMAGE_COVER,
                 ]);
             },
