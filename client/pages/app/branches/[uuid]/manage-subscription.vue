@@ -753,7 +753,7 @@ const addBranchTooltip = computed(() => {
     }
 
     return testingAtMax.value
-        ? "You've reached your plan's branch limit. More branches can be added once your free testing ends."
+        ? "You've reached your plan's branch limit. More branches can be added once your free trial ends."
         : "";
 });
 

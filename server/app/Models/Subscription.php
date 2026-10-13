@@ -19,7 +19,7 @@ class Subscription extends Model
     public const STATUS_CANCELLED = 'cancelled';
     public const MODE_TEST = 'test';
     public const MODE_LIVE = 'live';
-    public const TEST_MONTHS = 1;
+    public const TRIAL_WEEKS = 2;
     public const TERM_MONTHS = 12;
 
     protected $casts = [
@@ -273,7 +273,7 @@ class Subscription extends Model
     public static function testTerms(int $planId, ?Carbon $startsAt = null): array
     {
         $startsAt = $startsAt ?? Carbon::now();
-        $testEnds = $startsAt->copy()->addMonths(self::TEST_MONTHS);
+        $testEnds = $startsAt->copy()->addWeeks(self::TRIAL_WEEKS);
 
         return [
             'mode' => self::MODE_TEST,

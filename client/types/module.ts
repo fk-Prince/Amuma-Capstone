@@ -16,4 +16,5 @@ export enum Modules {
     BranchSettings = "Branch Settings",
     ManageSubscription = "Manage Subscription",
     Inquiries = "Inquiries",
+    AuditLogs = "Audit Logs",
 }

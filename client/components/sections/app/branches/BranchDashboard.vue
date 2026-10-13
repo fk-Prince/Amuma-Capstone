@@ -154,7 +154,7 @@
                     class="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                    Still on free testing
+                    Still on free trial
                     <template v-if="testingEndsLabel">
                         · ends on {{ testingEndsLabel }}
                     </template>
@@ -367,7 +367,7 @@ const hasPendingPlan = computed(
     () => isTesting.value && Boolean(pendingPlan.value?.ends_at),
 );
 
-// While on free testing, the paid plan waiting to start takes over the
+// While on free trial, the paid plan waiting to start takes over the
 // headline date and the countdown.
 const effectiveEndDate = computed(() =>
     hasPendingPlan.value

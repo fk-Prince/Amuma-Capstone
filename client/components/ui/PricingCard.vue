@@ -31,7 +31,7 @@
                         : 'bg-gradient-to-r from-emerald-500 to-emerald-400 text-white shadow-emerald-500/30',
                 ]"
             >
-                1 Month Free Testing
+                2 Weeks Free Trial
             </div>
         </div>
 

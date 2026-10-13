@@ -37,6 +37,11 @@ class Branch extends Model
         return $this->hasPlanAccess(['A', 'C']);
     }
 
+    public function hasActiveSubscription()
+    {
+        return $this->hasPlanAccess(['A', 'B', 'C']);
+    }
+
     private function hasPlanAccess(array $planCodes)
     {
         return $this->subscriptions()

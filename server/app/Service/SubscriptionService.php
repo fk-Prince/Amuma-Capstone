@@ -92,7 +92,7 @@ class SubscriptionService
     private function ensureNotTesting(int|string|null $agencyId): void
     {
         if ($this->subscriptionRepository->agencyIsTesting($agencyId)) {
-            throw new Exception(__('Branches can be added once your free testing ends.'), 422);
+            throw new Exception(__('Branches can be added once your free trial ends.'), 422);
         }
     }
 
@@ -193,7 +193,7 @@ class SubscriptionService
         }
 
         if ($subscription->isTest()) {
-            throw new Exception(__('Your paid year is already paid for and starts when free testing ends.'), 422);
+            throw new Exception(__('Your paid year is already paid for and starts when your free trial ends.'), 422);
         }
 
         if ($subscription->pending_plan_id) {
@@ -431,7 +431,7 @@ class SubscriptionService
             }
 
             if ($subscription->isTest()) {
-                throw new Exception(__('Cancel the subscription during free testing instead.'), 422);
+                throw new Exception(__('Cancel the subscription during your free trial instead.'), 422);
             }
 
             if (!$subscription->pending_plan_id || $subscription->pendingPlanIsDue()) {
@@ -495,7 +495,7 @@ class SubscriptionService
             }
 
             if (!$subscription->canCancelTest()) {
-                throw new Exception(__('Only a subscription still in its free testing month can be cancelled.'), 422);
+                throw new Exception(__('Only a subscription still in its free trial can be cancelled.'), 422);
             }
 
             $payments = $subscription->payments()
@@ -555,7 +555,7 @@ class SubscriptionService
             }
 
             if (!$subscription->canCancelTest() || $subscription->status !== Subscription::STATUS_ACTIVE) {
-                throw new Exception(__('Only an active subscription still in its free testing month can be ended early.'), 422);
+                throw new Exception(__('Only an active subscription still in its free trial can be ended early.'), 422);
             }
 
             $subscription->update([
@@ -567,7 +567,7 @@ class SubscriptionService
 
             return response()->json([
                 'status' => true,
-                'message' => __('Free testing ended. Your paid year starts today.'),
+                'message' => __('Free trial ended. Your paid year starts today.'),
                 'subscription' => [
                     'uuid' => $subscription->uuid,
                     'status' => $subscription->status,
@@ -604,7 +604,7 @@ class SubscriptionService
         );
 
         $testEndsAt = $withTrial
-            ? Carbon::now()->addMonths(Subscription::TEST_MONTHS)->toDateString()
+            ? Carbon::now()->addWeeks(Subscription::TRIAL_WEEKS)->toDateString()
             : null;
 
         $branchDetails = $this->branchDetails($payload);

@@ -114,7 +114,7 @@
                                         · Subscription cancelled
                                     </template>
                                     <template v-else-if="isTest">
-                                        · Free testing
+                                        · Free trial
                                     </template>
                                 </p>
                             </div>
@@ -227,7 +227,7 @@
                             isCancelled
                                 ? "Subscription cancelled"
                                 : isTest
-                                ? "Free testing"
+                                ? "Free trial"
                                 : hasPendingUpgrade
                                 ? "Pending plan"
                                 : coveredBranches.length > 1
@@ -244,11 +244,11 @@
                             {{ formatDate(subscription.end_date) }} and your
                             payment was refunded. Want to keep using AMUMA?
                             Pick any plan type and plan and subscribe now — your
-                            paid year starts today, with no free testing.
+                            paid year starts today, with no free trial.
                         </template>
                         <template v-else-if="isTest">
                             Your paid year is already queued and starts
-                            automatically when free testing ends. Not for you?
+                            automatically when your free trial ends. Not for you?
                             Cancel before then for a full refund.
                             <template v-if="canUpgrade">
                                 You can still upgrade to Hybrid anytime.
@@ -322,7 +322,7 @@
                             Your paid year of {{ pendingPlan.name }}
                             {{ planTypeLabel(pendingPlan.type) }} starts on
                             {{ formatDate(pendingPlan.starts_at) }}, when free
-                            testing ends.
+                            trial ends.
                         </span>
                         <span v-else>
                             Change to {{ pendingPlan.name }}
@@ -395,7 +395,7 @@
                         class="flex flex-wrap items-center justify-between gap-3"
                     >
                         <p class="text-xs text-primary">
-                            Done testing? Start your paid year now instead of
+                            Done with your trial? Start your paid year now instead of
                             waiting until {{ formatDate(pendingPlan?.starts_at) }}.
                         </p>
 
@@ -404,13 +404,13 @@
                             class="rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 dark:bg-secondary"
                             @click="confirmEnd = true"
                         >
-                            End testing now
+                            End trial now
                         </button>
                     </div>
 
                     <div v-else>
                         <p class="text-xs text-primary">
-                            Ending free testing starts your paid year of
+                            Ending your free trial starts your paid year of
                             {{ pendingPlan?.name }} today. You'll no longer be
                             able to cancel for a full refund. This can't be
                             undone.
@@ -423,7 +423,7 @@
                                 class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 transition hover:bg-slate-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/10"
                                 @click="confirmEnd = false"
                             >
-                                Keep testing
+                                Keep trial
                             </button>
 
                             <button
@@ -432,7 +432,7 @@
                                 class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
                                 @click="endTest"
                             >
-                                {{ ending ? "Ending…" : "Yes, end testing" }}
+                                {{ ending ? "Ending…" : "Yes, end trial" }}
                             </button>
                         </div>
                     </div>
@@ -463,7 +463,7 @@
 
                     <div v-else>
                         <p class="text-xs text-rose-700 dark:text-rose-300">
-                            Cancelling ends free testing now and refunds
+                            Cancelling ends your free trial now and refunds
                             ₱{{ formatMoney(refundAmount) }}.
                             {{
                                 coveredBranches.length > 1
@@ -1601,9 +1601,9 @@ const endTest = async () => {
 
         confirmEnd.value = false;
         syncBranchMode();
-        success(result?.message ?? "Free testing ended.");
+        success(result?.message ?? "Free trial ended.");
     } catch (err: any) {
-        error(err?.message ?? "Could not end free testing.");
+        error(err?.message ?? "Could not end free trial.");
     } finally {
         ending.value = false;
     }

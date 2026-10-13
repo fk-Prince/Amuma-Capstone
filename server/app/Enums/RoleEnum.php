@@ -36,7 +36,8 @@ enum RoleEnum: string
                         ModuleEnum::Services,
                         ModuleEnum::EmployeeManagement,
                         ModuleEnum::BillingAndInvoices,
-                        ModuleEnum::BranchSettings => $module->actionColumns(),
+                        ModuleEnum::BranchSettings,
+                        ModuleEnum::AuditLogs => $module->actionColumns(),
                         default => [PermissionAction::Read->value],
                     },
                 ])

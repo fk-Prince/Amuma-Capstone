@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class InvoiceAdjustment extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'billing';
+
     protected $table = 'invoice_adjustments';
 
     protected $primaryKey = 'invoice_adjustment_id';

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,10 @@ use Illuminate\Support\Str;
 
 class Payment extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'billing';
+
     protected $primaryKey = 'payment_id';
 
     public const METHOD_CREDIT = 'CREDIT';

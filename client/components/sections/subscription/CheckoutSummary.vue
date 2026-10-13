@@ -73,7 +73,7 @@
                     v-if="props.withTrial"
                     class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold dark:bg-emerald-500/10 dark:text-emerald-400"
                 >
-                    1 month free testing
+                    2 weeks free trial
                 </span>
             </div>
 
@@ -98,8 +98,8 @@
 
                 <SummaryRow
                     v-if="props.withTrial"
-                    label="Free Testing"
-                    value="1 month — your paid year starts after"
+                    label="Free Trial"
+                    value="2 weeks — your paid year starts after"
                 />
 
                 <SummaryRow
@@ -131,7 +131,7 @@
                     class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
                 />
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
-                    <span class="font-semibold">Cancel anytime during testing.</span>
+                    <span class="font-semibold">Cancel anytime during the trial.</span>
                     If AMUMA isn't right for you, cancel within your free month and
                     we'll refund your payment in full.
                 </p>

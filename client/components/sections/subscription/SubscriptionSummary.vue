@@ -48,12 +48,12 @@
 
                 <div v-if="isNewAgency" class="flex justify-between">
                     <span class="text-slate-500 dark:text-gray-400">
-                        Free Testing
+                        Free Trial
                     </span>
 
                     <span
                         class="font-semibold text-emerald-600 dark:text-emerald-400"
-                        >1 month</span
+                        >2 weeks</span
                     >
                 </div>
 
@@ -76,7 +76,7 @@
                     class="rounded-lg bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                 >
                     <span class="font-semibold"
-                        >Cancel anytime during testing</span
+                        >Cancel anytime during the trial</span
                     >
                     for a full refund.
                 </p>

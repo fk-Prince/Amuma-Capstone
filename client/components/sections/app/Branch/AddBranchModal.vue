@@ -490,10 +490,10 @@
                                 >
                                     <template v-if="purchaseWithTrial">
                                         <span class="font-semibold"
-                                            >1 month free testing</span
+                                            >2 weeks free trial</span
                                         >
                                         first, then your paid year starts.
-                                        Cancel anytime during testing for a full
+                                        Cancel anytime during the trial for a full
                                         refund.
                                     </template>
                                     <template v-else>

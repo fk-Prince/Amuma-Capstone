@@ -10,7 +10,7 @@ class ApplyPendingSubscriptionPlans extends Command
 {
     protected $signature = 'subscriptions:apply-pending-plans';
 
-    protected $description = 'Start paid pending plans that are due, including taking test subscriptions live when their free testing ends';
+    protected $description = 'Start paid pending plans that are due, including taking test subscriptions live when their free trial ends';
 
     public function handle(): int
     {

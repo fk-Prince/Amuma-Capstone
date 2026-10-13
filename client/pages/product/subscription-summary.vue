@@ -32,7 +32,7 @@
                     We'll verify your subscription and notify you of your
                     request's status within 1-2 business days.
                     <template v-if="withTrial">
-                        Your 1-month free testing starts once your branch is
+                        Your 2-week free trial starts once your branch is
                         approved, and your paid year begins right after it.
                         You can cancel for a full refund any time during the
                         test.

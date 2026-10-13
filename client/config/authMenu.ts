@@ -13,7 +13,8 @@ import {
     CreditCard,
     BookOpen,
     MessageSquare,
-    MessageCircleQuestion
+    MessageCircleQuestion,
+    ScrollText
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -130,6 +131,13 @@ export const authMenuList: MenuItems[] = [
         icon: Building2,
         to: "/app/branches/[uuid]/manage-subscription",
         modules: ["Manage Subscription"],
+        group: "Business",
+    },
+    {
+        label: "Audit Logs",
+        icon: ScrollText,
+        to: "/app/branches/[uuid]/audit-logs",
+        modules: ["Audit Logs"],
         group: "Business",
     },
 ];

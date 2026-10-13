@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'bookings';
+
     protected $primaryKey = 'booking_id';
     protected $keyType = 'int';
 
@@ -62,6 +67,11 @@ class Booking extends Model
                 );
             }
         });
+    }
+
+    public function auditExclude(): array
+    {
+        return ['booking_data', 'updated_at'];
     }
 
     public function patientsBooking()

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdditionalChargeController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
@@ -92,6 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/inquiries', [InquiryController::class, 'index']);
     Route::patch('/inquiries/{uuid}/status', [InquiryController::class, 'updateStatus']);
     Route::post('/inquiries/{uuid}/reply', [InquiryController::class, 'reply']);
+
+    // AUDIT LOGS
+    Route::get('/audit-logs', [AuditLogController::class, 'index']);
+    Route::get('/audit-logs/{uuid}', [AuditLogController::class, 'show']);
 
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);

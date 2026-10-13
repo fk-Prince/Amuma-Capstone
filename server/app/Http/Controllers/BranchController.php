@@ -51,7 +51,7 @@ class BranchController extends Controller
 
     public function update(BranchRequest $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid, active: true);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BranchSettings, PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['branch' => $branch]);

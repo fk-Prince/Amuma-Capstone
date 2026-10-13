@@ -75,6 +75,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Update,
     ],
     [Modules.Inquiries]: [PermissionAction.Read, PermissionAction.Update],
+    [Modules.AuditLogs]: [PermissionAction.Read],
 };
 
 export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
@@ -102,6 +103,8 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
         "View and change branch details such as address, hours, currency and policies, and upload branch photos.",
     [Modules.Inquiries]:
         "Read questions sent by families from the branch's provider page and track which ones have been answered.",
+    [Modules.AuditLogs]:
+        "Review who did what in the branch: sign-ins, bookings and billing changes, with the values before and after.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -216,6 +219,10 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Update]:
             "Mark inquiries as read or resolved once they have been followed up.",
     },
+    [Modules.AuditLogs]: {
+        [PermissionAction.Read]:
+            "See the branch's activity trail: who acted, what they did, when, and what changed.",
+    },
 };
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<
@@ -240,6 +247,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.ManageSubscription]: [PermissionAction.Read],
         [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
         [Modules.Inquiries]: [PermissionAction.Read],
+        [Modules.AuditLogs]: MODULE_ACTIONS[Modules.AuditLogs],
     },
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],

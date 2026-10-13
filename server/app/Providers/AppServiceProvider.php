@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
 use App\Observers\InvoiceAdjustmentObserver;
 use App\Observers\InvoiceObserver;
+use App\Service\AuditService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AuditService::class);
     }
 
 

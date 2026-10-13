@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,10 @@ use Illuminate\Support\Collection;
 
 class Invoice extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'billing';
+
     public const STATUS_PENDING = 'unpaid';
     public const STATUS_PARTIAL = 'partially_paid';
     public const STATUS_PAID = 'paid';

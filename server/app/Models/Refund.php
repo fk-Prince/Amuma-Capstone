@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Refund extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'billing';
+
     protected $table = 'refunds';
 
     protected $primaryKey = 'refund_id';

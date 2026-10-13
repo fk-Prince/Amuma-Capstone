@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Utils\BranchCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'billing';
+
     protected $primaryKey = 'transaction_id';
 
     public const UPDATED_AT = null;

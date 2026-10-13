@@ -1154,7 +1154,7 @@
                                         >
                                             {{
                                                 sub.is_test
-                                                    ? "Free Testing"
+                                                    ? "Free Trial"
                                                     : sub.plan?.name || "—"
                                             }}
                                         </span>

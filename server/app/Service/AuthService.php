@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use App\Repository\UserRepository;
 use Exception;
@@ -16,18 +17,31 @@ class AuthService
 {
     private UserRepository $userRepository;
 
-    public function __construct(UserRepository $userRepository)
+    private AuditService $auditService;
+
+    public function __construct(UserRepository $userRepository, AuditService $auditService)
     {
         $this->userRepository = $userRepository;
+        $this->auditService = $auditService;
     }
 
     public function login(array $payload)
     {
+        $identifier = filled($payload['employee_code'] ?? null)
+            ? $payload['employee_code']
+            : $payload['email'];
+
         $user = filled($payload['employee_code'] ?? null)
             ? $this->userRepository->findByEmployeeCode($payload['employee_code'])
             : $this->userRepository->findByField('email', $payload['email']);
 
         if (!$user) {
+            $this->auditService->log(
+                AuditLog::ACTION_LOGIN_FAILED,
+                'auth',
+                description: "Failed login for {$identifier}: account not found."
+            );
+
             throw new Exception(__('Incorrect credentials'), 404);
         }
 
@@ -41,12 +55,21 @@ class AuthService
         }
 
         if (!Hash::check($payload['password'], $user->password)) {
+            $this->auditService->log(
+                AuditLog::ACTION_LOGIN_FAILED,
+                'auth',
+                $user,
+                'Failed login: incorrect password.',
+                $user
+            );
+
             throw new Exception(__('Incorrect credentials'), 401);
         }
 
         Auth::login($user);
         request()->session()->regenerate();
 
+        $this->auditService->log(AuditLog::ACTION_LOGIN, 'auth', $user, actor: $user);
 
         return response()->json([
             'user' => $user,
@@ -56,6 +79,10 @@ class AuthService
 
     public function logout(Request $request)
     {
+        if ($request->user()) {
+            $this->auditService->log(AuditLog::ACTION_LOGOUT, 'auth', $request->user());
+        }
+
         $request->user()?->currentAccessToken()?->delete();
 
         Auth::logout();
@@ -166,7 +193,9 @@ class AuthService
         Auth::login($user);
         request()->session()->regenerate();
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $this->auditService->log(AuditLog::ACTION_LOGIN, 'auth', $user, 'Signed in with Google.', $user);
+
+        $token =$user->createToken('auth-token')->plainTextToken;
 
         return redirect()->away(
             config('app.client_url') . '/auth/success?token=' . urlencode($token)
