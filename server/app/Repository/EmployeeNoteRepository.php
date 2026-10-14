@@ -115,11 +115,11 @@ class EmployeeNoteRepository
     private function relations(): array
     {
         return [
-            'employee:employee_id,user_id,first_name,middle_name,last_name',
+            'employee:employee_id,user_id,first_name,last_name',
             'employee.users:user_id,uuid',
             'schedule:schedule_id,schedule_code,scheduled_at',
             'patient:patient_id,uuid,first_name,last_name,suffix',
-            'recorder:employee_id,first_name,middle_name,last_name',
+            'recorder:employee_id,first_name,last_name',
         ];
     }
 }
