@@ -2,10 +2,12 @@
     <div>
         <textarea
             v-model="text"
-            rows="3"
+            :rows="rows"
             maxlength="1000"
             :disabled="saving"
             :placeholder="placeholder"
+            @keydown.ctrl.enter.prevent="submit"
+            @keydown.meta.enter.prevent="submit"
             class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:placeholder:text-gray-500"
         />
 
@@ -15,7 +17,7 @@
 
         <div class="mt-2 flex items-center justify-between gap-2">
             <span class="text-[11px] text-slate-400 dark:text-gray-500">
-                {{ text.length }}/1000
+                {{ text.length }}/1000 · Ctrl+Enter to save
             </span>
 
             <div class="flex items-center gap-2">
@@ -54,11 +56,13 @@ const props = withDefaults(
         submitLabel?: string;
         placeholder?: string;
         showCancel?: boolean;
+        rows?: number;
     }>(),
     {
         initial: "",
         submitLabel: "Add note",
         placeholder: "Write what they did...",
+        rows: 2,
     },
 );
 

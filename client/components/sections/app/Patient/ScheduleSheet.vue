@@ -173,9 +173,6 @@
 
                 <p class="mt-0.5 text-[10px] text-gray-500">
                     {{ note.employee_name }}
-                    <template v-if="note.recorded_by">
-                        · by {{ note.recorded_by }}
-                    </template>
                     · {{ stringToDateTime(note.created_at) }}
                 </p>
             </div>

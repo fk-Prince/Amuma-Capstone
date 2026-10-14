@@ -6,9 +6,21 @@
             </h3>
 
             <p class="mt-0.5 text-xs text-slate-400 dark:text-gray-500">
-                What staff did for this patient, from admission and homecare
-                visits.
+                What staff did for this patient. Notes written here are about
+                the patient only; notes from a schedule also show here with
+                their schedule code.
             </p>
+        </div>
+
+        <div
+            class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-white/10 dark:bg-secondary"
+        >
+            <EmployeeNoteForm
+                ref="form"
+                :saving="saving"
+                placeholder="Write a note about this patient..."
+                @submit="add"
+            />
         </div>
 
         <div
@@ -20,7 +32,6 @@
             <EmployeeNoteList
                 :notes="notes"
                 :branch-uuid="branchUuid"
-                can-write
                 show-employee
                 show-schedule
                 empty-text="No care notes yet."
@@ -43,6 +54,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import EmployeeNoteForm from "~/components/sections/app/Employee/EmployeeNoteForm.vue";
 import EmployeeNoteList from "~/components/sections/app/Employee/EmployeeNoteList.vue";
 import { employeeNoteService } from "~/api/employee-note/EmployeeNoteService";
 import { useToast } from "~/composables/useToast";
@@ -53,12 +65,39 @@ const props = defineProps<{
     branchUuid: string;
 }>();
 
-const { error } = useToast();
+const { success, error } = useToast();
 
 const notes = ref<EmployeeNote[]>([]);
 const meta = ref<EmployeeNoteMeta | null>(null);
 const loading = ref(false);
 const loadingMore = ref(false);
+const saving = ref(false);
+const form = ref<{ clear: () => void } | null>(null);
+
+async function add(text: string) {
+    saving.value = true;
+
+    try {
+        const res = await employeeNoteService.create({
+            branch_uuid: props.branchUuid,
+            patient_uuid: props.patientUuid,
+            note: text,
+        });
+
+        notes.value = [res.data, ...notes.value];
+
+        if (meta.value) {
+            meta.value = { ...meta.value, total: meta.value.total + 1 };
+        }
+
+        form.value?.clear();
+        success(res.message ?? "Note added.");
+    } catch (err: any) {
+        error(err?.message ?? "Couldn't add the note.");
+    } finally {
+        saving.value = false;
+    }
+}
 
 async function fetchPage(page: number) {
     return await employeeNoteService.list({

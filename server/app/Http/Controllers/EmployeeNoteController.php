@@ -15,13 +15,12 @@ class EmployeeNoteController extends Controller
     {
         $this->resolveStaffBranch($request);
 
-        return $this->employeeNoteService->list($request->all());
+        return $this->employeeNoteService->list($request->all(), $request->user());
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'employee_uuid' => ['required', 'uuid'],
             'schedule_code' => ['nullable', 'string', 'max:50'],
             'patient_uuid' => ['nullable', 'uuid'],
             'note' => ['required', 'string', 'max:1000'],
@@ -40,14 +39,14 @@ class EmployeeNoteController extends Controller
 
         $this->resolveStaffBranch($request);
 
-        return $this->employeeNoteService->update($request->all(), $uuid);
+        return $this->employeeNoteService->update($request->all(), $uuid, $request->user());
     }
 
     public function destroy(Request $request, string $uuid)
     {
         $this->resolveStaffBranch($request);
 
-        return $this->employeeNoteService->delete($request->all(), $uuid);
+        return $this->employeeNoteService->delete($request->all(), $uuid, $request->user());
     }
 
     private function resolveStaffBranch(Request $request): void

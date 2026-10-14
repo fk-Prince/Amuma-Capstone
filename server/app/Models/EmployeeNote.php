@@ -17,7 +17,6 @@ class EmployeeNote extends Model
         'schedule_id',
         'patient_id',
         'note',
-        'recorded_by',
     ];
 
     public function uniqueIds()
@@ -38,10 +37,5 @@ class EmployeeNote extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
-    }
-
-    public function recorder()
-    {
-        return $this->belongsTo(Employee::class, 'recorded_by', 'employee_id');
     }
 }

@@ -24,9 +24,6 @@ return new class extends Migration
                 ->constrained('patients', 'patient_id')
                 ->nullOnDelete();
             $table->text('note');
-            $table->foreignId('recorded_by')->nullable()
-                ->constrained('employees', 'employee_id')
-                ->nullOnDelete();
             $table->timestamps();
             $table->index(['branch_id', 'employee_id']);
             $table->index('schedule_id');

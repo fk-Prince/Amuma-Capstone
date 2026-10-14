@@ -1,32 +1,25 @@
 <template>
-    <div v-if="notes.length || canAdd" class="mt-2 border-t border-slate-200 pt-2 dark:border-white/10">
-        <button
-            type="button"
-            class="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-            @click="open = !open"
-        >
-            <NotebookPen class="h-3.5 w-3.5" />
-            {{ notes.length ? `Notes (${notes.length})` : "Add note" }}
-            <ChevronDown
-                class="h-3.5 w-3.5 transition"
-                :class="{ 'rotate-180': open }"
-            />
-        </button>
+    <div
+        class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
+    >
+        <p class="text-xs text-slate-400 dark:text-gray-500">
+            Notes{{ notes.length ? ` (${notes.length})` : "" }}
+        </p>
 
-        <div v-if="open" class="mt-2 space-y-3">
+        <div class="mt-2 space-y-3">
             <EmployeeNoteList
                 v-if="notes.length"
                 :notes="notes"
                 :branch-uuid="branchUuid"
-                :can-write="canWrite"
+                show-employee
                 @updated="emit('updated', $event)"
                 @removed="emit('removed', $event)"
             />
 
             <EmployeeNoteForm
-                v-if="canAdd"
                 ref="form"
                 :saving="saving"
+                placeholder="Write what you did for this schedule..."
                 @submit="add"
             />
         </div>
@@ -34,8 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { ChevronDown, NotebookPen } from "lucide-vue-next";
+import { ref } from "vue";
 import EmployeeNoteForm from "~/components/sections/app/Employee/EmployeeNoteForm.vue";
 import EmployeeNoteList from "~/components/sections/app/Employee/EmployeeNoteList.vue";
 import { employeeNoteService } from "~/api/employee-note/EmployeeNoteService";
@@ -45,9 +37,7 @@ import type { EmployeeNote } from "~/types/employee-note";
 const props = defineProps<{
     notes: EmployeeNote[];
     branchUuid: string;
-    employeeUuid: string | null;
     scheduleCode: string;
-    canWrite: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -58,11 +48,8 @@ const emit = defineEmits<{
 
 const { success, error } = useToast();
 
-const open = ref(false);
 const saving = ref(false);
 const form = ref<{ clear: () => void } | null>(null);
-
-const canAdd = computed(() => props.canWrite && !!props.employeeUuid);
 
 async function add(text: string) {
     saving.value = true;
@@ -70,7 +57,6 @@ async function add(text: string) {
     try {
         const res = await employeeNoteService.create({
             branch_uuid: props.branchUuid,
-            employee_uuid: props.employeeUuid,
             schedule_code: props.scheduleCode,
             note: text,
         });

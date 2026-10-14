@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Http\Resources\EmployeeNoteResource;
 use App\Models\Employee;
+use App\Models\EmployeeNote;
 use App\Models\Patient;
 use App\Models\Schedule;
 use App\Models\User;
@@ -16,9 +17,10 @@ class EmployeeNoteService
 
     public function __construct(private EmployeeNoteRepository $notes) {}
 
-    public function list(array $payload)
+    public function list(array $payload, User $user)
     {
         $branchId = (int) $payload['branch_id'];
+        $viewerId = $this->authorOf($user)->employee_id;
         $perPage = (int) ($payload['per_page'] ?? 10);
 
         if (!empty($payload['schedule_code'])) {
@@ -26,7 +28,7 @@ class EmployeeNoteService
 
             return response()->json([
                 'data' => EmployeeNoteResource::collection(
-                    $this->notes->forSchedule($branchId, $schedule->schedule_id)
+                    $this->notes->forSchedule($branchId, $schedule->schedule_id, $viewerId)
                 )->resolve(),
             ]);
         }
@@ -34,42 +36,22 @@ class EmployeeNoteService
         if (!empty($payload['patient_uuid'])) {
             $patient = $this->patientOrFail($payload['patient_uuid'], $branchId);
 
-            return $this->paginated($this->notes->paginateForPatient($branchId, $patient->patient_id, $perPage));
+            return $this->paginated(
+                $this->notes->paginateForPatient($branchId, $patient->patient_id, $viewerId, $perPage)
+            );
         }
 
         $employee = $this->employeeOrFail($payload['employee_uuid'] ?? '', $branchId);
 
-        $page = $this->notes->paginateForEmployee($branchId, $employee->employee_id, $perPage);
-
-        $response = $this->paginated($page)->getData(true);
-
-        if ($page->currentPage() === 1) {
-            $response['schedules'] = $this->notes
-                ->schedulesOf($employee->employee_id, $branchId)
-                ->map(fn(Schedule $schedule) => [
-                    'schedule_code' => $schedule->schedule_code,
-                    'scheduled_at' => $schedule->scheduled_at?->toISOString(),
-                    'patient_name' => $schedule->patient?->display_name,
-                ])
-                ->values();
-
-            $response['patients'] = $this->notes
-                ->admittedPatients($branchId)
-                ->map(fn(Patient $patient) => [
-                    'patient_uuid' => $patient->uuid,
-                    'patient_name' => $patient->display_name,
-                ])
-                ->values();
-        }
-
-        return response()->json($response);
+        return $this->paginated(
+            $this->notes->paginateForEmployee($branchId, $employee->employee_id, $viewerId, $perPage)
+        );
     }
 
     public function create(array $payload, User $user)
     {
         $branchId = (int) $payload['branch_id'];
-
-        $employee = $this->employeeOrFail($payload['employee_uuid'] ?? '', $branchId);
+        $author = $this->authorOf($user);
 
         $scheduleId = null;
         $patientId = null;
@@ -77,29 +59,18 @@ class EmployeeNoteService
         if (!empty($payload['schedule_code'])) {
             $schedule = $this->scheduleOrFail($payload['schedule_code'], $branchId);
 
-            if (!$this->notes->wasAssigned($employee->employee_id, $schedule->schedule_id)) {
-                throw new Exception('This employee was not assigned to that schedule.', 422);
-            }
-
             $scheduleId = $schedule->schedule_id;
             $patientId = $schedule->patient_id;
         } elseif (!empty($payload['patient_uuid'])) {
-            $patient = $this->patientOrFail($payload['patient_uuid'], $branchId);
-
-            if (!$this->notes->isAdmitted($patient)) {
-                throw new Exception('Pick an admitted patient or a homecare schedule.', 422);
-            }
-
-            $patientId = $patient->patient_id;
+            $patientId = $this->patientOrFail($payload['patient_uuid'], $branchId)->patient_id;
         }
 
         $note = $this->notes->create([
             'branch_id' => $branchId,
-            'employee_id' => $employee->employee_id,
+            'employee_id' => $author->employee_id,
             'schedule_id' => $scheduleId,
             'patient_id' => $patientId,
             'note' => $this->cleanNote($payload['note'] ?? ''),
-            'recorded_by' => $user->employee?->employee_id,
         ]);
 
         return response()->json([
@@ -108,9 +79,9 @@ class EmployeeNoteService
         ], 201);
     }
 
-    public function update(array $payload, string $uuid)
+    public function update(array $payload, string $uuid, User $user)
     {
-        $note = $this->noteOrFail($uuid, (int) $payload['branch_id']);
+        $note = $this->ownNoteOrFail($uuid, (int) $payload['branch_id'], $user);
 
         $note->update(['note' => $this->cleanNote($payload['note'] ?? '')]);
 
@@ -120,9 +91,9 @@ class EmployeeNoteService
         ]);
     }
 
-    public function delete(array $payload, string $uuid)
+    public function delete(array $payload, string $uuid, User $user)
     {
-        $this->noteOrFail($uuid, (int) $payload['branch_id'])->delete();
+        $this->ownNoteOrFail($uuid, (int) $payload['branch_id'], $user)->delete();
 
         return response()->json(['message' => 'Note deleted.']);
     }
@@ -151,6 +122,11 @@ class EmployeeNoteService
         return mb_substr($note, 0, 1000);
     }
 
+    private function authorOf(User $user): Employee
+    {
+        return $user->employee ?? throw new Exception('Only staff can use notes.', 403);
+    }
+
     private function employeeOrFail(string $uuid, int $branchId): Employee
     {
         return $this->notes->findEmployee($uuid, $branchId)
@@ -169,9 +145,15 @@ class EmployeeNoteService
             ?? throw new Exception('Patient not found.', 404);
     }
 
-    private function noteOrFail(string $uuid, int $branchId)
+    private function ownNoteOrFail(string $uuid, int $branchId, User $user): EmployeeNote
     {
-        return $this->notes->findInBranch($uuid, $branchId)
+        $note = $this->notes->findInBranch($uuid, $branchId)
             ?? throw new Exception('Note not found.', 404);
+
+        if ($note->employee_id !== $this->authorOf($user)->employee_id) {
+            throw new Exception('You can only change your own notes.', 403);
+        }
+
+        return $note;
     }
 }
