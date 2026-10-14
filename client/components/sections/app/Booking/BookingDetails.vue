@@ -726,7 +726,6 @@ const paymentRows = computed(() => {
         },
         { label: "Method", value: payment.payment_method },
         { label: "Card", value: payment.masked_card_number },
-        { label: "Reference", value: payment.xendit_invoice_id },
     ].filter((row): row is { label: string; value: string } =>
         Boolean(row && row.value),
     );
