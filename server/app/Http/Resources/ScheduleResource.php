@@ -290,6 +290,7 @@ class ScheduleResource extends JsonResource
 
                                 return [
                                     'employee_id' => $assignment->employee_id,
+                                    'employee_uuid' => $employee?->users?->uuid,
                                     'is_active' => $assignment->is_active,
                                     'full_name' => $employee->fullName ?? '',
                                     'employee_role' => $employee?->employeeBranch

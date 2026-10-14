@@ -51,13 +51,18 @@ class EmployeeNoteService
     public function create(array $payload, User $user)
     {
         $branchId = (int) $payload['branch_id'];
-        $author = $this->authorOf($user);
+
+        $employee = $this->authorOf($user);
 
         $scheduleId = null;
         $patientId = null;
 
         if (!empty($payload['schedule_code'])) {
             $schedule = $this->scheduleOrFail($payload['schedule_code'], $branchId);
+
+            if (!$this->notes->isAssigned($employee->employee_id, $schedule->schedule_id)) {
+                throw new Exception('Only employees assigned to this schedule can leave a note on it.', 403);
+            }
 
             $scheduleId = $schedule->schedule_id;
             $patientId = $schedule->patient_id;
@@ -67,7 +72,7 @@ class EmployeeNoteService
 
         $note = $this->notes->create([
             'branch_id' => $branchId,
-            'employee_id' => $author->employee_id,
+            'employee_id' => $employee->employee_id,
             'schedule_id' => $scheduleId,
             'patient_id' => $patientId,
             'note' => $this->cleanNote($payload['note'] ?? ''),

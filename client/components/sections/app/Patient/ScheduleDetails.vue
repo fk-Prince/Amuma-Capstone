@@ -628,17 +628,6 @@
                         </p>
                     </div>
 
-                    <ScheduleNotes
-                        v-if="!isEditing"
-                        :class="leftColClass"
-                        :notes="scheduleNotes"
-                        :branch-uuid="branchUuid"
-                        :schedule-code="schedule.schedule_code"
-                        @created="onNoteCreated"
-                        @updated="onNoteUpdated"
-                        @removed="onNoteRemoved"
-                    />
-
                     <div :class="servicesColClass">
                         <p
                             class="mb-2 text-sm font-semibold text-slate-800 dark:text-white"
@@ -1209,8 +1198,11 @@
                                         <div
                                             v-for="employee in activeAssigneesFor(service)"
                                             :key="employee.employee_id"
-                                            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
+                                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
                                         >
+                                            <div
+                                                class="flex items-center justify-between"
+                                            >
                                             <div
                                                 class="flex min-w-0 items-center gap-3"
                                             >
@@ -1300,6 +1292,17 @@
                                             >
                                                 {{ employee.note }}
                                             </span>
+                                            </div>
+
+                                            <AssigneeNotes
+                                                :notes="notesFor(employee)"
+                                                :branch-uuid="branchUuid"
+                                                :employee-uuid="employee.employee_uuid ?? null"
+                                                :schedule-code="schedule.schedule_code"
+                                                @created="onNoteCreated"
+                                                @updated="onNoteUpdated"
+                                                @removed="onNoteRemoved"
+                                            />
                                         </div>
                                     </div>
 
@@ -1429,7 +1432,7 @@ import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
-import ScheduleNotes from "~/components/sections/app/Patient/ScheduleNotes.vue";
+import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import {
@@ -1459,7 +1462,11 @@ function durationLabelFor(service: ScheduleServiceItem): string {
 }
 import { fullName, initials } from "~/utils/user";
 import type { Employee } from "~/types/employee";
-import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import type {
+    ScheduleAssignee,
+    ScheduleItem,
+    ScheduleServiceItem,
+} from "~/types/schedule";
 import type { EmployeeNote } from "~/types/employee-note";
 import { employeeNoteService } from "~/api/employee-note/EmployeeNoteService";
 import {
@@ -1560,6 +1567,13 @@ watch(
     },
     { immediate: true },
 );
+
+function notesFor(assignee: ScheduleAssignee) {
+    return scheduleNotes.value.filter(
+        (note) =>
+            !!note.employee_uuid && note.employee_uuid === assignee.employee_uuid,
+    );
+}
 
 function onNoteCreated(note: EmployeeNote) {
     scheduleNotes.value = [note, ...scheduleNotes.value];

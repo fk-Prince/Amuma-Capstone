@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\EmployeeNote;
 use App\Models\Patient;
 use App\Models\Schedule;
+use App\Models\ScheduleAssigned;
 
 class EmployeeNoteRepository
 {
@@ -66,6 +67,14 @@ class EmployeeNoteRepository
         return Patient::where('uuid', $uuid)
             ->where('branch_id', $branchId)
             ->first();
+    }
+
+    public function isAssigned(int $employeeId, int $scheduleId): bool
+    {
+        return ScheduleAssigned::where('employee_id', $employeeId)
+            ->where('is_active', true)
+            ->whereHas('scheduleService', fn($service) => $service->where('schedule_id', $scheduleId))
+            ->exists();
     }
 
     private function visibleQuery(int $branchId, int $viewerId)
