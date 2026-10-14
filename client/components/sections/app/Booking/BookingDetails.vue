@@ -92,10 +92,7 @@
 
                     <div class="flex items-center gap-4">
                         <span
-                            v-if="
-                                paymentStatus &&
-                                booking.facility?.type === 'Complete'
-                            "
+                            v-if="showPaymentBadge"
                             class="px-3 py-1 uppercase rounded-sm text-xs font-medium"
                             :class="{
                                 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300':
@@ -672,6 +669,13 @@ const paymentStatus = computed(() => {
 
 const isPaid = computed(
     () => paymentStatus.value === "paid" || paymentStatus.value === "partial",
+);
+
+const showPaymentBadge = computed(
+    () =>
+        Boolean(paymentStatus.value) &&
+        (props.booking.facility?.type === "Complete" ||
+            paymentStatus.value === "partial"),
 );
 
 const isRejected = computed(
