@@ -373,11 +373,6 @@ class BookingService
         $owner = User::where('email', $data['guardian']['email'])->first();
 
         $total = round((float) ($data['price'] ?? 0), 2);
-        $percent = $this->bookingHelper->getBookingPercent([
-            'category' => Booking::CATEGORY_ONLINE,
-            'branch' => $branch,
-        ]);
-        $bookingAmount = round($total * $percent / 100, 2);
 
         $bookingData = [
             'patient' => $patient + ['middle_name' => null],
@@ -395,9 +390,6 @@ class BookingService
             ],
             'payment' => [
                 'total_amount' => $total,
-                'booking_percent' => $percent,
-                'booking_amount' => $bookingAmount,
-                'balance_amount' => round($total - $bookingAmount, 2),
                 'payment_status' => 'pending',
             ],
             'assessment' => array_values(array_filter(is_array($assessments) ? $assessments : [$assessments])),

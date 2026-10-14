@@ -93,29 +93,33 @@ const serviceAddress = computed(() =>
 
 const payment = computed(() => props.booking.payment ?? null);
 
-const balanceDue = computed(() => Number(payment.value?.balance_amount ?? 0));
-
 const isCompleteAdmission = computed(
     () => props.booking.facility?.type === "Complete",
 );
 
-const hasDownpayment = computed(
-    () => !isFacility.value && payment.value?.booking_amount != null,
+const isUnpaid = computed(
+    () =>
+        !isFacility.value &&
+        payment.value?.payment_status === "pending" &&
+        Number(payment.value?.total_amount ?? 0) > 0,
 );
 
-const isUnpaid = computed(
-    () => hasDownpayment.value && payment.value?.payment_status === "pending",
+const hasDownpayment = computed(
+    () =>
+        !isFacility.value &&
+        !isUnpaid.value &&
+        payment.value?.booking_amount != null,
+);
+
+const balanceDue = computed(() =>
+    Number(
+        (isUnpaid.value
+            ? payment.value?.total_amount
+            : payment.value?.balance_amount) ?? 0,
+    ),
 );
 
 const paidLabel = computed(() => {
-    if (isUnpaid.value) {
-        const percent = payment.value?.booking_percent;
-
-        return percent && percent < 100
-            ? `Downpayment Due (${percent}%)`
-            : "Amount Due";
-    }
-
     if (balanceDue.value <= 0) return "Amount paid";
 
     if (!hasDownpayment.value) return "Reservation Fee Paid";
@@ -370,7 +374,10 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div
-                        v-if="payment && (isCompleteAdmission || hasDownpayment)"
+                        v-if="
+                            payment &&
+                            (isCompleteAdmission || hasDownpayment || isUnpaid)
+                        "
                         class="mt-7"
                     >
                         <p
@@ -382,7 +389,7 @@ onBeforeUnmount(() => {
                         <table class="mt-3 w-full text-sm">
                             <tbody>
                                 <tr
-                                    v-if="balanceDue > 0 || isUnpaid"
+                                    v-if="balanceDue > 0"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
                                     <td
@@ -396,6 +403,7 @@ onBeforeUnmount(() => {
                                 </tr>
 
                                 <tr
+                                    v-if="!isUnpaid"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
                                     <td
@@ -469,11 +477,6 @@ onBeforeUnmount(() => {
                             above when following up with the branch.
                         </p>
 
-                        <p v-if="isUnpaid" class="mt-2 font-semibold">
-                            Please present this slip to the cashier to settle
-                            the amount due.
-                        </p>
-
                         <div class="mt-8 flex justify-center">
                             <div class="w-1/2 text-center">
                                 <p
@@ -512,7 +515,7 @@ onBeforeUnmount(() => {
     body.acknowledgement-printing * {
         visibility: hidden !important;
     }
-    s body.acknowledgement-printing #acknowledgement-print,
+    body.acknowledgement-printing #acknowledgement-print,
     body.acknowledgement-printing #acknowledgement-print * {
         visibility: visible !important;
     }
