@@ -118,6 +118,15 @@ const bodyClass = computed(() =>
 
 const fieldClass = computed(() => (props.compact ? "!py-2" : ""));
 
+const cardPanelRef = ref<HTMLElement | null>(null);
+const cardPanelHeight = ref(0);
+
+const panelStyle = computed(() =>
+    props.compact && cardPanelHeight.value
+        ? { minHeight: `${cardPanelHeight.value}px` }
+        : undefined,
+);
+
 const terms = computed(() => getPaymentTerms(props.termsContext));
 const agreedToTerms = ref(false);
 const showTermsModal = ref(false);
@@ -177,6 +186,16 @@ const updateCard = <K extends keyof CardDetails>(
 const selectMethod = (method: PaymentMethod) => {
     checkout.payment_method = method;
 };
+
+watch(
+    () => checkout.payment_method,
+    (_, previous) => {
+        if (previous !== "CREDIT-CARD" || !cardPanelRef.value) return;
+
+        cardPanelHeight.value = cardPanelRef.value.offsetHeight;
+    },
+    { flush: "pre" },
+);
 
 const digitsOnly = (value: unknown) => String(value ?? "").replace(/\D/g, "");
 
@@ -355,14 +374,14 @@ watch(isCash, (active) => {
             <!-- Payment Methods -->
             <div
                 v-if="methods.length > 1 && compact"
-                class="grid gap-2 border-b border-slate-100 px-5 py-3 dark:border-white/10"
+                class="grid gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10"
                 :class="methods.length > 2 ? 'grid-cols-3' : 'grid-cols-2'"
             >
                 <button
                     v-for="method in methods"
                     :key="method.value"
                     type="button"
-                    class="flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition"
+                    class="flex items-center justify-center gap-2.5 rounded-lg border px-3 py-3.5 text-sm font-semibold transition"
                     :class="
                         checkout.payment_method === method.value
                             ? 'border-primary bg-primary/[0.04] text-primary ring-1 ring-primary/20'
@@ -374,13 +393,13 @@ watch(isCash, (active) => {
                         v-if="method.image"
                         :src="method.image"
                         :alt="method.label"
-                        class="h-4 w-auto max-w-[2.5rem] object-contain"
+                        class="h-5 w-auto max-w-[3.25rem] object-contain"
                     />
 
                     <component
                         v-else-if="method.icon"
                         :is="method.icon"
-                        class="h-4 w-4"
+                        class="h-5 w-5"
                     />
 
                     {{ method.label }}
@@ -489,6 +508,7 @@ watch(isCash, (active) => {
             <!-- Card -->
             <form
                 v-if="isCard && card"
+                ref="cardPanelRef"
                 @submit.prevent="handleCardPay"
                 :class="bodyClass"
             >
@@ -644,7 +664,11 @@ watch(isCash, (active) => {
             </form>
 
             <!-- GCash -->
-            <div v-else-if="isGCash" :class="bodyClass">
+            <div
+                v-else-if="isGCash"
+                :class="bodyClass"
+                :style="panelStyle"
+            >
                 <div
                     v-if="compact"
                     class="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5 dark:border-blue-500/20 dark:bg-blue-500/10"
@@ -753,7 +777,11 @@ watch(isCash, (active) => {
             </div>
 
             <!-- Cash -->
-            <div v-else-if="isCash" :class="bodyClass">
+            <div
+                v-else-if="isCash"
+                :class="bodyClass"
+                :style="panelStyle"
+            >
                 <div
                     class="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/10 dark:to-secondary p-5"
                 >

@@ -3,14 +3,23 @@
         <div
             class="flex items-start justify-between gap-4 border-b border-gray-200 pb-4"
         >
-            <div>
-                <p
-                    class="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500"
-                >
-                    {{ branchName || "Amuma Care" }}
-                </p>
+            <div class="flex items-start gap-3">
+                <img
+                    v-if="branchImage"
+                    :src="branchImage"
+                    :alt="branchName || 'Branch logo'"
+                    class="h-12 w-12 shrink-0 rounded-lg object-cover"
+                />
 
-                <h1 class="mt-1 text-lg font-semibold">Schedule Details</h1>
+                <div>
+                    <p
+                        class="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500"
+                    >
+                        {{ branchName || "Amuma Care" }}
+                    </p>
+
+                    <h1 class="mt-1 text-lg font-semibold">Schedule Details</h1>
+                </div>
             </div>
 
             <div class="text-right">
@@ -204,6 +213,7 @@ import type {
 const props = defineProps<{
     schedule: ScheduleItem;
     branchName?: string | null;
+    branchImage?: string | null;
     notes?: EmployeeNote[];
 }>();
 

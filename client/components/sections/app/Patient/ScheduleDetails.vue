@@ -1396,6 +1396,11 @@
             <ScheduleSheet
                 :schedule="schedule"
                 :branch-name="branchStore.activeBranch?.name"
+                :branch-image="
+                    typeof branchStore.activeBranch?.image === 'string'
+                        ? branchStore.activeBranch.image
+                        : null
+                "
                 :notes="scheduleNotes"
             />
         </div>
