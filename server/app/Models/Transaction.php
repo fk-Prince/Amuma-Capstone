@@ -18,6 +18,7 @@ class Transaction extends Model
     public const UPDATED_AT = null;
 
     public const TYPE_PAYMENT = 'payment';
+    public const TYPE_REFUND = 'refund';
     public const TYPE_WITHDRAW = 'withdraw';
 
     public const DIRECTION_CREDIT = 'credit';
@@ -33,6 +34,7 @@ class Transaction extends Model
         'branch_id',
         'patient_id',
         'client_id',
+        'booking_id',
         'amount',
         'type',
         'direction',
@@ -63,6 +65,11 @@ class Transaction extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id', 'client_id');
+    }
+
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
     public function payment()

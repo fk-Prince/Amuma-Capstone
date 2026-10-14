@@ -150,21 +150,31 @@ class BookingFactory
         $totalAmount = (float) ($payment['total_amount'] ?? 0);
         $amount = (float) ($payment['booking_amount'] ?? $totalAmount);
 
-        $transaction = $this->transactions->forPayment(
-            $amount,
-            $payload['branch_id'],
-            $patientId,
-            $description,
-            [
-                'client_id' => $client?->client_id,
-                'method' => $payment['payment_method'] ?? 'cash',
-                'party_name' => trim(
-                    ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
-                ) ?: null,
-                'masked_account_number' => $payment['masked_card_number'] ?? null,
-                'transaction_reference_id' => $payment['xendit_invoice_id'] ?? null,
-            ]
-        );
+        $transaction = $this->transactions->bookingPayment($payload['booking_id'] ?? null);
+
+        if ($transaction) {
+            $transaction->update([
+                'patient_id' => $patientId,
+                'client_id' => $transaction->client_id ?? $client?->client_id,
+            ]);
+        } else {
+            $transaction = $this->transactions->forPayment(
+                $amount,
+                $payload['branch_id'],
+                $patientId,
+                $description,
+                [
+                    'client_id' => $client?->client_id,
+                    'booking_id' => $payload['booking_id'] ?? null,
+                    'method' => $payment['payment_method'] ?? 'cash',
+                    'party_name' => trim(
+                        ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
+                    ) ?: null,
+                    'masked_account_number' => $payment['masked_card_number'] ?? null,
+                    'transaction_reference_id' => $payment['xendit_invoice_id'] ?? null,
+                ]
+            );
+        }
 
         $receipt = $this->paymentRepository->create([
             'transaction_id' => $transaction->transaction_id,

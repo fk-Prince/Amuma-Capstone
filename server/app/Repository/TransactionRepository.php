@@ -16,6 +16,22 @@ class TransactionRepository
         return Transaction::where($conditions)->first();
     }
 
+    public function findBookingPayment(string $transactionCode)
+    {
+        return Transaction::with('booking', 'branch.location', 'patient')
+            ->where('transaction_code', $transactionCode)
+            ->where('type', Transaction::TYPE_PAYMENT)
+            ->whereNotNull('booking_id')
+            ->first();
+    }
+
+    public function codesForBookings(array $bookingIds)
+    {
+        return Transaction::whereIn('booking_id', $bookingIds)
+            ->where('type', Transaction::TYPE_PAYMENT)
+            ->pluck('transaction_code', 'booking_id');
+    }
+
     public function forPatient(mixed $patientId)
     {
         return Transaction::where('patient_id', $patientId)

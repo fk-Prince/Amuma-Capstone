@@ -9,6 +9,7 @@ use App\Guard\GuardianEmailGuard;
 use App\Models\Booking;
 use App\Models\Patient;
 use App\Models\PatientAccess;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\BookingRepository;
 use App\Service\Booking\BookingHelper;
@@ -17,6 +18,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
@@ -24,7 +26,8 @@ class BookingService
         private BookingRepository $bookingRepository,
         private NotificationService $notificationService,
         private BookingHelper $bookingHelper,
-        private BookingFactory $bookingFactory
+        private BookingFactory $bookingFactory,
+        private TransactionService $transactions
     ) {}
 
     public function bookingAction(array $payload)
@@ -62,7 +65,7 @@ class BookingService
                 }
             }
 
-            $data = $this->bookingFactory->process($payload);
+            $data = $this->bookingFactory->process($payload + ['booking_id' => $booking->booking_id]);
 
             $bookingData = [
                 'patient' =>   $payload['patient'],
@@ -240,6 +243,8 @@ class BookingService
                     throw new Exception('Failed to create booking.', 500);
                 }
 
+                $this->recordDownpayment($user, $booking, $bookingData['payment']);
+
                 $this->notificationService->notifyNewBooking($branch, $user, $booking);
 
                 return response()->json([
@@ -262,7 +267,36 @@ class BookingService
         }
     }
 
-    // DONE 
+    // Only a booking that was actually paid for has a downpayment to record.
+    private function recordDownpayment(User $user, Booking $booking, array $payment): void
+    {
+        $amount = (float) ($payment['booking_amount'] ?? 0);
+
+        if ($amount <= 0) {
+            return;
+        }
+
+        $client = $user->client;
+
+        $this->transactions->forPayment(
+            $amount,
+            $booking->branch_id,
+            null,
+            "Downpayment for booking {$booking->reference_id}.",
+            [
+                'booking_id' => $booking->booking_id,
+                'client_id' => $client?->client_id,
+                'method' => $payment['payment_method'] ?? null,
+                'party_name' => trim(
+                    ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
+                ) ?: null,
+                'masked_account_number' => $payment['masked_card_number'] ?? null,
+                'transaction_reference_id' => $payment['xendit_invoice_id'] ?? null,
+            ]
+        );
+    }
+
+    // DONE
     public function createBooking(User $user, array $payload)
     {
         if ($this->bookingHelper->isHomecare($payload)) {
@@ -426,8 +460,13 @@ class BookingService
         return new BookingResource($booking);
     }
 
-    private function refundBookingPayment(array &$bookingData): bool
-    {
+    // A rejected booking is always marked refunded; $markRefundedAnyway keeps
+    // that true even when the gateway call fails, and logs it for follow-up.
+    private function refundBookingPayment(
+        Booking $booking,
+        array &$bookingData,
+        bool $markRefundedAnyway = false
+    ): bool {
         $payment = $bookingData['payment'] ?? [];
         $amount = (float) ($payment['booking_amount'] ?? $payment['total_amount'] ?? 0);
 
@@ -445,11 +484,41 @@ class BookingService
             (bool) ($payment['masked_card_number'] ?? null)
         );
 
-        if ($refunded) {
-            $bookingData['payment']['payment_status'] = 'refunded';
+        if (!$refunded && !$markRefundedAnyway) {
+            return false;
         }
 
-        return $refunded;
+        if (!$refunded) {
+            Log::warning('Booking marked refunded although the gateway refund failed', [
+                'booking_id' => $booking->booking_id,
+                'reference_id' => $booking->reference_id,
+                'xendit_invoice_id' => $payment['xendit_invoice_id'],
+                'amount' => $amount,
+            ]);
+        }
+
+        $bookingData['payment']['payment_status'] = 'refunded';
+
+        $paid = $this->transactions->bookingPayment($booking->booking_id);
+
+        if ($paid) {
+            $this->transactions->forRefund(
+                $amount,
+                $booking->branch_id,
+                $paid->patient_id,
+                "Refund for booking {$booking->reference_id}.",
+                [
+                    'booking_id' => $booking->booking_id,
+                    'client_id' => $paid->client_id,
+                    'method' => $paid->method,
+                    'party_name' => $paid->party_name,
+                    'masked_account_number' => $paid->masked_account_number,
+                    'transaction_reference_id' => $paid->transaction_reference_id,
+                ]
+            );
+        }
+
+        return true;
     }
 
     //USED
@@ -457,7 +526,7 @@ class BookingService
     {
         return DB::transaction(function () use ($booking) {
             $bookingData = $booking->booking_data;
-            $refunded = $this->refundBookingPayment($bookingData);
+            $refunded = $this->refundBookingPayment($booking, $bookingData);
 
             $booking->update([
                 'booking_data' => $bookingData,
@@ -476,13 +545,13 @@ class BookingService
                 ['reference_id', '=', $payload['reference_id']],
                 ['branch_id', '=', $payload['branch_id']]
             ]);
-            $bookingData = $booking['booking_data'];
             if (!$booking) {
                 throw new Exception('Booking doesn\'t exist', 404);
             }
 
+            $bookingData = $booking['booking_data'];
 
-            $this->refundBookingPayment($bookingData);
+            $this->refundBookingPayment($booking, $bookingData, true);
 
             $reason = trim((string) ($payload['reason'] ?? '')) ?: null;
 

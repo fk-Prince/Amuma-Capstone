@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Exceptions\ExternalServiceException;
+use App\Http\Resources\BookingReceiptResource;
 use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -14,6 +15,7 @@ use App\Service\Payment\GCashPayment;
 use App\Repository\RefundRepository;
 use App\Utils\AccommodationHelper;
 use Exception;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -319,7 +321,7 @@ class PaymentService
         );
     }
 
-    public function receipt(Client $client, array $payload): PaymentReceiptResource
+    public function receipt(Client $client, array $payload): JsonResource
     {
         $receipt = $this->paymentRepository->findByCode(
             $payload['payment_code'],
@@ -327,7 +329,7 @@ class PaymentService
         );
 
         if (!$receipt) {
-            throw new Exception('Receipt not found.', 404);
+            return $this->bookingReceipt($client, $payload['payment_code']);
         }
 
         $hasAccess = PatientAccess::where('patient_id', $receipt->patient_id)
@@ -340,5 +342,29 @@ class PaymentService
         }
 
         return new PaymentReceiptResource($receipt);
+    }
+
+    // A booking's downpayment has a transaction but no receipt record until
+    // the booking is accepted, so it is printed from the transaction itself.
+    private function bookingReceipt(Client $client, string $transactionCode): BookingReceiptResource
+    {
+        $transaction = $this->transactions->bookingReceipt($transactionCode);
+
+        if (!$transaction) {
+            throw new Exception('Receipt not found.', 404);
+        }
+
+        $paidByClient = (int) $transaction->client_id === (int) $client->client_id;
+
+        $hasAccess = $paidByClient || ($transaction->patient_id && PatientAccess::where('patient_id', $transaction->patient_id)
+            ->where('client_id', $client->client_id)
+            ->where('have_access', true)
+            ->exists());
+
+        if (!$hasAccess) {
+            throw new Exception('You do not have access to this receipt.', 403);
+        }
+
+        return new BookingReceiptResource($transaction);
     }
 }

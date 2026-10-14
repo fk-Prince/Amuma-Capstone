@@ -32,6 +32,23 @@ class TransactionService
         ]);
     }
 
+    public function bookingReceipt(string $transactionCode): ?Transaction
+    {
+        return $this->transactionRepository->findBookingPayment($transactionCode);
+    }
+
+    public function bookingPayment(mixed $bookingId): ?Transaction
+    {
+        if (!$bookingId) {
+            return null;
+        }
+
+        return $this->transactionRepository->findByField([
+            ['booking_id', '=', $bookingId],
+            ['type', '=', Transaction::TYPE_PAYMENT],
+        ]);
+    }
+
     public function settle(?Transaction $transaction, string $status, ?string $reason = null): void
     {
         $transaction?->update(array_filter([
@@ -50,6 +67,25 @@ class TransactionService
         return $this->record(
             Transaction::TYPE_PAYMENT,
             Transaction::DIRECTION_CREDIT,
+            $amount,
+            $branchId,
+            $patientId,
+            $description,
+            Transaction::STATUS_COMPLETED,
+            $extra
+        );
+    }
+
+    public function forRefund(
+        float $amount,
+        mixed $branchId,
+        mixed $patientId,
+        ?string $description = null,
+        array $extra = []
+    ): Transaction {
+        return $this->record(
+            Transaction::TYPE_REFUND,
+            Transaction::DIRECTION_DEBIT,
             $amount,
             $branchId,
             $patientId,
@@ -78,5 +114,4 @@ class TransactionService
             $extra
         );
     }
-
 }

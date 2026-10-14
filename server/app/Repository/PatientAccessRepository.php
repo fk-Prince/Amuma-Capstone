@@ -33,7 +33,8 @@ class PatientAccessRepository
     private const ACTIVITY_LIMIT = 200;
 
     public function __construct(
-        private readonly PortalHelper $helper
+        private readonly PortalHelper $helper,
+        private readonly TransactionRepository $transactions
     ) {}
 
     public function overview(array $payload)
@@ -181,10 +182,17 @@ class PatientAccessRepository
             ->orderByDesc('booking_id')
             ->paginate((int) ($payload['per_page'] ?? 10));
 
+        $receiptCodes = $this->transactions->codesForBookings(
+            collect($bookings->items())->pluck('booking_id')->all()
+        );
+
         return [
             'success' => true,
             'data' => collect($bookings->items())
-                ->map(fn($booking) => $this->helper->bookingPayload($booking))
+                ->map(fn($booking) => $this->helper->bookingPayload(
+                    $booking,
+                    $receiptCodes->get($booking->booking_id)
+                ))
                 ->values(),
             'meta' => [
                 'current_page' => $bookings->currentPage(),
