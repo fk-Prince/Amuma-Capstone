@@ -487,6 +487,17 @@
                         </p>
                     </div>
                 </section>
+
+                <div class="flex justify-end">
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-2 rounded-lg border border-[#D7E6E3] bg-white px-4 py-2 text-sm font-semibold text-[#0E7C7B] transition hover:bg-[#EAF4F2] dark:border-white/10 dark:bg-transparent dark:text-accent-300 dark:hover:bg-white/10"
+                        @click="emit('print')"
+                    >
+                        <Printer class="h-4 w-4" />
+                        Print booking
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -508,7 +519,7 @@ import { fullName } from "~/utils/user";
 import LocationMapModal from "~/components/ui/LocationMapModal.vue";
 import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
-import { Stethoscope } from "lucide-vue-next";
+import { Printer, Stethoscope } from "lucide-vue-next";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { Field } from "~/utils/fields";
@@ -528,6 +539,10 @@ const route = useRoute();
 const props = defineProps<{
     booking: BookingRetrieve;
     loading?: boolean;
+}>();
+
+const emit = defineEmits<{
+    (e: "print"): void;
 }>();
 
 const booking = computed(() => props.booking);

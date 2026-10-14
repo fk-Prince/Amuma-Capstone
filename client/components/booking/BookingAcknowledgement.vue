@@ -103,7 +103,19 @@ const hasDownpayment = computed(
     () => !isFacility.value && payment.value?.booking_amount != null,
 );
 
+const isUnpaid = computed(
+    () => hasDownpayment.value && payment.value?.payment_status === "pending",
+);
+
 const paidLabel = computed(() => {
+    if (isUnpaid.value) {
+        const percent = payment.value?.booking_percent;
+
+        return percent && percent < 100
+            ? `Downpayment Due (${percent}%)`
+            : "Amount Due";
+    }
+
     if (balanceDue.value <= 0) return "Amount paid";
 
     if (!hasDownpayment.value) return "Reservation Fee Paid";
@@ -370,7 +382,7 @@ onBeforeUnmount(() => {
                         <table class="mt-3 w-full text-sm">
                             <tbody>
                                 <tr
-                                    v-if="balanceDue > 0"
+                                    v-if="balanceDue > 0 || isUnpaid"
                                     class="border-b border-slate-100 dark:border-white/10"
                                 >
                                     <td
@@ -455,6 +467,11 @@ onBeforeUnmount(() => {
                             a booking stays a request until the care team
                             reviews and accepts it. Present the reference number
                             above when following up with the branch.
+                        </p>
+
+                        <p v-if="isUnpaid" class="mt-2 font-semibold">
+                            Please present this slip to the cashier to settle
+                            the amount due.
                         </p>
 
                         <div class="mt-8 flex justify-center">

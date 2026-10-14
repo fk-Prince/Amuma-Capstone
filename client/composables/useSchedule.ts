@@ -140,9 +140,9 @@ export function useSchedule(props: UseScheduleProps = {}) {
 
     /**
      * A schedule's booked duration can span multiple calendar days (e.g. a
-     * 24hr+ homecare shift, or a short one that starts late at night and
-     * runs past midnight), so "which day does this schedule belong to" has
-     * to be a range, not just its literal start date.
+     * 24hr+ homecare shift that starts late one day and runs into the
+     * next), so "which day does this schedule belong to" has to be a
+     * range, not just its literal start date.
      */
     function scheduleDateSpan(
         schedule: ScheduleItem,
@@ -150,16 +150,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
         const start = getScheduleDate(schedule);
         if (!start) return null;
 
-        const startMinutes = parseTimeToMinutes(schedule.start_time);
-        const totalMinutes = scheduleTotalMinutes(schedule);
-
-        const spanDays =
-            startMinutes !== null && totalMinutes !== null
-                ? Math.max(
-                    1,
-                    Math.ceil((startMinutes + totalMinutes) / MINUTES_PER_DAY),
-                )
-                : Math.max(1, Math.ceil((schedule.total_hours ?? 0) / 24));
+        const spanDays = Math.max(1, Math.ceil((schedule.total_hours ?? 0) / 24));
 
         const endDate = new Date(`${start}T00:00:00`);
         endDate.setDate(endDate.getDate() + spanDays - 1);
@@ -408,16 +399,37 @@ export function useSchedule(props: UseScheduleProps = {}) {
         };
     }
 
-    function timeRangeFor(schedule: ScheduleItem, day: DayLike) {
-        const span = scheduleDateSpan(schedule);
+    // "Oct 14, 2026", or "Oct 14 – 15, 2026" when the booking runs past
+    // midnight into the next day.
+    function scheduleDateLabel(schedule: ScheduleItem) {
+        const start = getScheduleDate(schedule);
+        if (!start) return "";
 
-        if (!span || !day.date || day.date === span.start) {
-            return `${schedule.start_time} – ${schedule.end_time}`;
-        }
+        const startMinutes = parseTimeToMinutes(schedule.start_time);
+        const totalMinutes = scheduleTotalMinutes(schedule);
 
-        return day.date === span.end
-            ? `12:00 AM – ${schedule.end_time}`
-            : "All day";
+        const extraDays =
+            startMinutes !== null && totalMinutes !== null
+                ? Math.max(
+                      0,
+                      Math.ceil((startMinutes + totalMinutes) / MINUTES_PER_DAY) -
+                          1,
+                  )
+                : 0;
+
+        const startDate = new Date(`${start}T00:00:00`);
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + extraDays);
+
+        const format = new Intl.DateTimeFormat(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+
+        return extraDays > 0
+            ? format.formatRange(startDate, endDate)
+            : format.format(startDate);
     }
 
     const tick = ref(0);
@@ -588,7 +600,7 @@ export function useSchedule(props: UseScheduleProps = {}) {
         getServiceBox,
         getScheduleLeft,
         getScheduleWidth,
-        timeRangeFor,
+        scheduleDateLabel,
 
         nowOffset,
         startNowTicker,

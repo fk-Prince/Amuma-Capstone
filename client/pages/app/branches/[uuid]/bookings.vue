@@ -326,6 +326,7 @@
                     <BookingDetails
                         :booking="selectedBooking"
                         :loading="isSubmitting"
+                        @print="printing = selectedBooking"
                     />
                 </div>
 
@@ -752,6 +753,14 @@
             @booked="onHomecareBooked"
         />
 
+        <BookingAcknowledgement
+            v-if="printing"
+            :booking="printing"
+            :branch-name="activeBranch?.name ?? null"
+            :branch-image="activeBranchImage"
+            @close="printing = null"
+        />
+
         <RejectBookingModal
             v-if="rejectTarget"
             :reference-id="rejectTarget.reference_id"
@@ -778,6 +787,8 @@ import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue
 import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
 import StaffHomecareBookingModal from "~/components/sections/app/Booking/StaffHomecareBookingModal.vue";
+import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
+import { useBranchStore } from "~/stores/branch";
 import { Modules } from "~/types/module";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import RejectBookingModal from "~/components/sections/app/Booking/RejectBookingModal.vue";
@@ -862,9 +873,19 @@ const showHomecareBooking = computed(
 );
 
 const homecareBookingOpen = ref(false);
+const printing = ref<BookingRetrieve | null>(null);
+const branchStore = useBranchStore();
+const activeBranch = computed(() => branchStore.activeBranch);
+const activeBranchImage = computed(() => {
+    const image = activeBranch.value?.image;
+
+    return typeof image === "string" ? image : null;
+});
 
 function onHomecareBooked(booking: any) {
     if (!booking?.reference_id) return;
+
+    printing.value = booking;
 
     const listed = (bookingData.value ?? []).some(
         (item: any) => item.booking_id === booking.booking_id,

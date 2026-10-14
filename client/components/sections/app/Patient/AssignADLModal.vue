@@ -503,7 +503,7 @@
                                                 <span
                                                     class="h-1.5 w-1.5 rounded-full bg-amber-500"
                                                 ></span>
-                                                Busy
+                                                Conflict
                                             </span>
 
                                             <span
@@ -1045,7 +1045,7 @@ function handleEmployeeClick(employee: Employee) {
 
     if (employee.is_busy) {
         toastError(
-            `${fullName(employee.first_name, "", employee.last_name)} is busy or has a schedule conflict and can't be assigned to this booking.`,
+            `${fullName(employee.first_name, "", employee.last_name)} has a schedule conflict and can't be assigned to this booking.`,
         );
         return;
     }

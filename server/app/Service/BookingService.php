@@ -372,6 +372,13 @@ class BookingService
 
         $owner = User::where('email', $data['guardian']['email'])->first();
 
+        $total = round((float) ($data['price'] ?? 0), 2);
+        $percent = $this->bookingHelper->getBookingPercent([
+            'category' => Booking::CATEGORY_ONLINE,
+            'branch' => $branch,
+        ]);
+        $bookingAmount = round($total * $percent / 100, 2);
+
         $bookingData = [
             'patient' => $patient + ['middle_name' => null],
             'guardian' => $guardian + ['middle_name' => null],
@@ -387,7 +394,11 @@ class BookingService
                 'price'         => $data['type'] === Booking::TYPE_ADL ? ($data['rate'] ?? null) : null,
             ],
             'payment' => [
-                'total_amount' => $data['price'] ?? 0,
+                'total_amount' => $total,
+                'booking_percent' => $percent,
+                'booking_amount' => $bookingAmount,
+                'balance_amount' => round($total - $bookingAmount, 2),
+                'payment_status' => 'pending',
             ],
             'assessment' => array_values(array_filter(is_array($assessments) ? $assessments : [$assessments])),
             'diagnoses' => $this->bookingHelper->resolveDiagnoses($payload['diagnoses'] ?? []),
@@ -402,8 +413,6 @@ class BookingService
             'valid_until'  => Carbon::parse($data['date'] . ' ' . $data['prefered_time']),
             'booking_type' => Booking::BOOKINGTYPE_ONLINE,
         ]);
-
-        $this->notificationService->notifyNewBooking($branch, $staff, $booking);
 
         return response()->json([
             'message' => 'Homecare booking created. It is waiting for review.',

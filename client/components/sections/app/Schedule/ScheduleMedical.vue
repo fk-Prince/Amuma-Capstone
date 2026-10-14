@@ -343,7 +343,7 @@
                                         v-if="schedule.scheduled_date"
                                         class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                     >
-                                        {{ formatDate(day.date) }}
+                                        {{ scheduleDateLabel(schedule) }}
                                     </p>
 
                                     <div
@@ -352,7 +352,7 @@
                                         <span
                                             class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white"
                                         >
-                                            {{ timeRangeFor(schedule, day) }}
+                                            {{ schedule.start_time }} – {{ schedule.end_time }}
                                         </span>
 
                                         <span
@@ -433,7 +433,7 @@
                                         v-if="schedule.scheduled_date"
                                         class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                     >
-                                        {{ formatDate(day.date) }}
+                                        {{ scheduleDateLabel(schedule) }}
                                     </p>
 
                                     <div
@@ -442,7 +442,7 @@
                                         <span
                                             class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white"
                                         >
-                                            {{ timeRangeFor(schedule, day) }}
+                                            {{ schedule.start_time }} – {{ schedule.end_time }}
                                         </span>
 
                                         <span
@@ -484,7 +484,6 @@ import {
 
 import type { ScheduleItem } from "~/types/schedule";
 import { initials } from "~/utils/user";
-import { formatDate } from "~/utils/time";
 import { useSchedule } from "~/composables/useSchedule";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
@@ -536,7 +535,7 @@ const {
     getServiceBox,
     getScheduleLeft,
     getScheduleWidth,
-    timeRangeFor,
+    scheduleDateLabel,
 
     nowOffset,
     startNowTicker,
