@@ -330,7 +330,8 @@ class PaymentService
             throw new Exception('Receipt not found.', 404);
         }
 
-        $hasAccess = PatientAccess::where('patient_id', $receipt->patient_id)
+        $hasAccess = (int) $receipt->client_id === (int) $client->client_id
+            || PatientAccess::where('patient_id', $receipt->patient_id)
             ->where('client_id', $client->client_id)
             ->where('have_access', true)
             ->exists();

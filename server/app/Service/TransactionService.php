@@ -32,6 +32,18 @@ class TransactionService
         ]);
     }
 
+    public function bookingPayment(mixed $bookingId): ?Transaction
+    {
+        if (!$bookingId) {
+            return null;
+        }
+
+        return $this->transactionRepository->findByField([
+            ['booking_id', '=', $bookingId],
+            ['type', '=', Transaction::TYPE_PAYMENT],
+        ]);
+    }
+
     public function settle(?Transaction $transaction, string $status, ?string $reason = null): void
     {
         $transaction?->update(array_filter([

@@ -10,6 +10,7 @@ use App\Models\Branch;
 use App\Models\BranchSubscription;
 use App\Models\Location;
 use App\Models\Subscription;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\SubscriptionRepository;
@@ -313,7 +314,9 @@ class UserService
             ? $this->transactionRepository
             ->forClient($user->client->client_id)
             ->map(fn($transaction) => [
-                'label' => Str::headline($transaction->type),
+                'label' => $transaction->booking_id && $transaction->type === Transaction::TYPE_PAYMENT
+                    ? 'Booking Downpayment'
+                    : Str::headline($transaction->type),
                 'reference' => $transaction->transaction_code,
                 'description' => $transaction->description
                     ?: $transaction->branch?->name,
