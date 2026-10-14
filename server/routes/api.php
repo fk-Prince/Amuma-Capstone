@@ -25,6 +25,7 @@ use App\Http\Controllers\PatientAccessController;
 use App\Http\Controllers\CaregiverShiftController;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Http\Controllers\PatientActivityController;
+use App\Http\Controllers\EmployeeNoteController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PaymentController;
@@ -124,6 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/caregiver-shifts/{id}', [CaregiverShiftController::class, 'update']);
     Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
     Route::apiResource('plans', PlanController::class)->only(['update']);
+    Route::apiResource('employee-notes', EmployeeNoteController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/patient-access/action', [PatientAccessController::class, 'retrieveAction']);
     Route::post('/patient-access/action', [PatientAccessController::class, 'executeAction']);

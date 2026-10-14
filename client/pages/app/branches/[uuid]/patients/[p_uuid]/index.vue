@@ -7,6 +7,7 @@ import ActionVitalModal from "~/components/sections/app/Patient/ActionVitalModal
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
 import ActionPatientActivityModal from "~/components/sections/app/Patient/ActionPatientActivityModal.vue";
 import PatientActivityTable from "~/components/sections/app/Patient/PatientActivityTable.vue";
+import PatientCareNotes from "~/components/sections/app/Patient/PatientCareNotes.vue";
 import { useToast } from "~/composables/useToast";
 import Overview from "~/components/sections/app/Patient/Overview.vue";
 import PatientAssessment from "~/components/sections/app/Patient/PatientAssessment.vue";
@@ -88,6 +89,7 @@ const tabs = [
     "Medication",
     "Vital Signs",
     "Activity",
+    "Care Notes",
 ] as const;
 type Tab = (typeof tabs)[number];
 
@@ -99,6 +101,7 @@ const tabSlugMap: Record<Tab, string> = {
     "Vital Signs": "vitals",
     Admission: "admissions",
     Activity: "activity",
+    "Care Notes": "care-notes",
 };
 
 const slugToTab: Record<string, Tab> = Object.fromEntries(
@@ -847,6 +850,12 @@ onMounted(async () => {
                                 />
                             </template>
                         </template>
+
+                        <PatientCareNotes
+                            v-if="activeTab === 'Care Notes'"
+                            :patient-uuid="uuid"
+                            :branch-uuid="b_uuid"
+                        />
 
                         <template
                             v-if="activeTab === 'Overview' && patientData"

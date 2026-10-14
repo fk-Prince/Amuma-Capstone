@@ -2,7 +2,8 @@
 import { computed } from "vue";
 import { formatRole } from "~/utils/user";
 import { type Employee, formatAssignmentType } from "~/types/employee";
-import { Pencil, Calendar } from "lucide-vue-next";
+import { Pencil, Calendar, NotebookPen } from "lucide-vue-next";
+import EmployeeNotesModal from "~/components/sections/app/Employee/EmployeeNotesModal.vue";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import { usePagination } from "~/composables/usePagination";
@@ -11,6 +12,8 @@ import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
 const { canUpdate, hasModule } = usePermissions();
 
 const route = useRoute();
+
+const notesFor = ref<Employee | null>(null);
 
 const viewSchedule = (name: string) => {
     navigateTo({
@@ -172,6 +175,16 @@ const formatStatus = (status: string | null | undefined) => {
                     </button>
 
                     <button
+                        type="button"
+                        title="Notes"
+                        aria-label="Notes"
+                        class="text-slate-400 hover:text-slate-700 dark:text-gray-500 dark:hover:text-gray-200"
+                        @click="notesFor = row.raw"
+                    >
+                        <NotebookPen class="w-4 h-4" />
+                    </button>
+
+                    <button
                         v-if="hasModule(Modules.Schedules)"
                         type="button"
                         title="View schedule"
@@ -184,5 +197,12 @@ const formatStatus = (status: string | null | undefined) => {
                 </div>
             </template>
         </DataTable>
+
+        <EmployeeNotesModal
+            :open="!!notesFor"
+            :employee="notesFor"
+            :branch-uuid="route.params.uuid as string"
+            @close="notesFor = null"
+        />
     </div>
 </template>

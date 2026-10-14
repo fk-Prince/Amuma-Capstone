@@ -148,13 +148,11 @@
                                         </span>
                                     </div>
 
-                                    <p
+                                    <ExpandableText
                                         v-if="service.description"
-                                        :title="service.description"
-                                        class="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                    >
-                                        {{ service.description }}
-                                    </p>
+                                        class="mt-1.5"
+                                        :text="service.description"
+                                    />
                                 </div>
 
                                 <span
@@ -880,6 +878,7 @@
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
+import ExpandableText from "~/components/ui/ExpandableText.vue";
 import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";

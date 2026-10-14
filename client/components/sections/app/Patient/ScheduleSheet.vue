@@ -157,6 +157,30 @@
             </div>
         </section>
 
+        <section v-if="notes?.length" class="space-y-2">
+            <p
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-500"
+            >
+                Staff notes
+            </p>
+
+            <div
+                v-for="note in notes"
+                :key="note.uuid"
+                class="break-inside-avoid border-b border-dashed border-gray-200 pb-2"
+            >
+                <p class="whitespace-pre-wrap text-[12px]">{{ note.note }}</p>
+
+                <p class="mt-0.5 text-[10px] text-gray-500">
+                    {{ note.employee_name }}
+                    <template v-if="note.recorded_by">
+                        · by {{ note.recorded_by }}
+                    </template>
+                    · {{ stringToDateTime(note.created_at) }}
+                </p>
+            </div>
+        </section>
+
         <p class="border-t border-gray-200 pt-3 text-[10px] text-gray-500">
             Printed {{ printedAt }}
         </p>
@@ -173,6 +197,7 @@ import {
     formatTime,
     stringToDateTime,
 } from "~/utils/time";
+import type { EmployeeNote } from "~/types/employee-note";
 import type {
     ScheduleAssignee,
     ScheduleItem,
@@ -182,6 +207,7 @@ import type {
 const props = defineProps<{
     schedule: ScheduleItem;
     branchName?: string | null;
+    notes?: EmployeeNote[];
 }>();
 
 const { scheduleStatusLabel } = useSchedule();

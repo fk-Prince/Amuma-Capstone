@@ -12,6 +12,7 @@ export interface OnlineScheduleAssignment {
 
 export interface ScheduleAssignee {
     employee_id: number;
+    employee_uuid?: string | null;
     full_name: string;
     avatar: string | null;
     phone_number: string | null;

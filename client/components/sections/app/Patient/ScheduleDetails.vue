@@ -662,13 +662,11 @@
                                             {{ performedByLabel(service) }}
                                         </p>
 
-                                        <p
+                                        <ExpandableText
                                             v-if="service.description"
-                                            :title="service.description"
-                                            class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{ service.description }}
-                                        </p>
+                                            class="mt-1"
+                                            :text="service.description"
+                                        />
                                     </div>
 
                                     <span
@@ -1186,12 +1184,11 @@
                                         v-if="activeAssigneesFor(service).length"
                                         class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                     >
-                                        Assigned Employee
-                                        <span
-                                            v-if="activeAssigneesFor(service).length > 1"
-                                        >
-                                            s
-                                        </span>
+                                        {{
+                                            activeAssigneesFor(service).length > 1
+                                                ? "Assigned Employees"
+                                                : "Assigned Employee"
+                                        }}
                                     </p>
 
                                     <div
@@ -1201,8 +1198,11 @@
                                         <div
                                             v-for="employee in activeAssigneesFor(service)"
                                             :key="employee.employee_id"
-                                            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
+                                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-white/10 dark:bg-white/5"
                                         >
+                                            <div
+                                                class="flex items-center justify-between"
+                                            >
                                             <div
                                                 class="flex min-w-0 items-center gap-3"
                                             >
@@ -1292,6 +1292,18 @@
                                             >
                                                 {{ employee.note }}
                                             </span>
+                                            </div>
+
+                                            <AssigneeNotes
+                                                :notes="notesFor(employee)"
+                                                :branch-uuid="branchUuid"
+                                                :employee-uuid="employee.employee_uuid ?? null"
+                                                :schedule-code="schedule.schedule_code"
+                                                can-write
+                                                @created="onNoteCreated"
+                                                @updated="onNoteUpdated"
+                                                @removed="onNoteRemoved"
+                                            />
                                         </div>
                                     </div>
 
@@ -1385,6 +1397,7 @@
             <ScheduleSheet
                 :schedule="schedule"
                 :branch-name="branchStore.activeBranch?.name"
+                :notes="scheduleNotes"
             />
         </div>
     </Teleport>
@@ -1420,6 +1433,8 @@ import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
+import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
+import ExpandableText from "~/components/ui/ExpandableText.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import {
     getLocalDateStr,
@@ -1448,7 +1463,13 @@ function durationLabelFor(service: ScheduleServiceItem): string {
 }
 import { fullName, initials } from "~/utils/user";
 import type { Employee } from "~/types/employee";
-import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import type {
+    ScheduleAssignee,
+    ScheduleItem,
+    ScheduleServiceItem,
+} from "~/types/schedule";
+import type { EmployeeNote } from "~/types/employee-note";
+import { employeeNoteService } from "~/api/employee-note/EmployeeNoteService";
 import {
     CalendarCheck2,
     Check,
@@ -1521,6 +1542,55 @@ const { error: toastError } = useToast();
 const { canUpdate, canExport, hasModule } = usePermissions();
 
 const branchStore = useBranchStore();
+
+const branchUuid = computed(() => route.params.uuid as string);
+const scheduleNotes = ref<EmployeeNote[]>([]);
+
+watch(
+    () => [props.open, props.schedule?.schedule_code] as const,
+    async ([isOpen, code]) => {
+        scheduleNotes.value = [];
+
+        if (!isOpen || !code) return;
+
+        try {
+            const res = await employeeNoteService.list({
+                branch_uuid: branchUuid.value,
+                schedule_code: code,
+            });
+
+            if (props.schedule?.schedule_code === code) {
+                scheduleNotes.value = res.data ?? [];
+            }
+        } catch {
+            scheduleNotes.value = [];
+        }
+    },
+    { immediate: true },
+);
+
+function notesFor(assignee: ScheduleAssignee) {
+    return scheduleNotes.value.filter(
+        (note) =>
+            !!note.employee_uuid && note.employee_uuid === assignee.employee_uuid,
+    );
+}
+
+function onNoteCreated(note: EmployeeNote) {
+    scheduleNotes.value = [note, ...scheduleNotes.value];
+}
+
+function onNoteUpdated(note: EmployeeNote) {
+    scheduleNotes.value = scheduleNotes.value.map((existing) =>
+        existing.uuid === note.uuid ? note : existing,
+    );
+}
+
+function onNoteRemoved(uuid: string) {
+    scheduleNotes.value = scheduleNotes.value.filter(
+        (note) => note.uuid !== uuid,
+    );
+}
 
 async function handlePrint() {
     document.body.classList.add("printing-slip");
