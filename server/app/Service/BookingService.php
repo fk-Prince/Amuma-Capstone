@@ -9,10 +9,8 @@ use App\Guard\GuardianEmailGuard;
 use App\Models\Booking;
 use App\Models\Patient;
 use App\Models\PatientAccess;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\BookingRepository;
-use App\Repository\PaymentRepository;
 use App\Service\Booking\BookingHelper;
 use App\Service\External\XenditService;
 use Carbon\Carbon;
@@ -26,9 +24,7 @@ class BookingService
         private BookingRepository $bookingRepository,
         private NotificationService $notificationService,
         private BookingHelper $bookingHelper,
-        private BookingFactory $bookingFactory,
-        private TransactionService $transactions,
-        private PaymentRepository $paymentRepository
+        private BookingFactory $bookingFactory
     ) {}
 
     public function bookingAction(array $payload)
@@ -66,7 +62,7 @@ class BookingService
                 }
             }
 
-            $data = $this->bookingFactory->process($payload + ['booking_id' => $booking->booking_id]);
+            $data = $this->bookingFactory->process($payload);
 
             $bookingData = [
                 'patient' =>   $payload['patient'],
@@ -244,8 +240,6 @@ class BookingService
                     throw new Exception('Failed to create booking.', 500);
                 }
 
-                $this->recordBookingPayment($user, $booking, $bookingData, $breakdown);
-
                 $this->notificationService->notifyNewBooking($branch, $user, $booking);
 
                 return response()->json([
@@ -268,40 +262,7 @@ class BookingService
         }
     }
 
-    private function recordBookingPayment(User $user, Booking $booking, array $bookingData, array $breakdown): void
-    {
-        $payment = $bookingData['payment'];
-        $client = $user->client;
-
-        $transaction = $this->transactions->forPayment(
-            $breakdown['booking_amount'],
-            $booking->branch_id,
-            $bookingData['patient']['patient_id'] ?? null,
-            ($this->bookingHelper->isHomecare(['category' => $booking->category])
-                ? 'Downpayment'
-                : 'Reservation fee') . " for booking {$booking->reference_id}.",
-            [
-                'booking_id' => $booking->booking_id,
-                'client_id' => $client?->client_id,
-                'method' => $payment['payment_method'],
-                'party_name' => trim(
-                    ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
-                ) ?: null,
-                'masked_account_number' => $payment['masked_card_number'] ?? null,
-                'transaction_reference_id' => $payment['xendit_invoice_id'] ?? null,
-            ]
-        );
-
-        $this->paymentRepository->create([
-            'transaction_id' => $transaction->transaction_id,
-            'prior_balance' => $breakdown['total_amount'],
-            'new_balance' => $breakdown['balance_amount'],
-            'cash_tendered' => $breakdown['booking_amount'],
-            'created_at' => now(),
-        ]);
-    }
-
-    // DONE
+    // DONE 
     public function createBooking(User $user, array $payload)
     {
         if ($this->bookingHelper->isHomecare($payload)) {
@@ -465,7 +426,7 @@ class BookingService
         return new BookingResource($booking);
     }
 
-    private function refundBookingPayment(Booking $booking, array &$bookingData): bool
+    private function refundBookingPayment(array &$bookingData): bool
     {
         $payment = $bookingData['payment'] ?? [];
         $amount = (float) ($payment['booking_amount'] ?? $payment['total_amount'] ?? 0);
@@ -484,33 +445,11 @@ class BookingService
             (bool) ($payment['masked_card_number'] ?? null)
         );
 
-        if (!$refunded) {
-            return false;
+        if ($refunded) {
+            $bookingData['payment']['payment_status'] = 'refunded';
         }
 
-        $bookingData['payment']['payment_status'] = 'refunded';
-
-        $paid = $this->transactions->bookingPayment($booking->booking_id);
-
-        if ($paid) {
-            $this->transactions->forWithdraw(
-                $amount,
-                $booking->branch_id,
-                $paid->patient_id,
-                "Refund for booking {$booking->reference_id}.",
-                Transaction::STATUS_COMPLETED,
-                [
-                    'booking_id' => $booking->booking_id,
-                    'client_id' => $paid->client_id,
-                    'method' => $paid->method,
-                    'party_name' => $paid->party_name,
-                    'masked_account_number' => $paid->masked_account_number,
-                    'transaction_reference_id' => $paid->transaction_reference_id,
-                ]
-            );
-        }
-
-        return true;
+        return $refunded;
     }
 
     //USED
@@ -518,7 +457,7 @@ class BookingService
     {
         return DB::transaction(function () use ($booking) {
             $bookingData = $booking->booking_data;
-            $refunded = $this->refundBookingPayment($booking, $bookingData);
+            $refunded = $this->refundBookingPayment($bookingData);
 
             $booking->update([
                 'booking_data' => $bookingData,
@@ -537,13 +476,13 @@ class BookingService
                 ['reference_id', '=', $payload['reference_id']],
                 ['branch_id', '=', $payload['branch_id']]
             ]);
+            $bookingData = $booking['booking_data'];
             if (!$booking) {
                 throw new Exception('Booking doesn\'t exist', 404);
             }
 
-            $bookingData = $booking['booking_data'];
 
-            $this->refundBookingPayment($booking, $bookingData);
+            $this->refundBookingPayment($bookingData);
 
             $reason = trim((string) ($payload['reason'] ?? '')) ?: null;
 

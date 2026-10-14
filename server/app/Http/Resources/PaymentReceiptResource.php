@@ -52,7 +52,7 @@ class PaymentReceiptResource extends JsonResource
 
             // One line per invoice this payment was split across, each with its
             // own description — the reference belongs to the payment as a whole.
-            'lines' => $this->allocations->isEmpty() ? [$this->unallocatedLine()] : $this->allocations->values()->map(fn($allocation, $index) => [
+            'lines' => $this->allocations->values()->map(fn($allocation, $index) => [
                 'line_no'           => $index + 1,
                 'allocation_id'     => $allocation->allocation_id,
                 'invoice_id'        => $allocation->invoice_id,
@@ -67,28 +67,6 @@ class PaymentReceiptResource extends JsonResource
                 'amount_applied'    => (float) $allocation->amount,
                 'hours_booked'      => $allocation->invoice?->adlHoursBooked(),
             ]),
-        ];
-    }
-
-    // A booking payment is taken before any invoice exists, so the receipt
-    // shows what it was for until the booking is accepted.
-    protected function unallocatedLine(): array
-    {
-        $amount = (float) $this->amount_applied;
-        $description = $this->transaction?->description ?: 'Booking payment';
-
-        return [
-            'line_no'           => 1,
-            'allocation_id'     => null,
-            'invoice_id'        => null,
-            'payment_id'        => $this->payment_id,
-            'payment_reference' => $this->reference_id,
-            'invoice_code'      => null,
-            'description'       => $description,
-            'rows'              => [['description' => $description, 'amount' => $amount]],
-            'invoice_date'      => null,
-            'amount_applied'    => $amount,
-            'hours_booked'      => null,
         ];
     }
 

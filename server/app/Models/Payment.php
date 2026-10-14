@@ -172,10 +172,7 @@ class Payment extends Model
 
     public function getAmountAppliedAttribute(): float
     {
-        // A booking payment is taken before it is applied to any invoice.
-        return $this->allocations->isEmpty() && $this->transaction?->booking_id
-            ? $this->amount
-            : $this->allocated_amount;
+        return $this->allocated_amount;
     }
 
     public function getAmountTenderedAttribute(): float

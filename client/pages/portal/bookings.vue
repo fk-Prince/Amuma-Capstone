@@ -21,9 +21,6 @@ import PatientDetails from "~/components/sections/app/Booking/PatientDetails.vue
 import GuardianAssessmentDetails from "~/components/sections/app/Booking/GuardianAssessmentDetails.vue";
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
-import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
-import { paymentService } from "~/api/payment/PaymentService";
-import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { formatCurrency } from "~/utils/currency";
 import type { BookingRetrieve } from "~/types/booking";
 import { stringToDateTime } from "~/utils/time";
@@ -39,7 +36,6 @@ definePageMeta({
 
 type PortalBooking = BookingRetrieve & {
     branch_name: string | null;
-    receipt_code?: string | null;
 };
 
 interface PageMeta {
@@ -58,25 +54,6 @@ const expandedId = ref<number | null>(null);
 const printing = ref<PortalBooking | null>(null);
 const cancellingId = ref<number | null>(null);
 const { error: showError, success: showSuccess } = useToast();
-
-const activeReceipt = ref<PaymentReceiptData | null>(null);
-const loadingReceiptCode = ref<string | null>(null);
-
-async function openReceipt(receiptCode?: string | null) {
-    if (!receiptCode || loadingReceiptCode.value) return;
-
-    loadingReceiptCode.value = receiptCode;
-
-    try {
-        const res = await paymentService.receipt({ payment_code: receiptCode });
-
-        activeReceipt.value = res?.data ?? res ?? null;
-    } catch (err: any) {
-        showError(err?.message || "Unable to load that receipt.");
-    } finally {
-        loadingReceiptCode.value = null;
-    }
-}
 
 function isCancellable(booking: PortalBooking) {
     return booking.status === "pending" || booking.status === "approved";
@@ -783,7 +760,7 @@ onMounted(() => {
                                             <CreditCard class="h-4 w-4" />
                                         </div>
 
-                                        <div class="min-w-0 flex-1">
+                                        <div>
                                             <h3
                                                 class="text-sm font-semibold text-gray-900 dark:text-white"
                                             >
@@ -795,29 +772,6 @@ onMounted(() => {
                                                 Payment and transaction details
                                             </p>
                                         </div>
-
-                                        <button
-                                            v-if="booking.receipt_code"
-                                            type="button"
-                                            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
-                                            :disabled="
-                                                loadingReceiptCode ===
-                                                booking.receipt_code
-                                            "
-                                            @click="
-                                                openReceipt(
-                                                    booking.receipt_code,
-                                                )
-                                            "
-                                        >
-                                            <Printer class="h-3.5 w-3.5" />
-                                            {{
-                                                loadingReceiptCode ===
-                                                booking.receipt_code
-                                                    ? "Loading..."
-                                                    : "Print receipt"
-                                            }}
-                                        </button>
                                     </div>
 
                                     <div
@@ -997,12 +951,6 @@ onMounted(() => {
             :branch-name="printing.branch_name"
             :branch-image="(printing as any).branch_image"
             @close="printing = null"
-        />
-
-        <PaymentReceipt
-            v-if="activeReceipt"
-            :receipt="activeReceipt"
-            @close="activeReceipt = null"
         />
     </div>
 </template>

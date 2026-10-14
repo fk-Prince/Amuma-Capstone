@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
 class PortalHelper
 {
 
-    public function bookingPayload(Booking $booking, ?string $receiptCode = null): array
+    public function bookingPayload(Booking $booking): array
     {
         $data = is_string($booking->booking_data)
             ? json_decode($booking->booking_data, true)
@@ -76,7 +76,6 @@ class PortalHelper
 
 
             'payment' => !empty($payment['payment_status']) ? $payment : null,
-            'receipt_code' => $receiptCode,
 
             'created_at' => $booking->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $booking->updated_at?->format('Y-m-d H:i:s'),

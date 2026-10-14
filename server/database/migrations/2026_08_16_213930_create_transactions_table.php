@@ -30,12 +30,6 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->nullOnDelete();
 
-            $table->foreignId('booking_id')
-                ->nullable()
-                ->constrained('bookings', 'booking_id')
-                ->cascadeOnUpdate()
-                ->nullOnDelete();
-
             $table->decimal('amount', 10, 2);
 
             $table->enum('type', ['payment', 'withdraw']);

@@ -25,7 +25,7 @@ class TransactionRepository
 
     public function forClient(mixed $clientId)
     {
-        return Transaction::with('branch:branch_id,name', 'booking:booking_id,category')
+        return Transaction::with('branch:branch_id,name')
             ->where('client_id', $clientId)
             ->orderByDesc('created_at')
             ->get();

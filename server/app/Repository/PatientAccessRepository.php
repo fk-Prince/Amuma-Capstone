@@ -7,7 +7,6 @@ use App\Models\Invoice;
 use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
-use App\Models\Transaction;
 use App\Utils\PortalHelper;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -182,15 +181,10 @@ class PatientAccessRepository
             ->orderByDesc('booking_id')
             ->paginate((int) ($payload['per_page'] ?? 10));
 
-        $receiptCodes = $this->bookingReceiptCodes(collect($bookings->items()));
-
         return [
             'success' => true,
             'data' => collect($bookings->items())
-                ->map(fn($booking) => $this->helper->bookingPayload(
-                    $booking,
-                    $receiptCodes->get(data_get($booking->booking_data, 'payment.xendit_invoice_id'))
-                ))
+                ->map(fn($booking) => $this->helper->bookingPayload($booking))
                 ->values(),
             'meta' => [
                 'current_page' => $bookings->currentPage(),
@@ -476,23 +470,5 @@ class PatientAccessRepository
 
         (new EloquentCollection($picked->all()))
             ->load(PortalHelper::scheduleDetailRelations());
-    }
-
-    private function bookingReceiptCodes(Collection $bookings): Collection
-    {
-        $references = $bookings
-            ->map(fn(Booking $booking) => data_get($booking->booking_data, 'payment.xendit_invoice_id'))
-            ->filter()
-            ->values();
-
-        if ($references->isEmpty()) {
-            return collect();
-        }
-
-        return Transaction::query()
-            ->whereIn('transaction_reference_id', $references)
-            ->where('type', Transaction::TYPE_PAYMENT)
-            ->whereHas('payment')
-            ->pluck('transaction_code', 'transaction_reference_id');
     }
 }

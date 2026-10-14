@@ -33,7 +33,6 @@ class Transaction extends Model
         'branch_id',
         'patient_id',
         'client_id',
-        'booking_id',
         'amount',
         'type',
         'direction',
@@ -64,11 +63,6 @@ class Transaction extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id', 'client_id');
-    }
-
-    public function booking(): BelongsTo
-    {
-        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
 
     public function payment()
