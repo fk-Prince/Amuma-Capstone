@@ -35,6 +35,11 @@
                     </div>
 
                     <div class="flex items-center gap-2 lg:justify-end">
+                        <ViewModeToggle
+                            :model-value="viewMode"
+                            @update:model-value="setViewMode"
+                        />
+
                         <div class="flex-1 lg:w-80">
                             <BaseInput
                                 v-model="query"
@@ -67,6 +72,7 @@
                     v-if="activeTab === 'patients'"
                     class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="patientColumns"
+                    :view="viewMode"
                     :rows="invoices"
                     :pagination="pagination"
                     :loading="loading"
@@ -146,6 +152,7 @@
                     v-else-if="activeTab === 'invoices'"
                     class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="invoiceColumns"
+                    :view="viewMode"
                     :rows="invoiceRows"
                     :pagination="invoicePagination"
                     :loading="invoiceRowsLoading"
@@ -203,9 +210,125 @@
                 </DataTable>
 
                 <DataTable
+                    v-else-if="activeTab === 'bookings'"
+                    class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
+                    :columns="bookingColumns"
+                    :view="viewMode"
+                    :rows="bookingRows"
+                    :pagination="bookingPagination"
+                    :loading="bookingRowsLoading"
+                    :searchable="false"
+                    :row-key="(row: BookingBillingRow) => row.reference_id"
+                    empty-title="No booking payments found"
+                    empty-description="Bookings that carry a payment show up here."
+                    :on-row-click="openBookingReceipt"
+                    @page-change="fetchBookingRows"
+                >
+                    <template #cell-reference_id="{ value }">
+                        <span
+                            class="font-mono font-semibold text-slate-800 dark:text-white"
+                        >
+                            {{ value }}
+                        </span>
+                    </template>
+
+                    <template #cell-patient_name="{ value }">
+                        <span class="font-medium text-slate-800 dark:text-white">
+                            {{ value ?? "—" }}
+                        </span>
+                    </template>
+
+                    <template #cell-type="{ row }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ bookingTypeLabel(row) }}
+                        </span>
+                    </template>
+
+                    <template #cell-status="{ row }">
+                        <span
+                            class="rounded-full px-3 py-1 text-xs font-medium capitalize"
+                            :class="statusClasses(row.status)"
+                        >
+                            {{ formatStatus(row.status) }}
+                        </span>
+                    </template>
+
+                    <template #cell-booking_amount="{ row }">
+                        <span
+                            v-if="row.booking_amount > 0"
+                            class="font-medium text-green-600"
+                        >
+                            ₱{{ formatMoney(row.booking_amount) }}
+                        </span>
+                        <span v-else class="text-slate-400 dark:text-gray-500">
+                            —
+                        </span>
+                    </template>
+
+                    <template #cell-balance_amount="{ row }">
+                        <span
+                            v-if="row.payment_status !== 'refunded'"
+                            class="font-medium text-red-500"
+                        >
+                            ₱{{ formatMoney(row.balance_amount) }}
+                        </span>
+                        <span v-else class="text-slate-400 dark:text-gray-500">
+                            —
+                        </span>
+                    </template>
+
+                    <template #cell-payment_status="{ value }">
+                        <span
+                            class="rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize"
+                            :class="paymentStatusClass(String(value))"
+                        >
+                            {{ value }}
+                        </span>
+                    </template>
+
+                    <template #cell-created_at="{ value }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ formatDateTime(value) }}
+                        </span>
+                    </template>
+
+                    <template #cell-actions="{ row }">
+                        <div class="flex items-center justify-end gap-2">
+                            <button
+                                v-if="row.can_pay && canCreate(Modules.BillingAndInvoices)"
+                                type="button"
+                                class="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600"
+                                @click.stop="openPayModal(row)"
+                            >
+                                Pay
+                            </button>
+
+                            <button
+                                v-if="row.can_refund && canUpdate(Modules.BillingAndInvoices)"
+                                type="button"
+                                class="rounded-md border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                                @click.stop="refundTarget = row"
+                            >
+                                Refund
+                            </button>
+
+                            <button
+                                v-if="row.receipt"
+                                type="button"
+                                class="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                @click.stop="openBookingReceipt(row)"
+                            >
+                                Receipt
+                            </button>
+                        </div>
+                    </template>
+                </DataTable>
+
+                <DataTable
                     v-else
                     class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
                     :columns="receiptColumns"
+                    :view="viewMode"
                     :rows="receipts"
                     :pagination="receiptPagination"
                     :loading="receiptsLoading"
@@ -276,6 +399,107 @@
 
         <Teleport to="body">
             <div
+                v-if="payTarget"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+                @click.self="!paying && closePayModal()"
+            >
+                <div
+                    class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                >
+                    <h3
+                        class="text-base font-semibold text-gray-900 dark:text-white"
+                    >
+                        Collect payment for {{ payTarget.reference_id }}
+                    </h3>
+
+                    <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                        {{ payTarget.patient_name ?? "This booking" }} pays the
+                        downpayment in cash at the branch.
+                    </p>
+
+                    <dl class="mt-4 text-sm">
+                        <div class="flex justify-between py-1">
+                            <dt class="text-gray-500 dark:text-gray-400">
+                                Booking total
+                            </dt>
+                            <dd class="font-medium text-gray-900 dark:text-white">
+                                ₱{{ formatMoney(payTarget.total_amount) }}
+                            </dd>
+                        </div>
+
+                        <div
+                            class="flex justify-between border-t border-gray-100 py-1.5 dark:border-white/10"
+                        >
+                            <dt class="font-semibold text-gray-900 dark:text-white">
+                                Amount due now
+                            </dt>
+                            <dd class="font-semibold text-primary">
+                                ₱{{ formatMoney(payTarget.amount_due) }}
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <label
+                        class="mt-3 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        for="booking-cash"
+                    >
+                        Cash received
+                    </label>
+                    <input
+                        id="booking-cash"
+                        v-model="payCash"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        :disabled="paying"
+                        class="mt-1.5 w-full rounded-lg border border-gray-200 px-3 py-2 text-right text-sm font-semibold text-gray-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                        @keyup.enter="confirmPay"
+                    />
+
+                    <p
+                        v-if="payChange > 0"
+                        class="mt-1.5 text-right text-xs text-gray-500 dark:text-gray-400"
+                    >
+                        Change ₱{{ formatMoney(payChange) }}
+                    </p>
+
+                    <div class="mt-5 flex justify-end gap-2.5">
+                        <button
+                            type="button"
+                            :disabled="paying"
+                            class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                            @click="closePayModal"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            :disabled="paying || !canConfirmPay"
+                            class="flex min-w-[110px] items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            @click="confirmPay"
+                        >
+                            {{ paying ? "Saving..." : "Confirm payment" }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <ConfirmDialog
+            :open="!!refundTarget"
+            variant="danger"
+            title="Refund this booking?"
+            :message="`${refundTarget?.reference_id ?? ''} was rejected. ₱${formatMoney(refundTarget?.booking_amount)} paid for it will be marked as refunded.`"
+            confirm-label="Refund"
+            :loading="refunding"
+            @confirm="confirmRefund"
+            @cancel="refundTarget = null"
+        />
+
+        <Teleport to="body">
+            <div
                 v-if="voidTarget"
                 class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
                 @click.self="!voidingInvoice && closeVoidModal()"
@@ -339,6 +563,11 @@ import { formatAmount } from "~/utils/currency";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import InvoiceOverview from "~/components/sections/app/Billing/InvoiceOverview.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
+import { Modules } from "~/types/module";
+import { formatStatus, statusClasses } from "~/types/booking";
 import { usePagination } from "~/composables/usePagination";
 import { invoiceService } from "~/api/invoice/InvoiceService";
 import {
@@ -361,13 +590,36 @@ useHead({
 const route = useRoute();
 const router = useRouter();
 
-type TabKey = "patients" | "invoices" | "receipts";
+type TabKey = "patients" | "invoices" | "bookings" | "receipts";
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: "patients", label: "Patients" },
     { key: "invoices", label: "Invoices" },
+    { key: "bookings", label: "Bookings" },
     { key: "receipts", label: "Receipts" },
 ];
+
+const { view: viewMode, setView: setViewMode } = useListView();
+const { canCreate, canUpdate } = usePermissions();
+
+interface BookingBillingRow {
+    booking_id: number;
+    reference_id: string;
+    category: string;
+    type: string | null;
+    status: string;
+    patient_name: string | null;
+    total_amount: number;
+    booking_amount: number;
+    balance_amount: number;
+    payment_status: string | null;
+    payment_method: string | null;
+    created_at: string | null;
+    receipt: PaymentReceiptData | null;
+    can_pay: boolean;
+    can_refund: boolean;
+    amount_due: number | null;
+}
 
 const activeTab = ref<TabKey>("patients");
 
@@ -394,6 +646,23 @@ const invoiceColumns: DataTableColumn[] = [
     { key: "created_at", label: "Date", sortable: false },
 ];
 
+const bookingColumns: DataTableColumn[] = [
+    {
+        key: "reference_id",
+        label: "Booking Ref.",
+        sortable: false,
+        primary: true,
+    },
+    { key: "patient_name", label: "Patient", sortable: false },
+    { key: "type", label: "Type", sortable: false },
+    { key: "status", label: "Status", sortable: false },
+    { key: "booking_amount", label: "Paid", align: "right", sortable: false },
+    { key: "balance_amount", label: "Balance", align: "right", sortable: false },
+    { key: "payment_status", label: "Payment", sortable: false },
+    { key: "created_at", label: "Date", sortable: false },
+    { key: "actions", label: "", align: "right", sortable: false },
+];
+
 const receiptColumns: DataTableColumn[] = [
     { key: "payment_code", label: "Transaction No.", sortable: false },
     { key: "issued_at", label: "Issued", sortable: false },
@@ -416,6 +685,18 @@ const invoicePagination = usePagination({
     pageSize: 10,
 });
 
+const bookingRows = ref<BookingBillingRow[]>([]);
+const bookingRowsLoading = ref(false);
+const bookingPagination = usePagination({
+    pageSize: 10,
+});
+
+const payTarget = ref<BookingBillingRow | null>(null);
+const payCash = ref<number | string>("");
+const paying = ref(false);
+const refundTarget = ref<BookingBillingRow | null>(null);
+const refunding = ref(false);
+
 const receipts = ref<PaymentReceiptData[]>([]);
 const receiptsLoading = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
@@ -433,6 +714,8 @@ const searchPlaceholder = computed(() => {
     if (activeTab.value === "patients") return "Patient code or name...";
     if (activeTab.value === "invoices")
         return "Search by invoice code or patient name...";
+    if (activeTab.value === "bookings")
+        return "Search by booking reference or patient name...";
 
     return "Transaction no., patient code, name, payor or invoice code...";
 });
@@ -447,6 +730,8 @@ function switchTab(tab: TabKey) {
         fetchReceipts(1);
     } else if (tab === "invoices" && !invoiceRows.value.length) {
         fetchInvoiceRows(1);
+    } else if (tab === "bookings" && !bookingRows.value.length) {
+        fetchBookingRows(1);
     }
 }
 
@@ -460,6 +745,12 @@ function onSearch() {
     if (activeTab.value === "invoices") {
         invoicePagination.reset();
         fetchInvoiceRows(1);
+        return;
+    }
+
+    if (activeTab.value === "bookings") {
+        bookingPagination.reset();
+        fetchBookingRows(1);
         return;
     }
 
@@ -521,6 +812,146 @@ async function fetchInvoiceRows(page = invoicePagination.currentPage.value) {
         invoicePagination.setTotal(0);
     } finally {
         invoiceRowsLoading.value = false;
+    }
+}
+
+async function fetchBookingRows(page = bookingPagination.currentPage.value) {
+    bookingRowsLoading.value = true;
+
+    bookingPagination.currentPage.value = page;
+
+    try {
+        const res = await invoiceService.bookings({
+            branch_uuid: route.params.uuid,
+            search: query.value,
+            page,
+            per_page: bookingPagination.pageSize.value,
+        });
+
+        bookingRows.value = res.data ?? [];
+
+        bookingPagination.setTotal(res.meta?.total ?? bookingRows.value.length);
+    } catch (err) {
+        console.error(err);
+        bookingRows.value = [];
+        bookingPagination.setTotal(0);
+    } finally {
+        bookingRowsLoading.value = false;
+    }
+}
+
+function bookingTypeLabel(row: BookingBillingRow) {
+    if (row.type === "Complete") return "Complete Admission";
+
+    return row.category === "homecare" && row.type
+        ? `Homecare · ${row.type}`
+        : (row.type ?? "—");
+}
+
+const PAYMENT_STATUS_CLASSES: Record<string, string> = {
+    paid: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
+    partial:
+        "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
+    pending:
+        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+    refunded:
+        "bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/10 dark:text-gray-400 dark:border-white/10",
+};
+
+function paymentStatusClass(status: string) {
+    return (
+        PAYMENT_STATUS_CLASSES[status] ??
+        "bg-slate-50 text-slate-600 border-slate-200"
+    );
+}
+
+function openBookingReceipt(row: BookingBillingRow) {
+    if (row.receipt) activeReceipt.value = row.receipt;
+}
+
+function replaceBookingRow(next: BookingBillingRow) {
+    bookingRows.value = bookingRows.value.map((row) =>
+        row.reference_id === next.reference_id ? next : row,
+    );
+}
+
+const payChange = computed(() =>
+    Math.max(
+        0,
+        Math.round(
+            (Number(payCash.value || 0) - Number(payTarget.value?.amount_due ?? 0)) *
+                100,
+        ) / 100,
+    ),
+);
+
+const canConfirmPay = computed(
+    () =>
+        Number(payCash.value || 0) > 0 &&
+        Number(payCash.value || 0) >= Number(payTarget.value?.amount_due ?? 0),
+);
+
+function openPayModal(row: BookingBillingRow) {
+    payTarget.value = row;
+    payCash.value = row.amount_due ?? "";
+}
+
+function closePayModal() {
+    if (paying.value) return;
+
+    payTarget.value = null;
+    payCash.value = "";
+}
+
+async function confirmPay() {
+    if (!payTarget.value || paying.value || !canConfirmPay.value) return;
+
+    paying.value = true;
+
+    try {
+        const res = await invoiceService.action({
+            type: "booking_pay",
+            branch_uuid: route.params.uuid,
+            reference_id: payTarget.value.reference_id,
+            cash: Number(payCash.value),
+        });
+
+        success(res.message ?? "Payment received.");
+
+        replaceBookingRow(res.data);
+
+        payTarget.value = null;
+        payCash.value = "";
+
+        openBookingReceipt(res.data);
+    } catch (err: any) {
+        error(err?.message ?? "Failed to record the payment. Please try again.");
+    } finally {
+        paying.value = false;
+    }
+}
+
+async function confirmRefund() {
+    if (!refundTarget.value || refunding.value) return;
+
+    refunding.value = true;
+
+    try {
+        const res = await invoiceService.action({
+            type: "booking_refund",
+            branch_uuid: route.params.uuid,
+            reference_id: refundTarget.value.reference_id,
+        });
+
+        success(res.message ?? "Booking refunded.");
+
+        replaceBookingRow(res.data);
+
+        refundTarget.value = null;
+    } catch (err: any) {
+        error(err?.message ?? "Failed to refund the booking. Please try again.");
+    } finally {
+        refunding.value = false;
     }
 }
 

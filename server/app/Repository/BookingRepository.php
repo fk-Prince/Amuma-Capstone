@@ -92,6 +92,36 @@ class BookingRepository
             ->paginate($payload['per_page'] ?? 10);
     }
 
+    // Bookings that carry a payment. Pre-admission is free and has none.
+    public function billing(string $branchId, array $payload)
+    {
+        $search = strtolower(trim((string) ($payload['search'] ?? '')));
+
+        return Booking::where('branch_id', $branchId)
+            ->whereRaw("booking_data->'payment'->>'payment_status' is not null")
+            ->when($search !== '', function ($query) use ($search) {
+                $term = '%' . $search . '%';
+
+                $query->where(function ($q) use ($term) {
+                    $q->whereRaw('LOWER(reference_id) LIKE ?', [$term])
+                        ->orWhereRaw(
+                            "LOWER(CONCAT_WS(' ', booking_data->'patient'->>'first_name', booking_data->'patient'->>'middle_name', booking_data->'patient'->>'last_name')) LIKE ?",
+                            [$term]
+                        );
+                });
+            })
+            ->orderByDesc('created_at')
+            ->paginate((int) ($payload['per_page'] ?? 10));
+    }
+
+    public function lockByReference(string $referenceId, string $branchId)
+    {
+        return Booking::where('reference_id', $referenceId)
+            ->where('branch_id', $branchId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function create(array $payload)
     {
         return Booking::create($payload);

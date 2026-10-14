@@ -6,13 +6,17 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Service\BookingService;
 use App\Service\InvoiceService;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
 
-    public function __construct(private InvoiceService $invoiceService) {}
+    public function __construct(
+        private InvoiceService $invoiceService,
+        private BookingService $bookingService
+    ) {}
 
     public function overview(Request $request)
     {
@@ -35,6 +39,15 @@ class InvoiceController extends Controller
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
         BranchGuard::mergeRequest($request, $branch);
         return $this->invoiceService->storeBooking($request->all(), $request->user());
+    }
+
+    public function bookings(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
+        BranchGuard::mergeRequest($request, $branch);
+        $request->merge(['branch' => $branch]);
+        return $this->bookingService->billingList($request->all());
     }
 
     public function receipts(Request $request)
@@ -68,6 +81,19 @@ class InvoiceController extends Controller
         if ($request->type === 'refund') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
             return $this->invoiceService->completeRefund($request->all());
+        } else if ($request->type === 'booking_pay') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
+            $request->validate([
+                'reference_id' => ['required', 'string'],
+                'cash' => ['required', 'numeric', 'min:0.01'],
+            ]);
+            $request->merge(['branch' => $branch]);
+            return $this->bookingService->payBooking($request->all(), $request->user());
+        } else if ($request->type === 'booking_refund') {
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Update);
+            $request->validate(['reference_id' => ['required', 'string']]);
+            $request->merge(['branch' => $branch]);
+            return $this->bookingService->refundBooking($request->all());
         } else if ($request->type === 'decline-refund') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Create);
             return $this->invoiceService->declineRefund($request->all());

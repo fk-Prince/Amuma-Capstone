@@ -12,6 +12,8 @@ use App\Models\PatientAccess;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\BookingRepository;
+use App\Repository\PaymentRepository;
+use App\Http\Resources\BookingReceiptResource;
 use App\Service\Booking\BookingHelper;
 use App\Service\External\XenditService;
 use Carbon\Carbon;
@@ -27,7 +29,8 @@ class BookingService
         private NotificationService $notificationService,
         private BookingHelper $bookingHelper,
         private BookingFactory $bookingFactory,
-        private TransactionService $transactions
+        private TransactionService $transactions,
+        private PaymentRepository $paymentRepository
     ) {}
 
     public function bookingAction(array $payload)
@@ -471,14 +474,15 @@ class BookingService
         $amount = (float) ($payment['booking_amount'] ?? $payment['total_amount'] ?? 0);
 
         $refundable = in_array($payment['payment_status'] ?? null, ['paid', 'partial'], true)
-            && !empty($payment['xendit_invoice_id'])
             && $amount > 0;
 
         if (!$refundable) {
             return false;
         }
 
-        $refunded = XenditService::refundXenditPayment(
+        // Paid online it goes back through the gateway; paid at the counter
+        // it is handed back in person.
+        $refunded = empty($payment['xendit_invoice_id']) || XenditService::refundXenditPayment(
             $payment['xendit_invoice_id'],
             $amount,
             (bool) ($payment['masked_card_number'] ?? null)
@@ -575,5 +579,211 @@ class BookingService
                 'message' => 'Booking has successfully rejected',
             ];
         });
+    }
+
+    /*
+        BOOKINGS TAB OF THE INVOICES PAGE
+    */
+    public function billingList(array $payload)
+    {
+        $bookings = $this->bookingRepository->billing($payload['branch_id'], $payload);
+
+        $payments = $this->transactions->paymentsForBookings(
+            $bookings->pluck('booking_id')->all()
+        );
+
+        return response()->json([
+            'data' => $bookings->getCollection()
+                ->map(fn(Booking $booking) => $this->billingRow(
+                    $booking,
+                    $payments->get($booking->booking_id),
+                    $payload['branch']
+                ))
+                ->values(),
+            'meta' => [
+                'current_page' => $bookings->currentPage(),
+                'last_page' => $bookings->lastPage(),
+                'total' => $bookings->total(),
+                'per_page' => $bookings->perPage(),
+            ],
+        ]);
+    }
+
+    // Cash taken at the counter for a booking still waiting for review.
+    public function payBooking(array $payload, User $user)
+    {
+        return DB::transaction(function () use ($payload, $user) {
+            $booking = $this->bookingRepository->lockByReference(
+                $payload['reference_id'],
+                $payload['branch_id']
+            );
+
+            if (!$booking) {
+                throw new Exception('Booking doesn\'t exist', 404);
+            }
+
+            if (!$this->canPay($booking)) {
+                throw new Exception('This booking can\'t be paid right now.', 422);
+            }
+
+            $data = $booking->booking_data;
+            $payment = $data['payment'];
+            $total = round((float) $payment['total_amount'], 2);
+
+            $percent = $this->downpaymentPercent($booking, $payload['branch']);
+            $due = round($total * $percent / 100, 2);
+            $cash = round((float) ($payload['cash'] ?? 0), 2);
+
+            if ($cash < $due) {
+                throw new Exception('The cash received must cover the amount due.', 422);
+            }
+
+            $guardian = $data['guardian'] ?? [];
+            $client = User::where('email', $guardian['email'] ?? null)->first()?->client;
+            $payor = trim(($guardian['first_name'] ?? '') . ' ' . ($guardian['last_name'] ?? ''));
+
+            $transaction = $this->transactions->forPayment(
+                $due,
+                $booking->branch_id,
+                $data['patient']['patient_id'] ?? null,
+                "Downpayment for booking {$booking->reference_id}.",
+                [
+                    'booking_id' => $booking->booking_id,
+                    'client_id' => $client?->client_id,
+                    'method' => 'CASH',
+                    'party_name' => $payor !== '' ? $payor : null,
+                ]
+            );
+
+            $balance = round($total - $due, 2);
+
+            $this->paymentRepository->create([
+                'transaction_id' => $transaction->transaction_id,
+                'prior_balance' => $total,
+                'new_balance' => $balance,
+                'cash_tendered' => $cash,
+                'issued_by' => $user->user_id,
+                'created_at' => now(),
+            ]);
+
+            $data['payment'] = array_merge($payment, [
+                'booking_percent' => $percent,
+                'booking_amount' => $due,
+                'balance_amount' => $balance,
+                'payment_status' => $balance > 0 ? 'partial' : 'paid',
+                'payment_method' => 'CASH',
+            ]);
+
+            $booking->update(['booking_data' => $data]);
+
+            return response()->json([
+                'message' => "Payment for booking {$booking->reference_id} received.",
+                'change' => round($cash - $due, 2),
+                'data' => $this->billingRow(
+                    $booking->fresh(),
+                    $this->transactions->paymentsForBookings([$booking->booking_id])->get($booking->booking_id),
+                    $payload['branch']
+                ),
+            ]);
+        });
+    }
+
+    public function refundBooking(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $booking = $this->bookingRepository->lockByReference(
+                $payload['reference_id'],
+                $payload['branch_id']
+            );
+
+            if (!$booking) {
+                throw new Exception('Booking doesn\'t exist', 404);
+            }
+
+            if (!$this->canRefund($booking)) {
+                throw new Exception('This booking has no payment to refund.', 422);
+            }
+
+            $data = $booking->booking_data;
+
+            $this->refundBookingPayment($booking, $data, true);
+
+            $booking->update(['booking_data' => $data]);
+
+            return response()->json([
+                'message' => "Booking {$booking->reference_id} has been refunded.",
+                'data' => $this->billingRow(
+                    $booking->fresh(),
+                    $this->transactions->paymentsForBookings([$booking->booking_id])->get($booking->booking_id),
+                    $payload['branch']
+                ),
+            ]);
+        });
+    }
+
+    private function downpaymentPercent(Booking $booking, mixed $branch): int
+    {
+        return $this->bookingHelper->getBookingPercent([
+            'category' => $booking->category,
+            'branch' => $branch,
+            'booking_data' => $booking->booking_data,
+        ]);
+    }
+
+    private function canPay(Booking $booking): bool
+    {
+        $data = $booking->booking_data ?? [];
+        $payment = $data['payment'] ?? [];
+
+        return $booking->status === Booking::STATUS_PENDING
+            && ($payment['payment_status'] ?? null) === 'pending'
+            && (float) ($payment['total_amount'] ?? 0) > 0
+            && ($data['facility']['type'] ?? null) !== Booking::TYPE_PREADMISSION;
+    }
+
+    private function canRefund(Booking $booking): bool
+    {
+        $payment = ($booking->booking_data ?? [])['payment'] ?? [];
+
+        return $booking->status === Booking::STATUS_REJECTED
+            && in_array($payment['payment_status'] ?? null, ['paid', 'partial'], true);
+    }
+
+    private function billingRow(Booking $booking, ?Transaction $transaction, mixed $branch): array
+    {
+        $data = $booking->booking_data ?? [];
+        $payment = $data['payment'] ?? [];
+        $patient = $data['patient'] ?? [];
+
+        $patientName = trim(implode(' ', array_filter([
+            $patient['first_name'] ?? null,
+            $patient['middle_name'] ?? null,
+            $patient['last_name'] ?? null,
+            $patient['suffix'] ?? null,
+        ])));
+
+        return [
+            'booking_id' => $booking->booking_id,
+            'reference_id' => $booking->reference_id,
+            'category' => $booking->category,
+            'type' => $data['facility']['type'] ?? $data['homecare']['type'] ?? null,
+            'status' => $booking->status,
+            'patient_name' => $patientName !== '' ? $patientName : null,
+            'total_amount' => (float) ($payment['total_amount'] ?? 0),
+            'booking_amount' => (float) ($payment['booking_amount'] ?? 0),
+            'balance_amount' => (float) ($payment['balance_amount'] ?? $payment['total_amount'] ?? 0),
+            'payment_status' => $payment['payment_status'] ?? null,
+            'payment_method' => $payment['payment_method'] ?? null,
+            'created_at' => $booking->created_at?->toIso8601String(),
+            'receipt' => $transaction ? (new BookingReceiptResource($transaction))->resolve() : null,
+            'can_pay' => $this->canPay($booking),
+            'can_refund' => $this->canRefund($booking),
+            'amount_due' => $this->canPay($booking)
+                ? round(
+                    (float) $payment['total_amount'] * $this->downpaymentPercent($booking, $branch) / 100,
+                    2
+                )
+                : null,
+        ];
     }
 }

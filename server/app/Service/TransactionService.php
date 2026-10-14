@@ -37,6 +37,11 @@ class TransactionService
         return $this->transactionRepository->findBookingPayment($transactionCode);
     }
 
+    public function paymentsForBookings(array $bookingIds)
+    {
+        return $this->transactionRepository->paymentsForBookings($bookingIds);
+    }
+
     public function bookingPayment(mixed $bookingId): ?Transaction
     {
         if (!$bookingId) {

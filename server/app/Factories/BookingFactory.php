@@ -176,7 +176,8 @@ class BookingFactory
             );
         }
 
-        $receipt = $this->paymentRepository->create([
+        // A payment taken at the counter already has its receipt.
+        $receipt = $transaction->payment ?? $this->paymentRepository->create([
             'transaction_id' => $transaction->transaction_id,
             'prior_balance' => $totalAmount,
             'new_balance' => round(max($totalAmount - $amount, 0), 2),

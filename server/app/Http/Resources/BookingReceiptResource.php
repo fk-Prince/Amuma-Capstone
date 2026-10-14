@@ -21,6 +21,8 @@ class BookingReceiptResource extends JsonResource
         $total = round((float) ($payment['total_amount'] ?? $amount), 2);
         $balance = round((float) ($payment['balance_amount'] ?? max($total - $amount, 0)), 2);
 
+        $tendered = round((float) ($this->payment?->cash_tendered ?? $amount), 2);
+
         $description = $this->description ?: 'Booking downpayment';
 
         $patientName = trim(implode(' ', array_filter([
@@ -32,7 +34,7 @@ class BookingReceiptResource extends JsonResource
 
         return [
             'payment_code' => $this->transaction_code,
-            'channel'      => 'portal',
+            'channel'      => $this->client_id && !$this->payment?->issued_by ? 'portal' : 'counter',
             'issued_at'    => $this->created_at?->toIso8601String(),
 
             'issuer' => [
@@ -49,7 +51,7 @@ class BookingReceiptResource extends JsonResource
                 'name' => $this->party_name ?: null,
             ],
 
-            'issued_by' => null,
+            'issued_by' => $this->issuerName(),
 
             'patient' => [
                 'patient_uuid' => $this->patient?->uuid,
@@ -60,9 +62,9 @@ class BookingReceiptResource extends JsonResource
             'payment' => [
                 'method'          => $this->method,
                 'masked_account'  => $this->masked_account_number,
-                'amount_tendered' => $amount,
+                'amount_tendered' => $tendered,
                 'amount_applied'  => $amount,
-                'change_due'      => 0.0,
+                'change_due'      => round(max($tendered - $amount, 0), 2),
                 'amount_in_words' => MoneyWords::pesos($amount),
             ],
 
@@ -75,7 +77,7 @@ class BookingReceiptResource extends JsonResource
                 'line_no'           => 1,
                 'allocation_id'     => null,
                 'invoice_id'        => null,
-                'payment_id'        => null,
+                'payment_id'        => $this->payment?->payment_id,
                 'payment_reference' => $this->transaction_reference_id,
                 'invoice_code'      => null,
                 'description'       => $description,
@@ -85,5 +87,18 @@ class BookingReceiptResource extends JsonResource
                 'hours_booked'      => null,
             ]],
         ];
+    }
+
+    protected function issuerName(): ?string
+    {
+        $issuer = $this->payment?->issuedBy;
+
+        if (!$issuer) {
+            return null;
+        }
+
+        $name = trim(($issuer->first_name ?? '') . ' ' . ($issuer->last_name ?? ''));
+
+        return $name !== '' ? $name : $issuer->email;
     }
 }

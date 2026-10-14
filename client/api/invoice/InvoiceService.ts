@@ -38,6 +38,10 @@ class InvoiceService extends BaseService {
         return await this.request(`${this.resource}/receipts`, 'GET', payload);
     }
 
+    async bookings(payload: {}): Promise<any> {
+        return await this.request(`${this.resource}/bookings`, 'GET', payload);
+    }
+
     async action(payload: {}): Promise<any> {
         return await this.request(`${this.resource}/action`, 'POST', payload);
     }

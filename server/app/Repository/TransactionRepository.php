@@ -25,6 +25,15 @@ class TransactionRepository
             ->first();
     }
 
+    public function paymentsForBookings(array $bookingIds)
+    {
+        return Transaction::with('booking', 'branch.location', 'patient', 'payment.issuedBy')
+            ->whereIn('booking_id', $bookingIds)
+            ->where('type', Transaction::TYPE_PAYMENT)
+            ->get()
+            ->keyBy('booking_id');
+    }
+
     public function codesForBookings(array $bookingIds)
     {
         return Transaction::whereIn('booking_id', $bookingIds)
