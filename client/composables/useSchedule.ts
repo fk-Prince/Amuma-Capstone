@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import type { ScheduleItem } from "~/types/schedule";
 import { useRemScale } from "~/composables/useRemScale";
 
 export interface UseScheduleProps {
@@ -21,6 +21,9 @@ export interface DayGroup {
 }
 
 const HOUR_WIDTH = 500;
+const MINUTES_PER_DAY = 24 * 60;
+
+type DayLike = { date?: string; hours: { value: number }[] };
 
 export function useSchedule(props: UseScheduleProps = {}) {
     const scale = useRemScale();
@@ -118,11 +121,28 @@ export function useSchedule(props: UseScheduleProps = {}) {
         return null;
     }
 
+    function scheduleTotalMinutes(schedule: ScheduleItem) {
+        if (schedule.total_duration_minutes > 0) {
+            return schedule.total_duration_minutes;
+        }
+
+        if (schedule.total_hours > 0) return schedule.total_hours * 60;
+
+        return null;
+    }
+
+    function daysBetween(from: string, to: string) {
+        const start = new Date(`${from}T00:00:00`);
+        const end = new Date(`${to}T00:00:00`);
+
+        return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+    }
+
     /**
      * A schedule's booked duration can span multiple calendar days (e.g. a
-     * 24hr+ homecare shift that starts late one day and runs into the
-     * next), so "which day does this schedule belong to" has to be a
-     * range, not just its literal start date.
+     * 24hr+ homecare shift, or a short one that starts late at night and
+     * runs past midnight), so "which day does this schedule belong to" has
+     * to be a range, not just its literal start date.
      */
     function scheduleDateSpan(
         schedule: ScheduleItem,
@@ -130,7 +150,16 @@ export function useSchedule(props: UseScheduleProps = {}) {
         const start = getScheduleDate(schedule);
         if (!start) return null;
 
-        const spanDays = Math.max(1, Math.ceil((schedule.total_hours ?? 0) / 24));
+        const startMinutes = parseTimeToMinutes(schedule.start_time);
+        const totalMinutes = scheduleTotalMinutes(schedule);
+
+        const spanDays =
+            startMinutes !== null && totalMinutes !== null
+                ? Math.max(
+                    1,
+                    Math.ceil((startMinutes + totalMinutes) / MINUTES_PER_DAY),
+                )
+                : Math.max(1, Math.ceil((schedule.total_hours ?? 0) / 24));
 
         const endDate = new Date(`${start}T00:00:00`);
         endDate.setDate(endDate.getDate() + spanDays - 1);
@@ -281,66 +310,114 @@ export function useSchedule(props: UseScheduleProps = {}) {
         dayGroups.value.reduce((sum, day) => sum + day.unassignedCount, 0),
     );
 
-    function getServiceLeft(
+
+    function clipToDay(
+        schedule: ScheduleItem,
+        day: DayLike,
+        startMin: number,
+        durationMin: number,
+        minWidth: number,
+    ) {
+        const first = day.hours[0]!.value * 60;
+        const last = day.hours[day.hours.length - 1]!.value * 60;
+        const scheduleDate = getScheduleDate(schedule);
+
+        const shift =
+            day.date && scheduleDate
+                ? daysBetween(scheduleDate, day.date) * MINUTES_PER_DAY
+                : 0;
+
+        const start = Math.max(startMin - shift, first);
+        const end = Math.min(startMin - shift + durationMin, last);
+
+        const room = ((last - start) / 60) * hourWidth.value;
+        const natural = ((end - start) / 60) * hourWidth.value;
+
+        return {
+            left: ((start - first) / 60) * hourWidth.value,
+            width: Math.max(Math.min(Math.max(natural, minWidth), room), 0),
+            visible: end > start,
+        };
+    }
+
+    function scheduleBox(schedule: ScheduleItem, day: DayLike) {
+        const start = parseTimeToMinutes(schedule.start_time);
+
+        if (start === null) {
+            return { left: 0, width: hourWidth.value, visible: true };
+        }
+
+        const total = scheduleTotalMinutes(schedule);
+
+        if (total !== null) {
+            return clipToDay(schedule, day, start, total, 140 * scale.value);
+        }
+
+        const end = parseTimeToMinutes(schedule.end_time);
+
+        if (end === null) {
+            return clipToDay(schedule, day, start, 60, 0);
+        }
+
+        const duration =
+            end > start ? end - start : end - start + MINUTES_PER_DAY;
+
+        return clipToDay(schedule, day, start, duration, 240 * scale.value);
+    }
+
+    function getScheduleLeft(schedule: ScheduleItem, day: DayLike) {
+        return scheduleBox(schedule, day).left;
+    }
+
+    function getScheduleWidth(schedule: ScheduleItem, day: DayLike) {
+        return scheduleBox(schedule, day).width;
+    }
+
+    function getServiceBox(
         schedule: ScheduleItem,
         serviceIndex: number,
-        day: { hours: { value: number }[] },
+        day: DayLike,
     ) {
         const scheduleStart = parseTimeToMinutes(schedule.start_time);
+        const duration = schedule.services?.[serviceIndex]?.duration_minutes ?? 0;
 
-        if (scheduleStart === null) return 0;
-
-        const dayStart = day.hours[0]!.value * 60;
+        if (scheduleStart === null) {
+            return { left: "0px", width: `${hourWidth.value}px` };
+        }
 
         const serviceStart =
             schedule.services
                 ?.slice(0, serviceIndex)
                 .reduce(
-                    (total, service) =>
-                        total + (service.duration_minutes ?? 0),
+                    (total, item) => total + (item.duration_minutes ?? 0),
                     scheduleStart,
                 ) ?? scheduleStart;
 
-        return ((serviceStart - dayStart) / 60) * hourWidth.value;
+        const box = clipToDay(
+            schedule,
+            day,
+            serviceStart,
+            duration || 60,
+            duration ? 240 * scale.value : 0,
+        );
+
+        return {
+            left: `${box.left}px`,
+            width: `${box.width}px`,
+            ...(box.visible ? {} : { display: "none" }),
+        };
     }
 
-    function getServiceWidth(service: ScheduleServiceItem) {
-        const duration = service.duration_minutes ?? 0;
-        if (!duration) return hourWidth.value;
-        return Math.max((duration / 60) * hourWidth.value, 240 * scale.value);
-    }
+    function timeRangeFor(schedule: ScheduleItem, day: DayLike) {
+        const span = scheduleDateSpan(schedule);
 
-    function getScheduleLeft(
-        schedule: ScheduleItem,
-        day: { hours: { value: number }[] },
-    ) {
-        const start = parseTimeToMinutes(schedule.start_time);
-        if (start === null) return 0;
-
-        const dayStart = day.hours[0]!.value * 60;
-
-        return ((start - dayStart) / 60) * hourWidth.value;
-    }
-
-    function getScheduleWidth(schedule: ScheduleItem) {
-        const start = parseTimeToMinutes(schedule.start_time);
-        const end = parseTimeToMinutes(schedule.end_time);
-
-        if (
-            typeof schedule.total_duration_minutes === "number" &&
-            schedule.total_duration_minutes > 0
-        ) {
-            return Math.max(
-                (schedule.total_duration_minutes / 60) * hourWidth.value,
-                140 * scale.value,
-            );
+        if (!span || !day.date || day.date === span.start) {
+            return `${schedule.start_time} – ${schedule.end_time}`;
         }
 
-        if (start === null || end === null) return hourWidth.value;
-
-        const duration = end - start;
-
-        return Math.max((duration / 60) * hourWidth.value, 240 * scale.value);
+        return day.date === span.end
+            ? `12:00 AM – ${schedule.end_time}`
+            : "All day";
     }
 
     const tick = ref(0);
@@ -508,10 +585,10 @@ export function useSchedule(props: UseScheduleProps = {}) {
         scheduleDateSpan,
         scheduleCoversDate,
 
-        getServiceLeft,
-        getServiceWidth,
+        getServiceBox,
         getScheduleLeft,
         getScheduleWidth,
+        timeRangeFor,
 
         nowOffset,
         startNowTicker,

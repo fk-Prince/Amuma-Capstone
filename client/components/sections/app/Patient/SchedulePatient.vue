@@ -278,8 +278,7 @@
                                                 : '',
                                         ]"
                                         :style="{
-                                            left: `${getServiceLeft(schedule, sIndex, day)}px`,
-                                            width: `${getServiceWidth(service)}px`,
+                                            ...getServiceBox(schedule, sIndex, day),
                                             top: rem(8 + sIndex * SERVICE_STRIDE),
                                             height: rem(SERVICE_HEIGHT),
                                         }"
@@ -290,12 +289,12 @@
                                                 v-if="schedule.scheduled_date"
                                                 class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                             >
-                                                {{ formatDate(schedule.scheduled_date) }}
+                                                {{ formatDate(day.date) }}
                                             </p>
 
                                             <div class="flex items-center justify-between gap-2">
                                                 <span class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white">
-                                                    {{ schedule.start_time }} – {{ schedule.end_time }}
+                                                    {{ timeRangeFor(schedule, day) }}
                                                 </span>
 
                                                 <span
@@ -365,7 +364,7 @@
                                     ]"
                                     :style="{
                                         left: `${getScheduleLeft(schedule, day)}px`,
-                                        width: `${getScheduleWidth(schedule)}px`,
+                                        width: `${getScheduleWidth(schedule, day)}px`,
                                         top: '0.5rem',
                                         height: '5.625rem',
                                     }"
@@ -376,12 +375,12 @@
                                             v-if="schedule.scheduled_date"
                                             class="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                         >
-                                            {{ formatDate(schedule.scheduled_date) }}
+                                            {{ formatDate(day.date) }}
                                         </p>
 
                                         <div class="flex items-center justify-between gap-2">
                                             <span class="truncate text-[12px] font-semibold tabular-nums text-slate-800 dark:text-white">
-                                                {{ schedule.start_time }} – {{ schedule.end_time }}
+                                                {{ timeRangeFor(schedule, day) }}
                                             </span>
 
                                             <span
@@ -465,10 +464,10 @@ const {
     selectedDate,
     rangeEnd,
     schedulesForDay,
-    getServiceLeft,
-    getServiceWidth,
+    getServiceBox,
     getScheduleLeft,
     getScheduleWidth,
+    timeRangeFor,
     nowOffset,
     startNowTicker,
     stopNowTicker,
@@ -529,7 +528,7 @@ function scrollToSchedule(
             labelWidth.value +
                 getScheduleLeft(schedule, day) -
                 container.clientWidth / 2 +
-                getScheduleWidth(schedule) / 2,
+                getScheduleWidth(schedule, day) / 2,
         ),
         behavior: "smooth",
     });

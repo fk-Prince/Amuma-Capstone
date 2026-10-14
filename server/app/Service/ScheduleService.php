@@ -812,10 +812,17 @@ class ScheduleService
             return [$scheduleStart, $scheduleEnd];
         }
 
-        return [
-            $scheduleStart->copy()->setTimeFromTimeString($startTime),
-            $scheduleStart->copy()->setTimeFromTimeString($endTime),
-        ];
+        $shiftStart = $scheduleStart->copy()->setTimeFromTimeString($startTime);
+        $shiftEnd = $scheduleStart->copy()->setTimeFromTimeString($endTime);
+
+        $windowStart = $shiftStart->max($scheduleStart)->copy();
+        $windowEnd = $shiftEnd->min($scheduleEnd)->copy();
+
+        if ($windowStart->gte($windowEnd)) {
+            return [$shiftStart, $shiftEnd];
+        }
+
+        return [$windowStart, $windowEnd];
     }
 
     public function assignEmployee(array $payload)
