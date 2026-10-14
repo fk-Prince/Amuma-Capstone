@@ -36,6 +36,7 @@
                         v-model:editing="editing"
                         class="mt-4"
                         :invoice-code="preview.invoice.invoice_code"
+                        :deposit="preview.invoice.booking_deposit"
                         :billed="preview.invoice.billed"
                         :paid="preview.invoice.paid"
                         :max="preview.invoice.paid"
@@ -105,6 +106,7 @@ interface CancelPreview {
         invoice_code: string;
         billed: number;
         paid: number;
+        booking_deposit: { label: string; percent: number } | null;
     } | null;
     shared_invoice_codes: string[];
 }

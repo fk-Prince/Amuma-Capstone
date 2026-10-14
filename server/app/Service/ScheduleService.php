@@ -584,6 +584,10 @@ class ScheduleService
                 'invoice_code' => $own->pluck('invoice_code')->implode(', '),
                 'billed' => round((float) $own->sum(fn(Invoice $invoice) => $invoice->adjusted_total), 2),
                 'paid' => round((float) $own->sum(fn(Invoice $invoice) => $invoice->net_paid_amount), 2),
+                'booking_deposit' => $own
+                    ->map(fn(Invoice $invoice) => $invoice->bookingDeposit())
+                    ->filter()
+                    ->first(),
             ],
             'shared_invoice_codes' => $shared->pluck('invoice_code')->all(),
         ];

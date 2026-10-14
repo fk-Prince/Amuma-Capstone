@@ -105,6 +105,7 @@
                         v-model:editing="editingAmount"
                         class="mt-4"
                         :invoice-code="invoiceCode"
+                        :deposit="bookingDeposit"
                         :billed="Math.max(invoiceTotal, paidAmount)"
                         :paid="paidAmount"
                         :max="paidAmount"
@@ -155,8 +156,9 @@ const props = withDefaults(
         paidAmount?: number;
         invoiceCode?: string | null;
         invoiceTotal?: number;
+        bookingDeposit?: { label: string; percent: number } | null;
     }>(),
-    { paidAmount: 0, invoiceCode: null, invoiceTotal: 0 },
+    { paidAmount: 0, invoiceCode: null, invoiceTotal: 0, bookingDeposit: null },
 );
 
 const QUICK_REASONS = [

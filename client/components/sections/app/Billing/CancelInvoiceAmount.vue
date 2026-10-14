@@ -51,6 +51,18 @@
                 </dd>
             </div>
 
+            <div
+                v-if="deposit"
+                class="flex items-center justify-between gap-3 py-1"
+            >
+                <dt class="text-muted dark:text-gray-400">
+                    {{ deposit.label }}
+                </dt>
+                <dd class="font-medium text-secondary dark:text-white">
+                    {{ deposit.percent }}%
+                </dd>
+            </div>
+
             <div class="flex items-center justify-between gap-3 py-1">
                 <dt class="text-muted dark:text-gray-400">Amount paid</dt>
                 <dd class="font-medium text-secondary dark:text-white">
@@ -154,6 +166,8 @@ const props = defineProps<{
     defaultAmount: number;
     amountLabel: string;
     maxHint: string;
+    // What the family paid when they booked, as a share of the price.
+    deposit?: { label: string; percent: number } | null;
     disabled?: boolean;
     amountError?: string;
     reasonError?: string;

@@ -183,6 +183,7 @@ export interface Admission {
     bed?: Bed;
     room?: Room;
     invoices: InvoiceAccommodation[];
+    booking_deposit?: { label: string; percent: number } | null;
     current_contract?: Contract | null;
     current_period?: AdmissionPeriod | null;
     future_periods?: {

@@ -266,6 +266,10 @@ class PatientResource extends JsonResource
                 ->map(fn($invoice) => $this->formatInvoiceAdmission($invoice))
                 ->values()
                 : [],
+
+            'booking_deposit' => $admission->relationLoaded('invoiceAdmission')
+                ? $admission->invoiceAdmission->first()?->invoice?->bookingDeposit()
+                : null,
         ];
     }
 

@@ -621,8 +621,8 @@ type TabKey = "patients" | "invoices" | "bookings" | "transactions";
 const tabs: { key: TabKey; label: string }[] = [
     { key: "patients", label: "Patients" },
     { key: "invoices", label: "Invoices" },
-    { key: "bookings", label: "Bookings" },
     { key: "transactions", label: "Transactions" },
+    { key: "bookings", label: "Bookings" },
 ];
 
 const { view: viewMode, setView: setViewMode } = useListView();

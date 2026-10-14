@@ -77,6 +77,28 @@ class Invoice extends Model
         return $this->status === self::STATUS_WRITTEN_OFF;
     }
 
+    public function patientBookings(): HasMany
+    {
+        return $this->hasMany(PatientBooking::class, 'invoice_id', 'invoice_id');
+    }
+
+    public function bookingDeposit(): ?array
+    {
+        $booking = $this->patientBookings()->with('booking')->first()?->booking;
+        $payment = ($booking?->booking_data ?? [])['payment'] ?? [];
+
+        if (!$booking || empty($payment['booking_percent'])) {
+            return null;
+        }
+
+        return [
+            'label' => $booking->category === Booking::CATEGORY_FACILITY
+                ? 'Reservation fee'
+                : 'Downpayment',
+            'percent' => (int) $payment['booking_percent'],
+        ];
+    }
+
     public function invoiceServices(): HasMany
     {
         return $this->hasMany(InvoiceServices::class, 'invoice_id', 'invoice_id');
@@ -187,8 +209,8 @@ class Invoice extends Model
                     'description' => $description,
                     'weight' => (float) $group->sum(fn($line) => (float) $line->price * (
                         $line->scheduleService?->service_id === null
-                            ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
-                            : 1
+                        ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
+                        : 1
                     )),
                 ])
                 ->values();

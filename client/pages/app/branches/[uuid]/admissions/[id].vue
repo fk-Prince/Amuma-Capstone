@@ -926,6 +926,7 @@
             :paid-amount="admitPaidAmount"
             :invoice-code="admitInvoice?.invoice_code"
             :invoice-total="Number(admitInvoice?.price ?? 0)"
+            :booking-deposit="patient?.latest_admission?.booking_deposit ?? null"
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
         />
