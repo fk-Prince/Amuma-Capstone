@@ -327,28 +327,29 @@
                 <DataTable
                     v-else
                     class="flex-1 min-h-0 rounded-t-none rounded-b-xl border-none"
-                    :columns="receiptColumns"
+                    :columns="transactionColumns"
                     :view="viewMode"
-                    :rows="receipts"
-                    :pagination="receiptPagination"
-                    :loading="receiptsLoading"
+                    :rows="transactions"
+                    :pagination="transactionPagination"
+                    :loading="transactionsLoading"
                     :searchable="false"
-                    empty-title="No receipts found"
-                    empty-description="Search by transaction number, patient, payor or invoice code."
-                    :on-row-click="openReceipt"
-                    @page-change="fetchReceipts"
+                    :row-key="(row: TransactionRow) => row.transaction_code"
+                    empty-title="No transactions found"
+                    empty-description="Search by transaction number, patient, payor or booking reference."
+                    :on-row-click="openTransaction"
+                    @page-change="fetchTransactions"
                 >
-                    <template #cell-payment_code="{ row }">
+                    <template #cell-transaction_code="{ value }">
                         <span
                             class="font-mono font-semibold text-slate-800 dark:text-white"
                         >
-                            {{ row.payment_code }}
+                            {{ value }}
                         </span>
                     </template>
 
-                    <template #cell-issued_at="{ row }">
+                    <template #cell-created_at="{ value }">
                         <span class="text-slate-600 dark:text-gray-400">
-                            {{ formatDateTime(row.issued_at) }}
+                            {{ formatDateTime(value) }}
                         </span>
                     </template>
 
@@ -357,34 +358,59 @@
                             <span
                                 class="font-medium text-slate-800 dark:text-white"
                             >
-                                {{ row.patient?.full_name ?? "—" }}
+                                {{ row.patient_name ?? "—" }}
                             </span>
                             <span
                                 class="text-xs text-slate-400 dark:text-gray-500"
                             >
-                                from {{ row.payor?.name ?? "—" }}
+                                {{ row.type === "payment" ? "from" : "to" }}
+                                {{ row.payor_name ?? "—" }}
                             </span>
                         </div>
                     </template>
 
-                    <template #cell-channel="{ row }">
+                    <template #cell-label="{ row }">
                         <span
                             class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                            :class="
-                                row.channel === 'portal'
-                                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300'
-                                    : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300'
-                            "
+                            :class="transactionTypeClass(row.type)"
                         >
-                            {{
-                                row.channel === "portal" ? "Online" : "Counter"
-                            }}
+                            {{ row.label }}
+                        </span>
+                    </template>
+
+                    <template #cell-description="{ value }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ value ?? "—" }}
+                        </span>
+                    </template>
+
+                    <template #cell-method="{ value }">
+                        <span class="text-slate-600 dark:text-gray-400">
+                            {{ transactionMethodLabel(value) }}
                         </span>
                     </template>
 
                     <template #cell-amount="{ row }">
-                        <span class="font-medium text-green-600">
-                            ₱{{ formatMoney(row.payment?.amount_applied) }}
+                        <span
+                            class="font-medium"
+                            :class="
+                                row.type === 'payment'
+                                    ? 'text-green-600'
+                                    : 'text-red-500'
+                            "
+                        >
+                            {{ row.type === "payment" ? "" : "-" }}₱{{
+                                formatMoney(row.amount)
+                            }}
+                        </span>
+                    </template>
+
+                    <template #cell-status="{ value }">
+                        <span
+                            class="rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize"
+                            :class="transactionStatusClass(String(value))"
+                        >
+                            {{ value }}
                         </span>
                     </template>
                 </DataTable>
@@ -590,13 +616,13 @@ useHead({
 const route = useRoute();
 const router = useRouter();
 
-type TabKey = "patients" | "invoices" | "bookings" | "receipts";
+type TabKey = "patients" | "invoices" | "bookings" | "transactions";
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: "patients", label: "Patients" },
     { key: "invoices", label: "Invoices" },
     { key: "bookings", label: "Bookings" },
-    { key: "receipts", label: "Receipts" },
+    { key: "transactions", label: "Transactions" },
 ];
 
 const { view: viewMode, setView: setViewMode } = useListView();
@@ -663,12 +689,34 @@ const bookingColumns: DataTableColumn[] = [
     { key: "actions", label: "", align: "right", sortable: false },
 ];
 
-const receiptColumns: DataTableColumn[] = [
-    { key: "payment_code", label: "Transaction No.", sortable: false },
-    { key: "issued_at", label: "Issued", sortable: false },
+interface TransactionRow {
+    transaction_code: string;
+    created_at: string | null;
+    type: "payment" | "refund" | "withdraw";
+    label: string;
+    status: string;
+    method: string | null;
+    amount: number;
+    description: string | null;
+    patient_name: string | null;
+    payor_name: string | null;
+    receipt: PaymentReceiptData | null;
+}
+
+const transactionColumns: DataTableColumn[] = [
+    {
+        key: "transaction_code",
+        label: "Transaction No.",
+        sortable: false,
+        primary: true,
+    },
+    { key: "created_at", label: "Date", sortable: false },
     { key: "patient", label: "Patient", sortable: false },
-    { key: "channel", label: "Channel", sortable: false },
+    { key: "label", label: "Type", sortable: false },
+    { key: "description", label: "Description", sortable: false },
+    { key: "method", label: "Method", sortable: false },
     { key: "amount", label: "Amount", align: "right", sortable: false },
+    { key: "status", label: "Status", sortable: false },
 ];
 
 const invoices = ref<PatientSummaryRow[]>([]);
@@ -697,10 +745,10 @@ const paying = ref(false);
 const refundTarget = ref<BookingBillingRow | null>(null);
 const refunding = ref(false);
 
-const receipts = ref<PaymentReceiptData[]>([]);
-const receiptsLoading = ref(false);
+const transactions = ref<TransactionRow[]>([]);
+const transactionsLoading = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
-const receiptPagination = usePagination({
+const transactionPagination = usePagination({
     pageSize: 10,
 });
 
@@ -717,7 +765,7 @@ const searchPlaceholder = computed(() => {
     if (activeTab.value === "bookings")
         return "Search by booking reference or patient name...";
 
-    return "Transaction no., patient code, name, payor or invoice code...";
+    return "Transaction no., patient, payor or booking reference...";
 });
 
 function switchTab(tab: TabKey) {
@@ -726,8 +774,8 @@ function switchTab(tab: TabKey) {
     activeTab.value = tab;
     query.value = "";
 
-    if (tab === "receipts" && !receipts.value.length) {
-        fetchReceipts(1);
+    if (tab === "transactions" && !transactions.value.length) {
+        fetchTransactions(1);
     } else if (tab === "invoices" && !invoiceRows.value.length) {
         fetchInvoiceRows(1);
     } else if (tab === "bookings" && !bookingRows.value.length) {
@@ -754,8 +802,8 @@ function onSearch() {
         return;
     }
 
-    receiptPagination.reset();
-    fetchReceipts(1);
+    transactionPagination.reset();
+    fetchTransactions(1);
 }
 
 function clearSearch() {
@@ -1012,35 +1060,73 @@ async function confirmVoid() {
     }
 }
 
-async function fetchReceipts(page = receiptPagination.currentPage.value) {
-    receiptsLoading.value = true;
+async function fetchTransactions(
+    page = transactionPagination.currentPage.value,
+) {
+    transactionsLoading.value = true;
 
-    receiptPagination.currentPage.value = page;
+    transactionPagination.currentPage.value = page;
 
     try {
-        const res = await invoiceService.receipts({
+        const res = await invoiceService.transactions({
             branch_uuid: route.params.uuid,
             search: query.value,
             page,
-            per_page: receiptPagination.pageSize.value,
+            per_page: transactionPagination.pageSize.value,
         });
 
-        receipts.value = res.data ?? [];
+        transactions.value = res.data ?? [];
 
-        receiptPagination.setTotal(
-            res.meta?.total ?? res.total ?? receipts.value.length,
+        transactionPagination.setTotal(
+            res.meta?.total ?? transactions.value.length,
         );
-    } catch (error) {
-        console.error(error);
-        receipts.value = [];
-        receiptPagination.setTotal(0);
+    } catch (err) {
+        console.error(err);
+        transactions.value = [];
+        transactionPagination.setTotal(0);
     } finally {
-        receiptsLoading.value = false;
+        transactionsLoading.value = false;
     }
 }
 
-function openReceipt(row: PaymentReceiptData) {
-    activeReceipt.value = row;
+// A payment prints its receipt; a refund or withdrawal is only there to read.
+function openTransaction(row: TransactionRow) {
+    if (row.receipt) activeReceipt.value = row.receipt;
+}
+
+const TRANSACTION_TYPE_CLASSES: Record<string, string> = {
+    payment:
+        "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+    refund: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300",
+    withdraw:
+        "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+};
+
+function transactionTypeClass(type: string) {
+    return (
+        TRANSACTION_TYPE_CLASSES[type] ??
+        "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300"
+    );
+}
+
+const TRANSACTION_STATUS_CLASSES: Record<string, string> = {
+    completed:
+        "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
+    requested:
+        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
+    rejected:
+        "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20",
+};
+
+function transactionStatusClass(status: string) {
+    return (
+        TRANSACTION_STATUS_CLASSES[status] ??
+        "bg-slate-50 text-slate-600 border-slate-200"
+    );
+}
+
+function transactionMethodLabel(method: string | null | undefined) {
+    return method ? method.replace(/[-_]/g, " ").toUpperCase() : "—";
 }
 
 function onRowClick(row: PatientSummaryRow) {

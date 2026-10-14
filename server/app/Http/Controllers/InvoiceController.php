@@ -41,6 +41,14 @@ class InvoiceController extends Controller
         return $this->invoiceService->storeBooking($request->all(), $request->user());
     }
 
+    public function transactions(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::BillingAndInvoices, PermissionAction::Read);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->invoiceService->transactions($request->all());
+    }
+
     public function bookings(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Models\Transaction;
+use App\Http\Resources\BookingReceiptResource;
 use App\Http\Resources\InvoiceResource;
 use App\Http\Resources\PaymentReceiptResource;
 use App\Models\Invoice;
@@ -20,6 +21,7 @@ use App\Utils\MaskUtil;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class InvoiceService
 {
@@ -444,6 +446,71 @@ class InvoiceService
         return $invoice->invoiceServices
             ->first()?->scheduleService?->schedule?->patient
             ?? $invoice->additionalCharges->first()?->patientAdmission?->patient;
+    }
+
+    public function transactions(array $payload)
+    {
+        $page = $this->transactions->paginateForBranch(
+            $payload['branch_id'],
+            trim((string) ($payload['search'] ?? '')),
+            (int) ($payload['per_page'] ?? 10)
+        );
+
+        return response()->json([
+            'data' => $page->getCollection()
+                ->map(fn(Transaction $transaction) => $this->transactionRow($transaction))
+                ->values(),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'per_page' => $page->perPage(),
+            ],
+        ]);
+    }
+
+    // Only a completed payment has a receipt to print; refunds and
+    // withdrawals are there to be read.
+    private function transactionRow(Transaction $transaction): array
+    {
+        $receipt = null;
+
+        if (
+            $transaction->type === Transaction::TYPE_PAYMENT
+            && $transaction->status === Transaction::STATUS_COMPLETED
+        ) {
+            $receipt = $transaction->payment
+                ? (new PaymentReceiptResource($transaction->payment))->resolve()
+                : ($transaction->booking_id
+                    ? (new BookingReceiptResource($transaction))->resolve()
+                    : null);
+        }
+
+        $bookedPatient = $transaction->booking?->booking_data['patient'] ?? [];
+
+        $bookedName = trim(implode(' ', array_filter([
+            $bookedPatient['first_name'] ?? null,
+            $bookedPatient['last_name'] ?? null,
+        ])));
+
+        $payor = $transaction->party_name
+            ?: trim(($transaction->client?->first_name ?? '') . ' ' . ($transaction->client?->last_name ?? ''));
+
+        return [
+            'transaction_code' => $transaction->transaction_code,
+            'created_at' => $transaction->created_at?->toIso8601String(),
+            'type' => $transaction->type,
+            'label' => $transaction->booking_id && $transaction->type === Transaction::TYPE_PAYMENT
+                ? 'Booking Downpayment'
+                : Str::headline($transaction->type),
+            'status' => $transaction->status,
+            'method' => $transaction->method,
+            'amount' => (float) $transaction->amount,
+            'description' => $transaction->description,
+            'patient_name' => $transaction->patient?->display_name ?: ($bookedName !== '' ? $bookedName : null),
+            'payor_name' => $payor !== '' ? $payor : null,
+            'receipt' => $receipt,
+        ];
     }
 
     public function receipts(array $payload)

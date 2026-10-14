@@ -149,6 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/invoices/overview', [InvoiceController::class, 'overview']);
     Route::get('/invoices/receipts', [InvoiceController::class, 'receipts']);
     Route::get('/invoices/bookings', [InvoiceController::class, 'bookings']);
+    Route::get('/invoices/transactions', [InvoiceController::class, 'transactions']);
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
     Route::get('/branches/dashboard', [BranchController::class, 'dashboard']);

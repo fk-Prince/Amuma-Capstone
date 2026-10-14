@@ -25,6 +25,41 @@ class TransactionRepository
             ->first();
     }
 
+    // Everything the branch has recorded, with what a payment's receipt needs.
+    public function paginateForBranch(mixed $branchId, string $search, int $perPage)
+    {
+        return Transaction::with(array_merge(
+            ['patient', 'client', 'booking', 'branch.location'],
+            array_map(
+                fn($relation) => 'payment.' . $relation,
+                PaymentRepository::RECEIPT_RELATIONS
+            )
+        ))
+            ->where('branch_id', $branchId)
+            ->when($search !== '', function ($query) use ($search) {
+                $term = '%' . $search . '%';
+
+                $query->where(function ($q) use ($term, $search) {
+                    $q->where('transaction_code', 'ilike', $term)
+                        ->orWhere('party_name', 'ilike', $term)
+                        ->orWhere('transaction_reference_id', 'ilike', $term)
+                        ->orWhereHas(
+                            'patient',
+                            fn($p) => $p
+                                ->whereRaw("concat(first_name, ' ', last_name) ilike ?", [$term])
+                                ->orWhere('patient_code', 'ilike', "{$search}%")
+                        )
+                        ->orWhereHas(
+                            'booking',
+                            fn($b) => $b->where('reference_id', 'ilike', $term)
+                        );
+                });
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('transaction_id')
+            ->paginate($perPage);
+    }
+
     public function paymentsForBookings(array $bookingIds)
     {
         return Transaction::with('booking', 'branch.location', 'patient', 'payment.issuedBy')
