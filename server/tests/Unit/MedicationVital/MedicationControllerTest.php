@@ -160,7 +160,7 @@ class MedicationControllerTest extends TestCase
         $this->assertSame('Metformin', $body['data'][0]['name']);
     }
 
-    public function test_store_fails_when_the_patient_is_not_found(): void
+    public function test_patient_not_found(): void
     {
         $this->patientMissing();
 
@@ -172,7 +172,7 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(0, Medication::count());
     }
 
-    public function test_store_saves_the_medication(): void
+    public function test_successfully_saved_medication(): void
     {
         $this->patientFound();
 
@@ -191,7 +191,7 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(['08:00', '20:00'], $medication->times);
     }
 
-    public function test_store_asks_to_notify_the_family(): void
+    public function test_notify_patient_access_is_called_once_for_a_medication(): void
     {
         $this->patientFound();
 
@@ -210,7 +210,7 @@ class MedicationControllerTest extends TestCase
         ]));
     }
 
-    public function test_update_fails_for_an_unknown_medication(): void
+    public function test_medication_record_not_found(): void
     {
         $this->assertFailsWith('Medication record not found', fn() => $this->controller->update(
             $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['strength' => '850mg']]),
@@ -218,7 +218,7 @@ class MedicationControllerTest extends TestCase
         ));
     }
 
-    public function test_update_changes_only_the_fields_that_were_sent(): void
+    public function test_strength_changes_to_850mg_while_the_name_and_times_stay_the_same(): void
     {
         $medication = $this->savedMedication();
 
@@ -234,7 +234,7 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(['08:00', '20:00'], $medication->times);
     }
 
-    public function test_dosage_marks_a_dose_and_records_who_marked_it(): void
+    public function test_dose_status_is_taken_and_marked_by_the_nurse(): void
     {
         $medication = $this->savedMedication();
 
@@ -269,7 +269,7 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(2, MedicationSchedule::count());
     }
 
-    public function test_dosage_removes_a_dose_record(): void
+    public function test_dose_status_is_removed_and_no_dose_record_is_left(): void
     {
         $medication = $this->savedMedication();
 

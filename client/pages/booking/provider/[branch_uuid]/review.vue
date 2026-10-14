@@ -156,10 +156,9 @@
                 </div>
 
                 <div v-if="showPayment" class="xl:sticky xl:top-8">
-                    <div
-                        class="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:bg-secondary dark:border-white/10"
-                    >
+                    <div class="rounded-xl shadow-sm">
                         <PaymentForm
+                            compact
                             :card="card"
                             :total-amount="bookingAmount"
                             :processing="

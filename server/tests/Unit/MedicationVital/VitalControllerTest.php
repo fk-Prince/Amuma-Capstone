@@ -142,7 +142,7 @@ class VitalControllerTest extends TestCase
         $this->assertSame(2, $body['meta']['last_page']);
     }
 
-    public function test_store_fails_when_the_patient_is_not_found(): void
+    public function test_patient_not_found(): void
     {
         $this->patientMissing();
 
@@ -154,7 +154,7 @@ class VitalControllerTest extends TestCase
         $this->assertSame(0, Vital::count());
     }
 
-    public function test_store_saves_every_reading(): void
+    public function test_successfully_saved_vital_signs(): void
     {
         $this->patientFound();
 
@@ -176,7 +176,7 @@ class VitalControllerTest extends TestCase
         $this->assertSame('Resting', $vital->notes);
     }
 
-    public function test_store_saves_readings_that_were_not_taken_as_empty(): void
+    public function test_readings_not_taken_are_null_and_heart_rate_is_72(): void
     {
         $this->patientFound();
 
@@ -197,7 +197,7 @@ class VitalControllerTest extends TestCase
         $this->assertSame(72, $vital->heart_rate);
     }
 
-    public function test_store_asks_to_notify_the_family(): void
+    public function test_notify_patient_access_is_called_once_for_vitals(): void
     {
         $this->patientFound();
 
@@ -216,7 +216,7 @@ class VitalControllerTest extends TestCase
         ]));
     }
 
-    public function test_store_without_a_date_saves_nothing(): void
+    public function test_no_vital_is_saved_without_a_date(): void
     {
         $this->patientFound();
 
@@ -238,7 +238,7 @@ class VitalControllerTest extends TestCase
         $this->assertSame(0, Vital::count());
     }
 
-    public function test_update_fails_for_an_unknown_entry(): void
+    public function test_vital_record_not_found(): void
     {
         $this->assertFailsWith('Vital record not found', fn() => $this->controller->update(
             $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['heartRate' => 90]]),
@@ -246,7 +246,7 @@ class VitalControllerTest extends TestCase
         ));
     }
 
-    public function test_update_changes_only_the_readings_that_were_sent(): void
+    public function test_successfully_updated_vital_signs(): void
     {
         $vital = $this->savedVital();
 
