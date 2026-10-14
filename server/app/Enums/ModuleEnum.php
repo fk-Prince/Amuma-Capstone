@@ -36,6 +36,7 @@ enum ModuleEnum: string
                 PermissionAction::Read,
                 PermissionAction::Update,
                 PermissionAction::Assign,
+                PermissionAction::Export,
             ],
             self::Admissions => [
                 PermissionAction::Read,

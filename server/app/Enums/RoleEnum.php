@@ -27,7 +27,7 @@ enum RoleEnum: string
                             PermissionAction::Read->value,
                             PermissionAction::ForceDischarge->value,
                         ],
-                        ModuleEnum::Patients => [
+                        ModuleEnum::Patients, ModuleEnum::Schedules => [
                             PermissionAction::Read->value,
                             PermissionAction::Export->value,
                         ],

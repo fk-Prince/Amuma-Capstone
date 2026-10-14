@@ -502,8 +502,8 @@
                             "
                             class="rounded-lg bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            You'll be asked whether to void this schedule's
-                            invoice when you cancel.
+                            You'll be able to review this schedule's invoice
+                            amount before it's cancelled.
                         </p>
 
                         <div>
@@ -1301,6 +1301,13 @@
                                     >
                                         No employee has been assigned yet.
                                     </div>
+
+                                    <PreviousAssignees
+                                        class="mt-4"
+                                        :assignees="
+                                            service.previous_assignees ?? []
+                                        "
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1341,6 +1348,16 @@
 
                     <template v-else>
                         <button
+                            v-if="canExport(Modules.Schedules)"
+                            type="button"
+                            class="mr-auto inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
+                            @click="handlePrint"
+                        >
+                            <Printer class="h-4 w-4" />
+                            Print
+                        </button>
+
+                        <button
                             class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
                             @click="close"
                         >
@@ -1360,37 +1377,25 @@
         </div>
     </Transition>
 
-    <ConfirmDialog
+    <Teleport to="body">
+        <div
+            v-if="open && schedule && canExport(Modules.Schedules)"
+            class="print-slip-sheet hidden print:block"
+        >
+            <ScheduleSheet
+                :schedule="schedule"
+                :branch-name="branchStore.activeBranch?.name"
+            />
+        </div>
+    </Teleport>
+
+    <ScheduleCancel
         :open="cancelConfirmOpen"
-        title="Cancel this schedule?"
-        message="This action cannot be undone."
-        description="The schedule will be cancelled and can no longer be edited."
-        confirm-label="Cancel Schedule"
-        cancel-label="Keep Schedule"
-        variant="danger"
+        :schedule="schedule"
         :loading="submitLoading"
         @confirm="confirmCancelSchedule"
         @cancel="cancelConfirmOpen = false"
-    >
-        <label
-            class="mt-4 flex cursor-pointer items-start gap-2.5 rounded-lg border border-gray-200 p-3 dark:border-white/10"
-        >
-            <input
-                v-model="voidInvoice"
-                type="checkbox"
-                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
-            />
-            <span class="text-sm text-gray-700 dark:text-gray-300">
-                Void this schedule's invoice
-                <span
-                    class="mt-0.5 block text-xs text-gray-400 dark:text-gray-500"
-                >
-                    Anything already paid goes back to the patient's credit. If
-                    unchecked, the invoice stays open.
-                </span>
-            </span>
-        </label>
-    </ConfirmDialog>
+    />
 
     <ConfirmDialog
         :open="completeConfirmOpen"
@@ -1407,11 +1412,14 @@
 
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue";
+import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
+import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import {
     getLocalDateStr,
@@ -1448,12 +1456,14 @@ import {
     LoaderCircle,
     Mail,
     Phone,
+    Printer,
     Search,
     Users,
 } from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { usePermissions } from "~/composables/usePermission";
+import { useBranchStore } from "~/stores/branch";
 import { Modules } from "~/types/module";
 import type { AnyCaaRecord } from "node:dns";
 
@@ -1508,7 +1518,25 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const { error: toastError } = useToast();
-const { canUpdate, hasModule } = usePermissions();
+const { canUpdate, canExport, hasModule } = usePermissions();
+
+const branchStore = useBranchStore();
+
+async function handlePrint() {
+    document.body.classList.add("printing-slip");
+
+    await nextTick();
+
+    await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+
+    try {
+        window.print();
+    } finally {
+        document.body.classList.remove("printing-slip");
+    }
+}
 
 const patientUuid = computed(() => {
     const uuid = props.schedule?.patient?.patient_uuid;
@@ -2136,7 +2164,6 @@ function validate() {
 
 const cancelConfirmOpen = ref(false);
 const completeConfirmOpen = ref(false);
-const voidInvoice = ref(false);
 
 function buildSchedulePayload() {
     if (!props.schedule) return null;
@@ -2203,7 +2230,6 @@ function handleSchedule() {
     }
 
     if (form.value.status === "cancelled") {
-        voidInvoice.value = false;
         cancelConfirmOpen.value = true;
         return;
     }
@@ -2220,13 +2246,16 @@ function handleSchedule() {
     }
 }
 
-function confirmCancelSchedule() {
+function confirmCancelSchedule(settlement: {
+    final_amount?: number;
+    adjustment_reason?: string;
+}) {
     cancelConfirmOpen.value = false;
 
     const payload = buildSchedulePayload();
 
     if (payload) {
-        emit("schedule", { ...payload, void_invoice: voidInvoice.value });
+        emit("schedule", { ...payload, ...settlement });
     }
 }
 

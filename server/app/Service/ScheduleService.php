@@ -23,6 +23,7 @@ use App\Repository\NotificationRepository;
 use App\Repository\OnlineScheduleRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\Schedule;
 use App\Models\ScheduleService as ScheduleServiceModel;
@@ -449,10 +450,11 @@ class ScheduleService
                 $this->onlineScheduleRepository->forceClockOutSchedule($schedule->schedule_id);
             }
 
-            $voidedInvoices = $newStatus === Schedule::STATUS_CANCELLED
-                && filter_var($payload['void_invoice'] ?? false, FILTER_VALIDATE_BOOLEAN)
-                ? $this->cancelledSchedule($user, $schedule)
-                : [];
+            $settled = $newStatus === Schedule::STATUS_CANCELLED
+                ? $this->settleCancelledInvoices($user, $schedule, $payload)
+                : collect();
+
+            $voidedInvoices = $settled->where('voided', true)->pluck('invoice_code')->all();
 
             $this->notifyAssignedStaff(
                 $user,
@@ -473,11 +475,12 @@ class ScheduleService
             });
 
             return response()->json([
-                'message' => $voidedInvoices
-                    ? 'Schedule cancelled. Invoice ' . implode(', ', $voidedInvoices) . ' was voided.'
-                    : ($newStatus === Schedule::STATUS_CANCELLED
-                        ? 'Schedule cancelled.'
-                        : 'Schedule updated successfully.'),
+                'message' => match (true) {
+                    $voidedInvoices !== [] => 'Schedule cancelled. Invoice ' . implode(', ', $voidedInvoices) . ' was voided.',
+                    $settled->isNotEmpty() => 'Schedule cancelled. Invoice ' . $settled->pluck('invoice_code')->implode(', ') . ' was adjusted.',
+                    $newStatus === Schedule::STATUS_CANCELLED => 'Schedule cancelled.',
+                    default => 'Schedule updated successfully.',
+                },
                 'voided_invoices' => $voidedInvoices,
                 'data' => new ScheduleResource($schedule->fresh([
                     'scheduleServices.assigned.onlineSchedules',
@@ -564,55 +567,93 @@ class ScheduleService
         );
     }
 
-    private function cancelledSchedule(User $user, Schedule $schedule): array
+    public function cancelPreview(array $payload)
     {
-        $schedule->load('scheduleServices.invoiceServices');
+        $schedule = $this->scheduleRepository->findByFields([
+            ['schedule_id', '=', $payload['schedule_id']],
+        ]);
 
-        $invoiceIds = $schedule->scheduleServices
-            ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices)
-            ->pluck('invoice_id')
-            ->filter()
-            ->unique();
-
-        if ($invoiceIds->isEmpty()) {
-            return [];
+        if (!$schedule) {
+            throw new Exception('Schedule not found.', 404);
         }
 
-        $invoices = Invoice::with('invoiceServices.scheduleService.schedule')
-            ->whereIn('invoice_id', $invoiceIds)
-            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
-            ->get();
+        [$own, $shared] = $this->invoicesToSettle($schedule, $payload['branch_id']);
 
-        $voided = [];
+        return [
+            'invoice' => $own->isEmpty() ? null : [
+                'invoice_code' => $own->pluck('invoice_code')->implode(', '),
+                'billed' => round((float) $own->sum(fn(Invoice $invoice) => $invoice->adjusted_total), 2),
+                'paid' => round((float) $own->sum(fn(Invoice $invoice) => $invoice->net_paid_amount), 2),
+            ],
+            'shared_invoice_codes' => $shared->pluck('invoice_code')->all(),
+        ];
+    }
 
-        foreach ($invoices as $invoice) {
-            $billsOtherSchedules = $invoice->invoiceServices
+    private function invoicesToSettle(Schedule $schedule, mixed $branchId): array
+    {
+        [$shared, $own] = $this->invoiceRepository->openForSchedule($schedule, $branchId)
+            ->partition(fn(Invoice $invoice) => $invoice->invoiceServices
                 ->map(fn($line) => $line->scheduleService?->schedule)
                 ->filter()
                 ->contains(fn(Schedule $other) => $other->schedule_id !== $schedule->schedule_id
-                    && $other->status !== Schedule::STATUS_CANCELLED);
+                    && $other->status !== Schedule::STATUS_CANCELLED));
 
-            if ($billsOtherSchedules) {
+        return [$own->values(), $shared->values()];
+    }
+
+    private function settleCancelledInvoices(User $user, Schedule $schedule, array $payload): Collection
+    {
+        if (!isset($payload['final_amount']) || $payload['final_amount'] === '') {
+            return collect();
+        }
+
+        [$invoices] = $this->invoicesToSettle($schedule, $payload['branch_id']);
+
+        $billedTotal = round((float) $invoices->sum(fn(Invoice $invoice) => $invoice->adjusted_total), 2);
+        $remaining = round((float) $payload['final_amount'], 2);
+
+        if ($remaining < 0 || $remaining > $billedTotal) {
+            throw new Exception("The invoice amount must be between 0 and {$billedTotal}.", 422);
+        }
+
+        $reason = trim((string) ($payload['adjustment_reason'] ?? ''));
+
+        if ($remaining < $billedTotal && mb_strlen($reason) < 3) {
+            throw new Exception('Give a reason for changing the invoice amount.', 422);
+        }
+
+        $settled = collect();
+
+        foreach ($invoices as $invoice) {
+            $billed = round((float) $invoice->adjusted_total, 2);
+            $final = min($billed, $remaining);
+            $remaining = round($remaining - $final, 2);
+
+            if ($final >= $billed) {
                 continue;
             }
 
-            $paid = round((float) $invoice->net_paid_amount, 2);
+            $credit = max(0, round((float) $invoice->net_paid_amount - $final, 2));
 
-            $this->invoiceService->closeAsVoid(
+            $this->invoiceService->settleCancelled(
                 $invoice,
-                "Schedule {$schedule->schedule_code} was cancelled.",
+                $final,
+                "Schedule {$schedule->schedule_code} was cancelled. {$reason}",
                 $user->user_id
             );
 
-            $this->notifyClientOfVoid($user, $schedule, $invoice, $paid);
+            $this->notifyClientOfSettlement($user, $schedule, $invoice, $final, $credit);
 
-            $voided[] = $invoice->invoice_code;
+            $settled->push([
+                'invoice_code' => $invoice->invoice_code,
+                'voided' => $final <= 0,
+            ]);
         }
 
-        return $voided;
+        return $settled;
     }
 
-    private function notifyClientOfVoid(User $user, Schedule $schedule, Invoice $invoice, float $paid): void
+    private function notifyClientOfSettlement(User $user, Schedule $schedule, Invoice $invoice, float $final, float $credit): void
     {
         $schedule->loadMissing('patient');
 
@@ -621,8 +662,10 @@ class ScheduleService
         }
 
         $message = "Invoice {$invoice->invoice_code} for {$schedule->patient->display_name}'s schedule"
-            . " {$schedule->schedule_code} was voided because the schedule was cancelled."
-            . ($paid > 0 ? ' The ₱' . number_format($paid, 2) . ' already paid was added to your credit.' : '');
+            . " {$schedule->schedule_code} was "
+            . ($final <= 0 ? 'voided' : 'adjusted to ₱' . number_format($final, 2))
+            . ' because the schedule was cancelled.'
+            . ($credit > 0 ? ' ₱' . number_format($credit, 2) . ' was added to your credit.' : '');
 
         $this->notificationService->notifyPatientAccess(
             $schedule->patient,

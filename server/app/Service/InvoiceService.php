@@ -655,6 +655,33 @@ class InvoiceService
         ]);
     }
 
+    public function settleCancelled(Invoice $invoice, float $finalAmount, string $reason, ?int $userId): void
+    {
+        $billed = round((float) $invoice->adjusted_total, 2);
+        $finalAmount = round($finalAmount, 2);
+
+        if ($finalAmount < 0 || $finalAmount > $billed) {
+            throw new Exception("The invoice amount must be between 0 and {$billed}.", 422);
+        }
+
+        if ($finalAmount <= 0) {
+            $this->closeAsVoid($invoice, $reason, $userId);
+            return;
+        }
+
+        $reduction = round($billed - $finalAmount, 2);
+
+        if ($reduction > 0) {
+            $invoice->invoiceAdjustments()->create([
+                'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                'amount' => -$reduction,
+                'reason' => $reason,
+            ]);
+        }
+
+        $invoice->syncStatus();
+    }
+
     public function adjustInvoice(array $payload)
     {
         return DB::transaction(function () use ($payload) {

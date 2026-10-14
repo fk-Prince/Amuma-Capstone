@@ -6,7 +6,7 @@
             @click.self="handleClose"
         >
             <div
-                class="w-full max-w-md rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
+                class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
             >
                 <div
                     class="border-b border-primary-100 p-6 dark:border-primary-500/20"
@@ -98,59 +98,23 @@
                         </p>
                     </div>
 
-                    <div
-                        v-if="paidAmount > 0"
-                        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300"
-                    >
-                        <span class="font-semibold">
-                            {{ formatCurrency(paidAmount) }}
-                        </span>
-                        was paid for this admission. The amount kept below will
-                        not be refunded; anything above it goes back to the
-                        patient as credit. Are you sure you want to continue?
-
-                        <label
-                            for="keep-amount"
-                            class="mt-3 block text-xs font-medium"
-                        >
-                            Amount to keep (not refunded)
-                        </label>
-
-                        <div class="relative mt-1">
-                            <span
-                                class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-gray-500"
-                            >
-                                ₱
-                            </span>
-
-                            <input
-                                id="keep-amount"
-                                v-model="keepAmount"
-                                type="number"
-                                inputmode="decimal"
-                                min="0"
-                                :max="paidAmount"
-                                step="0.01"
-                                :disabled="loading"
-                                class="w-full rounded-xl border border-primary-100 bg-white py-2 pl-7 pr-3 text-sm text-secondary focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                                @blur="clampKeepAmount"
-                            />
-                        </div>
-
-                        <p
-                            class="mt-1 text-[11px] text-amber-700/80 dark:text-amber-300/70"
-                        >
-                            Cannot exceed the {{ formatCurrency(paidAmount) }}
-                            paid.
-                        </p>
-
-                        <p
-                            v-if="keepAmountError"
-                            class="mt-1 text-xs text-rose-600 dark:text-rose-300"
-                        >
-                            {{ keepAmountError }}
-                        </p>
-                    </div>
+                    <CancelInvoiceAmount
+                        v-if="invoiceCode || paidAmount > 0"
+                        v-model:amount="keepAmount"
+                        v-model:reason="keepReason"
+                        v-model:editing="editingAmount"
+                        class="mt-4"
+                        :invoice-code="invoiceCode"
+                        :billed="Math.max(invoiceTotal, paidAmount)"
+                        :paid="paidAmount"
+                        :max="paidAmount"
+                        :default-amount="paidAmount"
+                        amount-label="Amount to keep"
+                        :max-hint="`the ${formatCurrency(paidAmount)} paid`"
+                        :disabled="loading"
+                        :amount-error="keepAmountError"
+                        :reason-error="keepReasonError"
+                    />
 
                     <div
                         class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
@@ -181,6 +145,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import CancelInvoiceAmount from "~/components/sections/app/Billing/CancelInvoiceAmount.vue";
 import { formatCurrency } from "~/utils/currency";
 
 const props = withDefaults(
@@ -188,8 +153,10 @@ const props = withDefaults(
         open: boolean;
         loading?: boolean;
         paidAmount?: number;
+        invoiceCode?: string | null;
+        invoiceTotal?: number;
     }>(),
-    { paidAmount: 0 },
+    { paidAmount: 0, invoiceCode: null, invoiceTotal: 0 },
 );
 
 const QUICK_REASONS = [
@@ -199,7 +166,12 @@ const QUICK_REASONS = [
 ];
 
 const emit = defineEmits<{
-    (e: "confirm", reason: string, keepAmount: number | null): void;
+    (
+        e: "confirm",
+        reason: string,
+        keepAmount: number | null,
+        keepReason: string | null,
+    ): void;
     (e: "cancel"): void;
 }>();
 
@@ -207,18 +179,9 @@ const cancellationReason = ref("");
 const cancellationReasonError = ref("");
 const keepAmount = ref<number | string>(0);
 const keepAmountError = ref("");
-
-function clampKeepAmount() {
-    const value = Number(keepAmount.value);
-
-    if (!Number.isFinite(value) || value < 0) {
-        keepAmount.value = 0;
-    } else if (value > props.paidAmount) {
-        keepAmount.value = props.paidAmount;
-    }
-
-    keepAmountError.value = "";
-}
+const keepReason = ref("");
+const keepReasonError = ref("");
+const editingAmount = ref(false);
 
 watch(
     () => props.open,
@@ -228,6 +191,9 @@ watch(
             cancellationReasonError.value = "";
             keepAmount.value = props.paidAmount;
             keepAmountError.value = "";
+            keepReason.value = "";
+            keepReasonError.value = "";
+            editingAmount.value = false;
         }
     },
 );
@@ -253,6 +219,8 @@ function handleConfirm() {
     }
 
     cancellationReasonError.value = "";
+    keepAmountError.value = "";
+    keepReasonError.value = "";
 
     if (props.paidAmount > 0) {
         const keep = Number(keepAmount.value);
@@ -262,10 +230,25 @@ function handleConfirm() {
             return;
         }
 
-        emit("confirm", reason, Math.round(keep * 100) / 100);
+        const kept = Math.round(keep * 100) / 100;
+
+        if (kept < props.paidAmount) {
+            const why = keepReason.value.trim();
+
+            if (why.length < 3) {
+                keepReasonError.value =
+                    "Give a reason for changing the amount.";
+                return;
+            }
+
+            emit("confirm", reason, kept, why);
+            return;
+        }
+
+        emit("confirm", reason, kept, null);
         return;
     }
 
-    emit("confirm", reason, null);
+    emit("confirm", reason, null, null);
 }
 </script>

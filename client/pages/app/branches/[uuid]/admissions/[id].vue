@@ -924,6 +924,8 @@
             :open="cancelAdmissionDialogOpen"
             :loading="actionLoading"
             :paid-amount="admitPaidAmount"
+            :invoice-code="admitInvoice?.invoice_code"
+            :invoice-total="Number(admitInvoice?.price ?? 0)"
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
         />
@@ -1102,8 +1104,12 @@ definePageMeta({
 
 useHead({ title: "Patient Admission" });
 
+const admitInvoice = computed(
+    () => patient.value?.latest_admission?.invoices?.[0],
+);
+
 const admitPaidAmount = computed(() => {
-    const invoice = patient.value?.latest_admission?.invoices?.[0];
+    const invoice = admitInvoice.value;
     return Number(invoice?.net_paid_amount ?? invoice?.paid_amount ?? 0);
 });
 
@@ -1482,8 +1488,16 @@ async function confirmCancelPeriod() {
         null;
 }
 
-function confirmCancelAdmission(reason: string, keepAmount: number | null) {
-    runAction("cancel", { note: reason, keep_amount: keepAmount });
+function confirmCancelAdmission(
+    reason: string,
+    keepAmount: number | null,
+    keepReason: string | null,
+) {
+    runAction("cancel", {
+        note: reason,
+        keep_amount: keepAmount,
+        keep_reason: keepReason,
+    });
 }
 
 function confirmAdmit() {

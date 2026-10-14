@@ -95,6 +95,14 @@ class BedService
             throw new Exception(__('Bed name already exists in this room.'), 409);
         }
 
+        if (
+            isset($payload['status'])
+            && $payload['status'] !== $bed->status
+            && $bed->currentAdmission()->exists()
+        ) {
+            throw new Exception(__('This bed has a patient assigned. Discharge the patient before changing its status.'), 422);
+        }
+
         DB::transaction(function () use ($bed, $room, $payload) {
             $bed->update([
                 'room_id' => $room->room_id,

@@ -14,6 +14,7 @@ use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Payment;
 use App\Models\Refund;
+use App\Models\Schedule;
 use App\Utils\InvoiceMoney;
 use Carbon\Carbon;
 
@@ -36,6 +37,21 @@ class InvoiceRepository
     public function findManyByField(array $conditions)
     {
         return Invoice::where($conditions)->get();
+    }
+
+    public function openForSchedule(Schedule $schedule, mixed $branchId)
+    {
+        return Invoice::with('invoiceServices.scheduleService.schedule')
+            ->whereIn(
+                'invoice_id',
+                InvoiceServices::whereIn(
+                    'schedule_services_id',
+                    $schedule->scheduleServices()->select('schedule_services_id')
+                )->select('invoice_id')
+            )
+            ->where('branch_id', $branchId)
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->get();
     }
 
     public function getInvoices(array $payload)

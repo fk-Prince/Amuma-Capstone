@@ -30,6 +30,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Read,
         PermissionAction.Update,
         PermissionAction.Assign,
+        PermissionAction.Export,
     ],
     [Modules.Admissions]: [
         PermissionAction.Read,
@@ -82,7 +83,7 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
     [Modules.Bookings]:
         "Review booking requests from families and accept or decline them, turning an approved request into a visit or admission, and book homecare services for patients on file.",
     [Modules.Schedules]:
-        "View the visit calendar, assign nurses and caregivers to visits, and move, edit or cancel them.",
+        "View the visit calendar, assign nurses and caregivers to visits, move, edit or cancel them, and print a visit's details.",
     [Modules.Admissions]:
         "Set up admissions, place residents in their beds to start billing, and discharge them once settled or, when permitted, with a balance outstanding.",
     [Modules.Patients]:
@@ -146,6 +147,8 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
             "Move, edit or cancel visits and the services attached to them.",
         [PermissionAction.Assign]:
             "Choose which nurse or caregiver handles a visit, and reassign it later.",
+        [PermissionAction.Export]:
+            "Print a visit's details: the patient, services and assigned staff.",
     },
     [Modules.Admissions]: {
         [PermissionAction.Read]:
@@ -232,7 +235,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     agency_owner: MODULE_ACTIONS,
     branch_manager: {
         [Modules.Bookings]: [PermissionAction.Read],
-        [Modules.Schedules]: [PermissionAction.Read],
+        [Modules.Schedules]: [PermissionAction.Read, PermissionAction.Export],
         [Modules.Admissions]: [
             PermissionAction.Read,
             PermissionAction.ForceDischarge,

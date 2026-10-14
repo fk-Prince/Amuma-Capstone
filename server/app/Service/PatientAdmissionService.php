@@ -383,7 +383,8 @@ class PatientAdmissionService
             $this->settleCancelledInvoices(
                 $admission,
                 $payload['user']->user_id ?? null,
-                isset($payload['keep_amount']) ? (float) $payload['keep_amount'] : null
+                isset($payload['keep_amount']) ? (float) $payload['keep_amount'] : null,
+                $payload['keep_reason'] ?? null
             );
 
             AccommodationHelper::deactivate($admission);
@@ -409,12 +410,16 @@ class PatientAdmissionService
     }
 
 
-    private function settleCancelledInvoices(PatientAdmission $admission, ?int $userId, ?float $keepAmount = null): void
-    {
+    private function settleCancelledInvoices(
+        PatientAdmission $admission,
+        ?int $userId,
+        ?float $keepAmount = null,
+        ?string $keepReason = null
+    ): void {
         $currentPeriodId = $this->periods->current($admission)?->admission_period_id;
 
         $admission->invoiceAdmission()->with('invoice')->get()
-            ->each(function ($line) use ($currentPeriodId, $userId, $keepAmount) {
+            ->each(function ($line) use ($currentPeriodId, $userId, $keepAmount, $keepReason) {
                 $invoice = $this->lockOpenInvoice($line->invoice);
 
                 if (!$invoice) {
@@ -422,7 +427,7 @@ class PatientAdmissionService
                 }
 
                 if ($line->admission_period_id === $currentPeriodId) {
-                    $this->keepReservationFee($invoice, $userId, $keepAmount);
+                    $this->keepReservationFee($invoice, $userId, $keepAmount, $keepReason);
                     return;
                 }
 
@@ -566,33 +571,35 @@ class PatientAdmissionService
         return $invoice;
     }
 
-    private function keepReservationFee(Invoice $invoice, ?int $userId, ?float $keepAmount = null): void
-    {
-        $collected = (float) $invoice->net_paid_amount;
+    private function keepReservationFee(
+        Invoice $invoice,
+        ?int $userId,
+        ?float $keepAmount = null,
+        ?string $keepReason = null
+    ): void {
+        $collected = round((float) $invoice->net_paid_amount, 2);
+        $kept = $keepAmount === null ? $collected : round($keepAmount, 2);
 
-        if ($keepAmount !== null && ($keepAmount < 0 || round($keepAmount, 2) > round($collected, 2))) {
+        if ($kept < 0 || $kept > $collected) {
             throw new Exception("The amount kept can't be more than the {$collected} that was paid.", 422);
         }
 
-        $kept = $keepAmount === null ? $collected : round($keepAmount, 2);
+        $reason = $kept < $collected ? trim((string) $keepReason) : '';
 
-        if ($collected <= 0 || $kept <= 0) {
-            $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled.', $userId);
-            return;
+        if ($kept < $collected && mb_strlen($reason) < 3) {
+            throw new Exception('Give a reason for changing the amount kept.', 422);
         }
 
-        $uncollected = round((float) $invoice->adjusted_total - $kept, 2);
-
-        if ($uncollected > 0) {
-            InvoiceAdjustment::create([
-                'invoice_id' => $invoice->invoice_id,
-                'type' => InvoiceAdjustment::TYPE_CORRECTION,
-                'amount' => -$uncollected,
-                'reason' => 'Reservation fee collected. Admission cancelled.',
-            ]);
-        }
-
-        $invoice->syncStatus();
+        $this->invoiceService->settleCancelled(
+            $invoice,
+            min($kept, round((float) $invoice->adjusted_total, 2)),
+            match (true) {
+                $reason !== '' => "Admission cancelled. {$reason}",
+                $kept > 0 => 'Reservation fee collected. Admission cancelled.',
+                default => 'Admission cancelled.',
+            },
+            $userId
+        );
     }
 
     /*

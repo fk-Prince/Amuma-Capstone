@@ -38,6 +38,17 @@ export interface ScheduleServiceItem {
     end_service: string;
     type: string | null;
     assignees?: ScheduleAssignee[];
+    previous_assignees?: PreviousAssignee[];
+}
+
+export interface PreviousAssignee {
+    employee_id: number;
+    full_name: string;
+    employee_role: string | null;
+    avatar: string | null;
+    note: string | null;
+    start_time?: string | null;
+    end_time?: string | null;
 }
 
 
@@ -169,6 +180,8 @@ export interface AuditRow {
         phone_number: string | null;
         email: string | null;
     }[];
+
+    previous_assignees?: PreviousAssignee[];
 
     assigned?: {
         employee_id: number;

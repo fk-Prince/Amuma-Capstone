@@ -26,11 +26,7 @@ class AuditLogRepository
                 'description',
                 'created_at',
             ])
-            ->with([
-                'user:user_id,email',
-                'user.employee:employee_id,user_id,first_name,last_name',
-                'user.client:client_id,user_id,first_name,last_name',
-            ])
+            ->with($this->actorRelations($branchId))
             ->when($filters['module'] ?? null, fn($query, $module) => $query->where('module', $module))
             ->when($filters['action'] ?? null, fn($query, $action) => $query->where('action', $action))
             ->when($filters['date_from'] ?? null, fn($query, $from) => $query->whereDate('created_at', '>=', $from))
@@ -55,12 +51,20 @@ class AuditLogRepository
     {
         return $this->branchQuery($branchId)
             ->where('uuid', $uuid)
-            ->with([
-                'user:user_id,email',
-                'user.employee:employee_id,user_id,first_name,last_name',
-                'user.client:client_id,user_id,first_name,last_name',
-            ])
+            ->with($this->actorRelations($branchId))
             ->first();
+    }
+
+    private function actorRelations(int $branchId): array
+    {
+        return [
+            'user:user_id,email',
+            'user.employee:employee_id,user_id,first_name,last_name',
+            'user.employee.employeeBranch' => fn($assignment) => $assignment
+                ->select(['employee_id', 'branch_id', 'role_name'])
+                ->where('branch_id', $branchId),
+            'user.client:client_id,user_id,first_name,last_name',
+        ];
     }
 
     private function branchQuery(int $branchId)

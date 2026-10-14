@@ -388,6 +388,11 @@
                                 Pick staff from the list on the right to assign
                                 them to this service.
                             </p>
+
+                            <PreviousAssignees
+                                class="mt-4"
+                                :assignees="service.previous_assignees ?? []"
+                            />
                         </div>
                     </div>
 
@@ -874,6 +879,7 @@
 
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
+import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";

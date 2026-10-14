@@ -308,6 +308,10 @@
                             Pick staff from the list on the right to assign them
                             to this booking.
                         </p>
+
+                        <PreviousAssignees
+                            :assignees="schedule?.previous_assignees ?? []"
+                        />
                     </div>
 
                     <div
@@ -709,6 +713,7 @@
 
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
+import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";

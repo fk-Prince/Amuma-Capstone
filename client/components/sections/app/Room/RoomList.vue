@@ -421,6 +421,7 @@ const cancelAddBed = () => {
                                     <BedCard
                                         v-if="editingBedId === bed.bed_id"
                                         :bedData="bed"
+                                        :patient="bed.current_admission"
                                         action="update"
                                         @cancel="editingBedId = null"
                                         :loading="loading"

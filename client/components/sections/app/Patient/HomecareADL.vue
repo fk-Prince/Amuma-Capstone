@@ -1375,6 +1375,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 note: schedule.note ?? null,
 
                 assignees,
+                previous_assignees: service.previous_assignees ?? [],
 
                 address: schedule.address ?? schedule.patient?.address ?? null,
                 patient_id: schedule.patient?.patient_id ?? null,

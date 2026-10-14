@@ -321,6 +321,25 @@ class ScheduleResource extends JsonResource
                                 ];
                             })->values()
                             : [],
+
+                        'previous_assignees' => $scheduleService->relationLoaded('assigned')
+                            ? $scheduleService->assigned->where('is_active', false)->values()->map(function ($assignment) {
+                                $employee = $assignment->employee?->employees;
+
+                                return [
+                                    'employee_id' => $assignment->employee_id,
+                                    'is_active' => false,
+                                    'full_name' => $employee->fullName ?? '',
+                                    'employee_role' => $employee?->employeeBranch
+                                        ?->firstWhere('branch_id', $this->patient->branch_id)
+                                        ?->role_name,
+                                    'avatar' => $employee?->avatar,
+                                    'note' => $assignment->note,
+                                    'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
+                                    'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
+                                ];
+                            })->values()
+                            : [],
                     ];
                 })->values()
             ),
