@@ -38,10 +38,10 @@
                         :invoice-code="preview.invoice.invoice_code"
                         :billed="preview.invoice.billed"
                         :paid="preview.invoice.paid"
-                        :max="preview.invoice.billed"
-                        :default-amount="preview.invoice.billed"
-                        amount-label="Amount to bill"
-                        :max-hint="`the ${formatCurrency(preview.invoice.billed)} invoice total`"
+                        :max="preview.invoice.paid"
+                        :default-amount="preview.invoice.paid"
+                        amount-label="Amount to keep"
+                        :max-hint="`the ${formatCurrency(preview.invoice.paid)} paid`"
                         :disabled="loading"
                         :amount-error="amountError"
                         :reason-error="reasonError"
@@ -160,7 +160,7 @@ watch(
             });
 
             preview.value = res as CancelPreview;
-            amount.value = preview.value.invoice?.billed ?? 0;
+            amount.value = preview.value.invoice?.paid ?? 0;
         } catch {
             fetchFailed.value = true;
         } finally {
@@ -188,14 +188,14 @@ function handleConfirm() {
 
     const final = Number(amount.value);
 
-    if (!Number.isFinite(final) || final < 0 || final > invoice.billed) {
-        amountError.value = `Enter an amount from 0 to ${formatCurrency(invoice.billed)}.`;
+    if (!Number.isFinite(final) || final < 0 || final > invoice.paid) {
+        amountError.value = `Enter an amount from 0 to ${formatCurrency(invoice.paid)}.`;
         return;
     }
 
     const rounded = Math.round(final * 100) / 100;
 
-    if (rounded >= invoice.billed) {
+    if (rounded >= invoice.paid) {
         emit("confirm", {});
         return;
     }

@@ -603,42 +603,41 @@ class ScheduleService
 
     private function settleCancelledInvoices(User $user, Schedule $schedule, array $payload): Collection
     {
-        if (!isset($payload['final_amount']) || $payload['final_amount'] === '') {
-            return collect();
-        }
-
         [$invoices] = $this->invoicesToSettle($schedule, $payload['branch_id']);
 
-        $billedTotal = round((float) $invoices->sum(fn(Invoice $invoice) => $invoice->adjusted_total), 2);
-        $remaining = round((float) $payload['final_amount'], 2);
+        $collected = round((float) $invoices->sum(fn(Invoice $invoice) => $invoice->net_paid_amount), 2);
+        $remaining = isset($payload['final_amount']) && $payload['final_amount'] !== ''
+            ? round((float) $payload['final_amount'], 2)
+            : $collected;
 
-        if ($remaining < 0 || $remaining > $billedTotal) {
-            throw new Exception("The invoice amount must be between 0 and {$billedTotal}.", 422);
+        if ($remaining < 0 || $remaining > $collected) {
+            throw new Exception("The amount kept can't be more than the {$collected} that was paid.", 422);
         }
 
-        $reason = trim((string) ($payload['adjustment_reason'] ?? ''));
+        $reason = $remaining < $collected ? trim((string) ($payload['adjustment_reason'] ?? '')) : '';
 
-        if ($remaining < $billedTotal && mb_strlen($reason) < 3) {
-            throw new Exception('Give a reason for changing the invoice amount.', 422);
+        if ($remaining < $collected && mb_strlen($reason) < 3) {
+            throw new Exception('Give a reason for changing the amount kept.', 422);
         }
 
         $settled = collect();
 
         foreach ($invoices as $invoice) {
             $billed = round((float) $invoice->adjusted_total, 2);
-            $final = min($billed, $remaining);
+            $paid = round((float) $invoice->net_paid_amount, 2);
+            $final = min($billed, $paid, $remaining);
             $remaining = round($remaining - $final, 2);
 
             if ($final >= $billed) {
                 continue;
             }
 
-            $credit = max(0, round((float) $invoice->net_paid_amount - $final, 2));
+            $credit = max(0, round($paid - $final, 2));
 
             $this->invoiceService->settleCancelled(
                 $invoice,
                 $final,
-                "Schedule {$schedule->schedule_code} was cancelled. {$reason}",
+                trim("Schedule {$schedule->schedule_code} was cancelled. {$reason}"),
                 $user->user_id
             );
 

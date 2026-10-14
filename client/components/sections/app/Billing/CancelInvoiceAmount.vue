@@ -51,10 +51,7 @@
                 </dd>
             </div>
 
-            <div
-                v-if="paid > 0"
-                class="flex items-center justify-between gap-3 py-1"
-            >
+            <div class="flex items-center justify-between gap-3 py-1">
                 <dt class="text-muted dark:text-gray-400">Amount paid</dt>
                 <dd class="font-medium text-secondary dark:text-white">
                     {{ formatCurrency(paid) }}
@@ -62,7 +59,6 @@
             </div>
 
             <div
-                v-if="canEdit"
                 class="mt-1 flex items-center justify-between gap-3 border-t border-primary-100 pt-2.5 dark:border-white/10"
             >
                 <dt class="font-semibold text-secondary dark:text-white">

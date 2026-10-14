@@ -885,8 +885,6 @@ const activeBranchImage = computed(() => {
 function onHomecareBooked(booking: any) {
     if (!booking?.reference_id) return;
 
-    printing.value = booking;
-
     const listed = (bookingData.value ?? []).some(
         (item: any) => item.booking_id === booking.booking_id,
     );
