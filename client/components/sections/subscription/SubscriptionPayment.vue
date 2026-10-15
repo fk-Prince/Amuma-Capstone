@@ -144,6 +144,8 @@ const payGCash = async () => {
                 processing.value = false;
             },
 
+            finishWhenRecorded: true,
+
             onSuccess: async (invoice) => {
                 await navigateTo({
                     path: "/product/subscription-summary",

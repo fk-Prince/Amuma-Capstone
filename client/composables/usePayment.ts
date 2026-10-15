@@ -1,4 +1,5 @@
 import { use3DS } from "~/composables/use3DS";
+import { paymentService } from "~/api/payment/PaymentService";
 import type { CardDetails } from "~/types/payment";
 
 type CardPaymentOptions = {
@@ -18,6 +19,9 @@ type GCashPaymentOptions = {
     closeModal?: Ref<(() => void) | null>;
     onSuccess?: (result: any) => Promise<void>;
     onClose?: () => void;
+    // Don't wait for the gateway's own "redirecting in a few seconds" screen:
+    // as soon as the server has recorded the payment, close the window.
+    finishWhenRecorded?: boolean;
 };
 
 // export async function cardPayment({
@@ -343,6 +347,7 @@ export async function gcashPayment({
     closeModal,
     onSuccess,
     onClose,
+    finishWhenRecorded,
 }: GCashPaymentOptions) {
     const { handle3DS } = use3DS();
 
@@ -383,7 +388,14 @@ export async function gcashPayment({
             closeModal.value = close;
         }
 
+        let finished = false;
+        let poll: ReturnType<typeof setInterval> | undefined;
+
         const finish = async (result: any) => {
+            if (finished) return;
+
+            finished = true;
+            clearInterval(poll);
             close();
 
             if (onSuccess) {
@@ -393,7 +405,32 @@ export async function gcashPayment({
             settleResolve(result);
         };
 
+        if (finishWhenRecorded && res?.external_id) {
+            let checking = false;
+
+            poll = setInterval(async () => {
+                if (checking || finished) return;
+
+                checking = true;
+
+                try {
+                    const status = await paymentService.checkStatus(
+                        res.external_id,
+                    );
+
+                    if (status.status === "submitted") {
+                        await finish(res);
+                    }
+                } catch {
+                    // The redirect page still reports the result.
+                } finally {
+                    checking = false;
+                }
+            }, 2000);
+        }
+
         on3DSClose(() => {
+            clearInterval(poll);
             close();
             onClose?.();
             settleReject(
@@ -405,6 +442,7 @@ export async function gcashPayment({
             try {
                 await finish(res);
             } catch (error) {
+                clearInterval(poll);
                 close();
                 settleReject(error);
             }
