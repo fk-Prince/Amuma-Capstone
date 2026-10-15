@@ -27,7 +27,7 @@
                     </button>
 
                     <div class="min-h-0 flex-1 overflow-y-auto p-6 pr-12">
-                        <BranchRenewalTab :uuid="uuid" />
+                        <BranchRenewalTab :uuid="uuid" :end-trial="endTrial" />
                     </div>
                 </div>
             </div>
@@ -42,6 +42,7 @@ import BranchRenewalTab from "~/components/sections/app/settings/BranchRenewalTa
 defineProps<{
     open: boolean;
     uuid: string;
+    endTrial?: boolean;
 }>();
 
 const emit = defineEmits<{

@@ -98,6 +98,15 @@ class Branch extends Model
             ->withTimestamps();
     }
 
+    // A branch still on its free trial isn't offered to the public yet.
+    public function scopeNotTesting($query)
+    {
+        return $query->whereDoesntHave('subscriptions', fn($subscriptions) => $subscriptions
+            ->where('subscriptions.mode', Subscription::MODE_TEST)
+            ->whereIn('subscriptions.status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
+            ->where('branch_subscription.status', '!=', BranchSubscription::STATUS_REJECTED));
+    }
+
     public function subscriptionLink()
     {
         return $this->hasOne(BranchSubscription::class, 'branch_id', 'branch_id')

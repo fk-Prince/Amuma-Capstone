@@ -335,6 +335,7 @@
 
         <RenewalModal
             :open="showRenewal"
+            :end-trial="openedToEndTrial"
             :uuid="route.params.uuid as string"
             @close="closeRenewal"
         />
@@ -845,6 +846,7 @@ watch(statusFilter, () => fetchBranches(1));
 onBeforeUnmount(() => clearTimeout(searchDebounce));
 
 const showRenewal = ref(false);
+const openedToEndTrial = ref(false);
 const renewalSummary = ref<any>(null);
 const subscriptionPlan = ref<any>(null);
 
@@ -865,6 +867,7 @@ const fetchRenewal = async () => {
 
 const closeRenewal = () => {
     showRenewal.value = false;
+    openedToEndTrial.value = false;
     fetchRenewal();
 };
 
@@ -878,6 +881,13 @@ watch(subscriptionVersion, () => {
 });
 
 onMounted(async () => {
+    // The trial notice in the header links here to end the trial.
+    if (route.query.end_trial) {
+        openedToEndTrial.value = true;
+        showRenewal.value = true;
+        navigateTo({ query: { ...route.query, end_trial: undefined } }, { replace: true });
+    }
+
     await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);
 });
 </script>
