@@ -151,34 +151,34 @@ function close() {
     >
         <div
             v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
             @click.self="close"
         >
             <div
-                class="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                class="flex h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Pay booking"
             >
                 <div
-                    class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-4 py-4 sm:px-8 sm:py-6 dark:border-white/10"
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-12 sm:w-12"
                         >
                             <CreditCard class="h-5 w-5" />
                         </div>
 
                         <div>
                             <h2
-                                class="text-lg font-semibold text-gray-900 dark:text-white"
+                                class="text-lg font-semibold text-gray-900 sm:text-xl dark:text-white"
                             >
                                 Pay booking
                             </h2>
 
                             <p
-                                class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
+                                class="mt-0.5 break-all text-sm text-gray-500 dark:text-gray-400"
                             >
                                 {{ referenceId }} · {{ patientName }}
                             </p>
@@ -197,10 +197,10 @@ function close() {
                 </div>
 
                 <div
-                    class="grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-5 md:grid-cols-2 md:items-start"
+                    class="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 py-4 sm:gap-8 sm:px-8 sm:py-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start"
                 >
                     <div
-                        class="rounded-2xl border border-primary/15 bg-primary/5 p-5 dark:border-primary-500/20 dark:bg-primary-500/10"
+                        class="rounded-2xl border border-primary/15 bg-primary/5 p-5 sm:p-6 lg:sticky lg:top-0 dark:border-primary-500/20 dark:bg-primary-500/10"
                     >
                         <p
                             class="text-xs font-bold uppercase tracking-wide text-primary"
@@ -209,13 +209,13 @@ function close() {
                         </p>
 
                         <p
-                            class="mt-1 text-4xl font-bold text-primary dark:text-primary-300"
+                            class="mt-1 text-3xl font-bold text-primary sm:text-5xl dark:text-primary-300"
                         >
                             {{ formatCurrency(amountDue) }}
                         </p>
 
                         <div
-                            class="mt-4 space-y-1.5 border-t border-primary/15 pt-3 text-xs text-gray-600 dark:border-primary-500/20 dark:text-gray-400"
+                            class="mt-4 space-y-2 border-t border-primary/15 pt-4 text-xs sm:text-sm text-gray-600 dark:border-primary-500/20 dark:text-gray-400"
                         >
                             <div class="flex justify-between gap-3">
                                 <span>Booking total</span>

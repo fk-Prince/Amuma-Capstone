@@ -187,7 +187,6 @@ class BookingHelper
             || $booking->status !== Booking::STATUS_PENDING
             || ($payment['payment_status'] ?? null) !== 'pending'
             || $total <= 0
-            || ($booking->valid_until && Carbon::parse($booking->valid_until)->isPast())
         ) {
             return null;
         }

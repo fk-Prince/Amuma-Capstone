@@ -295,7 +295,7 @@
                     <template #cell-actions="{ row }">
                         <div class="flex items-center justify-end gap-2">
                             <button
-                                v-if="row.can_pay && canCreate(Modules.BillingAndInvoices)"
+                                v-if="isPayable(row) && canCreate(Modules.BillingAndInvoices)"
                                 type="button"
                                 class="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600"
                                 @click.stop="openPayModal(row)"
@@ -310,6 +310,15 @@
                                 @click.stop="refundTarget = row"
                             >
                                 Refund
+                            </button>
+
+                            <button
+                                v-if="row.invoice_code"
+                                type="button"
+                                class="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                @click.stop="viewBookingInvoice(row)"
+                            >
+                                Invoice
                             </button>
 
                             <button
@@ -641,10 +650,16 @@ interface BookingBillingRow {
     payment_status: string | null;
     payment_method: string | null;
     created_at: string | null;
+    invoice_code?: string | null;
     receipt: PaymentReceiptData | null;
     can_pay: boolean;
     can_refund: boolean;
     amount_due: number | null;
+}
+
+// Only a pending booking can be paid.
+function isPayable(row: BookingBillingRow) {
+    return row.can_pay && row.status === "pending";
 }
 
 const activeTab = ref<TabKey>("patients");
@@ -1010,6 +1025,13 @@ function invoiceStatusClass(status: string) {
 }
 
 function viewInvoice(row: InvoiceRow) {
+    router.push({
+        path: `/app/branches/${uuid.value}/invoices/${row.invoice_code}`,
+        query: { mode: "invoice" },
+    });
+}
+
+function viewBookingInvoice(row: BookingBillingRow) {
     router.push({
         path: `/app/branches/${uuid.value}/invoices/${row.invoice_code}`,
         query: { mode: "invoice" },

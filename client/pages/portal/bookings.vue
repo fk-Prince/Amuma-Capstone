@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import {
     ChevronDown,
     CalendarDays,
@@ -83,6 +83,15 @@ async function openReceipt(receiptCode?: string | null) {
 }
 
 const payingBooking = ref<PortalBooking | null>(null);
+
+function canPayNow(booking: PortalBooking) {
+    return Boolean(booking.can_pay) && booking.status === "pending";
+}
+
+function onPayClosed() {
+    payingBooking.value = null;
+    loadBookings(meta.value?.current_page ?? 1, true);
+}
 
 function onBookingPaid() {
     payingBooking.value = null;
@@ -330,8 +339,8 @@ function patientName(booking: PortalBooking) {
     );
 }
 
-async function loadBookings(page = 1) {
-    isLoading.value = true;
+async function loadBookings(page = 1, silent = false) {
+    if (!silent) isLoading.value = true;
     loadError.value = null;
 
     try {
@@ -356,8 +365,21 @@ function onChangePage(page: number) {
     loadBookings(page);
 }
 
+// A booking can be approved or rejected while this page sits open, which
+// changes whether it still takes a payment, so refresh when the tab returns.
+function refreshOnReturn() {
+    if (document.visibilityState === "visible") {
+        loadBookings(meta.value?.current_page ?? 1, true);
+    }
+}
+
 onMounted(() => {
     loadBookings();
+    document.addEventListener("visibilitychange", refreshOnReturn);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("visibilitychange", refreshOnReturn);
 });
 </script>
 
@@ -576,7 +598,7 @@ onMounted(() => {
                                             </span>
 
                                             <span
-                                                v-if="booking.can_pay"
+                                                v-if="canPayNow(booking)"
                                                 class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20"
                                             >
                                                 <CreditCard class="h-3 w-3" />
@@ -793,7 +815,7 @@ onMounted(() => {
                                 </div>
 
                                 <div
-                                    v-if="booking.can_pay"
+                                    v-if="canPayNow(booking)"
                                     class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 sm:p-5 dark:border-amber-500/20 dark:bg-amber-500/10"
                                 >
                                     <div class="flex items-center gap-3">
@@ -1083,7 +1105,7 @@ onMounted(() => {
             :total="Number((payingBooking.payment as any)?.total_amount ?? 0)"
             :amount-due="Number(payingBooking.amount_due ?? 0)"
             :percent="payingBooking.percent_due ?? null"
-            @close="payingBooking = null"
+            @close="onPayClosed"
             @paid="onBookingPaid"
         />
 

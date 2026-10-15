@@ -46,28 +46,28 @@ function peso(value: number) {
     <Transition name="modal">
         <div
             v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6"
             @click.self="emit('close')"
         >
             <div
-                class="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                class="flex h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Pay balance"
             >
                 <div
-                    class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-4 py-4 sm:px-8 sm:py-6 dark:border-white/10"
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:h-12 sm:w-12"
                         >
                             <AppIcon name="credit-card" class="h-5 w-5" />
                         </div>
 
                         <div>
                             <h2
-                                class="text-lg font-semibold text-gray-900 dark:text-white"
+                                class="text-lg font-semibold text-gray-900 sm:text-xl dark:text-white"
                             >
                                 Pay balance
                             </h2>
@@ -94,7 +94,7 @@ function peso(value: number) {
                 </div>
 
                 <div
-                    class="grid min-h-0 flex-1 gap-6 overflow-y-auto px-6 py-5 lg:grid-cols-2 lg:items-start"
+                    class="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 py-4 sm:gap-8 sm:px-8 sm:py-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start"
                 >
                     <div class="space-y-5">
                         <div
@@ -114,7 +114,7 @@ function peso(value: number) {
                             </div>
 
                             <p
-                                class="mt-1 text-4xl font-bold text-rose-600 dark:text-rose-300"
+                                class="mt-1 text-3xl font-bold text-rose-600 sm:text-5xl dark:text-rose-300"
                             >
                                 {{ peso(cardAmount) }}
                             </p>

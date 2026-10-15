@@ -860,6 +860,7 @@ class BookingService
         $data = $booking->booking_data ?? [];
         $payment = $data['payment'] ?? [];
         $patient = $data['patient'] ?? [];
+        $booking->loadMissing('patientBookings.invoice');
 
         $patientName = trim(implode(' ', array_filter([
             $patient['first_name'] ?? null,
@@ -881,6 +882,7 @@ class BookingService
             'payment_status' => $payment['payment_status'] ?? null,
             'payment_method' => $payment['payment_method'] ?? null,
             'created_at' => $booking->created_at?->toIso8601String(),
+            'invoice_code' => $booking->patientBookings->first()?->invoice?->invoice_code,
             'receipt' => $transaction ? (new BookingReceiptResource($transaction))->resolve() : null,
             'can_pay' => $this->canPay($booking),
             'can_refund' => $this->canRefund($booking),

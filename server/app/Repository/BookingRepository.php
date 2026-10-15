@@ -97,7 +97,8 @@ class BookingRepository
     {
         $search = strtolower(trim((string) ($payload['search'] ?? '')));
 
-        return Booking::where('branch_id', $branchId)
+        return Booking::with('patientBookings.invoice')
+            ->where('branch_id', $branchId)
             ->whereRaw("booking_data->'payment'->>'payment_status' is not null")
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%' . $search . '%';
