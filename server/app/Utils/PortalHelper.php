@@ -458,6 +458,7 @@ class PortalHelper
                         'payment_code' => $payment?->payment_code,
                         'reference_id' => $payment?->reference_id,
                         'masked_account_detail' => $payment?->masked_account_detail,
+                        'payor_name' => $payment?->payor_name,
                         'status' => 'completed',
                         'created_at' => $payment?->created_at?->format('Y-m-d H:i:s'),
                         'invoice_codes' => [],

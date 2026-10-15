@@ -88,6 +88,15 @@ function reasonFor(transaction: PortalTransaction) {
                         >
                             <span>{{ transaction.date }}</span>
 
+                            <span v-if="transaction.partyName">
+                                {{
+                                    transaction.type === "refund"
+                                        ? "Withdrawn by"
+                                        : "Paid by"
+                                }}
+                                {{ transaction.partyName }}
+                            </span>
+
                             <span
                                 v-if="
                                     (transaction.invoiceCodes?.length ?? 0) > 1

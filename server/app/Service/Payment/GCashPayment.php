@@ -3,8 +3,7 @@
 namespace App\Service\Payment;
 
 use App\Exceptions\ExternalServiceException;
-use App\Interfaces\IFacilityPayment;
-use App\Interfaces\ISubscriptionPayment;
+use App\Interfaces\IPaymentMethod;
 use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Http\Client\Response;
@@ -16,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class GCashPayment implements ISubscriptionPayment, IFacilityPayment
+class GCashPayment implements IPaymentMethod
 {
     private string $secretKey;
 
@@ -59,7 +58,7 @@ class GCashPayment implements ISubscriptionPayment, IFacilityPayment
         return $this->invoiceResponse($response, $reference);
     }
 
-    public function facilityBilling(array $payload)
+    public function bookingBilling(array $payload)
     {
         $user = Auth::user();
         $reference = (string) Str::uuid();

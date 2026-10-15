@@ -81,4 +81,5 @@ export interface PortalTransaction {
     reason?: string;
     maskedCardNumber?: string | null;
     receiptNo?: string | null;
+    partyName?: string | null;
 }

@@ -2,7 +2,7 @@
 
 namespace App\Interfaces;
 
-interface IFacilityPayment
+interface IBookingPayment
 {
-    public function facilityBilling(array $payload);
+    public function bookingBilling(array $payload);
 }

@@ -187,7 +187,7 @@ class BookingService
         $payload['breakdown'] = $breakdown;
 
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
-        $result = $paymentMethod->facilityBilling($payload);
+        $result = $paymentMethod->bookingBilling($payload);
 
         if ($result instanceof JsonResponse) {
             return $result;

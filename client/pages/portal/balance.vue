@@ -549,6 +549,8 @@ function mapTransactions(list: any[]): Transaction[] {
                 : (entry.declined_reason ?? entry.reason ?? undefined),
             maskedCardNumber: entry.masked_account_detail ?? null,
             receiptNo: entry.payment_code ?? null,
+            partyName:
+                (isRefund ? entry.account_name : entry.payor_name) || null,
         };
     });
 }

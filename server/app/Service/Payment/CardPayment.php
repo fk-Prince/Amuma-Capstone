@@ -3,8 +3,7 @@
 namespace App\Service\Payment;
 
 use App\Exceptions\ExternalServiceException;
-use App\Interfaces\IFacilityPayment;
-use App\Interfaces\ISubscriptionPayment;
+use App\Interfaces\IPaymentMethod;
 use App\Service\BookingService;
 use App\Service\SubscriptionService;
 use Exception;
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class CardPayment implements ISubscriptionPayment, IFacilityPayment
+class CardPayment implements IPaymentMethod
 {
     private string $secretKey;
     public function __construct(private SubscriptionService $subscriptionService,)
@@ -89,7 +88,7 @@ class CardPayment implements ISubscriptionPayment, IFacilityPayment
     }
 
 
-    public function facilityBilling(array $payload)
+    public function bookingBilling(array $payload)
     {
         $user      = Auth::user();
         $reference = (string) Str::uuid();
