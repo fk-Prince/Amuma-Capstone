@@ -20,21 +20,6 @@
                         @update:dateFrom="dateFrom = $event"
                         @update:dateTo="dateTo = $event"
                     />
-
-                    <div class="flex shrink-0 items-center gap-2 sm:ml-auto">
-                        <button
-                            type="button"
-                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
-                            aria-label="Refresh inquiries"
-                            :disabled="loading"
-                            @click="fetchInquiries"
-                        >
-                            <RefreshCw
-                                class="h-4 w-4"
-                                :class="{ 'animate-spin': loading }"
-                            />
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -46,7 +31,22 @@
                 :page-size="PAGE_SIZE"
                 @select="openInquiry"
                 @page-change="onPageChange"
-            />
+            >
+                <template #actions>
+                    <button
+                        type="button"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                        aria-label="Refresh inquiries"
+                        :disabled="loading"
+                        @click="fetchInquiries"
+                    >
+                        <RefreshCw
+                            class="h-4 w-4"
+                            :class="{ 'animate-spin': loading }"
+                        />
+                    </button>
+                </template>
+            </InquiryList>
         </div>
 
         <InquiryDetailModal

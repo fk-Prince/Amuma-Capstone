@@ -16,14 +16,31 @@ class AuditService
 
     private ?string $batchUuid = null;
 
+    private int $suspended = 0;
+
     private array $roles = [];
 
     private array $branchIds = [];
 
     public function __construct(private AuditLogRepository $logs) {}
 
+    public function withoutAuditing(\Closure $callback): mixed
+    {
+        $this->suspended++;
+
+        try {
+            return $callback();
+        } finally {
+            $this->suspended--;
+        }
+    }
+
     public function model(Model $model, string $action): void
     {
+        if ($this->suspended > 0) {
+            return;
+        }
+
         $exclude = $model->auditExclude();
 
         if ($action === AuditLog::ACTION_CREATED) {
@@ -47,6 +64,7 @@ class AuditService
             $model,
             old: $old ?: null,
             new: $new ?: null,
+            description: $model->auditDescription($action),
             branchId: $model->auditBranchId(),
         );
     }

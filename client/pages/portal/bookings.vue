@@ -22,6 +22,7 @@ import GuardianAssessmentDetails from "~/components/sections/app/Booking/Guardia
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import PayBookingModal from "~/components/sections/portal/PayBookingModal.vue";
 import { paymentService } from "~/api/payment/PaymentService";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { formatCurrency } from "~/utils/currency";
@@ -40,6 +41,9 @@ definePageMeta({
 type PortalBooking = BookingRetrieve & {
     branch_name: string | null;
     receipt_code?: string | null;
+    can_pay?: boolean;
+    amount_due?: number | null;
+    percent_due?: number | null;
 };
 
 interface PageMeta {
@@ -76,6 +80,13 @@ async function openReceipt(receiptCode?: string | null) {
     } finally {
         loadingReceiptCode.value = null;
     }
+}
+
+const payingBooking = ref<PortalBooking | null>(null);
+
+function onBookingPaid() {
+    payingBooking.value = null;
+    loadBookings(meta.value?.current_page ?? 1);
 }
 
 function isCancellable(booking: PortalBooking) {
@@ -563,6 +574,14 @@ onMounted(() => {
                                                         .label
                                                 }}
                                             </span>
+
+                                            <span
+                                                v-if="booking.can_pay"
+                                                class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-inset ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20"
+                                            >
+                                                <CreditCard class="h-3 w-3" />
+                                                Payment due
+                                            </span>
                                         </div>
 
                                         <div
@@ -771,6 +790,58 @@ onMounted(() => {
                                     <GuardianAssessmentDetails
                                         :booking="booking"
                                     />
+                                </div>
+
+                                <div
+                                    v-if="booking.can_pay"
+                                    class="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-100 bg-amber-50 p-4 sm:p-5 dark:border-amber-500/20 dark:bg-amber-500/10"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-amber-600 dark:bg-white/10 dark:text-amber-300"
+                                        >
+                                            <CreditCard class="h-4 w-4" />
+                                        </div>
+
+                                        <div>
+                                            <h3
+                                                class="text-sm font-semibold text-amber-900 dark:text-amber-200"
+                                            >
+                                                Downpayment due
+                                                {{
+                                                    formatMoney(
+                                                        booking.amount_due,
+                                                    )
+                                                }}
+                                            </h3>
+
+                                            <p
+                                                class="text-xs text-amber-800/80 dark:text-amber-300/70"
+                                            >
+                                                <template
+                                                    v-if="booking.percent_due"
+                                                >
+                                                    {{ booking.percent_due }}%
+                                                    of
+                                                </template>
+                                                {{
+                                                    formatMoney(
+                                                        (booking.payment as any)
+                                                            ?.total_amount,
+                                                    )
+                                                }}
+                                                · pay by card or GCash.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
+                                        @click.stop="payingBooking = booking"
+                                    >
+                                        Pay now
+                                    </button>
                                 </div>
 
                                 <div
@@ -1002,6 +1073,18 @@ onMounted(() => {
             :branch-name="printing.branch_name"
             :branch-image="(printing as any).branch_image"
             @close="printing = null"
+        />
+
+        <PayBookingModal
+            v-if="payingBooking"
+            :open="true"
+            :reference-id="payingBooking.reference_id"
+            :patient-name="patientName(payingBooking)"
+            :total="Number((payingBooking.payment as any)?.total_amount ?? 0)"
+            :amount-due="Number(payingBooking.amount_due ?? 0)"
+            :percent="payingBooking.percent_due ?? null"
+            @close="payingBooking = null"
+            @paid="onBookingPaid"
         />
 
         <PaymentReceipt

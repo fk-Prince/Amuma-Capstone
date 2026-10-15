@@ -174,6 +174,37 @@ class BookingHelper
         return 100;
     }
 
+    // What a family can still pay online on a homecare booking nobody has paid
+    // for yet: the branch's downpayment percent of the total.
+    public function portalPaymentDue(Booking $booking): ?array
+    {
+        $data = $booking->booking_data ?? [];
+        $payment = $data['payment'] ?? [];
+        $total = round((float) ($payment['total_amount'] ?? 0), 2);
+
+        if (
+            $booking->category !== Booking::CATEGORY_ONLINE
+            || $booking->status !== Booking::STATUS_PENDING
+            || ($payment['payment_status'] ?? null) !== 'pending'
+            || $total <= 0
+            || ($booking->valid_until && Carbon::parse($booking->valid_until)->isPast())
+        ) {
+            return null;
+        }
+
+        $percent = $this->getBookingPercent([
+            'category' => $booking->category,
+            'branch' => $booking->branch,
+            'booking_data' => $data,
+        ]);
+
+        return [
+            'percent' => $percent,
+            'total' => $total,
+            'amount' => round($total * $percent / 100, 2),
+        ];
+    }
+
     public function resolveBookingPayment(array $payload): array
     {
         $total = $this->getTotal($payload);

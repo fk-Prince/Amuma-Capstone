@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PatientAdmission extends Model
 {
-    use HasFactory;
+    use Auditable, HasFactory;
+
+    protected string $auditModule = 'admissions';
 
     protected $primaryKey = 'patient_admission_id';
     public const STATUS_ADMITTED = 'admitted';
@@ -29,6 +32,43 @@ class PatientAdmission extends Model
         'discharged_at' => 'datetime',
     ];
 
+
+    public function auditBranchId(): ?int
+    {
+        $branchId = Patient::where('patient_id', $this->patient_id)->value('branch_id');
+
+        return is_numeric($branchId) ? (int) $branchId : null;
+    }
+
+    public function auditDescription(string $action): ?string
+    {
+        $name = trim((string) $this->patient?->display_name) ?: 'a patient';
+
+        if ($action === 'created') {
+            return $this->status === self::STATUS_ADMITTED
+                ? "Admitted {$name}."
+                : "Registered an admission for {$name}.";
+        }
+
+        if ($this->wasChanged('status')) {
+            return match ($this->status) {
+                self::STATUS_ADMITTED => "Admitted {$name}.",
+                self::STATUS_DISCHARGED => "Discharged {$name}.",
+                self::STATUS_CANCELLED => "Cancelled the admission of {$name}.",
+                default => null,
+            };
+        }
+
+        if ($this->wasChanged('bed_id')) {
+            return "Moved {$name} to another bed.";
+        }
+
+        if ($this->wasChanged('discharged_at')) {
+            return "Changed the end of {$name}'s stay.";
+        }
+
+        return null;
+    }
 
     public function getEndDateAttribute()
     {

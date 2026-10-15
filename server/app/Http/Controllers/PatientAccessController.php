@@ -64,8 +64,17 @@ class PatientAccessController extends Controller
             return $this->patientAccessService->bookAgain($payload, $request->user());
         }
 
-        if ($request->action === 'cancel_booking') {
-            return $this->patientAccessService->cancelBooking($payload, $request->user());
+
+
+        if ($request->action === 'pay_booking') {
+            $request->validate([
+                'reference_id' => ['required', 'string', 'max:50'],
+                'payment_method' => ['required', 'in:GCASH,CREDIT-CARD'],
+                'token_id' => ['nullable', 'string'],
+                'authentication_id' => ['nullable', 'string'],
+            ]);
+
+            return $this->patientAccessService->payBooking($payload, $request->user());
         }
 
         if ($request->action === 'cancel_admission') {

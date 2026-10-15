@@ -23,6 +23,11 @@ trait Auditable
         return ['password', 'remember_token', 'updated_at'];
     }
 
+    public function auditDescription(string $action): ?string
+    {
+        return null;
+    }
+
     public function auditModule(): string
     {
         return property_exists($this, 'auditModule')

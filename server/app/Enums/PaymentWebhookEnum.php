@@ -9,6 +9,7 @@ enum PaymentWebhookEnum: string
     case RENEWAL = 'RENEWAL';
     case BOOKING_FACILITY = 'BOOKING_FACILITY';
     case PORTAL_BALANCE = 'PORTAL_BALANCE';
+    case PORTAL_BOOKING = 'PORTAL_BOOKING';
     public static function fromPayload(array $payload): self
     {
         return self::tryFrom(

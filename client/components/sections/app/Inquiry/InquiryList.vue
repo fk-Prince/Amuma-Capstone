@@ -88,6 +88,9 @@ const rows = computed(() =>
         :on-row-click="(row) => emit('select', row.raw)"
         @page-change="emit('page-change', $event)"
     >
+        <template #actions>
+            <slot name="actions" />
+        </template>
 
         <template #cell-name="{ row }">
             <div class="flex items-center gap-3">

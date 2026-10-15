@@ -133,6 +133,11 @@ class PatientAccessService
         ]);
     }
 
+    public function payBooking(array $payload, User $user)
+    {
+        return $this->bookingService->payPortalBooking($user, $payload);
+    }
+
     public function requestScheduleReview(array $payload, User $user)
     {
         $access = $this->patientAccessRepository->verifyAccess($payload);

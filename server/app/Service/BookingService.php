@@ -16,6 +16,7 @@ use App\Repository\PaymentRepository;
 use App\Http\Resources\BookingReceiptResource;
 use App\Service\Booking\BookingHelper;
 use App\Service\External\XenditService;
+use App\Service\Payment\GCashPayment;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -234,7 +235,7 @@ class BookingService
                     default => Carbon::now()->addWeek(),
                 };
 
-                $booking = $this->bookingRepository->create([
+                $booking = $this->createUnaudited([
                     'user_id'      => $user->user_id,
                     'branch_id'    => $branch->branch_id,
                     'category'     => $payload['category'],
@@ -269,6 +270,14 @@ class BookingService
                 'message' => 'Booking failed. Your payment has been refunded.',
             ], 500);
         }
+    }
+
+    // Bookings made on the public page aren't audited; only staff actions are.
+    private function createUnaudited(array $attributes): Booking
+    {
+        return app(AuditService::class)->withoutAuditing(
+            fn() => $this->bookingRepository->create($attributes)
+        );
     }
 
     // Only a booking that was actually paid for has a downpayment to record.
@@ -336,7 +345,7 @@ class BookingService
                     : Carbon::parse($bookingData['facility']['admission_date'])->endOfDay(),
                 default => Carbon::now()->addWeek(),
             };
-            $booking = $this->bookingRepository->create([
+            $booking = $this->createUnaudited([
                 'user_id'      => $user->user_id,
                 'branch_id'    => $branch->branch_id,
                 'category'     => $payload['category'],
@@ -685,6 +694,102 @@ class BookingService
                     $this->transactions->paymentsForBookings([$booking->booking_id])->get($booking->booking_id),
                     $payload['branch']
                 ),
+            ]);
+        });
+    }
+
+    // A family paying the downpayment on a homecare booking made for them.
+    public function payPortalBooking(User $user, array $payload)
+    {
+        $booking = Booking::with('branch')
+            ->where('reference_id', $payload['reference_id'] ?? null)
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        if (!$booking) {
+            throw new Exception('Booking doesn\'t exist', 404);
+        }
+
+        $due = $this->bookingHelper->portalPaymentDue($booking);
+
+        if (!$due) {
+            throw new Exception('This booking has no payment due.', 422);
+        }
+
+        $method = $payload['payment_method'] ?? null;
+
+        if ($method === 'GCASH') {
+            return app(GCashPayment::class)->portalBookingInvoice($user, [
+                'reference_id' => $booking->reference_id,
+                'amount' => $due['amount'],
+            ]);
+        }
+
+        if ($method !== 'CREDIT-CARD') {
+            throw new Exception('Choose a payment method.', 422);
+        }
+
+        $charge = PaymentFactory::make('CREDIT-CARD')->bookingBilling([
+            'total' => $due['amount'],
+            'token_id' => $payload['token_id'] ?? null,
+            'authentication_id' => $payload['authentication_id'] ?? null,
+        ]);
+
+        if ($charge instanceof JsonResponse) {
+            return $charge;
+        }
+
+        try {
+            return $this->settlePortalPayment($user, $booking->reference_id, [
+                'payment_method' => 'CREDIT-CARD',
+                'xendit_invoice_id' => $charge['xendit_invoice_id'],
+                'masked_card_number' => $charge['masked_card_number'],
+            ]);
+        } catch (Exception $e) {
+            report($e);
+
+            XenditService::refundXenditPayment($charge['xendit_invoice_id'], (float) $due['amount'], true);
+
+            throw new Exception('We couldn\'t apply your payment. It has been refunded.', 422);
+        }
+    }
+
+    public function settlePortalPayment(User $user, string $reference, array $paid)
+    {
+        return DB::transaction(function () use ($user, $reference, $paid) {
+            $booking = Booking::with('branch')
+                ->where('reference_id', $reference)
+                ->where('user_id', $user->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            $due = $booking ? $this->bookingHelper->portalPaymentDue($booking) : null;
+
+            if (!$due) {
+                throw new Exception('This booking has no payment due.', 422);
+            }
+
+            $data = $booking->booking_data;
+            $balance = round($due['total'] - $due['amount'], 2);
+
+            $data['payment'] = array_merge($data['payment'], [
+                'booking_percent' => $due['percent'],
+                'booking_amount' => $due['amount'],
+                'balance_amount' => $balance,
+                'payment_status' => $balance > 0 ? 'partial' : 'paid',
+                'payment_method' => $paid['payment_method'],
+                'xendit_invoice_id' => $paid['xendit_invoice_id'],
+                'masked_card_number' => $paid['masked_card_number'],
+            ]);
+
+            app(AuditService::class)->withoutAuditing(
+                fn() => $booking->update(['booking_data' => $data])
+            );
+
+            $this->recordDownpayment($user, $booking, $data['payment']);
+
+            return response()->json([
+                'message' => "Payment for booking {$booking->reference_id} received.",
             ]);
         });
     }

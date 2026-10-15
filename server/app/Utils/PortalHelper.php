@@ -10,6 +10,7 @@ use App\Models\PatientAccess;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Models\Transaction;
+use App\Service\Booking\BookingHelper;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -24,6 +25,7 @@ class PortalHelper
         $data ??= [];
 
         $payment = $data['payment'] ?? null;
+        $due = app(BookingHelper::class)->portalPaymentDue($booking);
 
         return [
             'booking_id' => $booking->booking_id,
@@ -77,6 +79,9 @@ class PortalHelper
 
             'payment' => !empty($payment['payment_status']) ? $payment : null,
             'receipt_code' => $receiptCode,
+            'can_pay' => $due !== null,
+            'amount_due' => $due['amount'] ?? null,
+            'percent_due' => $due['percent'] ?? null,
 
             'created_at' => $booking->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $booking->updated_at?->format('Y-m-d H:i:s'),
