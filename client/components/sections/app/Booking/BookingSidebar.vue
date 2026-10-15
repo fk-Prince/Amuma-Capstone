@@ -79,6 +79,29 @@
                                 <p
                                     class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
                                 >
+                                    Accepted
+                                </p>
+                                <CalendarCheck class="h-4 w-4 text-sky-500 dark:text-sky-300" />
+                            </div>
+
+                            <p
+                                class="mt-2 text-2xl font-semibold text-[#16302E] dark:text-white"
+                            >
+                                {{ overview?.bookings?.accepted ?? 0 }}
+                            </p>
+
+                            <p class="text-xs text-[#6B8A87] dark:text-gray-400">
+                                Awaiting admission
+                            </p>
+                        </div>
+
+                        <div
+                            class="rounded-xl border border-[#EDF4F3] bg-[#FAFCFB] p-4 dark:border-white/10 dark:bg-white/5"
+                        >
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="text-xs uppercase tracking-wide text-[#6B8A87] dark:text-gray-400"
+                                >
                                     Rejected
                                 </p>
                                 <UserX class="h-4 w-4 text-rose-500 dark:text-rose-300" />
@@ -212,6 +235,7 @@ import { onBeforeUnmount, computed, watch } from "vue";
 import {
     CalendarDays,
     Clock,
+    CalendarCheck,
     CalendarClock,
     UserX,
 } from "lucide-vue-next";

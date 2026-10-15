@@ -177,6 +177,9 @@ function formatDate(value?: string) {
 function statusDotClasses(status?: string) {
     const s = (status ?? "").toLowerCase().replace("-", "_");
     switch (s) {
+        case "accepted":
+            return "bg-[#2563A6]";
+
         case "approved":
             return "bg-[#1F7A4D]";
 

@@ -115,13 +115,17 @@ class NotificationService
 
         $client = $booking->user_id ? User::find($booking->user_id) : null;
 
-        $verb = $decision === Booking::STATUS_APPROVED ? 'approved' : 'rejected';
+        $verb = match ($decision) {
+            Booking::STATUS_APPROVED => 'approved',
+            Booking::STATUS_ACCEPTED => 'accepted',
+            default => 'rejected',
+        };
 
         $reason = $reason ?? ($booking->reason ?? null);
         $reason = trim((string) $reason) ?: null;
 
-        if ($verb === 'approved') {
-            $message = "Your booking {$booking->reference_id} has been approved by {$branch->name}.";
+        if ($verb !== 'rejected') {
+            $message = "Your booking {$booking->reference_id} has been {$verb} by {$branch->name}.";
         } else {
             $message = "Your booking {$booking->reference_id} was declined by {$branch->name}.";
 

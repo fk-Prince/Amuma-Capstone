@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
             $table->jsonb('booking_data');
             $table->enum('category', ['homecare', 'facility'])->index();
-            $table->enum('status', ['approved', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending')->index();
+            $table->enum('status', ['approved', 'accepted', 'pending', 'rejected', 'expired',  'cancelled'])->default('pending')->index();
             $table->text('reason')->nullable();
             $table->foreignId('reviewed_by')
                 ->nullable()

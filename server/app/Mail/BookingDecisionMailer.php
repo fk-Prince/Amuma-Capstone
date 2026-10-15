@@ -19,12 +19,12 @@ class BookingDecisionMailer extends Mailable
 
     private function isApproved(): bool
     {
-        return $this->decision === 'approved';
+        return in_array($this->decision, ['approved', 'accepted'], true);
     }
 
     public function envelope(): Envelope
     {
-        $verb = $this->isApproved() ? 'approved' : 'declined';
+        $verb = $this->isApproved() ? $this->decision : 'declined';
 
         return new Envelope(
             subject: "Your booking {$this->referenceId} has been {$verb}"
@@ -37,10 +37,10 @@ class BookingDecisionMailer extends Mailable
 
         $accent = $approved ? '#0E7C7B' : '#b91c1c';
         $accentSoft = $approved ? '#e7f5f5' : '#fef2f2';
-        $heading = $approved ? 'Booking approved' : 'Booking declined';
+        $heading = $approved ? 'Booking ' . $this->decision : 'Booking declined';
 
         $lead = $approved
-            ? "Good news — your booking with <strong style='color:{$accent};'>{$this->branchName}</strong> has been approved."
+            ? "Good news — your booking with <strong style='color:{$accent};'>{$this->branchName}</strong> has been {$this->decision}."
             : "Your booking with <strong style='color:{$accent};'>{$this->branchName}</strong> could not be accepted.";
 
         $logoUrl = config('mail.logo_url');

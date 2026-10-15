@@ -237,6 +237,10 @@ class BookingRepository
                     ->where('status', Booking::STATUS_APPROVED)
                     ->count(),
 
+                'accepted' => Booking::where('branch_id', $branchId)
+                    ->where('status', Booking::STATUS_ACCEPTED)
+                    ->count(),
+
                 'expired' => Booking::where('branch_id', $branchId)
                     ->where('status', Booking::STATUS_EXPIRED)
                     ->count(),

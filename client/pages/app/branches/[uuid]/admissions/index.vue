@@ -672,7 +672,7 @@ async function loadByReference() {
             booking.status === "pending"
                 ? {
                       tone: "pending",
-                      message: `Details from ${booking.reference_id} have been loaded. This booking hasn't been approved in Bookings yet; completing the admission will approve it.`,
+                      message: `Details from ${booking.reference_id} have been loaded. This booking hasn't been accepted in Bookings yet; completing the admission will approve it.`,
                   }
                 : {
                       tone: "approved",
@@ -834,7 +834,7 @@ function admissionTypeLabel(type?: string | null) {
 const canProcessBooking = (row: any) =>
     !facilityLocked.value &&
     row.admission_type?.toLowerCase() === "pre-admission" &&
-    ["pending", "approved"].includes(row.status?.toLowerCase());
+    ["pending", "accepted"].includes(row.status?.toLowerCase());
 
 function openBooking(row: any) {
     if (facilityLocked.value) return;
@@ -921,6 +921,10 @@ function statusBadgeClass(status: string) {
 
     if (value === "approved" || value === "admitted") {
         return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
+    }
+
+    if (value === "accepted") {
+        return "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300";
     }
 
     if (value === "pending") {

@@ -1220,7 +1220,7 @@ class PatientAdmissionService
             throw new Exception('Booking does not exist.', 404);
         }
 
-        if (!in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_APPROVED], true)) {
+        if (!in_array($booking->status, [Booking::STATUS_PENDING, Booking::STATUS_ACCEPTED, Booking::STATUS_APPROVED], true)) {
             $message = match ($booking->status) {
                 Booking::STATUS_REJECTED => 'This booking was rejected' . ($booking->reason ? ": {$booking->reason}" : '.') . ' It cannot be admitted.',
                 Booking::STATUS_EXPIRED => 'This booking has expired and cannot be admitted.',

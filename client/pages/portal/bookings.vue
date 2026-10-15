@@ -79,7 +79,7 @@ async function openReceipt(receiptCode?: string | null) {
 }
 
 function isCancellable(booking: PortalBooking) {
-    return booking.status === "pending" || booking.status === "approved";
+    return ["pending", "accepted", "approved"].includes(booking.status);
 }
 
 async function cancelBooking(booking: PortalBooking) {
@@ -131,6 +131,11 @@ function statusConfig(status: string) {
             label: "Pending",
             class: "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
             icon: Clock3,
+        },
+        accepted: {
+            label: "Accepted",
+            class: "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20",
+            icon: CheckCircle2,
         },
         approved: {
             label: "Approved",

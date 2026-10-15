@@ -591,11 +591,7 @@
                                                 <path d="m5 12 4 4L19 6" />
                                             </svg>
 
-                                            {{
-                                                isFacility
-                                                    ? "Accept Admission Booking"
-                                                    : "Accept Homecare Booking"
-                                            }}
+                                            {{ reviewButtonLabel }}
                                         </span>
                                     </ActionButton>
 
@@ -975,6 +971,14 @@ const isPreAdmissionFacility = computed(() => {
     );
 });
 
+const reviewButtonLabel = computed(() => {
+    if (isPreAdmissionFacility.value) return "Accept Pre-Admission Booking";
+
+    return isFacility.value
+        ? "Approve Admission Booking"
+        : "Approve Homecare Booking";
+});
+
 const showAccommodationButton = computed(() => {
     const currentStatus = selectedBooking.value?.status?.toLowerCase() ?? "";
 
@@ -1029,6 +1033,9 @@ function statusDotClasses(status?: string) {
     const s = (status ?? "").toLowerCase().replace("-", "_");
 
     switch (s) {
+        case "accepted":
+            return "bg-[#2563A6]";
+
         case "approved":
             return "bg-[#1F7A4D]";
 
@@ -1080,6 +1087,7 @@ const serviceAddress = (row: any) => {
 
 const OVERVIEW_STATUS_KEYS: Record<string, string> = {
     pending: "pending_confirmation",
+    accepted: "accepted",
     approved: "approved",
     rejected: "rejected",
 };
@@ -1199,10 +1207,19 @@ const confirmBooking = async (booking: any) => {
                   },
         );
 
-        success(res.message ?? "Booking approved successfully.");
+        success(
+            res.message ??
+                (booking.facility?.type === "Pre-Admission"
+                    ? "Booking accepted successfully."
+                    : "Booking approved successfully."),
+        );
 
         syncBookingStatus(booking, {
-            status: res.data?.status ?? "approved",
+            status:
+                res.data?.status ??
+                (booking.facility?.type === "Pre-Admission"
+                    ? "accepted"
+                    : "approved"),
             reviewed_by: res.data?.reviewed_by,
             reviewed_at: res.data?.reviewed_at,
             ...(res.data?.patient ? { patient: res.data.patient } : {}),

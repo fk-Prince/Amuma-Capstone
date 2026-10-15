@@ -36,7 +36,7 @@ export interface BookingRetrieve {
     reference_id: string;
     category: "facility" | "homecare";
     booking_type: 'online' | 'walk-in';
-    status: "pending" | "approved" | "cancelled" | "rejected" | "expired";
+    status: "pending" | "accepted" | "approved" | "cancelled" | "rejected" | "expired";
     reason: string | null;
     reviewed_by: string | null;
     reviewed_at: string | null;
@@ -108,6 +108,8 @@ function matchStatus(status: string) {
             return "In-Progress";
         case "pending":
             return "Pending";
+        case "accepted":
+            return "Accepted";
         case "approved":
             return "Approved";
         case "completed":
@@ -126,6 +128,9 @@ export function statusClasses(status?: string) {
     const s = (status ?? "").toLowerCase();
 
     switch (s) {
+        case "accepted":
+            return "bg-[#E6F1FA] text-[#2563A6]";
+
         case "approved":
             return "bg-[#E4F4EE] text-[#1F7A4D]";
 
@@ -152,6 +157,9 @@ export function statusClasses(status?: string) {
 export function statusDotClasses(status?: string) {
     const s = (status ?? "").toLowerCase().replace("-", "_");
     switch (s) {
+        case "accepted":
+            return "bg-[#2563A6]";
+
         case "approved":
             return "bg-[#1F7A4D]";
 
@@ -184,6 +192,7 @@ export function statusDotClasses(status?: string) {
 export const statusFilters = [
     { label: "All", value: "all" },
     { label: "Pending", value: "pending" },
+    { label: "Accepted", value: "accepted" },
     { label: "Approved", value: "approved" },
     { label: "Rejected", value: "rejected" },
     { label: "Expired", value: "expired" },

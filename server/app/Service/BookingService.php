@@ -40,6 +40,7 @@ class BookingService
 
             $nonProcessableStatuses = [
                 Booking::STATUS_APPROVED,
+                Booking::STATUS_ACCEPTED,
                 Booking::STATUS_REJECTED,
                 Booking::STATUS_EXPIRED,
                 Booking::STATUS_CANCELLED,
@@ -118,7 +119,7 @@ class BookingService
 
             if ($booking->status !== Booking::STATUS_PENDING) {
                 throw new Exception(
-                    "Booking cannot be approved. Current status: {$booking->status}.",
+                    "Booking cannot be accepted. Current status: {$booking->status}.",
                     400
                 );
             }
@@ -130,23 +131,23 @@ class BookingService
             $facilityType = $booking->booking_data['facility']['type'] ?? '';
 
             if (strcasecmp($facilityType, Booking::TYPE_PREADMISSION) !== 0) {
-                throw new Exception('Only pre-admission bookings can be approved without processing.', 422);
+                throw new Exception('Only pre-admission bookings can be accepted without processing.', 422);
             }
 
             $booking->update([
-                'status' => Booking::STATUS_APPROVED,
+                'status' => Booking::STATUS_ACCEPTED,
                 'reviewed_by' => ($payload['user'] ?? null)?->employee?->employee_id,
             ]);
 
             $this->notificationService->notifyBookingDecision(
                 $payload['branch'],
                 $booking->fresh(),
-                Booking::STATUS_APPROVED,
+                Booking::STATUS_ACCEPTED,
                 $payload['user'] ?? null
             );
 
             return response()->json([
-                'message' => "Booking {$booking->reference_id} has been approved.",
+                'message' => "Booking {$booking->reference_id} has been accepted.",
                 'data' => new BookingResource($booking->fresh()),
             ], 200);
         });

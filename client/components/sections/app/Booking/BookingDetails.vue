@@ -548,7 +548,11 @@ const emit = defineEmits<{
 const booking = computed(() => props.booking);
 
 const reviewLabel = computed(() =>
-    props.booking?.status === "rejected" ? "Rejected By" : "Approved By",
+    props.booking?.status === "rejected"
+        ? "Rejected By"
+        : props.booking?.status === "accepted"
+          ? "Accepted By"
+          : "Approved By",
 );
 
 const isMapOpen = ref(false);
