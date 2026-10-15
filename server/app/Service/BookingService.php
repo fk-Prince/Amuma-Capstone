@@ -272,6 +272,20 @@ class BookingService
         }
     }
 
+    // A failed alert must never undo a payment that has already gone through.
+    private function notifyPayment(Booking $booking, float $amount, ?User $actor): void
+    {
+        try {
+            $branch = $booking->branch ?? $booking->load('branch')->branch;
+
+            if ($branch) {
+                $this->notificationService->notifyBookingPayment($branch, $booking, $amount, $actor);
+            }
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
     // Bookings made on the public page aren't audited; only staff actions are.
     private function createUnaudited(array $attributes): Booking
     {
@@ -686,6 +700,8 @@ class BookingService
 
             $booking->update(['booking_data' => $data]);
 
+            $this->notifyPayment($booking, $due, $user);
+
             return response()->json([
                 'message' => "Payment for booking {$booking->reference_id} received.",
                 'change' => round($cash - $due, 2),
@@ -787,6 +803,8 @@ class BookingService
             );
 
             $this->recordDownpayment($user, $booking, $data['payment']);
+
+            $this->notifyPayment($booking, (float) $due['amount'], $user);
 
             return response()->json([
                 'message' => "Payment for booking {$booking->reference_id} received.",

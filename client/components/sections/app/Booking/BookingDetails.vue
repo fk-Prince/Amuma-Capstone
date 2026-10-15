@@ -488,7 +488,7 @@
                     </div>
                 </section>
 
-                <div class="flex justify-end">
+                <div class="flex justify-start">
                     <button
                         type="button"
                         class="inline-flex items-center gap-2 rounded-lg border border-[#D7E6E3] bg-white px-4 py-2 text-sm font-semibold text-[#0E7C7B] transition hover:bg-[#EAF4F2] dark:border-white/10 dark:bg-transparent dark:text-accent-300 dark:hover:bg-white/10"

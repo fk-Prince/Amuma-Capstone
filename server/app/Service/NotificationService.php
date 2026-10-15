@@ -200,6 +200,18 @@ class NotificationService
         ], $booking);
     }
 
+    public function notifyBookingPayment(Branch $branch, object $booking, float $amount, ?User $actor = null): void
+    {
+        $this->notifyBranchStaff(
+            $branch,
+            "Payment of ₱" . number_format($amount, 2) . " was received for booking #{$booking->reference_id}.",
+            'Booking',
+            $actor,
+            $booking,
+            (string) $booking->booking_id,
+        );
+    }
+
     public function notifyPatientAccess(
         Patient $patient,
         string $message,
