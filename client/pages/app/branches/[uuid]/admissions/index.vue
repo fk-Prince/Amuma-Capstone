@@ -227,6 +227,15 @@
                                     : "Load Admission"
                             }}
                         </button>
+
+                        <button
+                            type="button"
+                            :disabled="loadingReference || submitting"
+                            @click="resetForm"
+                            class="flex w-full sm:w-auto items-center justify-center cursor-pointer sm:mt-6 gap-1.5 rounded-lg border border-slate-200 px-4 py-2.5 sm:py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Reset
+                        </button>
                     </div>
 
                     <div
@@ -421,6 +430,7 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import AssessmentForm from "~/components/forms/AssessmentForm.vue";
 import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
+import { resetAdmissionForm } from "~/utils/admission-form";
 
 import {
     patientData,
@@ -944,11 +954,32 @@ function statusBadgeClass(status: string) {
 
 function startNewAdmission() {
     if (facilityLocked.value) return;
+    resetForm();
+    viewMode.value = "form";
+}
+
+function resetForm() {
+    resetAdmissionForm();
+    bookingStore.$reset();
+
     referenceInput.value = "";
     referenceError.value = "";
     referenceNotice.value = null;
     bookingProcessed.value = false;
-    viewMode.value = "form";
+    isPaid.value = false;
+
+    reservedErrors.value = {};
+    patientErrors.value = {};
+    guardianErrors.value = {};
+    assessmentErrors.value = {};
+
+    resetGuardianLink();
+    activeStep.value = "step1";
+
+    if (route.query.reference_id) {
+        const { reference_id, step, ...rest } = route.query;
+        router.replace({ query: rest });
+    }
 }
 
 watch(viewMode, (mode) => {

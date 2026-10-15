@@ -154,6 +154,7 @@ import { formatAmount } from "~/utils/currency";
 import { useBranchStore } from "~/stores/branch";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import type { AdmissionSlip } from "~/types/admission-slip";
+import { resetAdmissionForm } from "~/utils/admission-form";
 useHead({ title: "Review Admission" });
 
 definePageMeta({
@@ -369,6 +370,7 @@ async function handleSubmit() {
         const slip = res.data?.portal ? (res.data as AdmissionSlip) : null;
 
         bookingStore.$reset();
+        resetAdmissionForm();
 
         if (slip) {
             admissionSlip.value = slip;

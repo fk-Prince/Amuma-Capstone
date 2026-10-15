@@ -969,7 +969,7 @@ class PatientAdmissionService
                         unset($payload['reserved']['room']['beds']);
                     }
 
-                    $this->preAdmission($payload);
+                    $preAdmission = $this->preAdmission($payload);
 
                     $bookingData = [
                         'patient'  => $payload['patient'],
@@ -988,6 +988,11 @@ class PatientAdmissionService
                         'booking_type' => Booking::BOOKINGTYPE_WALKIN,
                         'status'       => Booking::STATUS_APPROVED,
                         'booking_data' => $bookingData,
+                    ]);
+
+                    $booking->patientBookings()->create([
+                        'invoice_id' => $preAdmission['invoice']->invoice_id,
+                        'patient_id' => $preAdmission['patient']['patient']->patient_id,
                     ]);
 
                     if ($booking->branch) {

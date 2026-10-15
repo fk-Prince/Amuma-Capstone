@@ -64,12 +64,12 @@ class HomecareBookingTest extends TestCase
         ], $breakdown);
     }
 
-    public function test_bk04_medical_visit_costs_the_sum_of_the_chosen_services(): void
+    public function test_medical_visit_costs_the_sum_of_the_chosen_services(): void
     {
         $this->assertSame(1100.0, (float) $this->total($this->medicalVisit()));
     }
 
-    public function test_bk04_medical_visit_is_submitted_as_pending_after_the_downpayment(): void
+    public function test_your_booking_has_been_submitted_successfully(): void
     {
         $response = $this->submitPaid($this->medicalVisit());
 
@@ -88,7 +88,7 @@ class HomecareBookingTest extends TestCase
         $this->assertSame('partial', $payment['payment_status']);
     }
 
-    public function test_bk04_downpayment_is_saved_as_a_transaction_of_the_booking(): void
+    public function test_downpayment_is_saved_as_a_transaction_of_the_booking(): void
     {
         $this->submitPaid($this->medicalVisit());
 
@@ -101,7 +101,7 @@ class HomecareBookingTest extends TestCase
         $this->assertSame('chg_001', $transaction->transaction_reference_id);
     }
 
-    public function test_bk04_admission_staff_is_told_about_the_new_booking(): void
+    public function test_you_have_a_new_booking_request(): void
     {
         $this->submitPaid($this->medicalVisit());
 
@@ -113,7 +113,7 @@ class HomecareBookingTest extends TestCase
         );
     }
 
-    public function test_bk04_homecare_cannot_be_submitted_without_paying(): void
+    public function test_homecare_bookings_require_a_downpayment_before_they_can_be_submitted(): void
     {
         $this->assertFailsWith(
             'Homecare bookings require a downpayment before they can be submitted.',
@@ -127,7 +127,7 @@ class HomecareBookingTest extends TestCase
         $this->assertSame(0, Booking::count());
     }
 
-    public function test_bk05_adl_visit_costs_the_hours_times_the_hourly_rate(): void
+    public function test_adl_visit_costs_the_hours_times_the_hourly_rate(): void
     {
         $total = $this->total($this->adlVisit(['time_span' => 4]));
 
@@ -135,7 +135,7 @@ class HomecareBookingTest extends TestCase
         $this->assertEquals(300, $total['price']);
     }
 
-    public function test_bk05_adl_visit_is_submitted_with_half_paid(): void
+    public function test_adl_visit_is_submitted_with_half_paid(): void
     {
         $this->submitPaid($this->adlVisit(['time_span' => 4]));
 
@@ -146,7 +146,7 @@ class HomecareBookingTest extends TestCase
         $this->assertEquals(600, $payment['balance_amount']);
     }
 
-    public function test_bk05_adl_visit_needs_an_hourly_rate_from_the_branch(): void
+    public function test_no_active_adl_pricing_contract_is_configured_for_this_branch(): void
     {
         DB::table('branch_contracts')->where('accommodation_type', 'ADL')->update(['is_active' => false]);
 
@@ -157,7 +157,7 @@ class HomecareBookingTest extends TestCase
         );
     }
 
-    public function test_bk06_medical_visit_with_no_service_is_not_charged(): void
+    public function test_the_booking_amount_could_not_be_determined(): void
     {
         $this->assertFailsWith(
             'The booking amount could not be determined.',
@@ -169,7 +169,7 @@ class HomecareBookingTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_bk08_visit_less_than_one_hour_ahead_is_refused(): void
+    public function test_homecare_must_be_booked_at_least_1_hour_ahead(): void
     {
         $soon = now()->addMinutes(30);
 
@@ -186,7 +186,49 @@ class HomecareBookingTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_bk08_visit_two_hours_ahead_is_allowed(): void
+    private function leadTime(string $time): void
+    {
+        $this->app->make(BookingHelper::class)->assertHomecareLeadTime([
+            'date' => now()->toDateString(),
+            'prefered_time' => $time,
+        ], $this->branch);
+    }
+
+    public function test_visit_exactly_1_hour_ahead_is_valid(): void
+    {
+        $this->travelTo(now()->setTime(10, 30, 45));
+
+        $this->leadTime('11:30');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_visit_59_minutes_ahead_is_invalid(): void
+    {
+        $this->travelTo(now()->setTime(10, 30, 45));
+
+        $this->assertFailsWith(
+            'Homecare must be booked at least 1 hour ahead. Please choose a later time.',
+            fn() => $this->leadTime('11:29'),
+            422
+        );
+    }
+
+    public function test_adl_visit_of_1_hour_is_valid(): void
+    {
+        $this->assertEquals(300, $this->total($this->adlVisit(['time_span' => 1]))['total']);
+    }
+
+    public function test_the_adl_pricing_contract_has_an_invalid_price(): void
+    {
+        $this->assertFailsWith(
+            'The ADL pricing contract has an invalid price.',
+            fn() => $this->total($this->adlVisit(['time_span' => 0])),
+            422
+        );
+    }
+
+    public function test_visit_two_hours_ahead_is_allowed(): void
     {
         $later = now()->addHours(2);
 

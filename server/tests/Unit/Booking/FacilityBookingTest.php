@@ -56,7 +56,7 @@ class FacilityBookingTest extends TestCase
         ], $breakdown);
     }
 
-    public function test_bk10_pre_admission_form_is_submitted_without_payment(): void
+    public function test_pre_admission_form_is_submitted_without_payment(): void
     {
         $response = $this->preAdmission();
 
@@ -73,7 +73,7 @@ class FacilityBookingTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_bk10_pre_admission_form_stays_valid_for_one_month(): void
+    public function test_pre_admission_form_stays_valid_for_one_month(): void
     {
         $this->preAdmission();
 
@@ -82,7 +82,7 @@ class FacilityBookingTest extends TestCase
         $this->assertTrue($validUntil->isSameDay(now()->addMonth()));
     }
 
-    public function test_bk10_pre_admission_form_cannot_go_through_the_payment(): void
+    public function test_this_booking_does_not_take_a_payment(): void
     {
         $this->assertFailsWith(
             'This booking does not take a payment.',
@@ -95,7 +95,7 @@ class FacilityBookingTest extends TestCase
         );
     }
 
-    public function test_bk11_complete_admission_costs_the_plan_price(): void
+    public function test_complete_admission_costs_the_plan_price(): void
     {
         $total = $this->controller->action($this->makeRequest([
             'action' => 'total',
@@ -106,7 +106,7 @@ class FacilityBookingTest extends TestCase
         $this->assertEquals(15000, $total);
     }
 
-    public function test_bk11_complete_admission_is_submitted_fully_paid(): void
+    public function test_complete_admission_is_submitted_fully_paid(): void
     {
         $this->submitPaid($this->completeAdmission());
 
@@ -120,7 +120,7 @@ class FacilityBookingTest extends TestCase
         $this->assertSame('15000.00', (string) Transaction::firstOrFail()->amount);
     }
 
-    public function test_bk11_complete_admission_is_valid_until_the_admission_date(): void
+    public function test_complete_admission_is_valid_until_the_admission_date(): void
     {
         $this->submitPaid($this->completeAdmission());
 
@@ -129,7 +129,7 @@ class FacilityBookingTest extends TestCase
         $this->assertSame(now()->addDays(5)->endOfDay()->toDateTimeString(), $validUntil->toDateTimeString());
     }
 
-    public function test_bk11_plan_the_branch_does_not_offer_is_refused(): void
+    public function test_no_active_vip_yearly_pricing_contract_is_configured_for_this_branch(): void
     {
         $this->assertFailsWith(
             'No active VIP (Yearly) pricing contract is configured for this branch.',
@@ -142,7 +142,7 @@ class FacilityBookingTest extends TestCase
         );
     }
 
-    public function test_bk14_diagnosis_older_than_six_months_is_refused(): void
+    public function test_diagnosis_must_be_from_the_past_6_months(): void
     {
         $this->assertFailsWith('Diagnosis must be from the past 6 months.', fn() => $this->preAdmission([
             'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(8)->toDateString()]],
@@ -151,21 +151,48 @@ class FacilityBookingTest extends TestCase
         $this->assertSame(0, Booking::count());
     }
 
-    public function test_bk14_diagnosis_dated_in_the_future_is_refused(): void
+    public function test_diagnosis_date_cannot_be_in_the_future(): void
     {
         $this->assertFailsWith('Diagnosis date cannot be in the future.', fn() => $this->preAdmission([
             'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->addDay()->toDateString()]],
         ]));
     }
 
-    public function test_bk14_diagnosis_without_a_name_is_refused(): void
+    public function test_primary_diagnosis_is_required(): void
     {
         $this->assertFailsWith('Primary Diagnosis is required.', fn() => $this->preAdmission([
             'diagnoses' => [['diagnosis_date' => now()->subMonth()->toDateString()]],
         ]));
     }
 
-    public function test_bk14_recent_diagnosis_is_accepted(): void
+    public function test_diagnosis_exactly_6_months_old_is_valid(): void
+    {
+        $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(6)->toDateString()]],
+        ]);
+
+        $this->assertSame(1, Booking::count());
+    }
+
+    public function test_diagnosis_dated_today_is_valid(): void
+    {
+        $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->toDateString()]],
+        ]);
+
+        $this->assertSame(1, Booking::count());
+    }
+
+    public function test_diagnosis_6_months_and_1_day_old_is_invalid(): void
+    {
+        $this->assertFailsWith('Diagnosis must be from the past 6 months.', fn() => $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(6)->subDay()->toDateString()]],
+        ]));
+
+        $this->assertSame(0, Booking::count());
+    }
+
+    public function test_recent_diagnosis_is_accepted(): void
     {
         $this->preAdmission([
             'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(2)->toDateString()]],

@@ -143,7 +143,7 @@ class BookingReviewTest extends TestCase
         return Notification::where('to_user_id', $this->relative->user_id)->latest('notification_id')->firstOrFail()->message;
     }
 
-    public function test_bk15_staff_sees_the_bookings_of_their_branch(): void
+    public function test_staff_sees_the_bookings_of_their_branch(): void
     {
         $this->paidHomecare();
         $this->preAdmission();
@@ -154,7 +154,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(Booking::STATUS_PENDING, $result['data'][0]['status']);
     }
 
-    public function test_bk15_status_filter_shows_only_matching_bookings(): void
+    public function test_status_filter_shows_only_matching_bookings(): void
     {
         $this->paidHomecare();
         $this->preAdmission()->update(['status' => Booking::STATUS_REJECTED]);
@@ -164,7 +164,7 @@ class BookingReviewTest extends TestCase
         $this->assertCount(1, $result['data']);
     }
 
-    public function test_bk15_booking_details_show_the_patient_and_service(): void
+    public function test_booking_details_show_the_patient_and_service(): void
     {
         $booking = $this->paidHomecare();
 
@@ -175,7 +175,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(Booking::TYPE_MEDICAL, $details['homecare']['type']);
     }
 
-    public function test_bk16_approved_homecare_booking_becomes_a_patient_schedule_and_invoice(): void
+    public function test_booking_has_been_approved_successfully(): void
     {
         $booking = $this->paidHomecare();
 
@@ -193,7 +193,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(1, $booking->patientBookings()->count());
     }
 
-    public function test_bk16_downpayment_counts_toward_the_invoice(): void
+    public function test_downpayment_counts_toward_the_invoice(): void
     {
         $booking = $this->paidHomecare();
 
@@ -206,7 +206,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(1, Payment::count());
     }
 
-    public function test_bk16_relative_is_told_the_booking_was_approved(): void
+    public function test_your_booking_has_been_approved_by_amuma_davao_city(): void
     {
         $booking = $this->paidHomecare();
 
@@ -215,7 +215,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame("Your booking {$booking->reference_id} has been approved by AMUMA Davao City.", $this->relativeAlert());
     }
 
-    public function test_bk17_approved_admission_holds_the_bed_and_settles_the_invoice(): void
+    public function test_approved_admission_holds_the_bed_and_settles_the_invoice(): void
     {
         $booking = $this->paidAdmission();
 
@@ -227,7 +227,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(0.0, (float) Invoice::firstOrFail()->balance_due);
     }
 
-    public function test_bk13_bed_already_taken_cannot_be_given(): void
+    public function test_selected_bed_is_already_occupied(): void
     {
         DB::table('beds')->where('bed_id', $this->bedId)->update(['status' => 'Occupied']);
         $booking = $this->paidAdmission();
@@ -237,7 +237,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(Booking::STATUS_PENDING, $booking->fresh()->status);
     }
 
-    public function test_bk18_pre_admission_form_is_accepted(): void
+    public function test_pre_admission_booking_has_been_approved(): void
     {
         $booking = $this->preAdmission();
 
@@ -252,7 +252,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(0, Invoice::count());
     }
 
-    public function test_bk18_only_pre_admission_forms_can_be_accepted(): void
+    public function test_only_pre_admission_bookings_can_be_approved_without_processing(): void
     {
         $booking = $this->paidAdmission();
 
@@ -266,7 +266,7 @@ class BookingReviewTest extends TestCase
         );
     }
 
-    public function test_bk19_rejected_booking_is_refunded(): void
+    public function test_booking_has_successfully_rejected(): void
     {
         $booking = $this->paidHomecare();
 
@@ -286,7 +286,7 @@ class BookingReviewTest extends TestCase
         Http::assertSent(fn($request) => str_contains($request->url(), 'credit_card_charges/chg_003/refunds'));
     }
 
-    public function test_bk19_relative_is_told_the_reason(): void
+    public function test_your_booking_was_declined_by_amuma_davao_city_reason_no_caregiver_available(): void
     {
         $booking = $this->paidHomecare();
 
@@ -298,7 +298,7 @@ class BookingReviewTest extends TestCase
         );
     }
 
-    public function test_bk19_unpaid_booking_is_rejected_without_a_refund(): void
+    public function test_unpaid_booking_is_rejected_without_a_refund(): void
     {
         $this->reject($this->preAdmission());
 
@@ -306,7 +306,7 @@ class BookingReviewTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_bk20_approved_booking_cannot_be_approved_again(): void
+    public function test_booking_cannot_be_processed_because_its_current_status_is_approved(): void
     {
         $booking = $this->paidHomecare();
         $this->approve($booking);
@@ -320,7 +320,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(1, Patient::count());
     }
 
-    public function test_bk20_rejected_booking_cannot_be_accepted(): void
+    public function test_booking_cannot_be_approved_current_status_rejected(): void
     {
         $booking = $this->preAdmission();
         $this->reject($booking);
@@ -335,7 +335,7 @@ class BookingReviewTest extends TestCase
         );
     }
 
-    public function test_bk21_staff_without_review_permission_cannot_approve(): void
+    public function test_insufficient_permissions_to_approve(): void
     {
         $viewer = $this->staff([PermissionAction::Read->value], 'nurse');
         $booking = $this->paidHomecare();
@@ -344,7 +344,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(Booking::STATUS_PENDING, $booking->fresh()->status);
     }
 
-    public function test_bk21_staff_without_review_permission_cannot_reject(): void
+    public function test_insufficient_permissions_to_reject(): void
     {
         $viewer = $this->staff([PermissionAction::Read->value], 'nurse');
         $booking = $this->paidHomecare();
@@ -353,7 +353,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(0, Transaction::where('type', Transaction::TYPE_REFUND)->count());
     }
 
-    public function test_bk21_relative_cannot_see_the_branch_bookings(): void
+    public function test_insufficient_permissions_to_list_the_branch_bookings(): void
     {
         $this->assertFailsWith('Insufficient permissions', fn() => $this->controller->index($this->makeRequest([], $this->relative)), 403);
     }
@@ -374,7 +374,7 @@ class BookingReviewTest extends TestCase
         ], $overrides)));
     }
 
-    public function test_bk22_staff_books_homecare_for_a_walk_in(): void
+    public function test_homecare_booking_created_it_is_waiting_for_review(): void
     {
         $this->giveHomecareSubscription();
 
@@ -390,12 +390,12 @@ class BookingReviewTest extends TestCase
         $this->assertSame(0, Transaction::count());
     }
 
-    public function test_bk22_branch_without_homecare_subscription_cannot_book(): void
+    public function test_this_branch_has_no_homecare_service_subscription(): void
     {
         $this->assertFailsWith('This branch has no Homecare Service subscription.', fn() => $this->walkIn(), 422);
     }
 
-    public function test_bk22_guardian_email_is_required(): void
+    public function test_the_guardian_email_field_is_required(): void
     {
         $this->giveHomecareSubscription();
 
@@ -404,7 +404,7 @@ class BookingReviewTest extends TestCase
         ]));
     }
 
-    public function test_bk22_staff_email_cannot_be_used_for_the_guardian(): void
+    public function test_this_email_belongs_to_a_staff_member(): void
     {
         $this->giveHomecareSubscription();
 
@@ -415,7 +415,7 @@ class BookingReviewTest extends TestCase
         );
     }
 
-    public function test_bk23_cash_below_the_amount_due_is_refused(): void
+    public function test_the_cash_received_must_cover_the_amount_due(): void
     {
         $this->giveHomecareSubscription();
         $this->walkIn();
@@ -430,7 +430,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(0, Transaction::count());
     }
 
-    public function test_bk23_cash_at_the_counter_pays_the_downpayment(): void
+    public function test_payment_for_booking_received(): void
     {
         $this->giveHomecareSubscription();
         $this->walkIn();
@@ -447,7 +447,63 @@ class BookingReviewTest extends TestCase
         $this->assertSame('CASH', Transaction::firstOrFail()->method);
     }
 
-    public function test_bk23_pre_admission_form_has_nothing_to_pay(): void
+    public function test_cash_exactly_the_amount_due_is_valid(): void
+    {
+        $this->giveHomecareSubscription();
+        $this->walkIn();
+        $booking = Booking::firstOrFail();
+
+        $response = $this->counter(['reference_id' => $booking->reference_id, 'cash' => 600])->getData(true);
+
+        $this->assertSame("Payment for booking {$booking->reference_id} received.", $response['message']);
+        $this->assertEquals(0, $response['change']);
+    }
+
+    public function test_cash_1_centavo_short_is_invalid(): void
+    {
+        $this->giveHomecareSubscription();
+        $this->walkIn();
+        $booking = Booking::firstOrFail();
+
+        $this->assertFailsWith(
+            'The cash received must cover the amount due.',
+            fn() => $this->counter(['reference_id' => $booking->reference_id, 'cash' => 599.99]),
+            422
+        );
+    }
+
+    public function test_walk_in_visit_dated_today_is_valid(): void
+    {
+        $this->giveHomecareSubscription();
+        $this->travelTo(now()->setTime(8, 0));
+
+        $response = $this->walkIn(['date' => now()->toDateString(), 'prefered_time' => '10:00']);
+
+        $this->assertSame(201, $response->getStatusCode());
+    }
+
+    public function test_the_date_field_must_be_a_date_after_or_equal_to_today(): void
+    {
+        $this->giveHomecareSubscription();
+
+        $this->assertFailsWith(
+            'The date field must be a date after or equal to today.',
+            fn() => $this->walkIn(['date' => now()->subDay()->toDateString()])
+        );
+
+        $this->assertSame(0, Booking::count());
+    }
+
+    public function test_the_guardian_email_field_must_be_a_valid_email_address(): void
+    {
+        $this->giveHomecareSubscription();
+
+        $this->assertFailsWith('The guardian.email field must be a valid email address.', fn() => $this->walkIn([
+            'guardian' => ['email' => 'mark.reyes'] + $this->guardianData(),
+        ]));
+    }
+
+    public function test_this_booking_cant_be_paid_right_now(): void
     {
         $booking = $this->preAdmission();
 
@@ -458,7 +514,7 @@ class BookingReviewTest extends TestCase
         );
     }
 
-    public function test_bk24_unreviewed_booking_expires_and_is_refunded(): void
+    public function test_unreviewed_booking_expires_and_is_refunded(): void
     {
         $booking = $this->paidHomecare();
         $booking->update(['valid_until' => now()->subHour()]);
@@ -471,7 +527,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(1, Transaction::where('type', Transaction::TYPE_REFUND)->count());
     }
 
-    public function test_bk24_booking_still_in_time_is_left_alone(): void
+    public function test_booking_still_in_time_is_left_alone(): void
     {
         $booking = $this->paidHomecare();
 
@@ -480,7 +536,7 @@ class BookingReviewTest extends TestCase
         $this->assertSame(Booking::STATUS_PENDING, $booking->fresh()->status);
     }
 
-    public function test_bk24_booking_past_its_time_cannot_be_approved(): void
+    public function test_booking_has_expired(): void
     {
         $booking = $this->paidHomecare();
         $booking->update(['valid_until' => now()->subHour()]);
