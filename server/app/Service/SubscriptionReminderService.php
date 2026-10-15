@@ -2,8 +2,7 @@
 
 namespace App\Service;
 
-use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
+use App\Enums\RoleEnum;
 use App\Events\NotificationEvent;
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
@@ -14,6 +13,11 @@ use App\Repository\SubscriptionRepository;
 class SubscriptionReminderService
 {
     public const MESSAGE_TYPE = 'Subscription Renewal';
+
+    private const RECIPIENT_ROLES = [
+        RoleEnum::AgencyOwner->value,
+        RoleEnum::BranchManager->value,
+    ];
 
     public function __construct(
         private SubscriptionRepository $subscriptionRepository,
@@ -36,10 +40,9 @@ class SubscriptionReminderService
                     continue;
                 }
 
-                $recipients = $this->employeeRepository->getBranchUsersWithPermission(
-                    $link->branch_id,
-                    ModuleEnum::BranchSettings,
-                    PermissionAction::Read
+                $recipients = $this->employeeRepository->getBranchStaffByRoles(
+                    self::RECIPIENT_ROLES,
+                    $link->branch_id
                 );
 
                 foreach ($recipients as $recipient) {
