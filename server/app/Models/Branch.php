@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -47,8 +48,20 @@ class Branch extends Model
 
     private function hasPlanAccess(array $planCodes)
     {
-        return $this->subscriptions()
-            ->wherePivot('status', BranchSubscription::STATUS_APPROVED)
+        $subscriptions = $this->subscriptions();
+
+        self::constrainPlanAccess($subscriptions, $planCodes);
+
+        return $subscriptions->exists();
+    }
+
+    // What "this service is available" means: an approved, unexpired, active
+    // subscription that includes one of the plans. Shared so the booking search
+    // and the service-unavailable checks can never disagree.
+    private static function constrainPlanAccess($subscriptions, array $planCodes): void
+    {
+        $subscriptions
+            ->where('branch_subscription.status', BranchSubscription::STATUS_APPROVED)
             ->where('subscriptions.status', Subscription::STATUS_ACTIVE)
             ->whereDate('subscriptions.end_date', '>=', now())
             ->where(function ($q) use ($planCodes) {
@@ -62,8 +75,7 @@ class Branch extends Model
                     $upgraded->whereDate('subscriptions.pending_plan_starts_at', '<=', now())
                         ->whereHas('pendingPlan', fn($p) => $p->whereIn('plan_code', $planCodes));
                 });
-            })
-            ->exists();
+            });
     }
 
     protected $casts = [
@@ -98,13 +110,20 @@ class Branch extends Model
             ->withTimestamps();
     }
 
-    // A branch still on its free trial isn't offered to the public yet.
-    public function scopeNotTesting($query)
+    // Only a branch on an approved live plan is offered to the public. Trials and
+    // anything pending, rejected or cancelled stay out; an expired one is still
+    // listed (its services just show as unavailable).
+    public function scopeOnLivePlan(Builder $query): Builder
     {
-        return $query->whereDoesntHave('subscriptions', fn($subscriptions) => $subscriptions
-            ->where('subscriptions.mode', Subscription::MODE_TEST)
-            ->whereIn('subscriptions.status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
-            ->where('branch_subscription.status', '!=', BranchSubscription::STATUS_REJECTED));
+        return $query->whereHas('subscriptionLink', fn($link) => $link
+            ->where('status', BranchSubscription::STATUS_APPROVED)
+            ->whereHas('subscription', fn($subscription) => $subscription
+                ->where('mode', Subscription::MODE_LIVE)
+                ->whereNotIn('status', [
+                    Subscription::STATUS_PENDING,
+                    Subscription::STATUS_REJECTED,
+                    Subscription::STATUS_CANCELLED,
+                ])));
     }
 
     public function subscriptionLink()

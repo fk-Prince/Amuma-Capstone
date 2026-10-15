@@ -44,7 +44,7 @@ class BranchRepository
             'contracts',
         ])
             ->where('status', Branch::STATUS_VERIFIED)
-            ->notTesting()
+            ->onLivePlan()
             ->whereHas('agencies', function ($q) {
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
@@ -106,7 +106,7 @@ class BranchRepository
             'contracts',
         ])
             ->where('status', Branch::STATUS_VERIFIED)
-            ->notTesting()
+            ->onLivePlan()
             ->whereHas('agencies', function ($q) {
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
