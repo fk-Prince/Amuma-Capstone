@@ -143,8 +143,8 @@ export const vitalSchema = z
             .string()
             .trim()
             .optional()
-            .refine((v) => !v || (Number(v) >= 85 && Number(v) <= 110), {
-                message: "Temperature must be between 85°F and 110°F",
+            .refine((v) => !v || (Number(v) >= 30 && Number(v) <= 43), {
+                message: "Temperature must be between 30°C and 43°C",
             }),
 
         oxygenSaturation: z

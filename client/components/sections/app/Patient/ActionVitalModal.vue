@@ -311,8 +311,8 @@ const bloodPressureDisplay = computed(() => {
                                         type="number"
                                         min="0"
                                         step="0.1"
-                                        label="Temperature (°F)"
-                                        placeholder="e.g. 98.6"
+                                        label="Temperature (°C)"
+                                        placeholder="e.g. 36.6"
                                         :error="errors.temperature"
                                         @update:modelValue="
                                             clearError('temperature')

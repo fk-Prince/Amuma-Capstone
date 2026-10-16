@@ -7,14 +7,6 @@
                 <h3 class="text-lg font-semibold tracking-tight">
                     Diagnosis Cases
                 </h3>
-
-                <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-                    Every diagnosis case added here is billed to
-                    {{ patientName || "the patient" }} on one new invoice. The
-                    monthly case price is added to every admission period. A
-                    diagnosis case can be changed or removed until a payment is
-                    made toward it. A discharge includes them in its refund.
-                </p>
             </div>
 
             <button

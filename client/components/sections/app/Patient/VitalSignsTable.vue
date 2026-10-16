@@ -155,7 +155,7 @@ const emit = defineEmits<{
                 >
                     {{
                         latestVital.temperature
-                            ? `${latestVital.temperature}°F`
+                            ? `${latestVital.temperature}°C`
                             : "—"
                     }}
                 </p>
@@ -187,7 +187,11 @@ const emit = defineEmits<{
                 <p
                     class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
                 >
-                    {{ latestVital.bloodGlucose || "—" }}
+                    {{
+                        latestVital.bloodGlucose
+                            ? `${latestVital.bloodGlucose} mg/dL`
+                            : "—"
+                    }}
                 </p>
             </div>
 
@@ -425,7 +429,7 @@ const emit = defineEmits<{
                             >
                                 {{
                                     vital.temperature
-                                        ? `${vital.temperature}°F`
+                                        ? `${vital.temperature}°C`
                                         : "—"
                                 }}
                             </td>
@@ -433,7 +437,11 @@ const emit = defineEmits<{
                             <td
                                 class="px-4 py-4 text-sm text-slate-600 dark:text-gray-400"
                             >
-                                {{ cell(vital.bloodGlucose) }}
+                                {{
+                                    vital.bloodGlucose
+                                        ? `${vital.bloodGlucose} mg/dL`
+                                        : "—"
+                                }}
                             </td>
 
                             <td
