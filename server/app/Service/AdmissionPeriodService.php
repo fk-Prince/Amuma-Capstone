@@ -60,57 +60,95 @@ class AdmissionPeriodService
     }
 
 
-    /*
-        An accommodation change is flat: moving up charges only the room price
-        still missing, moving down or sideways costs nothing and refunds
-        nothing. The diagnosis fee billed with the admission stays as charged.
-    */
-    public function upgradeFee(float $newPrice, float $roomCharged): float
+    public function repriceConsumed(AdmissionPeriod $period,  float $oldPrice,  float $consumed)
     {
-        return round(max(0, $newPrice - $roomCharged), 2);
+        $lines = $period->invoiceAdmissionLines;
+
+        if ($oldPrice <= 0 || $lines->isEmpty()) {
+            return;
+        }
+
+        $assigned = 0.0;
+        $last = $lines->count() - 1;
+
+        foreach ($lines->values() as $index => $line) {
+            $share = $index === $last
+                ? round($consumed - $assigned, 2)
+                : round((float) $line->price / $oldPrice * $consumed, 2);
+
+            $line->update(['price' => $share]);
+            $assigned = round($assigned + $share, 2);
+        }
     }
 
-    public function moveBilling(AdmissionPeriod $period, AdmissionPeriod $next, BranchContract $newContract, array &$upgrades): void
+
+    public function moveBilling(AdmissionPeriod $period, AdmissionPeriod $next, float $oldPrice, float $oldConsumed, float $newRemaining, BranchContract $newContract, array &$upgrades): void
     {
-        $fee = $this->upgradeFee((float) $newContract->price, $period->roomChargedInChain());
+        $lines = $period->invoiceAdmissionLines->values();
+        $before = $lines->map(fn($line) => (float) $line->price);
+        $total = $before->sum();
 
-        $origin = $period->invoiceAdmissionLines()
-            ->with('invoice')
-            ->orderBy('invoice_admission_id')
-            ->first()
-            ?->invoice;
-
-        if (!$origin) {
+        if ($lines->isEmpty() || $total <= 0) {
             return;
         }
 
-        $description = $this->changeDescription($period->branchContract, $newContract);
+        $this->repriceConsumed($period, $oldPrice, $oldConsumed);
 
-        if ($fee >= 0.01 && $this->settled($origin)) {
-            $this->addUpgrade($upgrades, $origin, $next, $fee, $description);
+        $kept = $lines
+            ->map(fn($line, $index) => round($before[$index] - (float) $line->price, 2))
+            ->all();
 
-            return;
+        $deltas = $this->allocateDelta($kept, round($newRemaining - array_sum($kept), 2));
+
+        $perInvoice = [];
+
+        foreach ($lines as $index => $line) {
+            $entry = $perInvoice[$line->invoice_id]
+                ?? ['invoice' => $line->invoice, 'kept' => 0.0, 'delta' => 0.0, 'description' => $line->description];
+
+            $perInvoice[$line->invoice_id] = [
+                'invoice' => $entry['invoice'],
+                'description' => $entry['description'],
+                'kept' => round($entry['kept'] + $kept[$index], 2),
+                'delta' => round($entry['delta'] + $deltas[$index], 2),
+            ];
         }
 
-        if ($fee >= 0.01) {
-            InvoiceAdjustment::create([
-                'invoice_id' => $origin->invoice_id,
-                'type'       => 'correction',
-                'amount'     => $fee,
-                'reason'     => 'Accommodation upgraded. Difference to the new plan.',
-            ]);
+        foreach ($perInvoice as $entry) {
+            $invoice = $entry['invoice'];
+            $delta = $entry['delta'];
+            $description = $this->changeDescription($period->branchContract, $newContract);
+            $separate = $delta >= 0.01 && $this->settled($invoice);
+
+            if ($separate) {
+                $this->addUpgrade($upgrades, $invoice, $next, $delta, $description);
+                $delta = 0.0;
+            }
+
+            if (abs($delta) >= 0.01) {
+                InvoiceAdjustment::create([
+                    'invoice_id' => $invoice->invoice_id,
+                    'type'       => 'correction',
+                    'amount'     => $delta,
+                    'reason'     => $delta > 0
+                        ? 'Accommodation upgraded mid-period. Difference for the remaining days.'
+                        : 'Accommodation downgraded mid-period. Credit for the remaining days.',
+                ]);
+            }
+
+            $price = round($entry['kept'] + $delta, 2);
+
+            if ($price > 0) {
+                $invoice->invoiceAdmissionLines()->create([
+                    'admission_period_id' => $next->admission_period_id,
+                    'price'               => $price,
+                    'description'         => $separate ? $entry['description'] : $description,
+                ]);
+            }
+
+            $invoice->refresh();
+            $invoice->syncStatus();
         }
-
-        // A downgrade still records its line, at no charge, so the new
-        // accommodation shows up on the invoice and in the period chain.
-        $origin->invoiceAdmissionLines()->create([
-            'admission_period_id' => $next->admission_period_id,
-            'price'               => $fee,
-            'description'         => $description,
-        ]);
-
-        $origin->refresh();
-        $origin->syncStatus();
     }
 
     private function settled(Invoice $invoice): bool
@@ -153,6 +191,45 @@ class AdmissionPeriodService
                 ]);
             }
         }
+    }
+
+    private function allocateDelta(array $amounts, float $delta): array
+    {
+        $deltas = array_fill(0, count($amounts), 0.0);
+
+        if (abs($delta) < 0.01) {
+            return $deltas;
+        }
+
+        if ($delta > 0) {
+            $total = array_sum($amounts);
+            $last = count($amounts) - 1;
+            $assigned = 0.0;
+
+            foreach ($amounts as $index => $amount) {
+                $deltas[$index] = $index === $last
+                    ? round($delta - $assigned, 2)
+                    : round($total > 0 ? $amount / $total * $delta : $delta / count($amounts), 2);
+
+                $assigned = round($assigned + $deltas[$index], 2);
+            }
+
+            return $deltas;
+        }
+
+        $remaining = $delta;
+
+        foreach (array_reverse(array_keys($amounts)) as $index) {
+            $take = max($remaining, -$amounts[$index]);
+            $deltas[$index] = round($take, 2);
+            $remaining = round($remaining - $take, 2);
+
+            if ($remaining >= 0) {
+                break;
+            }
+        }
+
+        return $deltas;
     }
 
     private function direction(?BranchContract $from, BranchContract $to): string
@@ -199,56 +276,57 @@ class AdmissionPeriodService
                 continue;
             }
 
+            $newPrice = (float) $contract->price;
             $oldContract = $future->branchContract;
 
             $future->update([
                 'branch_contract_id' => $contract->branch_contract_id,
             ]);
 
-            $roomLines = $future->invoiceAdmissionLines
-                ->sortBy('invoice_admission_id')
-                ->values();
+            $lines = $future->invoiceAdmissionLines->values();
+            $prices = $lines->map(fn($line) => (float) $line->price)->all();
+            $deltas = $this->allocateDelta($prices, round($newPrice - array_sum($prices), 2));
 
-            $line = $roomLines->first();
+            $groups = [];
 
-            if (!$line) {
-                continue;
+            foreach ($lines as $index => $line) {
+                $groups[$line->invoice_id][] = [$line, $deltas[$index]];
             }
 
-            $line->update([
-                'description' => $this->carriedDescription($future, $oldContract, $contract, $line->description),
-            ]);
+            foreach ($groups as $invoiceId => $entries) {
+                $delta = round(array_sum(array_column($entries, 1)), 2);
+                $invoice = $invoiceId ? Invoice::find($invoiceId) : null;
 
-            $fee = $this->upgradeFee((float) $contract->price, (float) $roomLines->sum('price'));
+                if ($invoice && $delta >= 0.01 && $this->settled($invoice)) {
+                    $this->addUpgrade($upgrades, $invoice, $future, $delta, $this->changeDescription($oldContract, $contract));
 
-            if ($fee < 0.01) {
-                continue;
+                    continue;
+                }
+
+                foreach ($entries as [$line, $lineDelta]) {
+                    $line->update([
+                        'price' => round((float) $line->price + $lineDelta, 2),
+                        'description' => $this->carriedDescription($future, $oldContract, $contract, $line->description),
+                    ]);
+                }
+
+                if (!$invoiceId || abs($delta) < 0.01) {
+                    continue;
+                }
+
+                $reason = $delta > 0
+                    ? 'Accommodation upgraded. Prepaid period re-priced to the new plan.'
+                    : 'Accommodation downgraded. Prepaid period re-priced to the new plan.';
+
+                InvoiceAdjustment::create([
+                    'invoice_id' => $invoiceId,
+                    'type'       => 'correction',
+                    'amount'     => $delta,
+                    'reason'     => $reason,
+                ]);
+
+                $invoice->syncStatus();
             }
-
-            $invoice = $line->invoice;
-
-            if (!$invoice) {
-                continue;
-            }
-
-            if ($this->settled($invoice)) {
-                $this->addUpgrade($upgrades, $invoice, $future, $fee, $this->changeDescription($oldContract, $contract));
-
-                continue;
-            }
-
-            $line->update([
-                'price' => round((float) $line->price + $fee, 2),
-            ]);
-
-            InvoiceAdjustment::create([
-                'invoice_id' => $invoice->invoice_id,
-                'type'       => 'correction',
-                'amount'     => $fee,
-                'reason'     => 'Accommodation upgraded. Prepaid period charged the difference to the new plan.',
-            ]);
-
-            $invoice->syncStatus();
         }
     }
 

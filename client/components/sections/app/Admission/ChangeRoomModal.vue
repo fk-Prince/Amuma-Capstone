@@ -27,9 +27,8 @@
                             <p
                                 class="mt-1 text-sm text-slate-500 dark:text-gray-400"
                             >
-                                Moving up to a pricier accommodation adds the
-                                price difference once. Moving down is free and
-                                nothing is refunded. The
+                                Moving to a different accommodation re-bills the
+                                remaining days at the new rate. The
                                 {{
                                     currentCycle
                                         ? currentCycle.toLowerCase()
@@ -381,18 +380,202 @@
                         </div>
 
                         <div
-                            v-if="flatChange"
+                            v-if="proration"
                             class="mt-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-500/20 dark:bg-amber-500/10"
                         >
-                            <p
-                                class="text-sm font-semibold text-amber-900 dark:text-amber-300"
-                            >
-                                {{
-                                    flatChange.fee > 0
-                                        ? "Upgrade — pay the difference"
-                                        : "No charge for this change"
-                                }}
-                            </p>
+                            <div class="flex items-center gap-1.5">
+                                <p
+                                    class="text-sm font-semibold text-amber-900 dark:text-amber-300"
+                                >
+                                    {{ proration.remainingDays }} days remaining
+                                </p>
+
+                                <span
+                                    class="group relative inline-flex"
+                                    tabindex="0"
+                                    role="button"
+                                    aria-label="How this was worked out"
+                                >
+                                    <svg
+                                        class="h-3.5 w-3.5 cursor-help text-amber-700/60 transition hover:text-amber-900 dark:text-amber-300/60 dark:hover:text-amber-200"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M12 16v-4" />
+                                        <path d="M12 8h.01" />
+                                    </svg>
+
+                                    <span
+                                        class="pointer-events-none invisible absolute left-0 top-full z-20 mt-2 w-80 rounded-lg border border-slate-200 bg-white p-3 text-left opacity-0 shadow-lg transition duration-150 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 dark:border-white/10 dark:bg-secondary"
+                                    >
+                                        <span
+                                            class="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                        >
+                                            How this was worked out
+                                        </span>
+
+                                        <span
+                                            class="block space-y-1 text-[11px] leading-5"
+                                        >
+                                            <span
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Period
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{ proration.totalDays }}
+                                                    days
+                                                </span>
+                                            </span>
+
+                                            <span
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Stayed so far
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{ proration.consumedDays }}
+                                                    days
+                                                </span>
+                                            </span>
+
+                                            <span
+                                                class="flex justify-between gap-3 border-t border-slate-100 pt-1 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Unused
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{
+                                                        proration.remainingDays
+                                                    }}
+                                                    days
+                                                </span>
+                                            </span>
+
+                                            <span
+                                                class="mt-1 flex justify-between gap-3 border-t border-slate-100 pt-1 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    {{ currentType }}
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.oldPeriodPrice,
+                                                        )
+                                                    }}
+                                                    ÷
+                                                    {{ proration.totalDays }}
+                                                    =
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.oldDailyRate,
+                                                        )
+                                                    }}/day
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.oldRemaining,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </span>
+
+                                            <span
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    {{
+                                                        selectedContract?.accommodation_type
+                                                    }}
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.newContractPrice,
+                                                        )
+                                                    }}
+                                                    ÷ {{ proration.totalDays }} =
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.newDailyRate,
+                                                        )
+                                                    }}/day
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{
+                                                        formatCurrency(
+                                                            proration.newRemaining,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </span>
+
+                                            <span
+                                                class="mt-1 flex justify-between gap-3 border-t border-slate-100 pt-1 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Each ×
+                                                    {{
+                                                        proration.remainingDays
+                                                    }}
+                                                    unused days
+                                                </span>
+
+                                                <span
+                                                    class="shrink-0 font-semibold text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{
+                                                        proration.difference >=
+                                                        0
+                                                            ? "+"
+                                                            : "−"
+                                                    }}
+                                                    {{
+                                                        formatCurrency(
+                                                            Math.abs(
+                                                                proration.difference,
+                                                            ),
+                                                        )
+                                                    }}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                </span>
+                            </div>
 
                             <div class="mt-3 space-y-1.5 text-sm">
                                 <div class="flex justify-between gap-4">
@@ -403,11 +586,15 @@
                                         <span
                                             class="text-slate-400 dark:text-gray-500"
                                         >
-                                            billed so far
+                                            now
                                         </span>
                                     </span>
                                     <span class="font-medium">
-                                        {{ formatCurrency(flatChange.roomCharged) }}
+                                        {{
+                                            formatCurrency(
+                                                proration.oldRemaining,
+                                            )
+                                        }}
                                     </span>
                                 </div>
 
@@ -421,11 +608,15 @@
                                         <span
                                             class="text-slate-400 dark:text-gray-500"
                                         >
-                                            price
+                                            new
                                         </span>
                                     </span>
                                     <span class="font-medium">
-                                        {{ formatCurrency(flatChange.newPrice) }}
+                                        {{
+                                            formatCurrency(
+                                                proration.newRemaining,
+                                            )
+                                        }}
                                     </span>
                                 </div>
 
@@ -435,21 +626,35 @@
                                     <span
                                         class="font-semibold text-slate-700 dark:text-gray-300"
                                     >
-                                        To pay
+                                        {{
+                                            proration.difference >= 0
+                                                ? "To pay"
+                                                : "To credit"
+                                        }}
                                     </span>
                                     <span
-                                        class="font-bold text-amber-900 dark:text-amber-300"
+                                        class="font-bold"
+                                        :class="
+                                            proration.difference >= 0
+                                                ? 'text-amber-900 dark:text-amber-300'
+                                                : 'text-emerald-700 dark:text-emerald-300'
+                                        "
                                     >
                                         {{
-                                            flatChange.fee > 0
-                                                ? `+ ${formatCurrency(flatChange.fee)}`
-                                                : formatCurrency(0)
+                                            proration.difference >= 0
+                                                ? "+"
+                                                : "−"
+                                        }}
+                                        {{
+                                            formatCurrency(
+                                                Math.abs(proration.difference),
+                                            )
                                         }}
                                     </span>
                                 </div>
 
                                 <div
-                                    v-for="group in flatChange.futureGroups"
+                                    v-for="group in proration.futureGroups"
                                     :key="group.billingCycle ?? 'unknown'"
                                     class="flex justify-between gap-4 border-t border-amber-200 pt-1.5 dark:border-amber-500/20"
                                 >
@@ -479,29 +684,20 @@
                                         — left unchanged
                                     </span>
 
-                                    <span
-                                        v-else-if="group.delta > 0"
-                                        class="font-medium"
-                                    >
-                                        + {{ formatCurrency(group.delta) }}
-                                    </span>
-
                                     <span v-else class="font-medium">
-                                        No charge
+                                        will be re-priced to
+                                        {{
+                                            selectedContract?.accommodation_type
+                                        }}
                                     </span>
                                 </div>
                             </div>
 
-                            <p
+                            <!-- <p
                                 class="mt-3 text-xs text-amber-800/80 dark:text-amber-300/70"
                             >
-                                {{
-                                    flatChange.fee > 0
-                                        ? "Only the missing room price is added. Days already stayed are not re-billed."
-                                        : "Moving to a cheaper or equal plan costs nothing, and nothing is refunded."
-                                }}
-                                Diagnosis fees stay as billed.
-                            </p>
+                                Payments already made stay put.
+                            </p> -->
 
                             <div
                                 v-if="priceReference.length"
@@ -950,22 +1146,24 @@ const currentInvoiceCode = computed(
     () => props.admission?.current_invoice?.invoice_code ?? null,
 );
 
-// An accommodation change is flat: moving up adds only the room price not yet
-// billed, moving down or sideways costs nothing and refunds nothing.
-const flatChange = computed(() => {
-    if (!isAccommodationChange.value) {
+const proration = computed(() => {
+    if (!isAccommodationChange.value || !consumption.value) {
         return null;
     }
 
+    const { remainingDays, totalDays, consumedDays } = consumption.value;
+
     const round2 = (n: number) => Math.round(n * 100) / 100;
 
-    const roomCharged = Number(
-        currentPeriod.value?.room_charged_amount ??
-            currentPeriod.value?.charged_amount ??
-            0,
-    );
+    const oldDailyRate =
+        Number(currentPeriod.value?.charged_amount ?? 0) / totalDays;
 
-    const newPrice = Number(selectedContract.value?.price ?? 0);
+    const newDailyRate =
+        Number(selectedContract.value?.price ?? 0) / totalDays;
+
+    const oldRemaining = round2(oldDailyRate * remainingDays);
+    const newRemaining = round2(newDailyRate * remainingDays);
+    const difference = round2(newRemaining - oldRemaining);
 
     const futureGroups = (props.admission?.future_periods?.groups ?? []).map(
         (group) => {
@@ -985,27 +1183,17 @@ const flatChange = computed(() => {
                               normalize(group.billing_cycle),
                   );
 
-            const charged =
-                group.room_charged_amounts ??
-                Array.from(
-                    { length: group.count },
-                    () => group.charged_amount / Math.max(1, group.count),
-                );
-
             return {
                 billingCycle: group.billing_cycle,
                 count: group.count,
+                chargedAmount: round2(group.charged_amount),
+                newPrice: matchedContract
+                    ? round2(Number(matchedContract.price))
+                    : null,
                 delta: matchedContract
                     ? round2(
-                          charged.reduce(
-                              (sum, amount) =>
-                                  sum +
-                                  Math.max(
-                                      0,
-                                      Number(matchedContract.price) - amount,
-                                  ),
-                              0,
-                          ),
+                          group.count * Number(matchedContract.price) -
+                              group.charged_amount,
                       )
                     : null,
             };
@@ -1013,9 +1201,18 @@ const flatChange = computed(() => {
     );
 
     return {
-        roomCharged: round2(roomCharged),
-        newPrice: round2(newPrice),
-        fee: round2(Math.max(0, newPrice - roomCharged)),
+        remainingDays,
+        totalDays,
+        consumedDays,
+        oldDailyRate: round2(oldDailyRate),
+        newDailyRate: round2(newDailyRate),
+        oldPeriodPrice: round2(
+            Number(currentPeriod.value?.charged_amount ?? 0),
+        ),
+        newContractPrice: round2(Number(selectedContract.value?.price ?? 0)),
+        oldRemaining,
+        newRemaining,
+        difference,
         futureGroups,
     };
 });
