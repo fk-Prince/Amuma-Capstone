@@ -164,23 +164,96 @@
                             @update:model-value="pickDiagnosis"
                         />
 
-                        <Combobox
-                            :key="`case-${active.key}-${active.case_uuid}`"
-                            :model-value="active.case_uuid"
-                            label="Diagnosis case"
-                            placeholder="Select a diagnosis case"
-                            required
-                            search-bar
-                            search-placeholder="Search diagnosis cases"
-                            :items="caseItems"
-                            :error="
-                                errorFor(
-                                    activeIndex,
-                                    'diagnosis_case_uuid',
-                                )
-                            "
-                            @update:model-value="selectCase"
-                        />
+                        <div>
+                            <p
+                                class="mb-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
+                            >
+                                Diagnosis case
+                                <span class="text-danger">*</span>
+                            </p>
+
+                            <button
+                                type="button"
+                                class="group flex w-full items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-200"
+                                :class="
+                                    errorFor(activeIndex, 'diagnosis_case_uuid')
+                                        ? 'border-red-400 bg-red-50/30 dark:bg-red-500/10'
+                                        : activeCase
+                                          ? 'border-primary bg-primary/5 dark:bg-primary-500/10'
+                                          : 'border-slate-200 hover:border-primary-200 hover:bg-primary-50/30 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
+                                "
+                                @click="caseModalOpen = true"
+                            >
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                                        :class="
+                                            activeCase
+                                                ? 'bg-primary text-white'
+                                                : 'bg-primary/10 text-primary'
+                                        "
+                                    >
+                                        <Check
+                                            v-if="activeCase"
+                                            class="h-5 w-5"
+                                        />
+
+                                        <Stethoscope v-else class="h-5 w-5" />
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <p
+                                            class="truncate text-sm font-semibold"
+                                            :class="
+                                                activeCase
+                                                    ? 'text-slate-800 dark:text-white'
+                                                    : 'text-slate-400 dark:text-gray-500'
+                                            "
+                                        >
+                                            {{
+                                                activeCase?.title ||
+                                                "Choose the diagnosis case"
+                                            }}
+                                        </p>
+
+                                        <p
+                                            class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
+                                        >
+                                            {{
+                                                activeCase
+                                                    ? `${formatCurrency(activeCase.price)} / month`
+                                                    : "One diagnosis case per diagnosis"
+                                            }}
+                                        </p>
+
+                                        <p
+                                            v-if="activeCase?.description"
+                                            class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ activeCase.description }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <span
+                                    class="shrink-0 whitespace-nowrap text-xs font-semibold transition-colors"
+                                    :class="
+                                        activeCase
+                                            ? 'text-primary'
+                                            : 'text-slate-400 group-hover:text-primary dark:text-gray-500'
+                                    "
+                                >
+                                    {{ activeCase ? "Change" : "Choose" }}
+                                </span>
+                            </button>
+
+                            <p
+                                v-if="errorFor(activeIndex, 'diagnosis_case_uuid')"
+                                class="mt-1.5 text-xs text-red-500"
+                            >
+                                {{ errorFor(activeIndex, "diagnosis_case_uuid") }}
+                            </p>
+                        </div>
 
                         <BaseInput
                             :key="`amount-${active.key}`"
@@ -667,6 +740,14 @@
             </div>
         </div>
 
+        <DiagnosisCaseModal
+            :open="caseModalOpen"
+            :cases="cases"
+            :model-value="active.case_uuid"
+            @update:model-value="selectCase"
+            @close="caseModalOpen = false"
+        />
+
         <ChargeSlipModal :slip="slip" @close="slip = null" />
     </div>
 </template>
@@ -678,8 +759,10 @@ import {
     FileText,
     LoaderCircle,
     Pencil,
+    Check,
     Plus,
     Printer,
+    Stethoscope,
     Trash2,
     UploadCloud,
     X as XIcon,
@@ -689,6 +772,7 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import ChargeSlipModal from "~/components/sections/app/Admission/ChargeSlipModal.vue";
+import DiagnosisCaseModal from "~/components/sections/app/Admission/DiagnosisCaseModal.vue";
 import { admissionService } from "~/api/admission/AdmissionService";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import { patientService } from "~/api/patient/PatientService";
@@ -860,11 +944,10 @@ const diagnosisItems = computed(() => [
     { label: "+ Add new diagnosis", value: NEW_DIAGNOSIS },
 ]);
 
-const caseItems = computed(() =>
-    cases.value.map((item) => ({
-        label: `${item.title} — ${formatCurrency(item.price)} / month`,
-        value: item.uuid,
-    })),
+const caseModalOpen = ref(false);
+
+const activeCase = computed(
+    () => cases.value.find((item) => item.uuid === active.value.case_uuid) ?? null,
 );
 
 const filledEntries = computed(() =>
