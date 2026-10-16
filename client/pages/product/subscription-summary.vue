@@ -184,9 +184,16 @@ const isSuccess = computed(() => {
 });
 
 
+const branchUuid = computed(
+    () =>
+        branchStore.activeBranch?.uuid ??
+        branchStore.lastSelectedBranch?.uuid ??
+        branchStore.branches?.[0]?.uuid,
+);
+
 const paymentUrl = computed(() =>
     typeof route.query.ref === "string" && route.query.ref
-        ? subscriptionInvoiceLink(route.query.ref)
+        ? subscriptionInvoiceLink(route.query.ref, branchUuid.value)
         : null,
 );
 
@@ -215,12 +222,7 @@ onMounted(async () => {
     await prepareWorkspace();
 });
 
-const dashboardUrl = computed(() => {
-    const uuid =
-        branchStore.activeBranch?.uuid ??
-        branchStore.lastSelectedBranch?.uuid ??
-        branchStore.branches?.[0]?.uuid;
-
-    return uuid ? `/app/branches/${uuid}/dashboard` : null;
-});
+const dashboardUrl = computed(() =>
+    branchUuid.value ? `/app/branches/${branchUuid.value}/dashboard` : null,
+);
 </script>
