@@ -53,6 +53,7 @@ class Subscription extends Model
         'mode',
         'start_date',
         'end_date',
+        'cancel_reason',
     ];
 
     public function plans()

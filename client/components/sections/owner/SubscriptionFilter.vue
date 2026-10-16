@@ -124,7 +124,7 @@
 import Combobox from "~/components/ui/Combobox.vue";
 
 export type SubscriptionView = "requests" | "approved" | "rejected";
-export type ApprovedStatus = "active" | "expired" | "expiring";
+export type ApprovedStatus = "active" | "expired" | "expiring" | "cancelled";
 export type PlanFilter = "all" | "A" | "B" | "C";
 
 type ComboboxItem = {
@@ -173,6 +173,10 @@ const statusOptions: ComboboxItem[] = [
     {
         label: "Expired",
         value: "expired",
+    },
+    {
+        label: "Cancelled",
+        value: "cancelled",
     },
 ];
 

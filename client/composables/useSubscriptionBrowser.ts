@@ -6,7 +6,7 @@ const PER_PAGE = 9;
 const SEARCH_DEBOUNCE_MS = 350;
 
 export type SubscriptionView = "requests" | "approved" | "rejected";
-export type ApprovedStatus = "active" | "expired" | "expiring";
+export type ApprovedStatus = "active" | "expired" | "expiring" | "cancelled";
 export type PlanFilter = "all" | "A" | "B" | "C";
 
 export function useSubscriptionBrowser(initialView: SubscriptionView) {

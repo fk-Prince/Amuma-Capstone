@@ -88,7 +88,8 @@ export interface SubscriptionCardData {
     };
 
     subscription?: {
-        status?: "pending" | "active" | "expired" | "rejected";
+        status?: "pending" | "active" | "expired" | "rejected" | "cancelled";
+        cancel_reason?: string | null;
         branch_limit?: number;
         covered_branches: SubscriptionCoveredBranch[];
     };

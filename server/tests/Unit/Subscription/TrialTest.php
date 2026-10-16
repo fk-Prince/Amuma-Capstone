@@ -76,11 +76,25 @@ class TrialTest extends TestCase
     {
         $subscription = $this->onTrial();
 
-        $response = $this->controller->cancelTest($this->request([]));
+        $response = $this->controller->cancelTest($this->request(['reason' => 'Too expensive for us.']));
 
         $this->assertSame('Subscription cancelled. Your payment is being refunded.', $this->data($response)['message']);
         $this->assertSame(Subscription::STATUS_CANCELLED, $subscription->fresh()->status);
+        $this->assertSame('Too expensive for us.', $subscription->fresh()->cancel_reason);
         $this->assertSame(SubscriptionPayment::STATUS_REFUNDED, SubscriptionPayment::firstOrFail()->status);
+    }
+
+    public function test_a_cancel_reason_is_required(): void
+    {
+        $subscription = $this->onTrial();
+
+        $this->assertFailsWith(
+            'Please tell us why you are cancelling.',
+            fn() => $this->controller->cancelTest($this->request([])),
+            422
+        );
+
+        $this->assertSame(Subscription::STATUS_ACTIVE, $subscription->fresh()->status);
     }
 
     public function test_the_subscription_could_not_be_cancelled_because_the_refund_failed(): void
@@ -90,7 +104,7 @@ class TrialTest extends TestCase
 
         $this->assertFailsWith(
             'The subscription could not be cancelled because the refund failed. Please try again.',
-            fn() => $this->controller->cancelTest($this->request([])),
+            fn() => $this->controller->cancelTest($this->request(['reason' => 'Too expensive for us.'])),
             502
         );
 

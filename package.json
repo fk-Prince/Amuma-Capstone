@@ -12,6 +12,7 @@
         "ssl-proxy": "node --disable-warning=DEP0060 node_modules/local-ssl-proxy/build/main.js --hostname 127.0.0.1 --cert client/certs/dev.pem --key client/certs/dev-key.pem",
         "api-https": "wait-on tcp:127.0.0.1:8000 && npm run ssl-proxy -- --source 8443 --target 8000",
         "reverb-wss": "wait-on tcp:127.0.0.1:8080 && npm run ssl-proxy -- --source 9443 --target 8080",
+        "query": "cd server && php scripts/query.php",
         "env": "node scripts/sync-env.mjs",
         "db": "node scripts/db.mjs",
         "db:fresh": "node scripts/db.mjs --fresh",

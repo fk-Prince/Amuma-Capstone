@@ -1,5 +1,10 @@
 <script lang="ts" setup>
-type ApprovedStatus = "active" | "inactive" | "expired" | "expiring";
+type ApprovedStatus =
+    | "active"
+    | "inactive"
+    | "expired"
+    | "expiring"
+    | "cancelled";
 type StatSelectPayload =
     | { view: "requests" }
     | { view: "approved"; status: ApprovedStatus }
@@ -25,7 +30,7 @@ const props = withDefaults(
 const visibleCount = computed(
     () =>
         (props.showRequests ? 1 : 0) +
-        (props.showApproved ? 4 : 0) +
+        (props.showApproved ? 5 : 0) +
         (props.showRejected ? 1 : 0),
 );
 
@@ -49,6 +54,8 @@ const overview = computed<any>(() => {
             active: 0,
             inactive: 0,
             expired: 0,
+            cancelled: 0,
+            cancelled_trials: 0,
             rejected: 0,
         }
     );
@@ -405,6 +412,82 @@ function select(payload: StatSelectPayload) {
                             class="mt-3 text-xs text-rose-500 dark:text-rose-300"
                         >
                             Needs renewal
+                        </p>
+                    </template>
+                    <template v-else>
+                        <div
+                            class="mt-2 h-8 w-14 animate-pulse rounded bg-slate-200 dark:bg-white/10"
+                        />
+                        <div
+                            class="mt-3 h-3 w-28 animate-pulse rounded bg-slate-100 dark:bg-white/5"
+                        />
+                    </template>
+                </div>
+            </button>
+
+            <!-- Cancelled -->
+            <button
+                v-if="showApproved"
+                type="button"
+                :aria-pressed="isApprovedActive('cancelled')"
+                class="group relative w-full overflow-hidden rounded-lg border bg-white dark:bg-secondary p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-slate-300"
+                :class="
+                    isApprovedActive('cancelled')
+                        ? 'border-slate-400 ring-2 ring-slate-200 dark:ring-white/10'
+                        : 'border-slate-200 dark:border-white/10'
+                "
+                @click="select({ view: 'approved', status: 'cancelled' })"
+            >
+                <div
+                    class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-slate-200/60 dark:bg-white/5 blur-2xl"
+                />
+
+                <div class="relative">
+                    <div class="flex items-center justify-between">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10"
+                        >
+                            <svg
+                                class="h-5 w-5 text-slate-500 dark:text-gray-300"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="m5.6 5.6 12.8 12.8" />
+                            </svg>
+                        </div>
+
+                        <span
+                            class="rounded-full bg-slate-100 dark:bg-white/10 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-gray-300"
+                        >
+                            Ended
+                        </span>
+                    </div>
+
+                    <p
+                        class="mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    >
+                        Cancelled
+                    </p>
+
+                    <template v-if="!loading">
+                        <p
+                            class="mt-1 text-3xl font-bold tabular-nums text-slate-800 dark:text-white"
+                        >
+                            {{ overview.cancelled ?? 0 }}
+                        </p>
+                        <p
+                            class="mt-3 text-xs text-slate-500 dark:text-gray-400"
+                        >
+                            {{ overview.cancelled_trials ?? 0 }}
+                            {{
+                                (overview.cancelled_trials ?? 0) === 1
+                                    ? "trial"
+                                    : "trials"
+                            }}
+                            cancelled
                         </p>
                     </template>
                     <template v-else>

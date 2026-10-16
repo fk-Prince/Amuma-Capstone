@@ -447,6 +447,21 @@
             </div>
 
             <div
+                v-if="props.subscription.subscription?.cancel_reason"
+                class="border-t border-slate-100 px-5 py-2.5 text-[11px] dark:border-white/10"
+            >
+                <p
+                    class="text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-gray-500"
+                >
+                    Cancel reason
+                </p>
+
+                <p class="mt-0.5 text-secondary dark:text-gray-200">
+                    {{ props.subscription.subscription.cancel_reason }}
+                </p>
+            </div>
+
+            <div
                 v-if="agency.registered_by"
                 class="flex items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-2.5 text-[11px] text-muted dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
             >

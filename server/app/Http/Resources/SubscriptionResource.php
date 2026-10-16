@@ -40,6 +40,7 @@ class SubscriptionResource extends JsonResource
             'subscription' => [
                 'uuid' => $subscription?->uuid,
                 'status' => $subscription?->status,
+                'cancel_reason' => $subscription?->cancel_reason,
                 'start_date' => $subscription?->start_date,
                 'end_date' => $subscription?->end_date,
                 'branch_limit' => $subscription?->branchLimit(),

@@ -251,7 +251,7 @@ definePageMeta({
 });
 
 useHead({
-    title: "AMUMA Branches",
+    title: "Subscription",
 });
 
 const {

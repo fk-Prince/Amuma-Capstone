@@ -221,6 +221,10 @@ class SubscriptionRepository
             'pending' => (int) ($counts['pending'] ?? 0),
             'active' => (int) ($counts['active'] ?? 0),
             'expired' => (int) ($counts['expired'] ?? 0),
+            'cancelled' => (int) ($counts['cancelled'] ?? 0),
+            'cancelled_trials' => Subscription::where('status', Subscription::STATUS_CANCELLED)
+                ->where('mode', Subscription::MODE_TEST)
+                ->count(),
             'expiring_soon' => $this->expiringSoon(Subscription::query())->count(),
             'rejected' => BranchSubscription::where('status', BranchSubscription::STATUS_REJECTED)->count(),
             'active_branches' => BranchSubscription::where(

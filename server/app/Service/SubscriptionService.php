@@ -486,7 +486,17 @@ class SubscriptionService
 
     public function cancelTest(array $payload)
     {
-        return DB::transaction(function () use ($payload) {
+        $reason = trim((string) ($payload['reason'] ?? ''));
+
+        if ($reason === '') {
+            throw new Exception(__('Please tell us why you are cancelling.'), 422);
+        }
+
+        if (mb_strlen($reason) > 500) {
+            throw new Exception(__('The cancel reason may not be longer than 500 characters.'), 422);
+        }
+
+        return DB::transaction(function () use ($payload, $reason) {
             $subscription = $this->subscriptionRepository
                 ->findLatestForBranch($payload['branch_id']);
 
@@ -519,6 +529,7 @@ class SubscriptionService
 
             $subscription->update([
                 'status' => Subscription::STATUS_CANCELLED,
+                'cancel_reason' => $reason,
                 'end_date' => Carbon::now(),
                 'pending_plan_id' => null,
                 'pending_plan_starts_at' => null,

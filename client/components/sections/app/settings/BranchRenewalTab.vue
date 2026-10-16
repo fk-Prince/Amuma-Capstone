@@ -473,6 +473,23 @@
                             will stop running. This can't be undone.
                         </p>
 
+                        <label
+                            for="cancel-reason"
+                            class="mt-3 block text-xs font-semibold text-rose-700 dark:text-rose-300"
+                        >
+                            Why are you cancelling?
+                        </label>
+
+                        <textarea
+                            id="cancel-reason"
+                            v-model="cancelReason"
+                            rows="3"
+                            maxlength="500"
+                            :disabled="cancelling"
+                            placeholder="Tell us your reason for cancelling"
+                            class="mt-1.5 w-full resize-none rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:border-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-100 disabled:opacity-50 dark:border-rose-500/30 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-rose-500/20"
+                        />
+
                         <div class="mt-3 flex flex-wrap justify-end gap-2">
                             <button
                                 type="button"
@@ -485,7 +502,7 @@
 
                             <button
                                 type="button"
-                                :disabled="cancelling"
+                                :disabled="cancelling || !cancelReason.trim()"
                                 class="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:opacity-50"
                                 @click="cancelTest"
                             >
@@ -1112,6 +1129,7 @@ const canCancel = computed(
 
 const confirmCancel = ref(false);
 const cancelling = ref(false);
+const cancelReason = ref("");
 
 const confirmEnd = ref(false);
 const ending = ref(false);
@@ -1565,11 +1583,19 @@ const cancelPendingPlan = async () => {
 const cancelTest = async () => {
     if (cancelling.value) return;
 
+    const reason = cancelReason.value.trim();
+
+    if (!reason) {
+        error("Please tell us why you are cancelling.");
+        return;
+    }
+
     cancelling.value = true;
 
     try {
         const result = await subscriptionService.cancelTest({
             branch_uuid: props.uuid,
+            reason,
         });
 
         subscription.value = {
@@ -1582,6 +1608,7 @@ const cancelTest = async () => {
         };
 
         confirmCancel.value = false;
+        cancelReason.value = "";
         syncBranchMode();
         announceChange();
         success(result?.message ?? "Subscription cancelled.");

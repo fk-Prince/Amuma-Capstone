@@ -24,6 +24,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('plans', 'plan_id');
             $table->date('pending_plan_starts_at')->nullable();
+            $table->text('cancel_reason')->nullable();
             $table->timestamps();
             $table->index('pending_plan_starts_at');
         });
