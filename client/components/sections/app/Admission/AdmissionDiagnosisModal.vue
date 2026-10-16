@@ -81,7 +81,10 @@
                             No diagnosis cases yet. Add them from Contracts.
                         </p>
 
-                        <div v-else class="grid gap-6 md:grid-cols-[1fr_auto_1fr]">
+                        <div
+                            v-else
+                            class="grid gap-6 md:grid-cols-[1fr_auto_1fr]"
+                        >
                             <!-- LEFT · SELECTION -->
                             <section class="min-w-0">
                                 <div
@@ -165,7 +168,12 @@
                                         search-bar
                                         search-placeholder="Search diagnoses"
                                         :items="diagnosisItems"
-                                        :error="errorFor(activeIndex, 'patient_diagnosis_uuid')"
+                                        :error="
+                                            errorFor(
+                                                activeIndex,
+                                                'patient_diagnosis_uuid',
+                                            )
+                                        "
                                         @update:model-value="pickDiagnosis"
                                     />
 
@@ -178,7 +186,12 @@
                                         search-bar
                                         search-placeholder="Search diagnosis cases"
                                         :items="caseItems"
-                                        :error="errorFor(activeIndex, 'diagnosis_case_uuid')"
+                                        :error="
+                                            errorFor(
+                                                activeIndex,
+                                                'diagnosis_case_uuid',
+                                            )
+                                        "
                                         @update:model-value="selectCase"
                                     />
 
@@ -190,7 +203,9 @@
                                         placeholder="0.00"
                                         required
                                         :error="errorFor(activeIndex, 'amount')"
-                                        @update:modelValue="clearError(activeIndex, 'amount')"
+                                        @update:modelValue="
+                                            clearError(activeIndex, 'amount')
+                                        "
                                     />
 
                                     <BaseInput
@@ -200,7 +215,9 @@
                                         mode="textarea"
                                         :textMax="255"
                                         placeholder="Optional note saved with this diagnosis case"
-                                        :error="errorFor(activeIndex, 'description')"
+                                        :error="
+                                            errorFor(activeIndex, 'description')
+                                        "
                                     />
                                 </div>
 
@@ -271,7 +288,9 @@
                                         label="Primary Diagnosis"
                                         placeholder="e.g. Type 2 Diabetes"
                                         :error="newErrors.diagnosis"
-                                        @update:modelValue="delete newErrors.diagnosis"
+                                        @update:modelValue="
+                                            delete newErrors.diagnosis
+                                        "
                                     />
 
                                     <DatePickerField
@@ -300,7 +319,8 @@
                                             class="text-[13px] text-muted dark:text-gray-400"
                                         >
                                             Lab result, medical certificate, or
-                                            report (PDF, PNG, or JPG, up to 10MB)
+                                            report (PDF, PNG, or JPG, up to
+                                            10MB)
                                         </p>
 
                                         <label
@@ -332,7 +352,9 @@
                                                 <button
                                                     type="button"
                                                     class="text-xs font-medium text-slate-400 underline transition hover:text-red-500"
-                                                    @click.prevent="newDiagnosis.file = null"
+                                                    @click.prevent="
+                                                        newDiagnosis.file = null
+                                                    "
                                                 >
                                                     Remove file
                                                 </button>
@@ -394,18 +416,25 @@
                                     v-else
                                     class="divide-y divide-slate-100 dark:divide-white/10"
                                 >
-                                    <li v-for="item in diagnoses" :key="item.uuid">
+                                    <li
+                                        v-for="item in diagnoses"
+                                        :key="item.uuid"
+                                    >
                                         <button
                                             type="button"
                                             class="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition disabled:cursor-default"
                                             :class="
-                                                active.diagnosis_uuid === item.uuid
+                                                active.diagnosis_uuid ===
+                                                item.uuid
                                                     ? 'bg-primary/5'
                                                     : item.admission_charge
                                                       ? ''
                                                       : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                             "
-                                            :disabled="!!item.admission_charge || takenByOthers.has(item.uuid)"
+                                            :disabled="
+                                                !!item.admission_charge ||
+                                                takenByOthers.has(item.uuid)
+                                            "
                                             @click="pickDiagnosis(item.uuid)"
                                         >
                                             <div class="min-w-0">
@@ -418,46 +447,81 @@
                                                     v-if="item.diagnosis_date"
                                                     class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                                 >
-                                                    {{ formatDate(item.diagnosis_date) }}
+                                                    {{
+                                                        formatDate(
+                                                            item.diagnosis_date,
+                                                        )
+                                                    }}
                                                 </p>
 
-                                                <template v-if="item.admission_charge">
+                                                <template
+                                                    v-if="item.admission_charge"
+                                                >
                                                     <p
                                                         class="mt-1.5 break-words text-xs text-slate-600 dark:text-gray-300"
                                                     >
-                                                        {{ item.admission_charge.case_title }}
+                                                        {{
+                                                            item
+                                                                .admission_charge
+                                                                .case_title
+                                                        }}
                                                         ·
-                                                        {{ formatCurrency(item.admission_charge.amount) }}
+                                                        {{
+                                                            formatCurrency(
+                                                                item
+                                                                    .admission_charge
+                                                                    .amount,
+                                                            )
+                                                        }}
                                                         / mo
                                                     </p>
                                                     <p
-                                                        v-if="item.admission_charge.description"
+                                                        v-if="
+                                                            item
+                                                                .admission_charge
+                                                                .description
+                                                        "
                                                         class="mt-0.5 break-words text-xs text-slate-500 dark:text-gray-400"
                                                     >
-                                                        {{ item.admission_charge.description }}
+                                                        {{
+                                                            item
+                                                                .admission_charge
+                                                                .description
+                                                        }}
                                                     </p>
                                                     <p
                                                         class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                                     >
-                                                        {{ item.admission_charge.invoice_code }}
+                                                        {{
+                                                            item
+                                                                .admission_charge
+                                                                .invoice_code
+                                                        }}
                                                     </p>
                                                 </template>
                                             </div>
 
                                             <span
-                                                v-if="active.diagnosis_uuid === item.uuid"
+                                                v-if="
+                                                    active.diagnosis_uuid ===
+                                                    item.uuid
+                                                "
                                                 class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
                                             >
                                                 Selected
                                             </span>
                                             <span
-                                                v-else-if="item.admission_charge"
+                                                v-else-if="
+                                                    item.admission_charge
+                                                "
                                                 class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                                             >
                                                 Charged
                                             </span>
                                             <span
-                                                v-else-if="takenByOthers.has(item.uuid)"
+                                                v-else-if="
+                                                    takenByOthers.has(item.uuid)
+                                                "
                                                 class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                             >
                                                 On another case
@@ -491,7 +555,11 @@
                         >
                             <span class="text-slate-500 dark:text-gray-400">
                                 Total ({{ filledEntries.length }}
-                                {{ filledEntries.length === 1 ? "case" : "cases" }}
+                                {{
+                                    filledEntries.length === 1
+                                        ? "case"
+                                        : "cases"
+                                }}
                                 ·
                                 {{ isYearly ? "12 months" : "1 month" }})
                             </span>
@@ -513,7 +581,12 @@
                             <button
                                 type="button"
                                 class="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                                :disabled="submitting || loading || !!loadError || !cases.length"
+                                :disabled="
+                                    submitting ||
+                                    loading ||
+                                    !!loadError ||
+                                    !cases.length
+                                "
                                 @click="submit"
                             >
                                 <LoaderCircle
@@ -615,7 +688,10 @@ const branchStore = useBranchStore();
 const NEW_DIAGNOSIS = "__new__";
 
 const isYearly = computed(
-    () => String(props.billingCycle ?? "").trim().toLowerCase() === "yearly",
+    () =>
+        String(props.billingCycle ?? "")
+            .trim()
+            .toLowerCase() === "yearly",
 );
 const months = computed(() => (isYearly.value ? 12 : 1));
 
@@ -641,7 +717,9 @@ const submitError = ref("");
 const submitting = ref(false);
 const slip = ref<ChargeSlip | null>(null);
 
-const active = computed(() => entries.value[activeIndex.value] ?? entries.value[0]!);
+const active = computed(
+    () => entries.value[activeIndex.value] ?? entries.value[0]!,
+);
 
 const todayStr = getLocalDateStr(new Date());
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -872,8 +950,7 @@ function openSlip(rows: PatientDiagnosis[]) {
         prepared_by: user
             ? [user.first_name, user.last_name].filter(Boolean).join(" ")
             : null,
-        invoice_code: codes.join(", ") || null,
-        // What is still to be paid at the cashier.
+        invoice_code: billed.length > 1 ? null : (codes[0] ?? null),
         total: billed.reduce(
             (sum, row) =>
                 sum +
@@ -978,7 +1055,9 @@ async function submit() {
 
         submitError.value = Object.keys(raw).length
             ? ""
-            : (err?.data?.message ?? err?.message ?? "Couldn't add the diagnosis cases.");
+            : (err?.data?.message ??
+              err?.message ??
+              "Couldn't add the diagnosis cases.");
     } finally {
         submitting.value = false;
     }

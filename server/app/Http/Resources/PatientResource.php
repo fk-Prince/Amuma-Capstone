@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\AdmissionPeriod;
+use App\Models\RoomTransfer;
 use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Utils\DischargeCalculator;

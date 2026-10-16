@@ -21,7 +21,7 @@
                 </h1>
             </div>
 
-            <div class="text-right">
+            <div v-if="slip.invoice_code" class="text-right">
                 <p
                     class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
                 >
@@ -32,7 +32,7 @@
                     class="text-sm font-semibold"
                     :class="print ? '' : 'dark:text-white'"
                 >
-                    {{ slip.invoice_code || "—" }}
+                    {{ slip.invoice_code }}
                 </p>
             </div>
         </div>
@@ -119,8 +119,9 @@
                 "
             >
                 Please present this slip to the cashier to settle the amount
-                due for invoice
-                <span class="font-semibold">{{ slip.invoice_code }}</span
+                due<template v-if="slip.invoice_code">
+                    for invoice
+                    <span class="font-semibold">{{ slip.invoice_code }}</span></template
                 >.
             </p>
         </section>
