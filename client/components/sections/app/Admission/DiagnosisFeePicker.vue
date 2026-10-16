@@ -1,5 +1,5 @@
 <template>
-    <section v-if="rows.length" :class="sectionClass">
+    <section v-if="rows.length || (loaded && emptyText)" :class="sectionClass">
         <h4
             class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
         >
@@ -11,6 +11,13 @@
 
         <p class="mt-1 text-xs text-slate-500 dark:text-gray-400">
             {{ hint }}
+        </p>
+
+        <p
+            v-if="!rows.length"
+            class="mt-2.5 rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+        >
+            {{ emptyText }}
         </p>
 
         <div class="mt-2.5 space-y-3">
@@ -59,6 +66,10 @@ const props = withDefaults(
         step?: string;
         hint?: string;
         sectionClass?: string;
+        // Starts each diagnosis from the case it already has on this admission.
+        admissionId?: number;
+        // Shown when there is nothing to pick. Leave out to hide the section.
+        emptyText?: string;
     }>(),
     {
         step: "",
@@ -72,6 +83,7 @@ const emit = defineEmits<{
 }>();
 
 const cases = ref<DiagnosisCase[]>([]);
+const loaded = ref(false);
 const rows = ref<{ uuid: string; diagnosis: string; case_uuid: string }[]>([]);
 
 const caseItems = computed(() => [
@@ -107,6 +119,7 @@ watch(selection, (value) => emit("update:selection", value), {
 async function load() {
     cases.value = [];
     rows.value = [];
+    loaded.value = false;
 
     if (!props.patientUuid) return;
 
@@ -118,6 +131,9 @@ async function load() {
             diagnosisCaseService.patientDiagnoses({
                 branch_uuid,
                 patient_uuid: props.patientUuid,
+                ...(props.admissionId
+                    ? { patient_admission_id: props.admissionId }
+                    : {}),
             }),
         ]);
 
@@ -130,15 +146,20 @@ async function load() {
                 uuid: string;
                 diagnosis: string;
                 last_case_uuid?: string | null;
+                admission_case_uuid?: string | null;
             }) => ({
                 uuid: item.uuid,
                 diagnosis: item.diagnosis,
-                case_uuid: item.last_case_uuid ?? "",
+                case_uuid: props.admissionId
+                    ? (item.admission_case_uuid ?? "")
+                    : (item.last_case_uuid ?? ""),
             }),
         );
     } catch {
         cases.value = [];
         rows.value = [];
+    } finally {
+        loaded.value = true;
     }
 }
 

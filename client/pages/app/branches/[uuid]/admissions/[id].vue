@@ -361,6 +361,24 @@
 
                         <ActionButton
                             variant="outline"
+                            :disabled="
+                                !isWaiting || facilityLocked || !canUpdateAdmission
+                            "
+                            :tooltip="
+                                blockedTip(
+                                    isAdmitted
+                                        ? 'Diagnosis cases can only be set before the patient is admitted.'
+                                        : 'There is no waiting admission. Start a new admission first.',
+                                    canUpdateAdmission,
+                                )
+                            "
+                            @click="diagnosisModalOpen = true"
+                        >
+                            Diagnosis Cases
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="outline"
                             :disabled="!canReadAdmissions"
                             :tooltip="
                                 canReadAdmissions ? undefined : noPermissionTip
@@ -1039,6 +1057,16 @@
             @close="addServiceModalOpen = false"
         />
 
+        <AdmissionDiagnosisModal
+            :open="diagnosisModalOpen"
+            :patient-uuid="id"
+            :patient-name="patient?.full_name"
+            :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
+            :saving="actionLoading"
+            @close="diagnosisModalOpen = false"
+            @save="saveDiagnosisCases"
+        />
+
         <ChargesModal
             :open="chargeModalOpen"
             :patient-uuid="id"
@@ -1092,6 +1120,7 @@ import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDis
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
 import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
 import ChargesModal from "~/components/sections/app/Admission/ChargesModal.vue";
+import AdmissionDiagnosisModal from "~/components/sections/app/Admission/AdmissionDiagnosisModal.vue";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
@@ -1424,11 +1453,12 @@ async function runAction(
         | "discharge"
         | "extend"
         | "change_room"
+        | "diagnosis_cases"
         | "cancel"
         | "cancel_period",
     extra: Record<string, unknown> = {},
-) {
-    if (!latestAdmission.value) return;
+): Promise<boolean> {
+    if (!latestAdmission.value) return false;
 
     actionLoading.value = true;
 
@@ -1442,8 +1472,10 @@ async function runAction(
         });
         patient.value = res.data;
         success(res?.message ?? "Updated successfully.");
+        return true;
     } catch (err: any) {
         error(err?.data?.message ?? "Something went wrong. Please try again.");
+        return false;
     } finally {
         actionLoading.value = false;
         admitModalOpen.value = false;
@@ -1502,6 +1534,16 @@ function confirmCancelAdmission(
         keep_amount: keepAmount,
         keep_reason: keepReason,
     });
+}
+
+const diagnosisModalOpen = ref(false);
+
+async function saveDiagnosisCases(
+    diagnoses: DiagnosisFeeSelection["diagnoses"],
+) {
+    if (await runAction("diagnosis_cases", { diagnoses })) {
+        diagnosisModalOpen.value = false;
+    }
 }
 
 function confirmAdmit() {

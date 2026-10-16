@@ -11,6 +11,18 @@ class AdmissionChargeDiagnosisRepository
         return AdmissionChargeDiagnosis::create($payload);
     }
 
+    public function deleteForAdmission(int $admissionId): void
+    {
+        AdmissionChargeDiagnosis::where('patient_admission_id', $admissionId)->delete();
+    }
+
+    public function caseIdsForAdmission(int $admissionId)
+    {
+        return AdmissionChargeDiagnosis::where('patient_admission_id', $admissionId)
+            ->whereNotNull('diagnosis_case_id')
+            ->pluck('diagnosis_case_id', 'patient_diagnosis_id');
+    }
+
     public function latestCaseIds(array $patientDiagnosisIds)
     {
         if (empty($patientDiagnosisIds)) {

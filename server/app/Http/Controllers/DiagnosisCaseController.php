@@ -36,6 +36,7 @@ class DiagnosisCaseController extends Controller
         $request->validate([
             'branch_uuid' => ['required', 'uuid'],
             'patient_uuid' => ['required', 'uuid'],
+            'patient_admission_id' => ['nullable', 'integer'],
         ]);
 
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

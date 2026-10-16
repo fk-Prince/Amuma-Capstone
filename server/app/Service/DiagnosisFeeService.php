@@ -86,6 +86,29 @@ class DiagnosisFeeService
         }
     }
 
+    public function replace(PatientAdmission $admission, Collection $fees): void
+    {
+        $this->admissionChargeRepository->deleteForAdmission($admission->patient_admission_id);
+
+        $this->record($admission, $fees);
+    }
+
+    /*
+        The diagnosis case an admission was billed under, keyed by diagnosis id.
+    */
+    public function admissionCaseUuids(int $admissionId): Collection
+    {
+        $caseIds = $this->admissionChargeRepository->caseIdsForAdmission($admissionId);
+
+        if ($caseIds->isEmpty()) {
+            return collect();
+        }
+
+        $cases = $this->diagnosisCaseRepository->findManyByIds($caseIds->unique()->values()->all());
+
+        return $caseIds->map(fn($caseId) => $cases->get($caseId)?->uuid)->filter();
+    }
+
     /*
         The diagnosis case last used to bill each diagnosis, keyed by the
         diagnosis id, so a new admission can start from the same fees.

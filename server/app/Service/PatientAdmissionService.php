@@ -98,6 +98,7 @@ class PatientAdmissionService
             'new_admission' => $this->newAdmission($payload),
             'extend' => $this->extendAdmission($payload),
             'change_room' => $this->changeRoom($payload),
+            'diagnosis_cases' => $this->setDiagnosisCases($payload),
             'discharge' => $this->dischargeAdmission($payload),
             'cancel' => $this->cancelAdmission($payload),
             'cancel_period' => $this->cancelPeriod($payload),
@@ -612,6 +613,69 @@ class PatientAdmissionService
             },
             $userId
         );
+    }
+
+    /*
+        FOR SETTING THE DIAGNOSIS CASES BILLED WITH A WAITING ADMISSION
+    */
+    public function setDiagnosisCases(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $admission = $this->patientAdmissionRepository->findByFields([
+                ['patient_admission_id', '=', $payload['admission_id']]
+            ]);
+
+            if (!$admission) {
+                throw new Exception('Admission not found.', 404);
+            }
+
+            if ($admission->status !== PatientAdmission::STATUS_WAITING) {
+                throw new Exception('Diagnosis cases can only be set before the patient is admitted.', 422);
+            }
+
+            $period = $this->periods->current($admission);
+
+            $line = $period?->invoiceAdmissionLines()->orderBy('invoice_admission_id')->first();
+
+            $invoice = $line
+                ? Invoice::where('invoice_id', $line->invoice_id)->lockForUpdate()->first()
+                : null;
+
+            if (!$invoice || in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
+                throw new Exception('This admission has no open invoice to add diagnosis cases to.', 422);
+            }
+
+            $fees = $this->diagnosisFees->fromRequest(
+                $payload['diagnoses'] ?? [],
+                $admission->patient,
+                $payload['branch_id']
+            );
+
+            $previous = round((float) $admission->chargeDiagnoses()->sum('amount'), 2);
+            $delta = round($this->diagnosisFees->total($fees) - $previous, 2);
+
+            if ($delta < 0 && (float) $invoice->net_paid_amount > (float) $invoice->adjusted_total + $delta) {
+                throw new Exception(
+                    'More has already been paid on this invoice than the new total. Remove less, or refund first.',
+                    422
+                );
+            }
+
+            $this->diagnosisFees->replace($admission, $fees);
+
+            if (abs($delta) >= 0.01) {
+                $line->update(['price' => round((float) $line->price + $delta, 2)]);
+                $invoice->update(['total_amount' => round((float) $invoice->total_amount + $delta, 2)]);
+            }
+
+            $invoice->refresh();
+            $invoice->syncStatus();
+
+            return [
+                'message' => 'Diagnosis cases updated.',
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
+            ];
+        });
     }
 
     /*

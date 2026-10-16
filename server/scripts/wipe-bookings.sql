@@ -4,7 +4,7 @@ DECLARE
     schedule_locations bigint[];
     wiped text[] := ARRAY[
         'refund_allocation', 'refunds', 'payment_invoice_allocation', 'payments', 'transactions',
-        'invoice_adjustments', 'additional_charge_diagnosis', 'additional_charges', 'patient_bookings',
+        'invoice_adjustments', 'admission_charge_diagnosis', 'additional_charges', 'patient_bookings',
         'invoice_services', 'invoice_admission', 'invoices',
         'caregiver_shifts', 'room_transfers', 'admission_periods', 'patient_admissions',
         'online_schedules', 'schedule_assigned', 'schedule_services', 'schedules',
@@ -29,7 +29,7 @@ BEGIN
     DELETE FROM transactions;
 
     DELETE FROM invoice_adjustments;
-    DELETE FROM additional_charge_diagnosis;
+    DELETE FROM admission_charge_diagnosis;
     DELETE FROM additional_charges;
     DELETE FROM patient_bookings;
     DELETE FROM invoice_services;
