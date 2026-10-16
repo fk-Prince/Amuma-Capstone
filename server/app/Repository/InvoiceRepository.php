@@ -232,7 +232,9 @@ class InvoiceRepository
                 fn($p) => $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                fn($p) => $p->where('uuid', $patientUuid)
+            )->orWhereHas(
+                'diagnosisLines.admissionPeriod.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
         })
@@ -329,8 +331,10 @@ class InvoiceRepository
                     'invoiceAdmissionLines.admissionPeriod.patientAdmission',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 )->orWhereHas(
-                    'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                    'additionalCharges',
+                    fn($a) => $a->whereIn('patient_id', $patientIds)
+                )->orWhereHas(
+                    'diagnosisLines.admissionPeriod.patientAdmission',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 );
             })

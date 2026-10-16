@@ -91,7 +91,7 @@ class InvoiceResource extends JsonResource
                 'additionalCharges',
                 fn() => $this->additionalCharges->map(fn($charge) => [
                     'additional_charge_id' => $charge->additional_charge_id,
-                    'patient_admission_id' => $charge->patient_admission_id,
+                    'patient_admission_id' => $charge->patientAdmission?->patient_admission_id,
                     'type' => $charge->type,
                     'type_label' => $charge->type_label,
                     'description' => $charge->description,

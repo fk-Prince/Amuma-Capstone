@@ -122,7 +122,7 @@ class AdditionalChargeService
     {
         return [
             'additional_charge_id' => $charge->additional_charge_id,
-            'patient_admission_id' => $charge->patient_admission_id,
+            'patient_admission_id' => $charge->patientAdmission?->patient_admission_id,
             'admitted_at' => $charge->patientAdmission?->admitted_at?->toIso8601String(),
             'admission_status' => $charge->patientAdmission?->status,
             'type' => $charge->type,
