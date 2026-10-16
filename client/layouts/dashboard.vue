@@ -47,7 +47,6 @@
         >
             <div class="print:hidden">
                 <DashboardHeader @open="isOpen = true" />
-                <TrialNotice class="mt-3" />
             </div>
 
             <main
@@ -73,7 +72,6 @@
 <script setup lang="ts">
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
-import TrialNotice from "~/components/sections/TrialNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";
 import { useRouteAccess } from "~/composables/useRouteAccess";
