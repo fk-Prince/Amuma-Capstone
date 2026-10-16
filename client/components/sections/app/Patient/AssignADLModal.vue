@@ -262,7 +262,9 @@
                                     {{ nameFor(entry.employee_id) }} might have
                                     to work
                                     {{ longDutyHours(entry) }} hours on this
-                                    shift. You can still continue.
+                                    shift. That is over the limit of
+                                    {{ DUTY_LIMIT_HOURS }} hours. You can still
+                                    continue.
                                 </p>
 
                                 <div class="mt-3">
@@ -756,8 +758,17 @@ const PRESET_HOURS: Record<string, { start: string; end: string }> = {
     "Full Shift": { start: "00:00", end: "23:59" },
 };
 
-function isFullDay(entry: AssignmentEntry) {
-    return entry.start_time === "00:00" && entry.end_time === "23:59";
+const DUTY_LIMIT_HOURS = 12;
+
+function shiftHours(entry: AssignmentEntry) {
+    if (!entry.start_time || !entry.end_time) return 0;
+
+    const [startHour = 0, startMinute = 0] = entry.start_time.split(":").map(Number);
+    const [endHour = 0, endMinute = 0] = entry.end_time.split(":").map(Number);
+
+    const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+
+    return minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : 0;
 }
 
 // The booking window is clamped to the end of the first day, so a booking of
@@ -774,7 +785,9 @@ function longDutyHours(entry: AssignmentEntry): number {
         return Math.round(booked * 10) / 10;
     }
 
-    return isFullDay(entry) ? 24 : 0;
+    const hours = shiftHours(entry);
+
+    return hours > DUTY_LIMIT_HOURS ? hours : 0;
 }
 
 function applyPreset(entry: AssignmentEntry, preset: string) {

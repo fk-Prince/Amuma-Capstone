@@ -1092,6 +1092,33 @@
                                                         </label>
                                                     </div>
 
+                                                    <p
+                                                        v-if="
+                                                            service.type === 'ADL' &&
+                                                            longDutyHours(
+                                                                service.schedule_services_id,
+                                                                Number(employee.employee_id),
+                                                            )
+                                                        "
+                                                        class="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                                                    >
+                                                        <TriangleAlert
+                                                            class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                                        />
+                                                        {{ employee.full_name }} might
+                                                        have to work
+                                                        {{
+                                                            longDutyHours(
+                                                                service.schedule_services_id,
+                                                                Number(employee.employee_id),
+                                                            )
+                                                        }}
+                                                        hours on this shift. That is
+                                                        over the limit of
+                                                        {{ DUTY_LIMIT_HOURS }} hours.
+                                                        You can still continue.
+                                                    </p>
+
                                                     <input
                                                         :value="
                                                             noteFor(
@@ -1483,6 +1510,7 @@ import {
     Phone,
     Printer,
     Search,
+    TriangleAlert,
     Users,
 } from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
@@ -1724,6 +1752,22 @@ function employeeLabel(employee: Employee) {
         employee.full_name ||
         fullName(employee.first_name, "", employee.last_name)
     );
+}
+
+const DUTY_LIMIT_HOURS = 12;
+
+function longDutyHours(serviceId: number, employeeId: number) {
+    const entry = entryFor(serviceId, employeeId);
+
+    if (!entry?.start_time || !entry.end_time) return 0;
+
+    const [startHour = 0, startMinute = 0] = entry.start_time.split(":").map(Number);
+    const [endHour = 0, endMinute = 0] = entry.end_time.split(":").map(Number);
+
+    const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+    const hours = minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : 0;
+
+    return hours > DUTY_LIMIT_HOURS ? hours : 0;
 }
 
 function employeeById(employeeId: string | number) {
