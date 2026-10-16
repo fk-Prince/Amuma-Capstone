@@ -985,8 +985,12 @@
         <ConfirmDialog
             :open="paymentRequiredDialogOpen"
             title="Payment Required"
-            :message="`${formatCurrency(unpaidAmount)} remains unpaid.`"
-            description="Full payment is required before this patient can be admitted."
+            :message="`${formatCurrency(unpaidAmount + diagnosisUnpaidAmount)} remains unpaid.`"
+            :description="
+                diagnosisUnpaid
+                    ? 'The diagnosis case invoice must be paid before this patient can be admitted.'
+                    : 'Full payment is required before this patient can be admitted.'
+            "
             confirm-label="Understood"
             hide-cancel
             variant="danger"
@@ -1317,23 +1321,33 @@ function blockedTip(reason: string, permitted = true) {
         : reason;
 }
 
-// The stay invoice and the diagnosis case invoices both have to be paid.
-const isInvoiceUnpaid = computed(() => {
-    const diagnosisUnpaid = (
-        latestAdmission.value?.diagnosis_invoices ?? []
-    ).some(
+// Diagnosis case invoices still owing, which always stop an admission.
+const owingDiagnosisInvoices = computed(() =>
+    (latestAdmission.value?.diagnosis_invoices ?? []).filter(
         (invoice) =>
             invoice.balance_due > 0 &&
             !["void", "written_off"].includes(
                 String(invoice.status).toLowerCase(),
             ),
-    );
+    ),
+);
 
-    return (
-        (latestInvoice.value?.status ?? "").toLowerCase() !== "paid" ||
-        diagnosisUnpaid
-    );
-});
+const diagnosisUnpaid = computed(() => owingDiagnosisInvoices.value.length > 0);
+
+const diagnosisUnpaidAmount = computed(() =>
+    owingDiagnosisInvoices.value.reduce(
+        (sum, invoice) => sum + Number(invoice.balance_due),
+        0,
+    ),
+);
+
+const stayUnpaid = computed(
+    () => (latestInvoice.value?.status ?? "").toLowerCase() !== "paid",
+);
+
+const isInvoiceUnpaid = computed(
+    () => stayUnpaid.value || diagnosisUnpaid.value,
+);
 
 const branchStore = useBranchStore();
 
@@ -1341,8 +1355,13 @@ const requiresFullPaymentOnAdmit = computed(
     () => branchStore.activeBranch?.settings?.requires_full_payment_on_admit ?? true,
 );
 
+// A diagnosis case balance always blocks. The stay invoice follows the
+// branch's full payment setting.
 const admitBlockedByUnpaidInvoice = computed(
-    () => isWaiting.value && isInvoiceUnpaid.value && requiresFullPaymentOnAdmit.value,
+    () =>
+        isWaiting.value &&
+        (diagnosisUnpaid.value ||
+            (stayUnpaid.value && requiresFullPaymentOnAdmit.value)),
 );
 
 const admitModalOpen = ref(false);

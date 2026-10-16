@@ -289,30 +289,42 @@ class PatientAdmissionService
     */
     private function assertPaidBeforeAdmitting(PatientAdmission $admission, AdmissionPeriod $period): void
     {
+        $owing = fn($invoices) => collect($invoices)
+            ->filter()
+            ->unique('invoice_id')
+            ->first(
+                fn(Invoice $invoice) => !in_array($invoice->status, Invoice::CLOSED_STATUSES, true)
+                    && $invoice->balance_due > 0
+            );
+
+        // A diagnosis case invoice has to be settled whatever the branch setting.
+        $diagnosis = $owing(
+            $admission->chargeDiagnoses()->with('invoice')->get()->pluck('invoice')
+        );
+
+        if ($diagnosis) {
+            throw new Exception(
+                "Diagnosis case invoice {$diagnosis->invoice_code} still has a balance of "
+                    . number_format((float) $diagnosis->balance_due, 2)
+                    . '. It must be paid before the patient is admitted.',
+                422
+            );
+        }
+
+        // The stay invoice follows the branch's full payment setting.
         $setting = $admission->patient?->branch?->settings['requires_full_payment_on_admit'] ?? true;
 
-        $required = filter_var($setting, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
-
-        if (!$required) {
+        if (!(filter_var($setting, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true)) {
             return;
         }
 
-        $invoices = $period->invoiceAdmissionLines()->with('invoice')->get()
-            ->pluck('invoice')
-            ->concat($admission->chargeDiagnoses()->with('invoice')->get()->pluck('invoice'))
-            ->filter()
-            ->unique('invoice_id');
+        $stay = $owing($period->invoiceAdmissionLines()->with('invoice')->get()->pluck('invoice'));
 
-        $unpaid = $invoices->first(
-            fn(Invoice $invoice) => !in_array($invoice->status, Invoice::CLOSED_STATUSES, true)
-                && $invoice->balance_due > 0
-        );
-
-        if ($unpaid) {
+        if ($stay) {
             throw new Exception(
-                "Invoice {$unpaid->invoice_code} still has a balance of "
-                    . number_format((float) $unpaid->balance_due, 2)
-                    . '. The stay invoice and the diagnosis case invoices must be paid before the patient is admitted.',
+                "Invoice {$stay->invoice_code} still has a balance of "
+                    . number_format((float) $stay->balance_due, 2)
+                    . '. It must be paid before the patient is admitted.',
                 422
             );
         }
