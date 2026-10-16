@@ -245,6 +245,13 @@ export interface InvoiceAccommodation {
     refund_status: string;
 
     admission_period_id?: number | null;
+    // Where the patient lay during this period.
+    placement?: {
+        floor: string | null;
+        room_no: string | null;
+        room_type: string | null;
+        bed_no: string | null;
+    } | null;
     period_code?: string | null;
     parent_admission_period_id?: number | null;
     accommodation_status?: string | null;

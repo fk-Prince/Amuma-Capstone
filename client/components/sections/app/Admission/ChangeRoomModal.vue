@@ -741,6 +741,29 @@
                                 class="w-full p-3 text-sm resize-none"
                             />
                         </div>
+
+                        <div v-if="selectedRoom && selectedBed" class="mt-4">
+                            <label
+                                class="block text-xs font-medium text-slate-500 mb-1.5 dark:text-gray-400"
+                            >
+                                Transfer fee
+                                <span
+                                    class="text-slate-400 font-normal dark:text-gray-500"
+                                    >(optional)</span
+                                >
+                            </label>
+                            <BaseInput
+                                v-model="transferFee"
+                                mode="number"
+                                placeholder="0.00"
+                                class="w-full"
+                            />
+                            <p
+                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Billed as an additional charge on a new invoice.
+                            </p>
+                        </div>
                     </div>
 
                     <!-- FOOTER -->
@@ -937,6 +960,7 @@ const emit = defineEmits<{
             reason: string;
             contractId: number;
             isAccommodationChange: boolean;
+            transferFee: number;
         },
     ): void;
     (e: "close"): void;
@@ -952,6 +976,7 @@ const selectedBed = ref<Bed | null>(null);
 const modalRoom = ref<Room | null>(null);
 const showBeds = ref(false);
 const reason = ref("");
+const transferFee = ref<number | string>("");
 
 const selectedContract = computed(() => selectedGroup.value);
 
@@ -1263,6 +1288,7 @@ watch(
         selectedRoom.value = null;
         selectedBed.value = null;
         reason.value = "";
+        transferFee.value = "";
 
         loading.value = true;
 
@@ -1308,6 +1334,7 @@ function confirmSelection() {
         reason: reason.value.trim(),
         contractId: selectedContract.value.contract_id,
         isAccommodationChange: isAccommodationChange.value,
+        transferFee: Number(transferFee.value) > 0 ? Number(transferFee.value) : 0,
     });
 }
 

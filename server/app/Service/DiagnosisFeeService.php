@@ -152,19 +152,10 @@ class DiagnosisFeeService
         return $invoice;
     }
 
-    // The fees set when the patient was admitted, as monthly amounts.
+    // The fees on the admission so far, as monthly amounts.
     public function baseFees(PatientAdmission $admission): Collection
     {
-        $first = $admission->periods()
-            ->where('reason', AdmissionPeriod::REASON_ADMITTED)
-            ->orderBy('admission_period_id')
-            ->first();
-
-        if (!$first) {
-            return collect();
-        }
-
-        return $this->admissionChargeRepository->forPeriod($first->admission_period_id)
+        return $this->admissionChargeRepository->forAdmission($admission->patient_admission_id)
             ->map(fn(AdmissionDiagnosis $row) => [
                 'diagnosis' => $row->patientDiagnosis,
                 'case' => $row->diagnosisCase,

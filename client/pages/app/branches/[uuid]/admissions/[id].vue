@@ -362,13 +362,13 @@
                         <ActionButton
                             variant="outline"
                             :disabled="
-                                !isWaiting || facilityLocked || !canUpdateAdmission
+                                !(isWaiting || isAdmitted) ||
+                                facilityLocked ||
+                                !canUpdateAdmission
                             "
                             :tooltip="
                                 blockedTip(
-                                    isAdmitted
-                                        ? 'Diagnosis cases can only be set before the patient is admitted.'
-                                        : 'There is no waiting admission. Start a new admission first.',
+                                    'Diagnosis cases can only be added while the patient is waiting or admitted.',
                                     canUpdateAdmission,
                                 )
                             "
@@ -476,9 +476,8 @@
                                             class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                         >
                                             {{
-                                                latestAdmission.room?.room_no
-                                                    ? `Room ${latestAdmission.room.room_no}`
-                                                    : "No room assigned"
+                                                roomLabel(latestAdmission.room) ||
+                                                "No room assigned"
                                             }}
                                             <span
                                                 v-if="
@@ -704,9 +703,8 @@
                                                 class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                             >
                                                 {{
-                                                    admission.room?.room_no
-                                                        ? `Room ${admission.room.room_no}`
-                                                        : "No room assigned"
+                                                    roomLabel(admission.room) ||
+                                                    "No room assigned"
                                                 }}
 
                                                 <span
@@ -814,9 +812,8 @@
                                     class="text-sm font-semibold text-primary-900 dark:text-primary-300"
                                 >
                                     {{
-                                        timelineAdmission.room?.room_no
-                                            ? `Room ${timelineAdmission.room.room_no}`
-                                            : "Admission"
+                                        roomLabel(timelineAdmission.room) ||
+                                        "Admission"
                                     }}
                                     <span
                                         v-if="timelineAdmission.bed?.bed_no"
@@ -1164,6 +1161,15 @@ const unpaidAmount = computed(() => {
 const route = useRoute();
 const router = useRouter();
 const { success, error } = useToast();
+
+// "Room C201 · 2nd Floor", or nothing when no room is assigned.
+function roomLabel(room?: { room_no?: string | null; floor?: string | null } | null) {
+    if (!room?.room_no) return "";
+
+    return room.floor
+        ? `Room ${room.room_no} · ${room.floor} Floor`
+        : `Room ${room.room_no}`;
+}
 
 const id = computed(() => route.params.id as string);
 const uuid = computed(() => route.params.uuid as string);
@@ -1603,12 +1609,14 @@ async function handleChangeRoomSelect(payload: {
     reason: string;
     contractId: number;
     isAccommodationChange: boolean;
+    transferFee: number;
 }) {
     await runAction("change_room", {
         room_id: payload.room.room_id,
         bed_id: payload.bed.bed_id,
         contract_id: payload.contractId,
         reason: payload.reason,
+        ...(payload.transferFee > 0 ? { transfer_fee: payload.transferFee } : {}),
     });
     changeRoomModalOpen.value = false;
 }

@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Http\Resources\BookingResource;
 use App\Guard\GuardianEmailGuard;
 use App\Models\AdmissionChargeDiagnosis;
+use App\Models\AdditionalCharge;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
@@ -15,6 +16,7 @@ use App\Models\PatientAdmission;
 use App\Models\Room;
 use App\Models\RoomTransfer;
 use App\Models\User;
+use App\Repository\AdditionalChargeRepository;
 use App\Repository\AdmissionChargeDiagnosisRepository;
 use App\Repository\BookingRepository;
 use App\Repository\InvoiceRepository;
@@ -44,6 +46,7 @@ class PatientAdmissionService
         private NotificationService $notificationService,
         private DiagnosisFeeService $diagnosisFees,
         private AdmissionChargeDiagnosisRepository $diagnosisChargeRepository,
+        private AdditionalChargeRepository $additionalChargeRepository,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -734,8 +737,8 @@ class PatientAdmissionService
                 throw new Exception('Admission not found.', 404);
             }
 
-            if ($admission->status !== PatientAdmission::STATUS_WAITING) {
-                throw new Exception('Diagnosis cases can only be set before the patient is admitted.', 422);
+            if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED], true)) {
+                throw new Exception('Diagnosis cases can only be added while the patient is waiting or admitted.', 422);
             }
 
             $period = $this->periods->current($admission);
@@ -752,7 +755,7 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            $existing = $this->diagnosisChargeRepository->forPeriod($period->admission_period_id);
+            $existing = $this->diagnosisChargeRepository->forAdmission($admission->patient_admission_id);
 
             // A diagnosis can be billed once, and can't be taken back after.
             foreach ($fees as $fee) {
@@ -933,6 +936,42 @@ class PatientAdmissionService
         });
     }
 
+    // A transfer fee is an additional charge billed on an invoice of its own.
+    private function collectTransferFee(PatientAdmission $admission, array $payload, ?string $roomNo): void
+    {
+        $raw = $payload['transfer_fee'] ?? null;
+
+        if (blank($raw)) {
+            return;
+        }
+
+        if (!is_numeric($raw) || (float) $raw < 0 || (float) $raw > 99999999.99) {
+            throw new Exception('Enter a valid transfer fee.', 422);
+        }
+
+        $fee = round((float) $raw, 2);
+
+        if ($fee < 0.01) {
+            return;
+        }
+
+        $invoice = $this->invoiceRepository->create([
+            'total_amount' => $fee,
+            'branch_id' => $payload['branch_id'],
+            'status' => Invoice::STATUS_PENDING,
+        ]);
+
+        $this->additionalChargeRepository->create([
+            'patient_id' => $admission->patient_id,
+            'invoice_id' => $invoice->invoice_id,
+            'type' => AdditionalCharge::TYPE_ADDITIONAL,
+            'description' => $roomNo ? "Transfer fee - Room {$roomNo}" : 'Transfer fee',
+            'amount' => $fee,
+        ]);
+
+        Invoice::forgetPatientInvoiceIds();
+    }
+
     /*
         FOR CHANGE ROOM AND CHANGE OF ACCOMMODATION
     */
@@ -1009,6 +1048,8 @@ class PatientAdmissionService
                     $payload['reason'] ?? null
                 );
 
+                $this->collectTransferFee($admission, $payload, $newRoom->room_no);
+
                 $patient = $admission->patient;
 
                 if ($patient) {
@@ -1031,6 +1072,7 @@ class PatientAdmissionService
             $consumption = AdmissionHelper::periodConsumption($period);
 
             $remainingDays = $consumption['remaining'];
+            $totalDays = $consumption['total'];
             $consumedDays = $consumption['consumed'];
 
 
@@ -1040,6 +1082,17 @@ class PatientAdmissionService
                     422
                 );
             }
+
+            $oldPrice = (float) $period->invoiceAdmissionLines->sum('price')
+                ?: (float) $period->branchContract->price;
+
+            $oldRemaining = round(($oldPrice / $totalDays) * $remainingDays, 2);
+            $oldConsumed = round($oldPrice - $oldRemaining, 2);
+
+            $newRemaining = round(
+                ((float) $newContract->price / $totalDays) * $remainingDays,
+                2
+            );
 
             $windowEnd = Carbon::parse($period->end_date);
 
@@ -1067,7 +1120,15 @@ class PatientAdmissionService
                 $payload['reason'] ?? null
             );
 
-            $this->periods->moveBilling($period, $next, $newContract, $upgrades);
+            $this->periods->moveBilling(
+                $period,
+                $next,
+                $oldPrice,
+                $oldConsumed,
+                $newRemaining,
+                $newContract,
+                $upgrades
+            );
 
             $this->periods->issueUpgrades($upgrades);
 
@@ -1081,6 +1142,8 @@ class PatientAdmissionService
                     $payload['reason'] ?? null
                 );
             }
+
+            $this->collectTransferFee($admission, $payload, $newRoom->room_no);
 
             $patient = $admission->patient;
 

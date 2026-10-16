@@ -194,8 +194,57 @@ class PatientResource extends JsonResource
         ) ?? $admission;
     }
 
+    // Where the patient lay in each billing period, keyed by period id.
+    private array $placements = [];
+
+    private function periodPlacements(mixed $admission): array
+    {
+        if (!$admission->relationLoaded('periods')) {
+            return [];
+        }
+
+        $transfers = RoomTransfer::with(['fromBed.room', 'toBed.room'])
+            ->where('patient_admission_id', $admission->patient_admission_id)
+            ->orderBy('transfer_date')
+            ->orderBy('room_transfer_id')
+            ->get();
+
+        $current = $admission->relationLoaded('bed') ? $admission->bed : null;
+
+        $placements = [];
+
+        foreach ($admission->periods as $period) {
+            $inEffect = !in_array($period->status, AdmissionPeriod::CLOSED_STATUSES, true)
+                && $period->end_date?->isFuture();
+
+            // The bed the patient is in now covers a running or upcoming
+            // period. An earlier one used the bed they were moved to when it
+            // began, or the one they started in.
+            $bed = $inEffect
+                ? $current
+                : (
+                    $transfers
+                    ->filter(fn($transfer) => $transfer->transfer_date <= $period->start_date)
+                    ->last()?->toBed
+                    ?? $transfers->first()?->fromBed
+                    ?? $current
+                );
+
+            $placements[$period->admission_period_id] = $bed ? [
+                'floor' => $bed->room?->floor,
+                'room_no' => $bed->room?->room_no,
+                'room_type' => $bed->room?->room_type,
+                'bed_no' => $bed->bed_no,
+            ] : null;
+        }
+
+        return $placements;
+    }
+
     private function formatAdmission(mixed $admission, bool $includeDischargeCalculation = false)
     {
+        $this->placements = $this->periodPlacements($admission) + $this->placements;
+
         $currentInvoice = $admission->relationLoaded('currentInvoiceAdmission')
             ? $admission->currentInvoiceAdmission
             : null;
@@ -386,6 +435,7 @@ class PatientResource extends JsonResource
             'refund_status' => $invoice?->refund_status ?? 'none',
 
             'admission_period_id' => $invoiceAdmissionLines->admission_period_id,
+            'placement' => $this->placements[$invoiceAdmissionLines->admission_period_id] ?? null,
             'period_code' => AdmissionPeriod::codeFor($invoiceAdmissionLines->admission_period_id),
             'parent_admission_period_id' => $invoiceAdmissionLines->admissionPeriod?->parent_admission_period_id,
             'accommodation_status' => $invoiceAdmissionLines->status,

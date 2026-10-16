@@ -30,6 +30,26 @@ class AdmissionChargeDiagnosisRepository
             ->keyBy('patient_diagnosis_id');
     }
 
+    // Every diagnosis billed on the admission, whichever period, each as the
+    // row it was first billed on.
+    public function forAdmission(int $admissionId)
+    {
+        return AdmissionDiagnosis::with([
+            'charge.invoice',
+            'patientDiagnosis',
+            'diagnosisCase',
+            'admissionPeriod.branchContract',
+        ])
+            ->whereHas(
+                'charge.admissionPeriod',
+                fn($query) => $query->where('patient_admission_id', $admissionId)
+            )
+            ->orderBy('admission_diagnosis_id')
+            ->get()
+            ->unique('patient_diagnosis_id')
+            ->keyBy('patient_diagnosis_id');
+    }
+
     public function latestCaseIds(array $patientDiagnosisIds)
     {
         if (empty($patientDiagnosisIds)) {

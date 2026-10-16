@@ -184,6 +184,16 @@
                                         }}
                                     </span>
 
+                                    <template v-if="placementLabel(invoice)">
+                                        <span
+                                            class="text-slate-300 dark:text-gray-600"
+                                        >
+                                            ·
+                                        </span>
+
+                                        <span>{{ placementLabel(invoice) }}</span>
+                                    </template>
+
                                     <template v-if="invoice.period_start">
                                         <span
                                             class="text-slate-300 dark:text-gray-600"
@@ -232,31 +242,18 @@
                                 </div>
 
                                 <div
+                                    v-if="
+                                        isCancelled(invoice) ||
+                                        (periodActions &&
+                                            isUpcoming(invoice, admission))
+                                    "
                                     class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[11px]"
                                 >
-                                    <span
-                                        class="text-[12px] font-semibold"
-                                        :class="
-                                            isCancelled(invoice)
-                                                ? 'text-slate-400 line-through dark:text-gray-500'
-                                                : 'text-slate-800 dark:text-white'
-                                        "
-                                    >
-                                        {{ formatCurrency(invoice.price) }}
-                                    </span>
-
                                     <span
                                         v-if="isCancelled(invoice)"
                                         class="text-rose-500 dark:text-rose-300"
                                     >
                                         not charged — invoice voided
-                                    </span>
-
-                                    <span
-                                        v-else-if="priceNote(invoice)"
-                                        class="text-slate-400 dark:text-gray-500"
-                                    >
-                                        {{ priceNote(invoice) }}
                                     </span>
 
                                     <button
@@ -325,7 +322,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { formatCurrency } from "~/utils/currency";
 import { formatDate, stringToDateTime } from "~/utils/time";
 import type { Admission, InvoiceAccommodation } from "~/types/patient";
 
@@ -416,6 +412,20 @@ const currentAdmissionId = computed(() => {
 
 function isCurrent(admission: Admission) {
     return admission.patient_admission_id === currentAdmissionId.value;
+}
+
+function placementLabel(invoice: InvoiceAccommodation) {
+    const place = invoice.placement;
+
+    if (!place) return "";
+
+    return [
+        place.floor ? `${place.floor} Floor` : "",
+        place.room_no ? `Room ${place.room_no}` : "",
+        place.bed_no ? `Bed ${place.bed_no}` : "",
+    ]
+        .filter(Boolean)
+        .join(" · ");
 }
 
 function mergeByPeriod(invoices: InvoiceAccommodation[]) {
@@ -616,20 +626,6 @@ function periodLength(invoice: InvoiceAccommodation) {
     const days = Math.round(hours / 24);
 
     return `${days} day${days === 1 ? "" : "s"}`;
-}
-
-function priceNote(invoice: InvoiceAccommodation) {
-    const charged = Number(invoice.price ?? 0);
-    const plan = Number(invoice.contract?.price ?? 0);
-
-    if (!plan || !charged || Math.abs(plan - charged) < 0.01) {
-        return "";
-    }
-
-    const length = periodLength(invoice);
-    const basis = `of  ${formatCurrency(plan)}`;
-
-    return length ? `${basis} · ${length} charged` : basis;
 }
 
 function reasonLabel(reason: string) {

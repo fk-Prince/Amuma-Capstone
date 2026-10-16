@@ -106,21 +106,14 @@ class PatientAdmission extends Model
     // admitted, which every period bills again.
     public function diagnosisMonthlyFee(): float
     {
-        $first = $this->periods()
-            ->where('reason', AdmissionPeriod::REASON_ADMITTED)
-            ->orderBy('admission_period_id')
-            ->first();
-
-        if (!$first) {
-            return 0.0;
-        }
-
         return round((float) AdmissionDiagnosis::with('admissionPeriod.branchContract')
             ->whereHas(
-                'charge',
-                fn($query) => $query->where('admission_period_id', $first->admission_period_id)
+                'charge.admissionPeriod',
+                fn($query) => $query->where('patient_admission_id', $this->patient_admission_id)
             )
+            ->orderBy('admission_diagnosis_id')
             ->get()
+            ->unique('patient_diagnosis_id')
             ->sum(fn(AdmissionDiagnosis $row) => $row->monthlyAmount()), 2);
     }
 

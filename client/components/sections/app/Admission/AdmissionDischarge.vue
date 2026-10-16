@@ -814,10 +814,10 @@
                                         class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
                                     >
                                         What this patient still owes, including
-                                        additional charges, services and
-                                        schedules, after any refund or account
-                                        credit is applied. Periods that have not
-                                        started are not counted.
+                                        diagnosis cases, additional charges,
+                                        services and schedules, after any refund
+                                        or account credit is applied. Periods
+                                        that have not started are not counted.
                                     </p>
                                 </div>
 

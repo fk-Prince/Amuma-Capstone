@@ -30,7 +30,8 @@
                                 {{ patientName || "the patient" }} on one new
                                 invoice. The monthly case price is added to
                                 every admission period, and a diagnosis case
-                                can't be removed once it is added.
+                                can't be removed once it is added. A discharge
+                                includes them in its refund.
                             </p>
                         </div>
 

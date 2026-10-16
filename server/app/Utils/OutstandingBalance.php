@@ -19,7 +19,7 @@ class OutstandingBalance
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
             ->values();
 
-        $invoices->each(fn($invoice) => $invoice->loadMissing('additionalCharges', 'diagnosisLines'));
+        $invoices->each(fn($invoice) => $invoice->loadMissing('additionalCharges', 'diagnosisLines.admissionPeriod'));
 
         $accommodation = $invoices->filter(
             fn($invoice) => $invoice->invoiceAdmissionLines->isNotEmpty()
@@ -57,6 +57,9 @@ class OutstandingBalance
                 $invoice->balance_due - $invoice->invoiceAdmissionLines
                     ->whereIn('admission_period_id', $futurePeriodIds)
                     ->sum('price')
+                    - $invoice->diagnosisLines
+                        ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $futurePeriodIds, true))
+                        ->sum('amount')
             ),
             2
         );
