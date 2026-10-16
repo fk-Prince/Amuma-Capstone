@@ -41,38 +41,45 @@ ALTER TABLE additional_charges DROP COLUMN patient_admission_id;
 
 DROP TABLE IF EXISTS additional_charge_diagnosis;
 
--- 4. Diagnosis fees: one row per diagnosis, each billed on an invoice of its own
+-- 4. Diagnosis cases: a charge (period, invoice, total) and the diagnoses under it (case, amount, description)
+DROP TABLE IF EXISTS admission_diagnosis;
 DROP TABLE IF EXISTS admission_charge_diagnosis;
 
 CREATE TABLE admission_charge_diagnosis (
     admission_charge_diagnosis_id bigserial PRIMARY KEY,
-    patient_admission_id bigint NOT NULL
-        REFERENCES patient_admissions (patient_admission_id) ON DELETE CASCADE,
     admission_period_id bigint NOT NULL
         REFERENCES admission_periods (admission_period_id) ON DELETE CASCADE,
     invoice_id bigint NOT NULL
         REFERENCES invoices (invoice_id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    amount numeric(10, 2) NOT NULL,
+    created_at timestamp(0) without time zone NULL,
+    updated_at timestamp(0) without time zone NULL
+);
+
+CREATE TABLE admission_diagnosis (
+    admission_diagnosis_id bigserial PRIMARY KEY,
+    admission_charge_diagnosis_id bigint NOT NULL
+        REFERENCES admission_charge_diagnosis (admission_charge_diagnosis_id) ON DELETE CASCADE,
     patient_diagnosis_id bigint NOT NULL
         REFERENCES patient_diagnosis (patient_diagnosis_id) ON DELETE CASCADE,
     diagnosis_case_id bigint NULL
         REFERENCES diagnosis_cases (diagnosis_case_id) ON DELETE SET NULL,
-    amount numeric(10, 2) NOT NULL,
     description varchar(255) NULL,
+    amount numeric(10, 2) NOT NULL,
     created_at timestamp(0) without time zone NULL,
-    updated_at timestamp(0) without time zone NULL,
-    CONSTRAINT admission_charge_diagnosis_unique UNIQUE (admission_period_id, patient_diagnosis_id)
+    updated_at timestamp(0) without time zone NULL
 );
 
 -- 5. Keep Laravel's migration list in step so `php artisan migrate` has nothing left to run
 DELETE FROM migrations WHERE migration = '2026_09_28_120100_create_additional_charge_diagnosis_table';
 
 INSERT INTO migrations (migration, batch)
-SELECT '2026_09_28_120100_create_admission_charge_diagnosis_table', COALESCE(MAX(batch), 0) + 1
-FROM migrations
-WHERE NOT EXISTS (
-    SELECT 1 FROM migrations
-    WHERE migration = '2026_09_28_120100_create_admission_charge_diagnosis_table'
-);
+SELECT name, COALESCE((SELECT MAX(batch) FROM migrations), 0) + 1
+FROM (VALUES
+    ('2026_09_28_120100_create_admission_charge_diagnosis_table'),
+    ('2026_09_28_120200_create_admission_diagnosis_table')
+) AS wanted(name)
+WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE migration = wanted.name);
 
 COMMIT;
 

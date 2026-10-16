@@ -30,6 +30,8 @@ class PaymentRepository
         'allocations.invoice.invoiceServices.scheduleService.service',
         'allocations.invoice.invoiceAdmissionLines.admissionPeriod.branchContract',
         'allocations.invoice.invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
+        'allocations.invoice.additionalCharges',
+        'allocations.invoice.diagnosisLines.diagnosisCase',
         'transaction.branch.location',
         'transaction.patient',
         'transaction.client',

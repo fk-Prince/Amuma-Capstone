@@ -883,7 +883,7 @@ class PortalHelper
             ]);
         }
 
-        foreach ($invoice->diagnosisCharges as $charge) {
+        foreach ($invoice->diagnosisLines as $charge) {
             $lines->push([
                 'category' => $charge->type_label,
                 'description' => $charge->line_description,

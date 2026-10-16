@@ -10,9 +10,6 @@ return new class extends Migration
     {
         Schema::create('admission_charge_diagnosis', function (Blueprint $table) {
             $table->id('admission_charge_diagnosis_id');
-            $table->foreignId('patient_admission_id')
-                ->constrained('patient_admissions', 'patient_admission_id')
-                ->cascadeOnDelete();
             $table->foreignId('admission_period_id')
                 ->constrained('admission_periods', 'admission_period_id')
                 ->cascadeOnDelete();
@@ -20,17 +17,8 @@ return new class extends Migration
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
-            $table->foreignId('patient_diagnosis_id')
-                ->constrained('patient_diagnosis', 'patient_diagnosis_id')
-                ->cascadeOnDelete();
-            $table->foreignId('diagnosis_case_id')
-                ->nullable()
-                ->constrained('diagnosis_cases', 'diagnosis_case_id')
-                ->nullOnDelete();
             $table->decimal('amount', 10, 2);
-            $table->string('description')->nullable();
             $table->timestamps();
-            $table->unique(['admission_period_id', 'patient_diagnosis_id'], 'admission_charge_diagnosis_unique');
         });
     }
 

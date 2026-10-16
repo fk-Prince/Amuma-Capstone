@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Models\AdmissionChargeDiagnosis;
+use App\Models\AdmissionDiagnosis;
 use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\Patient;
@@ -130,15 +131,19 @@ class DiagnosisFeeService
             'status' => Invoice::STATUS_PENDING,
         ]);
 
+        $charge = $this->admissionChargeRepository->createCharge([
+            'admission_period_id' => $period->admission_period_id,
+            'invoice_id' => $invoice->invoice_id,
+            'amount' => $invoice->total_amount,
+        ]);
+
         foreach ($billable as $fee) {
-            $this->admissionChargeRepository->create([
-                'patient_admission_id' => $admission->patient_admission_id,
-                'admission_period_id' => $period->admission_period_id,
-                'invoice_id' => $invoice->invoice_id,
+            $this->admissionChargeRepository->createDiagnosis([
+                'admission_charge_diagnosis_id' => $charge->admission_charge_diagnosis_id,
                 'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
                 'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
-                'amount' => round((float) $fee['amount'] * $multiplier, 2),
                 'description' => $fee['description'] ?? null,
+                'amount' => round((float) $fee['amount'] * $multiplier, 2),
             ]);
         }
 
@@ -160,13 +165,13 @@ class DiagnosisFeeService
         }
 
         return $this->admissionChargeRepository->forPeriod($first->admission_period_id)
-            ->map(fn(AdmissionChargeDiagnosis $row) => [
+            ->map(fn(AdmissionDiagnosis $row) => [
                 'diagnosis' => $row->patientDiagnosis,
                 'case' => $row->diagnosisCase,
                 'amount' => $row->monthlyAmount(),
                 'description' => $row->description,
                 'billed' => (float) $row->amount,
-                'invoice' => $row->invoice,
+                'invoice' => $row->charge?->invoice,
             ])
             ->values();
     }

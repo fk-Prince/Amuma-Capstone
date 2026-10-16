@@ -114,16 +114,24 @@ class Invoice extends Model
         return $this->hasMany(AdditionalCharge::class, 'invoice_id', 'invoice_id');
     }
 
-    public function diagnosisCharges(): HasMany
+    // The diagnosis cases billed on this invoice, through the charge.
+    public function diagnosisLines()
     {
-        return $this->hasMany(AdmissionChargeDiagnosis::class, 'invoice_id', 'invoice_id');
+        return $this->hasManyThrough(
+            AdmissionDiagnosis::class,
+            AdmissionChargeDiagnosis::class,
+            'invoice_id',
+            'admission_charge_diagnosis_id',
+            'invoice_id',
+            'admission_charge_diagnosis_id'
+        );
     }
 
     public function chargedAdmission(): ?PatientAdmission
     {
         return $this->invoiceAdmissionLines->first()?->patientAdmission
             ?? $this->additionalCharges->first()?->patientAdmission
-            ?? $this->diagnosisCharges->first()?->patientAdmission;
+            ?? $this->diagnosisLines->first()?->patientAdmission;
     }
 
 
@@ -156,7 +164,7 @@ class Invoice extends Model
 
         $charges = $this->additionalCharges
             ->pluck('description')
-            ->concat($this->diagnosisCharges->map(fn($charge) => $charge->line_description))
+            ->concat($this->diagnosisLines->map(fn($charge) => $charge->line_description))
             ->filter()
             ->unique()
             ->values();
@@ -225,7 +233,7 @@ class Invoice extends Model
 
         return $this->additionalCharges
             ->map(fn($line) => ['description' => $line->description, 'amount' => (float) $line->amount])
-            ->concat($this->diagnosisCharges->map(fn($line) => [
+            ->concat($this->diagnosisLines->map(fn($line) => [
                 'description' => $line->line_description,
                 'amount' => (float) $line->amount,
             ]))
@@ -409,7 +417,7 @@ class Invoice extends Model
         $charged = AdditionalCharge::where('patient_id', $patientId)->pluck('invoice_id');
 
         $diagnosed = AdmissionChargeDiagnosis::whereHas(
-            'patientAdmission',
+            'admissionPeriod.patientAdmission',
             fn($query) => $query->where('patient_id', $patientId)
         )->pluck('invoice_id');
 

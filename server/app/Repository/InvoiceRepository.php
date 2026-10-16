@@ -72,7 +72,7 @@ class InvoiceRepository
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
             'invoiceAdmissionLines.admissionPeriod.branchContract',
             'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
             'allocations.refundAllocations.refund.transaction',
             'allocations.payment.transaction',
             'payments',
@@ -100,7 +100,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
             ]);
 
         if (!empty($search)) {
@@ -122,7 +122,7 @@ class InvoiceRepository
                     ->orWhereHas('invoiceServices.scheduleService.schedule.patient', $patientName)
                     ->orWhereHas('invoiceAdmissionLines.admissionPeriod.patientAdmission.patient', $patientName)
                     ->orWhereHas('additionalCharges.patient', $patientName)
-                    ->orWhereHas('diagnosisCharges.patientAdmission.patient', $patientName);
+                    ->orWhereHas('diagnosisLines.admissionPeriod.patientAdmission.patient', $patientName);
             });
         }
 
@@ -232,7 +232,7 @@ class InvoiceRepository
                 fn($p) => $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
         })
@@ -248,7 +248,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
                                 'invoiceAdjustments',
             ]);
 
@@ -330,7 +330,7 @@ class InvoiceRepository
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 )->orWhereHas(
                     'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 );
             })
@@ -345,7 +345,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
             ])
             ->get();
 
@@ -589,7 +589,7 @@ class InvoiceRepository
                         'admission' => $charge->patientAdmission,
                         'invoice' => $invoice,
                         'invoice_admission' => null,
-                    ])->concat($invoice->diagnosisCharges->map(fn($charge) => [
+                    ])->concat($invoice->diagnosisLines->map(fn($charge) => [
                         'admission' => $charge->patientAdmission,
                         'invoice' => $invoice,
                         'invoice_admission' => null,
@@ -678,7 +678,7 @@ class InvoiceRepository
                         ?->patient_admission_id === $admissionId
                 ) || $invoice->additionalCharges->contains(
                     fn($charge) => (int) $charge->patientAdmission?->patient_admission_id === $admissionId
-                ) || $invoice->diagnosisCharges->contains(
+                ) || $invoice->diagnosisLines->contains(
                     fn($charge) => (int) $charge->patient_admission_id === $admissionId
                 )
             )
@@ -857,7 +857,7 @@ class InvoiceRepository
             $category[] = 'Charges';
         }
 
-        if ($invoice->diagnosisCharges->isNotEmpty()) {
+        if ($invoice->diagnosisLines->isNotEmpty()) {
             $category[] = 'Diagnosis';
         }
 
@@ -1118,7 +1118,7 @@ class InvoiceRepository
                     'amount' => (float) $charge->amount,
                     'created_at' => $charge->created_at?->toIso8601String(),
                 ])
-                ->concat($invoice->diagnosisCharges->map(fn($charge) => $charge->asCharge()))
+                ->concat($invoice->diagnosisLines->map(fn($charge) => $charge->asCharge()))
                 ->values(),
 
             'payments' =>
@@ -1193,7 +1193,7 @@ class InvoiceRepository
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );

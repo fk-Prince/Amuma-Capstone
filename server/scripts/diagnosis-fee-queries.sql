@@ -7,18 +7,19 @@ SELECT p.first_name || ' ' || p.last_name AS patient,
        ap.reason,
        pd.diagnosis,
        dc.title AS diagnosis_case,
-       acd.amount AS billed_amount,
-       acd.description,
+       ad.amount AS billed_amount,
+       ad.description,
        i.invoice_code,
        i.status,
        acd.created_at
-FROM admission_charge_diagnosis acd
-JOIN patient_admissions pa ON pa.patient_admission_id = acd.patient_admission_id
+FROM admission_diagnosis ad
+JOIN admission_charge_diagnosis acd ON acd.admission_charge_diagnosis_id = ad.admission_charge_diagnosis_id
 JOIN admission_periods ap ON ap.admission_period_id = acd.admission_period_id
+JOIN patient_admissions pa ON pa.patient_admission_id = ap.patient_admission_id
 JOIN patients p ON p.patient_id = pa.patient_id
-JOIN patient_diagnosis pd ON pd.patient_diagnosis_id = acd.patient_diagnosis_id
+JOIN patient_diagnosis pd ON pd.patient_diagnosis_id = ad.patient_diagnosis_id
 JOIN invoices i ON i.invoice_id = acd.invoice_id
-LEFT JOIN diagnosis_cases dc ON dc.diagnosis_case_id = acd.diagnosis_case_id
+LEFT JOIN diagnosis_cases dc ON dc.diagnosis_case_id = ad.diagnosis_case_id
 ORDER BY acd.created_at DESC;
 
 -- 2. Waiting admissions and whether both invoices (stay + diagnosis cases) are settled
@@ -31,9 +32,11 @@ SELECT pa.patient_admission_id,
         JOIN admission_periods ap ON ap.admission_period_id = ia.admission_period_id
         WHERE ap.patient_admission_id = pa.patient_admission_id) AS stay_invoices,
        (SELECT string_agg(DISTINCT i.invoice_code || ' (' || i.status || ')', ', ')
-        FROM admission_charge_diagnosis acd
+        FROM admission_diagnosis ad
+        JOIN admission_charge_diagnosis acd ON acd.admission_charge_diagnosis_id = ad.admission_charge_diagnosis_id
+        JOIN admission_periods ap2 ON ap2.admission_period_id = acd.admission_period_id
         JOIN invoices i ON i.invoice_id = acd.invoice_id
-        WHERE acd.patient_admission_id = pa.patient_admission_id) AS diagnosis_invoices
+        WHERE ap2.patient_admission_id = pa.patient_admission_id) AS diagnosis_invoices
 FROM patient_admissions pa
 JOIN patients p ON p.patient_id = pa.patient_id
 WHERE pa.status = 'waiting'
@@ -72,10 +75,10 @@ ORDER BY ap.patient_admission_id, ap.admission_period_id;
 -- 6. Diagnoses of a patient with the case they were last billed under
 SELECT pd.patient_diagnosis_id, pd.diagnosis, pd.diagnosis_date,
        (SELECT dc.title
-        FROM admission_charge_diagnosis acd
-        JOIN diagnosis_cases dc ON dc.diagnosis_case_id = acd.diagnosis_case_id
-        WHERE acd.patient_diagnosis_id = pd.patient_diagnosis_id
-        ORDER BY acd.admission_charge_diagnosis_id DESC
+        FROM admission_diagnosis ad
+        JOIN diagnosis_cases dc ON dc.diagnosis_case_id = ad.diagnosis_case_id
+        WHERE ad.patient_diagnosis_id = pd.patient_diagnosis_id
+        ORDER BY ad.admission_diagnosis_id DESC
         LIMIT 1) AS last_case
 FROM patient_diagnosis pd
 WHERE pd.patient_id = 1 -- change me

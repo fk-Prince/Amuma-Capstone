@@ -434,7 +434,7 @@ class InvoiceService
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceServices.scheduleService.schedule.patient',
             'additionalCharges.patient',
-            'diagnosisCharges.patientAdmission.patient',
+            'diagnosisLines.admissionPeriod.patientAdmission.patient',
         ]);
 
         $patient = $invoice->invoiceAdmissionLines
@@ -447,7 +447,7 @@ class InvoiceService
         return $invoice->invoiceServices
             ->first()?->scheduleService?->schedule?->patient
             ?? $invoice->additionalCharges->first()?->patient
-            ?? $invoice->diagnosisCharges->first()?->patientAdmission?->patient;
+            ?? $invoice->diagnosisLines->first()?->patientAdmission?->patient;
     }
 
     public function transactions(array $payload)

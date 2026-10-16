@@ -41,6 +41,6 @@ class DiagnosisCase extends Model
 
     public function admissionCharges()
     {
-        return $this->hasMany(AdmissionChargeDiagnosis::class, 'diagnosis_case_id', 'diagnosis_case_id');
+        return $this->hasMany(AdmissionDiagnosis::class, 'diagnosis_case_id', 'diagnosis_case_id');
     }
 }

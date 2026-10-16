@@ -600,7 +600,7 @@ class PatientAdmissionService
             );
 
             $this->diagnosisChargeRepository->forPeriod($period->admission_period_id)
-                ->pluck('invoice')
+                ->map(fn($row) => $row->charge?->invoice)
                 ->filter()
                 ->unique('invoice_id')
                 ->each(function ($diagnosisInvoice) use ($userId) {

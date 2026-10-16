@@ -93,12 +93,12 @@ class PatientAdmission extends Model
         );
     }
 
+    // The diagnosis case charges billed on this admission, whichever period.
     public function chargeDiagnoses()
     {
-        return $this->hasMany(
-            AdmissionChargeDiagnosis::class,
-            'patient_admission_id',
-            'patient_admission_id'
+        return AdmissionChargeDiagnosis::whereHas(
+            'admissionPeriod',
+            fn($query) => $query->where('patient_admission_id', $this->patient_admission_id)
         );
     }
 
@@ -115,10 +115,13 @@ class PatientAdmission extends Model
             return 0.0;
         }
 
-        return round((float) AdmissionChargeDiagnosis::with('admissionPeriod.branchContract')
-            ->where('admission_period_id', $first->admission_period_id)
+        return round((float) AdmissionDiagnosis::with('admissionPeriod.branchContract')
+            ->whereHas(
+                'charge',
+                fn($query) => $query->where('admission_period_id', $first->admission_period_id)
+            )
             ->get()
-            ->sum(fn(AdmissionChargeDiagnosis $row) => $row->monthlyAmount()), 2);
+            ->sum(fn(AdmissionDiagnosis $row) => $row->monthlyAmount()), 2);
     }
 
     public function periods()
