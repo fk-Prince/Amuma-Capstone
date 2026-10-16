@@ -128,6 +128,13 @@
                         </span>
                     </div>
 
+                    <p
+                        v-if="schedule.note"
+                        class="border-t border-gray-100 px-4 py-3 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400"
+                    >
+                        {{ schedule.note }}
+                    </p>
+
                     <div
                         v-if="schedule.services?.length"
                         class="divide-y divide-gray-100 border-t border-gray-100 dark:divide-white/10 dark:border-white/10"
@@ -166,6 +173,13 @@
                                         class="truncate text-sm font-medium text-gray-800 dark:text-white"
                                     >
                                         {{ service.service_name || "Service" }}
+                                    </p>
+
+                                    <p
+                                        v-if="assignmentSummary(service.assignees?.[0])"
+                                        class="truncate text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ assignmentSummary(service.assignees?.[0]) }}
                                     </p>
 
                                     <p class="truncate text-xs text-gray-400 dark:text-gray-500">
@@ -257,7 +271,7 @@ import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
-import { formatDurationShort } from "~/utils/time";
+import { assignmentSummary, formatDurationShort } from "~/utils/time";
 
 const props = withDefaults(
     defineProps<{

@@ -1327,6 +1327,8 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 full_name: assignee.full_name ?? null,
                 avatar: assignee.avatar ?? null,
                 note: assignee.note ?? null,
+                start_time: assignee.start_time ?? null,
+                end_time: assignee.end_time ?? null,
                 employee_role: assignee.employee_role ?? null,
                 phone_number: assignee.phone_number ?? null,
                 email: assignee.email ?? null,

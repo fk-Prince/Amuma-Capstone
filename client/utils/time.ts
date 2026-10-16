@@ -54,6 +54,23 @@ export function format24To12(time: string | undefined | null) {
     return `${String(hour).padStart(2, "0")}:${minute} ${ampm}`;
 }
 
+// What was set on an assignment in the dashboard, "08:00 AM - 12:00 PM · AM Shift".
+export function assignmentSummary(
+    assignee?: {
+        start_time?: string | null;
+        end_time?: string | null;
+        note?: string | null;
+    } | null,
+) {
+    if (!assignee) return "";
+
+    const start = format24To12(assignee.start_time);
+    const end = format24To12(assignee.end_time);
+    const hours = start && end ? `${start} - ${end}` : start || end;
+
+    return [hours, assignee.note?.trim()].filter(Boolean).join(" · ");
+}
+
 // GENERATE {label, value} PAIRS FOR EVERY STEP IN A DAY
 export function generateAmPmTimes(stepMinutes = 60): { label: string; value: string }[] {
     return generate24HourTimes(stepMinutes).map((value) => ({

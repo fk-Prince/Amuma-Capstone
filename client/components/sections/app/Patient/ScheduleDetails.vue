@@ -2011,6 +2011,15 @@ function toggleAssignee(serviceId: number, employeeId: number) {
         ? bookingWindowFor(service)
         : { start: "", end: "" };
 
+    const previous = (service?.previous_assignees ?? []).filter(
+        (assignee) => assignee.start_time || assignee.end_time || assignee.note,
+    );
+    const inherited =
+        [...previous]
+            .reverse()
+            .find((assignee) => Number(assignee.employee_id) === employeeId) ??
+        (current.length === 0 ? previous[previous.length - 1] : undefined);
+
     assignments.value = {
         ...assignments.value,
         [serviceId]:
@@ -2021,9 +2030,9 @@ function toggleAssignee(serviceId: number, employeeId: number) {
                           employee_id: employeeId,
                           note: isNoteLocked(serviceId, employeeId)
                               ? "Assistant"
-                              : "",
-                          start_time: window.start,
-                          end_time: window.end,
+                              : (inherited?.note ?? ""),
+                          start_time: inherited?.start_time || window.start,
+                          end_time: inherited?.end_time || window.end,
                       },
                   ]
                 : current.filter((_, i) => i !== index),

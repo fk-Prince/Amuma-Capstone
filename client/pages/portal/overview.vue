@@ -383,6 +383,19 @@
                                 .join(", ") || "No caregiver assigned yet"
                         }}
                     </p>
+
+                    <p
+                        v-for="assignee in assigneesOf(service).filter(
+                            (item) => assignmentSummary(item),
+                        )"
+                        :key="assignee.employee_id"
+                        class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                    >
+                        <template v-if="assigneesOf(service).length > 1">
+                            {{ assignee.full_name }}:
+                        </template>
+                        {{ assignmentSummary(assignee) }}
+                    </p>
                 </div>
             </div>
 
@@ -551,6 +564,19 @@
                             </div>
                         </template>
                     </div>
+
+                    <p
+                        v-for="assignee in assigneesOf(service).filter(
+                            (item) => assignmentSummary(item),
+                        )"
+                        :key="assignee.employee_id"
+                        class="-mt-2 mb-3 text-xs text-gray-500 dark:text-gray-400"
+                    >
+                        <template v-if="assigneesOf(service).length > 1">
+                            {{ assignee.full_name }}:
+                        </template>
+                        {{ assignmentSummary(assignee) }}
+                    </p>
 
                     <div v-if="isMedicalVisit" class="grid grid-cols-2 gap-2">
                         <div
@@ -1126,7 +1152,12 @@ import { patientAccessService } from "../../api/patient-access/PatientAccessServ
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
-import { formatDate, formatDuration, stringToDateTime } from "~/utils/time";
+import {
+    assignmentSummary,
+    formatDate,
+    formatDuration,
+    stringToDateTime,
+} from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 import { methodLabel } from "~/utils/payment-method";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
