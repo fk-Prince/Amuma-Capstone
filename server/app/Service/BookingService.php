@@ -255,7 +255,7 @@ class BookingService
 
                 return response()->json([
                     'data' => $booking,
-                    'message' => 'Your booking has been submitted successfully! We\'ll review your request and notify you once it has been confirmed.',
+                    'message' => 'Your booking has been submitted successfully',
                 ], 200);
             });
         } catch (Exception $e) {
@@ -377,7 +377,7 @@ class BookingService
 
             return response()->json([
                 'data' => $booking,
-                'message' => 'Your booking has been submitted successfully! We\'ll review your request and notify you once it has been confirmed.',
+                'message' => 'Your booking has been submitted successfully',
             ], 200);
         });
     }

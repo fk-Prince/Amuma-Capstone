@@ -58,7 +58,7 @@ class HomecareBookingTest extends TestCase
         $breakdown = $this->app->make(BookingHelper::class)->resolveBookingPayment($payload);
 
         return $this->app->make(BookingService::class)->storePaidBooking($this->relative, $payload, [
-            'xendit_invoice_id' => 'chg_001',
+            'xendit_invoice_id' => 'TXN-000001',
             'masked_card_number' => '400000XXXXXX0002',
             'total' => $breakdown['booking_amount'],
         ], $breakdown);
@@ -74,7 +74,7 @@ class HomecareBookingTest extends TestCase
         $response = $this->submitPaid($this->medicalVisit());
 
         $this->assertSame(
-            "Your booking has been submitted successfully! We'll review your request and notify you once it has been confirmed.",
+            'Your booking has been submitted successfully',
             $response->getData(true)['message']
         );
 
@@ -98,7 +98,7 @@ class HomecareBookingTest extends TestCase
         $this->assertSame(Transaction::TYPE_PAYMENT, $transaction->type);
         $this->assertSame('550.00', (string) $transaction->amount);
         $this->assertSame($this->client->client_id, (int) $transaction->client_id);
-        $this->assertSame('chg_001', $transaction->transaction_reference_id);
+        $this->assertSame('TXN-000001', $transaction->transaction_reference_id);
     }
 
     public function test_you_have_a_new_booking_request(): void

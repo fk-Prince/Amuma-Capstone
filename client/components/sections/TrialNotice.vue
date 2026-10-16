@@ -13,7 +13,8 @@
                 <span class="font-semibold"
                     >This branch is on its free trial.</span
                 >
-                People can't find it in the booking search yet.
+                People can't find it in the booking search yet, so take this
+                time to set up your branch.
                 <template v-if="canStart">
                     When you're ready, start your plan now.
                 </template>

@@ -61,7 +61,7 @@ class FacilityBookingTest extends TestCase
         $response = $this->preAdmission();
 
         $this->assertSame(
-            "Your booking has been submitted successfully! We'll review your request and notify you once it has been confirmed.",
+            'Your booking has been submitted successfully',
             $response->getData(true)['message']
         );
 
