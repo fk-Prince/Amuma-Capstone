@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Http\Resources\BookingResource;
 use App\Guard\GuardianEmailGuard;
+use App\Models\AdmissionChargeDiagnosis;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
@@ -196,7 +197,7 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            $amount = round((float) $contract['price'] + $this->diagnosisFees->total($fees), 2);
+            $amount = round((float) $contract['price'] + $this->diagnosisFees->total($fees, $contract['billing_cycle']), 2);
 
             $invoice = Invoice::create([
                 'branch_id'      => $payload['branch_id'],
@@ -651,8 +652,13 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            $previous = round((float) $admission->chargeDiagnoses()->sum('amount'), 2);
-            $delta = round($this->diagnosisFees->total($fees) - $previous, 2);
+            $cycle = $period->branchContract?->billing_cycle;
+
+            $previous = round(
+                (float) $admission->chargeDiagnoses()->sum('amount') * AdmissionChargeDiagnosis::multiplier($cycle),
+                2
+            );
+            $delta = round($this->diagnosisFees->total($fees, $cycle) - $previous, 2);
 
             if ($delta < 0 && (float) $invoice->net_paid_amount > (float) $invoice->adjusted_total + $delta) {
                 throw new Exception(
@@ -759,14 +765,21 @@ class PatientAdmissionService
                 $endDate
             );
 
+            $amountDue = round(
+                (float) $contract['price']
+                    + (float) $admission->chargeDiagnoses()->sum('amount')
+                    * AdmissionChargeDiagnosis::multiplier($contract['billing_cycle']),
+                2
+            );
+
             $invoice = Invoice::create([
                 'branch_id'      => $payload['branch_id'],
-                'total_amount'   => $contract['price'],
+                'total_amount'   => $amountDue,
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
                 'admission_period_id' => $nextPeriod->admission_period_id,
-                'price'               => $contract['price'],
+                'price'               => $amountDue,
             ]);
 
 
@@ -775,9 +788,9 @@ class PatientAdmissionService
             if (!empty($payload['require_payment'])) {
                 $cash = round((float) ($payload['cash'] ?? 0), 2);
 
-                if ($cash < (float) $contract['price']) {
+                if ($cash < $amountDue) {
                     throw new Exception(
-                        'Payment of ' . $contract['price']
+                        'Payment of ' . $amountDue
                             . ' is required to extend this stay.',
                         422
                     );
@@ -1128,7 +1141,11 @@ class PatientAdmissionService
             $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
             $period = $this->periods->current($admission);
 
-            $amount = round((float) $payload['payment']['total_amount'] + $this->diagnosisFees->total($fees), 2);
+            $amount = round(
+                (float) $payload['payment']['total_amount']
+                    + $this->diagnosisFees->total($fees, $payload['reserved']['billing_cycle'] ?? null),
+                2
+            );
 
             $invoice = $this->invoiceRepository->create([
                 'total_amount' => $amount,
@@ -1248,7 +1265,11 @@ class PatientAdmissionService
         $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
         $period = $this->periods->current($admission);
 
-        $amount = round((float) $payload['payment']['total_amount'] + $this->diagnosisFees->total($fees), 2);
+        $amount = round(
+            (float) $payload['payment']['total_amount']
+                + $this->diagnosisFees->total($fees, $payload['reserved']['billing_cycle'] ?? null),
+            2
+        );
 
         $invoice = $this->invoiceRepository->create([
             'total_amount' => $amount,

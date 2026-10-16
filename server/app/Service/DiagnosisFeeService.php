@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Models\AdmissionChargeDiagnosis;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Repository\AdmissionChargeDiagnosisRepository;
@@ -65,9 +66,15 @@ class DiagnosisFeeService
         return $fees->unique(fn(array $fee) => $fee['diagnosis']->patient_diagnosis_id)->values();
     }
 
-    public function total(Collection $fees): float
+    // What the picked cases add to one period: their monthly prices, times
+    // twelve when the period is billed yearly.
+    public function total(Collection $fees, ?string $billingCycle = null): float
     {
-        return round((float) $fees->sum(fn(array $fee) => (float) $fee['case']->price), 2);
+        return round(
+            (float) $fees->sum(fn(array $fee) => (float) $fee['case']->price)
+                * AdmissionChargeDiagnosis::multiplier($billingCycle),
+            2
+        );
     }
 
     /*

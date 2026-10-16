@@ -401,10 +401,15 @@ class PatientSeeder extends Seeder
             'amount' => $amount,
         ]);
 
-        $line->update(['price' => round((float) $line->price + $amount, 2)]);
+        $billed = round(
+            $amount * AdmissionChargeDiagnosis::multiplier($line->admissionPeriod?->branchContract?->billing_cycle),
+            2
+        );
+
+        $line->update(['price' => round((float) $line->price + $billed, 2)]);
 
         $invoice = Invoice::find($line->invoice_id);
-        $invoice->update(['total_amount' => round((float) $invoice->total_amount + $amount, 2)]);
+        $invoice->update(['total_amount' => round((float) $invoice->total_amount + $billed, 2)]);
         $invoice->syncStatus();
     }
 

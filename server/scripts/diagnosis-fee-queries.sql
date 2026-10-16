@@ -20,18 +20,21 @@ SELECT pa.patient_admission_id,
        ap.reason,
        ap.status,
        SUM(ia.price) AS period_price,
-       CASE WHEN ap.reason = 'admitted'
+       CASE WHEN ap.reason IN ('admitted', 'extended')
             THEN COALESCE((SELECT SUM(amount) FROM admission_charge_diagnosis x
                            WHERE x.patient_admission_id = pa.patient_admission_id), 0)
+                 * CASE WHEN UPPER(bc.billing_cycle) = 'YEARLY' THEN 12 ELSE 1 END
             ELSE 0 END AS diagnosis_fee,
-       SUM(ia.price) - CASE WHEN ap.reason = 'admitted'
+       SUM(ia.price) - CASE WHEN ap.reason IN ('admitted', 'extended')
             THEN COALESCE((SELECT SUM(amount) FROM admission_charge_diagnosis x
                            WHERE x.patient_admission_id = pa.patient_admission_id), 0)
+                 * CASE WHEN UPPER(bc.billing_cycle) = 'YEARLY' THEN 12 ELSE 1 END
             ELSE 0 END AS room_price
 FROM admission_periods ap
 JOIN patient_admissions pa ON pa.patient_admission_id = ap.patient_admission_id
+JOIN branch_contracts bc ON bc.branch_contract_id = ap.branch_contract_id
 LEFT JOIN invoice_admission ia ON ia.admission_period_id = ap.admission_period_id
-GROUP BY pa.patient_admission_id, ap.admission_period_id, ap.reason, ap.status
+GROUP BY pa.patient_admission_id, ap.admission_period_id, ap.reason, ap.status, bc.billing_cycle
 ORDER BY pa.patient_admission_id, ap.admission_period_id;
 
 -- 3. Invoices whose total does not match their admission lines (should return no rows)

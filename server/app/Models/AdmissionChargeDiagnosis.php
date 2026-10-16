@@ -21,6 +21,12 @@ class AdmissionChargeDiagnosis extends Model
         'amount' => 'decimal:2',
     ];
 
+    // The amount is the case's monthly price. A yearly period bills twelve.
+    public static function multiplier(?string $billingCycle): int
+    {
+        return strtoupper(trim((string) $billingCycle)) === 'YEARLY' ? 12 : 1;
+    }
+
     public function patientAdmission()
     {
         return $this->belongsTo(PatientAdmission::class, 'patient_admission_id', 'patient_admission_id');

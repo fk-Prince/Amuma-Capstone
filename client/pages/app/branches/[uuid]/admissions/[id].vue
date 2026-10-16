@@ -379,9 +379,12 @@
 
                         <ActionButton
                             variant="outline"
-                            :disabled="!canReadAdmissions"
+                            :disabled="!isAdmitted || !canReadAdmissions"
                             :tooltip="
-                                canReadAdmissions ? undefined : noPermissionTip
+                                blockedTip(
+                                    unavailableWhileNotAdmitted,
+                                    canReadAdmissions,
+                                )
                             "
                             @click="chargeModalOpen = true"
                         >
@@ -1062,6 +1065,7 @@
             :patient-uuid="id"
             :patient-name="patient?.full_name"
             :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
+            :billing-cycle="(currentAdmission ?? latestAdmission)?.current_contract?.billing_cycle"
             :saving="actionLoading"
             @close="diagnosisModalOpen = false"
             @save="saveDiagnosisCases"
@@ -1073,12 +1077,12 @@
             :patient-name="patient?.full_name"
             :branch-uuid="uuid"
             :current-admission-id="
-                isAdmitted || isWaiting
+                isAdmitted
                     ? (currentAdmission ?? latestAdmission)
                           ?.patient_admission_id
                     : null
             "
-            :can-add="(isAdmitted || isWaiting) && canUpdateAdmission"
+            :can-add="isAdmitted && canUpdateAdmission"
             :add-blocked-reason="
                 !canUpdateAdmission
                     ? 'You need permission to update admissions.'

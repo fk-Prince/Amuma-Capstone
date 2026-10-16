@@ -524,7 +524,7 @@
                 open
                 :patient-uuid="patientUuid"
                 section-class="mt-8"
-                hint="Billed together with this admission."
+                hint="The monthly case price is added to every admission period, times 12 on a yearly plan."
                 @update:selection="feeSelection = $event"
             />
 

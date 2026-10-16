@@ -187,6 +187,9 @@ export interface Admission {
     invoices: InvoiceAccommodation[];
     booking_deposit?: { label: string; percent: number } | null;
     current_contract?: Contract | null;
+    // Monthly diagnosis amount added to every admission period (times 12 on
+    // a yearly period).
+    diagnosis_monthly_fee?: number;
     current_period?: AdmissionPeriod | null;
     future_periods?: {
         count: number;

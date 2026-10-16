@@ -467,13 +467,17 @@ function caseFor(entry: Diagnosis) {
         : undefined;
 }
 
-// Only a diagnosis that was actually filled in is billed.
-const diagnosisFeeTotal = computed(() =>
-    diagnosisList.value.reduce(
-        (sum, entry) =>
-            entry.diagnosis ? sum + Number(caseFor(entry)?.price ?? 0) : sum,
-        0,
-    ),
+// Only a diagnosis that was actually filled in is billed. Case prices are
+// monthly, so a yearly admission is billed twelve of them.
+const diagnosisFeeTotal = computed(
+    () =>
+        diagnosisList.value.reduce(
+            (sum, entry) =>
+                entry.diagnosis
+                    ? sum + Number(caseFor(entry)?.price ?? 0)
+                    : sum,
+            0,
+        ) * (props.reserved.billing_cycle === "yearly" ? 12 : 1),
 );
 
 const patientRows = computed<Row[]>(() => {
@@ -543,7 +547,7 @@ function getDiagnosisRows(entry: Diagnosis): Row[] {
         {
             label: "Diagnosis Case",
             value: diagnosisCase
-                ? `${diagnosisCase.title} — ${formatCurrency(diagnosisCase.price)}`
+                ? `${diagnosisCase.title} — ${formatCurrency(diagnosisCase.price)} / month`
                 : "",
         },
         {

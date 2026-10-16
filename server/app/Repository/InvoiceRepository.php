@@ -606,6 +606,11 @@ class InvoiceRepository
                     'patient_admission_id' =>
                     $admission->patient_admission_id,
 
+                    'diagnosis_monthly_fee' => round(
+                        (float) $admission->chargeDiagnoses()->sum('amount'),
+                        2
+                    ),
+
                     'status' =>
                     $admission->status,
 

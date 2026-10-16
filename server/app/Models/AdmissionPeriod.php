@@ -109,15 +109,24 @@ class AdmissionPeriod extends Model
         return $this->chargedAmount() / $this->totalDays();
     }
 
-    // The diagnosis fee is billed once, inside the price of the period the
-    // patient was admitted on. Everything else on the lines is room price.
+    // The diagnosis amount is added to the price of every admission and
+    // extension period: the monthly case price, times twelve on a yearly
+    // period. An accommodation change only carries the upgrade difference.
+    public function diagnosisAmount(): float
+    {
+        if (!in_array($this->reason, [self::REASON_ADMITTED, self::REASON_EXTENDED], true)) {
+            return 0.0;
+        }
+
+        $monthly = (float) $this->patientAdmission?->chargeDiagnoses()->sum('amount');
+
+        return round($monthly * AdmissionChargeDiagnosis::multiplier($this->branchContract?->billing_cycle), 2);
+    }
+
+    // Everything on the lines that is not the diagnosis amount.
     public function roomChargedAmount(): float
     {
-        $diagnosis = $this->reason === self::REASON_ADMITTED
-            ? (float) $this->patientAdmission?->chargeDiagnoses()->sum('amount')
-            : 0.0;
-
-        return round(max(0, $this->chargedAmount() - $diagnosis), 2);
+        return round(max(0, $this->chargedAmount() - $this->diagnosisAmount()), 2);
     }
 
     // Room price already billed across the accommodation changes that led to

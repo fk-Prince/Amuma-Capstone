@@ -240,6 +240,8 @@ class PatientResource extends JsonResource
 
             'current_period' => $this->formatPeriod($period),
 
+            'diagnosis_monthly_fee' => round((float) $admission->chargeDiagnoses()->sum('amount'), 2),
+
             'future_periods' => $this->formatFuturePeriods($admission, $period),
 
             'current_invoice' => $this->formatInvoiceAdmission($currentInvoice),

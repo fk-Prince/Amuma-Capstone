@@ -381,8 +381,9 @@
                                 </p>
                                 <p class="text-lg font-bold tracking-tight">
                                     ₱{{
-                                        Number(
-                                            selectedContract.price,
+                                        (
+                                            Number(selectedContract.price) +
+                                            diagnosisFee
                                         ).toLocaleString()
                                     }}
                                     <span
@@ -395,6 +396,20 @@
                                                 : "mo"
                                         }}
                                     </span>
+                                </p>
+                                <p
+                                    v-if="diagnosisFee > 0"
+                                    class="text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    Room
+                                    {{ formatCurrency(selectedContract.price) }}
+                                    + diagnosis
+                                    {{ formatCurrency(diagnosisFee) }}
+                                    {{
+                                        billingCycle === "yearly"
+                                            ? "(12 months)"
+                                            : "(1 month)"
+                                    }}
                                 </p>
                             </div>
                         </div>
@@ -544,6 +559,14 @@ const emit = defineEmits<{
     ): void;
     (e: "close"): void;
 }>();
+
+// The diagnosis amount recorded on the admission rides on every period and
+// can't be changed here: monthly price, times twelve on a yearly extension.
+const diagnosisFee = computed(
+    () =>
+        Number(props.admission?.diagnosis_monthly_fee ?? 0) *
+        (billingCycle.value === "yearly" ? 12 : 1),
+);
 
 const contracts = ref<RoomContract[]>([]);
 const loading = ref(false);
