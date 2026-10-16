@@ -146,12 +146,12 @@ async function load() {
                 uuid: string;
                 diagnosis: string;
                 last_case_uuid?: string | null;
-                admission_case_uuid?: string | null;
+                admission_charge?: { case_uuid: string | null } | null;
             }) => ({
                 uuid: item.uuid,
                 diagnosis: item.diagnosis,
                 case_uuid: props.admissionId
-                    ? (item.admission_case_uuid ?? "")
+                    ? (item.admission_charge?.case_uuid ?? "")
                     : (item.last_case_uuid ?? ""),
             }),
         );

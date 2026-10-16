@@ -35,6 +35,9 @@ export interface DiagnosisFeeSelection {
     diagnoses: {
         patient_diagnosis_uuid: string;
         diagnosis_case_uuid: string;
+        // Monthly amount, when it differs from the case price.
+        amount?: number;
+        description?: string;
     }[];
     fee: number;
 }

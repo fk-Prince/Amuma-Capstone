@@ -60,7 +60,31 @@ class DiagnosisFeeService
                 ]);
             }
 
-            $fees->push($this->pair($diagnosis, $entry['diagnosis_case_uuid'], $branchId, $index));
+            $fee = $this->pair($diagnosis, $entry['diagnosis_case_uuid'], $branchId, $index);
+
+            $amount = $entry['amount'] ?? null;
+
+            if (filled($amount)) {
+                if (!is_numeric($amount) || (float) $amount < 0 || (float) $amount > 99999999.99) {
+                    throw ValidationException::withMessages([
+                        "diagnoses.$index.amount" => 'Enter a valid amount.',
+                    ]);
+                }
+
+                $fee['amount'] = round((float) $amount, 2);
+            }
+
+            $description = trim((string) ($entry['description'] ?? ''));
+
+            if (mb_strlen($description) > 255) {
+                throw ValidationException::withMessages([
+                    "diagnoses.$index.description" => 'The description may not be longer than 255 characters.',
+                ]);
+            }
+
+            $fee['description'] = $description !== '' ? $description : null;
+
+            $fees->push($fee);
         }
 
         return $fees->unique(fn(array $fee) => $fee['diagnosis']->patient_diagnosis_id)->values();
@@ -71,7 +95,7 @@ class DiagnosisFeeService
     public function total(Collection $fees, ?string $billingCycle = null): float
     {
         return round(
-            (float) $fees->sum(fn(array $fee) => (float) $fee['case']->price)
+            (float) $fees->sum(fn(array $fee) => (float) $fee['amount'])
                 * AdmissionChargeDiagnosis::multiplier($billingCycle),
             2
         );
@@ -88,7 +112,8 @@ class DiagnosisFeeService
                 'patient_admission_id' => $admission->patient_admission_id,
                 'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
                 'diagnosis_case_id' => $fee['case']->diagnosis_case_id,
-                'amount' => round((float) $fee['case']->price, 2),
+                'amount' => round((float) $fee['amount'], 2),
+                'description' => $fee['description'] ?? null,
             ]);
         }
     }
@@ -101,19 +126,16 @@ class DiagnosisFeeService
     }
 
     /*
-        The diagnosis case an admission was billed under, keyed by diagnosis id.
+        What an admission was billed for each diagnosis, keyed by diagnosis id.
     */
-    public function admissionCaseUuids(int $admissionId): Collection
+    public function admissionCharges(int $admissionId): Collection
     {
-        $caseIds = $this->admissionChargeRepository->caseIdsForAdmission($admissionId);
-
-        if ($caseIds->isEmpty()) {
-            return collect();
-        }
-
-        $cases = $this->diagnosisCaseRepository->findManyByIds($caseIds->unique()->values()->all());
-
-        return $caseIds->map(fn($caseId) => $cases->get($caseId)?->uuid)->filter();
+        return $this->admissionChargeRepository->forAdmission($admissionId)
+            ->map(fn(AdmissionChargeDiagnosis $charge) => [
+                'case_uuid' => $charge->diagnosisCase?->uuid,
+                'amount' => (float) $charge->amount,
+                'description' => $charge->description,
+            ]);
     }
 
     /*
@@ -147,6 +169,11 @@ class DiagnosisFeeService
             ]);
         }
 
-        return ['diagnosis' => $diagnosis, 'case' => $case];
+        return [
+            'diagnosis' => $diagnosis,
+            'case' => $case,
+            'amount' => round((float) $case->price, 2),
+            'description' => null,
+        ];
     }
 }

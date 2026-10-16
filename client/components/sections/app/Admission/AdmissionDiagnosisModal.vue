@@ -13,7 +13,7 @@
                 class="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-5"
             >
                 <div
-                    class="flex w-full max-w-xl max-h-[88dvh] flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                    class="flex w-full max-w-4xl max-h-[88dvh] flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
                     <div
                         class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 dark:border-white/10"
@@ -28,11 +28,9 @@
                             >
                                 Pick one of {{ patientName || "the patient" }}'s
                                 diagnoses and the case it is billed under. The
-                                monthly case price is added to every
-                                admission period, starting with this admission
-                                and each extension after it, times 12 on a
-                                yearly plan. It can be changed until the
-                                patient is admitted.
+                                monthly case price is added to every admission
+                                period. It can be changed until the patient is
+                                admitted.
                             </p>
                         </div>
 
@@ -55,25 +53,42 @@
                             {{ loadError }}
                         </p>
 
-                        <div v-else-if="loading" class="space-y-3">
-                            <div
-                                class="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
-                            />
-                            <div
-                                class="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
-                            />
+                        <div
+                            v-else-if="loading"
+                            class="grid gap-6 md:grid-cols-2"
+                        >
+                            <div class="space-y-3">
+                                <div
+                                    v-for="i in 3"
+                                    :key="i"
+                                    class="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
+                                />
+                            </div>
+                            <div class="space-y-3">
+                                <div
+                                    v-for="i in 3"
+                                    :key="i"
+                                    class="h-10 animate-pulse rounded-xl bg-slate-100 dark:bg-white/10"
+                                />
+                            </div>
                         </div>
 
-                        <template v-else>
-                            <p
-                                v-if="!cases.length"
-                                class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
-                            >
-                                No diagnosis cases yet. Add them from
-                                Contracts.
-                            </p>
+                        <p
+                            v-else-if="!cases.length"
+                            class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+                        >
+                            No diagnosis cases yet. Add them from Contracts.
+                        </p>
 
-                            <div v-else class="space-y-4">
+                        <div v-else class="grid gap-6 md:grid-cols-2">
+                            <!-- LEFT · SELECTION -->
+                            <section class="min-w-0 space-y-4">
+                                <h4
+                                    class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                >
+                                    Selection
+                                </h4>
+
                                 <Combobox
                                     :key="`diagnosis-${pickKey}`"
                                     v-model="pickedDiagnosis"
@@ -84,18 +99,66 @@
                                     :items="diagnosisItems"
                                 />
 
+                                <Combobox
+                                    :key="`case-${pickKey}`"
+                                    :model-value="pickedCase"
+                                    label="Diagnosis case"
+                                    placeholder="Select a diagnosis case"
+                                    search-bar
+                                    search-placeholder="Search diagnosis cases"
+                                    :items="caseItems"
+                                    @update:model-value="selectCase"
+                                />
+
+                                <BaseInput
+                                    v-model="pickedAmount"
+                                    label="Amount per month"
+                                    mode="number"
+                                    placeholder="0.00"
+                                    :error="pickError"
+                                    @update:modelValue="pickError = ''"
+                                />
+
+                                <BaseInput
+                                    v-model="pickedDescription"
+                                    label="Description"
+                                    mode="textarea"
+                                    :textMax="255"
+                                    placeholder="Optional note saved with this diagnosis case"
+                                />
+
                                 <button
-                                    v-if="!addingDiagnosis"
                                     type="button"
-                                    class="-mt-2 text-xs font-semibold text-primary transition hover:opacity-80"
-                                    @click="addingDiagnosis = true"
+                                    class="w-full rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10"
+                                    :disabled="!pickedDiagnosis || !pickedCase"
+                                    @click="addPicked"
                                 >
-                                    + Add a new diagnosis to the record
+                                    + Add diagnosis case
                                 </button>
+                            </section>
+
+                            <!-- RIGHT · VIEW / ADD DIAGNOSIS -->
+                            <section class="min-w-0 space-y-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <h4
+                                        class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                    >
+                                        Diagnoses
+                                    </h4>
+
+                                    <button
+                                        v-if="!addingDiagnosis"
+                                        type="button"
+                                        class="text-xs font-semibold text-primary transition hover:opacity-80"
+                                        @click="addingDiagnosis = true"
+                                    >
+                                        + Add new diagnosis
+                                    </button>
+                                </div>
 
                                 <div
-                                    v-else
-                                    class="-mt-1 space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10"
+                                    v-if="addingDiagnosis"
+                                    class="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10"
                                 >
                                     <p
                                         class="text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -146,9 +209,8 @@
                                         <p
                                             class="text-[13px] text-muted dark:text-gray-400"
                                         >
-                                            Upload a lab result, medical
-                                            certificate, or report (PDF, PNG,
-                                            or JPG, up to 10MB)
+                                            Lab result, medical certificate, or
+                                            report (PDF, PNG, or JPG, up to 10MB)
                                         </p>
 
                                         <label
@@ -231,68 +293,104 @@
                                     </div>
                                 </div>
 
-                                <Combobox
-                                    :key="`case-${pickKey}`"
-                                    v-model="pickedCase"
-                                    label="Diagnosis case"
-                                    placeholder="Select a diagnosis case"
-                                    search-bar
-                                    search-placeholder="Search diagnosis cases"
-                                    :items="caseItems"
-                                />
-
-                                <button
-                                    type="button"
-                                    class="w-full rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10"
-                                    :disabled="!pickedDiagnosis || !pickedCase"
-                                    @click="addPicked"
+                                <p
+                                    v-if="!diagnoses.length"
+                                    class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                                 >
-                                    + Add diagnosis case
-                                </button>
-                            </div>
+                                    No recorded diagnoses yet. Add one above.
+                                </p>
 
-                            <ul
-                                v-if="selectedRows.length"
-                                class="mt-5 divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-white/10 dark:border-white/10"
-                            >
-                                <li
-                                    v-for="row in selectedRows"
-                                    :key="row.diagnosis_uuid"
-                                    class="flex items-start justify-between gap-3 px-4 py-3"
+                                <ul
+                                    v-else
+                                    class="divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-white/10 dark:border-white/10"
                                 >
-                                    <div class="min-w-0">
-                                        <p
-                                            class="break-words text-sm font-medium text-slate-800 dark:text-white"
+                                    <li
+                                        v-for="item in diagnoses"
+                                        :key="item.uuid"
+                                        class="px-4 py-3"
+                                    >
+                                        <div
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            {{ row.diagnosis }}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{ row.title }}
-                                        </p>
-                                    </div>
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="break-words text-sm font-medium text-slate-800 dark:text-white"
+                                                >
+                                                    {{ item.diagnosis }}
+                                                </p>
+                                                <p
+                                                    v-if="item.diagnosis_date"
+                                                    class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
+                                                >
+                                                    {{ formatDate(item.diagnosis_date) }}
+                                                </p>
+                                            </div>
 
-                                    <div class="flex shrink-0 items-center gap-3">
-                                        <span class="text-sm font-semibold">
-                                            {{ formatCurrency(row.price) }}
                                             <span
-                                                class="text-xs font-normal text-slate-400 dark:text-gray-500"
-                                                >/ mo</span
+                                                v-if="!chosen[item.uuid]"
+                                                class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                             >
-                                        </span>
-                                        <button
-                                            type="button"
-                                            class="text-xs font-medium text-slate-400 transition hover:text-red-500 dark:text-gray-500"
-                                            :disabled="saving"
-                                            @click="removeRow(row.diagnosis_uuid)"
+                                                Not billed
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            v-if="chosen[item.uuid]"
+                                            class="mt-2 rounded-lg bg-primary/5 px-3 py-2"
                                         >
-                                            Remove
-                                        </button>
-                                    </div>
-                                </li>
-                            </ul>
-                        </template>
+                                            <div
+                                                class="flex items-start justify-between gap-3"
+                                            >
+                                                <p
+                                                    class="min-w-0 break-words text-xs font-medium text-slate-700 dark:text-gray-300"
+                                                >
+                                                    {{ caseTitle(chosen[item.uuid]!.case_uuid) }}
+                                                </p>
+                                                <p
+                                                    class="shrink-0 text-xs font-semibold"
+                                                >
+                                                    {{
+                                                        formatCurrency(
+                                                            Number(chosen[item.uuid]!.amount),
+                                                        )
+                                                    }}
+                                                    <span
+                                                        class="font-normal text-slate-400 dark:text-gray-500"
+                                                        >/ mo</span
+                                                    >
+                                                </p>
+                                            </div>
+
+                                            <p
+                                                v-if="chosen[item.uuid]!.description"
+                                                class="mt-1 break-words text-xs text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{ chosen[item.uuid]!.description }}
+                                            </p>
+
+                                            <div class="mt-2 flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    class="text-xs font-medium text-primary transition hover:opacity-80"
+                                                    :disabled="saving"
+                                                    @click="editRow(item.uuid)"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="text-xs font-medium text-slate-400 transition hover:text-red-500 dark:text-gray-500"
+                                                    :disabled="saving"
+                                                    @click="removeRow(item.uuid)"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </section>
+                        </div>
                     </div>
 
                     <div
@@ -354,20 +452,29 @@ import {
     DIAGNOSIS_WINDOW_MONTHS,
     diagnosisWindowStart,
 } from "~/schema/patient-schema";
-import { getLocalDateStr } from "~/utils/time";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import type {
     DiagnosisCase,
     DiagnosisFeeSelection,
 } from "~/types/additional-charge";
 import { formatCurrency } from "~/utils/currency";
-import { formatDate } from "~/utils/time";
+import { formatDate, getLocalDateStr } from "~/utils/time";
 
 interface PatientDiagnosis {
     uuid: string;
     diagnosis: string;
     diagnosis_date: string | null;
-    admission_case_uuid: string | null;
+    admission_charge?: {
+        case_uuid: string | null;
+        amount: number;
+        description: string | null;
+    } | null;
+}
+
+interface ChosenCase {
+    case_uuid: string;
+    amount: number | string;
+    description: string;
 }
 
 const route = useRoute();
@@ -382,26 +489,29 @@ const props = defineProps<{
     saving?: boolean;
 }>();
 
-const isYearly = computed(
-    () => String(props.billingCycle ?? "").trim().toLowerCase() === "yearly",
-);
-const months = computed(() => (isYearly.value ? 12 : 1));
-
 const emit = defineEmits<{
     (e: "close"): void;
     (e: "save", diagnoses: DiagnosisFeeSelection["diagnoses"]): void;
 }>();
+
+const isYearly = computed(
+    () => String(props.billingCycle ?? "").trim().toLowerCase() === "yearly",
+);
+const months = computed(() => (isYearly.value ? 12 : 1));
 
 const loading = ref(false);
 const loadError = ref("");
 const diagnoses = ref<PatientDiagnosis[]>([]);
 const cases = ref<DiagnosisCase[]>([]);
 
-// diagnosis uuid -> diagnosis case uuid
-const chosen = ref<Record<string, string>>({});
+// diagnosis uuid -> what it is billed under
+const chosen = ref<Record<string, ChosenCase>>({});
 
 const pickedDiagnosis = ref("");
 const pickedCase = ref("");
+const pickedAmount = ref<number | string>("");
+const pickedDescription = ref("");
+const pickError = ref("");
 const pickKey = ref(0);
 
 const { error: toastError } = useToast();
@@ -491,7 +601,7 @@ async function saveNewDiagnosis() {
                 uuid: created.uuid,
                 diagnosis: created.diagnosis,
                 diagnosis_date: created.diagnosis_date,
-                admission_case_uuid: null,
+                admission_charge: null,
             },
             ...diagnoses.value,
         ];
@@ -529,42 +639,74 @@ const caseItems = computed(() =>
     })),
 );
 
-const selectedRows = computed(() =>
-    Object.entries(chosen.value)
-        .map(([diagnosisUuid, caseUuid]) => {
-            const diagnosis = diagnoses.value.find(
-                (item) => item.uuid === diagnosisUuid,
-            );
-            const diagnosisCase = cases.value.find(
-                (item) => item.uuid === caseUuid,
-            );
+function caseTitle(caseUuid: string) {
+    return cases.value.find((item) => item.uuid === caseUuid)?.title ?? "—";
+}
 
-            return diagnosis && diagnosisCase
-                ? {
-                      diagnosis_uuid: diagnosisUuid,
-                      diagnosis: diagnosis.diagnosis,
-                      title: diagnosisCase.title,
-                      price: Number(diagnosisCase.price),
-                  }
-                : null;
-        })
-        .filter((row): row is NonNullable<typeof row> => row !== null),
-);
+// Picking a case starts the amount from its price, which can then be changed.
+function selectCase(uuid: string) {
+    pickedCase.value = uuid;
+
+    const item = cases.value.find((entry) => entry.uuid === uuid);
+
+    if (item) pickedAmount.value = Number(item.price);
+
+    pickError.value = "";
+}
 
 const fee = computed(() =>
-    selectedRows.value.reduce((sum, row) => sum + row.price, 0),
+    Object.entries(chosen.value)
+        .filter(([diagnosisUuid]) =>
+            diagnoses.value.some((item) => item.uuid === diagnosisUuid),
+        )
+        .reduce((sum, [, value]) => sum + (Number(value.amount) || 0), 0),
 );
+
+function resetPick() {
+    pickedDiagnosis.value = "";
+    pickedCase.value = "";
+    pickedAmount.value = "";
+    pickedDescription.value = "";
+    pickError.value = "";
+    pickKey.value++;
+}
 
 function addPicked() {
     if (!pickedDiagnosis.value || !pickedCase.value) return;
 
+    const amount = Number(pickedAmount.value);
+
+    if (pickedAmount.value === "" || Number.isNaN(amount) || amount < 0) {
+        pickError.value = "Enter an amount of zero or more.";
+        return;
+    }
+
     chosen.value = {
         ...chosen.value,
-        [pickedDiagnosis.value]: pickedCase.value,
+        [pickedDiagnosis.value]: {
+            case_uuid: pickedCase.value,
+            amount,
+            description: pickedDescription.value.trim(),
+        },
     };
-    pickedDiagnosis.value = "";
-    pickedCase.value = "";
+
+    resetPick();
+}
+
+function editRow(diagnosisUuid: string) {
+    const row = chosen.value[diagnosisUuid];
+
+    if (!row) return;
+
+    removeRow(diagnosisUuid);
+
+    // The picker lists only diagnoses that are not billed yet, so remount it
+    // after the row has been released.
     pickKey.value++;
+    pickedDiagnosis.value = diagnosisUuid;
+    pickedCase.value = row.case_uuid;
+    pickedAmount.value = row.amount;
+    pickedDescription.value = row.description;
 }
 
 function removeRow(diagnosisUuid: string) {
@@ -576,9 +718,11 @@ function removeRow(diagnosisUuid: string) {
 function save() {
     emit(
         "save",
-        selectedRows.value.map((row) => ({
-            patient_diagnosis_uuid: row.diagnosis_uuid,
-            diagnosis_case_uuid: chosen.value[row.diagnosis_uuid]!,
+        Object.entries(chosen.value).map(([diagnosisUuid, value]) => ({
+            patient_diagnosis_uuid: diagnosisUuid,
+            diagnosis_case_uuid: value.case_uuid,
+            amount: Number(value.amount),
+            description: value.description || undefined,
         })),
     );
 }
@@ -589,8 +733,7 @@ async function load() {
     diagnoses.value = [];
     cases.value = [];
     chosen.value = {};
-    pickedDiagnosis.value = "";
-    pickedCase.value = "";
+    resetPick();
     cancelNewDiagnosis();
 
     try {
@@ -612,8 +755,15 @@ async function load() {
 
         chosen.value = Object.fromEntries(
             diagnoses.value
-                .filter((item) => item.admission_case_uuid)
-                .map((item) => [item.uuid, item.admission_case_uuid!]),
+                .filter((item) => item.admission_charge?.case_uuid)
+                .map((item) => [
+                    item.uuid,
+                    {
+                        case_uuid: item.admission_charge!.case_uuid!,
+                        amount: Number(item.admission_charge!.amount),
+                        description: item.admission_charge!.description ?? "",
+                    },
+                ]),
         );
     } catch (err: any) {
         loadError.value =

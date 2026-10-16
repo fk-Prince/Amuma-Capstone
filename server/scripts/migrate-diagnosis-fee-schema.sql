@@ -51,10 +51,13 @@ CREATE TABLE IF NOT EXISTS admission_charge_diagnosis (
     diagnosis_case_id bigint NULL
         REFERENCES diagnosis_cases (diagnosis_case_id) ON DELETE SET NULL,
     amount numeric(10, 2) NOT NULL,
+    description varchar(255) NULL,
     created_at timestamp(0) without time zone NULL,
     updated_at timestamp(0) without time zone NULL,
     CONSTRAINT admission_charge_diagnosis_unique UNIQUE (patient_admission_id, patient_diagnosis_id)
 );
+
+ALTER TABLE admission_charge_diagnosis ADD COLUMN IF NOT EXISTS description varchar(255) NULL;
 
 -- 5. Keep Laravel's migration list in step so `php artisan migrate` has nothing left to run
 DELETE FROM migrations WHERE migration = '2026_09_28_120100_create_additional_charge_diagnosis_table';

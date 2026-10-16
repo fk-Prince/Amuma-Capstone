@@ -21,6 +21,7 @@ return new class extends Migration
                 ->constrained('diagnosis_cases', 'diagnosis_case_id')
                 ->nullOnDelete();
             $table->decimal('amount', 10, 2);
+            $table->string('description')->nullable();
             $table->timestamps();
             $table->unique(['patient_admission_id', 'patient_diagnosis_id'], 'admission_charge_diagnosis_unique');
         });

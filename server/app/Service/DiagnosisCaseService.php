@@ -46,8 +46,8 @@ class DiagnosisCaseService
             ->get();
 
         $lastCases = $this->diagnosisFees->lastCaseUuids($diagnoses->pluck('patient_diagnosis_id')->all());
-        $admissionCases = !empty($payload['patient_admission_id'])
-            ? $this->diagnosisFees->admissionCaseUuids((int) $payload['patient_admission_id'])
+        $admissionCharges = !empty($payload['patient_admission_id'])
+            ? $this->diagnosisFees->admissionCharges((int) $payload['patient_admission_id'])
             : collect();
 
         return response()->json([
@@ -56,7 +56,7 @@ class DiagnosisCaseService
                 'diagnosis' => $diagnosis->diagnosis,
                 'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
                 'last_case_uuid' => $lastCases->get($diagnosis->patient_diagnosis_id),
-                'admission_case_uuid' => $admissionCases->get($diagnosis->patient_diagnosis_id),
+                'admission_charge' => $admissionCharges->get($diagnosis->patient_diagnosis_id),
             ])->values(),
         ]);
     }

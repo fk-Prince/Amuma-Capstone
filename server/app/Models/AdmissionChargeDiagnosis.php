@@ -15,6 +15,7 @@ class AdmissionChargeDiagnosis extends Model
         'patient_diagnosis_id',
         'diagnosis_case_id',
         'amount',
+        'description',
     ];
 
     protected $casts = [
