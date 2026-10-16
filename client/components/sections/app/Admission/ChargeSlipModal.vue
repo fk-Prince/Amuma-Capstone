@@ -13,6 +13,7 @@
                 >
                     <div>
                         <p
+                            v-if="!slip.title"
                             class="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary-600 dark:text-primary-300"
                         >
                             For the cashier

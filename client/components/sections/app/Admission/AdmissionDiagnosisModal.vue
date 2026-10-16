@@ -80,7 +80,7 @@
                             No diagnosis cases yet. Add them from Contracts.
                         </p>
 
-                        <div v-else class="grid gap-6 md:grid-cols-2">
+                        <div v-else class="grid gap-6 md:grid-cols-[1fr_auto_1fr]">
                             <!-- LEFT · SELECTION -->
                             <section class="min-w-0">
                                 <div
@@ -220,6 +220,11 @@
                                 </p>
                             </section>
 
+                            <div
+                                class="hidden w-px bg-slate-200 dark:bg-white/10 md:block"
+                                aria-hidden="true"
+                            />
+
                             <!-- RIGHT · VIEW / ADD DIAGNOSIS -->
                             <section class="min-w-0 space-y-4">
                                 <div
@@ -253,10 +258,7 @@
                                     </div>
                                 </div>
 
-                                <div
-                                    v-if="addingDiagnosis"
-                                    class="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-white/10"
-                                >
+                                <div v-if="addingDiagnosis" class="space-y-4">
                                     <p
                                         class="text-sm font-semibold text-slate-700 dark:text-gray-300"
                                     >
@@ -271,24 +273,14 @@
                                         @update:modelValue="delete newErrors.diagnosis"
                                     />
 
-                                    <div>
-                                        <DatePickerField
-                                            v-model="newDiagnosis.diagnosis_date"
-                                            label="Date Diagnosed"
-                                            placeholder="Select date diagnosed"
-                                            :min="windowStart"
-                                            :max="todayStr"
-                                            :default-to-today="false"
-                                            :error="newErrors.diagnosis_date"
-                                        />
-                                        <p
-                                            v-if="!newErrors.diagnosis_date"
-                                            class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
-                                        >
-                                            Must be within the past
-                                            {{ DIAGNOSIS_WINDOW_MONTHS }} months.
-                                        </p>
-                                    </div>
+                                    <DatePickerField
+                                        v-model="newDiagnosis.diagnosis_date"
+                                        label="Date Diagnosed"
+                                        placeholder="Select date diagnosed"
+                                        :max="todayStr"
+                                        :default-to-today="false"
+                                        :error="newErrors.diagnosis_date"
+                                    />
 
                                     <BaseInput
                                         v-model="newDiagnosis.diagnosis_notes"
@@ -399,7 +391,7 @@
 
                                 <ul
                                     v-else
-                                    class="divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-white/10 dark:border-white/10"
+                                    class="divide-y divide-slate-100 dark:divide-white/10"
                                 >
                                     <li v-for="item in diagnoses" :key="item.uuid">
                                         <button
@@ -567,10 +559,6 @@ import { patientService } from "~/api/patient/PatientService";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
-import {
-    DIAGNOSIS_WINDOW_MONTHS,
-    diagnosisWindowStart,
-} from "~/schema/patient-schema";
 import type { ChargeSlip } from "~/types/charge-slip";
 import type { DiagnosisCase } from "~/types/additional-charge";
 import { formatCurrency } from "~/utils/currency";
@@ -655,7 +643,6 @@ const slip = ref<ChargeSlip | null>(null);
 const active = computed(() => entries.value[activeIndex.value] ?? entries.value[0]!);
 
 const todayStr = getLocalDateStr(new Date());
-const windowStart = diagnosisWindowStart();
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const addingDiagnosis = ref(false);
@@ -819,11 +806,8 @@ async function saveNewDiagnosis() {
     }
     if (!newDiagnosis.diagnosis_date) {
         newErrors.diagnosis_date = "Date Diagnosed is required.";
-    } else if (
-        newDiagnosis.diagnosis_date < windowStart ||
-        newDiagnosis.diagnosis_date > todayStr
-    ) {
-        newErrors.diagnosis_date = `Diagnosis must be from the past ${DIAGNOSIS_WINDOW_MONTHS} months.`;
+    } else if (newDiagnosis.diagnosis_date > todayStr) {
+        newErrors.diagnosis_date = "Diagnosis date cannot be in the future.";
     }
     if (Object.keys(newErrors).length) return;
 
