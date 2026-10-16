@@ -83,15 +83,6 @@
                             {{ charge.description }}
                         </p>
 
-                        <p
-                            v-if="charge.diagnosis"
-                            class="mt-0.5 text-[11px] text-muted dark:text-gray-400"
-                        >
-                            Diagnosis: {{ charge.diagnosis }}
-                            <template v-if="charge.diagnosis_case">
-                                · Case: {{ charge.diagnosis_case }}
-                            </template>
-                        </p>
                     </div>
 
                     <p

@@ -39,13 +39,8 @@ class DiagnosisCase extends Model
         return $this->belongsTo(Branch::class, 'branch_id', 'branch_id');
     }
 
-    public function additionalCharges()
+    public function admissionCharges()
     {
-        return $this->belongsToMany(
-            AdditionalCharge::class,
-            'additional_charge_diagnosis',
-            'diagnosis_case_id',
-            'additional_charge_id'
-        )->withPivot('patient_diagnosis_id')->withTimestamps();
+        return $this->hasMany(AdmissionChargeDiagnosis::class, 'diagnosis_case_id', 'diagnosis_case_id');
     }
 }

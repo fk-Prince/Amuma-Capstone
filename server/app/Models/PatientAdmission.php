@@ -93,6 +93,15 @@ class PatientAdmission extends Model
         );
     }
 
+    public function chargeDiagnoses()
+    {
+        return $this->hasMany(
+            AdmissionChargeDiagnosis::class,
+            'patient_admission_id',
+            'patient_admission_id'
+        );
+    }
+
     public function periods()
     {
         return $this->hasMany(
@@ -163,7 +172,7 @@ class PatientAdmission extends Model
 
     public function additionalCharges()
     {
-        return $this->hasMany(AdditionalCharge::class, 'patient_admission_id', 'patient_admission_id');
+        return $this->hasMany(AdditionalCharge::class, 'patient_id', 'patient_id');
     }
 
     public function invoiceAdmission()

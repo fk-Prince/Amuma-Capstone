@@ -17,6 +17,7 @@ use App\Repository\PatientRepository;
 use App\Repository\UserRepository;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 
 class PatientService
@@ -300,7 +301,7 @@ class PatientService
         }
 
         $this->syncAssessments($patient, $assessment);
-        $this->syncDiagnoses($patient, $payload['diagnoses'] ?? []);
+        $diagnoses = $this->syncDiagnoses($patient, $payload['diagnoses'] ?? []);
 
         $patientAccess = $this->patientAccess($guardian, $patient);
 
@@ -312,6 +313,7 @@ class PatientService
             'patient' => $patient,
             'patientAccess' => $patientAccess,
             'credentials' => $this->portalCredentials($patientAccess),
+            'diagnoses' => $diagnoses,
         ];
     }
 
@@ -493,25 +495,32 @@ class PatientService
         }
     }
 
-    public function syncDiagnoses(object $patient, mixed $diagnoses): void
+    public function syncDiagnoses(object $patient, mixed $diagnoses): array
     {
+        $created = [];
+
         foreach ((array) $diagnoses as $diagnosis) {
-            if (!is_array($diagnosis) || empty(array_filter($diagnosis))) {
+            if (!is_array($diagnosis) || empty(array_filter(Arr::except($diagnosis, ['diagnosis_case_uuid'])))) {
                 continue;
             }
 
-            PatientDiagnosis::create([
-                'patient_id' => $patient->patient_id,
-                'diagnosis' => $diagnosis['diagnosis'] ?? null,
-                'diagnosis_date' => !empty($diagnosis['diagnosis_date'])
-                    ? $diagnosis['diagnosis_date']
-                    : null,
-                'diagnosis_notes' => $diagnosis['diagnosis_notes'] ?? null,
-                'diagnosis_file' => is_string($diagnosis['diagnosis_file'] ?? null)
-                    ? $diagnosis['diagnosis_file']
-                    : null,
-            ]);
+            $created[] = [
+                'diagnosis' => PatientDiagnosis::create([
+                    'patient_id' => $patient->patient_id,
+                    'diagnosis' => $diagnosis['diagnosis'] ?? null,
+                    'diagnosis_date' => !empty($diagnosis['diagnosis_date'])
+                        ? $diagnosis['diagnosis_date']
+                        : null,
+                    'diagnosis_notes' => $diagnosis['diagnosis_notes'] ?? null,
+                    'diagnosis_file' => is_string($diagnosis['diagnosis_file'] ?? null)
+                        ? $diagnosis['diagnosis_file']
+                        : null,
+                ]),
+                'diagnosis_case_uuid' => $diagnosis['diagnosis_case_uuid'] ?? null,
+            ];
         }
+
+        return $created;
     }
 
     // DONE PATIENT ACCESS

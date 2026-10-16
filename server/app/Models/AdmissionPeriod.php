@@ -108,4 +108,30 @@ class AdmissionPeriod extends Model
     {
         return $this->chargedAmount() / $this->totalDays();
     }
+
+    // The diagnosis fee is billed once, inside the price of the period the
+    // patient was admitted on. Everything else on the lines is room price.
+    public function roomChargedAmount(): float
+    {
+        $diagnosis = $this->reason === self::REASON_ADMITTED
+            ? (float) $this->patientAdmission?->chargeDiagnoses()->sum('amount')
+            : 0.0;
+
+        return round(max(0, $this->chargedAmount() - $diagnosis), 2);
+    }
+
+    // Room price already billed across the accommodation changes that led to
+    // this period, so a later upgrade only charges what is still missing.
+    public function roomChargedInChain(): float
+    {
+        $total = 0.0;
+        $current = $this;
+
+        while ($current) {
+            $total += $current->roomChargedAmount();
+            $current = $current->parentPeriod;
+        }
+
+        return round($total, 2);
+    }
 }

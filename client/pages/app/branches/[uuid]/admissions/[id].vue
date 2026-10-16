@@ -899,6 +899,7 @@
             <AdmissionDetail
                 v-if="newAdmissionModalOpen"
                 variant="new"
+                :patient-uuid="id"
                 :loading="loadingContract"
                 :roomContract="roomContract"
                 :model="reserved"
@@ -1070,6 +1071,7 @@ import type {
     InvoiceAccommodation,
 } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
+import type { DiagnosisFeeSelection } from "~/types/additional-charge";
 import { patientService } from "~/api/patient/PatientService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { admissionService } from "~/api/admission/AdmissionService";
@@ -1322,6 +1324,7 @@ const roomContract = ref<RoomContract[]>([]);
 const reserved = ref<Reserved | null>(null);
 const reservedErrors = ref<Record<string, string>>({});
 const pendingAdmission = ref<Reserved | null>(null);
+const pendingDiagnoses = ref<DiagnosisFeeSelection["diagnoses"]>([]);
 
 function openChangeRoomModal() {
     changeRoomModalOpen.value = true;
@@ -1541,8 +1544,12 @@ async function handleChangeRoomSelect(payload: {
     changeRoomModalOpen.value = false;
 }
 
-function handleNewAdmissionConfirm(payload: Reserved) {
+function handleNewAdmissionConfirm(
+    payload: Reserved,
+    fees: DiagnosisFeeSelection,
+) {
     pendingAdmission.value = payload;
+    pendingDiagnoses.value = fees.diagnoses;
     newAdmissionModalOpen.value = false;
     newAdmissionDialogOpen.value = true;
 }
@@ -1550,6 +1557,7 @@ function handleNewAdmissionConfirm(payload: Reserved) {
 function cancelNewAdmissionConfirm() {
     newAdmissionDialogOpen.value = false;
     pendingAdmission.value = null;
+    pendingDiagnoses.value = [];
 }
 
 async function confirmNewAdmission() {
@@ -1564,6 +1572,9 @@ async function confirmNewAdmission() {
             bed_id: pendingAdmission.value.bed?.bed_id,
             room_id: pendingAdmission.value.room?.room_id,
             admitted_at: pendingAdmission.value.admitted_at,
+            ...(pendingDiagnoses.value.length
+                ? { diagnoses: pendingDiagnoses.value }
+                : {}),
         };
         const res = await admissionService.action({
             branch_uuid: uuid.value,
@@ -1575,6 +1586,7 @@ async function confirmNewAdmission() {
         success(res?.message ?? "Patient admitted successfully.");
         newAdmissionDialogOpen.value = false;
         pendingAdmission.value = null;
+        pendingDiagnoses.value = [];
         reserved.value = null;
     } catch (err: any) {
         reservedErrors.value = err?.data?.errors ?? {};

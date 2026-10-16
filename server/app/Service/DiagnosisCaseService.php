@@ -4,11 +4,16 @@ namespace App\Service;
 
 use App\Models\DiagnosisCase;
 use App\Repository\DiagnosisCaseRepository;
+use App\Repository\PatientRepository;
 use Exception;
 
 class DiagnosisCaseService
 {
-    public function __construct(private DiagnosisCaseRepository $diagnosisCaseRepository) {}
+    public function __construct(
+        private DiagnosisCaseRepository $diagnosisCaseRepository,
+        private PatientRepository $patientRepository,
+        private DiagnosisFeeService $diagnosisFees,
+    ) {}
 
     public function listForBranch(array $payload)
     {
@@ -17,6 +22,38 @@ class DiagnosisCaseService
                 ->listForBranch($payload['branch_id'])
                 ->map(fn(DiagnosisCase $case) => $this->format($case))
                 ->values(),
+        ]);
+    }
+
+    /*
+        The patient's recorded diagnoses, each with the diagnosis case it was
+        last billed under so a new admission can start from the same fee.
+    */
+    public function patientDiagnoses(array $payload)
+    {
+        $patient = $this->patientRepository->findByFields([
+            ['uuid', '=', $payload['patient_uuid']],
+            ['branch_id', '=', $payload['branch_id']],
+        ]);
+
+        if (!$patient) {
+            throw new Exception('Patient not found.', 404);
+        }
+
+        $diagnoses = $patient->diagnoses()
+            ->orderByDesc('diagnosis_date')
+            ->orderByDesc('patient_diagnosis_id')
+            ->get();
+
+        $lastCases = $this->diagnosisFees->lastCaseUuids($diagnoses->pluck('patient_diagnosis_id')->all());
+
+        return response()->json([
+            'data' => $diagnoses->map(fn($diagnosis) => [
+                'uuid' => $diagnosis->uuid,
+                'diagnosis' => $diagnosis->diagnosis,
+                'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
+                'last_case_uuid' => $lastCases->get($diagnosis->patient_diagnosis_id),
+            ])->values(),
         ]);
     }
 

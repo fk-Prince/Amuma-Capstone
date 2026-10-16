@@ -431,9 +431,8 @@ class PatientAccessRepository
             )
             ->union(
                 DB::table('additional_charges')
-                    ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'additional_charges.patient_admission_id')
-                    ->whereIn('patient_admissions.patient_id', $patientIds)
-                    ->select('additional_charges.invoice_id', 'patient_admissions.patient_id')
+                    ->whereIn('additional_charges.patient_id', $patientIds)
+                    ->select('additional_charges.invoice_id', 'additional_charges.patient_id')
             )
             ->get();
 

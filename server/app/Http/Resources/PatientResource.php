@@ -315,6 +315,9 @@ class PatientResource extends JsonResource
                             ->sum('price'),
                         2
                     ),
+                    'room_charged_amounts' => $periods
+                        ->map(fn($period) => $period->roomChargedAmount())
+                        ->values(),
                 ])
                 ->values(),
             'invoices' => $lines
@@ -340,6 +343,7 @@ class PatientResource extends JsonResource
             'started_at' => $period->start_date,
             'ended_at' => $period->end_date,
             'charged_amount' => round((float) $charged, 2),
+            'room_charged_amount' => $period->roomChargedInChain(),
             'contract' => $this->formatContract($period->branchContract),
         ];
     }

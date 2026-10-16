@@ -29,6 +29,13 @@ class DiagnosisCaseService extends BaseService {
         return await this.request(this.resource, "GET", params);
     }
 
+    async patientDiagnoses(params: {
+        branch_uuid: string;
+        patient_uuid: string;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/patient-diagnoses`, "GET", params);
+    }
+
     async create(payload: DiagnosisCasePayload): Promise<any> {
         return await this.request(this.resource, "POST", payload);
     }

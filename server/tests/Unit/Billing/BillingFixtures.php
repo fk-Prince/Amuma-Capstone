@@ -142,7 +142,7 @@ trait BillingFixtures
         ]);
 
         DB::table('additional_charges')->insert([
-            'patient_admission_id' => $this->admissionId,
+            'patient_id' => $this->patient->patient_id,
             'invoice_id' => $invoice->invoice_id,
             'type' => 'additional_charges',
             'description' => $description,

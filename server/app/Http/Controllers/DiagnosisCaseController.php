@@ -31,6 +31,20 @@ class DiagnosisCaseController extends Controller
         return $this->diagnosisCases->listForBranch($request->all());
     }
 
+    public function patientDiagnoses(Request $request)
+    {
+        $request->validate([
+            'branch_uuid' => ['required', 'uuid'],
+            'patient_uuid' => ['required', 'uuid'],
+        ]);
+
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Read);
+        BranchGuard::mergeRequest($request, $branch);
+
+        return $this->diagnosisCases->patientDiagnoses($request->all());
+    }
+
     public function store(DiagnosisCaseRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

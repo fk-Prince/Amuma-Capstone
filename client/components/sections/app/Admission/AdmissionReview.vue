@@ -360,6 +360,7 @@ import { Pencil } from "lucide-vue-next";
 import DiagnosisPriceNotice from "~/components/forms/DiagnosisPriceNotice.vue";
 import type { Patient, Guardian, Assessment, Diagnosis } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
+import type { DiagnosisCase } from "~/types/additional-charge";
 import { CircleCheck } from "lucide-vue-next";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate as formatDateUtil } from "~/utils/time";
@@ -378,6 +379,7 @@ const props = defineProps<{
     diagnoses?: Diagnosis[];
     payment?: any;
     diagnosisCharges?: { min: number; max: number } | null;
+    diagnosisCases?: DiagnosisCase[];
     diagnosisNotice?: boolean;
 }>();
 
@@ -432,15 +434,47 @@ const admissionRows = computed<Row[]>(() => {
     ];
 
     if (contract) {
+        if (diagnosisFeeTotal.value > 0) {
+            rows.push(
+                {
+                    label: "Room",
+                    value: formatCurrency(contract.price),
+                },
+                {
+                    label: "Diagnosis fee",
+                    value: formatCurrency(diagnosisFeeTotal.value),
+                },
+            );
+        }
+
         rows.push({
             label: "Total",
-            value: formatCurrency(contract.price),
+            value: formatCurrency(
+                Number(contract.price) + diagnosisFeeTotal.value,
+            ),
             span: true,
         });
     }
 
     return rows;
 });
+
+function caseFor(entry: Diagnosis) {
+    return entry.diagnosis_case_uuid
+        ? props.diagnosisCases?.find(
+              (item) => item.uuid === entry.diagnosis_case_uuid,
+          )
+        : undefined;
+}
+
+// Only a diagnosis that was actually filled in is billed.
+const diagnosisFeeTotal = computed(() =>
+    diagnosisList.value.reduce(
+        (sum, entry) =>
+            entry.diagnosis ? sum + Number(caseFor(entry)?.price ?? 0) : sum,
+        0,
+    ),
+);
 
 const patientRows = computed<Row[]>(() => {
     const p = props.patient;
@@ -500,10 +534,18 @@ const diagnosisList = computed<Diagnosis[]>(() =>
 );
 
 function getDiagnosisRows(entry: Diagnosis): Row[] {
+    const diagnosisCase = caseFor(entry);
+
     return [
         { label: "Primary Diagnosis", value: entry.diagnosis ?? "" },
         { label: "Date Diagnosed", value: formatDate(entry.diagnosis_date) },
         { label: "Diagnosis Notes", value: entry.diagnosis_notes ?? "" },
+        {
+            label: "Diagnosis Case",
+            value: diagnosisCase
+                ? `${diagnosisCase.title} — ${formatCurrency(diagnosisCase.price)}`
+                : "",
+        },
         {
             label: "Supporting Document",
             value: entry.diagnosis_file_name ?? "",

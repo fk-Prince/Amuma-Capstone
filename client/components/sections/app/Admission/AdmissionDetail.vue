@@ -519,6 +519,15 @@
                 </div>
             </transition>
 
+            <DiagnosisFeePicker
+                v-if="variant === 'new' && patientUuid"
+                open
+                :patient-uuid="patientUuid"
+                section-class="mt-8"
+                hint="Billed together with this admission."
+                @update:selection="feeSelection = $event"
+            />
+
             <div
                 v-if="variant === 'modal' || variant === 'new'"
                 class="mt-8 pt-5 border-t flex justify-end"
@@ -546,6 +555,8 @@ import type { Room } from "~/types/room";
 import type { RoomContract, Reserved } from "~/types/contract";
 import type { Bed } from "~/types/bed";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
+import DiagnosisFeePicker from "~/components/sections/app/Admission/DiagnosisFeePicker.vue";
+import type { DiagnosisFeeSelection } from "~/types/additional-charge";
 import { toLocalDateString } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 
@@ -566,6 +577,8 @@ const props = withDefaults(
         // contract (and price) for a booking made under a yearly plan.
         initialBillingCycle?: "monthly" | "yearly" | null;
         requireAdmissionDate?: boolean;
+        // When set, the patient's recorded diagnoses can be billed with a new admission.
+        patientUuid?: string;
     }>(),
     {
         loading: false,
@@ -580,6 +593,8 @@ const props = withDefaults(
 );
 
 const admittedAt = ref("");
+
+const feeSelection = ref<DiagnosisFeeSelection>({ diagnoses: [], fee: 0 });
 
 const contracts = computed<RoomContract[]>(() => {
     const data = props.roomContract ?? [];
@@ -602,7 +617,7 @@ const errorEntries = computed(() =>
 const emit = defineEmits<{
     (e: "update:model", value: Reserved): void;
     (e: "close"): void;
-    (e: "confirm", value: Reserved): void;
+    (e: "confirm", value: Reserved, fees: DiagnosisFeeSelection): void;
 }>();
 
 const typeMeta: Record<
@@ -945,7 +960,7 @@ function handleDone() {
         admitted_at: admittedAt.value,
     };
 
-    emit("confirm", payload);
+    emit("confirm", payload, feeSelection.value);
     emit("close");
 }
 

@@ -378,7 +378,7 @@ class InvoiceResource extends JsonResource
 
         if ($this->resource->relationLoaded('invoiceAdmissionLines')) {
             $patient = $this->invoiceAdmissionLines
-                ->first()?->patientAdmission?->patient;
+                ->first()?->patient;
         }
 
         if (

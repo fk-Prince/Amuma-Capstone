@@ -71,7 +71,7 @@ class InvoiceRepository
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
             'invoiceAdmissionLines.admissionPeriod.branchContract',
-            'additionalCharges.patientAdmission.patient',
+            'additionalCharges.patient',
             'allocations.refundAllocations.refund.transaction',
             'allocations.payment.transaction',
             'payments',
@@ -98,7 +98,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
-                'additionalCharges.patientAdmission.patient',
+                'additionalCharges.patient',
             ]);
 
         if (!empty($search)) {
@@ -119,7 +119,7 @@ class InvoiceRepository
                 )
                     ->orWhereHas('invoiceServices.scheduleService.schedule.patient', $patientName)
                     ->orWhereHas('invoiceAdmissionLines.admissionPeriod.patientAdmission.patient', $patientName)
-                    ->orWhereHas('additionalCharges.patientAdmission.patient', $patientName);
+                    ->orWhereHas('additionalCharges.patient', $patientName);
             });
         }
 
@@ -227,7 +227,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'additionalCharges.patientAdmission.patient',
+                'additionalCharges.patient',
                 fn($p) => $p->where('uuid', $patientUuid)
             );
         })
@@ -242,9 +242,8 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
-                'additionalCharges.patientAdmission.patient',
-                'additionalCharges.patientAdmission.bed.room',
-                'invoiceAdjustments',
+                'additionalCharges.patient',
+                                'invoiceAdjustments',
             ]);
 
         $invoices = $scoped()
@@ -324,7 +323,7 @@ class InvoiceRepository
                     'invoiceAdmissionLines.admissionPeriod.patientAdmission',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 )->orWhereHas(
-                    'additionalCharges.patientAdmission',
+                    'additionalCharges.patient',
                     fn($a) => $a->whereIn('patient_id', $patientIds)
                 );
             })
@@ -338,7 +337,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
-                'additionalCharges.patientAdmission.patient',
+                'additionalCharges.patient',
             ])
             ->get();
 
@@ -664,7 +663,7 @@ class InvoiceRepository
                     fn($line) => (int) $line->admissionPeriod
                         ?->patient_admission_id === $admissionId
                 ) || $invoice->additionalCharges->contains(
-                    fn($charge) => (int) $charge->patient_admission_id === $admissionId
+                    fn($charge) => (int) $charge->patientAdmission?->patient_admission_id === $admissionId
                 )
             )
             ->map(function ($invoice) {
@@ -1172,7 +1171,7 @@ class InvoiceRepository
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
-                'additionalCharges.patientAdmission.patient',
+                'additionalCharges.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );

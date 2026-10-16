@@ -40,6 +40,7 @@ class PatientAdmissionService
         private RoomTransferService $transfers,
         private InvoiceService $invoiceService,
         private NotificationService $notificationService,
+        private DiagnosisFeeService $diagnosisFees,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -188,16 +189,26 @@ class PatientAdmissionService
                 $endDate
             );
 
+            $fees = $this->diagnosisFees->fromRequest(
+                $payload['diagnoses'] ?? [],
+                $patient,
+                $payload['branch_id']
+            );
+
+            $amount = round((float) $contract['price'] + $this->diagnosisFees->total($fees), 2);
+
             $invoice = Invoice::create([
                 'branch_id'      => $payload['branch_id'],
-                'total_amount'   => $contract['price'],
+                'total_amount'   => $amount,
                 'status'         => Invoice::STATUS_PENDING,
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
                 'admission_period_id' => $period->admission_period_id,
-                'price'               => $contract['price'],
+                'price'               => $amount,
             ]);
+
+            $this->diagnosisFees->record($admission, $fees);
 
             return [
                 'message' => 'Patient admitted successfully.',
@@ -419,6 +430,7 @@ class PatientAdmissionService
         $currentPeriodId = $this->periods->current($admission)?->admission_period_id;
 
         $admission->invoiceAdmission()->with('invoice')->get()
+            ->unique(fn($line) => $line->invoice_id . ':' . ($line->admission_period_id === $currentPeriodId ? 'current' : 'other'))
             ->each(function ($line) use ($currentPeriodId, $userId, $keepAmount, $keepReason) {
                 $invoice = $this->lockOpenInvoice($line->invoice);
 
@@ -843,7 +855,6 @@ class PatientAdmissionService
             $consumption = AdmissionHelper::periodConsumption($period);
 
             $remainingDays = $consumption['remaining'];
-            $totalDays = $consumption['total'];
             $consumedDays = $consumption['consumed'];
 
 
@@ -853,17 +864,6 @@ class PatientAdmissionService
                     422
                 );
             }
-
-            $oldPrice = (float) $period->invoiceAdmissionLines->sum('price')
-                ?: (float) $period->branchContract->price;
-
-            $oldRemaining = round(($oldPrice / $totalDays) * $remainingDays, 2);
-            $oldConsumed = round($oldPrice - $oldRemaining, 2);
-
-            $newRemaining = round(
-                ((float) $newContract->price / $totalDays) * $remainingDays,
-                2
-            );
 
             $windowEnd = Carbon::parse($period->end_date);
 
@@ -891,15 +891,7 @@ class PatientAdmissionService
                 $payload['reason'] ?? null
             );
 
-            $this->periods->moveBilling(
-                $period,
-                $next,
-                $oldPrice,
-                $oldConsumed,
-                $newRemaining,
-                $newContract,
-                $upgrades
-            );
+            $this->periods->moveBilling($period, $next, $newContract, $upgrades);
 
             $this->periods->issueUpgrades($upgrades);
 
@@ -1069,16 +1061,23 @@ class PatientAdmissionService
 
             $admission = $this->registerPatientBed($payload);
 
+            $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
+            $period = $this->periods->current($admission);
+
+            $amount = round((float) $payload['payment']['total_amount'] + $this->diagnosisFees->total($fees), 2);
+
             $invoice = $this->invoiceRepository->create([
-                'total_amount' => $payload['payment']['total_amount'],
+                'total_amount' => $amount,
                 'branch_id' => $payload['branch_id'],
                 'status'    => Invoice::STATUS_PENDING,
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
-                'admission_period_id' => $this->periods->current($admission)->admission_period_id,
-                'price'               => $payload['payment']['total_amount'],
+                'admission_period_id' => $period->admission_period_id,
+                'price'               => $amount,
             ]);
+
+            $this->diagnosisFees->record($admission, $fees);
 
             return [
                 'message' => 'Walk-in admission created successfully.',
@@ -1182,16 +1181,23 @@ class PatientAdmissionService
 
         $admission = $this->registerPatientBed($payload);
 
+        $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
+        $period = $this->periods->current($admission);
+
+        $amount = round((float) $payload['payment']['total_amount'] + $this->diagnosisFees->total($fees), 2);
+
         $invoice = $this->invoiceRepository->create([
-            'total_amount' => $payload['payment']['total_amount'],
+            'total_amount' => $amount,
             'branch_id' => $payload['branch_id'],
             'status'    => Invoice::STATUS_PENDING,
         ]);
 
         $invoice->invoiceAdmissionLines()->create([
-            'admission_period_id' => $this->periods->current($admission)->admission_period_id,
-            'price'               => $payload['payment']['total_amount'],
+            'admission_period_id' => $period->admission_period_id,
+            'price'               => $amount,
         ]);
+
+        $this->diagnosisFees->record($admission, $fees);
 
         return [
             'patient'   => $data,

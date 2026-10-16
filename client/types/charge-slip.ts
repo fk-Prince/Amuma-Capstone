@@ -3,8 +3,6 @@ export interface ChargeSlipLine {
     type_label: string;
     description: string;
     amount: number;
-    diagnosis?: string | null;
-    diagnosis_case?: string | null;
 }
 
 export interface ChargeSlip {

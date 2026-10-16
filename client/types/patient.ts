@@ -45,6 +45,8 @@ export interface Diagnosis {
     diagnosis_notes?: string;
     diagnosis_file?: File | string;
     diagnosis_file_name?: string;
+    // The facility's diagnosis case this diagnosis is billed under on the stay.
+    diagnosis_case_uuid?: string;
 }
 
 export interface Assessment {
@@ -196,6 +198,9 @@ export interface Admission {
             billing_cycle: string | null;
             count: number;
             charged_amount: number;
+            // Room price already billed on each period in the group, leaving
+            // the diagnosis fees out.
+            room_charged_amounts?: number[];
         }[];
         invoices: InvoiceAccommodation[];
     } | null;
@@ -212,6 +217,8 @@ export interface AdmissionPeriod {
     started_at?: string | null;
     ended_at?: string | null;
     charged_amount: number;
+    // Room price billed so far across the accommodation changes of this stay.
+    room_charged_amount?: number;
     contract?: Contract | null;
 }
 

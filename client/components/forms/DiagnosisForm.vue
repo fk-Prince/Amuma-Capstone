@@ -149,6 +149,31 @@
                     placeholder="Additional details about the diagnosis"
                 />
 
+                <div v-if="cases?.length" class="flex flex-col gap-1.5">
+                    <Combobox
+                        :key="`case-${activeIndex}`"
+                        :model-value="activeDiagnosis.diagnosis_case_uuid ?? ''"
+                        label="Diagnosis case"
+                        placeholder="No diagnosis fee"
+                        search-bar
+                        search-placeholder="Search diagnosis cases"
+                        :items="caseItems"
+                        :error="errors?.[`diagnosis_case_uuid.${activeIndex}`]"
+                        @update:model-value="
+                            update(
+                                activeIndex,
+                                'diagnosis_case_uuid',
+                                $event || undefined,
+                            )
+                        "
+                    />
+
+                    <p class="text-xs text-slate-400 dark:text-gray-500">
+                        Optional. The case price is added to the stay's bill
+                        for this diagnosis.
+                    </p>
+                </div>
+
                 <div class="flex flex-col gap-1.5">
                     <label
                         class="text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -241,8 +266,11 @@ import {
 } from "lucide-vue-next";
 import BaseInput from "../ui/BaseInput.vue";
 import DatePickerField from "../ui/DatePickerField.vue";
+import Combobox from "../ui/Combobox.vue";
 import DiagnosisPriceNotice from "./DiagnosisPriceNotice.vue";
 import type { Diagnosis } from "~/types/patient";
+import type { DiagnosisCase } from "~/types/additional-charge";
+import { formatCurrency } from "~/utils/currency";
 import { getLocalDateStr } from "~/utils/time";
 import {
     DIAGNOSIS_WINDOW_MONTHS,
@@ -256,7 +284,17 @@ const props = defineProps<{
     // as a heads-up that the bill can grow with the patient's diagnosis.
     charges?: { min: number; max: number } | null;
     chargeNotice?: boolean;
+    // The facility's diagnosis cases, so a diagnosis can be billed on the stay.
+    cases?: DiagnosisCase[];
 }>();
+
+const caseItems = computed(() => [
+    { label: "No diagnosis fee", value: "" },
+    ...(props.cases ?? []).map((item) => ({
+        label: `${item.title} — ${formatCurrency(item.price)}`,
+        value: item.uuid,
+    })),
+]);
 
 const emit = defineEmits<{
     (e: "update:model", value: Diagnosis[]): void;

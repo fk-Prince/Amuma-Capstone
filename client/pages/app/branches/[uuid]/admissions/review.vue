@@ -41,6 +41,7 @@
                             :diagnoses="bookingStore.diagnoses"
                             :payment="bookingStore.payment"
                             :diagnosis-charges="diagnosisPrices"
+                            :diagnosis-cases="diagnosisCases"
                             :diagnosis-notice="true"
                             @edit-step="goEditStep"
                         />
@@ -154,6 +155,7 @@ import { formatAmount } from "~/utils/currency";
 import { useBranchStore } from "~/stores/branch";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import type { AdmissionSlip } from "~/types/admission-slip";
+import type { DiagnosisCase } from "~/types/additional-charge";
 import { resetAdmissionForm } from "~/utils/admission-form";
 useHead({ title: "Review Admission" });
 
@@ -182,6 +184,7 @@ const submitting = ref(false);
 const uuid = route.params.uuid as string;
 
 const diagnosisPrices = ref<{ min: number; max: number } | null>(null);
+const diagnosisCases = ref<DiagnosisCase[]>([]);
 
 onMounted(async () => {
     try {
@@ -189,14 +192,15 @@ onMounted(async () => {
             branch_uuid: uuid,
             for: "charges",
         });
-        const prices = (res.data ?? []).map((item: { price: number }) =>
-            Number(item.price),
-        );
+        diagnosisCases.value = res.data ?? [];
+
+        const prices = diagnosisCases.value.map((item) => Number(item.price));
 
         diagnosisPrices.value = prices.length
             ? { min: Math.min(...prices), max: Math.max(...prices) }
             : null;
     } catch {
+        diagnosisCases.value = [];
         diagnosisPrices.value = null;
     }
 });

@@ -8,20 +8,18 @@ class AdditionalCharge extends Model
 {
     public const TYPE_MEDICATION = 'medication';
     public const TYPE_SUPPLIES = 'supplies';
-    public const TYPE_DIAGNOSIS_CASE = 'diagnosis_case';
     public const TYPE_ADDITIONAL = 'additional_charges';
 
     public const TYPES = [
         self::TYPE_MEDICATION,
         self::TYPE_SUPPLIES,
-        self::TYPE_DIAGNOSIS_CASE,
         self::TYPE_ADDITIONAL,
     ];
 
     protected $primaryKey = 'additional_charge_id';
 
     protected $fillable = [
-        'patient_admission_id',
+        'patient_id',
         'invoice_id',
         'type',
         'description',
@@ -32,9 +30,22 @@ class AdditionalCharge extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function patientAdmission()
+    public function patient()
     {
-        return $this->belongsTo(PatientAdmission::class, 'patient_admission_id', 'patient_admission_id');
+        return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
+    }
+
+    // A charge belongs to the patient. Where an admission is still wanted, it
+    // is the one the patient had when the charge was added.
+    public function getPatientAdmissionAttribute(): ?PatientAdmission
+    {
+        return PatientAdmission::where('patient_id', $this->patient_id)
+            ->where('admitted_at', '<=', $this->created_at ?? now())
+            ->orderByDesc('admitted_at')
+            ->first()
+            ?? PatientAdmission::where('patient_id', $this->patient_id)
+            ->latest('patient_admission_id')
+            ->first();
     }
 
     public function invoice()
@@ -42,22 +53,11 @@ class AdditionalCharge extends Model
         return $this->belongsTo(Invoice::class, 'invoice_id', 'invoice_id');
     }
 
-    public function patientDiagnosis()
-    {
-        return $this->belongsToMany(
-            PatientDiagnosis::class,
-            'additional_charge_diagnosis',
-            'additional_charge_id',
-            'patient_diagnosis_id'
-        )->withPivot('diagnosis_case_id')->withTimestamps();
-    }
-
     public function getTypeLabelAttribute(): string
     {
         return match ($this->type) {
             self::TYPE_MEDICATION => 'Medication',
             self::TYPE_SUPPLIES => 'Supplies',
-            self::TYPE_DIAGNOSIS_CASE => 'Diagnosis Case',
             default => 'Additional Charges',
         };
     }

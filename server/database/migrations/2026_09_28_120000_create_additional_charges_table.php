@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('additional_charges', function (Blueprint $table) {
             $table->id('additional_charge_id');
-            $table->foreignId('patient_admission_id')
-                ->constrained('patient_admissions', 'patient_admission_id')
+            $table->foreignId('patient_id')
+                ->constrained('patients', 'patient_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
             $table->foreignId('invoice_id')
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
-            $table->enum('type', ['medication', 'supplies', 'diagnosis_case', 'additional_charges']);
+            $table->enum('type', ['medication', 'supplies', 'additional_charges']);
             $table->string('description');
             $table->decimal('amount', 10, 2);
             $table->timestamps();

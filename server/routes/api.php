@@ -112,9 +112,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/bookings/action', [BookingController::class, 'action']);
     Route::post('/invoices/action', [InvoiceController::class, 'action']);
     Route::get('/additional-charges', [AdditionalChargeController::class, 'index']);
-    Route::get('/additional-charges/diagnoses', [AdditionalChargeController::class, 'diagnoses']);
     Route::post('/additional-charges', [AdditionalChargeController::class, 'store']);
     Route::get('/diagnosis-cases', [DiagnosisCaseController::class, 'index']);
+    Route::get('/diagnosis-cases/patient-diagnoses', [DiagnosisCaseController::class, 'patientDiagnoses']);
     Route::post('/diagnosis-cases', [DiagnosisCaseController::class, 'store']);
     Route::put('/diagnosis-cases/{uuid}', [DiagnosisCaseController::class, 'update']);
     Route::post('/admissions/action', [PatientAdmissionController::class, 'action']);

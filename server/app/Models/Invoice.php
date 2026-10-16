@@ -394,10 +394,7 @@ class Invoice extends Model
             fn($query) => $query->where('patient_id', $patientId)
         )->pluck('invoice_id');
 
-        $charged = AdditionalCharge::whereHas(
-            'patientAdmission',
-            fn($query) => $query->where('patient_id', $patientId)
-        )->pluck('invoice_id');
+        $charged = AdditionalCharge::where('patient_id', $patientId)->pluck('invoice_id');
 
         return self::$patientInvoiceIdCache[$key] = $admission
             ->merge($scheduled)

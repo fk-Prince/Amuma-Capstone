@@ -126,16 +126,6 @@
                                 </p>
 
                                 <p
-                                    v-if="charge.diagnosis"
-                                    class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
-                                >
-                                    Diagnosis: {{ charge.diagnosis }}
-                                    <template v-if="charge.diagnosis_case">
-                                        · Case: {{ charge.diagnosis_case }}
-                                    </template>
-                                </p>
-
-                                <p
                                     class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                 >
                                     {{ formatDate(charge.created_at) }}
@@ -273,8 +263,6 @@ function openSlip(invoiceCode: string | null, source: AdditionalCharge[]) {
             type_label: charge.type_label,
             description: charge.description,
             amount: charge.amount,
-            diagnosis: charge.diagnosis,
-            diagnosis_case: charge.diagnosis_case,
         })),
     };
 }
@@ -337,8 +325,6 @@ function chargeTypeClass(type: AdditionalChargeType) {
             return "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300";
         case "supplies":
             return "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
-        case "diagnosis_case":
-            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300";
         default:
             return "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300";
     }

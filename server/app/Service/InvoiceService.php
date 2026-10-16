@@ -433,7 +433,7 @@ class InvoiceService
         $invoice->loadMissing([
             'invoiceAdmissionLines.admissionPeriod.patientAdmission.patient',
             'invoiceServices.scheduleService.schedule.patient',
-            'additionalCharges.patientAdmission.patient',
+            'additionalCharges.patient',
         ]);
 
         $patient = $invoice->invoiceAdmissionLines
@@ -445,7 +445,7 @@ class InvoiceService
 
         return $invoice->invoiceServices
             ->first()?->scheduleService?->schedule?->patient
-            ?? $invoice->additionalCharges->first()?->patientAdmission?->patient;
+            ?? $invoice->additionalCharges->first()?->patient;
     }
 
     public function transactions(array $payload)
