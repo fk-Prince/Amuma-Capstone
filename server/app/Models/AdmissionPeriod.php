@@ -99,18 +99,9 @@ class AdmissionPeriod extends Model
         return $this->totalDays() - $this->consumedDays($asOf);
     }
 
-    // Everything billed for the period: the room, and the diagnosis cases on
-    // their own invoices. A discharge works out its refund on the whole.
     public function chargedAmount(): float
     {
-        return round($this->roomChargedAmount() + $this->diagnosisChargedAmount(), 2);
-    }
-
-    public function diagnosisChargedAmount(): float
-    {
-        return round((float) AdmissionChargeDiagnosis::where('admission_period_id', $this->admission_period_id)
-            ->whereHas('invoice', fn($query) => $query->whereNotIn('status', Invoice::CLOSED_STATUSES))
-            ->sum('amount'), 2);
+        return round((float) $this->invoiceAdmissionLines()->sum('price'), 2);
     }
 
     public function dailyRate(): float
@@ -118,10 +109,9 @@ class AdmissionPeriod extends Model
         return $this->chargedAmount() / $this->totalDays();
     }
 
-    // The invoice lines of the period are the room price.
     public function roomChargedAmount(): float
     {
-        return round((float) $this->invoiceAdmissionLines()->sum('price'), 2);
+        return $this->chargedAmount();
     }
 
     // Room price already billed across the accommodation changes that led to

@@ -14,6 +14,7 @@ return new class extends Migration
                 ->constrained('admission_periods', 'admission_period_id')
                 ->cascadeOnDelete();
             $table->foreignId('invoice_id')
+                ->nullable()
                 ->constrained('invoices', 'invoice_id')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();

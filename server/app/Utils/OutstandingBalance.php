@@ -59,7 +59,7 @@ class OutstandingBalance
                     ->sum('price')
                     - $invoice->diagnosisLines
                         ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $futurePeriodIds, true))
-                        ->sum('amount')
+                        ->sum('billed_amount')
             ),
             2
         );

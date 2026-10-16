@@ -888,7 +888,7 @@ class PortalHelper
                 'category' => $charge->type_label,
                 'description' => $charge->line_description,
                 'detail' => null,
-                'amount' => (float) $charge->amount,
+                'amount' => $charge->billed_amount,
             ]);
         }
 

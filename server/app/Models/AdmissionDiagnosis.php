@@ -56,12 +56,16 @@ class AdmissionDiagnosis extends Model
         return $this->belongsTo(DiagnosisCase::class, 'diagnosis_case_id', 'diagnosis_case_id');
     }
 
-    // What this diagnosis costs per month, whatever length of period it billed.
     public function monthlyAmount(): float
     {
-        $cycle = $this->admissionPeriod?->branchContract?->billing_cycle;
+        return round((float) $this->amount, 2);
+    }
 
-        return round((float) $this->amount / AdmissionChargeDiagnosis::multiplier($cycle), 2);
+    // What the period billed for it: the months the charge covers, at the
+    // monthly amount.
+    public function getBilledAmountAttribute(): float
+    {
+        return round($this->monthlyAmount() * ($this->charge?->months() ?? 0), 2);
     }
 
     // The admission it was billed on, through its period.
@@ -84,18 +88,16 @@ class AdmissionDiagnosis extends Model
             'type' => 'diagnosis_case',
             'type_label' => $this->type_label,
             'description' => $this->line_description,
-            'amount' => (float) $this->amount,
+            'amount' => $this->billed_amount,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
 
-    // Shown next to additional charges on invoices.
     public function getTypeLabelAttribute(): string
     {
         return 'Diagnosis Case';
     }
 
-    // What an invoice or receipt says it was paid for: the diagnosis case.
     public function getLineDescriptionAttribute(): string
     {
         $title = $this->diagnosisCase?->title;

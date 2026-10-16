@@ -7,7 +7,8 @@ SELECT CONCAT(p.first_name, ' ', p.last_name) AS patient,
        ap.reason,
        pd.diagnosis,
        dc.title AS diagnosis_case,
-       ad.amount AS billed_amount,
+       ad.amount AS monthly_amount,
+       acd.amount AS billed_amount,
        ad.description,
        i.invoice_code,
        i.status,
@@ -18,7 +19,7 @@ JOIN admission_periods ap ON ap.admission_period_id = acd.admission_period_id
 JOIN patient_admissions pa ON pa.patient_admission_id = ap.patient_admission_id
 JOIN patients p ON p.patient_id = pa.patient_id
 JOIN patient_diagnosis pd ON pd.patient_diagnosis_id = ad.patient_diagnosis_id
-JOIN invoices i ON i.invoice_id = acd.invoice_id
+LEFT JOIN invoices i ON i.invoice_id = acd.invoice_id
 LEFT JOIN diagnosis_cases dc ON dc.diagnosis_case_id = ad.diagnosis_case_id
 ORDER BY acd.created_at DESC;
 

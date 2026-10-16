@@ -105,6 +105,8 @@ class PatientAdmissionService
             'extend' => $this->extendAdmission($payload),
             'change_room' => $this->changeRoom($payload),
             'diagnosis_cases' => $this->setDiagnosisCases($payload),
+            'update_diagnosis_case' => $this->updateDiagnosisCase($payload),
+            'remove_diagnosis_case' => $this->removeDiagnosisCase($payload),
             'discharge' => $this->dischargeAdmission($payload),
             'cancel' => $this->cancelAdmission($payload),
             'cancel_period' => $this->cancelPeriod($payload),
@@ -367,6 +369,8 @@ class PatientAdmissionService
                 ]);
             }
 
+            $this->closeUnstartedDiagnosisInvoices($admission, $payload['user']->user_id ?? null);
+
             if ($currentPeriod) {
                 $force = !empty($payload['force']);
 
@@ -396,6 +400,50 @@ class PatientAdmissionService
                 ),
             ]);
         });
+    }
+
+    private function closeDiagnosisInvoices(int $periodId, string $reason, ?int $userId): void
+    {
+        $this->diagnosisChargeRepository->forPeriod($periodId)
+            ->map(fn($row) => $row->charge?->invoice)
+            ->filter()
+            ->unique('invoice_id')
+            ->each(function ($diagnosisInvoice) use ($reason, $userId) {
+                $invoice = $this->lockOpenInvoice($diagnosisInvoice);
+
+                if (!$invoice) {
+                    return;
+                }
+
+                if ($invoice->status === Invoice::STATUS_PAID) {
+                    InvoiceAdjustment::create([
+                        'invoice_id' => $invoice->invoice_id,
+                        'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                        'amount' => -round((float) $invoice->adjusted_total, 2),
+                        'reason' => $reason,
+                    ]);
+
+                    $invoice->syncStatus();
+
+                    return;
+                }
+
+                $this->invoiceService->closeAsVoid($invoice, $reason, $userId);
+            });
+    }
+
+    // Periods that never began bill nothing, diagnosis cases included.
+    private function closeUnstartedDiagnosisInvoices(PatientAdmission $admission, ?int $userId): void
+    {
+        $admission->periods()
+            ->whereNotIn('status', AdmissionPeriod::CLOSED_STATUSES)
+            ->where('start_date', '>', now())
+            ->pluck('admission_period_id')
+            ->each(fn($periodId) => $this->closeDiagnosisInvoices(
+                (int) $periodId,
+                'Admission discharged before this period began.',
+                $userId
+            ));
     }
 
     private function writeOffOutstanding(PatientAdmission $admission, ?User $user): void
@@ -614,32 +662,7 @@ class PatientAdmissionService
                 }
             );
 
-            $this->diagnosisChargeRepository->forPeriod($period->admission_period_id)
-                ->map(fn($row) => $row->charge?->invoice)
-                ->filter()
-                ->unique('invoice_id')
-                ->each(function ($diagnosisInvoice) use ($userId) {
-                    $invoice = $this->lockOpenInvoice($diagnosisInvoice);
-
-                    if (!$invoice) {
-                        return;
-                    }
-
-                    if ($invoice->status === Invoice::STATUS_PAID) {
-                        InvoiceAdjustment::create([
-                            'invoice_id' => $invoice->invoice_id,
-                            'type' => InvoiceAdjustment::TYPE_CORRECTION,
-                            'amount' => -round((float) $invoice->adjusted_total, 2),
-                            'reason' => 'Billing period cancelled.',
-                        ]);
-
-                        $invoice->syncStatus();
-
-                        return;
-                    }
-
-                    $this->invoiceService->closeAsVoid($invoice, 'Billing period cancelled.', $userId);
-                });
+            $this->closeDiagnosisInvoices($period->admission_period_id, 'Billing period cancelled.', $userId);
 
             $period->update(['status' => AdmissionPeriod::STATUS_CANCELLED]);
 
@@ -767,18 +790,139 @@ class PatientAdmissionService
                 }
             }
 
-            $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
+            $months = $this->diagnosisFees->billableMonths($admission, $period);
 
-            if (!$invoice) {
+            if ($fees->isEmpty() || $fees->every(fn(array $fee) => (float) $fee['amount'] < 0.01)) {
                 throw new Exception('Choose a diagnosis case with an amount greater than zero.', 422);
             }
 
+            $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id'], $months);
+
             return [
-                'message' => 'Diagnosis case added and invoiced.',
-                'invoice_code' => $invoice->invoice_code,
+                'message' => $invoice
+                    ? 'Diagnosis case added and invoiced.'
+                    : 'Diagnosis case added. This period is too far along to bill it, so it is billed from the next period.',
+                'invoice_code' => $invoice?->invoice_code,
                 'data' => $this->patientService->showPatient($payload['p_uuid']),
             ];
         });
+    }
+
+    // A diagnosis case can be changed or taken off until a payment lands on its invoices.
+    public function updateDiagnosisCase(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            [$admission, $rows] = $this->editableDiagnosisRows($payload);
+
+            $fee = $this->diagnosisFees->fromRequest(
+                [[
+                    'patient_diagnosis_uuid' => $payload['patient_diagnosis_uuid'] ?? null,
+                    'diagnosis_case_uuid' => $payload['diagnosis_case_uuid'] ?? null,
+                    'amount' => $payload['amount'] ?? null,
+                    'description' => $payload['description'] ?? null,
+                ]],
+                $admission->patient,
+                $payload['branch_id']
+            )->first();
+
+            if (!$fee) {
+                throw new Exception('Choose a diagnosis case.', 422);
+            }
+
+            if ((float) $fee['amount'] < 0.01) {
+                throw new Exception('The amount must be greater than zero.', 422);
+            }
+
+            foreach ($rows as $row) {
+                $months = $row->charge->months();
+
+                $this->diagnosisChargeRepository->updateDiagnosis($row, [
+                    'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
+                    'description' => $fee['description'] ?? null,
+                    'amount' => round((float) $fee['amount'], 2),
+                ]);
+
+                $this->diagnosisChargeRepository->syncCharge($row->charge, $months);
+            }
+
+            Invoice::forgetPatientInvoiceIds();
+
+            return [
+                'message' => 'Diagnosis case updated.',
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
+            ];
+        });
+    }
+
+    public function removeDiagnosisCase(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            [, $rows] = $this->editableDiagnosisRows($payload);
+
+            $userId = $payload['user']->user_id ?? null;
+
+            foreach ($rows as $row) {
+                $charge = $row->charge;
+                $months = $charge->months();
+
+                $this->diagnosisChargeRepository->deleteDiagnosis($row);
+
+                if ($charge->diagnoses()->exists()) {
+                    $this->diagnosisChargeRepository->syncCharge($charge, $months);
+
+                    continue;
+                }
+
+                $invoice = $charge->invoice;
+
+                $this->diagnosisChargeRepository->deleteCharge($charge);
+
+                if ($invoice) {
+                    $this->invoiceService->closeAsVoid($invoice, 'Diagnosis case removed.', $userId);
+                }
+            }
+
+            Invoice::forgetPatientInvoiceIds();
+
+            return [
+                'message' => 'Diagnosis case removed.',
+                'data' => $this->patientService->showPatient($payload['p_uuid']),
+            ];
+        });
+    }
+
+    private function editableDiagnosisRows(array $payload): array
+    {
+        $admission = $this->patientAdmissionRepository->findByFields([
+            ['patient_admission_id', '=', $payload['admission_id']]
+        ]);
+
+        if (!$admission) {
+            throw new Exception('Admission not found.', 404);
+        }
+
+        if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED], true)) {
+            throw new Exception('Diagnosis cases can only be changed while the patient is waiting or admitted.', 422);
+        }
+
+        $diagnosis = $this->diagnosisFees->findDiagnosis(
+            $admission->patient,
+            (string) ($payload['patient_diagnosis_uuid'] ?? '')
+        );
+
+        $rows = $diagnosis
+            ? $this->diagnosisChargeRepository->rowsFor($admission->patient_admission_id, $diagnosis->patient_diagnosis_id, true)
+            : collect();
+
+        if ($rows->isEmpty()) {
+            throw new Exception('This diagnosis has no diagnosis case on the admission.', 404);
+        }
+
+        if ($rows->contains(fn($row) => $row->charge->invoice?->allocations->isNotEmpty())) {
+            throw new Exception('A payment was already made toward this diagnosis case, so it can no longer be changed or removed.', 422);
+        }
+
+        return [$admission, $rows];
     }
 
     /*

@@ -372,7 +372,7 @@
                                     canUpdateAdmission,
                                 )
                             "
-                            @click="diagnosisModalOpen = true"
+                            @click="diagnosisView = true"
                         >
                             Diagnosis Cases
                         </ActionButton>
@@ -445,6 +445,7 @@
                 </div>
 
                 <div
+                    v-if="!diagnosisView"
                     class="grid lg:grid-cols-3 border-t border-primary-100 dark:border-primary-500/20"
                 >
                     <div
@@ -785,6 +786,20 @@
                         </section>
                  </aside>
                 </div>
+
+                <div
+                    v-else
+                    class="border-t border-primary-100 dark:border-primary-500/20"
+                >
+                    <AdmissionDiagnosisPanel
+                        :patient-uuid="id"
+                        :patient-name="patient?.full_name"
+                        :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
+                        :billing-cycle="(currentAdmission ?? latestAdmission)?.current_contract?.billing_cycle"
+                        @close="diagnosisView = false"
+                        @saved="patient = $event as PatientRetrieve"
+                    />
+                </div>
                 </div>
             </template>
         </div>
@@ -1061,16 +1076,6 @@
             @close="addServiceModalOpen = false"
         />
 
-        <AdmissionDiagnosisModal
-            :open="diagnosisModalOpen"
-            :patient-uuid="id"
-            :patient-name="patient?.full_name"
-            :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
-            :billing-cycle="(currentAdmission ?? latestAdmission)?.current_contract?.billing_cycle"
-            @close="diagnosisModalOpen = false"
-            @saved="patient = $event as PatientRetrieve"
-        />
-
         <ChargesModal
             :open="chargeModalOpen"
             :patient-uuid="id"
@@ -1124,7 +1129,7 @@ import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDis
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
 import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
 import ChargesModal from "~/components/sections/app/Admission/ChargesModal.vue";
-import AdmissionDiagnosisModal from "~/components/sections/app/Admission/AdmissionDiagnosisModal.vue";
+import AdmissionDiagnosisPanel from "~/components/sections/app/Admission/AdmissionDiagnosisPanel.vue";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
@@ -1577,7 +1582,8 @@ function confirmCancelAdmission(
     });
 }
 
-const diagnosisModalOpen = ref(false);
+// The Diagnosis Cases view takes the place of the overview below the actions.
+const diagnosisView = ref(false);
 
 function confirmAdmit() {
     if (!admitDate.value) return;

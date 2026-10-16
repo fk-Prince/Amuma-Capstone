@@ -235,7 +235,7 @@ class Invoice extends Model
             ->map(fn($line) => ['description' => $line->description, 'amount' => (float) $line->amount])
             ->concat($this->diagnosisLines->map(fn($line) => [
                 'description' => $line->line_description,
-                'amount' => (float) $line->amount,
+                'amount' => $line->billed_amount,
             ]))
             ->filter(fn($line) => $line['description'])
             ->groupBy('description')

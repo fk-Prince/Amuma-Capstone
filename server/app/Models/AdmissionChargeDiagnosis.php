@@ -29,6 +29,13 @@ class AdmissionChargeDiagnosis extends Model
         return strtoupper(trim((string) $billingCycle)) === 'YEARLY' ? 12 : 1;
     }
 
+    public function months(): int
+    {
+        $monthly = (float) $this->diagnoses()->sum('amount');
+
+        return $monthly > 0 ? (int) round((float) $this->amount / $monthly) : 0;
+    }
+
     public function admissionPeriod()
     {
         return $this->belongsTo(AdmissionPeriod::class, 'admission_period_id', 'admission_period_id');

@@ -46,7 +46,7 @@ DROP TABLE IF EXISTS admission_charge_diagnosis;
 CREATE TABLE admission_charge_diagnosis (
     admission_charge_diagnosis_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     admission_period_id BIGINT UNSIGNED NOT NULL,
-    invoice_id BIGINT UNSIGNED NOT NULL,
+    invoice_id BIGINT UNSIGNED NULL,
     amount DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,

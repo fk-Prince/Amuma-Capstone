@@ -13,6 +13,7 @@ use App\Repository\DiagnosisCaseRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientAdmissionRepository;
 use App\Repository\PatientRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -24,6 +25,7 @@ class DiagnosisFeeService
         private InvoiceRepository $invoiceRepository,
         private PatientRepository $patientRepository,
         private PatientAdmissionRepository $patientAdmissionRepository,
+        private AdmissionPeriodService $periods,
     ) {}
 
     /*
@@ -97,6 +99,11 @@ class DiagnosisFeeService
         return $fees->unique(fn(array $fee) => $fee['diagnosis']->patient_diagnosis_id)->values();
     }
 
+    public function findDiagnosis(Patient $patient, string $uuid)
+    {
+        return $this->patientRepository->findDiagnosis($patient, $uuid);
+    }
+
     // What the fees come to on one period: the monthly amounts, times twelve
     // when the period is billed yearly.
     public function total(Collection $fees, ?string $billingCycle = null): float
@@ -109,32 +116,92 @@ class DiagnosisFeeService
     }
 
     /*
-        Bills the fees for one admission period on an invoice of their own and
-        keeps one row per diagnosis against it. Returns null when there is
-        nothing to bill.
+        The months of a period a diagnosis case still bills when it is added.
+        A waiting admission, or an extension, bills the whole period: one month,
+        or twelve when yearly. Once the stay is running, every month that has
+        passed is dropped, and a month more than a week in counts as passed.
     */
-    public function bill(PatientAdmission $admission, AdmissionPeriod $period, Collection $fees, int $branchId): ?Invoice
+    public function billableMonths(PatientAdmission $admission, AdmissionPeriod $period, ?Carbon $asOf = null): int
     {
         $period->loadMissing('branchContract');
 
-        $multiplier = AdmissionChargeDiagnosis::multiplier($period->branchContract?->billing_cycle);
+        $full = AdmissionChargeDiagnosis::multiplier($period->branchContract?->billing_cycle);
 
-        $billable = $fees->filter(fn(array $fee) => round((float) $fee['amount'] * $multiplier, 2) >= 0.01);
+        if ($admission->status !== PatientAdmission::STATUS_ADMITTED || !$period->start_date) {
+            return $full;
+        }
+
+        $start = Carbon::parse($period->start_date);
+        $now = $asOf ?? now();
+
+        if ($now->lte($start)) {
+            return $full;
+        }
+
+        $passed = (int) floor($start->diffInMonths($now, true));
+
+        if ($start->copy()->addMonths($passed)->diffInDays($now, true) > 7) {
+            $passed++;
+        }
+
+        return max(0, $full - $passed);
+    }
+
+    // What adding a diagnosis case to the admission right now would bill, as
+    // months of the current period against the whole period.
+    public function monthsForAdmission(int $admissionId): ?array
+    {
+        $admission = $this->patientAdmissionRepository->findByFields([
+            ['patient_admission_id', '=', $admissionId],
+        ]);
+
+        $period = $admission ? $this->periods->current($admission) : null;
+
+        if (!$period) {
+            return null;
+        }
+
+        $period->loadMissing('branchContract');
+
+        return [
+            'billable' => $this->billableMonths($admission, $period),
+            'full' => AdmissionChargeDiagnosis::multiplier($period->branchContract?->billing_cycle),
+        ];
+    }
+
+    /*
+        Bills the fees for one admission period on an invoice of their own and
+        keeps one row per diagnosis against it, for the months given or the
+        whole period. Returns null when there is nothing to bill. With no
+        months left the diagnoses are still recorded on the period, without an
+        invoice, so the next period bills them.
+    */
+    public function bill(PatientAdmission $admission, AdmissionPeriod $period, Collection $fees, int $branchId, ?int $months = null): ?Invoice
+    {
+        $period->loadMissing('branchContract');
+
+        $months ??= AdmissionChargeDiagnosis::multiplier($period->branchContract?->billing_cycle);
+
+        $billable = $fees->filter(fn(array $fee) => round((float) $fee['amount'], 2) >= 0.01);
 
         if ($billable->isEmpty()) {
             return null;
         }
 
-        $invoice = $this->invoiceRepository->create([
-            'total_amount' => round((float) $billable->sum(fn(array $fee) => (float) $fee['amount']) * $multiplier, 2),
-            'branch_id' => $branchId,
-            'status' => Invoice::STATUS_PENDING,
-        ]);
+        $total = round((float) $billable->sum(fn(array $fee) => (float) $fee['amount']) * $months, 2);
+
+        $invoice = $total >= 0.01
+            ? $this->invoiceRepository->create([
+                'total_amount' => $total,
+                'branch_id' => $branchId,
+                'status' => Invoice::STATUS_PENDING,
+            ])
+            : null;
 
         $charge = $this->admissionChargeRepository->createCharge([
             'admission_period_id' => $period->admission_period_id,
-            'invoice_id' => $invoice->invoice_id,
-            'amount' => $invoice->total_amount,
+            'invoice_id' => $invoice?->invoice_id,
+            'amount' => $total,
         ]);
 
         foreach ($billable as $fee) {
@@ -143,7 +210,7 @@ class DiagnosisFeeService
                 'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
                 'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                 'description' => $fee['description'] ?? null,
-                'amount' => round((float) $fee['amount'] * $multiplier, 2),
+                'amount' => round((float) $fee['amount'], 2),
             ]);
         }
 
@@ -161,7 +228,7 @@ class DiagnosisFeeService
                 'case' => $row->diagnosisCase,
                 'amount' => $row->monthlyAmount(),
                 'description' => $row->description,
-                'billed' => (float) $row->amount,
+                'billed' => $row->billed_amount,
                 'invoice' => $row->charge?->invoice,
             ])
             ->values();
@@ -187,9 +254,12 @@ class DiagnosisFeeService
             return collect();
         }
 
+        $editable = $this->admissionChargeRepository->editableDiagnosisIds($admissionId);
+
         return $this->baseFees($admission)
             ->keyBy(fn(array $fee) => $fee['diagnosis']->patient_diagnosis_id)
-            ->map(fn(array $fee) => [
+            ->map(fn(array $fee, $diagnosisId) => [
+                'editable' => $editable->contains($diagnosisId),
                 'case_uuid' => $fee['case']?->uuid,
                 'case_title' => $fee['case']?->title,
                 'amount' => (float) $fee['amount'],

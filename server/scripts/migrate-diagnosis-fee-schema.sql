@@ -49,7 +49,7 @@ CREATE TABLE admission_charge_diagnosis (
     admission_charge_diagnosis_id bigserial PRIMARY KEY,
     admission_period_id bigint NOT NULL
         REFERENCES admission_periods (admission_period_id) ON DELETE CASCADE,
-    invoice_id bigint NOT NULL
+    invoice_id bigint NULL
         REFERENCES invoices (invoice_id) ON UPDATE CASCADE ON DELETE RESTRICT,
     amount numeric(10, 2) NOT NULL,
     created_at timestamp(0) without time zone NULL,
