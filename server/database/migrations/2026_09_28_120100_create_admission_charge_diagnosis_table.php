@@ -13,6 +13,13 @@ return new class extends Migration
             $table->foreignId('patient_admission_id')
                 ->constrained('patient_admissions', 'patient_admission_id')
                 ->cascadeOnDelete();
+            $table->foreignId('admission_period_id')
+                ->constrained('admission_periods', 'admission_period_id')
+                ->cascadeOnDelete();
+            $table->foreignId('invoice_id')
+                ->constrained('invoices', 'invoice_id')
+                ->cascadeOnUpdate()
+                ->restrictOnDelete();
             $table->foreignId('patient_diagnosis_id')
                 ->constrained('patient_diagnosis', 'patient_diagnosis_id')
                 ->cascadeOnDelete();
@@ -23,7 +30,7 @@ return new class extends Migration
             $table->decimal('amount', 10, 2);
             $table->string('description')->nullable();
             $table->timestamps();
-            $table->unique(['patient_admission_id', 'patient_diagnosis_id'], 'admission_charge_diagnosis_unique');
+            $table->unique(['admission_period_id', 'patient_diagnosis_id'], 'admission_charge_diagnosis_unique');
         });
     }
 

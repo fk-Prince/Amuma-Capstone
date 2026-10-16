@@ -883,6 +883,15 @@ class PortalHelper
             ]);
         }
 
+        foreach ($invoice->diagnosisCharges as $charge) {
+            $lines->push([
+                'category' => $charge->type_label,
+                'description' => $charge->line_description,
+                'detail' => null,
+                'amount' => (float) $charge->amount,
+            ]);
+        }
+
         return $this->invoiceRow($invoice) + [
             'lines' => $lines->values()->all(),
         ];

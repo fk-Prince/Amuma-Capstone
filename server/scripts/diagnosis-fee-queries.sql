@@ -1,41 +1,43 @@
 -- Run each block on its own in pgAdmin's Query Tool.
 
--- 1. Diagnosis fees recorded per admission
+-- 1. Diagnosis cases billed per admission period, with their invoice
 SELECT p.first_name || ' ' || p.last_name AS patient,
        pa.patient_admission_id,
+       ap.admission_period_id,
+       ap.reason,
        pd.diagnosis,
        dc.title AS diagnosis_case,
-       acd.amount,
+       acd.amount AS billed_amount,
+       acd.description,
+       i.invoice_code,
+       i.status,
        acd.created_at
 FROM admission_charge_diagnosis acd
 JOIN patient_admissions pa ON pa.patient_admission_id = acd.patient_admission_id
+JOIN admission_periods ap ON ap.admission_period_id = acd.admission_period_id
 JOIN patients p ON p.patient_id = pa.patient_id
 JOIN patient_diagnosis pd ON pd.patient_diagnosis_id = acd.patient_diagnosis_id
+JOIN invoices i ON i.invoice_id = acd.invoice_id
 LEFT JOIN diagnosis_cases dc ON dc.diagnosis_case_id = acd.diagnosis_case_id
 ORDER BY acd.created_at DESC;
 
--- 2. Admission period price split: room vs diagnosis fee
+-- 2. Waiting admissions and whether both invoices (stay + diagnosis cases) are settled
 SELECT pa.patient_admission_id,
-       ap.admission_period_id,
-       ap.reason,
-       ap.status,
-       SUM(ia.price) AS period_price,
-       CASE WHEN ap.reason IN ('admitted', 'extended')
-            THEN COALESCE((SELECT SUM(amount) FROM admission_charge_diagnosis x
-                           WHERE x.patient_admission_id = pa.patient_admission_id), 0)
-                 * CASE WHEN UPPER(bc.billing_cycle) = 'YEARLY' THEN 12 ELSE 1 END
-            ELSE 0 END AS diagnosis_fee,
-       SUM(ia.price) - CASE WHEN ap.reason IN ('admitted', 'extended')
-            THEN COALESCE((SELECT SUM(amount) FROM admission_charge_diagnosis x
-                           WHERE x.patient_admission_id = pa.patient_admission_id), 0)
-                 * CASE WHEN UPPER(bc.billing_cycle) = 'YEARLY' THEN 12 ELSE 1 END
-            ELSE 0 END AS room_price
-FROM admission_periods ap
-JOIN patient_admissions pa ON pa.patient_admission_id = ap.patient_admission_id
-JOIN branch_contracts bc ON bc.branch_contract_id = ap.branch_contract_id
-LEFT JOIN invoice_admission ia ON ia.admission_period_id = ap.admission_period_id
-GROUP BY pa.patient_admission_id, ap.admission_period_id, ap.reason, ap.status, bc.billing_cycle
-ORDER BY pa.patient_admission_id, ap.admission_period_id;
+       p.first_name || ' ' || p.last_name AS patient,
+       pa.status AS admission_status,
+       (SELECT string_agg(DISTINCT i.invoice_code || ' (' || i.status || ')', ', ')
+        FROM invoice_admission ia
+        JOIN invoices i ON i.invoice_id = ia.invoice_id
+        JOIN admission_periods ap ON ap.admission_period_id = ia.admission_period_id
+        WHERE ap.patient_admission_id = pa.patient_admission_id) AS stay_invoices,
+       (SELECT string_agg(DISTINCT i.invoice_code || ' (' || i.status || ')', ', ')
+        FROM admission_charge_diagnosis acd
+        JOIN invoices i ON i.invoice_id = acd.invoice_id
+        WHERE acd.patient_admission_id = pa.patient_admission_id) AS diagnosis_invoices
+FROM patient_admissions pa
+JOIN patients p ON p.patient_id = pa.patient_id
+WHERE pa.status = 'waiting'
+ORDER BY pa.patient_admission_id;
 
 -- 3. Invoices whose total does not match their admission lines (should return no rows)
 SELECT i.invoice_id, i.invoice_code, i.total_amount, SUM(ia.price) AS lines_total

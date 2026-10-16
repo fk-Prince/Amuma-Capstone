@@ -11,15 +11,10 @@ class AdmissionChargeDiagnosisRepository
         return AdmissionChargeDiagnosis::create($payload);
     }
 
-    public function deleteForAdmission(int $admissionId): void
+    public function forPeriod(int $periodId)
     {
-        AdmissionChargeDiagnosis::where('patient_admission_id', $admissionId)->delete();
-    }
-
-    public function forAdmission(int $admissionId)
-    {
-        return AdmissionChargeDiagnosis::with('diagnosisCase')
-            ->where('patient_admission_id', $admissionId)
+        return AdmissionChargeDiagnosis::with(['diagnosisCase', 'patientDiagnosis', 'invoice', 'admissionPeriod.branchContract'])
+            ->where('admission_period_id', $periodId)
             ->get()
             ->keyBy('patient_diagnosis_id');
     }

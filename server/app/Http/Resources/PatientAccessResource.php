@@ -290,9 +290,10 @@ class PatientAccessResource extends JsonResource
             ];
         }
 
-        if ($invoice->additionalCharges->isNotEmpty()) {
+        if ($invoice->additionalCharges->isNotEmpty() || $invoice->diagnosisCharges->isNotEmpty()) {
             return [
-                'patient_admission_id' => $invoice->additionalCharges->first()->patientAdmission?->patient_admission_id,
+                'patient_admission_id' => $invoice->additionalCharges->first()?->patientAdmission?->patient_admission_id
+                    ?? $invoice->diagnosisCharges->first()?->patient_admission_id,
                 'charges' => $invoice->additionalCharges
                     ->map(fn($charge) => [
                         'additional_charge_id' => $charge->additional_charge_id,
@@ -301,6 +302,7 @@ class PatientAccessResource extends JsonResource
                         'description' => $charge->description,
                         'amount' => (float) $charge->amount,
                     ])
+                    ->concat($invoice->diagnosisCharges->map(fn($charge) => $charge->asCharge()))
                     ->values(),
             ];
         }

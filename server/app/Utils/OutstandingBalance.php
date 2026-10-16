@@ -19,7 +19,7 @@ class OutstandingBalance
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
             ->values();
 
-        $invoices->each(fn($invoice) => $invoice->loadMissing('additionalCharges'));
+        $invoices->each(fn($invoice) => $invoice->loadMissing('additionalCharges', 'diagnosisCharges'));
 
         $accommodation = $invoices->filter(
             fn($invoice) => $invoice->invoiceAdmissionLines->isNotEmpty()
@@ -42,7 +42,7 @@ class OutstandingBalance
         $charges = $invoices->filter(
             fn($invoice) => $invoice->invoiceAdmissionLines->isEmpty()
                 && $invoice->invoiceServices->isEmpty()
-                && $invoice->additionalCharges->isNotEmpty()
+                && ($invoice->additionalCharges->isNotEmpty() || $invoice->diagnosisCharges->isNotEmpty())
         );
 
         $medicalIds = $medical->pluck('invoice_id')->all();
@@ -72,9 +72,11 @@ class OutstandingBalance
 
         $chargesOfAdmission = $charges->filter(
             fn($invoice) => $admissionId !== null
-                && $invoice->additionalCharges->contains(
+                && ($invoice->additionalCharges->contains(
+                    fn($charge) => (int) $charge->patientAdmission?->patient_admission_id === $admissionId
+                ) || $invoice->diagnosisCharges->contains(
                     fn($charge) => (int) $charge->patient_admission_id === $admissionId
-                )
+                ))
         );
 
         return [

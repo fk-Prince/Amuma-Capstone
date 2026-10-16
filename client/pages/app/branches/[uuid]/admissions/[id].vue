@@ -1066,9 +1066,8 @@
             :patient-name="patient?.full_name"
             :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
             :billing-cycle="(currentAdmission ?? latestAdmission)?.current_contract?.billing_cycle"
-            :saving="actionLoading"
             @close="diagnosisModalOpen = false"
-            @save="saveDiagnosisCases"
+            @saved="patient = $event as PatientRetrieve"
         />
 
         <ChargesModal
@@ -1318,8 +1317,22 @@ function blockedTip(reason: string, permitted = true) {
         : reason;
 }
 
+// The stay invoice and the diagnosis case invoices both have to be paid.
 const isInvoiceUnpaid = computed(() => {
-    return (latestInvoice.value?.status ?? "").toLowerCase() !== "paid";
+    const diagnosisUnpaid = (
+        latestAdmission.value?.diagnosis_invoices ?? []
+    ).some(
+        (invoice) =>
+            invoice.balance_due > 0 &&
+            !["void", "written_off"].includes(
+                String(invoice.status).toLowerCase(),
+            ),
+    );
+
+    return (
+        (latestInvoice.value?.status ?? "").toLowerCase() !== "paid" ||
+        diagnosisUnpaid
+    );
 });
 
 const branchStore = useBranchStore();
@@ -1457,7 +1470,6 @@ async function runAction(
         | "discharge"
         | "extend"
         | "change_room"
-        | "diagnosis_cases"
         | "cancel"
         | "cancel_period",
     extra: Record<string, unknown> = {},
@@ -1541,14 +1553,6 @@ function confirmCancelAdmission(
 }
 
 const diagnosisModalOpen = ref(false);
-
-async function saveDiagnosisCases(
-    diagnoses: DiagnosisFeeSelection["diagnoses"],
-) {
-    if (await runAction("diagnosis_cases", { diagnoses })) {
-        diagnosisModalOpen.value = false;
-    }
-}
 
 function confirmAdmit() {
     if (!admitDate.value) return;

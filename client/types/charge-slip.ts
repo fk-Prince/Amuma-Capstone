@@ -6,6 +6,9 @@ export interface ChargeSlipLine {
 }
 
 export interface ChargeSlip {
+    // Defaults to "Charge Slip" and "Charges".
+    title?: string;
+    section?: string;
     branch_name: string | null;
     patient_name: string | null;
     prepared_by: string | null;

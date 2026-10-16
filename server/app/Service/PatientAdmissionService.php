@@ -15,6 +15,7 @@ use App\Models\PatientAdmission;
 use App\Models\Room;
 use App\Models\RoomTransfer;
 use App\Models\User;
+use App\Repository\AdmissionChargeDiagnosisRepository;
 use App\Repository\BookingRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientAdmissionRepository;
@@ -42,6 +43,7 @@ class PatientAdmissionService
         private InvoiceService $invoiceService,
         private NotificationService $notificationService,
         private DiagnosisFeeService $diagnosisFees,
+        private AdmissionChargeDiagnosisRepository $diagnosisChargeRepository,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -197,20 +199,18 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            $amount = round((float) $contract['price'] + $this->diagnosisFees->total($fees, $contract['billing_cycle']), 2);
-
             $invoice = Invoice::create([
                 'branch_id'      => $payload['branch_id'],
-                'total_amount'   => $amount,
+                'total_amount'   => $contract['price'],
                 'status'         => Invoice::STATUS_PENDING,
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
                 'admission_period_id' => $period->admission_period_id,
-                'price'               => $amount,
+                'price'               => $contract['price'],
             ]);
 
-            $this->diagnosisFees->record($admission, $fees);
+            $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
                 'message' => 'Patient admitted successfully.',
@@ -241,6 +241,8 @@ class PatientAdmissionService
                 }
 
                 $period->loadMissing('branchContract');
+
+                $this->assertPaidBeforeAdmitting($admission, $period);
 
                 $admittedAt = isset($payload['admitted_at'])
                     ? Carbon::parse($payload['admitted_at'])
@@ -278,6 +280,41 @@ class PatientAdmissionService
             }
 
             throw $e;
+        }
+    }
+
+    /*
+        A branch that asks for full payment on admit needs both the stay invoice
+        and the diagnosis case invoices settled before the patient is admitted.
+    */
+    private function assertPaidBeforeAdmitting(PatientAdmission $admission, AdmissionPeriod $period): void
+    {
+        $setting = $admission->patient?->branch?->settings['requires_full_payment_on_admit'] ?? true;
+
+        $required = filter_var($setting, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+
+        if (!$required) {
+            return;
+        }
+
+        $invoices = $period->invoiceAdmissionLines()->with('invoice')->get()
+            ->pluck('invoice')
+            ->concat($admission->chargeDiagnoses()->with('invoice')->get()->pluck('invoice'))
+            ->filter()
+            ->unique('invoice_id');
+
+        $unpaid = $invoices->first(
+            fn(Invoice $invoice) => !in_array($invoice->status, Invoice::CLOSED_STATUSES, true)
+                && $invoice->balance_due > 0
+        );
+
+        if ($unpaid) {
+            throw new Exception(
+                "Invoice {$unpaid->invoice_code} still has a balance of "
+                    . number_format((float) $unpaid->balance_due, 2)
+                    . '. The stay invoice and the diagnosis case invoices must be paid before the patient is admitted.',
+                422
+            );
         }
     }
 
@@ -350,6 +387,7 @@ class PatientAdmissionService
     {
         $invoiceIds = $admission->invoiceAdmission()->pluck('invoice_id')
             ->merge($admission->additionalCharges()->pluck('invoice_id'))
+            ->merge($admission->chargeDiagnoses()->pluck('invoice_id'))
             ->filter()
             ->unique();
 
@@ -448,6 +486,33 @@ class PatientAdmissionService
                 $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled.', $userId);
             });
 
+        $admission->chargeDiagnoses()->with('invoice')->get()
+            ->pluck('invoice')
+            ->filter()
+            ->unique('invoice_id')
+            ->each(function ($diagnosisInvoice) use ($userId) {
+                $invoice = $this->lockOpenInvoice($diagnosisInvoice);
+
+                if (!$invoice) {
+                    return;
+                }
+
+                $collected = round((float) $invoice->net_paid_amount, 2);
+
+                if ($collected <= 0) {
+                    $this->invoiceService->closeAsVoid($invoice, 'Admission cancelled. Diagnosis cases voided.', $userId);
+
+                    return;
+                }
+
+                $this->invoiceService->settleCancelled(
+                    $invoice,
+                    min($collected, round((float) $invoice->adjusted_total, 2)),
+                    'Admission cancelled. Diagnosis case fee kept.',
+                    $userId
+                );
+            });
+
         $admission->additionalCharges()->with('invoice')->get()
             ->each(function ($charge) use ($userId) {
                 $invoice = $this->lockOpenInvoice($charge->invoice);
@@ -534,6 +599,33 @@ class PatientAdmissionService
                 }
             );
 
+            $this->diagnosisChargeRepository->forPeriod($period->admission_period_id)
+                ->pluck('invoice')
+                ->filter()
+                ->unique('invoice_id')
+                ->each(function ($diagnosisInvoice) use ($userId) {
+                    $invoice = $this->lockOpenInvoice($diagnosisInvoice);
+
+                    if (!$invoice) {
+                        return;
+                    }
+
+                    if ($invoice->status === Invoice::STATUS_PAID) {
+                        InvoiceAdjustment::create([
+                            'invoice_id' => $invoice->invoice_id,
+                            'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                            'amount' => -round((float) $invoice->adjusted_total, 2),
+                            'reason' => 'Billing period cancelled.',
+                        ]);
+
+                        $invoice->syncStatus();
+
+                        return;
+                    }
+
+                    $this->invoiceService->closeAsVoid($invoice, 'Billing period cancelled.', $userId);
+                });
+
             $period->update(['status' => AdmissionPeriod::STATUS_CANCELLED]);
 
             // Later periods move up to start where the cancelled one began, so
@@ -617,7 +709,7 @@ class PatientAdmissionService
     }
 
     /*
-        FOR SETTING THE DIAGNOSIS CASES BILLED WITH A WAITING ADMISSION
+        FOR ADDING DIAGNOSIS CASES, BILLED ON AN INVOICE OF THEIR OWN, BEFORE ADMITTING
     */
     public function setDiagnosisCases(array $payload)
     {
@@ -636,15 +728,11 @@ class PatientAdmissionService
 
             $period = $this->periods->current($admission);
 
-            $line = $period?->invoiceAdmissionLines()->orderBy('invoice_admission_id')->first();
-
-            $invoice = $line
-                ? Invoice::where('invoice_id', $line->invoice_id)->lockForUpdate()->first()
-                : null;
-
-            if (!$invoice || in_array($invoice->status, Invoice::CLOSED_STATUSES, true)) {
-                throw new Exception('This admission has no open invoice to add diagnosis cases to.', 422);
+            if (!$period) {
+                throw new Exception('No accommodation record found for this admission.', 400);
             }
+
+            $period->loadMissing('branchContract');
 
             $fees = $this->diagnosisFees->fromRequest(
                 $payload['diagnoses'] ?? [],
@@ -652,33 +740,27 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            $cycle = $period->branchContract?->billing_cycle;
+            $existing = $this->diagnosisChargeRepository->forPeriod($period->admission_period_id);
 
-            $previous = round(
-                (float) $admission->chargeDiagnoses()->sum('amount') * AdmissionChargeDiagnosis::multiplier($cycle),
-                2
-            );
-            $delta = round($this->diagnosisFees->total($fees, $cycle) - $previous, 2);
-
-            if ($delta < 0 && (float) $invoice->net_paid_amount > (float) $invoice->adjusted_total + $delta) {
-                throw new Exception(
-                    'More has already been paid on this invoice than the new total. Remove less, or refund first.',
-                    422
-                );
+            // A diagnosis can be billed once, and can't be taken back after.
+            foreach ($fees as $fee) {
+                if ($existing->has($fee['diagnosis']->patient_diagnosis_id)) {
+                    throw new Exception(
+                        "{$fee['diagnosis']->diagnosis} already has a diagnosis case on this admission.",
+                        422
+                    );
+                }
             }
 
-            $this->diagnosisFees->replace($admission, $fees);
+            $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
-            if (abs($delta) >= 0.01) {
-                $line->update(['price' => round((float) $line->price + $delta, 2)]);
-                $invoice->update(['total_amount' => round((float) $invoice->total_amount + $delta, 2)]);
+            if (!$invoice) {
+                throw new Exception('Choose a diagnosis case with an amount greater than zero.', 422);
             }
-
-            $invoice->refresh();
-            $invoice->syncStatus();
 
             return [
-                'message' => 'Diagnosis cases updated.',
+                'message' => 'Diagnosis case added and invoiced.',
+                'invoice_code' => $invoice->invoice_code,
                 'data' => $this->patientService->showPatient($payload['p_uuid']),
             ];
         });
@@ -765,22 +847,24 @@ class PatientAdmissionService
                 $endDate
             );
 
-            $amountDue = round(
-                (float) $contract['price']
-                    + (float) $admission->chargeDiagnoses()->sum('amount')
-                    * AdmissionChargeDiagnosis::multiplier($contract['billing_cycle']),
-                2
-            );
-
             $invoice = Invoice::create([
                 'branch_id'      => $payload['branch_id'],
-                'total_amount'   => $amountDue,
+                'total_amount'   => $contract['price'],
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
                 'admission_period_id' => $nextPeriod->admission_period_id,
-                'price'               => $amountDue,
+                'price'               => $contract['price'],
             ]);
+
+            // The diagnosis cases set at admission are billed again on their
+            // own invoice for this period, and can't be changed from here.
+            $diagnosisInvoice = $this->diagnosisFees->billExtension($admission, $nextPeriod, $payload['branch_id']);
+
+            $amountDue = round(
+                (float) $contract['price'] + (float) ($diagnosisInvoice?->total_amount ?? 0),
+                2
+            );
 
 
             $receipt = null;
@@ -797,7 +881,10 @@ class PatientAdmissionService
                 }
 
                 $receipt = $this->invoiceService->collectForInvoices(
-                    Invoice::whereKey($invoice->invoice_id)->get(),
+                    Invoice::whereIn(
+                        'invoice_id',
+                        array_filter([$invoice->invoice_id, $diagnosisInvoice?->invoice_id])
+                    )->get(),
                     [
                         'cash' => $cash,
                         'payment_method' => $payload['payment_method'] ?? 'CASH',
@@ -1141,24 +1228,18 @@ class PatientAdmissionService
             $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
             $period = $this->periods->current($admission);
 
-            $amount = round(
-                (float) $payload['payment']['total_amount']
-                    + $this->diagnosisFees->total($fees, $payload['reserved']['billing_cycle'] ?? null),
-                2
-            );
-
             $invoice = $this->invoiceRepository->create([
-                'total_amount' => $amount,
+                'total_amount' => $payload['payment']['total_amount'],
                 'branch_id' => $payload['branch_id'],
                 'status'    => Invoice::STATUS_PENDING,
             ]);
 
             $invoice->invoiceAdmissionLines()->create([
                 'admission_period_id' => $period->admission_period_id,
-                'price'               => $amount,
+                'price'               => $payload['payment']['total_amount'],
             ]);
 
-            $this->diagnosisFees->record($admission, $fees);
+            $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
                 'message' => 'Walk-in admission created successfully.',
@@ -1265,24 +1346,18 @@ class PatientAdmissionService
         $fees = $this->diagnosisFees->fromCreated($data['diagnoses'] ?? [], $payload['branch_id']);
         $period = $this->periods->current($admission);
 
-        $amount = round(
-            (float) $payload['payment']['total_amount']
-                + $this->diagnosisFees->total($fees, $payload['reserved']['billing_cycle'] ?? null),
-            2
-        );
-
         $invoice = $this->invoiceRepository->create([
-            'total_amount' => $amount,
+            'total_amount' => $payload['payment']['total_amount'],
             'branch_id' => $payload['branch_id'],
             'status'    => Invoice::STATUS_PENDING,
         ]);
 
         $invoice->invoiceAdmissionLines()->create([
             'admission_period_id' => $period->admission_period_id,
-            'price'               => $amount,
+            'price'               => $payload['payment']['total_amount'],
         ]);
 
-        $this->diagnosisFees->record($admission, $fees);
+        $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
         return [
             'patient'   => $data,

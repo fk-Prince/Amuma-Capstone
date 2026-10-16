@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\RoleEnum;
 use App\Models\AdditionalCharge;
-use App\Models\AdmissionChargeDiagnosis;
+use App\Service\DiagnosisFeeService;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
@@ -347,7 +347,18 @@ class PatientSeeder extends Seeder
             $chargedAt = now()->subDays($spec['days_ago'])->setTime(11, 0);
 
             if ($spec['type'] === 'diagnosis_case') {
-                $this->createDiagnosisFee($admission, $diagnoses->get($spec['diagnosis'] ?? -1), $case, $amount);
+                $fee = $this->createDiagnosisFee(
+                    $branch,
+                    $admission,
+                    $diagnoses->get($spec['diagnosis'] ?? -1),
+                    $case,
+                    $amount,
+                    $chargedAt
+                );
+
+                if ($fee && ($spec['paid'] ?? false)) {
+                    $this->payInvoice($fee, $patient, $data['guardian']['email'], $chargedAt->copy()->addHours(2));
+                }
 
                 continue;
             }
@@ -380,37 +391,45 @@ class PatientSeeder extends Seeder
         }
     }
 
-    // The diagnosis fee is billed inside the admission's price and kept on the
-    // admission so it can be told apart from the room.
+    // A diagnosis case is billed on an invoice of its own, for the admission's
+    // first period.
     private function createDiagnosisFee(
+        Branch $branch,
         PatientAdmission $admission,
         ?PatientDiagnosis $diagnosis,
         ?DiagnosisCase $case,
-        float $amount
-    ): void {
-        $line = $admission->invoiceAdmission()->orderBy('invoice_admission.invoice_admission_id')->first();
+        float $amount,
+        Carbon $chargedAt
+    ): ?Invoice {
+        $period = $admission->periods()->orderBy('admission_period_id')->first();
 
-        if (!$diagnosis || !$line || $amount <= 0) {
-            return;
+        if (!$diagnosis || !$period || $amount <= 0) {
+            return null;
         }
 
-        AdmissionChargeDiagnosis::create([
-            'patient_admission_id' => $admission->patient_admission_id,
-            'patient_diagnosis_id' => $diagnosis->patient_diagnosis_id,
-            'diagnosis_case_id' => $case?->diagnosis_case_id,
-            'amount' => $amount,
-        ]);
-
-        $billed = round(
-            $amount * AdmissionChargeDiagnosis::multiplier($line->admissionPeriod?->branchContract?->billing_cycle),
-            2
+        $invoice = app(DiagnosisFeeService::class)->bill(
+            $admission,
+            $period,
+            collect([[
+                'diagnosis' => $diagnosis,
+                'case' => $case,
+                'amount' => $amount,
+                'description' => null,
+            ]]),
+            $branch->branch_id
         );
 
-        $line->update(['price' => round((float) $line->price + $billed, 2)]);
+        if ($invoice) {
+            DB::table('invoices')
+                ->where('invoice_id', $invoice->invoice_id)
+                ->update(['created_at' => $chargedAt]);
 
-        $invoice = Invoice::find($line->invoice_id);
-        $invoice->update(['total_amount' => round((float) $invoice->total_amount + $billed, 2)]);
-        $invoice->syncStatus();
+            DB::table('admission_charge_diagnosis')
+                ->where('invoice_id', $invoice->invoice_id)
+                ->update(['created_at' => $chargedAt, 'updated_at' => $chargedAt]);
+        }
+
+        return $invoice;
     }
 
     private function createCompleteBooking(

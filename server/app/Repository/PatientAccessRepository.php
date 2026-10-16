@@ -216,6 +216,7 @@ class PatientAccessRepository
         'invoiceServices',
         'invoiceAdmissionLines',
         'additionalCharges',
+        'diagnosisCharges',
     ];
 
     public function invoicePage(array $payload)
@@ -434,6 +435,12 @@ class PatientAccessRepository
                     ->whereIn('additional_charges.patient_id', $patientIds)
                     ->select('additional_charges.invoice_id', 'additional_charges.patient_id')
             )
+            ->union(
+                DB::table('admission_charge_diagnosis')
+                    ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'admission_charge_diagnosis.patient_admission_id')
+                    ->whereIn('patient_admissions.patient_id', $patientIds)
+                    ->select('admission_charge_diagnosis.invoice_id', 'patient_admissions.patient_id')
+            )
             ->get();
 
         $invoices = $pairs->isEmpty()
@@ -444,7 +451,7 @@ class PatientAccessRepository
                 'allocations.refundAllocations.refund.transaction',
                 'allocations.refundAllocations.invoiceAdjustment',
                 'invoiceAdjustments',
-                ...($full ? ['invoiceServices', 'invoiceAdmissionLines', 'additionalCharges'] : []),
+                ...($full ? ['invoiceServices', 'invoiceAdmissionLines', 'additionalCharges', 'diagnosisCharges'] : []),
             ])
             ->orderByDesc('invoice_id')
             ->get();

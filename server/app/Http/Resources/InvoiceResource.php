@@ -97,7 +97,7 @@ class InvoiceResource extends JsonResource
                     'description' => $charge->description,
                     'amount' => (float) $charge->amount,
                     'created_at' => $charge->created_at?->toIso8601String(),
-                ])->values()
+                ])->concat($this->diagnosisCharges->map(fn($charge) => $charge->asCharge()))->values()
             ),
 
             // Through the allocations: a payment split across invoices only
@@ -394,7 +394,8 @@ class InvoiceResource extends JsonResource
             $this->resource->relationLoaded('additionalCharges')
         ) {
             $patient = $this->additionalCharges
-                ->first()?->patientAdmission?->patient;
+                ->first()?->patient
+                ?? $this->diagnosisCharges->first()?->patientAdmission?->patient;
         }
 
         if (!$patient) {

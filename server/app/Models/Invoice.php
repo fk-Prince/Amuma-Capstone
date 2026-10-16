@@ -114,10 +114,16 @@ class Invoice extends Model
         return $this->hasMany(AdditionalCharge::class, 'invoice_id', 'invoice_id');
     }
 
+    public function diagnosisCharges(): HasMany
+    {
+        return $this->hasMany(AdmissionChargeDiagnosis::class, 'invoice_id', 'invoice_id');
+    }
+
     public function chargedAdmission(): ?PatientAdmission
     {
         return $this->invoiceAdmissionLines->first()?->patientAdmission
-            ?? $this->additionalCharges->first()?->patientAdmission;
+            ?? $this->additionalCharges->first()?->patientAdmission
+            ?? $this->diagnosisCharges->first()?->patientAdmission;
     }
 
 
@@ -150,6 +156,7 @@ class Invoice extends Model
 
         $charges = $this->additionalCharges
             ->pluck('description')
+            ->concat($this->diagnosisCharges->map(fn($charge) => $charge->line_description))
             ->filter()
             ->unique()
             ->values();
@@ -217,7 +224,12 @@ class Invoice extends Model
         }
 
         return $this->additionalCharges
-            ->filter(fn($line) => $line->description)
+            ->map(fn($line) => ['description' => $line->description, 'amount' => (float) $line->amount])
+            ->concat($this->diagnosisCharges->map(fn($line) => [
+                'description' => $line->line_description,
+                'amount' => (float) $line->amount,
+            ]))
+            ->filter(fn($line) => $line['description'])
             ->groupBy('description')
             ->map(fn($group, $description) => [
                 'description' => $description,
@@ -396,9 +408,15 @@ class Invoice extends Model
 
         $charged = AdditionalCharge::where('patient_id', $patientId)->pluck('invoice_id');
 
+        $diagnosed = AdmissionChargeDiagnosis::whereHas(
+            'patientAdmission',
+            fn($query) => $query->where('patient_id', $patientId)
+        )->pluck('invoice_id');
+
         return self::$patientInvoiceIdCache[$key] = $admission
             ->merge($scheduled)
             ->merge($charged)
+            ->merge($diagnosed)
             ->unique()
             ->values();
     }

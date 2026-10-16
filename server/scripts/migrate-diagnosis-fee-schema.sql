@@ -41,11 +41,17 @@ ALTER TABLE additional_charges DROP COLUMN patient_admission_id;
 
 DROP TABLE IF EXISTS additional_charge_diagnosis;
 
--- 4. Diagnosis fees kept per admission
-CREATE TABLE IF NOT EXISTS admission_charge_diagnosis (
+-- 4. Diagnosis fees: one row per diagnosis, each billed on an invoice of its own
+DROP TABLE IF EXISTS admission_charge_diagnosis;
+
+CREATE TABLE admission_charge_diagnosis (
     admission_charge_diagnosis_id bigserial PRIMARY KEY,
     patient_admission_id bigint NOT NULL
         REFERENCES patient_admissions (patient_admission_id) ON DELETE CASCADE,
+    admission_period_id bigint NOT NULL
+        REFERENCES admission_periods (admission_period_id) ON DELETE CASCADE,
+    invoice_id bigint NOT NULL
+        REFERENCES invoices (invoice_id) ON UPDATE CASCADE ON DELETE RESTRICT,
     patient_diagnosis_id bigint NOT NULL
         REFERENCES patient_diagnosis (patient_diagnosis_id) ON DELETE CASCADE,
     diagnosis_case_id bigint NULL
@@ -54,10 +60,8 @@ CREATE TABLE IF NOT EXISTS admission_charge_diagnosis (
     description varchar(255) NULL,
     created_at timestamp(0) without time zone NULL,
     updated_at timestamp(0) without time zone NULL,
-    CONSTRAINT admission_charge_diagnosis_unique UNIQUE (patient_admission_id, patient_diagnosis_id)
+    CONSTRAINT admission_charge_diagnosis_unique UNIQUE (admission_period_id, patient_diagnosis_id)
 );
-
-ALTER TABLE admission_charge_diagnosis ADD COLUMN IF NOT EXISTS description varchar(255) NULL;
 
 -- 5. Keep Laravel's migration list in step so `php artisan migrate` has nothing left to run
 DELETE FROM migrations WHERE migration = '2026_09_28_120100_create_additional_charge_diagnosis_table';

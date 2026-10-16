@@ -17,7 +17,7 @@
                     class="mt-1 text-lg font-semibold"
                     :class="print ? '' : 'dark:text-white'"
                 >
-                    Charge Slip
+                    {{ slip.title || "Charge Slip" }}
                 </h1>
             </div>
 
@@ -60,7 +60,7 @@
             <p
                 class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
             >
-                Charges
+                {{ slip.section || "Charges" }}
             </p>
 
             <ul class="divide-y divide-gray-200 border-y border-gray-200">

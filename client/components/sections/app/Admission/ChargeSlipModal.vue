@@ -21,7 +21,7 @@
                         <h3
                             class="mt-1 text-lg font-semibold text-secondary dark:text-white"
                         >
-                            Charge slip
+                            {{ slip.title || "Charge slip" }}
                         </h3>
                     </div>
 

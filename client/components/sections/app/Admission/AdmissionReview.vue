@@ -441,7 +441,7 @@ const admissionRows = computed<Row[]>(() => {
                     value: formatCurrency(contract.price),
                 },
                 {
-                    label: "Diagnosis fee",
+                    label: "Diagnosis fee (own invoice)",
                     value: formatCurrency(diagnosisFeeTotal.value),
                 },
             );
