@@ -27,10 +27,7 @@
                 {{ loadError }}
             </p>
 
-            <div
-                v-else-if="loading"
-                class="grid gap-6 md:grid-cols-2"
-            >
+            <div v-else-if="loading" class="grid gap-6 md:grid-cols-2">
                 <div class="space-y-3">
                     <div
                         v-for="i in 4"
@@ -54,10 +51,7 @@
                 No diagnosis cases yet. Add them from Contracts.
             </p>
 
-            <div
-                v-else
-                class="grid gap-6 md:grid-cols-[1fr_auto_1fr]"
-            >
+            <div v-else class="grid gap-6 md:grid-cols-[1fr_auto_1fr]">
                 <!-- LEFT · SELECTION -->
                 <section class="min-w-0">
                     <div
@@ -156,10 +150,7 @@
                             search-placeholder="Search diagnoses"
                             :items="diagnosisItems"
                             :error="
-                                errorFor(
-                                    activeIndex,
-                                    'patient_diagnosis_uuid',
-                                )
+                                errorFor(activeIndex, 'patient_diagnosis_uuid')
                             "
                             @update:model-value="pickDiagnosis"
                         />
@@ -221,7 +212,9 @@
                                         >
                                             {{
                                                 activeCase
-                                                    ? formatCurrency(activeCase.price)
+                                                    ? formatCurrency(
+                                                          activeCase.price,
+                                                      )
                                                     : "One diagnosis case per diagnosis"
                                             }}
                                         </p>
@@ -248,10 +241,14 @@
                             </button>
 
                             <p
-                                v-if="errorFor(activeIndex, 'diagnosis_case_uuid')"
+                                v-if="
+                                    errorFor(activeIndex, 'diagnosis_case_uuid')
+                                "
                                 class="mt-1.5 text-xs text-red-500"
                             >
-                                {{ errorFor(activeIndex, "diagnosis_case_uuid") }}
+                                {{
+                                    errorFor(activeIndex, "diagnosis_case_uuid")
+                                }}
                             </p>
                         </div>
 
@@ -275,9 +272,7 @@
                             mode="textarea"
                             :textMax="255"
                             placeholder="Optional note saved with this diagnosis case"
-                            :error="
-                                errorFor(activeIndex, 'description')
-                            "
+                            :error="errorFor(activeIndex, 'description')"
                         />
 
                         <div
@@ -332,12 +327,16 @@
 
                                     <label
                                         class="flex cursor-pointer items-center gap-2"
-                                        :class="{ 'opacity-50': !active.billed }"
+                                        :class="{
+                                            'opacity-50': !active.billed,
+                                        }"
                                     >
                                         <input
                                             v-model="active.is_active"
                                             type="checkbox"
-                                            :disabled="submitting || !active.billed"
+                                            :disabled="
+                                                submitting || !active.billed
+                                            "
                                             class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
                                         />
                                         <span
@@ -349,27 +348,49 @@
                                 </div>
                             </div>
 
-                            <template v-if="active.billed">
-                                <DatePickerField
-                                    v-model="active.date_billed"
-                                    label="Date to be billed"
-                                    placeholder="Select the date to be billed"
-                                    :min="tomorrowStr"
-                                    :default-to-today="false"
-                                    :disabled="submitting"
-                                    :error="
-                                        errorFor(activeIndex, 'date_billed')
-                                    "
-                                />
-
+                            <div v-if="active.billed && !editingUuid">
                                 <p
-                                    class="text-xs text-slate-400 dark:text-gray-500"
+                                    class="mb-2 text-sm font-medium text-slate-700 dark:text-gray-300"
                                 >
-                                    Billed again on a new invoice every month
-                                    from this date while the patient is
-                                    admitted and billing is active.
+                                    Start billing
                                 </p>
-                            </template>
+
+                                <div
+                                    class="flex flex-wrap items-center gap-x-6 gap-y-2"
+                                >
+                                    <label
+                                        v-for="option in START_OPTIONS"
+                                        :key="option.value"
+                                        class="flex cursor-pointer items-center gap-2"
+                                    >
+                                        <input
+                                            v-model="active.start"
+                                            type="radio"
+                                            :name="`start-${active.key}`"
+                                            :value="option.value"
+                                            :disabled="submitting"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded-full border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                        />
+                                        <span
+                                            class="text-sm text-slate-600 dark:text-gray-300"
+                                        >
+                                            {{ option.label }}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <p
+                                v-if="active.billed"
+                                class="text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                {{
+                                    active.start === "next" && !editingUuid
+                                        ? "Nothing is billed now. It is first billed next month on the admission date"
+                                        : "This charge is billed now. It is billed again on a new invoice on the admission date"
+                                }}, then every month while the patient is
+                                admitted and billing is active.
+                            </p>
                         </div>
                     </div>
 
@@ -441,9 +462,7 @@
                             label="Primary Diagnosis"
                             placeholder="e.g. Type 2 Diabetes"
                             :error="newErrors.diagnosis"
-                            @update:modelValue="
-                                delete newErrors.diagnosis
-                            "
+                            @update:modelValue="delete newErrors.diagnosis"
                         />
 
                         <DatePickerField
@@ -471,9 +490,8 @@
                             <p
                                 class="text-[13px] text-muted dark:text-gray-400"
                             >
-                                Lab result, medical certificate, or
-                                report (PDF, PNG, or JPG, up to
-                                10MB)
+                                Lab result, medical certificate, or report (PDF,
+                                PNG, or JPG, up to 10MB)
                             </p>
 
                             <label
@@ -494,9 +512,7 @@
                                 />
 
                                 <template v-if="newDiagnosis.file">
-                                    <FileText
-                                        class="h-6 w-6 text-primary"
-                                    />
+                                    <FileText class="h-6 w-6 text-primary" />
                                     <span
                                         class="text-sm font-medium text-slate-700 dark:text-gray-300"
                                     >
@@ -569,16 +585,12 @@
                         v-else
                         class="divide-y divide-slate-100 dark:divide-white/10"
                     >
-                        <li
-                            v-for="item in diagnoses"
-                            :key="item.uuid"
-                        >
+                        <li v-for="item in diagnoses" :key="item.uuid">
                             <button
                                 type="button"
                                 class="flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition disabled:cursor-default"
                                 :class="
-                                    active.diagnosis_uuid ===
-                                    item.uuid
+                                    active.diagnosis_uuid === item.uuid
                                         ? 'bg-primary/5'
                                         : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                 "
@@ -595,77 +607,51 @@
                                         v-if="item.diagnosis_date"
                                         class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                     >
-                                        {{
-                                            formatDate(
-                                                item.diagnosis_date,
-                                            )
-                                        }}
+                                        {{ formatDate(item.diagnosis_date) }}
                                     </p>
 
-                                    <template
-                                        v-if="item.admission_charge"
-                                    >
+                                    <template v-if="item.admission_charge">
                                         <p
                                             class="mt-1.5 break-words text-xs text-slate-600 dark:text-gray-300"
                                         >
                                             {{
-                                                item
-                                                    .admission_charge
-                                                    .case_title
+                                                item.admission_charge.case_title
                                             }}
                                             ·
                                             {{
                                                 formatCurrency(
-                                                    item
-                                                        .admission_charge
+                                                    item.admission_charge
                                                         .amount,
                                                 )
                                             }}
                                         </p>
                                         <p
                                             v-if="
-                                                item
-                                                    .admission_charge
+                                                item.admission_charge
                                                     .description
                                             "
                                             class="mt-0.5 break-words text-xs text-slate-500 dark:text-gray-400"
                                         >
                                             {{
-                                                item
-                                                    .admission_charge
+                                                item.admission_charge
                                                     .description
                                             }}
                                         </p>
                                         <p
-                                            v-if="
-                                                item.admission_charge.billed ===
-                                                    'monthly' &&
-                                                item.admission_charge
-                                                    .next_bill_date
-                                            "
                                             class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
                                         >
-                                            Every month
+                                            Billed:
                                             {{
-                                                item.admission_charge.is_active
-                                                    ? "· next"
-                                                    : "· paused, was next"
-                                            }}
-                                            {{
-                                                formatDate(
-                                                    item.admission_charge
-                                                        .next_bill_date,
-                                                )
+                                                billedLabel(
+                                                    item.admission_charge,
+                                                ) ?? "One time"
                                             }}
                                         </p>
                                     </template>
                                 </div>
 
                                 <span
-                                    v-if="
-                                        active.diagnosis_uuid ===
-                                        item.uuid
-                                    "
+                                    v-if="active.diagnosis_uuid === item.uuid"
                                     class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary"
                                 >
                                     Selected
@@ -677,19 +663,14 @@
                                     Charged
                                 </span>
                                 <span
-                                    v-else-if="
-                                        takenByOthers.has(item.uuid)
-                                    "
+                                    v-else-if="takenByOthers.has(item.uuid)"
                                     class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                 >
                                     On another case
                                 </span>
                             </button>
 
-                            <div
-                                v-if="isCharged(item)"
-                                class="px-4 pb-3"
-                            >
+                            <div v-if="isCharged(item)" class="px-4 pb-3">
                                 <button
                                     type="button"
                                     class="inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80"
@@ -699,9 +680,7 @@
                                     Print slip
                                 </button>
 
-                                <template
-                                    v-if="item.admission_charge.editable"
-                                >
+                                <template v-if="item.admission_charge?.editable">
                                     <button
                                         type="button"
                                         class="ml-4 inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80 disabled:opacity-50"
@@ -719,19 +698,11 @@
             </div>
         </div>
 
-        <div
-            class="border-t border-slate-100 px-6 py-4 dark:border-white/10"
-        >
-            <div
-                class="mb-3 flex items-center justify-between text-sm"
-            >
+        <div class="border-t border-slate-100 px-6 py-4 dark:border-white/10">
+            <div class="mb-3 flex items-center justify-between text-sm">
                 <span class="text-slate-500 dark:text-gray-400">
                     Total ({{ filledEntries.length }}
-                    {{
-                        filledEntries.length === 1
-                            ? "case"
-                            : "cases"
-                    }})
+                    {{ filledEntries.length === 1 ? "case" : "cases" }})
                 </span>
                 <span class="text-lg font-bold tracking-tight">
                     {{ formatCurrency(total) }}
@@ -752,10 +723,7 @@
                     type="button"
                     class="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="
-                        submitting ||
-                        loading ||
-                        !!loadError ||
-                        !cases.length
+                        submitting || loading || !!loadError || !cases.length
                     "
                     @click="submit"
                 >
@@ -838,13 +806,17 @@ interface BilledCase {
     next_bill_date?: string | null;
 }
 
-
 interface PatientDiagnosis {
     uuid: string;
     diagnosis: string;
     diagnosis_date: string | null;
     admission_charge?: BilledCase | null;
 }
+
+const START_OPTIONS: { value: "now" | "next"; label: string }[] = [
+    { value: "now", label: "This period" },
+    { value: "next", label: "Next month" },
+];
 
 interface Entry {
     key: number;
@@ -854,7 +826,7 @@ interface Entry {
     description: string;
     billed: boolean;
     is_active: boolean;
-    date_billed: string;
+    start: "now" | "next";
 }
 
 const route = useRoute();
@@ -892,7 +864,7 @@ const newEntry = (): Entry => ({
     description: "",
     billed: false,
     is_active: true,
-    date_billed: "",
+    start: "now",
 });
 
 const entries = ref<Entry[]>([newEntry()]);
@@ -960,7 +932,9 @@ const diagnosisItems = computed(() => [
 const caseModalOpen = ref(false);
 
 const activeCase = computed(
-    () => cases.value.find((item) => item.uuid === active.value.case_uuid) ?? null,
+    () =>
+        cases.value.find((item) => item.uuid === active.value.case_uuid) ??
+        null,
 );
 
 const filledEntries = computed(() =>
@@ -974,30 +948,13 @@ const total = computed(() =>
     ),
 );
 
-const tomorrowStr = getLocalDateStr(new Date(Date.now() + 24 * 60 * 60 * 1000));
-
-function nextBillDate(charge: BilledCase) {
-    return charge.billed === "monthly" ? (charge.next_bill_date ?? "") : "";
-}
-
-
 function toggleBilled(checked: boolean) {
     const entry = active.value;
 
     entry.billed = checked;
 
-    if (checked) {
-        entry.is_active = true;
-
-        if (!entry.date_billed) {
-            const next = new Date();
-
-            next.setMonth(next.getMonth() + 1);
-            entry.date_billed = getLocalDateStr(next);
-        }
-    }
-
-    clearError(activeIndex.value, "date_billed");
+    if (checked) entry.is_active = true;
+    else entry.start = "now";
 }
 
 function errorFor(index: number, field: string) {
@@ -1033,7 +990,6 @@ function startEdit(item: PatientDiagnosis) {
             description: charge.description ?? "",
             billed: charge.billed === "monthly",
             is_active: charge.is_active ?? true,
-            date_billed: nextBillDate(charge),
         },
     ];
     activeIndex.value = 0;
@@ -1243,13 +1199,6 @@ function validate() {
             next[`diagnoses.${index}.amount`] =
                 "Enter an amount greater than zero.";
         }
-        if (
-            entry.billed &&
-            (!entry.date_billed || entry.date_billed < tomorrowStr)
-        ) {
-            next[`diagnoses.${index}.date_billed`] =
-                "The date to be billed must be after today.";
-        }
     });
 
     errors.value = next;
@@ -1290,7 +1239,6 @@ async function submit() {
                 description: entry.description.trim() || undefined,
                 billed: entry.billed ? "monthly" : undefined,
                 is_active: entry.billed ? entry.is_active : undefined,
-                date_billed: entry.billed ? entry.date_billed : undefined,
             });
 
             success(saved?.message ?? "Diagnosis case updated.");
@@ -1314,7 +1262,7 @@ async function submit() {
                 description: entry.description.trim() || undefined,
                 billed: entry.billed ? "monthly" : undefined,
                 is_active: entry.billed ? entry.is_active : undefined,
-                date_billed: entry.billed ? entry.date_billed : undefined,
+                start: entry.billed ? entry.start : undefined,
             })),
         });
 
@@ -1324,11 +1272,14 @@ async function submit() {
         await load();
 
         // The slip for what was just billed, ready for the cashier.
-        const billedNow = diagnoses.value.filter(
-            (row) => row.admission_charge?.invoice_code === res?.invoice_code,
-        );
-
-        openSlip(billedNow);
+        if (res?.invoice_code) {
+            openSlip(
+                diagnoses.value.filter(
+                    (row) =>
+                        row.admission_charge?.invoice_code === res.invoice_code,
+                ),
+            );
+        }
     } catch (err: any) {
         const raw = err?.errors ?? {};
 

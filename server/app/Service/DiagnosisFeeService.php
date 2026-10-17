@@ -89,24 +89,8 @@ class DiagnosisFeeService
                 : null;
             $fee['is_active'] = $fee['billed'] !== null
                 && filter_var($entry['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN);
+            $fee['start_next'] = $fee['billed'] !== null && ($entry['start'] ?? null) === 'next';
 
-            if ($fee['billed'] !== null) {
-                $dateBilled = trim((string) ($entry['date_billed'] ?? ''));
-
-                try {
-                    $date = Carbon::createFromFormat('!Y-m-d', $dateBilled);
-                } catch (\Throwable) {
-                    $date = null;
-                }
-
-                if (!$date || $date->toDateString() !== $dateBilled || $date->lte(today())) {
-                    throw ValidationException::withMessages([
-                        "diagnoses.$index.date_billed" => 'The date to be billed must be after today.',
-                    ]);
-                }
-
-                $fee['date_billed'] = $dateBilled;
-            }
             $fees->push($fee);
         }
 
@@ -127,35 +111,25 @@ class DiagnosisFeeService
             return null;
         }
 
-        $total = round((float) $billable->sum(fn(array $fee) => (float) $fee['amount']), 2);
+        $now = $billable->reject(fn(array $fee) => !empty($fee['start_next']));
+        $later = $billable->filter(fn(array $fee) => !empty($fee['start_next']));
 
-        $invoice = $this->invoiceRepository->create([
-            'total_amount' => $total,
-            'branch_id' => $branchId,
-            'status' => Invoice::STATUS_PENDING,
-        ]);
+        $invoice = null;
 
-        $charge = $this->admissionChargeRepository->createCharge([
-            'admission_period_id' => $period->admission_period_id,
-            'invoice_id' => $invoice->invoice_id,
-            'amount' => $total,
-        ]);
+        if ($now->isNotEmpty()) {
+            $total = round((float) $now->sum(fn(array $fee) => (float) $fee['amount']), 2);
 
-        foreach ($billable as $fee) {
-            $row = $this->admissionChargeRepository->createDiagnosis([
-                'admission_charge_diagnosis_id' => $charge->admission_charge_diagnosis_id,
-                'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
-                'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
-                'description' => $fee['description'] ?? null,
-                'amount' => round((float) $fee['amount'], 2),
-            ] + $this->recurrence($fee));
+            $invoice = $this->invoiceRepository->create([
+                'total_amount' => $total,
+                'branch_id' => $branchId,
+                'status' => Invoice::STATUS_PENDING,
+            ]);
 
-            // The newest charge carries the monthly billing from here on.
-            $this->admissionChargeRepository->stopRecurring(
-                $admission->patient_admission_id,
-                $fee['diagnosis']->patient_diagnosis_id,
-                $row->admission_diagnosis_id
-            );
+            $this->recordCharge($admission, $period, $now, $invoice, $total);
+        }
+
+        if ($later->isNotEmpty()) {
+            $this->recordCharge($admission, $period, $later, null, 0);
         }
 
         Invoice::forgetPatientInvoiceIds();
@@ -163,17 +137,59 @@ class DiagnosisFeeService
         return $invoice;
     }
 
-    public function recurrence(array $fee): array
+    private function recordCharge(PatientAdmission $admission, AdmissionPeriod $period, Collection $fees, ?Invoice $invoice, float $total): void
+    {
+        $charge = $this->admissionChargeRepository->createCharge([
+            'admission_period_id' => $period->admission_period_id,
+            'invoice_id' => $invoice?->invoice_id,
+            'amount' => $total,
+        ]);
+
+        foreach ($fees as $fee) {
+            $row = $this->admissionChargeRepository->createDiagnosis([
+                'admission_charge_diagnosis_id' => $charge->admission_charge_diagnosis_id,
+                'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
+                'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
+                'description' => $fee['description'] ?? null,
+                'amount' => round((float) $fee['amount'], 2),
+            ] + $this->recurrence($fee, $admission));
+
+            $this->admissionChargeRepository->stopRecurring(
+                $admission->patient_admission_id,
+                $fee['diagnosis']->patient_diagnosis_id,
+                $row->admission_diagnosis_id
+            );
+        }
+    }
+    public function recurrence(array $fee, PatientAdmission $admission, ?AdmissionDiagnosis $row = null): array
     {
         if (($fee['billed'] ?? null) !== AdmissionDiagnosis::BILLED_MONTHLY) {
             return ['billed' => null, 'is_active' => false, 'date_billed' => null];
         }
 
+        $date = $fee['date_billed'] ?? null;
+
+        if (!$date && $row?->billed === AdmissionDiagnosis::BILLED_MONTHLY && $row->date_billed?->gte(today())) {
+            $date = $row->date_billed->toDateString();
+        }
+
         return [
             'billed' => AdmissionDiagnosis::BILLED_MONTHLY,
             'is_active' => (bool) ($fee['is_active'] ?? true),
-            'date_billed' => $fee['date_billed'],
+            'date_billed' => $date ?? $this->nextAnniversary($admission, today()),
         ];
+    }
+
+    public function nextAnniversary(PatientAdmission $admission, Carbon $after): string
+    {
+        $start = Carbon::parse($admission->admitted_at)->startOfDay();
+        $months = 1;
+
+        do {
+            $next = $start->copy()->addMonthsNoOverflow($months++);
+        } while ($next->lte($after));
+
+        return $next->toDateString();
     }
     public function billDue(?Carbon $today = null): int
     {
@@ -197,7 +213,7 @@ class DiagnosisFeeService
                     'description' => $row->description,
                     'billed' => AdmissionDiagnosis::BILLED_MONTHLY,
                     'is_active' => true,
-                    'date_billed' => $row->date_billed->copy()->addMonthNoOverflow()->toDateString(),
+                    'date_billed' => $this->nextAnniversary($admission, $row->date_billed),
                 ]]), $admission->patient->branch_id);
 
                 if ($invoice) {

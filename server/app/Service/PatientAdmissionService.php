@@ -787,7 +787,9 @@ class PatientAdmissionService
             $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
-                'message' => 'Diagnosis case added and invoiced.',
+                'message' => $invoice
+                    ? 'Diagnosis case added and invoiced.'
+                    : 'Diagnosis case added. It is billed next month.',
                 'invoice_code' => $invoice?->invoice_code,
                 'data' => $this->patientService->showPatient($payload['p_uuid']),
             ];
@@ -808,7 +810,6 @@ class PatientAdmissionService
                     'description' => $payload['description'] ?? null,
                     'billed' => $payload['billed'] ?? null,
                     'is_active' => $payload['is_active'] ?? true,
-                    'date_billed' => $payload['date_billed'] ?? null,
                 ]],
                 $admission->patient,
                 $payload['branch_id']
@@ -827,7 +828,7 @@ class PatientAdmissionService
                     'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                     'description' => $fee['description'] ?? null,
                     'amount' => round((float) $fee['amount'], 2),
-                ] + $this->diagnosisFees->recurrence($fee));
+                ] + $this->diagnosisFees->recurrence($fee, $admission, $row));
 
                 $this->diagnosisChargeRepository->syncCharge($row->charge);
             }
