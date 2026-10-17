@@ -119,6 +119,24 @@ class OutstandingBalance
                 ->sortByDesc('balance_due')
                 ->values()
                 ->all(),
+
+            'balance_invoices' => $invoices
+                ->filter(fn($invoice) => $invoice->balance_due > 0)
+                ->map(fn($invoice) => [
+                    'invoice_code' => $invoice->invoice_code,
+                    'description' => preg_replace(
+                        '/^DIAGNOSIS CASE - /i',
+                        '',
+                        $invoice->paymentDescription()
+                    ),
+                    'kind' => $invoice->additionalCharges->isEmpty() && $invoice->diagnosisLines->isNotEmpty()
+                        ? 'diagnosis'
+                        : self::kind($invoice, $medical, $adl, $charges),
+                    'balance_due' => round((float) $invoice->balance_due, 2),
+                ])
+                ->sortByDesc('balance_due')
+                ->values()
+                ->all(),
         ];
     }
 

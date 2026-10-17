@@ -804,6 +804,7 @@
                         :patient-uuid="id"
                         :patient-name="patient?.full_name"
                         :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
+                        :admitted-at="(currentAdmission ?? latestAdmission)?.admitted_at"
                         @close="diagnosisView = false"
                         @saved="patient = $event as PatientRetrieve"
                     />
@@ -1217,10 +1218,10 @@ const authUser = useAuthUser();
 const balanceSlip = ref<ChargeSlip | null>(null);
 
 const BALANCE_KIND_LABELS: Record<string, string> = {
-    admission: "Stay",
     service: "Service",
-    adl: "Schedule",
+    adl: "Service",
     charge: "Charge",
+    diagnosis: "Diagnosis case",
 };
 
 function openBalanceSlip() {
@@ -1230,41 +1231,30 @@ function openBalanceSlip() {
 
     const user = authUser.value;
 
-    const charges = outstanding.invoices.map((invoice) => ({
-        id: invoice.invoice_code,
-        type_label: BALANCE_KIND_LABELS[invoice.kind] ?? "Invoice",
-        description: invoice.description
-            ? `${invoice.invoice_code} · ${invoice.description}`
-            : invoice.invoice_code,
-        amount: invoice.balance_due,
-    }));
-
-    const upcoming = Math.round(
-        (outstanding.total_balance -
-            charges.reduce((sum, line) => sum + line.amount, 0)) *
-            100,
-    ) / 100;
-
-    if (upcoming > 0) {
-        charges.push({
-            id: "upcoming",
-            type_label: "Upcoming",
-            description: "Periods that have not started",
-            amount: upcoming,
-        });
-    }
-
     balanceSlip.value = {
         title: "Balance Slip",
-        section: "Unpaid invoices",
+        section: "Patient balances",
+        column_labels: ["Description", "Balance"],
+        total_label: "Total balance",
+        wide: true,
         branch_name: branchStore.activeBranch?.name ?? null,
         patient_name: patient.value?.full_name ?? null,
+        patient_code: patient.value?.patient_code ?? null,
         prepared_by: user
             ? [user.first_name, user.last_name].filter(Boolean).join(" ")
             : null,
         invoice_code: null,
         total: outstanding.total_balance,
-        charges,
+        charges: (outstanding.balance_invoices ?? outstanding.invoices).map(
+            (invoice) => ({
+                id: invoice.invoice_code,
+                type_label: BALANCE_KIND_LABELS[invoice.kind] ?? "",
+                description: invoice.description
+                    ? `${invoice.invoice_code} · ${invoice.description}`
+                    : invoice.invoice_code,
+                amount: invoice.balance_due,
+            }),
+        ),
     };
 }
 

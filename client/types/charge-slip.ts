@@ -13,12 +13,16 @@ export interface ChargeSlip {
     section?: string;
     branch_name: string | null;
     patient_name: string | null;
+    patient_code?: string | null;
     prepared_by: string | null;
     invoice_code: string | null;
-    // A wide, A4-like slip for the diagnosis cases, set out as a table.
+    // An A4-like slip, and the diagnosis cases set out as a table.
     wide?: boolean;
+    diagnosis_table?: boolean;
     hide_cashier_note?: boolean;
     total_label?: string;
+    // Headings for the description and amount columns of the list.
+    column_labels?: [string, string];
     total: number;
     charges: ChargeSlipLine[];
 }

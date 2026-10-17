@@ -326,6 +326,12 @@ export interface DischargeOutstanding {
     adl_balance: number;
     other_balance: number;
     unpaid_invoice_count: number;
+    balance_invoices?: {
+        invoice_code: string;
+        description: string | null;
+        kind: "admission" | "service" | "adl" | "charge" | "diagnosis";
+        balance_due: number;
+    }[];
     invoices: {
         invoice_code: string;
         description: string | null;

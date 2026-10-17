@@ -1,7 +1,10 @@
 <template>
     <div
         class="space-y-5 text-secondary"
-        :class="print ? 'bg-white p-8 text-black' : ''"
+        :class="[
+            print ? 'bg-white p-8 text-black' : '',
+            slip.wide ? 'mx-auto w-full max-w-[210mm]' : '',
+        ]"
     >
         <div
             class="flex items-start justify-between gap-4 border-b border-gray-200 pb-4"
@@ -64,7 +67,7 @@
             </p>
 
             <div
-                v-if="slip.wide"
+                v-if="slip.diagnosis_table"
                 class="border-y border-gray-200"
             >
                 <div
@@ -93,8 +96,16 @@
                 </div>
             </div>
 
+            <div
+                v-else-if="slip.column_labels"
+                class="flex items-center justify-between gap-4 border-t border-gray-200 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
+            >
+                <p>{{ slip.column_labels[0] }}</p>
+                <p>{{ slip.column_labels[1] }}</p>
+            </div>
+
             <ul
-                v-else
+                v-if="!slip.diagnosis_table"
                 class="divide-y divide-gray-200 border-y border-gray-200"
             >
                 <li
@@ -104,6 +115,7 @@
                 >
                     <div class="min-w-0">
                         <p
+                            v-if="charge.type_label"
                             class="text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
                         >
                             {{ charge.type_label }}
@@ -199,6 +211,7 @@ const issuedAt = computed(() => stringToDateTime(new Date()));
 const details = computed(() =>
     [
         { label: "Patient", value: props.slip.patient_name },
+        { label: "Patient code", value: props.slip.patient_code },
     ].filter((row) => !!row.value),
 );
 </script>

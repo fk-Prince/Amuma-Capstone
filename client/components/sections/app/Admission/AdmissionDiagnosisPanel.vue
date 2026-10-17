@@ -386,10 +386,11 @@
                             >
                                 {{
                                     active.start === "next" && !editingUuid
-                                        ? "Nothing is billed now. It is first billed next month on the admission date"
-                                        : "This charge is billed now. It is billed again on a new invoice on the admission date"
-                                }}, then every month while the patient is
-                                admitted and billing is active.
+                                        ? "Nothing is billed now. It is first billed on"
+                                        : "This charge is billed now. It is billed again on a new invoice on"
+                                }}
+                                {{ nextBillLabel }}, then every month while the
+                                patient is admitted and billing is active.
                             </p>
                         </div>
                     </div>
@@ -835,6 +836,7 @@ const props = defineProps<{
     patientUuid: string;
     patientName?: string | null;
     admissionId?: number;
+    admittedAt?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -888,7 +890,31 @@ const active = computed(
 );
 
 const todayStr = getLocalDateStr(new Date());
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+const nextBillLabel = computed(() => {
+    if (!props.admittedAt) return "the admission date";
+
+    const start = new Date(props.admittedAt);
+
+    if (Number.isNaN(start.getTime())) return "the admission date";
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    let months = 1;
+    let next: Date;
+
+    do {
+        const year = start.getFullYear();
+        const month = start.getMonth() + months++;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+
+        next = new Date(year, month, Math.min(start.getDate(), lastDay));
+    } while (next <= today);
+
+    return `${formatDate(getLocalDateStr(next))} (admission date)`;
+});const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 const addingDiagnosis = ref(false);
 const savingDiagnosis = ref(false);
@@ -1159,6 +1185,7 @@ function openSlip(rows: PatientDiagnosis[]) {
             : null,
         invoice_code: null,
         wide: true,
+        diagnosis_table: true,
         hide_cashier_note: true,
         total_label: "Total",
         total: billed.reduce(
