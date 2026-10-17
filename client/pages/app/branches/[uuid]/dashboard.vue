@@ -713,7 +713,9 @@ const activeBranch = computed(() => branchStore.activeBranch);
 
 const isSubscriptionPending = computed(() => {
     const branch = activeBranch.value;
-    return branch?.agency?.status !== "verified" || branch?.status !== "verified";
+    return (
+        branch?.agency?.status !== "verified" || branch?.status !== "verified"
+    );
 });
 
 interface StatBucket {
@@ -740,7 +742,6 @@ interface DashboardOverview {
     bookings: {
         pending_confirmation: number;
         approved: number;
-        accepted: number;
         expired: number;
         cancelled: number;
         rejected: number;
@@ -804,7 +805,6 @@ const dashboard = ref<DashboardOverview>({
     bookings: {
         pending_confirmation: 0,
         approved: 0,
-        accepted: 0,
         expired: 0,
         cancelled: 0,
         rejected: 0,
@@ -900,13 +900,7 @@ const occupancySegments = computed(() => [
 
 const totalBookings = computed(() => {
     const b = dashboard.value.bookings;
-    return (
-        b.pending_confirmation +
-        b.accepted +
-        b.approved +
-        b.expired +
-        b.rejected
-    );
+    return b.pending_confirmation + b.approved + b.expired + b.rejected;
 });
 
 const bookingSegments = computed(() => [
@@ -917,14 +911,8 @@ const bookingSegments = computed(() => [
         color: "#d97706",
     },
     {
-        key: "accepted",
-        label: "Accepted",
-        count: dashboard.value.bookings.accepted,
-        color: "#0ea5e9",
-    },
-    {
         key: "approved",
-        label: "Approved",
+        label: "Approved / Accepted",
         count: dashboard.value.bookings.approved,
         color: "#3182ED",
     },
@@ -966,7 +954,9 @@ const fetchDashboard = async () => {
             bookings: {
                 pending_confirmation:
                     Number(data.bookings?.pending_confirmation) || 0,
-                approved: Number(data.bookings?.approved) || 0,
+                approved:
+                    (Number(data.bookings?.approved) || 0) +
+                    (Number(data.bookings?.accepted) || 0),
                 expired: Number(data.bookings?.expired) || 0,
                 cancelled: Number(data.bookings?.cancelled) || 0,
                 rejected: Number(data.bookings?.rejected) || 0,
@@ -1002,8 +992,7 @@ const fetchDashboard = async () => {
         if (err?.status === 403) {
             accessDenied.value = true;
             accessDeniedMessage.value =
-                err?.message ??
-                "You don't have access to this branch.";
+                err?.message ?? "You don't have access to this branch.";
         }
     } finally {
         loading.value = false;

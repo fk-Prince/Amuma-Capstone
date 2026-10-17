@@ -20,7 +20,6 @@ class EmployeePermission extends Model
         'can_update',
         'can_export',
         'can_assign',
-        'can_force_discharge',
         'can_renew',
         'can_review',
     ];
@@ -31,7 +30,6 @@ class EmployeePermission extends Model
         'can_update' => 'boolean',
         'can_export' => 'boolean',
         'can_assign' => 'boolean',
-        'can_force_discharge' => 'boolean',
         'can_renew' => 'boolean',
         'can_review' => 'boolean',
     ];

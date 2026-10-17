@@ -9,7 +9,6 @@ enum PermissionAction: string
     case Update = 'can_update';
     case Export = 'can_export';
     case Assign = 'can_assign';
-    case ForceDischarge = 'can_force_discharge';
     case Renew = 'can_renew';
     case Review = 'can_review';
 

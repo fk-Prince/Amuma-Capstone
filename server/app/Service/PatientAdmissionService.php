@@ -374,9 +374,7 @@ class PatientAdmissionService
             $this->closeUnstartedDiagnosisInvoices($admission, $payload['user']->user_id ?? null);
 
             if ($currentPeriod) {
-                $force = !empty($payload['force']);
-
-                $settled = $this->refundService->settleDischarge($admission, $currentPeriod, $force);
+                $settled = $this->refundService->settleDischarge($admission, $currentPeriod);
 
                 if ($settled['offset'] > 0 && $settled['owed_invoices']->isNotEmpty() && $admission->patient) {
                     $this->invoiceService->applyCredit(
@@ -386,10 +384,6 @@ class PatientAdmissionService
                         $payload['user'] ?? null,
                         $settled['offset']
                     );
-                }
-
-                if ($force) {
-                    $this->writeOffOutstanding($admission, $payload['user'] ?? null, $currentPeriod->admission_period_id);
                 }
             }
 
@@ -446,31 +440,6 @@ class PatientAdmissionService
                 'Admission discharged before this period began.',
                 $userId
             ));
-    }
-
-    private function writeOffOutstanding(PatientAdmission $admission, ?User $user, ?int $exceptPeriodId = null): void
-    {
-        $invoiceIds = $admission->invoiceAdmission()->pluck('invoice_id')
-            ->merge($admission->additionalCharges()->pluck('invoice_id'))
-            ->merge(
-                $admission->chargeDiagnoses()
-                    ->when($exceptPeriodId, fn($query) => $query->where('admission_period_id', '!=', $exceptPeriodId))
-                    ->pluck('invoice_id')
-            )
-            ->filter()
-            ->unique();
-
-        Invoice::with('allocations.refundAllocations', 'invoiceAdjustments')
-            ->whereIn('invoice_id', $invoiceIds)
-            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
-            ->get()
-            ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
-            ->each(fn(Invoice $invoice) => $invoice->update([
-                'status' => Invoice::STATUS_WRITTEN_OFF,
-                'written_off_at' => now(),
-                'written_off_by' => $user?->user_id,
-                'write_off_reason' => 'Force discharged with an unpaid balance. Marked as bad debt.',
-            ]));
     }
 
     /*

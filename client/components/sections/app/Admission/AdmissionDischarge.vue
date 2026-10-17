@@ -917,57 +917,22 @@
                     >
                         <div
                             v-if="owesBalance"
-                            class="flex items-start gap-3 rounded-lg border p-3.5"
-                            :class="
-                                mayForce
-                                    ? 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
-                                    : 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'
-                            "
+                            class="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3.5 dark:border-rose-500/20 dark:bg-rose-500/10"
                         >
                             <div>
                                 <p
-                                    class="text-sm font-semibold"
-                                    :class="
-                                        mayForce
-                                            ? 'text-amber-900 dark:text-amber-300'
-                                            : 'text-rose-800 dark:text-rose-300'
-                                    "
+                                    class="text-sm font-semibold text-rose-800 dark:text-rose-300"
                                 >
-                                    {{
-                                        mayForce
-                                            ? "Not fully paid"
-                                            : "You don't have permission to do this"
-                                    }}
+                                    Not fully paid
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5"
-                                    :class="
-                                        mayForce
-                                            ? 'text-amber-800 dark:text-amber-300'
-                                            : 'text-rose-700 dark:text-rose-300'
-                                    "
+                                    class="mt-0.5 text-xs leading-5 text-rose-700 dark:text-rose-300"
                                 >
-                                    <template v-if="mayForce">
-                                        This patient still owes
-                                        {{ formatCurrency(overallBalance) }}.
-                                        Force discharge ends the stay and writes
-                                        this admission's unpaid balance off as
-                                        bad debt.
-                                        <template v-if="serviceBalance > 0">
-                                            Unpaid services and schedules are
-                                            not written off and stay on the
-                                            patient's account.
-                                        </template>
-                                    </template>
-
-                                    <template v-else>
-                                        This patient still owes
-                                        {{ formatCurrency(overallBalance) }}.
-                                        Only someone with force discharge
-                                        permission can discharge a patient with
-                                        an unpaid balance.
-                                    </template>
+                                    This patient still owes
+                                    {{ formatCurrency(overallBalance) }}. The
+                                    balance must be settled before the patient
+                                    can be discharged.
                                 </p>
                             </div>
                         </div>
@@ -984,9 +949,7 @@
 
                             <button
                                 type="button"
-                                :disabled="
-                                    loading || (owesBalance && !mayForce)
-                                "
+                                :disabled="loading || owesBalance"
                                 class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="handleConfirm"
                             >
@@ -1013,13 +976,7 @@
                                     />
                                 </svg>
 
-                                {{
-                                    loading
-                                        ? "Discharging…"
-                                        : owesBalance
-                                          ? "Force discharge"
-                                          : "Discharge patient"
-                                }}
+                                {{ loading ? "Discharging…" : "Discharge patient" }}
                             </button>
                         </div>
                     </div>
@@ -1029,22 +986,10 @@
 
         <ConfirmDialog
             :open="confirming"
-            :title="
-                owesBalance ? 'Force discharge patient?' : 'Discharge patient?'
-            "
-            :message="
-                owesBalance
-                    ? `This patient still owes ${formatCurrency(overallBalance)}.`
-                    : 'This ends the current admission and any future periods.'
-            "
-            :description="
-                owesBalance
-                    ? 'This admission\'s unpaid balance will be marked as bad debt and written off. Services and schedules are not affected. This action cannot be undone.'
-                    : 'This action cannot be undone.'
-            "
-            :confirm-label="
-                owesBalance ? 'Yes, force discharge' : 'Yes, discharge'
-            "
+            title="Discharge patient?"
+            message="This ends the current admission and any future periods."
+            description="This action cannot be undone."
+            confirm-label="Yes, discharge"
             variant="danger"
             :loading="loading"
             @confirm="confirmDischargeNow"
@@ -1070,8 +1015,6 @@ import { INVOICE_STATUS } from "~/types/invoice";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 import { useDischargeRefund } from "~/composables/useDischargeRefund";
-import { usePermissions } from "~/composables/usePermission";
-import { Modules } from "~/types/module";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import PeriodChainModal from "./PeriodChainModal.vue";
 
@@ -1096,7 +1039,6 @@ const emit = defineEmits<{
             refund: boolean;
             currentRefundAmount: number | null;
             note: string;
-            force: boolean;
         },
     ];
     cancel: [];
@@ -1223,10 +1165,6 @@ const futureRefundAmount = computed(
 
 const isMonthly = computed(() => currentBillingCycle.value === "MONTHLY");
 
-const { canForceDischarge } = usePermissions();
-
-const mayForce = computed(() => canForceDischarge(Modules.Admissions));
-
 const owesBalance = computed(() => overallBalance.value > 0);
 
 const confirming = ref(false);
@@ -1317,7 +1255,7 @@ function handleConfirm() {
         return;
     }
 
-    if (owesBalance.value && !mayForce.value) {
+    if (owesBalance.value) {
         return;
     }
 
@@ -1341,8 +1279,6 @@ function proceedWithDischarge() {
             : null,
 
         note: dischargeNote.value.trim(),
-
-        force: owesBalance.value,
     });
 }
 

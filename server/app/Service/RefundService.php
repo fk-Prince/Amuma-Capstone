@@ -253,7 +253,7 @@ class RefundService
         return $this->getNetPaidAmount($invoice) >= $this->getRequiredPaymentAmount($period, $admission);
     }
 
-    public function settleDischarge(PatientAdmission $admission, AdmissionPeriod $period, bool $force = false): array
+    public function settleDischarge(PatientAdmission $admission, AdmissionPeriod $period): array
     {
         $plan = DischargeCalculator::plan($admission, $period);
 
@@ -262,7 +262,7 @@ class RefundService
             (float) collect($plan['invoices'])->sum('owed') - (float) $plan['offset'] - (float) $plan['credit_applied']
         ), 2);
 
-        if ($shortfall > 0 && !$force) {
+        if ($shortfall > 0) {
             $paid = round((float) collect($plan['invoices'])->sum('net_paid'), 2);
             $required = round((float) collect($plan['invoices'])->sum('new_total'), 2);
 
@@ -275,7 +275,7 @@ class RefundService
         foreach ($plan['invoices'] as $entry) {
             $invoice = $entry['invoice'];
 
-            if ($entry['credit'] >= 0.01 && !($force && $entry['net_paid'] <= 0)) {
+            if ($entry['credit'] >= 0.01) {
                 InvoiceAdjustment::create([
                     'invoice_id' => $invoice->invoice_id,
                     'type' => InvoiceAdjustment::TYPE_CORRECTION,

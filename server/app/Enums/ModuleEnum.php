@@ -42,7 +42,6 @@ enum ModuleEnum: string
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,
-                PermissionAction::ForceDischarge,
             ],
             self::RoomsAndBeds, self::Contracts, self::EmployeeManagement => [
                 PermissionAction::Read,

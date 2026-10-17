@@ -1471,13 +1471,11 @@ function confirmDischarge(payload: {
     refund: boolean;
     currentRefundAmount: number | null;
     note: string;
-    force: boolean;
 }) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
         note: payload.note,
-        force: payload.force,
     });
 }
 

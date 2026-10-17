@@ -36,7 +36,6 @@ class PatientAdmissionController extends Controller
         [$module, $action] = match (true) {
             $request->action === 'extend' && $request->boolean('require_payment') => [ModuleEnum::BillingAndInvoices, PermissionAction::Create],
             $request->action === 'new_admission' => [ModuleEnum::Admissions, PermissionAction::Create],
-            $request->action === 'discharge' && $request->boolean('force') => [ModuleEnum::Admissions, PermissionAction::ForceDischarge],
             default => [ModuleEnum::Admissions, PermissionAction::Update],
         };
         AuthGuard::requireModule($request->user(), $branch->branch_id, $module, $action);
