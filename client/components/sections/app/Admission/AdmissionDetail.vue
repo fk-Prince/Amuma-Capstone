@@ -519,14 +519,6 @@
                 </div>
             </transition>
 
-            <DiagnosisFeePicker
-                v-if="variant === 'new' && patientUuid"
-                open
-                :patient-uuid="patientUuid"
-                section-class="mt-8"
-                hint="The monthly case price is added to every admission period, times 12 on a yearly plan."
-                @update:selection="feeSelection = $event"
-            />
 
             <div
                 v-if="variant === 'modal' || variant === 'new'"
@@ -555,8 +547,6 @@ import type { Room } from "~/types/room";
 import type { RoomContract, Reserved } from "~/types/contract";
 import type { Bed } from "~/types/bed";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
-import DiagnosisFeePicker from "~/components/sections/app/Admission/DiagnosisFeePicker.vue";
-import type { DiagnosisFeeSelection } from "~/types/additional-charge";
 import { toLocalDateString } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
 
@@ -594,7 +584,6 @@ const props = withDefaults(
 
 const admittedAt = ref("");
 
-const feeSelection = ref<DiagnosisFeeSelection>({ diagnoses: [], fee: 0 });
 
 const contracts = computed<RoomContract[]>(() => {
     const data = props.roomContract ?? [];
@@ -617,7 +606,7 @@ const errorEntries = computed(() =>
 const emit = defineEmits<{
     (e: "update:model", value: Reserved): void;
     (e: "close"): void;
-    (e: "confirm", value: Reserved, fees: DiagnosisFeeSelection): void;
+    (e: "confirm", value: Reserved): void;
 }>();
 
 const typeMeta: Record<
@@ -960,7 +949,7 @@ function handleDone() {
         admitted_at: admittedAt.value,
     };
 
-    emit("confirm", payload, feeSelection.value);
+    emit("confirm", payload);
     emit("close");
 }
 

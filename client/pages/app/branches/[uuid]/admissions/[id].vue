@@ -371,13 +371,13 @@
                         <ActionButton
                             variant="outline"
                             :disabled="
-                                !(isWaiting || isAdmitted) ||
+                                !(isWaiting || isAdmitted || isDischarged) ||
                                 facilityLocked ||
                                 !canUpdateAdmission
                             "
                             :tooltip="
                                 blockedTip(
-                                    'Diagnosis cases can only be added while the patient is waiting or admitted.',
+                                    'Diagnosis cases can only be added to an admission that is waiting, admitted or discharged.',
                                     canUpdateAdmission,
                                 )
                             "
@@ -1119,7 +1119,6 @@ import type {
     InvoiceAccommodation,
 } from "~/types/patient";
 import type { RoomContract, Reserved } from "~/types/contract";
-import type { DiagnosisFeeSelection } from "~/types/additional-charge";
 import { patientService } from "~/api/patient/PatientService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { admissionService } from "~/api/admission/AdmissionService";
@@ -1344,6 +1343,7 @@ const patientFacts = computed(() => {
 const status = computed(() => latestAdmission.value?.status?.toLowerCase());
 const isWaiting = computed(() => status.value === "waiting");
 const isAdmitted = computed(() => status.value === "admitted");
+const isDischarged = computed(() => status.value === "discharged");
 
 // Most actions need an in-progress stay, and the reason they are unavailable
 // depends on where the patient actually is.
@@ -1459,7 +1459,6 @@ const roomContract = ref<RoomContract[]>([]);
 const reserved = ref<Reserved | null>(null);
 const reservedErrors = ref<Record<string, string>>({});
 const pendingAdmission = ref<Reserved | null>(null);
-const pendingDiagnoses = ref<DiagnosisFeeSelection["diagnoses"]>([]);
 
 function openChangeRoomModal() {
     changeRoomModalOpen.value = true;
@@ -1686,12 +1685,8 @@ async function handleChangeRoomSelect(payload: {
     changeRoomModalOpen.value = false;
 }
 
-function handleNewAdmissionConfirm(
-    payload: Reserved,
-    fees: DiagnosisFeeSelection,
-) {
+function handleNewAdmissionConfirm(payload: Reserved) {
     pendingAdmission.value = payload;
-    pendingDiagnoses.value = fees.diagnoses;
     newAdmissionModalOpen.value = false;
     newAdmissionDialogOpen.value = true;
 }
@@ -1699,7 +1694,6 @@ function handleNewAdmissionConfirm(
 function cancelNewAdmissionConfirm() {
     newAdmissionDialogOpen.value = false;
     pendingAdmission.value = null;
-    pendingDiagnoses.value = [];
 }
 
 async function confirmNewAdmission() {
@@ -1714,9 +1708,6 @@ async function confirmNewAdmission() {
             bed_id: pendingAdmission.value.bed?.bed_id,
             room_id: pendingAdmission.value.room?.room_id,
             admitted_at: pendingAdmission.value.admitted_at,
-            ...(pendingDiagnoses.value.length
-                ? { diagnoses: pendingDiagnoses.value }
-                : {}),
         };
         const res = await admissionService.action({
             branch_uuid: uuid.value,
@@ -1728,7 +1719,6 @@ async function confirmNewAdmission() {
         success(res?.message ?? "Patient admitted successfully.");
         newAdmissionDialogOpen.value = false;
         pendingAdmission.value = null;
-        pendingDiagnoses.value = [];
         reserved.value = null;
     } catch (err: any) {
         reservedErrors.value = err?.data?.errors ?? {};

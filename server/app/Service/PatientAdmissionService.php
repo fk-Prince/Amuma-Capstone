@@ -768,8 +768,8 @@ class PatientAdmissionService
                 throw new Exception('Admission not found.', 404);
             }
 
-            if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED], true)) {
-                throw new Exception('Diagnosis cases can only be added while the patient is waiting or admitted.', 422);
+            if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED, PatientAdmission::STATUS_DISCHARGED], true)) {
+                throw new Exception('Diagnosis cases can only be added to an admission that is waiting, admitted or discharged.', 422);
             }
 
             $period = $this->periods->current($admission);
@@ -909,8 +909,8 @@ class PatientAdmissionService
             throw new Exception('Admission not found.', 404);
         }
 
-        if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED], true)) {
-            throw new Exception('Diagnosis cases can only be changed while the patient is waiting or admitted.', 422);
+        if (!in_array($admission->status, [PatientAdmission::STATUS_WAITING, PatientAdmission::STATUS_ADMITTED, PatientAdmission::STATUS_DISCHARGED], true)) {
+            throw new Exception('Diagnosis cases can only be changed on an admission that is waiting, admitted or discharged.', 422);
         }
 
         $diagnosis = $this->diagnosisFees->findDiagnosis(
