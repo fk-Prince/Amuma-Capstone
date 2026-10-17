@@ -1035,6 +1035,7 @@ import { planIcon } from "~/utils/planIcon";
 
 const props = defineProps<{
     uuid: string;
+    endTrial?: boolean;
 }>();
 
 const { success, error, info } = useToast();
@@ -1666,5 +1667,10 @@ const formatDate = (date?: string | null) => {
 const formatMoney = (value: number | string) =>
     formatAmount(value, { treatMissingAsZero: true });
 
-onMounted(fetchSubscription);
+onMounted(async () => {
+    await fetchSubscription();
+
+    // Arrived from the "end trial" link in the header notice.
+    if (props.endTrial && canCancel.value) confirmEnd.value = true;
+});
 </script>
