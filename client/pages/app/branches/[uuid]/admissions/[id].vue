@@ -371,13 +371,13 @@
                         <ActionButton
                             variant="outline"
                             :disabled="
-                                !(isWaiting || isAdmitted || isDischarged) ||
+                                !(isWaiting || isAdmitted) ||
                                 facilityLocked ||
                                 !canUpdateAdmission
                             "
                             :tooltip="
                                 blockedTip(
-                                    'Diagnosis cases can only be added to an admission that is waiting, admitted or discharged.',
+                                    'Diagnosis cases can only be added while the patient is waiting or admitted.',
                                     canUpdateAdmission,
                                 )
                             "
@@ -1343,7 +1343,6 @@ const patientFacts = computed(() => {
 const status = computed(() => latestAdmission.value?.status?.toLowerCase());
 const isWaiting = computed(() => status.value === "waiting");
 const isAdmitted = computed(() => status.value === "admitted");
-const isDischarged = computed(() => status.value === "discharged");
 
 // Most actions need an in-progress stay, and the reason they are unavailable
 // depends on where the patient actually is.
