@@ -329,7 +329,7 @@ export interface DischargeOutstanding {
     invoices: {
         invoice_code: string;
         description: string | null;
-        kind: "admission" | "service" | "adl";
+        kind: "admission" | "service" | "adl" | "charge";
         balance_due: number;
         is_discharge_invoice: boolean;
     }[];

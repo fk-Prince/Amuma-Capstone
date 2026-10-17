@@ -302,7 +302,7 @@
                                             :name="`billed-${active.key}`"
                                             :checked="!active.billed"
                                             :disabled="submitting"
-                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded-full border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
                                             @change="toggleBilled(false)"
                                         />
                                         <span
@@ -320,7 +320,7 @@
                                             :name="`billed-${active.key}`"
                                             :checked="active.billed"
                                             :disabled="submitting"
-                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded-full border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
                                             @change="toggleBilled(true)"
                                         />
                                         <span
@@ -329,25 +329,27 @@
                                             Every month
                                         </span>
                                     </label>
+
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2"
+                                        :class="{ 'opacity-50': !active.billed }"
+                                    >
+                                        <input
+                                            v-model="active.is_active"
+                                            type="checkbox"
+                                            :disabled="submitting || !active.billed"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                        />
+                                        <span
+                                            class="text-sm text-slate-600 dark:text-gray-300"
+                                        >
+                                            Active billing
+                                        </span>
+                                    </label>
                                 </div>
                             </div>
-                            <template v-if="active.billed">
-                                <label
-                                    class="flex w-fit cursor-pointer items-center gap-2"
-                                >
-                                    <input
-                                        v-model="active.is_active"
-                                        type="checkbox"
-                                        :disabled="submitting"
-                                        class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
-                                    />
-                                    <span
-                                        class="text-sm font-medium text-slate-700 dark:text-gray-300"
-                                    >
-                                        Active billing
-                                    </span>
-                                </label>
 
+                            <template v-if="active.billed">
                                 <DatePickerField
                                     v-model="active.date_billed"
                                     label="Date to be billed"
@@ -654,19 +656,6 @@
                                                     item.admission_charge
                                                         .next_bill_date,
                                                 )
-                                            }}
-                                        </p>
-                                        <p
-                                            v-if="
-                                                item.admission_charge
-                                                    .invoice_code
-                                            "
-                                            class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
-                                        >
-                                            {{
-                                                item
-                                                    .admission_charge
-                                                    .invoice_code
                                             }}
                                         </p>
                                     </template>

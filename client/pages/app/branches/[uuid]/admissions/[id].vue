@@ -258,6 +258,15 @@
                                     )
                                 }}
                             </p>
+
+                            <button
+                                type="button"
+                                class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80"
+                                @click="openBalanceSlip"
+                            >
+                                <Printer class="h-3.5 w-3.5" />
+                                Print balance
+                            </button>
                         </div>
                     </div>
 
@@ -1067,6 +1076,8 @@
             @count="caregiverCount = $event"
         />
 
+        <ChargeSlipModal :slip="balanceSlip" @close="balanceSlip = null" />
+
         <AddServiceModal
             :open="addServiceModalOpen"
             :patient-uuid="id"
@@ -1129,6 +1140,10 @@ import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel
 import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
 import ChargesModal from "~/components/sections/app/Admission/ChargesModal.vue";
 import AdmissionDiagnosisPanel from "~/components/sections/app/Admission/AdmissionDiagnosisPanel.vue";
+import ChargeSlipModal from "~/components/sections/app/Admission/ChargeSlipModal.vue";
+import { Printer } from "lucide-vue-next";
+import { useAuthUser } from "~/composables/useAuthUser";
+import type { ChargeSlip } from "~/types/charge-slip";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
@@ -1197,6 +1212,61 @@ const patientOutstanding = computed(
 const currentAdmission = computed<Admission | undefined>(
     () => patient.value?.current_admission,
 );
+
+const authUser = useAuthUser();
+const balanceSlip = ref<ChargeSlip | null>(null);
+
+const BALANCE_KIND_LABELS: Record<string, string> = {
+    admission: "Stay",
+    service: "Service",
+    adl: "Schedule",
+    charge: "Charge",
+};
+
+function openBalanceSlip() {
+    const outstanding = patientOutstanding.value;
+
+    if (!outstanding) return;
+
+    const user = authUser.value;
+
+    const charges = outstanding.invoices.map((invoice) => ({
+        id: invoice.invoice_code,
+        type_label: BALANCE_KIND_LABELS[invoice.kind] ?? "Invoice",
+        description: invoice.description
+            ? `${invoice.invoice_code} · ${invoice.description}`
+            : invoice.invoice_code,
+        amount: invoice.balance_due,
+    }));
+
+    const upcoming = Math.round(
+        (outstanding.total_balance -
+            charges.reduce((sum, line) => sum + line.amount, 0)) *
+            100,
+    ) / 100;
+
+    if (upcoming > 0) {
+        charges.push({
+            id: "upcoming",
+            type_label: "Upcoming",
+            description: "Periods that have not started",
+            amount: upcoming,
+        });
+    }
+
+    balanceSlip.value = {
+        title: "Balance Slip",
+        section: "Unpaid invoices",
+        branch_name: branchStore.activeBranch?.name ?? null,
+        patient_name: patient.value?.full_name ?? null,
+        prepared_by: user
+            ? [user.first_name, user.last_name].filter(Boolean).join(" ")
+            : null,
+        invoice_code: null,
+        total: outstanding.total_balance,
+        charges,
+    };
+}
 
 const caregiverModalOpen = ref(false);
 const caregiverCount = ref(0);
