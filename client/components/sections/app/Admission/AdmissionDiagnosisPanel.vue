@@ -280,42 +280,94 @@
                             "
                         />
 
-                        <div :key="`billed-${active.key}`">
-                            <p
-                                class="mb-2 text-sm font-medium text-slate-700 dark:text-gray-300"
-                            >
-                                Billed
-                            </p>
+                        <div
+                            :key="`billing-${active.key}`"
+                            class="flex flex-col gap-3"
+                        >
+                            <div>
+                                <p
+                                    class="mb-2 text-sm font-medium text-slate-700 dark:text-gray-300"
+                                >
+                                    Billed
+                                </p>
 
-                            <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                                <div
+                                    class="flex flex-wrap items-center gap-x-6 gap-y-2"
+                                >
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2"
+                                    >
+                                        <input
+                                            type="radio"
+                                            :name="`billed-${active.key}`"
+                                            :checked="!active.billed"
+                                            :disabled="submitting"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                            @change="toggleBilled(false)"
+                                        />
+                                        <span
+                                            class="text-sm text-slate-600 dark:text-gray-300"
+                                        >
+                                            One time
+                                        </span>
+                                    </label>
+
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2"
+                                    >
+                                        <input
+                                            type="radio"
+                                            :name="`billed-${active.key}`"
+                                            :checked="active.billed"
+                                            :disabled="submitting"
+                                            class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                            @change="toggleBilled(true)"
+                                        />
+                                        <span
+                                            class="text-sm text-slate-600 dark:text-gray-300"
+                                        >
+                                            Every month
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <template v-if="active.billed">
                                 <label
-                                    v-for="option in BILLED_OPTIONS"
-                                    :key="option.value"
-                                    class="flex cursor-pointer items-center gap-2"
+                                    class="flex w-fit cursor-pointer items-center gap-2"
                                 >
                                     <input
-                                        v-model="active.billed"
-                                        type="radio"
-                                        :name="`billed-${active.key}`"
-                                        :value="option.value"
+                                        v-model="active.is_active"
+                                        type="checkbox"
                                         :disabled="submitting"
-                                        class="h-3.5 w-3.5 shrink-0 cursor-pointer border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                        class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
                                     />
                                     <span
-                                        class="text-sm text-slate-600 dark:text-gray-300"
+                                        class="text-sm font-medium text-slate-700 dark:text-gray-300"
                                     >
-                                        {{ option.label }}
+                                        Active billing
                                     </span>
                                 </label>
-                            </div>
 
-                            <p
-                                v-if="active.billed === 'monthly'"
-                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
-                            >
-                                Billed again on a new invoice every month
-                                while the patient is admitted.
-                            </p>
+                                <DatePickerField
+                                    v-model="active.date_billed"
+                                    label="Date to be billed"
+                                    placeholder="Select the date to be billed"
+                                    :min="tomorrowStr"
+                                    :default-to-today="false"
+                                    :disabled="submitting"
+                                    :error="
+                                        errorFor(activeIndex, 'date_billed')
+                                    "
+                                />
+
+                                <p
+                                    class="text-xs text-slate-400 dark:text-gray-500"
+                                >
+                                    Billed again on a new invoice every month
+                                    from this date while the patient is
+                                    admitted and billing is active.
+                                </p>
+                            </template>
                         </div>
                     </div>
 
@@ -591,7 +643,12 @@
                                             "
                                             class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
                                         >
-                                            Billed monthly · next
+                                            Every month
+                                            {{
+                                                item.admission_charge.is_active
+                                                    ? "· next"
+                                                    : "· paused, was next"
+                                            }}
                                             {{
                                                 formatDate(
                                                     item.admission_charge
@@ -641,22 +698,7 @@
                             </button>
 
                             <div
-                                v-if="item.admission_charge?.needs_charge"
-                                class="px-4 pb-3"
-                            >
-                                <button
-                                    type="button"
-                                    class="inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80 disabled:opacity-50"
-                                    :disabled="submitting"
-                                    @click="startCharge(item)"
-                                >
-                                    <RotateCw class="h-3.5 w-3.5" />
-                                    Charge
-                                </button>
-                            </div>
-
-                            <div
-                                v-else-if="item.admission_charge"
+                                v-if="isCharged(item)"
                                 class="px-4 pb-3"
                             >
                                 <button
@@ -680,53 +722,7 @@
                                         <Pencil class="h-3.5 w-3.5" />
                                         Edit
                                     </button>
-
-                                    <button
-                                        v-if="removingUuid !== item.uuid"
-                                        type="button"
-                                        class="ml-4 inline-flex items-center gap-1 text-xs font-medium text-red-500 transition hover:opacity-80 disabled:opacity-50"
-                                        :disabled="submitting"
-                                        @click="removingUuid = item.uuid"
-                                    >
-                                        <Trash2 class="h-3.5 w-3.5" />
-                                        Remove
-                                    </button>
                                 </template>
-
-                                <button
-                                    type="button"
-                                    class="ml-4 inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80 disabled:opacity-50"
-                                    :disabled="submitting"
-                                    @click="startCharge(item)"
-                                >
-                                    <RotateCw class="h-3.5 w-3.5" />
-                                    Charge
-                                </button>
-
-                                <div
-                                    v-if="removingUuid === item.uuid"
-                                    class="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300"
-                                >
-                                    Remove this diagnosis case and close its
-                                    invoice? Anything already paid stays as
-                                    credit.
-                                    <button
-                                        type="button"
-                                        class="font-semibold underline disabled:opacity-50"
-                                        :disabled="submitting"
-                                        @click="removeCase(item)"
-                                    >
-                                        {{ submitting ? "Removing..." : "Yes, remove" }}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="font-medium text-slate-500 underline dark:text-gray-400"
-                                        :disabled="submitting"
-                                        @click="removingUuid = ''"
-                                    >
-                                        Keep
-                                    </button>
-                                </div>
                             </div>
                         </li>
                     </ul>
@@ -815,9 +811,7 @@ import {
     Check,
     Plus,
     Printer,
-    RotateCw,
     Stethoscope,
-    Trash2,
     UploadCloud,
     X as XIcon,
 } from "lucide-vue-next";
@@ -850,16 +844,11 @@ interface BilledCase {
     editable?: boolean;
     // The stay was extended after it was charged, so it has no invoice now.
     needs_charge?: boolean;
-    billed?: Billed;
+    billed?: "monthly" | null;
+    is_active?: boolean;
     next_bill_date?: string | null;
 }
 
-type Billed = "one_time" | "monthly";
-
-const BILLED_OPTIONS: { value: Billed; label: string }[] = [
-    { value: "one_time", label: "One time" },
-    { value: "monthly", label: "Monthly" },
-];
 
 interface PatientDiagnosis {
     uuid: string;
@@ -874,7 +863,9 @@ interface Entry {
     case_uuid: string;
     amount: number | string;
     description: string;
-    billed: Billed;
+    billed: boolean;
+    is_active: boolean;
+    date_billed: string;
 }
 
 const route = useRoute();
@@ -910,7 +901,9 @@ const newEntry = (): Entry => ({
     case_uuid: "",
     amount: "",
     description: "",
-    billed: "one_time",
+    billed: false,
+    is_active: true,
+    date_billed: "",
 });
 
 const entries = ref<Entry[]>([newEntry()]);
@@ -920,9 +913,8 @@ const submitError = ref("");
 const submitting = ref(false);
 const slip = ref<ChargeSlip | null>(null);
 
-// The diagnosis being changed, and the one waiting on a remove confirmation.
+// The diagnosis being changed.
 const editingUuid = ref("");
-const removingUuid = ref("");
 
 const editingLabel = computed(
     () =>
@@ -993,6 +985,32 @@ const total = computed(() =>
     ),
 );
 
+const tomorrowStr = getLocalDateStr(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+function nextBillDate(charge: BilledCase) {
+    return charge.billed === "monthly" ? (charge.next_bill_date ?? "") : "";
+}
+
+
+function toggleBilled(checked: boolean) {
+    const entry = active.value;
+
+    entry.billed = checked;
+
+    if (checked) {
+        entry.is_active = true;
+
+        if (!entry.date_billed) {
+            const next = new Date();
+
+            next.setMonth(next.getMonth() + 1);
+            entry.date_billed = getLocalDateStr(next);
+        }
+    }
+
+    clearError(activeIndex.value, "date_billed");
+}
+
 function isPaid(billed: BilledCase) {
     return String(billed.invoice_status ?? "").toLowerCase() === "paid";
 }
@@ -1016,7 +1034,6 @@ function startEdit(item: PatientDiagnosis) {
 
     if (!charge) return;
 
-    removingUuid.value = "";
     submitError.value = "";
     errors.value = {};
     cancelNewDiagnosis();
@@ -1029,43 +1046,12 @@ function startEdit(item: PatientDiagnosis) {
             case_uuid: charge.case_uuid ?? "",
             amount: charge.amount,
             description: charge.description ?? "",
-            billed: charge.billed ?? "one_time",
+            billed: charge.billed === "monthly",
+            is_active: charge.is_active ?? true,
+            date_billed: nextBillDate(charge),
         },
     ];
     activeIndex.value = 0;
-}
-
-function startCharge(item: PatientDiagnosis) {
-    const charge = item.admission_charge;
-
-    if (!charge) return;
-
-    editingUuid.value = "";
-    removingUuid.value = "";
-    submitError.value = "";
-    errors.value = {};
-    cancelNewDiagnosis();
-
-    const entry: Entry = {
-        ...newEntry(),
-        diagnosis_uuid: item.uuid,
-        case_uuid: charge.case_uuid ?? "",
-        amount: charge.amount,
-        description: charge.description ?? "",
-        billed: charge.billed ?? "one_time",
-    };
-
-    const blank = entries.value.findIndex(
-        (candidate) => !candidate.diagnosis_uuid && !candidate.case_uuid,
-    );
-
-    if (blank === -1) {
-        entries.value.push(entry);
-        activeIndex.value = entries.value.length - 1;
-    } else {
-        entries.value[blank] = entry;
-        activeIndex.value = blank;
-    }
 }
 
 function cancelEdit() {
@@ -1074,35 +1060,6 @@ function cancelEdit() {
     activeIndex.value = 0;
     errors.value = {};
     submitError.value = "";
-}
-
-async function removeCase(item: PatientDiagnosis) {
-    if (submitting.value || !props.admissionId) return;
-
-    submitting.value = true;
-
-    try {
-        const res = await admissionService.action({
-            branch_uuid: route.params.uuid,
-            p_uuid: props.patientUuid,
-            admission_id: props.admissionId,
-            action: "remove_diagnosis_case",
-            patient_diagnosis_uuid: item.uuid,
-        });
-
-        success(res?.message ?? "Diagnosis case removed.");
-        emit("saved", res?.data);
-
-        removingUuid.value = "";
-        cancelEdit();
-        await load();
-    } catch (err: any) {
-        toastError(
-            err?.data?.message ?? err?.message ?? "Couldn't remove the diagnosis case.",
-        );
-    } finally {
-        submitting.value = false;
-    }
 }
 
 function addEntry() {
@@ -1299,6 +1256,13 @@ function validate() {
             next[`diagnoses.${index}.amount`] =
                 "Enter an amount greater than zero.";
         }
+        if (
+            entry.billed &&
+            (!entry.date_billed || entry.date_billed < tomorrowStr)
+        ) {
+            next[`diagnoses.${index}.date_billed`] =
+                "The date to be billed must be after today.";
+        }
     });
 
     errors.value = next;
@@ -1337,7 +1301,9 @@ async function submit() {
                 diagnosis_case_uuid: entry.case_uuid,
                 amount: Number(entry.amount),
                 description: entry.description.trim() || undefined,
-                billed: entry.billed,
+                billed: entry.billed ? "monthly" : undefined,
+                is_active: entry.billed ? entry.is_active : undefined,
+                date_billed: entry.billed ? entry.date_billed : undefined,
             });
 
             success(saved?.message ?? "Diagnosis case updated.");
@@ -1359,7 +1325,9 @@ async function submit() {
                 diagnosis_case_uuid: entry.case_uuid,
                 amount: Number(entry.amount),
                 description: entry.description.trim() || undefined,
-                billed: entry.billed,
+                billed: entry.billed ? "monthly" : undefined,
+                is_active: entry.billed ? entry.is_active : undefined,
+                date_billed: entry.billed ? entry.date_billed : undefined,
             })),
         });
 

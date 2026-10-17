@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 // admission_charge_diagnosis, which holds the period and the invoice.
 class AdmissionDiagnosis extends Model
 {
-    // How a case is billed: once, or again every month while it is active.
-    public const BILLED_ONE_TIME = 'one_time';
+    // What billed holds for a case that is billed again every month. A case
+    // billed once leaves it empty.
     public const BILLED_MONTHLY = 'monthly';
 
     protected $table = 'admission_diagnosis';

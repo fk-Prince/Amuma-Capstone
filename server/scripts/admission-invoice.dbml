@@ -86,7 +86,7 @@ Table admission_diagnosis {
   diagnosis_case_id bigint [ref: > diagnosis_cases.diagnosis_case_id]
   description varchar
   amount decimal(10,2) [not null, note: 'billed on the invoice as entered']
-  billed varchar [note: 'one_time or monthly']
+  billed varchar [note: 'monthly when billed again every month, empty when billed once']
   is_active boolean [not null, default: false, note: 'a monthly case still being billed by the scheduler']
   date_billed date [note: 'next day a monthly case is billed']
 }

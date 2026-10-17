@@ -84,16 +84,29 @@ class DiagnosisFeeService
 
             $fee['description'] = $description !== '' ? $description : null;
 
-            $billed = $entry['billed'] ?? AdmissionDiagnosis::BILLED_ONE_TIME;
+            $fee['billed'] = ($entry['billed'] ?? null) === AdmissionDiagnosis::BILLED_MONTHLY
+                ? AdmissionDiagnosis::BILLED_MONTHLY
+                : null;
+            $fee['is_active'] = $fee['billed'] !== null
+                && filter_var($entry['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
-            if (!in_array($billed, [AdmissionDiagnosis::BILLED_ONE_TIME, AdmissionDiagnosis::BILLED_MONTHLY], true)) {
-                throw ValidationException::withMessages([
-                    "diagnoses.$index.billed" => 'Choose one time or monthly.',
-                ]);
+            if ($fee['billed'] !== null) {
+                $dateBilled = trim((string) ($entry['date_billed'] ?? ''));
+
+                try {
+                    $date = Carbon::createFromFormat('!Y-m-d', $dateBilled);
+                } catch (\Throwable) {
+                    $date = null;
+                }
+
+                if (!$date || $date->toDateString() !== $dateBilled || $date->lte(today())) {
+                    throw ValidationException::withMessages([
+                        "diagnoses.$index.date_billed" => 'The date to be billed must be after today.',
+                    ]);
+                }
+
+                $fee['date_billed'] = $dateBilled;
             }
-
-            $fee['billed'] = $billed;
-
             $fees->push($fee);
         }
 
@@ -150,20 +163,18 @@ class DiagnosisFeeService
         return $invoice;
     }
 
-    public function recurrence(array $fee, ?AdmissionDiagnosis $row = null): array
+    public function recurrence(array $fee): array
     {
         if (($fee['billed'] ?? null) !== AdmissionDiagnosis::BILLED_MONTHLY) {
-            return ['billed' => AdmissionDiagnosis::BILLED_ONE_TIME, 'is_active' => false, 'date_billed' => null];
+            return ['billed' => null, 'is_active' => false, 'date_billed' => null];
         }
 
-        $next = $fee['date_billed']
-            ?? ($row?->is_active ? $row->date_billed?->toDateString() : null)
-            ?? now()->addMonthNoOverflow()->toDateString();
-
-        return ['billed' => AdmissionDiagnosis::BILLED_MONTHLY, 'is_active' => true, 'date_billed' => $next];
+        return [
+            'billed' => AdmissionDiagnosis::BILLED_MONTHLY,
+            'is_active' => (bool) ($fee['is_active'] ?? true),
+            'date_billed' => $fee['date_billed'],
+        ];
     }
-
-
     public function billDue(?Carbon $today = null): int
     {
         $billed = 0;
@@ -185,6 +196,7 @@ class DiagnosisFeeService
                     'amount' => $row->amount,
                     'description' => $row->description,
                     'billed' => AdmissionDiagnosis::BILLED_MONTHLY,
+                    'is_active' => true,
                     'date_billed' => $row->date_billed->copy()->addMonthNoOverflow()->toDateString(),
                 ]]), $admission->patient->branch_id);
 
@@ -218,8 +230,9 @@ class DiagnosisFeeService
                     'invoice_code' => $invoice?->invoice_code,
                     'invoice_status' => $invoice?->status,
                     'balance_due' => $invoice ? (float) $invoice->balance_due : null,
-                    'billed' => $row->billed ?? AdmissionDiagnosis::BILLED_ONE_TIME,
-                    'next_bill_date' => $row->is_active ? $row->date_billed?->toDateString() : null,
+                    'billed' => $row->billed,
+                    'is_active' => (bool) $row->is_active,
+                    'next_bill_date' => $row->billed ? $row->date_billed?->toDateString() : null,
                 ];
             });
     }

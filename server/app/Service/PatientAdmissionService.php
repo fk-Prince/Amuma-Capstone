@@ -807,6 +807,8 @@ class PatientAdmissionService
                     'amount' => $payload['amount'] ?? null,
                     'description' => $payload['description'] ?? null,
                     'billed' => $payload['billed'] ?? null,
+                    'is_active' => $payload['is_active'] ?? true,
+                    'date_billed' => $payload['date_billed'] ?? null,
                 ]],
                 $admission->patient,
                 $payload['branch_id']
@@ -825,7 +827,7 @@ class PatientAdmissionService
                     'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                     'description' => $fee['description'] ?? null,
                     'amount' => round((float) $fee['amount'], 2),
-                ] + $this->diagnosisFees->recurrence($fee, $row));
+                ] + $this->diagnosisFees->recurrence($fee));
 
                 $this->diagnosisChargeRepository->syncCharge($row->charge);
             }
