@@ -41,15 +41,15 @@ class PatientSeeder extends Seeder
 {
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->limit(1)->get();
+        $branches = Branch::orderBy('branch_id')->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
             return;
         }
 
-        foreach ($branches as $branch) {
-            foreach ($this->patients() as $data) {
+        foreach ($branches->values() as $index => $branch) {
+            foreach ($this->renamed($this->patients(), $index) as $data) {
                 $existing = Patient::where('branch_id', $branch->branch_id)
                     ->where('first_name', $data['profile']['first_name'])
                     ->where('last_name', $data['profile']['last_name'])
@@ -81,6 +81,38 @@ class PatientSeeder extends Seeder
                 });
             }
         }
+    }
+
+    private function renamed(array $patients, int $branchIndex): array
+    {
+        if ($branchIndex === 0) {
+            return $patients;
+        }
+
+        $pools = [
+            'Female' => ['Marites', 'Corazon', 'Estrella', 'Milagros', 'Remedios', 'Pilar', 'Amparo', 'Luzviminda', 'Natividad', 'Perla', 'Herminia', 'Consolacion', 'Felicidad', 'Erlinda', 'Gloria'],
+            'Male' => ['Rodolfo', 'Anselmo', 'Fidel', 'Leopoldo', 'Teodoro', 'Cesar', 'Nestor', 'Alfredo', 'Benjamin'],
+        ];
+        $middleNames = ['Aquino', 'Bautista', 'Castillo', 'Dela Cruz', 'Evangelista', 'Fernandez', 'Gonzales', 'Hernandez', 'Ilagan', 'Jimenez', 'Katigbak', 'Lim', 'Mercado', 'Navarro', 'Ortega', 'Panganiban', 'Quizon', 'Ramos', 'Salazar', 'Tolentino', 'Urbano', 'Vergara', 'Yap', 'Zamora'];
+        $lastNames = ['Abad', 'Balderama', 'Cabrera', 'Dumalagan', 'Escario', 'Fuentes', 'Generalao', 'Hilario', 'Inocencio', 'Jaranilla', 'Labrador', 'Magallanes', 'Natividad', 'Olaguer', 'Pelayo', 'Quiroga', 'Rivera', 'Sarmiento', 'Tabada', 'Ugay', 'Valdez', 'Wenceslao', 'Zaldivar', 'Yulo'];
+
+        $perBranch = array_count_values(array_column(array_column($patients, 'profile'), 'gender'));
+        $total = count($patients);
+        $counters = ['Female' => 0, 'Male' => 0];
+        $position = 0;
+
+        return array_map(function (array $data) use ($branchIndex, $pools, $middleNames, $lastNames, $perBranch, $total, &$counters, &$position) {
+            $gender = $data['profile']['gender'];
+            $pick = ($branchIndex - 1) * $perBranch[$gender] + $counters[$gender]++;
+            $slot = ($branchIndex - 1) * $total + $position++;
+
+            $data['profile']['first_name'] = $pools[$gender][$pick % count($pools[$gender])];
+            $data['profile']['middle_name'] = $middleNames[$slot % count($middleNames)];
+            $data['profile']['last_name'] = $lastNames[$slot % count($lastNames)];
+            $data['profile']['phone_number'] = (string) ((int) $data['profile']['phone_number'] + $branchIndex * 100);
+
+            return $data;
+        }, $patients);
     }
 
     private function createPatient(Branch $branch, array $data): Patient
@@ -313,8 +345,9 @@ class PatientSeeder extends Seeder
 
         if ($admission['complete'] ?? false) {
             $this->createCompleteBooking($branch, $patient, $data, $contract, $invoice, $admittedAt);
-            $this->payInvoice($invoice, $patient, $data['guardian']['email'], $admittedAt->copy()->subHours(2));
         }
+
+        $this->payInvoice($invoice, $patient, $data['guardian']['email'], $admittedAt->copy()->subHours(2));
 
         $this->createCharges($branch, $patient, $patientAdmission, $admission['charges'] ?? [], $data);
     }
@@ -359,7 +392,7 @@ class PatientSeeder extends Seeder
                     $chargedAt
                 );
 
-                if ($fee && ($spec['paid'] ?? false)) {
+                if ($fee) {
                     $this->payInvoice($fee, $patient, $data['guardian']['email'], $chargedAt->copy()->addHours(2));
                 }
 
@@ -388,9 +421,7 @@ class PatientSeeder extends Seeder
                 ->where('additional_charge_id', $charge->additional_charge_id)
                 ->update(['created_at' => $chargedAt, 'updated_at' => $chargedAt]);
 
-            if ($spec['paid'] ?? false) {
-                $this->payInvoice($invoice, $patient, $data['guardian']['email'], $chargedAt->copy()->addHours(2));
-            }
+            $this->payInvoice($invoice, $patient, $data['guardian']['email'], $chargedAt->copy()->addHours(2));
         }
     }
 
@@ -754,7 +785,7 @@ class PatientSeeder extends Seeder
                 'reserved' => null,
                 'payment' => [
                     'total_amount' => (float) $invoice->total_amount,
-                    'payment_status' => 'pending',
+                    'payment_status' => 'paid',
                 ],
             ],
         ]);
@@ -775,6 +806,8 @@ class PatientSeeder extends Seeder
         DB::table('patients')
             ->where('patient_id', $patient->patient_id)
             ->update(['created_at' => $bookedAt->copy()->addHours(3), 'updated_at' => $bookedAt->copy()->addHours(3)]);
+
+        $this->payInvoice($invoice, $patient, $data['guardian']['email'], $bookedAt->copy()->addHours(4));
     }
 
     private function patients(): array
