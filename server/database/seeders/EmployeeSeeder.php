@@ -33,7 +33,7 @@ class EmployeeSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->limit(1)->get();
+        $branches = Branch::orderBy('branch_id')->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
@@ -42,41 +42,43 @@ class EmployeeSeeder extends Seeder
 
         $modulesByName = Module::all()->keyBy('module_name');
 
-        foreach (self::ROLES as $index => $role) {
-            $count = self::ROLE_COUNTS[$role] ?? 1;
+        foreach ($branches->values() as $position => $branch) {
+            $branchTag = $position === 0 ? '' : '.b' . ($position + 1);
+            $branchLabel = $position === 0 ? '' : ' B' . ($position + 1);
 
-            for ($n = 1; $n <= $count; $n++) {
-                $email = $n === 1 ? "{$role}@gmail.com" : "{$role}{$n}@gmail.com";
-                $suffix = $n === 1 ? '' : " {$n}";
+            foreach (self::ROLES as $index => $role) {
+                $count = self::ROLE_COUNTS[$role] ?? 1;
 
-                $user = User::firstOrCreate(
-                    ['email' => $email],
-                    [
-                        'password' => Hash::make('password'),
-                        'provider' => 'local',
-                    ]
-                );
+                for ($n = 1; $n <= $count; $n++) {
+                    $email = ($n === 1 ? $role : "{$role}{$n}") . "{$branchTag}@gmail.com";
+                    $suffix = ($n === 1 ? '' : " {$n}") . $branchLabel;
 
-                $employee = Employee::updateOrCreate(
-                    ['user_id' => $user->user_id],
-                    [
-                        'first_name' => Str::title(str_replace('_', ' ', $role)) . $suffix,
-                        'last_name' => 'Account',
-                        'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
-                        'birth_date' => now()->subYears(25 + $index)->subDays(($index * 10 + $n) * 30)->toDateString(),
-                        'phone_number' => '917' . str_pad((string) (1000000 + $index * 10 + $n), 7, '0', STR_PAD_LEFT),
-                    ]
-                );
+                    $user = User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'password' => Hash::make('password'),
+                            'provider' => 'local',
+                        ]
+                    );
 
+                    $employee = Employee::updateOrCreate(
+                        ['user_id' => $user->user_id],
+                        [
+                            'first_name' => Str::title(str_replace('_', ' ', $role)) . $suffix,
+                            'last_name' => 'Account',
+                            'avatar' => 'https://ui-avatars.com/api/?name=' . strtoupper(substr($role, 0, 2)),
+                            'birth_date' => now()->subYears(25 + $index)->subDays(($index * 10 + $n) * 30)->toDateString(),
+                            'phone_number' => '917' . str_pad((string) (1000000 + $position * 1000 + $index * 10 + $n), 7, '0', STR_PAD_LEFT),
+                        ]
+                    );
 
-                $assignmentType = in_array($role, ['nurse', 'caregiver'], true) ? 'both' : null;
+                    $assignmentType = in_array($role, ['nurse', 'caregiver'], true) ? 'both' : null;
 
-                if ($role === 'caregiver') {
-                    $rotation = ['online', 'facility'];
-                    $assignmentType = $rotation[($n - 1) % count($rotation)];
-                }
+                    if ($role === 'caregiver') {
+                        $rotation = ['online', 'facility'];
+                        $assignmentType = $rotation[($n - 1) % count($rotation)];
+                    }
 
-                foreach ($branches as $branch) {
                     $employeeBranch = EmployeeBranch::firstOrCreate(
                         [
                             'employee_id' => $employee->employee_id,

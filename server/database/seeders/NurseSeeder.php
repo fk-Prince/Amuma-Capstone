@@ -23,7 +23,7 @@ class NurseSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->limit(1)->get();
+        $branches = Branch::orderBy('branch_id')->get();
 
         if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
@@ -32,29 +32,32 @@ class NurseSeeder extends Seeder
 
         $modulesByName = Module::all()->keyBy('module_name');
 
-        for ($i = 1; $i <= self::NURSE_COUNT; $i++) {
-            $user = User::firstOrCreate(
-                ['email' => "nurse{$i}@gmail.com"],
-                [
-                    'password' => Hash::make('password'),
-                    'provider' => 'local',
-                ]
-            );
+        foreach ($branches->values() as $position => $branch) {
+            $branchTag = $position === 0 ? '' : '.b' . ($position + 1);
+            $branchLabel = $position === 0 ? '' : ' B' . ($position + 1);
 
-            $employee = Employee::updateOrCreate(
-                ['user_id' => $user->user_id],
-                [
-                    'first_name' => "Nurse{$i}",
-                    'last_name' => 'Account',
-                    'avatar' => 'https://ui-avatars.com/api/?name=N' . $i,
-                    'birth_date' => now()->subYears(25 + $i)->subDays($i * 30)->toDateString(),
-                    'phone_number' => '918' . str_pad((string) (1000000 + $i), 7, '0', STR_PAD_LEFT),
-                ]
-            );
+            for ($i = 1; $i <= self::NURSE_COUNT; $i++) {
+                $user = User::firstOrCreate(
+                    ['email' => "nurse{$i}{$branchTag}@gmail.com"],
+                    [
+                        'password' => Hash::make('password'),
+                        'provider' => 'local',
+                    ]
+                );
 
-            $assignmentType = self::ASSIGNMENT_TYPES[($i - 1) % count(self::ASSIGNMENT_TYPES)];
+                $employee = Employee::updateOrCreate(
+                    ['user_id' => $user->user_id],
+                    [
+                        'first_name' => "Nurse{$i}{$branchLabel}",
+                        'last_name' => 'Account',
+                        'avatar' => 'https://ui-avatars.com/api/?name=N' . $i,
+                        'birth_date' => now()->subYears(25 + $i)->subDays($i * 30)->toDateString(),
+                        'phone_number' => '918' . str_pad((string) (1000000 + $position * 1000 + $i), 7, '0', STR_PAD_LEFT),
+                    ]
+                );
 
-            foreach ($branches as $branch) {
+                $assignmentType = self::ASSIGNMENT_TYPES[($i - 1) % count(self::ASSIGNMENT_TYPES)];
+
                 $employeeBranch = EmployeeBranch::updateOrCreate(
                     [
                         'employee_id' => $employee->employee_id,
