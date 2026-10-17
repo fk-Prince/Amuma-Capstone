@@ -142,10 +142,10 @@ class FacilityBookingTest extends TestCase
         );
     }
 
-    public function test_diagnosis_must_be_from_the_past_6_months(): void
+    public function test_diagnosis_must_be_from_the_past_3_months(): void
     {
-        $this->assertFailsWith('Diagnosis must be from the past 6 months.', fn() => $this->preAdmission([
-            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(8)->toDateString()]],
+        $this->assertFailsWith('Diagnosis must be from the past 3 months.', fn() => $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(5)->toDateString()]],
         ]));
 
         $this->assertSame(0, Booking::count());
@@ -165,10 +165,10 @@ class FacilityBookingTest extends TestCase
         ]));
     }
 
-    public function test_diagnosis_exactly_6_months_old_is_valid(): void
+    public function test_diagnosis_exactly_3_months_old_is_valid(): void
     {
         $this->preAdmission([
-            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(6)->toDateString()]],
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(3)->toDateString()]],
         ]);
 
         $this->assertSame(1, Booking::count());
@@ -183,10 +183,10 @@ class FacilityBookingTest extends TestCase
         $this->assertSame(1, Booking::count());
     }
 
-    public function test_diagnosis_6_months_and_1_day_old_is_invalid(): void
+    public function test_diagnosis_3_months_and_1_day_old_is_invalid(): void
     {
-        $this->assertFailsWith('Diagnosis must be from the past 6 months.', fn() => $this->preAdmission([
-            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(6)->subDay()->toDateString()]],
+        $this->assertFailsWith('Diagnosis must be from the past 3 months.', fn() => $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->subMonths(3)->subDay()->toDateString()]],
         ]));
 
         $this->assertSame(0, Booking::count());

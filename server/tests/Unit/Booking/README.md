@@ -72,18 +72,18 @@ D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite
 
 - [BookingReviewTest.php:230](BookingReviewTest.php#L230) Selected bed is already occupied
 
-## BK-14 Diagnosis older than 6 months
+## BK-14 Diagnosis older than 3 months
 
 ```
 D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/phpunit tests/Unit/Booking/FacilityBookingTest.php --testdox --filter "test_diagnosis_must_be_from_the_past_6_months|test_diagnosis_date_cannot_be_in_the_future|test_primary_diagnosis_is_required|test_diagnosis_exactly_6_months_old_is_valid|test_diagnosis_dated_today_is_valid|test_diagnosis_6_months_and_1_day_old_is_invalid|test_recent_diagnosis_is_accepted"
 ```
 
-- [FacilityBookingTest.php:145](FacilityBookingTest.php#L145) Diagnosis must be from the past 6 months
+- [FacilityBookingTest.php:145](FacilityBookingTest.php#L145) Diagnosis must be from the past 3 months
 - [FacilityBookingTest.php:154](FacilityBookingTest.php#L154) Diagnosis date cannot be in the future
 - [FacilityBookingTest.php:161](FacilityBookingTest.php#L161) Primary diagnosis is required
-- [FacilityBookingTest.php:168](FacilityBookingTest.php#L168) Diagnosis exactly 6 months old is valid
+- [FacilityBookingTest.php:168](FacilityBookingTest.php#L168) Diagnosis exactly 3 months old is valid
 - [FacilityBookingTest.php:177](FacilityBookingTest.php#L177) Diagnosis dated today is valid
-- [FacilityBookingTest.php:186](FacilityBookingTest.php#L186) Diagnosis 6 months and 1 day old is invalid
+- [FacilityBookingTest.php:186](FacilityBookingTest.php#L186) Diagnosis 3 months and 1 day old is invalid
 - [FacilityBookingTest.php:195](FacilityBookingTest.php#L195) Recent diagnosis is accepted
 
 ## BK-15 View bookings

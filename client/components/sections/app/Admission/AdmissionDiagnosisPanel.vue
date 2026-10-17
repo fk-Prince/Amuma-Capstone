@@ -44,12 +44,40 @@
                 </div>
             </div>
 
-            <p
-                v-else-if="!cases.length"
-                class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
-            >
-                No diagnosis cases yet. Add them from Contracts.
-            </p>
+            <div v-else-if="!cases.length" class="space-y-4">
+                <p
+                    class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+                >
+                    No diagnosis cases yet. Add them from Contracts.
+                </p>
+
+                <div v-if="diagnoses.length" class="space-y-2">
+                    <p
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                    >
+                        Patient Diagnoses
+                    </p>
+
+                    <div
+                        v-for="item in diagnoses"
+                        :key="item.uuid"
+                        class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 dark:border-white/10"
+                    >
+                        <p
+                            class="min-w-0 truncate text-sm font-medium text-slate-700 dark:text-gray-200"
+                        >
+                            {{ item.diagnosis }}
+                        </p>
+
+                        <p
+                            v-if="item.diagnosis_date"
+                            class="shrink-0 text-xs text-slate-400 dark:text-gray-500"
+                        >
+                            {{ formatDate(item.diagnosis_date) }}
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <div v-else class="grid gap-6 md:grid-cols-[1fr_auto_1fr]">
                 <!-- LEFT · SELECTION -->

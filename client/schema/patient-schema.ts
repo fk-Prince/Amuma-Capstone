@@ -66,7 +66,7 @@ const dateStringSchema = z
         message: "Enter a valid date",
     });
 
-export const DIAGNOSIS_WINDOW_MONTHS = 6;
+export const DIAGNOSIS_WINDOW_MONTHS = 3;
 
 export const diagnosisWindowStart = (): string => {
     const date = new Date();

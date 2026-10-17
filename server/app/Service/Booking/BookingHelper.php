@@ -12,7 +12,7 @@ use Illuminate\Http\UploadedFile;
 
 class BookingHelper
 {
-    public const DIAGNOSIS_WINDOW_MONTHS = 6;
+    public const DIAGNOSIS_WINDOW_MONTHS = 3;
 
     public const HOMECARE_LEAD_MINUTES = 60;
 
