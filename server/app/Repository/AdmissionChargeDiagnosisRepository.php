@@ -119,7 +119,16 @@ class AdmissionChargeDiagnosisRepository
             ->first();
     }
 
-    // A newer charge takes over the monthly billing of a diagnosis.
+    public function stopRecurringForAdmission(int $admissionId): void
+    {
+        AdmissionDiagnosis::where('is_active', true)
+            ->whereHas(
+                'charge.admissionPeriod',
+                fn($query) => $query->where('patient_admission_id', $admissionId)
+            )
+            ->update(['is_active' => false]);
+    }
+
     public function stopRecurring(int $admissionId, int $patientDiagnosisId, int $exceptId): void
     {
         AdmissionDiagnosis::where('patient_diagnosis_id', $patientDiagnosisId)

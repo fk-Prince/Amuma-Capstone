@@ -61,7 +61,7 @@ class OnlineScheduleService
         $scheduleServicesId = $payload['schedule_services_id'];
 
         $this->guardHasActiveAssignment($scheduleServicesId);
-        $this->guardAdlIsOngoing($scheduleServicesId);
+        $this->guardAdlCanClockIn($scheduleServicesId);
 
         $activeSession = $this->activeSessionFor($scheduleServicesId);
 
@@ -109,7 +109,7 @@ class OnlineScheduleService
             throw new Exception('You are not assigned to this schedule.', 403);
         }
 
-        $this->guardAdlIsOngoing($assigned->schedule_services_id);
+        $this->guardAdlCanClockIn($assigned->schedule_services_id);
 
         return DB::transaction(function () use ($payload, $assigned) {
             $activeSession = OnlineSchedule::whereHas(
@@ -130,6 +130,8 @@ class OnlineScheduleService
                 'type_in' => OnlineSchedule::TYPE_SCANNED,
                 'in_timestamp' => now(),
             ]);
+
+            $this->startAdlSchedule($assigned->schedule_services_id);
 
             broadcast(new QrScanned($payload['token'], 'in'));
 
@@ -243,15 +245,33 @@ class OnlineScheduleService
         }
     }
 
-    private function guardAdlIsOngoing(int $scheduleServicesId): void
+    private function guardAdlCanClockIn(int $scheduleServicesId): void
     {
         $scheduleService = ScheduleService::with('schedule')->find($scheduleServicesId);
 
         if (
             $scheduleService?->type === ScheduleService::TYPE_ADL
-            && strtolower((string) $scheduleService->schedule?->status) !== Schedule::STATUS_ONGOING
+            && !in_array(
+                strtolower((string) $scheduleService->schedule?->status),
+                [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING, Schedule::STATUS_MISSED],
+                true
+            )
         ) {
-            throw new Exception('Time in is only available once this ADL schedule is ongoing.', 422);
+            throw new Exception('Time in is not available for this ADL schedule.', 422);
+        }
+    }
+
+    private function startAdlSchedule(int $scheduleServicesId): void
+    {
+        $scheduleService = ScheduleService::with('schedule')->find($scheduleServicesId);
+        $schedule = $scheduleService?->schedule;
+
+        if (
+            $scheduleService?->type === ScheduleService::TYPE_ADL
+            && $schedule
+            && strtolower((string) $schedule->status) !== Schedule::STATUS_ONGOING
+        ) {
+            $schedule->update(['status' => Schedule::STATUS_ONGOING]);
         }
     }
 }

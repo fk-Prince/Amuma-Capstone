@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Utils\BranchCode;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +65,25 @@ class Schedule extends Model
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
+    }
+
+    public function firstScanAt(): ?Carbon
+    {
+        $at = OnlineSchedule::whereHas(
+            'assigned.scheduleService',
+            fn($query) => $query->where('schedule_id', $this->schedule_id)
+        )->min('in_timestamp');
+
+        return $at ? Carbon::parse($at) : null;
+    }
+
+    public function startedAt(): ?Carbon
+    {
+        $scan = $this->firstScanAt();
+
+        return $scan && $this->scheduled_at && $scan->lt($this->scheduled_at)
+            ? $scan
+            : $this->scheduled_at;
     }
 
     public function isOnsite()

@@ -6,7 +6,7 @@
             @click.self="handleClose"
         >
             <div
-                class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
+                class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
             >
                 <div
                     class="border-b border-primary-100 p-6 dark:border-primary-500/20"
@@ -49,6 +49,7 @@
                 </div>
 
                 <div class="p-6">
+                    <div class="grid gap-6 md:grid-cols-2">
                     <div>
                         <label
                             for="cancellation-reason"
@@ -98,12 +99,12 @@
                         </p>
                     </div>
 
+                    <div class="space-y-4">
                     <CancelInvoiceAmount
                         v-if="invoiceCode || paidAmount > 0"
                         v-model:amount="keepAmount"
                         v-model:reason="keepReason"
                         v-model:editing="editingAmount"
-                        class="mt-4"
                         :invoice-code="invoiceCode"
                         :deposit="bookingDeposit"
                         :billed="Math.max(invoiceTotal, paidAmount)"
@@ -116,6 +117,15 @@
                         :amount-error="keepAmountError"
                         :reason-error="keepReasonError"
                     />
+
+                    <p
+                        class="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-white/5 dark:text-gray-400"
+                    >
+                        Any billing connected to this admission, including its
+                        diagnosis cases and charges, will be voided.
+                    </p>
+                    </div>
+                    </div>
 
                     <div
                         class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"

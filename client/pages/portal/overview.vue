@@ -1295,8 +1295,10 @@ const isMedicalVisit = computed(
         Boolean(primaryLovedOne.value?.schedule.medical),
 );
 
-const canTimeIn = computed(
-    () => attendanceVisit.value?.status?.toLowerCase() === "ongoing",
+const canTimeIn = computed(() =>
+    ["ongoing", "pending", "missed"].includes(
+        attendanceVisit.value?.status?.toLowerCase() ?? "",
+    ),
 );
 
 const adlServices = computed(() => attendanceVisit.value?.services ?? []);
@@ -1354,7 +1356,7 @@ function initials(name?: string | null) {
 
 function serviceElapsedMinutes(service: ScheduleServiceItem) {
     const visit = attendanceVisit.value;
-    const scheduledAt = visit?.scheduled_at;
+    const scheduledAt = visit?.started_at ?? visit?.scheduled_at;
     const scheduled = service.duration_minutes ?? 0;
 
     if (visit?.status === "completed") {

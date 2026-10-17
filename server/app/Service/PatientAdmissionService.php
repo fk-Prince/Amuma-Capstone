@@ -572,13 +572,17 @@ class PatientAdmissionService
                     return;
                 }
 
-                $this->invoiceService->settleCancelled(
-                    $invoice,
-                    min($collected, round((float) $invoice->adjusted_total, 2)),
-                    'Admission cancelled. Diagnosis case fee kept.',
-                    $userId
-                );
+                InvoiceAdjustment::create([
+                    'invoice_id' => $invoice->invoice_id,
+                    'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                    'amount' => -round((float) $invoice->adjusted_total, 2),
+                    'reason' => 'Admission cancelled. Diagnosis cases voided.',
+                ]);
+
+                $invoice->syncStatus();
             });
+
+        $this->diagnosisChargeRepository->stopRecurringForAdmission($admission->patient_admission_id);
 
         $admission->additionalCharges()->with('invoice')->get()
             ->each(function ($charge) use ($userId) {

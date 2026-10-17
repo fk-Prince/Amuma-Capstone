@@ -864,7 +864,7 @@ const newEntry = (): Entry => ({
     case_uuid: "",
     amount: "",
     description: "",
-    billed: false,
+    billed: true,
     is_active: true,
     start: "now",
 });

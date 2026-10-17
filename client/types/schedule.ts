@@ -102,6 +102,7 @@ export interface ScheduleItem {
 
     scheduled_date: string | null;
     scheduled_at?: string | null;
+    started_at?: string | null;
 
     start_time?: string | null;
     end_time?: string | null;

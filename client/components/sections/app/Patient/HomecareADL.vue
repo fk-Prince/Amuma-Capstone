@@ -1597,17 +1597,30 @@ function showsProgress(log: AuditRow) {
     );
 }
 
+function startTimeMs(log: AuditRow): number | null {
+    if (!log.scheduled_at) return null;
+
+    const scheduled = new Date(log.scheduled_at).getTime();
+
+    const firstScan = log.online_logs.reduce<number | null>((first, scan) => {
+        if (!scan.in_timestamp) return first;
+
+        const time = new Date(scan.in_timestamp).getTime();
+
+        return first === null || time < first ? time : first;
+    }, null);
+
+    return firstScan !== null && firstScan < scheduled ? firstScan : scheduled;
+}
+
 function elapsedMinutes(log: AuditRow): number {
     const booked = (log.total_hours ?? 0) * 60;
+    const start = startTimeMs(log);
 
-    const elapsed = log.scheduled_at
-        ? Math.max(
-              0,
-              Math.round(
-                  (Date.now() - new Date(log.scheduled_at).getTime()) / 60000,
-              ),
-          )
-        : log.total_worked_minutes;
+    const elapsed =
+        start !== null
+            ? Math.max(0, Math.round((Date.now() - start) / 60000))
+            : log.total_worked_minutes;
 
     return booked > 0 ? Math.min(elapsed, booked) : elapsed;
 }
@@ -1628,12 +1641,11 @@ function progressWidth(log: AuditRow) {
 }
 
 function scheduledEndTime(log: AuditRow) {
-    if (!log.scheduled_at) return null;
+    const start = startTimeMs(log);
 
-    return (
-        new Date(log.scheduled_at).getTime() +
-        (log.total_hours ?? 0) * 60 * 60000
-    );
+    if (start === null) return null;
+
+    return start + (log.total_hours ?? 0) * 60 * 60000;
 }
 
 function progressFill(log: AuditRow) {
@@ -1682,7 +1694,7 @@ function remainingMinutes(log: AuditRow) {
         return Math.max(log.total_hours * 60 - log.total_worked_minutes, 0);
     }
 
-    const start = new Date(log.scheduled_at as string).getTime();
+    const start = startTimeMs(log) as number;
     const now = Date.now() + secondsTick.value * 0;
 
     if (now < start) {
