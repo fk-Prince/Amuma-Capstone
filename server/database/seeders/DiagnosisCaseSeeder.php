@@ -103,24 +103,26 @@ class DiagnosisCaseSeeder extends Seeder
 
     public function run(): void
     {
-        $branch = Branch::orderBy('branch_id')->first();
+        $branches = Branch::orderBy('branch_id')->get();
 
-        if (!$branch) {
+        if ($branches->isEmpty()) {
             $this->command->warn('No branches found. Seed branches first.');
             return;
         }
 
-        foreach (self::CASES as $case) {
-            DiagnosisCase::firstOrCreate(
-                [
-                    'branch_id' => $branch->branch_id,
-                    'title' => $case['title'],
-                ],
-                [
-                    'description' => $case['description'],
-                    'price' => $case['price'],
-                ]
-            );
+        foreach ($branches as $branch) {
+            foreach (self::CASES as $case) {
+                DiagnosisCase::firstOrCreate(
+                    [
+                        'branch_id' => $branch->branch_id,
+                        'title' => $case['title'],
+                    ],
+                    [
+                        'description' => $case['description'],
+                        'price' => $case['price'],
+                    ]
+                );
+            }
         }
     }
 }

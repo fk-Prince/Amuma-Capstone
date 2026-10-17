@@ -213,6 +213,16 @@ class PatientSeeder extends Seeder
             ->value('employees.user_id');
     }
 
+    private function cashier(int $branchId): ?int
+    {
+        return EmployeeBranch::query()
+            ->join('employees', 'employees.employee_id', '=', 'employee_branches.employee_id')
+            ->where('employee_branches.branch_id', $branchId)
+            ->whereIn('employee_branches.role_name', [RoleEnum::Cashier->value, RoleEnum::AgencyOwner->value])
+            ->orderByRaw('employee_branches.role_name = ? desc', [RoleEnum::Cashier->value])
+            ->value('employees.user_id');
+    }
+
     private function createVitals(Patient $patient, array $baseline): void
     {
         [$systolic, $diastolic, $heartRate, $glucose] = $baseline;
@@ -565,7 +575,7 @@ class PatientSeeder extends Seeder
                     'booking_amount' => (float) $invoice->total_amount,
                     'balance_amount' => 0,
                     'payment_status' => 'paid',
-                    'payment_method' => 'GCASH',
+                    'payment_method' => 'CASH',
                 ],
             ],
         ]);
@@ -589,10 +599,10 @@ class PatientSeeder extends Seeder
             $amount,
             $invoice->branch_id,
             $patient->patient_id,
-            'Payment received online.',
+            'Payment received in cash.',
             [
                 'client_id' => $client?->client_id,
-                'method' => 'GCASH',
+                'method' => 'CASH',
                 'party_name' => $client ? trim("{$client->first_name} {$client->last_name}") : null,
                 'created_at' => $paidAt,
             ]
@@ -602,6 +612,8 @@ class PatientSeeder extends Seeder
             'transaction_id' => $transaction->transaction_id,
             'prior_balance' => $amount,
             'new_balance' => 0,
+            'cash_tendered' => $amount,
+            'issued_by' => $this->cashier($invoice->branch_id),
             'created_at' => $paidAt,
         ]);
 
