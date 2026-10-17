@@ -1715,7 +1715,7 @@ async function confirmNewAdmission() {
             ...payload,
         });
         patient.value = res.data;
-        success(res?.message ?? "Patient admitted successfully.");
+        success(res?.message ?? "Walk-in admission created successfully.");
         newAdmissionDialogOpen.value = false;
         pendingAdmission.value = null;
         reserved.value = null;

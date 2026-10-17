@@ -218,7 +218,7 @@ class PatientAdmissionService
             $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
-                'message' => 'Patient admitted successfully.',
+                'message' => 'Walk-in admission created successfully.',
                 'data'    => $this->patientService->showPatient($payload['p_uuid']),
             ];
         });
