@@ -24,6 +24,7 @@ class DiagnosisFeeService
         private InvoiceRepository $invoiceRepository,
         private PatientRepository $patientRepository,
         private AdmissionPeriodService $periods,
+        private NotificationService $notificationService,
     ) {}
 
 
@@ -218,6 +219,23 @@ class DiagnosisFeeService
 
                 if ($invoice) {
                     $billed++;
+
+                    $this->notificationService->notifyPatientAccess(
+                        $admission->patient,
+                        sprintf(
+                            '%s was billed again for %s (%s): ₱%s on invoice %s. Monthly billing continues on %s.',
+                            $admission->patient->display_name,
+                            $row->diagnosisCase?->title ?? 'a diagnosis case',
+                            $row->patientDiagnosis?->diagnosis ?? 'diagnosis',
+                            number_format((float) $row->amount, 2),
+                            $invoice->invoice_code,
+                            Carbon::parse($this->nextAnniversary($admission, $row->date_billed))->format('M j, Y')
+                        ),
+                        'Diagnosis Case Charge',
+                        null,
+                        null,
+                        $invoice->invoice_code
+                    );
                 }
             });
         }

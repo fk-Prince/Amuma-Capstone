@@ -7,6 +7,7 @@ use App\Http\Resources\PatientReportResource;
 use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use App\Models\PatientAssessment;
+use App\Models\AdmissionDiagnosis;
 use App\Models\PatientDiagnosis;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
@@ -632,15 +633,38 @@ class PatientService
 
     private function reportDiagnoses(mixed $patient, ?string $diagnosisUuid = null)
     {
+        $diagnoses = $patient->diagnoses
+            ->when($diagnosisUuid, fn($rows) => $rows->where('uuid', $diagnosisUuid))
+            ->sortByDesc(fn($diagnosis) => $diagnosis->diagnosis_date?->timestamp ?? 0)
+            ->values();
+
+        $diagnoses->load('admissionCharges.diagnosisCase', 'admissionCharges.charge');
+
         return [
-            'diagnoses' => $patient->diagnoses
-                ->when($diagnosisUuid, fn($rows) => $rows->where('uuid', $diagnosisUuid))
-                ->sortByDesc(fn($diagnosis) => $diagnosis->diagnosis_date?->timestamp ?? 0)
+            'diagnoses' => $diagnoses
                 ->map(fn($diagnosis) => [
                     'diagnosis' => $diagnosis->diagnosis,
                     'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
                     'diagnosis_notes' => $diagnosis->diagnosis_notes,
-                ])->values()->all(),
+                ])->all(),
+
+            'cases' => $diagnoses
+                ->flatMap(fn($diagnosis) => $diagnosis->admissionCharges
+                    ->sortByDesc('admission_diagnosis_id')
+                    ->map(fn($row) => [
+                        'diagnosis' => $diagnosis->diagnosis,
+                        'diagnosis_case' => $row->diagnosisCase?->title,
+                        'description' => $row->description,
+                        'amount' => (float) $row->amount,
+                        'billed' => $row->billed === AdmissionDiagnosis::BILLED_MONTHLY
+                            ? ($row->is_active
+                                ? 'Every month, next ' . $row->date_billed?->format('M j, Y')
+                                : 'Every month (paused)')
+                            : 'One time',
+                        'charged_at' => $row->charge?->created_at?->toDateString(),
+                    ]))
+                ->values()
+                ->all(),
         ];
     }
 

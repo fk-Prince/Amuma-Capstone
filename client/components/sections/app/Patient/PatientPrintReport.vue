@@ -130,6 +130,41 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <template v-if="diagnosisCases.length">
+                    <h2 class="print-subhead">
+                        <Stethoscope class="print-icon" />
+                        Diagnosis cases
+                    </h2>
+
+                    <table class="print-table">
+                        <thead>
+                            <tr>
+                                <th>Diagnosis</th>
+                                <th>Diagnosis case</th>
+                                <th>Amount</th>
+                                <th>Billed</th>
+                                <th class="print-col-date">Charged</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(row, i) in diagnosisCases" :key="i">
+                                <td class="print-strong">
+                                    {{ row.diagnosis ?? "—" }}
+                                </td>
+                                <td>
+                                    {{ row.diagnosis_case ?? "—" }}
+                                    <template v-if="row.description">
+                                        · {{ row.description }}
+                                    </template>
+                                </td>
+                                <td>{{ formatCurrency(row.amount) }}</td>
+                                <td>{{ row.billed }}</td>
+                                <td>{{ formatDate(row.charged_at) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </template>
             </template>
 
             <template v-if="section === 'assessment'">
@@ -767,6 +802,7 @@ const assessments = computed(() => {
 });
 
 const diagnoses = computed<any[]>(() => props.report?.diagnosis?.diagnoses ?? []);
+const diagnosisCases = computed<any[]>(() => props.report?.diagnosis?.cases ?? []);
 
 const guardians = computed<any[]>(() => props.report?.profile?.guardians ?? []);
 

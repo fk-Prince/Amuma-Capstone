@@ -14,8 +14,8 @@
                 Diagnosis case price at this facility:
                 <span class="font-semibold">{{
                     formatCurrency(charges.min)
-                }}</span
-                >.
+                }}</span>
+                monthly.
             </template>
             <template v-else-if="charges">
                 Diagnosis case prices at this facility range from
@@ -25,8 +25,8 @@
                 to
                 <span class="font-semibold">{{
                     formatCurrency(charges.max)
-                }}</span
-                >.
+                }}</span>
+                monthly.
             </template>
         </p>
     </div>
