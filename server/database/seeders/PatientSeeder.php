@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\RoleEnum;
 use App\Models\AdditionalCharge;
 use App\Service\DiagnosisFeeService;
+use App\Models\AdmissionDiagnosis;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
 use App\Models\Booking;
@@ -49,12 +50,14 @@ class PatientSeeder extends Seeder
 
         foreach ($branches as $branch) {
             foreach ($this->patients() as $data) {
-                $exists = Patient::where('branch_id', $branch->branch_id)
+                $existing = Patient::where('branch_id', $branch->branch_id)
                     ->where('first_name', $data['profile']['first_name'])
                     ->where('last_name', $data['profile']['last_name'])
-                    ->exists();
+                    ->first();
 
-                if ($exists) {
+                if ($existing) {
+                    $this->backfillDiagnosisCases($branch, $existing, $data);
+
                     continue;
                 }
 
@@ -391,8 +394,35 @@ class PatientSeeder extends Seeder
         }
     }
 
-    // A diagnosis case is billed on an invoice of its own, for the admission's
-    // first period.
+    // Patients seeded before diagnosis cases moved to admission_diagnosis have
+    // none on the new tables, so they get them here.
+    private function backfillDiagnosisCases(Branch $branch, Patient $patient, array $data): void
+    {
+        $cases = collect($data['admission']['charges'] ?? [])
+            ->where('type', 'diagnosis_case')
+            ->values()
+            ->all();
+
+        $admission = $cases
+            ? PatientAdmission::where('patient_id', $patient->patient_id)->latest('patient_admission_id')->first()
+            : null;
+
+        if (!$admission) {
+            return;
+        }
+
+        $billed = AdmissionDiagnosis::whereHas(
+            'charge.admissionPeriod',
+            fn($query) => $query->where('patient_admission_id', $admission->patient_admission_id)
+        )->exists();
+
+        if ($billed) {
+            return;
+        }
+
+        DB::transaction(fn() => $this->createCharges($branch, $patient, $admission, $cases, $data));
+    }
+
     private function createDiagnosisFee(
         Branch $branch,
         PatientAdmission $admission,
