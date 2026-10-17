@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import QrcodeVue from "qrcode.vue";
 import { computed, onUnmounted, ref, watch } from "vue";
-import { LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
+import { Download, LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
 import ActionButton from "./ActionButton.vue";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useToast } from "~/composables/useToast";
@@ -161,6 +161,7 @@ watch(
 
 const { success, error: toastError } = useToast();
 const demoing = ref(false);
+const qrFrame = ref<HTMLElement | null>(null);
 const pickingCaregiver = ref(false);
 
 watch(
@@ -169,6 +170,37 @@ watch(
         if (!show) pickingCaregiver.value = false;
     },
 );
+
+function saveQr() {
+    const source = qrFrame.value?.querySelector("canvas");
+
+    if (!source) return;
+
+    const margin = 32;
+    const canvas = document.createElement("canvas");
+
+    canvas.width = source.width + margin * 2;
+    canvas.height = source.height + margin * 2;
+
+    const context = canvas.getContext("2d");
+
+    if (!context) return;
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(source, margin, margin);
+
+    const name = resolvedTitle.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+    const link = document.createElement("a");
+
+    link.download = `${name || "qr-code"}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
 
 function toApiType(mode: QrMode): "in" | "out" {
     return mode === "clock-out" ? "out" : "in";
@@ -295,6 +327,7 @@ onUnmounted(() => {
                     <div class="flex justify-center">
                         <div
                             v-if="qrValue"
+                            ref="qrFrame"
                             :class="accentClasses.ring"
                             class="rounded-xl border-2 bg-white p-5"
                         >
@@ -421,6 +454,17 @@ onUnmounted(() => {
                             Demo
                         </ActionButton>
                         -->
+
+                        <ActionButton
+                            v-if="qrValue && !pickingCaregiver"
+                            variant="outline"
+                            @click="saveQr"
+                        >
+                            <span class="inline-flex items-center gap-2">
+                                <Download class="h-4 w-4" />
+                                Save QR
+                            </span>
+                        </ActionButton>
 
                         <ActionButton
                             v-if="pickingCaregiver"

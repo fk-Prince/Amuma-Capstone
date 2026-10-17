@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { QrcodeStream } from "vue-qrcode-reader";
+import { QrcodeCapture, QrcodeStream } from "vue-qrcode-reader";
+import { ImageUp } from "lucide-vue-next";
 import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
 import { useToast } from "~/composables/useToast";
 
@@ -14,6 +15,7 @@ const { success, error: toastError } = useToast();
 const paused = ref(false);
 const verifying = ref(false);
 const error = ref<string | null>(null);
+const captureInput = ref<unknown>(null);
 
 function toApiType(type: unknown): "in" | "out" | null {
     if (type === "in" || type === "clock-in") return "in";
@@ -76,6 +78,21 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
     } finally {
         verifying.value = false;
     }
+}
+
+function chooseImage() {
+    ((captureInput.value as any)?.$el as HTMLInputElement | undefined)?.click();
+}
+
+function onImageDetect(detectedCodes: { rawValue: string }[]) {
+    if (!detectedCodes.length) {
+        error.value = "No QR code was found in that image.";
+        return;
+    }
+
+    error.value = null;
+
+    onDetect(detectedCodes);
 }
 
 function onError(err: Error) {
@@ -148,6 +165,23 @@ function onError(err: Error) {
                     Verifying...
                 </div>
             </div>
+
+            <QrcodeCapture
+                ref="captureInput"
+                class="hidden"
+                :capture="undefined"
+                @detect="onImageDetect"
+            />
+
+            <button
+                type="button"
+                :disabled="verifying"
+                class="absolute bottom-24 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-5 py-2.5 text-sm font-medium text-gray-800 shadow disabled:opacity-50 dark:bg-secondary/95 dark:text-white"
+                @click="chooseImage"
+            >
+                <ImageUp class="h-4 w-4" />
+                Upload QR
+            </button>
 
             <button
                 type="button"
