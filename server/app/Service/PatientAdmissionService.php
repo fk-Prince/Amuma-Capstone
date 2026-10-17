@@ -780,19 +780,6 @@ class PatientAdmissionService
                 $payload['branch_id']
             );
 
-            // A diagnosis is charged once, and again only after the stay is extended.
-            foreach ($fees as $fee) {
-                if ($this->diagnosisFees->hasCurrentCharge(
-                    $admission->patient_admission_id,
-                    $fee['diagnosis']->patient_diagnosis_id
-                )) {
-                    throw new Exception(
-                        "{$fee['diagnosis']->diagnosis} already has a diagnosis case on this admission.",
-                        422
-                    );
-                }
-            }
-
             if ($fees->isEmpty() || $fees->every(fn(array $fee) => (float) $fee['amount'] < 0.01)) {
                 throw new Exception('Choose a diagnosis case with an amount greater than zero.', 422);
             }
@@ -807,7 +794,7 @@ class PatientAdmissionService
         });
     }
 
-    // A diagnosis case can be changed or taken off until a payment lands on its invoices.
+    // A diagnosis case can be changed or taken off, paid or not.
     public function updateDiagnosisCase(array $payload)
     {
         return DB::transaction(function () use ($payload) {
@@ -819,6 +806,7 @@ class PatientAdmissionService
                     'diagnosis_case_uuid' => $payload['diagnosis_case_uuid'] ?? null,
                     'amount' => $payload['amount'] ?? null,
                     'description' => $payload['description'] ?? null,
+                    'billed' => $payload['billed'] ?? null,
                 ]],
                 $admission->patient,
                 $payload['branch_id']
@@ -837,7 +825,7 @@ class PatientAdmissionService
                     'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                     'description' => $fee['description'] ?? null,
                     'amount' => round((float) $fee['amount'], 2),
-                ]);
+                ] + $this->diagnosisFees->recurrence($fee, $row));
 
                 $this->diagnosisChargeRepository->syncCharge($row->charge);
             }
@@ -873,9 +861,26 @@ class PatientAdmissionService
 
                 $this->diagnosisChargeRepository->deleteCharge($charge);
 
-                if ($invoice) {
-                    $this->invoiceService->closeAsVoid($invoice, 'Diagnosis case removed.', $userId);
+                if (!$invoice) {
+                    continue;
                 }
+
+                // What was paid stays with the patient as credit, so a paid
+                // invoice is corrected down to nothing rather than voided.
+                if ($invoice->net_paid_amount > 0) {
+                    InvoiceAdjustment::create([
+                        'invoice_id' => $invoice->invoice_id,
+                        'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                        'amount' => -round((float) $invoice->adjusted_total, 2),
+                        'reason' => 'Diagnosis case removed.',
+                    ]);
+
+                    $invoice->syncStatus();
+
+                    continue;
+                }
+
+                $this->invoiceService->closeAsVoid($invoice, 'Diagnosis case removed.', $userId);
             }
 
             Invoice::forgetPatientInvoiceIds();
@@ -912,10 +917,6 @@ class PatientAdmissionService
 
         if ($rows->isEmpty()) {
             throw new Exception('This diagnosis has no diagnosis case on the admission.', 404);
-        }
-
-        if ($rows->contains(fn($row) => $row->charge->invoice?->allocations->isNotEmpty())) {
-            throw new Exception('A payment was already made toward this diagnosis case, so it can no longer be changed or removed.', 422);
         }
 
         return [$admission, $rows];

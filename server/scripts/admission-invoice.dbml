@@ -75,7 +75,7 @@ Table admission_charge_diagnosis {
   admission_charge_diagnosis_id bigint [pk, increment]
   admission_period_id bigint [not null, ref: > admission_periods.admission_period_id]
   invoice_id bigint [not null, ref: > invoices.invoice_id]
-  amount decimal(10,2) [not null, note: 'billed on the invoice: monthly x1, or x12 on a yearly period']
+  amount decimal(10,2) [not null, note: 'billed on the invoice as entered']
 }
 
 // The diagnoses under a charge
@@ -85,7 +85,10 @@ Table admission_diagnosis {
   patient_diagnosis_id bigint [not null, ref: > patient_diagnosis.patient_diagnosis_id]
   diagnosis_case_id bigint [ref: > diagnosis_cases.diagnosis_case_id]
   description varchar
-  amount decimal(10,2) [not null, note: 'billed on the invoice: monthly x1, or x12 on a yearly period']
+  amount decimal(10,2) [not null, note: 'billed on the invoice as entered']
+  billed varchar [note: 'one_time or monthly']
+  is_active boolean [not null, default: false, note: 'a monthly case still being billed by the scheduler']
+  date_billed date [note: 'next day a monthly case is billed']
 }
 
 // Charges added to an admitted patient, linked to the patient

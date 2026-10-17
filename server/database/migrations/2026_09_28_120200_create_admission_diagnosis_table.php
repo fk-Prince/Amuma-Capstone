@@ -22,6 +22,9 @@ return new class extends Migration
                 ->nullOnDelete();
             $table->string('description')->nullable();
             $table->decimal('amount', 10, 2);
+            $table->string('billed')->nullable();
+            $table->boolean('is_active')->default(false);
+            $table->date('date_billed')->nullable();
             $table->timestamps();
         });
     }

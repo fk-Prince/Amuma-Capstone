@@ -66,6 +66,9 @@ CREATE TABLE admission_diagnosis (
         REFERENCES diagnosis_cases (diagnosis_case_id) ON DELETE SET NULL,
     description varchar(255) NULL,
     amount numeric(10, 2) NOT NULL,
+    billed varchar(255) NULL,
+    is_active boolean NOT NULL DEFAULT false,
+    date_billed date NULL,
     created_at timestamp(0) without time zone NULL,
     updated_at timestamp(0) without time zone NULL
 );

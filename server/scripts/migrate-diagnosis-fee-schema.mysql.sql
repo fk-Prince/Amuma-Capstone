@@ -63,6 +63,9 @@ CREATE TABLE admission_diagnosis (
     diagnosis_case_id BIGINT UNSIGNED NULL,
     description VARCHAR(255) NULL,
     amount DECIMAL(10, 2) NOT NULL,
+    billed VARCHAR(255) NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 0,
+    date_billed DATE NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     CONSTRAINT admission_diagnosis_charge_foreign

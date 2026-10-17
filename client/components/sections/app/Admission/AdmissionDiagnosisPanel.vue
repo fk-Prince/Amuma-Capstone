@@ -279,6 +279,44 @@
                                 errorFor(activeIndex, 'description')
                             "
                         />
+
+                        <div :key="`billed-${active.key}`">
+                            <p
+                                class="mb-2 text-sm font-medium text-slate-700 dark:text-gray-300"
+                            >
+                                Billed
+                            </p>
+
+                            <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                                <label
+                                    v-for="option in BILLED_OPTIONS"
+                                    :key="option.value"
+                                    class="flex cursor-pointer items-center gap-2"
+                                >
+                                    <input
+                                        v-model="active.billed"
+                                        type="radio"
+                                        :name="`billed-${active.key}`"
+                                        :value="option.value"
+                                        :disabled="submitting"
+                                        class="h-3.5 w-3.5 shrink-0 cursor-pointer border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                                    />
+                                    <span
+                                        class="text-sm text-slate-600 dark:text-gray-300"
+                                    >
+                                        {{ option.label }}
+                                    </span>
+                                </label>
+                            </div>
+
+                            <p
+                                v-if="active.billed === 'monthly'"
+                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                            >
+                                Billed again on a new invoice every month
+                                while the patient is admitted.
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -488,14 +526,9 @@
                                     active.diagnosis_uuid ===
                                     item.uuid
                                         ? 'bg-primary/5'
-                                        : isCharged(item)
-                                          ? ''
-                                          : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                                        : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                 "
-                                :disabled="
-                                    isCharged(item) ||
-                                    takenByOthers.has(item.uuid)
-                                "
+                                :disabled="takenByOthers.has(item.uuid)"
                                 @click="pickDiagnosis(item.uuid)"
                             >
                                 <div class="min-w-0">
@@ -551,6 +584,23 @@
                                         </p>
                                         <p
                                             v-if="
+                                                item.admission_charge.billed ===
+                                                    'monthly' &&
+                                                item.admission_charge
+                                                    .next_bill_date
+                                            "
+                                            class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
+                                        >
+                                            Billed monthly · next
+                                            {{
+                                                formatDate(
+                                                    item.admission_charge
+                                                        .next_bill_date,
+                                                )
+                                            }}
+                                        </p>
+                                        <p
+                                            v-if="
                                                 item.admission_charge
                                                     .invoice_code
                                             "
@@ -601,7 +651,7 @@
                                     @click="startCharge(item)"
                                 >
                                     <RotateCw class="h-3.5 w-3.5" />
-                                    Charge again
+                                    Charge
                                 </button>
                             </div>
 
@@ -643,19 +693,23 @@
                                     </button>
                                 </template>
 
-                                <span
-                                    v-else
-                                    class="ml-4 text-[11px] text-slate-400 dark:text-gray-500"
+                                <button
+                                    type="button"
+                                    class="ml-4 inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80 disabled:opacity-50"
+                                    :disabled="submitting"
+                                    @click="startCharge(item)"
                                 >
-                                    Locked · payment made
-                                </span>
+                                    <RotateCw class="h-3.5 w-3.5" />
+                                    Charge
+                                </button>
 
                                 <div
                                     v-if="removingUuid === item.uuid"
                                     class="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-500/10 dark:text-red-300"
                                 >
-                                    Remove this diagnosis case and void its
-                                    invoice?
+                                    Remove this diagnosis case and close its
+                                    invoice? Anything already paid stays as
+                                    credit.
                                     <button
                                         type="button"
                                         class="font-semibold underline disabled:opacity-50"
@@ -796,7 +850,16 @@ interface BilledCase {
     editable?: boolean;
     // The stay was extended after it was charged, so it has no invoice now.
     needs_charge?: boolean;
+    billed?: Billed;
+    next_bill_date?: string | null;
 }
+
+type Billed = "one_time" | "monthly";
+
+const BILLED_OPTIONS: { value: Billed; label: string }[] = [
+    { value: "one_time", label: "One time" },
+    { value: "monthly", label: "Monthly" },
+];
 
 interface PatientDiagnosis {
     uuid: string;
@@ -811,6 +874,7 @@ interface Entry {
     case_uuid: string;
     amount: number | string;
     description: string;
+    billed: Billed;
 }
 
 const route = useRoute();
@@ -846,6 +910,7 @@ const newEntry = (): Entry => ({
     case_uuid: "",
     amount: "",
     description: "",
+    billed: "one_time",
 });
 
 const entries = ref<Entry[]>([newEntry()]);
@@ -901,10 +966,7 @@ const billedRows = computed(() => diagnoses.value.filter(isCharged));
 
 const diagnosisItems = computed(() => [
     ...diagnoses.value
-        .filter(
-            (item) =>
-                !isCharged(item) && !takenByOthers.value.has(item.uuid),
-        )
+        .filter((item) => !takenByOthers.value.has(item.uuid))
         .map((item) => ({
             label: item.diagnosis_date
                 ? `${item.diagnosis} — ${formatDate(item.diagnosis_date)}`
@@ -967,6 +1029,7 @@ function startEdit(item: PatientDiagnosis) {
             case_uuid: charge.case_uuid ?? "",
             amount: charge.amount,
             description: charge.description ?? "",
+            billed: charge.billed ?? "one_time",
         },
     ];
     activeIndex.value = 0;
@@ -977,6 +1040,8 @@ function startCharge(item: PatientDiagnosis) {
 
     if (!charge) return;
 
+    editingUuid.value = "";
+    removingUuid.value = "";
     submitError.value = "";
     errors.value = {};
     cancelNewDiagnosis();
@@ -987,6 +1052,7 @@ function startCharge(item: PatientDiagnosis) {
         case_uuid: charge.case_uuid ?? "",
         amount: charge.amount,
         description: charge.description ?? "",
+        billed: charge.billed ?? "one_time",
     };
 
     const blank = entries.value.findIndex(
@@ -1271,6 +1337,7 @@ async function submit() {
                 diagnosis_case_uuid: entry.case_uuid,
                 amount: Number(entry.amount),
                 description: entry.description.trim() || undefined,
+                billed: entry.billed,
             });
 
             success(saved?.message ?? "Diagnosis case updated.");
@@ -1292,6 +1359,7 @@ async function submit() {
                 diagnosis_case_uuid: entry.case_uuid,
                 amount: Number(entry.amount),
                 description: entry.description.trim() || undefined,
+                billed: entry.billed,
             })),
         });
 

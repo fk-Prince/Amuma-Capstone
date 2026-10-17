@@ -11,7 +11,9 @@ use App\Repository\AdmissionChargeDiagnosisRepository;
 use App\Repository\DiagnosisCaseRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DiagnosisFeeService
@@ -21,13 +23,10 @@ class DiagnosisFeeService
         private AdmissionChargeDiagnosisRepository $admissionChargeRepository,
         private InvoiceRepository $invoiceRepository,
         private PatientRepository $patientRepository,
+        private AdmissionPeriodService $periods,
     ) {}
 
-    /*
-        Diagnoses just recorded with the patient, each optionally carrying the
-        diagnosis case the facility prices it under. Every fee carries its
-        monthly amount.
-    */
+
     public function fromCreated(array $created, int $branchId): Collection
     {
         return collect($created)
@@ -40,10 +39,7 @@ class DiagnosisFeeService
             ->values();
     }
 
-    /*
-        Diagnoses already on the patient's record, picked as
-        [{patient_diagnosis_uuid, diagnosis_case_uuid, amount?, description?}].
-    */
+
     public function fromRequest(mixed $entries, Patient $patient, int $branchId): Collection
     {
         $fees = collect();
@@ -88,6 +84,16 @@ class DiagnosisFeeService
 
             $fee['description'] = $description !== '' ? $description : null;
 
+            $billed = $entry['billed'] ?? AdmissionDiagnosis::BILLED_ONE_TIME;
+
+            if (!in_array($billed, [AdmissionDiagnosis::BILLED_ONE_TIME, AdmissionDiagnosis::BILLED_MONTHLY], true)) {
+                throw ValidationException::withMessages([
+                    "diagnoses.$index.billed" => 'Choose one time or monthly.',
+                ]);
+            }
+
+            $fee['billed'] = $billed;
+
             $fees->push($fee);
         }
 
@@ -99,11 +105,7 @@ class DiagnosisFeeService
         return $this->patientRepository->findDiagnosis($patient, $uuid);
     }
 
-    /*
-        Bills the fees on an invoice of their own, against the period the stay
-        is in, and keeps one row per diagnosis under it. The amounts are billed
-        as entered. Returns null when there is nothing to bill.
-    */
+
     public function bill(PatientAdmission $admission, AdmissionPeriod $period, Collection $fees, int $branchId): ?Invoice
     {
         $billable = $fees->filter(fn(array $fee) => round((float) $fee['amount'], 2) >= 0.01);
@@ -127,13 +129,20 @@ class DiagnosisFeeService
         ]);
 
         foreach ($billable as $fee) {
-            $this->admissionChargeRepository->createDiagnosis([
+            $row = $this->admissionChargeRepository->createDiagnosis([
                 'admission_charge_diagnosis_id' => $charge->admission_charge_diagnosis_id,
                 'patient_diagnosis_id' => $fee['diagnosis']->patient_diagnosis_id,
                 'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                 'description' => $fee['description'] ?? null,
                 'amount' => round((float) $fee['amount'], 2),
-            ]);
+            ] + $this->recurrence($fee));
+
+            // The newest charge carries the monthly billing from here on.
+            $this->admissionChargeRepository->stopRecurring(
+                $admission->patient_admission_id,
+                $fee['diagnosis']->patient_diagnosis_id,
+                $row->admission_diagnosis_id
+            );
         }
 
         Invoice::forgetPatientInvoiceIds();
@@ -141,11 +150,53 @@ class DiagnosisFeeService
         return $invoice;
     }
 
-    /*
-        What an admission is billed for each diagnosis, keyed by diagnosis id,
-        as it was last charged. Once the stay has been extended after that
-        charge it has no invoice to show and needs charging again.
-    */
+    public function recurrence(array $fee, ?AdmissionDiagnosis $row = null): array
+    {
+        if (($fee['billed'] ?? null) !== AdmissionDiagnosis::BILLED_MONTHLY) {
+            return ['billed' => AdmissionDiagnosis::BILLED_ONE_TIME, 'is_active' => false, 'date_billed' => null];
+        }
+
+        $next = $fee['date_billed']
+            ?? ($row?->is_active ? $row->date_billed?->toDateString() : null)
+            ?? now()->addMonthNoOverflow()->toDateString();
+
+        return ['billed' => AdmissionDiagnosis::BILLED_MONTHLY, 'is_active' => true, 'date_billed' => $next];
+    }
+
+
+    public function billDue(?Carbon $today = null): int
+    {
+        $billed = 0;
+
+        foreach ($this->admissionChargeRepository->dueForRecurring($today ?? now()) as $due) {
+            DB::transaction(function () use ($due, &$billed) {
+                $row = $this->admissionChargeRepository->lockRecurring($due->admission_diagnosis_id);
+
+                $admission = $row?->charge?->admissionPeriod?->patientAdmission;
+                $period = $admission ? $this->periods->current($admission) : null;
+
+                if (!$row || !$period) {
+                    return;
+                }
+
+                $invoice = $this->bill($admission, $period, collect([[
+                    'diagnosis' => $row->patientDiagnosis,
+                    'case' => $row->diagnosisCase,
+                    'amount' => $row->amount,
+                    'description' => $row->description,
+                    'billed' => AdmissionDiagnosis::BILLED_MONTHLY,
+                    'date_billed' => $row->date_billed->copy()->addMonthNoOverflow()->toDateString(),
+                ]]), $admission->patient->branch_id);
+
+                if ($invoice) {
+                    $billed++;
+                }
+            });
+        }
+
+        return $billed;
+    }
+
     public function admissionCharges(int $admissionId): Collection
     {
         $editable = $this->admissionChargeRepository->editableDiagnosisIds($admissionId);
@@ -167,28 +218,13 @@ class DiagnosisFeeService
                     'invoice_code' => $invoice?->invoice_code,
                     'invoice_status' => $invoice?->status,
                     'balance_due' => $invoice ? (float) $invoice->balance_due : null,
+                    'billed' => $row->billed ?? AdmissionDiagnosis::BILLED_ONE_TIME,
+                    'next_bill_date' => $row->is_active ? $row->date_billed?->toDateString() : null,
                 ];
             });
     }
 
-    // A diagnosis already charged on the stay can only be charged again once
-    // the stay has been extended since.
-    public function hasCurrentCharge(int $admissionId, int $patientDiagnosisId): bool
-    {
-        $row = $this->admissionChargeRepository->forAdmission($admissionId)->get($patientDiagnosisId);
 
-        if (!$row) {
-            return false;
-        }
-
-        $extendedAt = $this->admissionChargeRepository->lastExtensionAt($admissionId);
-
-        return !$extendedAt || !$row->charge?->created_at?->lt($extendedAt);
-    }
-    /*
-        The diagnosis case last used to bill each diagnosis, keyed by the
-        diagnosis id, so a new admission can start from the same fees.
-    */
     public function lastCaseUuids(array $patientDiagnosisIds): Collection
     {
         $caseIds = $this->admissionChargeRepository->latestCaseIds($patientDiagnosisIds);

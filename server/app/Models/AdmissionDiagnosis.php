@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 // admission_charge_diagnosis, which holds the period and the invoice.
 class AdmissionDiagnosis extends Model
 {
+    // How a case is billed: once, or again every month while it is active.
+    public const BILLED_ONE_TIME = 'one_time';
+    public const BILLED_MONTHLY = 'monthly';
+
     protected $table = 'admission_diagnosis';
 
     protected $primaryKey = 'admission_diagnosis_id';
@@ -18,10 +22,15 @@ class AdmissionDiagnosis extends Model
         'diagnosis_case_id',
         'description',
         'amount',
+        'billed',
+        'is_active',
+        'date_billed',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'is_active' => 'boolean',
+        'date_billed' => 'date',
     ];
 
     // The admission period, through the charge the diagnosis is under.

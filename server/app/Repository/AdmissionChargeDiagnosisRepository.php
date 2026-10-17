@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\AdmissionChargeDiagnosis;
 use App\Models\AdmissionDiagnosis;
 use App\Models\AdmissionPeriod;
+use App\Models\PatientAdmission;
 use App\Models\Invoice;
 use Carbon\Carbon;
 
@@ -76,11 +77,10 @@ class AdmissionChargeDiagnosisRepository
         return $lock ? $query->lockForUpdate()->get() : $query->get();
     }
 
-    // Diagnoses nobody has paid toward yet, so they can still be changed or
-    // taken off, as patient diagnosis ids.
+    // Diagnoses that can still be changed or taken off, as patient diagnosis ids.
     public function editableDiagnosisIds(int $admissionId)
     {
-        return AdmissionDiagnosis::with('charge.invoice.allocations')
+        return AdmissionDiagnosis::query()
             ->whereHas(
                 'charge.admissionPeriod',
                 fn($q) => $q->where('patient_admission_id', $admissionId)
@@ -92,11 +92,44 @@ class AdmissionChargeDiagnosisRepository
             ->orderByDesc('admission_diagnosis_id')
             ->get()
             ->unique('patient_diagnosis_id')
-            ->filter(
-                fn(AdmissionDiagnosis $row) => !$row->charge?->invoice
-                    || $row->charge->invoice->allocations->isEmpty()
-            )
             ->pluck('patient_diagnosis_id');
+    }
+
+    // The monthly diagnosis cases due to be billed again as of the date.
+    public function dueForRecurring(Carbon $date)
+    {
+        return AdmissionDiagnosis::where('is_active', true)
+            ->where('billed', AdmissionDiagnosis::BILLED_MONTHLY)
+            ->whereDate('date_billed', '<=', $date->toDateString())
+            ->whereHas(
+                'charge.admissionPeriod.patientAdmission',
+                fn($query) => $query->where('status', PatientAdmission::STATUS_ADMITTED)
+            )
+            ->orderBy('admission_diagnosis_id')
+            ->get();
+    }
+
+    // Re-reads a monthly case under lock, and only while it is still active.
+    public function lockRecurring(int $id): ?AdmissionDiagnosis
+    {
+        return AdmissionDiagnosis::with('charge.admissionPeriod.patientAdmission.patient', 'patientDiagnosis', 'diagnosisCase')
+            ->where('admission_diagnosis_id', $id)
+            ->where('is_active', true)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    // A newer charge takes over the monthly billing of a diagnosis.
+    public function stopRecurring(int $admissionId, int $patientDiagnosisId, int $exceptId): void
+    {
+        AdmissionDiagnosis::where('patient_diagnosis_id', $patientDiagnosisId)
+            ->where('admission_diagnosis_id', '!=', $exceptId)
+            ->where('is_active', true)
+            ->whereHas(
+                'charge.admissionPeriod',
+                fn($query) => $query->where('patient_admission_id', $admissionId)
+            )
+            ->update(['is_active' => false]);
     }
 
     // When the stay was last extended, which leaves earlier diagnosis charges
@@ -133,6 +166,7 @@ class AdmissionChargeDiagnosisRepository
 
         $charge->update(['amount' => $amount]);
         $charge->invoice?->update(['total_amount' => $amount]);
+        $charge->invoice?->syncStatus();
     }
 
     public function latestCaseIds(array $patientDiagnosisIds)
