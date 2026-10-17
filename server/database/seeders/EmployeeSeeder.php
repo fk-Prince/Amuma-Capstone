@@ -7,16 +7,17 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
-use App\Models\EmployeeService;
 use App\Models\Module;
-use App\Models\Service;
 use App\Models\User;
+use Database\Seeders\Concerns\AssignsRandomServices;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class EmployeeSeeder extends Seeder
 {
+    use AssignsRandomServices;
+
     private const ROLES = [
         'branch_manager',
         'admission',
@@ -91,19 +92,7 @@ class EmployeeSeeder extends Seeder
                         ]
                     );
 
-                    if ($role === 'nurse') {
-                        $service = Service::where('branch_id', $branch->branch_id)->inRandomOrder()->first();
-
-                        if ($service) {
-                            EmployeeService::firstOrCreate(
-                                ['employee_branch_id' => $employeeBranch->employee_branch_id],
-                                [
-                                    'service_id' => $service->service_id,
-                                    'is_active' => true,
-                                ]
-                            );
-                        }
-                    }
+                    $this->assignRandomServices($employeeBranch, $role);
 
                     foreach (RoleEnum::permissionsFor($role) as $moduleName => $actions) {
                         $module = $modulesByName->get($moduleName);

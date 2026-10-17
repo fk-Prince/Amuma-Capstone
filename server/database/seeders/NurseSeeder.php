@@ -7,15 +7,16 @@ use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Enums\RoleEnum;
 use App\Models\EmployeePermission;
-use App\Models\EmployeeService;
 use App\Models\Module;
-use App\Models\Service;
 use App\Models\User;
+use Database\Seeders\Concerns\AssignsRandomServices;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class NurseSeeder extends Seeder
 {
+    use AssignsRandomServices;
+
     private const NURSE_COUNT = 5;
 
 
@@ -87,19 +88,7 @@ class NurseSeeder extends Seeder
                     );
                 }
 
-                $services = Service::where('branch_id', $branch->branch_id)->get();
-
-                foreach ($services as $service) {
-                    EmployeeService::firstOrCreate(
-                        [
-                            'employee_branch_id' => $employeeBranch->employee_branch_id,
-                            'service_id' => $service->service_id,
-                        ],
-                        [
-                            'is_active' => true,
-                        ]
-                    );
-                }
+                $this->assignRandomServices($employeeBranch, 'nurse');
             }
         }
     }
