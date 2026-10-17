@@ -1000,10 +1000,6 @@ function toggleBilled(checked: boolean) {
     clearError(activeIndex.value, "date_billed");
 }
 
-function isPaid(billed: BilledCase) {
-    return String(billed.invoice_status ?? "").toLowerCase() === "paid";
-}
-
 function errorFor(index: number, field: string) {
     return errors.value[`diagnoses.${index}.${field}`];
 }
@@ -1180,19 +1176,22 @@ async function saveNewDiagnosis() {
     }
 }
 
+function billedLabel(charge: BilledCase) {
+    if (charge.billed !== "monthly") return null;
+
+    if (!charge.is_active) return "Every month (paused)";
+
+    return charge.next_bill_date
+        ? `Every month, next ${formatDate(charge.next_bill_date)}`
+        : "Every month";
+}
+
 function openSlip(rows: PatientDiagnosis[]) {
     const billed = rows.filter(isCharged);
 
     if (!billed.length) return;
 
     const user = authUser.value;
-    const codes = [
-        ...new Set(
-            billed
-                .map((row) => row.admission_charge!.invoice_code)
-                .filter(Boolean) as string[],
-        ),
-    ];
 
     slip.value = {
         title: "Diagnosis Case Slip",
@@ -1202,13 +1201,12 @@ function openSlip(rows: PatientDiagnosis[]) {
         prepared_by: user
             ? [user.first_name, user.last_name].filter(Boolean).join(" ")
             : null,
-        invoice_code: billed.length > 1 ? null : (codes[0] ?? null),
+        invoice_code: null,
+        wide: true,
+        hide_cashier_note: true,
+        total_label: "Total",
         total: billed.reduce(
-            (sum, row) =>
-                sum +
-                (isPaid(row.admission_charge!)
-                    ? 0
-                    : row.admission_charge!.billed_amount),
+            (sum, row) => sum + row.admission_charge!.billed_amount,
             0,
         ),
         charges: billed.map((row) => {
@@ -1217,10 +1215,10 @@ function openSlip(rows: PatientDiagnosis[]) {
             return {
                 id: row.uuid,
                 type_label: charge.case_title ?? "Diagnosis case",
-                description:
-                    [row.diagnosis, charge.description]
-                        .filter(Boolean)
-                        .join(" · ") + (isPaid(charge) ? " (paid)" : ""),
+                description: [row.diagnosis, charge.description]
+                    .filter(Boolean)
+                    .join(" · "),
+                billed: billedLabel(charge),
                 amount: charge.billed_amount,
             };
         }),

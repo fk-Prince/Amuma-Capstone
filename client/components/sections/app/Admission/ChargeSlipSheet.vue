@@ -63,7 +63,40 @@
                 {{ slip.section || "Charges" }}
             </p>
 
-            <ul class="divide-y divide-gray-200 border-y border-gray-200">
+            <div
+                v-if="slip.wide"
+                class="border-y border-gray-200"
+            >
+                <div
+                    class="grid grid-cols-[1.3fr_1.6fr_1.1fr_auto] gap-x-6 border-b border-gray-200 py-2 text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
+                >
+                    <p>Diagnosis case</p>
+                    <p>Diagnosis</p>
+                    <p>Billed</p>
+                    <p class="text-right">Amount</p>
+                </div>
+
+                <div
+                    v-for="charge in slip.charges"
+                    :key="charge.id"
+                    class="grid grid-cols-[1.3fr_1.6fr_1.1fr_auto] gap-x-6 border-b border-gray-100 py-3 text-[12px] last:border-b-0"
+                    :class="print ? '' : 'dark:text-gray-100'"
+                >
+                    <p class="break-words font-semibold">
+                        {{ charge.type_label }}
+                    </p>
+                    <p class="break-words">{{ charge.description }}</p>
+                    <p class="break-words">{{ charge.billed || "—" }}</p>
+                    <p class="text-right font-semibold">
+                        {{ formatCurrency(charge.amount) }}
+                    </p>
+                </div>
+            </div>
+
+            <ul
+                v-else
+                class="divide-y divide-gray-200 border-y border-gray-200"
+            >
                 <li
                     v-for="charge in slip.charges"
                     :key="charge.id"
@@ -96,7 +129,7 @@
 
             <div class="flex items-center justify-between pt-1">
                 <p class="text-[12px] font-semibold uppercase tracking-wide">
-                    Amount due
+                    {{ slip.total_label || "Amount due" }}
                 </p>
 
                 <p
@@ -109,6 +142,7 @@
         </section>
 
         <section
+            v-if="!slip.hide_cashier_note"
             class="rounded-xl border border-gray-300 p-4"
             :class="print ? '' : 'bg-slate-50 dark:bg-white/5'"
         >

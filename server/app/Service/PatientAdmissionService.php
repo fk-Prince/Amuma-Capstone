@@ -1512,6 +1512,7 @@ class PatientAdmissionService
 
             'patient' => [
                 'patient_uuid' => $patient?->uuid,
+                'patient_code' => $patient?->patient_code,
                 'full_name' => $patient?->display_name ?? '',
                 'date_of_birth' => $patient?->date_of_birth,
                 'gender' => $patient?->gender,

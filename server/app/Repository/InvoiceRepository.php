@@ -1199,6 +1199,9 @@ class InvoiceRepository
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'additionalCharges.patient',
+                fn($p) =>
+                $p->where('uuid', $patientUuid)
+            )->orWhereHas(
                 'diagnosisLines.admissionPeriod.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)

@@ -6,7 +6,8 @@
             @click.self="emit('close')"
         >
             <div
-                class="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
+                class="flex max-h-[88vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
+                :class="slip.wide ? 'max-w-4xl' : 'max-w-xl'"
             >
                 <div
                     class="flex items-start justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-white/10"

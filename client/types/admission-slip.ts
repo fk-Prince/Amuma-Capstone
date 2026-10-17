@@ -1,5 +1,6 @@
 export interface AdmissionSlipPatient {
     patient_uuid: string | null;
+    patient_code?: string | null;
     full_name: string | null;
     date_of_birth: string | null;
     gender: string | null;

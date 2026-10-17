@@ -21,18 +21,18 @@
                 </h1>
             </div>
 
-            <div class="text-right">
+            <div v-if="slip.patient.patient_code" class="text-right">
                 <p
                     class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
                 >
-                    Admission No.
+                    Patient Code
                 </p>
 
                 <p
                     class="text-sm font-semibold"
                     :class="print ? '' : 'dark:text-white'"
                 >
-                    #{{ slip.admission.patient_admission_id }}
+                    {{ slip.patient.patient_code }}
                 </p>
             </div>
         </div>
