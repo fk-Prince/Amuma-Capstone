@@ -553,6 +553,7 @@
                                 />
                                 <SummaryRow
                                     label="Description"
+                                    expandable
                                     :value="form.branch.description"
                                 />
                             </section>

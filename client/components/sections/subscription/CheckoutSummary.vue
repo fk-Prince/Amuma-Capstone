@@ -182,6 +182,7 @@
 
                     <SummaryRow
                         label="Description"
+                        expandable
                         :value="checkout.agency.description || '—'"
                     />
 
@@ -276,6 +277,7 @@
 
                     <SummaryRow
                         label="Description"
+                        expandable
                         :value="checkout.branch.description || '—'"
                     />
 
