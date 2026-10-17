@@ -100,7 +100,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                'diagnosisLines.admissionPeriod.patientAdmission.patient',
             ]);
 
         if (!empty($search)) {
@@ -184,14 +184,18 @@ class InvoiceRepository
             ->get();
     }
 
-    public function owedAtDischarge(PatientAdmission $admission, array $exceptIds = [])
+    public function owedAtDischarge(PatientAdmission $admission, array $exceptIds = [], ?int $exceptPeriodId = null)
     {
         $invoiceIds = InvoiceAdmission::whereHas(
             'admissionPeriod',
             fn($query) => $query->where('patient_admission_id', $admission->patient_admission_id)
         )->pluck('invoice_id')
             ->merge($admission->additionalCharges()->pluck('invoice_id'))
-            ->merge($admission->chargeDiagnoses()->pluck('invoice_id'))
+            ->merge(
+                $admission->chargeDiagnoses()
+                    ->when($exceptPeriodId, fn($query) => $query->where('admission_period_id', '!=', $exceptPeriodId))
+                    ->pluck('invoice_id')
+            )
             ->merge(InvoiceServices::whereHas(
                 'scheduleService.schedule',
                 fn($query) => $query->where('patient_id', $admission->patient_id)
@@ -250,8 +254,8 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
-                                'invoiceAdjustments',
+                'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                'invoiceAdjustments',
             ]);
 
         $invoices = $scoped()
@@ -349,7 +353,7 @@ class InvoiceRepository
                 'invoiceAdmissionLines.admissionPeriod.patientAdmission.bed.room',
                 'invoiceAdmissionLines.admissionPeriod.branchContract',
                 'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                'diagnosisLines.admissionPeriod.patientAdmission.patient',
             ])
             ->get();
 
@@ -621,8 +625,6 @@ class InvoiceRepository
                 return [
                     'patient_admission_id' =>
                     $admission->patient_admission_id,
-
-                    'diagnosis_monthly_fee' => $admission->diagnosisMonthlyFee(),
 
                     'status' =>
                     $admission->status,
@@ -1197,7 +1199,7 @@ class InvoiceRepository
                 $p->where('uuid', $patientUuid)
             )->orWhereHas(
                 'additionalCharges.patient',
-            'diagnosisLines.admissionPeriod.patientAdmission.patient',
+                'diagnosisLines.admissionPeriod.patientAdmission.patient',
                 fn($p) =>
                 $p->where('uuid', $patientUuid)
             );

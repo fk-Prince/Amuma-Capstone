@@ -387,7 +387,7 @@ class PatientAdmissionService
                 }
 
                 if ($force) {
-                    $this->writeOffOutstanding($admission, $payload['user'] ?? null);
+                    $this->writeOffOutstanding($admission, $payload['user'] ?? null, $currentPeriod->admission_period_id);
                 }
             }
 
@@ -446,11 +446,15 @@ class PatientAdmissionService
             ));
     }
 
-    private function writeOffOutstanding(PatientAdmission $admission, ?User $user): void
+    private function writeOffOutstanding(PatientAdmission $admission, ?User $user, ?int $exceptPeriodId = null): void
     {
         $invoiceIds = $admission->invoiceAdmission()->pluck('invoice_id')
             ->merge($admission->additionalCharges()->pluck('invoice_id'))
-            ->merge($admission->chargeDiagnoses()->pluck('invoice_id'))
+            ->merge(
+                $admission->chargeDiagnoses()
+                    ->when($exceptPeriodId, fn($query) => $query->where('admission_period_id', '!=', $exceptPeriodId))
+                    ->pluck('invoice_id')
+            )
             ->filter()
             ->unique();
 
@@ -770,19 +774,18 @@ class PatientAdmissionService
                 throw new Exception('No accommodation record found for this admission.', 400);
             }
 
-            $period->loadMissing('branchContract');
-
             $fees = $this->diagnosisFees->fromRequest(
                 $payload['diagnoses'] ?? [],
                 $admission->patient,
                 $payload['branch_id']
             );
 
-            $existing = $this->diagnosisChargeRepository->forAdmission($admission->patient_admission_id);
-
-            // A diagnosis can be billed once, and can't be taken back after.
+            // A diagnosis is charged once, and again only after the stay is extended.
             foreach ($fees as $fee) {
-                if ($existing->has($fee['diagnosis']->patient_diagnosis_id)) {
+                if ($this->diagnosisFees->hasCurrentCharge(
+                    $admission->patient_admission_id,
+                    $fee['diagnosis']->patient_diagnosis_id
+                )) {
                     throw new Exception(
                         "{$fee['diagnosis']->diagnosis} already has a diagnosis case on this admission.",
                         422
@@ -790,18 +793,14 @@ class PatientAdmissionService
                 }
             }
 
-            $months = $this->diagnosisFees->billableMonths($admission, $period);
-
             if ($fees->isEmpty() || $fees->every(fn(array $fee) => (float) $fee['amount'] < 0.01)) {
                 throw new Exception('Choose a diagnosis case with an amount greater than zero.', 422);
             }
 
-            $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id'], $months);
+            $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
-                'message' => $invoice
-                    ? 'Diagnosis case added and invoiced.'
-                    : 'Diagnosis case added. This period is too far along to bill it, so it is billed from the next period.',
+                'message' => 'Diagnosis case added and invoiced.',
                 'invoice_code' => $invoice?->invoice_code,
                 'data' => $this->patientService->showPatient($payload['p_uuid']),
             ];
@@ -834,15 +833,13 @@ class PatientAdmissionService
             }
 
             foreach ($rows as $row) {
-                $months = $row->charge->months();
-
                 $this->diagnosisChargeRepository->updateDiagnosis($row, [
                     'diagnosis_case_id' => $fee['case']?->diagnosis_case_id,
                     'description' => $fee['description'] ?? null,
                     'amount' => round((float) $fee['amount'], 2),
                 ]);
 
-                $this->diagnosisChargeRepository->syncCharge($row->charge, $months);
+                $this->diagnosisChargeRepository->syncCharge($row->charge);
             }
 
             Invoice::forgetPatientInvoiceIds();
@@ -863,12 +860,11 @@ class PatientAdmissionService
 
             foreach ($rows as $row) {
                 $charge = $row->charge;
-                $months = $charge->months();
 
                 $this->diagnosisChargeRepository->deleteDiagnosis($row);
 
                 if ($charge->diagnoses()->exists()) {
-                    $this->diagnosisChargeRepository->syncCharge($charge, $months);
+                    $this->diagnosisChargeRepository->syncCharge($charge);
 
                     continue;
                 }
@@ -1016,15 +1012,7 @@ class PatientAdmissionService
                 'price'               => $contract['price'],
             ]);
 
-            // The diagnosis cases set at admission are billed again on their
-            // own invoice for this period, and can't be changed from here.
-            $diagnosisInvoice = $this->diagnosisFees->billExtension($admission, $nextPeriod, $payload['branch_id']);
-
-            $amountDue = round(
-                (float) $contract['price'] + (float) ($diagnosisInvoice?->total_amount ?? 0),
-                2
-            );
-
+            $amountDue = round((float) $contract['price'], 2);
 
             $receipt = null;
 
@@ -1040,10 +1028,7 @@ class PatientAdmissionService
                 }
 
                 $receipt = $this->invoiceService->collectForInvoices(
-                    Invoice::whereIn(
-                        'invoice_id',
-                        array_filter([$invoice->invoice_id, $diagnosisInvoice?->invoice_id])
-                    )->get(),
+                    Invoice::whereIn('invoice_id', [$invoice->invoice_id])->get(),
                     [
                         'cash' => $cash,
                         'payment_method' => $payload['payment_method'] ?? 'CASH',

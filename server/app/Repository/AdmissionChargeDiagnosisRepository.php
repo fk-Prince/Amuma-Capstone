@@ -4,7 +4,9 @@ namespace App\Repository;
 
 use App\Models\AdmissionChargeDiagnosis;
 use App\Models\AdmissionDiagnosis;
+use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
+use Carbon\Carbon;
 
 class AdmissionChargeDiagnosisRepository
 {
@@ -32,14 +34,13 @@ class AdmissionChargeDiagnosisRepository
     }
 
     // Every diagnosis billed on the admission, whichever period, each as the
-    // row it was first billed on.
+    // row it was last billed on.
     public function forAdmission(int $admissionId)
     {
         return AdmissionDiagnosis::with([
             'charge.invoice',
             'patientDiagnosis',
             'diagnosisCase',
-            'admissionPeriod.branchContract',
         ])
             ->whereHas(
                 'charge.admissionPeriod',
@@ -49,19 +50,17 @@ class AdmissionChargeDiagnosisRepository
                 'charge.invoice',
                 fn($query) => $query->whereIn('status', Invoice::CLOSED_STATUSES)
             )
-            ->orderBy('admission_diagnosis_id')
+            ->orderByDesc('admission_diagnosis_id')
             ->get()
             ->unique('patient_diagnosis_id')
             ->keyBy('patient_diagnosis_id');
     }
 
-    // Every live row a diagnosis has on the admission, one per billed period.
+    // The live row a diagnosis was last billed on, which is the one that can
+    // still be changed.
     public function rowsFor(int $admissionId, int $patientDiagnosisId, bool $lock = false)
     {
-        $query = AdmissionDiagnosis::with([
-            'charge.invoice.allocations',
-            'charge.admissionPeriod.branchContract',
-        ])
+        $query = AdmissionDiagnosis::with('charge.invoice.allocations')
             ->where('patient_diagnosis_id', $patientDiagnosisId)
             ->whereHas(
                 'charge.admissionPeriod',
@@ -70,7 +69,9 @@ class AdmissionChargeDiagnosisRepository
             ->whereDoesntHave(
                 'charge.invoice',
                 fn($q) => $q->whereIn('status', Invoice::CLOSED_STATUSES)
-            );
+            )
+            ->orderByDesc('admission_diagnosis_id')
+            ->limit(1);
 
         return $lock ? $query->lockForUpdate()->get() : $query->get();
     }
@@ -88,13 +89,26 @@ class AdmissionChargeDiagnosisRepository
                 'charge.invoice',
                 fn($q) => $q->whereIn('status', Invoice::CLOSED_STATUSES)
             )
+            ->orderByDesc('admission_diagnosis_id')
             ->get()
-            ->groupBy('patient_diagnosis_id')
-            ->filter(fn($rows) => $rows->every(
+            ->unique('patient_diagnosis_id')
+            ->filter(
                 fn(AdmissionDiagnosis $row) => !$row->charge?->invoice
                     || $row->charge->invoice->allocations->isEmpty()
-            ))
-            ->keys();
+            )
+            ->pluck('patient_diagnosis_id');
+    }
+
+    // When the stay was last extended, which leaves earlier diagnosis charges
+    // behind.
+    public function lastExtensionAt(int $admissionId): ?Carbon
+    {
+        $at = AdmissionPeriod::where('patient_admission_id', $admissionId)
+            ->where('reason', AdmissionPeriod::REASON_EXTENDED)
+            ->where('status', '!=', AdmissionPeriod::STATUS_CANCELLED)
+            ->max('created_at');
+
+        return $at ? Carbon::parse($at) : null;
     }
 
     public function updateDiagnosis(AdmissionDiagnosis $row, array $payload): void
@@ -112,11 +126,10 @@ class AdmissionChargeDiagnosisRepository
         $charge->delete();
     }
 
-    // Brings the charge, and the invoice behind it, back to what its rows come
-    // to over the months it bills.
-    public function syncCharge(AdmissionChargeDiagnosis $charge, int $months): void
+    // Brings the charge, and the invoice behind it, back to what its rows come to.
+    public function syncCharge(AdmissionChargeDiagnosis $charge): void
     {
-        $amount = round((float) $charge->diagnoses()->sum('amount') * $months, 2);
+        $amount = round((float) $charge->diagnoses()->sum('amount'), 2);
 
         $charge->update(['amount' => $amount]);
         $charge->invoice?->update(['total_amount' => $amount]);

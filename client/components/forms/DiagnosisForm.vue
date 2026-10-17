@@ -169,9 +169,8 @@
                     />
 
                     <p class="text-xs text-slate-400 dark:text-gray-500">
-                        Optional. The monthly case price is added to every
-                        admission period for this diagnosis, times 12 on a
-                        yearly plan.
+                        Optional. The case price is billed on its own invoice
+                        with the admission.
                     </p>
                 </div>
 
@@ -292,7 +291,7 @@ const props = defineProps<{
 const caseItems = computed(() => [
     { label: "No diagnosis fee", value: "" },
     ...(props.cases ?? []).map((item) => ({
-        label: `${item.title} — ${formatCurrency(item.price)} / month`,
+        label: `${item.title} — ${formatCurrency(item.price)}`,
         value: item.uuid,
     })),
 ]);

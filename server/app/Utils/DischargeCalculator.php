@@ -301,7 +301,7 @@ class DischargeCalculator
         // pays everything else the discharge leaves owing: the admission's other
         // invoices and charges, and the patient's services and schedules.
         $owedElsewhere = app(InvoiceRepository::class)
-            ->owedAtDischarge($admission, array_keys($invoices));
+            ->owedAtDischarge($admission, array_keys($invoices), $period->admission_period_id);
 
         $balanceOwed = round($owed - $offset + (float) $owedElsewhere->sum('balance_due'), 2);
         $refundApplied = round(min($refund - $offset, $balanceOwed), 2);

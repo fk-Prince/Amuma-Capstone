@@ -56,16 +56,10 @@ class AdmissionDiagnosis extends Model
         return $this->belongsTo(DiagnosisCase::class, 'diagnosis_case_id', 'diagnosis_case_id');
     }
 
-    public function monthlyAmount(): float
-    {
-        return round((float) $this->amount, 2);
-    }
-
-    // What the period billed for it: the months the charge covers, at the
-    // monthly amount.
+    // What it was billed for, as entered.
     public function getBilledAmountAttribute(): float
     {
-        return round($this->monthlyAmount() * ($this->charge?->months() ?? 0), 2);
+        return round((float) $this->amount, 2);
     }
 
     // The admission it was billed on, through its period.

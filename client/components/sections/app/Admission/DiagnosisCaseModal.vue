@@ -135,10 +135,6 @@
                                         class="whitespace-nowrap text-sm font-bold text-primary"
                                     >
                                         {{ formatCurrency(item.price) }}
-                                        <span
-                                            class="text-[11px] font-medium text-gray-400"
-                                            >/ month</span
-                                        >
                                     </span>
                                 </div>
 

@@ -89,7 +89,7 @@ const rows = ref<{ uuid: string; diagnosis: string; case_uuid: string }[]>([]);
 const caseItems = computed(() => [
     { label: "No diagnosis fee", value: "" },
     ...cases.value.map((item) => ({
-        label: `${item.title} — ${formatCurrency(item.price)} / month`,
+        label: `${item.title} — ${formatCurrency(item.price)}`,
         value: item.uuid,
     })),
 ]);

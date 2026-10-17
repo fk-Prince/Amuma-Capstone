@@ -221,7 +221,7 @@
                                         >
                                             {{
                                                 activeCase
-                                                    ? `${formatCurrency(activeCase.price)} / month`
+                                                    ? formatCurrency(activeCase.price)
                                                     : "One diagnosis case per diagnosis"
                                             }}
                                         </p>
@@ -258,7 +258,7 @@
                         <BaseInput
                             :key="`amount-${active.key}`"
                             v-model="active.amount"
-                            label="Amount per month"
+                            label="Amount"
                             mode="number"
                             placeholder="0.00"
                             required
@@ -488,12 +488,12 @@
                                     active.diagnosis_uuid ===
                                     item.uuid
                                         ? 'bg-primary/5'
-                                        : item.admission_charge
+                                        : isCharged(item)
                                           ? ''
                                           : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                 "
                                 :disabled="
-                                    !!item.admission_charge ||
+                                    isCharged(item) ||
                                     takenByOthers.has(item.uuid)
                                 "
                                 @click="pickDiagnosis(item.uuid)"
@@ -534,7 +534,6 @@
                                                         .amount,
                                                 )
                                             }}
-                                            / mo
                                         </p>
                                         <p
                                             v-if="
@@ -551,6 +550,10 @@
                                             }}
                                         </p>
                                         <p
+                                            v-if="
+                                                item.admission_charge
+                                                    .invoice_code
+                                            "
                                             class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500"
                                         >
                                             {{
@@ -572,9 +575,7 @@
                                     Selected
                                 </span>
                                 <span
-                                    v-else-if="
-                                        item.admission_charge
-                                    "
+                                    v-else-if="isCharged(item)"
                                     class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                                 >
                                     Charged
@@ -590,7 +591,22 @@
                             </button>
 
                             <div
-                                v-if="item.admission_charge"
+                                v-if="item.admission_charge?.needs_charge"
+                                class="px-4 pb-3"
+                            >
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80 disabled:opacity-50"
+                                    :disabled="submitting"
+                                    @click="startCharge(item)"
+                                >
+                                    <RotateCw class="h-3.5 w-3.5" />
+                                    Charge again
+                                </button>
+                            </div>
+
+                            <div
+                                v-else-if="item.admission_charge"
                                 class="px-4 pb-3"
                             >
                                 <button
@@ -667,20 +683,6 @@
         <div
             class="border-t border-slate-100 px-6 py-4 dark:border-white/10"
         >
-            <p
-                v-if="partialMonths"
-                class="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-            >
-                This period has already started, so a new diagnosis case is
-                billed for {{ months }} of its {{ fullMonths }}
-                {{ fullMonths === 1 ? "month" : "months" }}.
-                {{
-                    months === 0
-                        ? "It is billed from the next period."
-                        : "The next period bills the full amount."
-                }}
-            </p>
-
             <div
                 class="mb-3 flex items-center justify-between text-sm"
             >
@@ -690,13 +692,10 @@
                         filledEntries.length === 1
                             ? "case"
                             : "cases"
-                    }}
-                    ·
-                    {{ months }}
-                    {{ months === 1 ? "month" : "months" }})
+                    }})
                 </span>
                 <span class="text-lg font-bold tracking-tight">
-                    {{ formatCurrency(total * months) }}
+                    {{ formatCurrency(total) }}
                 </span>
             </div>
 
@@ -762,6 +761,7 @@ import {
     Check,
     Plus,
     Printer,
+    RotateCw,
     Stethoscope,
     Trash2,
     UploadCloud,
@@ -794,6 +794,8 @@ interface BilledCase {
     invoice_status: string | null;
     balance_due: number | null;
     editable?: boolean;
+    // The stay was extended after it was charged, so it has no invoice now.
+    needs_charge?: boolean;
 }
 
 interface PatientDiagnosis {
@@ -817,8 +819,6 @@ const props = defineProps<{
     patientUuid: string;
     patientName?: string | null;
     admissionId?: number;
-    // The admission's billing cycle, which decides how many months are billed.
-    billingCycle?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -832,39 +832,6 @@ const authUser = useAuthUser();
 const branchStore = useBranchStore();
 
 const NEW_DIAGNOSIS = "__new__";
-
-const isYearly = computed(
-    () =>
-        String(props.billingCycle ?? "")
-            .trim()
-            .toLowerCase() === "yearly",
-);
-const fullMonths = computed(() => (isYearly.value ? 12 : 1));
-
-// Months of the period still to bill. Once the stay is running the months
-// already gone, and a month more than a week in, are left out.
-const billableMonths = ref<number | null>(null);
-
-const months = computed(() => {
-    if (editingUuid.value) {
-        const charge = diagnoses.value.find(
-            (item) => item.uuid === editingUuid.value,
-        )?.admission_charge;
-
-        return charge && charge.amount > 0
-            ? Math.round(charge.billed_amount / charge.amount)
-            : 0;
-    }
-
-    return billableMonths.value ?? fullMonths.value;
-});
-
-const partialMonths = computed(
-    () =>
-        !editingUuid.value &&
-        billableMonths.value !== null &&
-        billableMonths.value < fullMonths.value,
-);
 
 const loading = ref(false);
 const loadError = ref("");
@@ -925,15 +892,18 @@ const takenByOthers = computed(
         ),
 );
 
-const billedRows = computed(() =>
-    diagnoses.value.filter((item) => item.admission_charge),
-);
+// A diagnosis whose stay was extended since it was charged has no invoice
+// and can be charged again.
+const isCharged = (item: PatientDiagnosis) =>
+    !!item.admission_charge && !item.admission_charge.needs_charge;
+
+const billedRows = computed(() => diagnoses.value.filter(isCharged));
 
 const diagnosisItems = computed(() => [
     ...diagnoses.value
         .filter(
             (item) =>
-                !item.admission_charge && !takenByOthers.value.has(item.uuid),
+                !isCharged(item) && !takenByOthers.value.has(item.uuid),
         )
         .map((item) => ({
             label: item.diagnosis_date
@@ -1000,6 +970,36 @@ function startEdit(item: PatientDiagnosis) {
         },
     ];
     activeIndex.value = 0;
+}
+
+function startCharge(item: PatientDiagnosis) {
+    const charge = item.admission_charge;
+
+    if (!charge) return;
+
+    submitError.value = "";
+    errors.value = {};
+    cancelNewDiagnosis();
+
+    const entry: Entry = {
+        ...newEntry(),
+        diagnosis_uuid: item.uuid,
+        case_uuid: charge.case_uuid ?? "",
+        amount: charge.amount,
+        description: charge.description ?? "",
+    };
+
+    const blank = entries.value.findIndex(
+        (candidate) => !candidate.diagnosis_uuid && !candidate.case_uuid,
+    );
+
+    if (blank === -1) {
+        entries.value.push(entry);
+        activeIndex.value = entries.value.length - 1;
+    } else {
+        entries.value[blank] = entry;
+        activeIndex.value = blank;
+    }
 }
 
 function cancelEdit() {
@@ -1169,7 +1169,7 @@ async function saveNewDiagnosis() {
 }
 
 function openSlip(rows: PatientDiagnosis[]) {
-    const billed = rows.filter((row) => row.admission_charge);
+    const billed = rows.filter(isCharged);
 
     if (!billed.length) return;
 
@@ -1344,7 +1344,6 @@ async function load() {
             }),
         ]);
 
-        billableMonths.value = diagnosisList.billable_months ?? null;
         cases.value = caseList.data ?? [];
         diagnoses.value = diagnosisList.data ?? [];
 

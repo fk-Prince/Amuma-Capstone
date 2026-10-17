@@ -189,7 +189,6 @@ export interface Admission {
     current_contract?: Contract | null;
     // Monthly diagnosis amount added to every admission period (times 12 on
     // a yearly period).
-    diagnosis_monthly_fee?: number;
     // The invoices the admission's diagnosis cases are billed on.
     diagnosis_invoices?: {
         invoice_code: string;

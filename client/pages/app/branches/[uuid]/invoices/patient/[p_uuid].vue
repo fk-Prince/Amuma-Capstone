@@ -3302,24 +3302,10 @@ const extendPayor = ref("");
 
 const extendPaymentOpen = computed(() => pendingExtend.value !== null);
 
-// Monthly diagnosis amount on the admission, times twelve on a yearly extension.
-const extendDiagnosisFee = computed(
-    () =>
-        Number((extendAdmission.value as any)?.diagnosis_monthly_fee ?? 0) *
-        (String(pendingExtend.value?.contract?.billing_cycle ?? "")
-            .trim()
-            .toUpperCase() === "YEARLY"
-            ? 12
-            : 1),
-);
-
 const extendAmountDue = computed(
     () =>
-        Math.round(
-            (Number(pendingExtend.value?.contract?.price ?? 0) +
-                extendDiagnosisFee.value) *
-                100,
-        ) / 100,
+        Math.round(Number(pendingExtend.value?.contract?.price ?? 0) * 100) /
+        100,
 );
 
 const extendPlanLabel = computed(() => {
@@ -3344,9 +3330,7 @@ function handleExtendSelect(payload: ExtendSelection) {
     }
 
     pendingExtend.value = payload;
-    extendCash.value =
-        Number(payload.contract?.price ?? 0) + extendDiagnosisFee.value ||
-        null;
+    extendCash.value = Number(payload.contract?.price ?? 0) || null;
     extendPayor.value = "";
     extendModalOpen.value = false;
 }

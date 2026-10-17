@@ -13,7 +13,8 @@ class OutstandingBalance
         mixed $invoices,
         ?Invoice $dischargeInvoice = null,
         array $futurePeriodIds = [],
-        ?int $admissionId = null
+        ?int $admissionId = null,
+        ?int $currentPeriodId = null
     ): array {
         $invoices = collect($invoices)
             ->reject(fn($invoice) => $invoice->status === Invoice::STATUS_VOID)
@@ -51,6 +52,10 @@ class OutstandingBalance
             fn($invoice) => in_array($invoice->invoice_id, $medicalIds, true)
         );
 
+        // The diagnosis cases billed on the period being discharged are left
+        // out of the balance, as are those on periods that have not started.
+        $skippedPeriodIds = array_filter([...$futurePeriodIds, $currentPeriodId]);
+
         $due = fn($invoice) => round(
             max(
                 0,
@@ -58,7 +63,7 @@ class OutstandingBalance
                     ->whereIn('admission_period_id', $futurePeriodIds)
                     ->sum('price')
                     - $invoice->diagnosisLines
-                        ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $futurePeriodIds, true))
+                        ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $skippedPeriodIds, true))
                         ->sum('billed_amount')
             ),
             2

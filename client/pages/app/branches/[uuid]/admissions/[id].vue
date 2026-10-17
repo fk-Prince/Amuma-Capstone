@@ -795,7 +795,6 @@
                         :patient-uuid="id"
                         :patient-name="patient?.full_name"
                         :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
-                        :billing-cycle="(currentAdmission ?? latestAdmission)?.current_contract?.billing_cycle"
                         @close="diagnosisView = false"
                         @saved="patient = $event as PatientRetrieve"
                     />

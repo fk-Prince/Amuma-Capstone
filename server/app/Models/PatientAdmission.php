@@ -102,21 +102,6 @@ class PatientAdmission extends Model
         );
     }
 
-    // The monthly amount of the diagnosis cases set when the patient was
-    // admitted, which every period bills again.
-    public function diagnosisMonthlyFee(): float
-    {
-        return round((float) AdmissionDiagnosis::with('admissionPeriod.branchContract')
-            ->whereHas(
-                'charge.admissionPeriod',
-                fn($query) => $query->where('patient_admission_id', $this->patient_admission_id)
-            )
-            ->orderBy('admission_diagnosis_id')
-            ->get()
-            ->unique('patient_diagnosis_id')
-            ->sum(fn(AdmissionDiagnosis $row) => $row->monthlyAmount()), 2);
-    }
-
     public function periods()
     {
         return $this->hasMany(

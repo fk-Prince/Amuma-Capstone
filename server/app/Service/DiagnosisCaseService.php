@@ -50,13 +50,7 @@ class DiagnosisCaseService
             ? $this->diagnosisFees->admissionCharges((int) $payload['patient_admission_id'])
             : collect();
 
-        $months = !empty($payload['patient_admission_id'])
-            ? $this->diagnosisFees->monthsForAdmission((int) $payload['patient_admission_id'])
-            : null;
-
         return response()->json([
-            'billable_months' => $months['billable'] ?? null,
-            'full_months' => $months['full'] ?? null,
             'data' => $diagnoses->map(fn($diagnosis) => [
                 'uuid' => $diagnosis->uuid,
                 'diagnosis' => $diagnosis->diagnosis,

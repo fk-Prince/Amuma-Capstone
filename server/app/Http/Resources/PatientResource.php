@@ -290,8 +290,6 @@ class PatientResource extends JsonResource
 
             'current_period' => $this->formatPeriod($period),
 
-            'diagnosis_monthly_fee' => $admission->diagnosisMonthlyFee(),
-
             'diagnosis_invoices' => $admission->chargeDiagnoses()
                 ->with('invoice')
                 ->get()
@@ -322,7 +320,8 @@ class PatientResource extends JsonResource
                         ($this->futurePeriods($admission, $period) ?? collect())
                             ->pluck('admission_period_id')
                             ->all(),
-                        $admission->patient_admission_id
+                        $admission->patient_admission_id,
+                        $period->admission_period_id
                     ),
                 ]
                 : null,
