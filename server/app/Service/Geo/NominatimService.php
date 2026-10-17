@@ -66,7 +66,7 @@ class NominatimService
         $response = $this->client()->get("{$this->url}/search", [
             'q' => $address,
             'format' => 'json',
-            'limit' => 1,
+            'limit' => 5,
             'countrycodes' => 'ph',
             'addressdetails' => 1,
         ]);
@@ -74,10 +74,12 @@ class NominatimService
 
         $data = $response->json();
 
-        if (!empty($data[0])) {
+        if (!empty($data)) {
+            $best = $this->bestMatch($address, $data);
+
             return [
-                'lat' => $data[0]['lat'],
-                'lng' => $data[0]['lon'],
+                'lat' => $best['lat'],
+                'lng' => $best['lon'],
             ];
         }
 
@@ -85,6 +87,28 @@ class NominatimService
         return null;
     }
 
+
+    // Nominatim's first hit is its own idea of the closest text match, which is
+    // often the right street name in the wrong city. Prefer the result that
+    // contains the most of the parts the person actually typed.
+    private function bestMatch(string $address, array $results): array
+    {
+        $parts = collect(explode(',', mb_strtolower($address)))
+            ->map(fn($part) => trim($part))
+            ->filter(fn($part) => mb_strlen($part) > 2)
+            ->values();
+
+        return collect($results)
+            ->map(function (array $result) use ($parts) {
+                $name = mb_strtolower((string) ($result['display_name'] ?? ''));
+
+                $result['_score'] = $parts->filter(fn($part) => str_contains($name, $part))->count();
+
+                return $result;
+            })
+            ->sortByDesc('_score')
+            ->first();
+    }
 
     public function getCityByCoords(float $lat, float $lon)
     {

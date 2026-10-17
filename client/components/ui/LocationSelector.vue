@@ -194,6 +194,7 @@ async function applyTypedAddress() {
             return;
         }
 
+        keepTypedAddress(query);
         confirmLocation();
     } catch (error) {
         console.error("[geocode] Failed:", error);
@@ -204,6 +205,40 @@ async function applyTypedAddress() {
     } finally {
         isLocating.value = false;
     }
+}
+
+function keepTypedAddress(text: string) {
+    if (!selectedLocation.value) return;
+
+    const parts = text
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    if (
+        parts.length > 1 &&
+        /^(ph|philippines)$/i.test(parts[parts.length - 1]!)
+    ) {
+        parts.pop();
+    }
+
+    if (parts.length < 2) return;
+
+    const province = parts.length >= 3 ? parts.pop()! : "";
+    const city = parts.pop()!;
+    const street = parts.join(", ");
+    const found = selectedLocation.value;
+    const nextProvince = province || found.province;
+    const country = found.country || "Philippines";
+
+    selectedLocation.value = {
+        ...found,
+        street,
+        city,
+        province: nextProvince,
+        country,
+        label: [street, city, nextProvince, country].filter(Boolean).join(", "),
+    };
 }
 
 const DEFAULT_CENTER: [number, number] = [7.0736, 125.611];
