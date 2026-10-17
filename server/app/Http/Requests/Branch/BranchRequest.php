@@ -41,7 +41,7 @@ class BranchRequest extends FormRequest
                 'string',
                 Rule::unique('branches', 'email')->ignore($this->input('branch_uuid'), 'uuid'),
             ],
-            'description' => ['required', 'string'],
+            'description' => ['required', 'string', 'max:2000'],
             'contact_number' => ['nullable', 'string', 'max:20'],
             'image' => [
                 'nullable',

@@ -344,16 +344,34 @@
                                 />
                             </div>
 
-                            <label
-                                class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
+                            <div
+                                class="flex flex-wrap items-center justify-between gap-2"
                             >
-                                <input
-                                    v-model="availableOnly"
-                                    type="checkbox"
-                                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
-                                />
-                                Available only
-                            </label>
+                                <label
+                                    class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
+                                >
+                                    <input
+                                        v-model="availableOnly"
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
+                                    />
+                                    Available only
+                                </label>
+
+                                <button
+                                    v-if="previousCount"
+                                    type="button"
+                                    class="rounded-full border px-3 py-1 text-[11px] font-semibold transition"
+                                    :class="
+                                        previousOnly
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-white/10 dark:bg-secondary dark:text-gray-300'
+                                    "
+                                    @click="previousOnly = !previousOnly"
+                                >
+                                    Previously assigned ({{ previousCount }})
+                                </button>
+                            </div>
                         </div>
 
                         <div
@@ -378,7 +396,9 @@
                                         {{
                                             employeeSearch
                                                 ? "No caregivers match that search"
-                                                : "No caregivers available"
+                                                : previousOnly
+                                                  ? "No previously assigned caregivers available"
+                                                  : "No caregivers available"
                                         }}
                                     </p>
                                 </div>
@@ -880,6 +900,18 @@ const bookingWindow = computed(() =>
 );
 
 const availableOnly = ref(false);
+const previousOnly = ref(false);
+
+const previousIds = computed(
+    () =>
+        new Set(
+            (props.schedule?.previous_assignees ?? []).map((assignee) =>
+                Number(assignee.employee_id),
+            ),
+        ),
+);
+
+const previousCount = computed(() => previousIds.value.size);
 
 function assignmentRank(employee: Employee): number {
     const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
@@ -898,7 +930,9 @@ const filteredEmployees = computed(() => {
             isCaregiver(employee) &&
             (!availableOnly.value ||
                 isSelected(employee.employee_id) ||
-                (!employee.is_busy && !isAssignmentTypeMismatch(employee))),
+                (!employee.is_busy && !isAssignmentTypeMismatch(employee))) &&
+            (!previousOnly.value ||
+                previousIds.value.has(Number(employee.employee_id))),
     );
 
     const term = employeeSearch.value.trim().toLowerCase();
@@ -1008,6 +1042,8 @@ function toggleConflicts(employeeId: string | number) {
 watch(
     () => props.schedule,
     (schedule) => {
+        previousOnly.value = false;
+
         if (!schedule) {
             assignments.value = [];
             employeeData.value = [];

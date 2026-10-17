@@ -39,7 +39,7 @@
                         :rows="6"
                         placeholder="Describe your agency"
                         :allowResize="true"
-                        :textMax="1000"
+                        :textMax="2000"
                         :error="errors?.agency_description"
                         @update:modelValue="clearError('agency_description')"
                         data-field="agency_description"

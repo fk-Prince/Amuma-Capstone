@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');
-            $table->string('description', 1000)->nullable();
+            $table->string('description', 2000)->nullable();
             $table->json('settings')->nullable();
             $table->string('contact_number')->nullable();
             $table->string('image')->nullable(true);

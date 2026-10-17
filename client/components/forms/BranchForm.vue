@@ -69,7 +69,7 @@
                         label="Description"
                         required
                         mode="textarea"
-                        :textMax="1000"
+                        :textMax="2000"
                         :allowResize="true"
                         :rows="6"
                         @update:modelValue="clearError('branch_description')"

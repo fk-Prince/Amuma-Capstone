@@ -98,7 +98,7 @@ export const agencySchema = z.object({
         .string()
         .trim()
         .min(1, "Description is required")
-        .max(1000),
+        .max(2000),
 
     image: z
         .union([

@@ -25,7 +25,7 @@ class AgencyRequest extends FormRequest
         //, 'unique:agencies,name'
         return [
             'agency_name'        => ['required', 'string'],
-            'agency_description' => ['required', 'string'],
+            'agency_description' => ['required', 'string', 'max:2000'],
 
             'location.street'     => ['required', 'string'],
             'location.city'       => ['required', 'string'],

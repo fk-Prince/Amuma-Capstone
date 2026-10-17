@@ -44,7 +44,7 @@ export const branchSchema = z.object({
         .string()
         .trim()
         .min(1, "Description is required")
-        .max(1000, "Description must not exceed 1000 characters"),
+        .max(2000, "Description must not exceed 2000 characters"),
 
     contact_number: phoneNumber("Contact number is required"),
 
