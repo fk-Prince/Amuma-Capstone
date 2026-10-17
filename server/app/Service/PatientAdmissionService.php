@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Http\Resources\BookingResource;
 use App\Guard\GuardianEmailGuard;
 use App\Models\AdmissionChargeDiagnosis;
+use App\Models\AdmissionDiagnosis;
 use App\Models\AdditionalCharge;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
@@ -25,6 +26,7 @@ use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -790,6 +792,8 @@ class PatientAdmissionService
 
             $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
+            $this->notifyDiagnosisCharges($admission, $fees, $invoice);
+
             return [
                 'message' => $invoice
                     ? 'Diagnosis case added and invoiced.'
@@ -800,7 +804,47 @@ class PatientAdmissionService
         });
     }
 
-    // A diagnosis case can be changed or taken off, paid or not.
+    private function notifyDiagnosisCharges(PatientAdmission $admission, Collection $fees, ?Invoice $invoice): void
+    {
+        $patient = $admission->patient;
+
+        foreach ($fees as $fee) {
+            if (round((float) $fee['amount'], 2) < 0.01) {
+                continue;
+            }
+
+            $monthly = ($fee['billed'] ?? null) === AdmissionDiagnosis::BILLED_MONTHLY && !empty($fee['is_active']);
+            $later = !empty($fee['start_next']);
+
+            $tail = match (true) {
+                $later => ' It is first billed on ' . Carbon::parse(
+                    $this->diagnosisFees->nextAnniversary($admission, today())
+                )->format('M j, Y') . '.',
+                $monthly => ' It is billed again every month, next on ' . Carbon::parse(
+                    $this->diagnosisFees->nextAnniversary($admission, today())
+                )->format('M j, Y') . '.',
+                default => '',
+            };
+
+            $this->notificationService->notifyPatientAccess(
+                $patient,
+                sprintf(
+                    'A new charge of ₱%s was added to %s\'s bill%s: %s (%s).%s',
+                    number_format((float) $fee['amount'], 2),
+                    $patient->display_name,
+                    $later || !$invoice ? '' : ' (' . $invoice->invoice_code . ')',
+                    $fee['case']?->title ?? 'Diagnosis case',
+                    $fee['diagnosis']->diagnosis,
+                    $tail
+                ),
+                'Diagnosis Case Charge',
+                Auth::user(),
+                null,
+                $later ? null : $invoice?->invoice_code
+            );
+        }
+    }
+
     public function updateDiagnosisCase(array $payload)
     {
         return DB::transaction(function () use ($payload) {
