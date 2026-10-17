@@ -4,10 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Branch;
 use App\Models\BranchContract;
+use Database\Seeders\Concerns\PricesPerBranch;
 use Illuminate\Database\Seeder;
 
 class BranchContractSeeder extends Seeder
 {
+    use PricesPerBranch;
+
     public function run(): void
     {
         $branches = Branch::orderBy('branch_id')->get();
@@ -55,12 +58,30 @@ class BranchContractSeeder extends Seeder
             ],
         ];
 
-        foreach ($branches as $branch) {
+        foreach ($branches->values() as $position => $branch) {
+            $facility = $branch->hasFacilitySubscription();
+            $homecare = $branch->hasHomecareSubscription();
+
             foreach ($contracts as $contract) {
-                BranchContract::create(array_merge($contract, [
-                    'branch_id' => $branch->branch_id,
-                    'is_active' => true,
-                ]));
+                $isFacility = $contract['category'] === BranchContract::CAREGORY_FACILITY;
+
+                if ($isFacility ? !$facility : !$homecare) {
+                    continue;
+                }
+
+                BranchContract::updateOrCreate(
+                    [
+                        'branch_id' => $branch->branch_id,
+                        'category' => $contract['category'],
+                        'accommodation_type' => $contract['accommodation_type'],
+                        'billing_cycle' => $contract['billing_cycle'],
+                    ],
+                    [
+                        'price' => $this->branchPrice($contract['price'], $position),
+                        'description' => $contract['description'],
+                        'is_active' => true,
+                    ]
+                );
             }
         }
     }

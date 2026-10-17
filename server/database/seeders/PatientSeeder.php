@@ -49,7 +49,14 @@ class PatientSeeder extends Seeder
         }
 
         foreach ($branches->values() as $index => $branch) {
+            $facility = $branch->hasFacilitySubscription();
+            $homecare = $branch->hasHomecareSubscription();
+
             foreach ($this->renamed($this->patients(), $index) as $data) {
+                if (isset($data['admission']) ? !$facility : !$homecare) {
+                    continue;
+                }
+
                 $existing = Patient::where('branch_id', $branch->branch_id)
                     ->where('first_name', $data['profile']['first_name'])
                     ->where('last_name', $data['profile']['last_name'])

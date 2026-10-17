@@ -45,7 +45,7 @@ class SubscriptionController extends Controller
 
     public function newBranchFromCapacity(SubscriptionRequest $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule(
             $request->user(),
             $branch->branch_id,
@@ -70,7 +70,7 @@ class SubscriptionController extends Controller
 
     public function newAdditionalBranch(SubscriptionRequest $request)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule(
             $request->user(),
             $branch->branch_id,

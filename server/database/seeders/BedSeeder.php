@@ -19,11 +19,13 @@ class BedSeeder extends Seeder
 
         foreach ($rooms as $room) {
             foreach (range(1, $room->capacity) as $i) {
-                Bed::create([
-                    'room_id' => $room->room_id,
-                    'bed_no'  => 'B' . $i,
-                    'status'  => Bed::STATUS_AVAILABLE,
-                ]);
+                Bed::firstOrCreate(
+                    [
+                        'room_id' => $room->room_id,
+                        'bed_no'  => 'B' . $i,
+                    ],
+                    ['status' => Bed::STATUS_AVAILABLE]
+                );
             }
         }
     }

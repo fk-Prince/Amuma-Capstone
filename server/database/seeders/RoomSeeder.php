@@ -20,6 +20,10 @@ class RoomSeeder extends Seeder
         }
 
         foreach ($branches as $branch) {
+            if (!$branch->hasFacilitySubscription()) {
+                continue;
+            }
+
             foreach (self::FLOORS as $index => $floor) {
                 $level = $index + 1;
 

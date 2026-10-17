@@ -111,6 +111,10 @@ class DiagnosisCaseSeeder extends Seeder
         }
 
         foreach ($branches as $branch) {
+            if (!$branch->hasFacilitySubscription()) {
+                continue;
+            }
+
             foreach (self::CASES as $case) {
                 DiagnosisCase::firstOrCreate(
                     [

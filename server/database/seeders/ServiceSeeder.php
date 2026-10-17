@@ -5,10 +5,13 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Service;
+use Database\Seeders\Concerns\PricesPerBranch;
 use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
+    use PricesPerBranch;
+
     private const SERVICES = [
         [
             'category_name' => 'Nursing Care',
@@ -181,7 +184,11 @@ class ServiceSeeder extends Seeder
             return;
         }
 
-        foreach ($branches as $branch) {
+        foreach ($branches->values() as $position => $branch) {
+            if (!$branch->hasHomecareSubscription()) {
+                continue;
+            }
+
             $categories = [];
 
             foreach (self::SERVICES as $service) {
@@ -202,7 +209,7 @@ class ServiceSeeder extends Seeder
                     [
                         'category_id' => $categories[$categoryName]->category_id,
                         'description' => $service['description'],
-                        'price' => $service['price'],
+                        'price' => $this->branchPrice($service['price'], $position, 10),
                         'maximum_duration' => $service['maximum_duration'],
                         'performed_by' => $service['performed_by'],
                         'is_available' => true,
