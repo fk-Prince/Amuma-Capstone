@@ -359,9 +359,9 @@
                                 </label>
 
                                 <button
-                                    v-if="previousCount"
+                                    :disabled="!previousCount"
                                     type="button"
-                                    class="rounded-full border px-3 py-1 text-[11px] font-semibold transition"
+                                    class="rounded-full border px-3 py-1 text-[11px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
                                     :class="
                                         previousOnly
                                             ? 'border-primary bg-primary text-white'

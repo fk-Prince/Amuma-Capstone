@@ -132,6 +132,20 @@
                                 {{ employeeGroupLabel }}
                             </span>
 
+                            <button
+                                :disabled="!previousCount"
+                                type="button"
+                                class="rounded-full border px-3 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+                                :class="
+                                    previousOnly
+                                        ? 'border-primary bg-primary text-white'
+                                        : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-white/10 dark:bg-secondary dark:text-gray-300'
+                                "
+                                @click="previousOnly = !previousOnly"
+                            >
+                                Previously assigned ({{ previousCount }})
+                            </button>
+
                             <div
                                 class="inline-flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 dark:border-white/10 dark:bg-secondary"
                             >
@@ -411,6 +425,10 @@ function isAssignedOnServer(employee: Employee) {
     return (employee.assigned ?? []).some((a: any) => a.is_assigned);
 }
 
+function isPreviouslyAssigned(employee: Employee) {
+    return (employee.assigned ?? []).some((a: any) => a.previously_assigned);
+}
+
 const initialAssignedIds = ref<string[]>([]);
 
 async function fetchEmployees() {
@@ -467,6 +485,7 @@ function onKeydown(e: KeyboardEvent) {
 
 const searchQuery = ref("");
 const viewFilter = ref<"unassigned" | "assigned">("unassigned");
+const previousOnly = ref(false);
 const selectedEmployees = ref<string[]>((props.modelValue ?? []).map(String));
 
 watch(
@@ -476,6 +495,7 @@ watch(
             selectedEmployees.value = (props.modelValue ?? []).map(String);
             searchQuery.value = "";
             viewFilter.value = "unassigned";
+            previousOnly.value = false;
             fetchEmployees();
         }
     },
@@ -492,13 +512,19 @@ const filteredEmployees = computed(() => {
             !keyword || name.includes(keyword) || role.includes(keyword);
 
         const matchesFilter =
-            viewFilter.value === "assigned"
-                ? isSelected(employee.employee_id)
-                : !isSelected(employee.employee_id);
+            previousOnly.value && previousCount.value > 0
+                ? isPreviouslyAssigned(employee)
+                : viewFilter.value === "assigned"
+                  ? isSelected(employee.employee_id)
+                  : !isSelected(employee.employee_id);
 
         return matchesSearch && matchesFilter;
     });
 });
+
+const previousCount = computed(
+    () => employeeData.value.filter(isPreviouslyAssigned).length,
+);
 
 const assignedCount = computed(
     () => employeeData.value.filter((e) => isSelected(e.employee_id)).length,
@@ -540,6 +566,7 @@ const staffPlural = computed(() =>
 
 const emptyStateTitle = computed(() => {
     if (searchQuery.value) return "No matching employees";
+    if (previousOnly.value) return `No previously assigned ${staffNoun.value}`;
     return viewFilter.value === "assigned"
         ? `No ${staffNoun.value} assigned yet`
         : `No unassigned ${staffNoun.value}`;
@@ -547,6 +574,9 @@ const emptyStateTitle = computed(() => {
 
 const emptyStateSubtitle = computed(() => {
     if (searchQuery.value) return "Try a different name or role.";
+    if (previousOnly.value) {
+        return `No ${staffPlural.value} were assigned to this service before.`;
+    }
     return viewFilter.value === "assigned"
         ? `Select ${staffPlural.value} from the Unassigned tab to assign them.`
         : `Every available ${staffNoun.value} has already been assigned.`;

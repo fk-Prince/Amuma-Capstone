@@ -288,8 +288,7 @@ class EmployeeRepository
             ->with([
                 'employees.users:user_id,email',
                 'employeeServices' => function ($query) use ($payload) {
-                    $query->where('service_id', $payload['service_id'])
-                        ->where('is_active', true);
+                    $query->where('service_id', $payload['service_id']);
                 },
             ])
             ->get();
@@ -308,10 +307,13 @@ class EmployeeRepository
             $employee->assignment_type = $employeeBranch->assignment_type;
             $employee->email = $employee->users?->email;
 
+            $isAssigned = $employeeBranch->employeeServices->contains('is_active', true);
+
             $employee->assigned = [
                 [
                     'service_id' => $payload['service_id'],
-                    'is_assigned' => $employeeBranch->employeeServices->isNotEmpty(),
+                    'is_assigned' => $isAssigned,
+                    'previously_assigned' => !$isAssigned && $employeeBranch->employeeServices->isNotEmpty(),
                 ],
             ];
 

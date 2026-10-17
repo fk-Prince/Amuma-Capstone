@@ -76,7 +76,11 @@ class EmployeeSeeder extends Seeder
                     $assignmentType = in_array($role, ['nurse', 'caregiver'], true) ? 'both' : null;
 
                     if ($role === 'caregiver') {
-                        $rotation = ['online', 'facility'];
+                        $rotation = array_values(array_filter([
+                            $branch->hasHomecareSubscription() ? 'online' : null,
+                            $branch->hasFacilitySubscription() ? 'facility' : null,
+                        ])) ?: ['online', 'facility'];
+
                         $assignmentType = $rotation[($n - 1) % count($rotation)];
                     }
 
