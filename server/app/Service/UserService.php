@@ -322,7 +322,15 @@ class UserService
                     ?: $transaction->branch?->name,
                 'method' => $transaction->method,
                 'amount' => (float) $transaction->amount,
-                'status' => $transaction->status,
+                // The badge says what the money did: paid, refunded or withdrawn.
+                // A withdrawal still waiting on review or turned down keeps that status.
+                'status' => match ($transaction->type) {
+                    Transaction::TYPE_PAYMENT => 'paid',
+                    Transaction::TYPE_REFUND => 'refunded',
+                    default => $transaction->status === 'completed'
+                        ? 'withdrawn'
+                        : $transaction->status,
+                },
                 'created_at' => $transaction->created_at?->toIso8601String(),
             ])
             : collect();
