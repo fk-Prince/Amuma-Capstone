@@ -333,24 +333,20 @@ const markRead = async (id: number) => {
     }
 };
 
-// A booking notification opens that booking's details; others just get marked read.
+// Staff: a booking notification opens that booking's details. Family members get
+// no link, so for them (and for other types) a click only marks it as read.
 const openNotification = async (notif: Notification) => {
     markRead(notif.id);
 
     if (notif.message_type !== "Booking" || !notif.reference_id) return;
+    if (!notif.branch?.uuid || !route.path.startsWith("/app/branches")) return;
 
     open.value = false;
 
-    const query = { reference_id: notif.reference_id };
-
-    if (route.path.startsWith("/portal")) {
-        await router.push({ path: "/portal/bookings", query });
-    } else if (notif.branch?.uuid) {
-        await router.push({
-            path: `/app/branches/${notif.branch.uuid}/bookings`,
-            query,
-        });
-    }
+    await router.push({
+        path: `/app/branches/${notif.branch.uuid}/bookings`,
+        query: { reference_id: notif.reference_id },
+    });
 };
 
 const markAllRead = async () => {
