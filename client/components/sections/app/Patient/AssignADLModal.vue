@@ -791,20 +791,8 @@ function shiftHours(entry: AssignmentEntry) {
     return minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : 0;
 }
 
-// The booking window is clamped to the end of the first day, so a booking of
-// 24 hours or more still shows a same-day window; if the caregiver keeps the
-// whole window, they cover the full booking.
+// The duty limit is per day: the start and end times are the hours worked each day.
 function longDutyHours(entry: AssignmentEntry): number {
-    const booked = Number(props.schedule?.total_hours ?? 0);
-
-    if (
-        booked >= 24 &&
-        entry.start_time === bookingWindow.value.start &&
-        entry.end_time === bookingWindow.value.end
-    ) {
-        return Math.round(booked * 10) / 10;
-    }
-
     const hours = shiftHours(entry);
 
     return hours > DUTY_LIMIT_HOURS ? hours : 0;
