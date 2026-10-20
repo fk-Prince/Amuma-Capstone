@@ -1,10 +1,7 @@
 <template>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:block">
         <header
-<<<<<<< main
-=======
             :class="{ 'di-header': intro }"
->>>>>>> branch
             class="min-w-0 flex-1 min-h-[64px] sm:min-h-[96px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 rounded-3xl lg:rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary max-lg:bg-gradient-to-br max-lg:from-white max-lg:to-primary-50/70 dark:max-lg:from-secondary dark:max-lg:to-secondary-800 shadow-[0_8px_30px_rgba(15,23,42,0.06)] lg:shadow-sm"
         >
             <div class="min-w-0 flex-1">
@@ -14,7 +11,9 @@
                     {{ pageTitle }}
                 </h1>
 
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400">
+                <p
+                    class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400"
+                >
                     {{ pageSubtitle }}
                 </p>
 
@@ -25,11 +24,15 @@
                         <Calendar
                             class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
                         />
-                        <span class="hidden sm:inline">{{ formattedDate }}</span>
+                        <span class="hidden sm:inline">{{
+                            formattedDate
+                        }}</span>
                         <span class="sm:hidden">{{ formattedShortDate }}</span>
                     </span>
 
-                    <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
+                    <span
+                        class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0"
+                    />
 
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
                         <Clock
@@ -66,11 +69,11 @@
         </header>
 
         <!-- Profile: its own floating circle next to the header on phones and tablets -->
-<<<<<<< main
-        <div v-if="user" class="shrink-0 lg:hidden">
-=======
-        <div v-if="user" class="shrink-0 lg:hidden" :class="{ 'di-pop': intro }">
->>>>>>> branch
+        <div
+            v-if="user"
+            class="shrink-0 lg:hidden"
+            :class="{ 'di-pop': intro }"
+        >
             <ClientOnly>
                 <NavbarProfileDropdown
                     :user="user"
@@ -92,10 +95,7 @@ import Notification from "~/components/ui/Notification.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
 
-<<<<<<< main
-=======
 const intro = useDashboardIntro();
->>>>>>> branch
 
 const user = useAuthUser();
 
@@ -113,11 +113,13 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     },
     "/app/owner/verification": {
         title: "Verification",
-        subtitle: "Review agency and branch documents before a subscription goes live.",
+        subtitle:
+            "Review agency and branch documents before a subscription goes live.",
     },
     "/app/owner/branches": {
         title: "Subscription",
-        subtitle: "Browse every subscription already approved, and its billing status.",
+        subtitle:
+            "Browse every subscription already approved, and its billing status.",
     },
     "/app/owner/plans": {
         title: "Plans",
@@ -125,7 +127,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     },
     "/profile": {
         title: "My Profile",
-        subtitle: "Update your personal details, contact information, and preferences.",
+        subtitle:
+            "Update your personal details, contact information, and preferences.",
     },
 };
 

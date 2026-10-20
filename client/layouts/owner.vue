@@ -1,10 +1,6 @@
 <template>
     <div
-<<<<<<< main
-        class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3"
-=======
         class="h-[100dvh] flex bg-page dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3"
->>>>>>> branch
     >
         <ClientOnly>
             <AuthTransitionScreen
@@ -61,10 +57,7 @@ import { useAuthReady } from "~/composables/useAuthUser";
 
 const isOpen = ref(false);
 const authReady = useAuthReady();
-<<<<<<< main
-=======
 
 // Enables the user's chosen color palette (see composables/useTheme.ts)
 useHead({ htmlAttrs: { "data-palette-scope": "app" } });
->>>>>>> branch
 </script>

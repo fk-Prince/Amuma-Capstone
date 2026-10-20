@@ -374,7 +374,7 @@ const InfoField = defineComponent({
 <style scoped>
 .patient-scroll {
     scrollbar-width: thin;
-    scrollbar-color: theme("colors.primary.300") transparent;
+    scrollbar-color: rgb(var(--primary-300)) transparent;
 }
 
 .patient-scroll::-webkit-scrollbar {
@@ -386,11 +386,11 @@ const InfoField = defineComponent({
 }
 
 .patient-scroll::-webkit-scrollbar-thumb {
-    background-color: theme("colors.primary.300");
+    background-color: rgb(var(--primary-300));
     border-radius: 999px;
 }
 
 .patient-scroll::-webkit-scrollbar-thumb:hover {
-    background-color: theme("colors.primary.500");
+    background-color: rgb(var(--primary-500));
 }
 </style>

@@ -11,10 +11,7 @@
         class="group fixed inset-y-2 left-2 z-40 flex w-[min(17rem,calc(100vw-1rem))] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary shadow-2xl shadow-primary-500/10 dark:shadow-black/40 transition-[transform,visibility] duration-300 ease-out lg:static lg:z-20 lg:h-full lg:w-[76px] lg:translate-x-0 lg:shadow-sm lg:transition-[width] lg:hover:w-64"
         :class="[
             open ? 'translate-x-0' : '-translate-x-[120%] max-lg:invisible',
-<<<<<<< main
-=======
             { 'di-sidebar': intro },
->>>>>>> branch
         ]"
     >
         <div
@@ -29,15 +26,7 @@
                 <div
                     class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
-<<<<<<< main
                     <p class="brand-shine text-2xl font-extrabold tracking-wide">AMUMA</p>
-=======
-                    <p
-                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(var(--primary-500)_/_35%)] dark:text-primary-300"
-                    >
-                        AMUMA
-                    </p>
->>>>>>> branch
                 </div>
             </NuxtLink>
 
@@ -118,7 +107,6 @@ import {
     ClipboardList,
     LayoutGrid,
     Users,
-    Camera,
     MessageSquare,
     CreditCard,
     Calendar,
@@ -138,10 +126,7 @@ defineProps<{
     open?: boolean;
 }>();
 
-<<<<<<< main
-=======
 const intro = useDashboardIntro();
->>>>>>> branch
 
 const emit = defineEmits<{
     close: [];
@@ -167,7 +152,6 @@ const navGroups = [
     {
         label: "Care",
         items: [
-            { label: "Monitoring", to: "/portal/monitoring", icon: Camera },
             { label: "Schedule", to: "/portal/schedule", icon: Calendar },
             { label: "Medications", to: "/portal/medications", icon: Pill },
             { label: "Messages", to: "/portal/messages", icon: MessageSquare },
@@ -186,10 +170,6 @@ const navGroups = [
 const bottomItems = [
     "/portal/overview",
     "/portal/loved-ones",
-<<<<<<< main
-=======
-    "/portal/monitoring",
->>>>>>> branch
     "/portal/schedule",
     "/portal/bookings",
     "/portal/medications",

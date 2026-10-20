@@ -211,19 +211,17 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     html:has(body.printing-statement) {
         height: auto !important;
     }
-<<<<<<< main
 }
-
 
 /* The AMUMA wordmark: a soft light sweeps across the letters. */
 .brand-shine {
     background-image: linear-gradient(
         100deg,
-        #3182ed 0%,
-        #3182ed 38%,
-        #7fb1f8 50%,
-        #3182ed 62%,
-        #3182ed 100%
+        rgb(var(--primary-500)) 0%,
+        rgb(var(--primary-500)) 38%,
+        rgb(var(--primary-300)) 50%,
+        rgb(var(--primary-500)) 62%,
+        rgb(var(--primary-500)) 100%
     );
     background-size: 250% 100%;
     background-clip: text;
@@ -246,9 +244,6 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     .brand-shine {
         animation: none;
         background-image: none;
-        color: #3182ed;
+        color: rgb(var(--primary-500));
     }
 }
-=======
-}
->>>>>>> branch

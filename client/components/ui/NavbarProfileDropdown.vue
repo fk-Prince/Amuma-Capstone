@@ -11,18 +11,20 @@
                             ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
                             : 'hover:bg-light/10',
                         themeAware ? 'dark:hover:bg-white/10' : '',
-                        avatarOnly ? '!p-0 !rounded-full hover:!bg-transparent' : '',
+                        avatarOnly
+                            ? '!p-0 !rounded-full hover:!bg-transparent'
+                            : '',
                     ]"
                 >
                     <!-- Phone / tablet badge: the photo, or gradient initials when there is no real photo -->
-                    <div v-if="avatarOnly" class="relative h-[52px] w-[52px] sm:h-16 sm:w-16">
+                    <div
+                        v-if="avatarOnly"
+                        class="relative h-[52px] w-[52px] sm:h-16 sm:w-16"
+                    >
                         <img
                             v-if="showPhoto"
                             :src="user.avatar"
-<<<<<<< main
                             referrerpolicy="no-referrer"
-=======
->>>>>>> branch
                             alt="Profile"
                             class="h-full w-full rounded-full object-cover shadow-md ring-2 ring-white dark:ring-white/15"
                             @error="avatarFailed = true"
@@ -41,14 +43,13 @@
                     <div v-else class="relative">
                         <img
                             :src="user.avatar"
-<<<<<<< main
                             referrerpolicy="no-referrer"
-=======
->>>>>>> branch
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
                             :class="[
                                 themeAware ? 'dark:border-white/20' : '',
-                                avatarOnly ? '!h-[50px] !w-[50px] sm:!h-16 sm:!w-16 !border-0 !shadow-none' : '',
+                                avatarOnly
+                                    ? '!h-[50px] !w-[50px] sm:!h-16 sm:!w-16 !border-0 !shadow-none'
+                                    : '',
                             ]"
                             alt="Profile"
                         />
@@ -119,6 +120,7 @@
                         <div class="relative shrink-0">
                             <img
                                 :src="user.avatar"
+                                referrerpolicy="no-referrer"
                                 class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                                 alt="Profile"
                             />
@@ -251,10 +253,14 @@ const initialsText = computed(() =>
 const isPlaceholderAvatar = computed(
     () =>
         !props.user.avatar ||
-        /ui-avatars|initials|default|placeholder|dicebear|identicon/i.test(props.user.avatar),
+        /ui-avatars|initials|default|placeholder|dicebear|identicon/i.test(
+            props.user.avatar,
+        ),
 );
 
-const showPhoto = computed(() => !isPlaceholderAvatar.value && !avatarFailed.value);
+const showPhoto = computed(
+    () => !isPlaceholderAvatar.value && !avatarFailed.value,
+);
 
 const roleLabel = computed(() => {
     const role = props.role?.trim();
@@ -300,30 +306,34 @@ const profileFrom = computed(() => {
 const visibleMenuItems = computed(() =>
     profileMenuDropDownList
         .filter((item) => {
-        if (
-            item.types &&
-            !item.types.some((type: string) => props.user[type as keyof User])
-        ) {
-            return false;
-        }
+            if (
+                item.types &&
+                !item.types.some(
+                    (type: string) => props.user[type as keyof User],
+                )
+            ) {
+                return false;
+            }
 
-        if (
-            item.requires &&
-            !item.requires.every((key: string) => props.user[key as keyof User])
-        ) {
-            return false;
-        }
+            if (
+                item.requires &&
+                !item.requires.every(
+                    (key: string) => props.user[key as keyof User],
+                )
+            ) {
+                return false;
+            }
 
-        if (
-            item.requiresAny &&
-            !item.requiresAny.some(
-                (key: string) => props.user[key as keyof User],
-            )
-        ) {
-            return false;
-        }
+            if (
+                item.requiresAny &&
+                !item.requiresAny.some(
+                    (key: string) => props.user[key as keyof User],
+                )
+            ) {
+                return false;
+            }
 
-        return true;
+            return true;
         })
         .map((item) => ({
             ...item,

@@ -652,9 +652,9 @@ const logout = async () => {
 .skeleton-shimmer {
     background: linear-gradient(
         90deg,
-        theme("colors.primary.50") 25%,
-        theme("colors.primary.100") 50%,
-        theme("colors.primary.50") 75%
+        rgb(var(--primary-50)) 25%,
+        rgb(var(--primary-100)) 50%,
+        rgb(var(--primary-50)) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.4s ease-in-out infinite;
@@ -672,7 +672,7 @@ const logout = async () => {
 .scroll-left {
     direction: rtl;
     scrollbar-width: thin;
-    scrollbar-color: theme("colors.primary.300") transparent;
+    scrollbar-color: rgb(var(--primary-300)) transparent;
 }
 
 .scroll-left-inner {
@@ -688,11 +688,11 @@ const logout = async () => {
 }
 
 .scroll-left::-webkit-scrollbar-thumb {
-    background-color: theme("colors.primary.300");
+    background-color: rgb(var(--primary-300));
     border-radius: 999px;
 }
 
 .scroll-left::-webkit-scrollbar-thumb:hover {
-    background-color: theme("colors.primary.500");
+    background-color: rgb(var(--primary-500));
 }
 </style>

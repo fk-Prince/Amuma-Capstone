@@ -1,10 +1,7 @@
 <template>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:block">
         <header
-<<<<<<< main
-=======
             :class="{ 'di-header': intro }"
->>>>>>> branch
             class="min-w-0 flex-1 min-h-[64px] sm:min-h-[96px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 rounded-3xl lg:rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary max-lg:bg-gradient-to-br max-lg:from-white max-lg:to-primary-50/70 dark:max-lg:from-secondary dark:max-lg:to-secondary-800 shadow-[0_8px_30px_rgba(15,23,42,0.06)] lg:shadow-sm"
         >
             <div class="min-w-0 flex-1">
@@ -14,7 +11,9 @@
                     {{ pageTitle }}
                 </h1>
 
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400">
+                <p
+                    class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400"
+                >
                     {{ pageSubtitle }}
                 </p>
 
@@ -22,15 +21,23 @@
                     class="hidden sm:flex items-center gap-2 sm:gap-3 mt-2 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400"
                 >
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Calendar class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300" />
-                        <span class="hidden sm:inline">{{ formattedDate }}</span>
+                        <Calendar
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                        />
+                        <span class="hidden sm:inline">{{
+                            formattedDate
+                        }}</span>
                         <span class="sm:hidden">{{ formattedShortDate }}</span>
                     </span>
 
-                    <span class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0" />
+                    <span
+                        class="w-px h-3 bg-gray-200 dark:bg-white/10 shrink-0"
+                    />
 
                     <span class="flex items-center gap-1.5 whitespace-nowrap">
-                        <Clock class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300" />
+                        <Clock
+                            class="w-3.5 h-3.5 text-primary-500 shrink-0 dark:text-primary-300"
+                        />
                         {{ formattedTime }}
                     </span>
                 </div>
@@ -91,11 +98,11 @@
         </header>
 
         <!-- Profile: its own floating circle next to the header on phones and tablets -->
-<<<<<<< main
-        <div v-if="user" class="shrink-0 lg:hidden">
-=======
-        <div v-if="user" class="shrink-0 lg:hidden" :class="{ 'di-pop': intro }">
->>>>>>> branch
+        <div
+            v-if="user"
+            class="shrink-0 lg:hidden"
+            :class="{ 'di-pop': intro }"
+        >
             <ClientOnly>
                 <NavbarProfileDropdown
                     :user="user"
@@ -120,10 +127,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { messageService } from "~/api/message/MessageService";
 import type { ConversationSummary } from "~/types/message";
 
-<<<<<<< main
-=======
 const intro = useDashboardIntro();
->>>>>>> branch
 
 const user = useAuthUser();
 const { $echo } = useNuxtApp();
@@ -153,10 +157,6 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "My Loved Ones",
         subtitle: "View and manage your loved one's profile and records.",
     },
-    "/portal/monitoring": {
-        title: "Monitoring",
-        subtitle: "Check in on the room, live and in real time.",
-    },
     "/portal/schedule": {
         title: "Schedule",
         subtitle: "Upcoming appointments and daily care schedule.",
@@ -179,6 +179,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "Financial Overview",
         subtitle:
             "View invoices, payments, balances, and available refunds for your loved ones.",
+    },
+    "/profile": {
+        title: "My Profile",
+        subtitle: "Update your personal details, contact information, and preferences.",
     },
 };
 
@@ -276,7 +280,9 @@ function bindMessages() {
         }
     };
 
-    ($echo as any).private(messageChannel).listen(".MessageSent", messageHandler);
+    ($echo as any)
+        .private(messageChannel)
+        .listen(".MessageSent", messageHandler);
 }
 
 watch(() => (user.value as any)?.uuid, bindMessages, { immediate: true });
