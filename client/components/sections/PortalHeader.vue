@@ -124,6 +124,7 @@ import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
+import { useMessageAlert } from "~/composables/useMessageAlert";
 import { messageService } from "~/api/message/MessageService";
 import type { ConversationSummary } from "~/types/message";
 
@@ -232,6 +233,8 @@ function goToMessages() {
     router.push("/portal/messages");
 }
 
+const { notifyNewMessage } = useMessageAlert();
+
 const conversations = ref<ConversationSummary[]>([]);
 
 const unreadMessageCount = computed(() =>
@@ -272,11 +275,16 @@ function bindMessages() {
 
         if (!row) {
             loadConversations();
+
+            if (payload.sender_type !== "client") notifyNewMessage(payload);
+
             return;
         }
 
         if (payload.sender_type !== "client") {
             row.unread_count += 1;
+
+            notifyNewMessage(payload, row.staff_name);
         }
     };
 

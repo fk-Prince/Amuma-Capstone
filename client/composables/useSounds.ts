@@ -7,24 +7,43 @@ const KEYS: Record<SoundKind, string> = {
     message: "amuma_sound_message",
 };
 
-export function isSoundEnabled(kind: SoundKind): boolean {
-    if (!import.meta.client) return false;
+const DEFAULT_VOLUME = 100;
+
+// Saved as 0-100 in localStorage. Older saves used "on" / "off".
+export function getSoundVolume(kind: SoundKind): number {
+    if (!import.meta.client) return DEFAULT_VOLUME;
 
     try {
-        return localStorage.getItem(KEYS[kind]) !== "off";
+        const raw = localStorage.getItem(KEYS[kind]);
+
+        if (raw === null || raw === "on") return DEFAULT_VOLUME;
+        if (raw === "off") return 0;
+
+        const value = Number(raw);
+
+        return Number.isFinite(value)
+            ? Math.min(100, Math.max(0, Math.round(value)))
+            : DEFAULT_VOLUME;
     } catch {
-        return true;
+        return DEFAULT_VOLUME;
     }
 }
 
-export function setSoundEnabled(kind: SoundKind, enabled: boolean): void {
+export function setSoundVolume(kind: SoundKind, volume: number): void {
     if (!import.meta.client) return;
 
     try {
-        localStorage.setItem(KEYS[kind], enabled ? "on" : "off");
+        localStorage.setItem(
+            KEYS[kind],
+            String(Math.min(100, Math.max(0, Math.round(volume)))),
+        );
     } catch {
         // storage unavailable (private mode), the choice just won't persist
     }
+}
+
+export function isSoundEnabled(kind: SoundKind): boolean {
+    return getSoundVolume(kind) > 0;
 }
 
 let ctx: AudioContext | null = null;
@@ -69,7 +88,7 @@ type ToneOptions = {
     slideTo?: number;
 };
 
-function tone(c: BaseAudioContext, o: ToneOptions) {
+function tone(c: BaseAudioContext, o: ToneOptions, out: AudioNode) {
     const { freq, start = 0, duration = 0.3, volume = 0.16, slideTo } = o;
 
     const osc = c.createOscillator();
@@ -88,29 +107,29 @@ function tone(c: BaseAudioContext, o: ToneOptions) {
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
 
     osc.connect(gain);
-    gain.connect(c.destination);
+    gain.connect(out);
     osc.start(t0);
     osc.stop(t0 + duration + 0.05);
 }
 
-export function scheduleNotification(c: BaseAudioContext) {
-    tone(c, { freq: 784, start: 0, duration: 0.55, volume: 0.15 });
-    tone(c, { freq: 1568, start: 0, duration: 0.3, volume: 0.04 });
-    tone(c, { freq: 1175, start: 0.14, duration: 0.75, volume: 0.15 });
-    tone(c, { freq: 2350, start: 0.14, duration: 0.4, volume: 0.035 });
+export function scheduleNotification(c: BaseAudioContext, out: AudioNode = c.destination) {
+    tone(c, { freq: 784, start: 0, duration: 0.55, volume: 0.15 }, out);
+    tone(c, { freq: 1568, start: 0, duration: 0.3, volume: 0.04 }, out);
+    tone(c, { freq: 1175, start: 0.14, duration: 0.75, volume: 0.15 }, out);
+    tone(c, { freq: 2350, start: 0.14, duration: 0.4, volume: 0.035 }, out);
 }
 
-export function scheduleMessage(c: BaseAudioContext) {
-    tone(c, { freq: 1047, start: 0, duration: 0.28, volume: 0.3 });
-    tone(c, { freq: 2093, start: 0, duration: 0.16, volume: 0.08 });
-    tone(c, { freq: 1319, start: 0.17, duration: 0.4, volume: 0.3 });
-    tone(c, { freq: 2637, start: 0.17, duration: 0.22, volume: 0.08 });
+export function scheduleMessage(c: BaseAudioContext, out: AudioNode = c.destination) {
+    tone(c, { freq: 1047, start: 0, duration: 0.28, volume: 0.3 }, out);
+    tone(c, { freq: 2093, start: 0, duration: 0.16, volume: 0.08 }, out);
+    tone(c, { freq: 1319, start: 0.17, duration: 0.4, volume: 0.3 }, out);
+    tone(c, { freq: 2637, start: 0.17, duration: 0.22, volume: 0.08 }, out);
 }
 
 // Soft, short "sent" cue: a quick rising blip, quieter than the incoming chime.
-export function scheduleSend(c: BaseAudioContext) {
-    tone(c, { freq: 523, slideTo: 784, start: 0, duration: 0.14, volume: 0.1 });
-    tone(c, { freq: 1568, start: 0.02, duration: 0.09, volume: 0.025 });
+export function scheduleSend(c: BaseAudioContext, out: AudioNode = c.destination) {
+    tone(c, { freq: 523, slideTo: 784, start: 0, duration: 0.14, volume: 0.1 }, out);
+    tone(c, { freq: 1568, start: 0.02, duration: 0.09, volume: 0.025 }, out);
 }
 
 const lastPlayed: Record<string, number> = {
@@ -122,12 +141,14 @@ const MIN_GAP_MS = 400;
 
 function play(
     kind: SoundKind,
-    schedule: (c: BaseAudioContext) => void,
+    schedule: (c: BaseAudioContext, out: AudioNode) => void,
     force: boolean,
     gapKey: string = kind,
 ) {
     if (!import.meta.client) return;
-    if (!force && !isSoundEnabled(kind)) return;
+    const volume = getSoundVolume(kind);
+
+    if (volume === 0) return;
 
     // several events arriving together should sound like one
     const now = Date.now();
@@ -138,13 +159,18 @@ function play(
     if (!c) return;
 
     try {
-        schedule(c);
+        // squared so the slider feels even to the ear
+        const master = c.createGain();
+        master.gain.value = (volume / 100) ** 2;
+        master.connect(c.destination);
+
+        schedule(c, master);
     } catch {
         // audio is a nice-to-have, never break the page for it
     }
 }
 
-// force: true plays even when the sound is switched off (for the Test buttons)
+// force: true skips the short gap between sounds (for the Test buttons). A volume of 0 is always silent.
 export function playNotificationSound(options: { force?: boolean } = {}) {
     play("notification", scheduleNotification, !!options.force);
 }
@@ -153,24 +179,24 @@ export function playMessageSound(options: { force?: boolean } = {}) {
     play("message", scheduleMessage, !!options.force);
 }
 
-// Plays when you hit Send. Follows the existing "message" sound switch in the
-// profile settings, so turning message sounds off silences this too.
+// Plays when you hit Send. Follows the "message" volume in the profile
+// settings, so setting it to 0 silences this too.
 export function playSendSound(options: { force?: boolean } = {}) {
     play("message", scheduleSend, !!options.force, "send");
 }
 
-// For the profile settings switches.
+// For the profile settings volume sliders (0-100).
 export function useSoundPrefs() {
-    const notification = ref(true);
-    const message = ref(true);
+    const notification = ref(DEFAULT_VOLUME);
+    const message = ref(DEFAULT_VOLUME);
 
     onMounted(() => {
-        notification.value = isSoundEnabled("notification");
-        message.value = isSoundEnabled("message");
+        notification.value = getSoundVolume("notification");
+        message.value = getSoundVolume("message");
     });
 
-    watch(notification, (value) => setSoundEnabled("notification", value));
-    watch(message, (value) => setSoundEnabled("message", value));
+    watch(notification, (value) => setSoundVolume("notification", value));
+    watch(message, (value) => setSoundVolume("message", value));
 
     return { notification, message };
 }

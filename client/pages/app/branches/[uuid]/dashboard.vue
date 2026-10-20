@@ -22,10 +22,7 @@
     </div>
 
     <div v-else class="min-h-screen-header">
-        <GeneralOverview
-            v-if="view === 'general'"
-            :key="`general-${uuid}`"
-        />
+        <GeneralOverview v-if="view === 'general'" :key="`general-${uuid}`" />
 
         <div v-else class="p-4">
             <AdmissionOverview
@@ -78,11 +75,11 @@ const activeBranch = computed(() => branchStore.activeBranch);
 
 const isSubscriptionPending = computed(() => {
     const branch = activeBranch.value;
-    return branch?.agency?.status !== "verified" || branch?.status !== "verified";
+    return (
+        branch?.agency?.status !== "verified" || branch?.status !== "verified"
+    );
 });
 
-// role_name comes from the API as agency_owner, branch_manager, admission,
-// cashier, nurse or caregiver. Normalise so "Agency Owner" also matches.
 const role = computed(() =>
     (activeBranch.value?.role_name ?? "")
         .trim()
@@ -102,8 +99,6 @@ const view = computed<View>(() => {
         case "nurse":
             return "care";
         default:
-            // agency_owner and branch_manager use the original dashboard.
-            // The agency owner picks the branch from the header dropdown.
             return "general";
     }
 });

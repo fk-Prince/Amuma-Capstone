@@ -7,7 +7,10 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Models\Booking;
+use App\Models\CaregiverShift;
+use App\Models\Employee;
 use App\Models\EmployeeBranch;
+use App\Models\ScheduleAssigned;
 use App\Models\PatientAdmission;
 use App\Repository\BookingRepository;
 use App\Repository\BranchContractRepository;
@@ -54,7 +57,7 @@ class BranchService
                 'avatar' => $row->employees->avatar,
                 'role_name' => ucwords(str_replace('_', ' ', $row->role_name)),
                 'achievements' => collect($row->employees->achievements ?? [])
-                    ->map(fn($item) => Arr::only($item, ['label']))
+                    ->map(fn($item) => Arr::only($item, ['label', 'url', 'date']))
                     ->values(),
             ])
             ->values();
@@ -313,6 +316,7 @@ class BranchService
             ->count();
 
         $staffTotal = EmployeeBranch::where('branch_id', $branchId)
+            ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
             ->distinct('employee_id')
             ->count('employee_id');
 
@@ -345,6 +349,150 @@ class BranchService
             'bookings' => $bookingOverview['bookings'],
             'contracts' => $contractStats,
             'recent_activity' => $recentActivity,
+            'my_duty' => $this->myDuty($branchId, $payload['viewer_user_id'] ?? null, $now),
+        ];
+    }
+
+    private function myDuty(int|string $branchId, int|string|null $userId, Carbon $now): ?array
+    {
+        if (!$userId) {
+            return null;
+        }
+
+        $employee = Employee::where('user_id', $userId)->first();
+
+        if (!$employee) {
+            return null;
+        }
+
+        $link = EmployeeBranch::where('employee_id', $employee->employee_id)
+            ->where('branch_id', $branchId)
+            ->first();
+
+        if (!$link || $link->status === EmployeeBranch::STATUS_INACTIVE || !in_array(strtolower((string) $link->role_name), ['caregiver', 'nurse'], true)) {
+            return null;
+        }
+
+        $dayStart = $now->copy()->startOfDay();
+        $dayEnd = $now->copy()->endOfDay();
+        $blocks = collect();
+
+        $shifts = CaregiverShift::where('caregiver_id', $employee->employee_id)
+            ->where('is_active', true)
+            ->whereHas('admission.bed.room', fn($q) => $q->where('branch_id', $branchId))
+            ->with(['admission.patient', 'admission.bed.room'])
+            ->get();
+
+        foreach ($shifts as $shift) {
+            foreach ([-1, 0] as $offset) {
+                $start = $dayStart->copy()->addDays($offset)->setTimeFromTimeString((string) $shift->start_time);
+                $end = $dayStart->copy()->addDays($offset)->setTimeFromTimeString((string) $shift->end_time);
+
+                if ($end->lessThanOrEqualTo($start)) {
+                    $end->addDay();
+                }
+
+                if ($end->lessThanOrEqualTo($dayStart) || $start->greaterThan($dayEnd)) {
+                    continue;
+                }
+
+                $room = $shift->admission?->bed?->room;
+
+                $blocks->push([
+                    'type' => 'shift',
+                    'title' => 'Facility shift',
+                    'patient_name' => $shift->admission?->patient?->display_name,
+                    'location' => $room?->room_no
+                        ? 'Room ' . $room->room_no . ($shift->admission?->bed?->bed_no ? ' · Bed ' . $shift->admission->bed->bed_no : '')
+                        : null,
+                    'start' => $start,
+                    'end' => $end,
+                ]);
+            }
+        }
+
+        $assignments = ScheduleAssigned::active()
+            ->where('employee_id', $employee->employee_id)
+            ->with(['scheduleService.service', 'scheduleService.schedule.patient'])
+            ->get()
+            ->filter(fn($assignment) => $assignment->scheduleService?->schedule)
+            ->groupBy(fn($assignment) => $assignment->scheduleService->schedule_id);
+
+        foreach ($assignments as $group) {
+            $schedule = $group->first()->scheduleService->schedule;
+
+            if ($schedule->category !== 'Homecare' || !$schedule->scheduled_at) {
+                continue;
+            }
+
+            if ((int) $schedule->patient?->branch_id !== (int) $branchId) {
+                continue;
+            }
+
+            if (in_array($schedule->status, ['cancelled', 'missed'], true)) {
+                continue;
+            }
+
+            $minutes = (int) $group->sum(function ($assignment) {
+                $service = $assignment->scheduleService;
+
+                if ($service->hours_booked !== null) {
+                    return (int) round(((float) $service->hours_booked) * 60);
+                }
+
+                $maxDuration = $service->service?->maximum_duration;
+
+                if (!$maxDuration) {
+                    return 0;
+                }
+
+                [$hours, $mins] = array_pad(explode(':', (string) $maxDuration), 2, 0);
+
+                return ((int) $hours * 60) + (int) $mins;
+            });
+
+            if ($minutes <= 0) {
+                continue;
+            }
+
+            $start = $schedule->scheduled_at->copy();
+            $end = $start->copy()->addMinutes($minutes);
+
+            if ($end->lessThanOrEqualTo($dayStart) || $start->greaterThan($dayEnd)) {
+                continue;
+            }
+
+            $blocks->push([
+                'type' => 'homecare',
+                'title' => 'Homecare visit',
+                'patient_name' => $schedule->patient?->display_name,
+                'location' => null,
+                'start' => $start,
+                'end' => $end,
+            ]);
+        }
+
+        $blocks = $blocks->sortBy(fn($block) => $block['start']->getTimestamp())->values();
+
+        $format = fn(array $block) => [
+            'type' => $block['type'],
+            'title' => $block['title'],
+            'patient_name' => $block['patient_name'],
+            'location' => $block['location'],
+            'start_at' => $block['start']->toISOString(),
+            'end_at' => $block['end']->toISOString(),
+            'total_minutes' => (int) $block['start']->diffInMinutes($block['end']),
+        ];
+
+        $current = $blocks->first(fn($block) => $now->greaterThanOrEqualTo($block['start']) && $now->lessThan($block['end']));
+        $next = $blocks->first(fn($block) => $block['start']->greaterThan($now));
+
+        return [
+            'on_duty' => (bool) $current,
+            'current' => $current ? $format($current) : null,
+            'next' => $next ? $format($next) : null,
+            'blocks' => $blocks->map($format)->all(),
+            'server_now' => $now->toISOString(),
         ];
     }
 }

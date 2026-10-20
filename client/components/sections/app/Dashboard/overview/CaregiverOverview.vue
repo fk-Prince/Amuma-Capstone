@@ -99,8 +99,7 @@
                         No assignments today
                     </p>
                     <p class="text-[11px] text-muted dark:text-gray-400">
-                        New shifts and visits assigned to you will show up
-                        here.
+                        New shifts and visits assigned to you will show up here.
                     </p>
                 </div>
 
@@ -163,7 +162,10 @@
                 </ul>
             </section>
 
-            <section v-if="quickLinks.length" class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <section
+                v-if="quickLinks.length"
+                class="grid grid-cols-2 gap-2 sm:grid-cols-3"
+            >
                 <NuxtLink
                     v-for="link in quickLinks"
                     :key="link.label"
@@ -256,7 +258,8 @@ const STATE_LABELS: Record<BlockState, string> = {
 const STATE_STYLES: Record<BlockState, string> = {
     done: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
     now: "bg-accent-500/10 text-accent-700 dark:text-accent-300",
-    upcoming: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    upcoming:
+        "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
 };
 
 const blocks = computed(() =>
@@ -281,9 +284,8 @@ const homecareCount = computed(
 
 const patientCount = computed(
     () =>
-        new Set(
-            blocks.value.map((block) => block.patient_name).filter(Boolean),
-        ).size,
+        new Set(blocks.value.map((block) => block.patient_name).filter(Boolean))
+            .size,
 );
 
 const scheduledHours = computed(() => {
@@ -313,9 +315,24 @@ const quickLinks = computed(() => {
     const base = `/app/branches/${props.branchUuid}`;
 
     return [
-        { label: "My patients", icon: Users, to: `${base}/patients`, show: hasModule(Modules.Patients) },
-        { label: "Schedule", icon: CalendarClock, to: `${base}/schedules`, show: hasModule(Modules.Schedules) },
-        { label: "Messages", icon: MessageSquare, to: `${base}/messages`, show: true },
+        {
+            label: "My patients",
+            icon: Users,
+            to: `${base}/patients`,
+            show: hasModule(Modules.Patients),
+        },
+        {
+            label: "Schedule",
+            icon: CalendarClock,
+            to: `${base}/schedules`,
+            show: hasModule(Modules.Schedules),
+        },
+        {
+            label: "Messages",
+            icon: MessageSquare,
+            to: `${base}/messages`,
+            show: true,
+        },
     ].filter((link) => link.show);
 });
 </script>

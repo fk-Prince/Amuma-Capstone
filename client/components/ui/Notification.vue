@@ -224,14 +224,22 @@ const { $echo } = useNuxtApp();
 
 const isMounted = ref(false);
 const open = ref(false);
-// Quick on/off for the notification sound (same switch as the profile page).
-const { notification: soundOn } = useSoundPrefs();
+// Quick mute for the notification sound. The volume is set on the profile page.
+const { notification: soundVolume } = useSoundPrefs();
+const soundOn = computed(() => soundVolume.value > 0);
+let lastVolume = 100;
 
 function toggleSound() {
-    soundOn.value = !soundOn.value;
+    if (soundOn.value) {
+        lastVolume = soundVolume.value;
+        soundVolume.value = 0;
+        return;
+    }
+
+    soundVolume.value = lastVolume || 100;
 
     // let the person hear what they just turned on
-    if (soundOn.value) playNotificationSound({ force: true });
+    playNotificationSound({ force: true });
 }
 
 const dropdownRef = ref<HTMLElement | null>(null);

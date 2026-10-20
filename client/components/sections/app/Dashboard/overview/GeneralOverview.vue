@@ -915,7 +915,7 @@ const bookingSegments = computed(() => [
     },
     {
         key: "approved",
-        label: "Approved",
+        label: "Approved / Accepted",
         count: dashboard.value.bookings.approved,
         color: "#3182ED",
     },
@@ -957,7 +957,9 @@ const fetchDashboard = async () => {
             bookings: {
                 pending_confirmation:
                     Number(data.bookings?.pending_confirmation) || 0,
-                approved: Number(data.bookings?.approved) || 0,
+                approved:
+                    (Number(data.bookings?.approved) || 0) +
+                    (Number(data.bookings?.accepted) || 0),
                 expired: Number(data.bookings?.expired) || 0,
                 cancelled: Number(data.bookings?.cancelled) || 0,
                 rejected: Number(data.bookings?.rejected) || 0,

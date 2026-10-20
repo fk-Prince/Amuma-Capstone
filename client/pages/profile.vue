@@ -788,6 +788,8 @@
                                     </button>
                                 </div>
                             </section>
+
+                            <SoundSettings />
                         </div>
                     </template>
                 </div>
@@ -821,6 +823,7 @@ import {
     UserRound,
 } from "lucide-vue-next";
 
+import SoundSettings from "~/components/ui/SoundSettings.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";

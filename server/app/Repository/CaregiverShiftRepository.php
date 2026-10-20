@@ -117,6 +117,12 @@ class CaregiverShiftRepository
             ->where('is_active', true)
             ->when($caregiverId !== null, fn($query) => $query->where('caregiver_id', $caregiverId))
             ->whereHas(
+                'caregiver.employeeBranch',
+                fn($link) => $link
+                    ->where('branch_id', $branchId)
+                    ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+            )
+            ->whereHas(
                 'admission',
                 fn($admission) => $admission
                     ->where('status', PatientAdmission::STATUS_ADMITTED)
@@ -146,7 +152,14 @@ class CaregiverShiftRepository
         return PatientAdmission::query()
             ->where('status', PatientAdmission::STATUS_ADMITTED)
             ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
-            ->whereDoesntHave('caregiverShifts', fn($shift) => $shift->where('is_active', true))
+            ->whereDoesntHave('caregiverShifts', fn($shift) => $shift
+                ->where('is_active', true)
+                ->whereHas(
+                    'caregiver.employeeBranch',
+                    fn($link) => $link
+                        ->where('branch_id', $branchId)
+                        ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+                ))
             ->when($search !== '', fn($query) => $query->where(
                 fn($match) => $match
                     ->whereHas(

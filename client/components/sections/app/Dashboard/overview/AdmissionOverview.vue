@@ -425,7 +425,7 @@ const totalBookings = computed(() => {
 
 const bookingSegments = computed(() => [
     { key: "pending", label: "Pending", count: overview.value.bookings.pending_confirmation, color: "#d97706" },
-    { key: "approved", label: "Approved", count: overview.value.bookings.approved, color: "#3182ED" },
+    { key: "approved", label: "Approved / Accepted", count: overview.value.bookings.approved, color: "#3182ED" },
     { key: "expired", label: "Expired", count: overview.value.bookings.expired, color: "#0E7C7B" },
     { key: "rejected", label: "Rejected", count: overview.value.bookings.rejected, color: "#f87171" },
 ]);

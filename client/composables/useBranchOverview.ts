@@ -92,7 +92,7 @@ export const normalizeOverview = (raw: any): BranchOverviewData => {
         },
         bookings: {
             pending_confirmation: num(data.bookings?.pending_confirmation),
-            approved: num(data.bookings?.approved),
+            approved: num(data.bookings?.approved) + num(data.bookings?.accepted),
             expired: num(data.bookings?.expired),
             cancelled: num(data.bookings?.cancelled),
             rejected: num(data.bookings?.rejected),
