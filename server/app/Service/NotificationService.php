@@ -197,7 +197,7 @@ class NotificationService
             'branch_id'    => $branch->branch_id,
             'branch_uuid'  => $branch->uuid,
             'user_id'      => $user->user_id,
-            'reference_id' => $booking->booking_id,
+            'reference_id' => (string) $booking->reference_id,
             'message'      => "You have a new booking request. Booking #{$booking->reference_id} is waiting for your review.",
         ], $booking);
     }
@@ -210,7 +210,7 @@ class NotificationService
             'Booking',
             $actor,
             $booking,
-            (string) $booking->booking_id,
+            (string) $booking->reference_id,
         );
     }
 
