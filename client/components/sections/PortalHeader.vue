@@ -153,7 +153,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     },
     "/profile": {
         title: "My Profile",
-        subtitle: "Update your personal details, contact information, and preferences.",
+        subtitle:
+            "Update your personal details, contact information, and preferences.",
     },
 };
 

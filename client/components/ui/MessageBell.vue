@@ -112,9 +112,8 @@ const rows = computed<Row[]>(() => {
 });
 
 const displayName = (row: Row) =>
-    (row.kind === "staff" || props.portal
-        ? row.staff_name
-        : row.client_name) ?? (props.portal ? "Branch team" : "Unknown");
+    (row.kind === "staff" || props.portal ? row.staff_name : row.client_name) ??
+    (props.portal ? "Branch team" : "Unknown");
 
 const displayAvatar = (row: Row) =>
     row.kind === "staff" || props.portal
@@ -545,7 +544,10 @@ onBeforeUnmount(() => {
                                                 : 'text-slate-500 dark:text-gray-400'
                                         "
                                     >
-                                        {{ row.last_message ?? "No messages yet" }}
+                                        {{
+                                            row.last_message ??
+                                            "No messages yet"
+                                        }}
                                     </span>
 
                                     <span
