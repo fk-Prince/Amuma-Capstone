@@ -374,15 +374,15 @@ const typeIcon = (type: string) =>
             >
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-primary" />
-                    Facility shift
+                    Facility Shifts
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-amber-500" />
-                    ADL
+                    Activities of Daily Living
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-violet-500" />
-                    Medical
+                    Medical Services
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-0.5 rounded-full bg-red-500" />

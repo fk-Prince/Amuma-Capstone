@@ -16,7 +16,7 @@
                         Staff on duty
                     </h2>
                     <p class="text-[11px] text-muted dark:text-gray-400">
-                        Shifts, ADL and medical · {{ todayLabel }}
+                        Facility Shifts, Activities of Daily Living, Medical Services · {{ todayLabel }}
                     </p>
                 </div>
             </div>
@@ -53,11 +53,11 @@
             v-else-if="!rows.length"
             class="py-10 text-center text-[11px] text-muted dark:text-gray-400"
         >
-            No shifts or tasks assigned today.
+            Nothing scheduled today.
         </p>
 
         <div v-else class="mt-3 overflow-x-auto">
-            <div class="min-w-[620px]">
+            <div class="min-w-[680px]">
                 <div class="grid items-end gap-2" :style="gridStyle">
                     <span
                         class="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-400"
@@ -66,9 +66,16 @@
                     </span>
                     <div class="relative h-4">
                         <span
-                            v-for="mark in hourMarks"
+                            v-for="(mark, index) in hourMarks"
                             :key="mark.hour"
-                            class="absolute -translate-x-1/2 text-[10px] text-muted dark:text-gray-400"
+                            class="absolute whitespace-nowrap text-[10px] text-muted dark:text-gray-400"
+                            :class="
+                                index === 0
+                                    ? ''
+                                    : index === hourMarks.length - 1
+                                      ? '-translate-x-full'
+                                      : '-translate-x-1/2'
+                            "
                             :style="{ left: `${mark.percent}%` }"
                         >
                             {{ mark.label }}
@@ -121,7 +128,7 @@
 
                         <div
                             class="relative rounded-md bg-slate-50 dark:bg-white/5"
-                            :style="{ height: `${trackHeight}px` }"
+                            :style="{ height: `${row.height}px` }"
                         >
                             <div
                                 v-for="mark in hourMarks"
@@ -134,12 +141,16 @@
                                 v-for="(segment, index) in row.segments"
                                 :key="index"
                                 class="absolute flex items-center overflow-hidden rounded px-1.5 text-[10px] font-semibold text-white"
-                                :class="segmentClass(segment.lane, row.onDuty)"
+                                :class="
+                                    segment.active
+                                        ? 'bg-accent ring-1 ring-accent-300'
+                                        : KIND_STYLE[segment.kind].bar
+                                "
                                 :style="{
                                     left: `${segment.left}%`,
                                     width: `${segment.width}%`,
-                                    top: `${laneTop(segment.lane)}px`,
-                                    height: `${LANE_HEIGHT}px`,
+                                    top: `${segment.top}px`,
+                                    height: `${BAR_HEIGHT}px`,
                                 }"
                                 :title="segment.title"
                             >
@@ -153,11 +164,11 @@
 
         <div
             v-if="!loading"
-            class="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2 dark:border-white/10"
+            class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100 pt-2 text-[10px] text-muted dark:border-white/10 dark:text-gray-400"
         >
             <span
                 v-if="uncoveredCount"
-                class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
             >
                 {{ uncoveredCount }}
                 {{ uncoveredCount === 1 ? "resident has" : "residents have" }}
@@ -165,28 +176,26 @@
             </span>
             <span
                 v-else-if="shifts.length"
-                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
             >
                 All residents have a caregiver
             </span>
 
-            <span class="text-[10px] text-muted dark:text-gray-400">
+            <span
+                v-for="kind in legendKinds"
+                :key="kind"
+                class="inline-flex items-center gap-1"
+            >
                 <span
-                    class="mr-1 inline-block h-2 w-2 rounded-sm bg-accent align-middle"
-                />On duty now
-                <span
-                    class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-primary-400 align-middle"
-                />Scheduled
-                <template v-if="hasAdl">
-                    <span
-                        class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-amber-500 align-middle"
-                    />ADL
-                </template>
-                <template v-if="hasMedical">
-                    <span
-                        class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-violet-500 align-middle"
-                    />Medical
-                </template>
+                    class="inline-block h-2 w-2 rounded-sm"
+                    :class="KIND_STYLE[kind].dot"
+                />
+                {{ KIND_STYLE[kind].label }}
+            </span>
+
+            <span class="inline-flex items-center gap-1">
+                <span class="inline-block h-2 w-2 rounded-sm bg-accent" />
+                On duty now
             </span>
         </div>
     </div>
@@ -219,7 +228,25 @@ interface BoardTask {
     end_time: string;
 }
 
-type Lane = "shift" | "adl" | "medical";
+type Kind = "facility" | "adl" | "medical";
+
+const KIND_STYLE: Record<Kind, { label: string; bar: string; dot: string }> = {
+    facility: {
+        label: "Facility Shifts",
+        bar: "bg-primary-400 dark:bg-primary-500/70",
+        dot: "bg-primary-400",
+    },
+    adl: {
+        label: "Activities of Daily Living",
+        bar: "bg-amber-500",
+        dot: "bg-amber-500",
+    },
+    medical: {
+        label: "Medical Services",
+        bar: "bg-violet-500",
+        dot: "bg-violet-500",
+    },
+};
 
 const loading = ref(true);
 const shifts = ref<BoardShift[]>([]);
@@ -314,113 +341,49 @@ const isNowIn = (start: number, end: number) =>
         ? nowHour.value >= start && nowHour.value < end
         : nowHour.value >= start || nowHour.value < end;
 
-// Shifts, ADL and medical each get their own lane. ADL is duration based, so it
-// reads better on a lane of its own than stacked on the shift bar.
-const hasAdl = computed(() => tasks.value.some((t) => t.type === "ADL"));
-const hasMedical = computed(() =>
-    tasks.value.some((t) => t.type === "Medical"),
-);
+const BAR_HEIGHT = 20;
+const BAR_GAP = 4;
 
-const lanes = computed<Lane[]>(() => [
-    ...(shifts.value.length ? (["shift"] as Lane[]) : []),
-    ...(hasAdl.value ? (["adl"] as Lane[]) : []),
-    ...(hasMedical.value ? (["medical"] as Lane[]) : []),
-]);
-
-const LANE_HEIGHT = 18;
-const LANE_GAP = 4;
-
-const trackHeight = computed(
-    () => Math.max(lanes.value.length, 1) * (LANE_HEIGHT + LANE_GAP) + LANE_GAP,
-);
-
-const laneTop = (lane: Lane) =>
-    LANE_GAP + Math.max(lanes.value.indexOf(lane), 0) * (LANE_HEIGHT + LANE_GAP);
-
-const segmentClass = (lane: Lane, onDuty: boolean) =>
-    lane === "adl"
-        ? "bg-amber-500"
-        : lane === "medical"
-          ? "bg-violet-500"
-          : onDuty
-            ? "bg-accent"
-            : "bg-primary-400 dark:bg-primary-500/70";
-
-interface Segment {
-    left: number;
-    width: number;
+interface RawSegment {
+    kind: Kind;
+    start: number;
+    end: number;
     label: string;
     title: string;
-    lane: Lane;
 }
 
-const toSegments = (
-    start: number,
-    end: number,
-    label: string,
-    title: string,
-    lane: Lane,
-): Segment[] => {
-    if (end > start) {
-        return [
-            {
-                left: (start / 24) * 100,
-                width: ((end - start) / 24) * 100,
-                label,
-                title,
-                lane,
-            },
-        ];
-    }
+interface StaffEntry {
+    id: number;
+    name: string;
+    role: string | null;
+    residents: Set<string>;
+    taskCount: number;
+    items: RawSegment[];
+    seenShift: Set<string>;
+}
 
-    // runs past midnight: split at midnight
-    const parts: Segment[] = [
-        {
-            left: (start / 24) * 100,
-            width: ((24 - start) / 24) * 100,
-            label,
-            title,
-            lane,
-        },
-    ];
-
-    if (end > 0) {
-        parts.push({ left: 0, width: (end / 24) * 100, label, title, lane });
-    }
-
-    return parts;
-};
-
-const rows = computed(() => {
-    const byStaff = new Map<
-        number,
-        {
-            id: number;
-            name: string;
-            role: string | null;
-            residents: Set<string>;
-            taskCount: number;
-            segments: Segment[];
-            windows: { start: number; end: number }[];
-            seenShift: Set<string>;
-        }
-    >();
+// Everyone scheduled today, with each shift and service as one labelled bar.
+const staff = computed(() => {
+    const byId = new Map<number, StaffEntry>();
 
     const entryFor = (id: number, name: string | null, role: string | null) => {
-        if (!byStaff.has(id)) {
-            byStaff.set(id, {
+        if (!byId.has(id)) {
+            byId.set(id, {
                 id,
                 name: name ?? "Unnamed staff",
                 role,
                 residents: new Set(),
                 taskCount: 0,
-                segments: [],
-                windows: [],
+                items: [],
                 seenShift: new Set(),
             });
         }
 
-        return byStaff.get(id)!;
+        const entry = byId.get(id)!;
+
+        entry.role ??= role;
+
+        return entry;
     };
 
     for (const shift of shifts.value) {
@@ -437,55 +400,130 @@ const rows = computed(() => {
 
         entry.seenShift.add(key);
 
-        const start = toHour(shift.start_time);
-        const end = toHour(shift.end_time);
-        const label = `${formatTime(shift.start_time)} – ${formatTime(shift.end_time)}`;
+        const time = `${formatTime(shift.start_time)} – ${formatTime(shift.end_time)}`;
 
-        entry.windows.push({ start, end });
-        entry.segments.push(
-            ...toSegments(start, end, label, `Shift · ${label}`, "shift"),
-        );
+        entry.items.push({
+            kind: "facility",
+            start: toHour(shift.start_time),
+            end: toHour(shift.end_time),
+            label: time,
+            title: `Facility shift · ${time}`,
+        });
     }
 
     for (const task of tasks.value) {
         const entry = entryFor(task.employee_id, task.full_name, task.role);
-        const start = toHour(task.start_time);
-        const end = toHour(task.end_time);
         const time = `${formatTime(task.start_time)} – ${formatTime(task.end_time)}`;
 
-        entry.role ??= task.role;
         entry.taskCount += 1;
-        entry.windows.push({ start, end });
-        entry.segments.push(
-            ...toSegments(
-                start,
-                end,
-                task.title,
-                `${task.type} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""} · ${time}`,
-                task.type === "ADL" ? "adl" : "medical",
-            ),
-        );
+        entry.items.push({
+            kind: task.type === "ADL" ? "adl" : "medical",
+            start: toHour(task.start_time),
+            end: toHour(task.end_time),
+            label: `${time} · ${task.title}`,
+            title: `${KIND_STYLE[task.type === "ADL" ? "adl" : "medical"].label} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""} · ${time}`,
+        });
     }
 
-    return [...byStaff.values()]
+    return [...byId.values()];
+});
+
+interface Segment {
+    left: number;
+    width: number;
+    top: number;
+    label: string;
+    title: string;
+    kind: Kind;
+    active: boolean;
+}
+
+// Bars that overlap in time are stacked on separate lines; otherwise a row
+// stays a single slim bar.
+const placeSegments = (items: RawSegment[]) => {
+    const pieces: (Omit<Segment, "top"> & { right: number })[] = [];
+
+    for (const item of items) {
+        const active = isNowIn(item.start, item.end);
+        const base = { label: item.label, title: item.title, kind: item.kind, active };
+
+        if (item.end > item.start) {
+            pieces.push({
+                ...base,
+                left: (item.start / 24) * 100,
+                width: ((item.end - item.start) / 24) * 100,
+                right: (item.end / 24) * 100,
+            });
+        } else {
+            // runs past midnight: split at midnight
+            pieces.push({
+                ...base,
+                left: (item.start / 24) * 100,
+                width: ((24 - item.start) / 24) * 100,
+                right: 100,
+            });
+
+            if (item.end > 0) {
+                pieces.push({
+                    ...base,
+                    left: 0,
+                    width: (item.end / 24) * 100,
+                    right: (item.end / 24) * 100,
+                });
+            }
+        }
+    }
+
+    pieces.sort((a, b) => a.left - b.left);
+
+    const laneEnds: number[] = [];
+    const segments: Segment[] = [];
+
+    for (const piece of pieces) {
+        let lane = laneEnds.findIndex((end) => end <= piece.left + 0.01);
+
+        if (lane === -1) {
+            lane = laneEnds.length;
+            laneEnds.push(0);
+        }
+
+        laneEnds[lane] = piece.right;
+
+        const { right: _right, ...rest } = piece;
+
+        segments.push({ ...rest, top: BAR_GAP + lane * (BAR_HEIGHT + BAR_GAP) });
+    }
+
+    return {
+        segments,
+        height: Math.max(laneEnds.length, 1) * (BAR_HEIGHT + BAR_GAP) + BAR_GAP,
+    };
+};
+
+const rows = computed(() =>
+    staff.value
         .map((entry) => {
             const residentCount = entry.residents.size;
-            const parts = [
-                residentCount
-                    ? `${residentCount} ${residentCount === 1 ? "resident" : "residents"}`
-                    : (entry.role ?? "Staff"),
-                entry.taskCount
-                    ? `${entry.taskCount} ${entry.taskCount === 1 ? "task" : "tasks"}`
-                    : null,
-            ].filter(Boolean);
+            const taskLabel = entry.taskCount
+                ? `${entry.taskCount} ${entry.taskCount === 1 ? "task" : "tasks"}`
+                : null;
+            const { segments, height } = placeSegments(entry.items);
 
             return {
                 id: entry.id,
                 name: entry.name,
-                subtitle: parts.join(" · "),
-                segments: entry.segments,
-                firstStart: Math.min(...entry.windows.map((w) => w.start)),
-                onDuty: entry.windows.some((w) => isNowIn(w.start, w.end)),
+                subtitle: [
+                    residentCount
+                        ? `${residentCount} ${residentCount === 1 ? "resident" : "residents"}`
+                        : entry.role,
+                    taskLabel,
+                ]
+                    .filter(Boolean)
+                    .join(" · "),
+                segments,
+                height,
+                firstStart: Math.min(...entry.items.map((item) => item.start)),
+                onDuty: entry.items.some((item) => isNowIn(item.start, item.end)),
             };
         })
         .sort(
@@ -493,10 +531,23 @@ const rows = computed(() => {
                 Number(b.onDuty) - Number(a.onDuty) ||
                 a.firstStart - b.firstStart ||
                 a.name.localeCompare(b.name),
-        );
-});
+        ),
+);
 
 const onDutyCount = computed(() => rows.value.filter((r) => r.onDuty).length);
+
+// Only list the kinds that actually appear today.
+const legendKinds = computed<Kind[]>(() => {
+    const present = new Set<Kind>();
+
+    for (const entry of staff.value) {
+        for (const item of entry.items) present.add(item.kind);
+    }
+
+    return (["facility", "adl", "medical"] as Kind[]).filter((kind) =>
+        present.has(kind),
+    );
+});
 
 const initials = (name: string) =>
     name

@@ -51,7 +51,7 @@
                 <OverviewStatCard
                     label="Scheduled hours"
                     :value="scheduledHours"
-                    hint="Shifts, ADL and medical tasks"
+                    hint="Facility Shifts, Activities of Daily Living, Medical Services"
                     :icon="Clock"
                     tone="accent"
                 />
