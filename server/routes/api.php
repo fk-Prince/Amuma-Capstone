@@ -181,6 +181,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/recipients', [MessageController::class, 'recipients']);
     Route::post('/messages/open', [MessageController::class, 'openWith']);
     Route::get('/messages/thread', [MessageController::class, 'thread']);
+    Route::get('/messages/details', [MessageController::class, 'details']);
+    Route::post('/messages/pin', [MessageController::class, 'pin']);
     Route::post('/messages', [MessageController::class, 'send']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);

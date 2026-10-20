@@ -27,9 +27,18 @@ return new class extends Migration
             $table->string('attachment_url')->nullable();
             $table->string('attachment_name')->nullable();
             $table->timestamp('read_at')->nullable();
+            $table->timestamp('pinned_at')->nullable();
+
+            $table->foreignId('pinned_by_user_id')
+                ->nullable()
+                ->constrained('users', 'user_id')
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
+
             $table->timestamps();
 
             $table->index(['conversation_id', 'created_at']);
+            $table->index(['conversation_id', 'pinned_at']);
         });
     }
 

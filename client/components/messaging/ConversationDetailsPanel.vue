@@ -160,7 +160,7 @@ const contacts = computed(() => {
             key: "phone",
             icon: Phone,
             label: "Phone",
-            text: value.phone,
+            text: formatPhone(value.phone),
             href: `tel:${value.phone}`,
         },
         props.details?.branch && {
