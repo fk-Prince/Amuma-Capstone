@@ -2,11 +2,14 @@
 import { computed, ref } from "vue";
 import { ChevronDown, Search } from "lucide-vue-next";
 import Reveal from "~/components/ui/Reveal.vue";
+import { useLandingAudience } from "~/composables/useLandingAudience";
 
 type Faq = {
     q: string;
     a: string;
     link?: { label: string; to: string };
+    // Plans / subscription content: hidden from family accounts.
+    subscription?: boolean;
 };
 
 const props = withDefaults(
@@ -24,7 +27,9 @@ const props = withDefaults(
     },
 );
 
-const faqs: Faq[] = [
+const { isFamily } = useLandingAudience();
+
+const allFaqs: Faq[] = [
     {
         q: "How do families book a visit?",
         a: "Search for a provider, choose a service, add your loved one's details, and send the request. The agency reviews it and approves or replies, and you can follow the result from your family portal.",
@@ -34,6 +39,7 @@ const faqs: Faq[] = [
         q: "What's the difference between Homecare, Facility and Hybrid?",
         a: "Homecare covers home visits, caregiver assignment and charting. Facility covers admissions, rooms and beds, and room contracts. Hybrid includes everything in both under one subscription.",
         link: { label: "Compare the three", to: "/product" },
+        subscription: true,
     },
     {
         q: "Can I manage more than one branch?",
@@ -57,24 +63,32 @@ const faqs: Faq[] = [
         q: "How does an agency get started?",
         a: "Create an agency account, set up your branch, and choose the plan that fits your care model. Your branch is submitted for verification before it appears in provider search.",
         link: { label: "Create an agency account", to: "/product" },
+        subscription: true,
     },
     {
         q: "Do I need to subscribe to both modules?",
         a: "No. Pick Homecare or Facility on its own, or choose Hybrid if you run both. You can compare plans and prices on the plans page.",
         link: { label: "View plans", to: "/product" },
+        subscription: true,
     },
 ];
+
+// Families book care and never see plan or subscription questions.
+const faqs = computed(() =>
+    isFamily.value ? allFaqs.filter((item) => !item.subscription) : allFaqs,
+);
 
 const query = ref("");
 const openIndex = ref<number | null>(0);
 
 const visible = computed(() => {
     const term = query.value.trim().toLowerCase();
-    const base = props.limit > 0 ? faqs.slice(0, props.limit) : faqs;
+    const base =
+        props.limit > 0 ? faqs.value.slice(0, props.limit) : faqs.value;
 
     if (!term) return base;
 
-    return faqs.filter(
+    return faqs.value.filter(
         (item) =>
             item.q.toLowerCase().includes(term) ||
             item.a.toLowerCase().includes(term),

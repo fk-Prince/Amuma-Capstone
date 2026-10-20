@@ -3,7 +3,10 @@
         <BookingNavbar v-if="isBookingRoute" :navList="navList" />
         <DefaultNavbar v-else :navList="navList" />
 
-        <main class="relative flex-1">
+        <main
+            class="relative flex-1"
+            :class="navInFlow ? '-mt-[126px] pt-[126px]' : ''"
+        >
             <div
                 class="pointer-events-none absolute inset-0 overflow-hidden print:hidden w-full h-full dark:opacity-30"
                 aria-hidden="true"
@@ -43,11 +46,25 @@ import BookingNavbar from "~/components/sections/BookingNavbar.vue";
 import AppFooter from "~/components/sections/AppFooter.vue";
 import SubscribeAuthModal from "~/components/ui/SubscribeAuthModal.vue";
 import { navList as defaultNavList } from "~/config/publicMenu";
+import { useLandingAudience } from "~/composables/useLandingAudience";
 
 const route = useRoute();
 const footer = computed(() => route.meta.footer ?? true);
-// The booking pages have their own navbar design; everything else keeps the
-// site-wide one.
 const isBookingRoute = computed(() => route.path.startsWith("/booking"));
-const navList = computed(() => (route.meta.navList as typeof defaultNavList | undefined) ?? defaultNavList);
+const navInFlow = computed(
+    () => isBookingRoute.value && route.meta.navVariant === 6,
+);
+
+const { landingPath, canSeeSubscription } = useLandingAudience();
+
+const navList = computed(() => {
+    const custom = route.meta.navList as typeof defaultNavList | undefined;
+    if (custom) return custom;
+
+    return defaultNavList
+        .filter((item) => canSeeSubscription.value || item.to !== "/product")
+        .map((item) =>
+            item.to === "/" ? { ...item, to: landingPath.value } : item,
+        );
+});
 </script>

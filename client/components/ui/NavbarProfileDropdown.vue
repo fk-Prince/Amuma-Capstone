@@ -4,20 +4,44 @@
             <template #trigger="{ toggle, open }">
                 <button
                     @click="toggle"
-                    class="flex items-center gap-1.5 px-1.5 py-1.5 rounded-xl transition-colors focus:outline-none sm:gap-2.5 sm:px-2"
+                    class="flex flex-row-reverse items-center gap-2.5 px-2 py-1.5 rounded-xl transition-colors focus:outline-none md:flex-row"
+                    :aria-label="avatarOnly ? 'Open profile menu' : undefined"
                     :class="[
                         scrolled || navTheme !== 'dark'
                             ? 'hover:bg-primary-50 dark:hover:bg-primary-500/10'
                             : 'hover:bg-light/10',
                         themeAware ? 'dark:hover:bg-white/10' : '',
+                        avatarOnly ? '!p-0 !rounded-full hover:!bg-transparent' : '',
                     ]"
                 >
-                    <div class="relative h-9 w-9 shrink-0">
+                    <!-- Phone / tablet badge: the photo, or gradient initials when there is no real photo -->
+                    <div v-if="avatarOnly" class="relative h-[52px] w-[52px] sm:h-16 sm:w-16">
+                        <img
+                            v-if="showPhoto"
+                            :src="user.avatar"
+                            alt="Profile"
+                            class="h-full w-full rounded-full object-cover shadow-md ring-2 ring-white dark:ring-white/15"
+                            @error="avatarFailed = true"
+                        />
+                        <span
+                            v-else
+                            class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-[15px] font-semibold tracking-wide text-white shadow-md shadow-primary-500/20 ring-2 ring-white/70 dark:ring-white/15 sm:text-lg"
+                        >
+                            {{ initialsText }}
+                        </span>
+                        <span
+                            class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-400 ring-2 ring-white dark:ring-secondary"
+                        />
+                    </div>
+
+                    <div v-else class="relative">
                         <img
                             :src="user.avatar"
-                            referrerpolicy="no-referrer"
-                            class="h-9 w-9 rounded-full border-2 border-white shadow-sm object-cover"
-                            :class="themeAware ? 'dark:border-white/20' : ''"
+                            class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
+                            :class="[
+                                themeAware ? 'dark:border-white/20' : '',
+                                avatarOnly ? '!h-[50px] !w-[50px] sm:!h-16 sm:!w-16 !border-0 !shadow-none' : '',
+                            ]"
                             alt="Profile"
                         />
                         <span
@@ -27,6 +51,7 @@
                     </div>
 
                     <div
+                        v-if="!avatarOnly"
                         class="hidden md:flex flex-col items-start leading-tight"
                     >
                         <span
@@ -63,8 +88,9 @@
                     </div>
 
                     <ChevronIcon
+                        v-if="!avatarOnly"
                         :isOpen="open"
-                        class="block h-4 w-4 shrink-0 transition-colors duration-300"
+                        class="block w-4 h-4 transition-colors duration-300"
                         :class="[
                             scrolled || navTheme !== 'dark'
                                 ? 'text-muted dark:text-gray-400'
@@ -85,7 +111,6 @@
                         <div class="relative shrink-0">
                             <img
                                 :src="user.avatar"
-                                referrerpolicy="no-referrer"
                                 class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                                 alt="Profile"
                             />
@@ -121,35 +146,8 @@
                         Appearance
                     </p>
 
-                    <div
-                        class="mx-4 my-1 flex items-center justify-between rounded-full bg-gray-50 dark:bg-white/5 p-1"
-                    >
-                        <button
-                            type="button"
-                            class="flex-1 flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-medium transition-colors"
-                            :class="
-                                !isDark
-                                    ? 'bg-white text-gray-800 shadow-sm dark:bg-secondary dark:text-white'
-                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
-                            "
-                            @click="setTheme(false)"
-                        >
-                            <Sun class="w-3.5 h-3.5" />
-                            Light
-                        </button>
-                        <button
-                            type="button"
-                            class="flex-1 flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-medium transition-colors"
-                            :class="
-                                isDark
-                                    ? 'bg-secondary text-white shadow-sm'
-                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
-                            "
-                            @click="setTheme(true)"
-                        >
-                            <Moon class="w-3.5 h-3.5" />
-                            Dark
-                        </button>
+                    <div class="mx-4 my-1">
+                        <ThemeModeSwitcher size="sm" />
                     </div>
 
                     <div class="py-1">
@@ -202,7 +200,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
-import { LogOut, LoaderCircle, Sun, Moon } from "lucide-vue-next";
+import { LogOut, LoaderCircle } from "lucide-vue-next";
+import ThemeModeSwitcher from "./ThemeModeSwitcher.vue";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
@@ -222,14 +221,32 @@ const props = withDefaults(
         navTheme?: any;
         themeAware?: boolean;
         role?: string | null;
+        // Just the round avatar, no name or chevron (used as a floating circle on phones).
+        avatarOnly?: boolean;
     }>(),
     {
         scrolled: true,
         navTheme: "light",
         themeAware: false,
         role: null,
+        avatarOnly: false,
     },
 );
+
+// Avatar-only mode (phones/tablets): use the photo when there is a real one, otherwise draw initials.
+const avatarFailed = ref(false);
+
+const initialsText = computed(() =>
+    `${props.user.first_name?.[0] ?? ""}${props.user.last_name?.[0] ?? ""}`.toUpperCase(),
+);
+
+const isPlaceholderAvatar = computed(
+    () =>
+        !props.user.avatar ||
+        /ui-avatars|initials|default|placeholder|dicebear|identicon/i.test(props.user.avatar),
+);
+
+const showPhoto = computed(() => !isPlaceholderAvatar.value && !avatarFailed.value);
 
 const roleLabel = computed(() => {
     const role = props.role?.trim();
@@ -263,7 +280,6 @@ async function onMenuItem(item: any, close: () => void) {
         navigating.value = false;
     }
 }
-const isDark = useIsDark();
 const route = useRoute();
 
 const profileFrom = computed(() => {

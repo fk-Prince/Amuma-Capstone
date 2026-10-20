@@ -15,16 +15,20 @@
             />
         </ClientOnly>
 
-        <div class="flex justify-end">
+        <StickyActionBar hint="Remember to save before leaving this tab.">
             <button
                 type="button"
                 :disabled="saving"
                 @click="handleSave"
-                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-50"
+                class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
+                <span
+                    v-if="saving"
+                    class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                />
                 {{ saving ? "Saving..." : "Save Changes" }}
             </button>
-        </div>
+        </StickyActionBar>
     </div>
 
     <div
@@ -36,6 +40,7 @@
 </template>
 
 <script setup lang="ts">
+import StickyActionBar from "~/components/ui/StickyActionBar.vue";
 import { ref, watch, toRaw } from "vue";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import BranchCoverCard from "~/components/sections/app/settings/BranchCoverCard.vue";

@@ -43,6 +43,11 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->makeSubscription($data, $request->user());
     }
 
+    public function trialStatus(Request $request)
+    {
+        return $this->subscriptionService->trialStatus($request->user());
+    }
+
     public function newBranchFromCapacity(SubscriptionRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);

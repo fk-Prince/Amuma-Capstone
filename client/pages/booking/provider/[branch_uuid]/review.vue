@@ -1,17 +1,21 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-surface"
+        class="min-h-screen lg:h-[calc(100dvh-126px)] lg:min-h-0 lg:overflow-hidden"
+    >
+    <div
+        class="mx-auto grid w-[94%] grid-cols-1 gap-5 pb-6 pt-2 lg:h-full lg:min-h-0 lg:w-[88%] lg:max-w-[1600px] lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:pb-4 lg:pt-1"
     >
         <aside
-            class="hidden lg:flex flex-col bg-white border-r sticky top-0 h-screen dark:bg-secondary dark:border-white/10"
+            class="hidden flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-br from-primary-50/70 via-white to-accent-50/50 shadow-sm lg:flex lg:h-full lg:min-h-0 dark:border-white/10 dark:bg-none dark:bg-secondary"
         >
             <BookingProgressHeader
                 title="Booking Progress"
                 :progress="progress"
             />
 
-            <div class="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+            <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3">
                 <BookingSteps
+                    compact
                     active="step6"
                     :completed="completedSteps"
                     @go="goEditStep"
@@ -19,9 +23,14 @@
             </div>
         </aside>
 
-        <main class="px-5 sm:px-10 py-8 w-full mx-auto lg:mx-0">
+        <main
+            class="flex min-w-0 flex-col pt-2 lg:h-full lg:min-h-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:pt-0 lg:shadow-sm dark:lg:border-white/10 dark:lg:bg-secondary"
+        >
+            <div
+                class="lg:shrink-0 lg:border-b lg:border-gray-100 lg:px-6 lg:py-4 dark:lg:border-white/10"
+            >
             <Breadcrumb
-                class="mb-5"
+                class="mb-5 lg:mb-0"
                 :items="[
                     { label: 'Find a Provider', to: '/booking/search' },
                     {
@@ -35,6 +44,7 @@
                     { label: 'Review & Submit' },
                 ]"
             />
+            </div>
 
             <div class="lg:hidden mb-6">
                 <div class="flex items-center gap-2">
@@ -54,6 +64,7 @@
                 </div>
             </div>
 
+            <div class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-8 lg:py-6">
             <div
                 :class="
                     showPayment
@@ -63,7 +74,7 @@
             >
                 <div>
                     <div
-                        class="rounded-2xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                        class="rounded-2xl border border-gray-100 bg-white shadow-sm lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:bg-secondary dark:border-white/10 dark:lg:bg-transparent"
                     >
                         <ReviewSection
                             :category="bookingStore.category"
@@ -92,24 +103,9 @@
 
                     <div
                         v-if="!showPayment"
-                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:bg-secondary dark:border-white/10"
+                        class="mt-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:border-dashed lg:bg-transparent lg:shadow-none dark:bg-secondary dark:border-white/10 dark:lg:bg-transparent"
                     >
-                        <BaseButton
-                            variant="primary"
-                            class="w-full rounded-xl py-3"
-                            :disabled="submitting || loadingTotal"
-                            @click="handleSubmit"
-                        >
-                            {{
-                                loadingTotal
-                                    ? "Loading"
-                                    : submitting
-                                      ? "Submitting..."
-                                      : "Confirm & Submit Booking"
-                            }}
-                        </BaseButton>
-
-                        <div class="mt-4 flex flex-col gap-3">
+                        <div class="flex flex-col gap-3">
                             <div
                                 class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
                             >
@@ -176,7 +172,35 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <div
+                v-if="!showPayment"
+                class="sticky bottom-3 z-20 mt-4 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur lg:static lg:mt-0 lg:rounded-none lg:border-0 lg:border-t lg:bg-white lg:px-6 lg:py-3.5 lg:shadow-none lg:backdrop-blur-none dark:border-white/10 dark:bg-secondary/95 dark:lg:bg-secondary"
+            >
+                <p
+                    class="hidden text-xs text-gray-500 sm:block dark:text-gray-400"
+                >
+                    Please double-check your details before you submit.
+                </p>
+
+                <BaseButton
+                    variant="primary"
+                    class="w-full rounded-xl px-6 py-2.5 sm:ml-auto sm:w-auto"
+                    :disabled="submitting || loadingTotal"
+                    @click="handleSubmit"
+                >
+                    {{
+                        loadingTotal
+                            ? "Loading"
+                            : submitting
+                              ? "Submitting..."
+                              : "Confirm & Submit Booking"
+                    }}
+                </BaseButton>
+            </div>
         </main>
+    </div>
     </div>
 </template>
 
@@ -201,6 +225,8 @@ useHead({ title: "Review Booking" });
 definePageMeta({
     navVariant: 6,
     navTheme: "light",
+    // The page fills the screen on desktop; no footer to scroll down to.
+    footer: false,
     middleware: [
         "auth-client",
         "prevent-staff-booking",

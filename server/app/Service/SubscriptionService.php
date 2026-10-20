@@ -583,6 +583,14 @@ class SubscriptionService
         });
     }
 
+    public function trialStatus(?User $user)
+    {
+        return response()->json([
+            'trial_available' => !$this->subscriptionRepository->userHasUsedTrial($user?->user_id),
+            'trial_weeks' => Subscription::TRIAL_WEEKS,
+        ], 200);
+    }
+
     public function createSubscription(?User $user, array $payload)
     {
         $planType = $payload['plan_type'] ?? null;
@@ -601,7 +609,7 @@ class SubscriptionService
 
         $withTrial = !$this->subscriptionRepository->agencyHasUsedTrial(
             !empty($payload['agency_id']) ? (int) $payload['agency_id'] : null
-        );
+        ) && !$this->subscriptionRepository->userHasUsedTrial($user?->user_id);
 
         $testEndsAt = $withTrial
             ? Carbon::now()->addWeeks(Subscription::TRIAL_WEEKS)->toDateString()

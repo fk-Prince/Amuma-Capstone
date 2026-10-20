@@ -203,13 +203,13 @@ watch(
                     leave-to-class="opacity-0 scale-95"
                 >
                     <div
-                        class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                        class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                         role="dialog"
                         aria-modal="true"
                         :aria-label="title"
                     >
                         <div
-                            class="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
+                            class="z-10 flex shrink-0 items-center justify-between gap-4 rounded-t-2xl border-b border-gray-100 bg-white/95 px-6 py-5 backdrop-blur dark:bg-secondary/95 dark:border-white/10"
                         >
                             <div class="flex items-center gap-3">
                                 <div
@@ -244,7 +244,11 @@ watch(
                             </button>
                         </div>
 
-                        <form @submit.prevent="onSubmit" class="p-6">
+                        <form
+                            @submit.prevent="onSubmit"
+                            class="flex min-h-0 flex-1 flex-col"
+                        >
+                            <div class="min-h-0 flex-1 overflow-y-auto p-6">
                             <div class="space-y-6">
                                 <ToggleSwitch
                                     v-if="action === 'update'"
@@ -499,8 +503,10 @@ watch(
                                 </div>
                             </div>
 
+                            </div>
+
                             <div
-                                class="mt-8 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end dark:border-white/10"
+                                class="shrink-0 flex flex-col-reverse gap-3 rounded-b-2xl border-t border-gray-100 bg-white px-6 py-4 sm:flex-row sm:justify-end dark:border-white/10 dark:bg-secondary"
                             >
                                 <button
                                     type="button"

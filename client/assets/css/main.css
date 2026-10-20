@@ -2,6 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Palette defaults (R G B channels so Tailwind opacity modifiers work).
+   Overridden inside dashboards by the user's chosen palette - see composables/useTheme.ts */
+:root {
+    --primary-50: 234 242 254;
+    --primary-100: 213 229 253;
+    --primary-200: 171 203 251;
+    --primary-300: 127 177 248;
+    --primary-400: 86 151 243;
+    --primary-500: 49 130 237;
+    --primary-600: 30 104 209;
+    --primary-700: 22 80 166;
+    --primary-800: 15 57 123;
+    --primary-900: 10 40 87;
+    --accent-50: 231 245 245;
+    --accent-100: 207 235 234;
+    --accent-200: 159 215 213;
+    --accent-300: 111 195 192;
+    --accent-400: 63 175 171;
+    --accent-500: 14 124 123;
+    --accent-600: 12 101 100;
+    --accent-700: 9 78 77;
+    --accent-800: 7 56 55;
+    --accent-900: 4 34 33;
+    --page-bg: 238 243 251;
+    --logo-primary-rot: 0;
+    --logo-primary-sat: 100;
+    --logo-accent-rot: 0;
+    --logo-accent-sat: 100;
+    --secondary-50: 244 246 250;
+    --secondary-100: 229 233 242;
+    --secondary-200: 199 207 224;
+    --secondary-300: 154 167 194;
+    --secondary-400: 107 122 155;
+    --secondary-500: 70 85 117;
+    --secondary-600: 49 64 93;
+    --secondary-700: 37 50 72;
+    --secondary-800: 31 40 56;
+    --secondary-900: 26 33 51;
+    --secondary-950: 14 20 32;
+    --ink: 22 48 46;
+    --ink-muted: 107 138 135;
+    --ink-subtle: 154 179 175;
+    --ink-line: 228 239 237;
+    --ink-line-alt: 221 236 236;
+    --ink-soft: 237 244 243;
+    --ink-soft-alt: 241 247 246;
+    --ink-wash: 247 250 249;
+    --ink-faint: 250 252 251;
+}
+
 :root {
     --header-h: 88px;
 }

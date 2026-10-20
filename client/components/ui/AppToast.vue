@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from "vue";
 
-export type ToastType = "success" | "error" | "warning" | "info";
+export type ToastType = "success" | "error" | "warning" | "info" | "message";
 
 export interface Toast {
     id: number;
@@ -9,6 +9,8 @@ export interface Toast {
     title: string;
     description?: string;
     duration?: number;
+    // When set, the whole toast is clickable and runs this (used by "message").
+    onClick?: () => void;
 }
 
 const toasts = ref<Toast[]>([]);
@@ -55,6 +57,15 @@ const styles: Record<
         title: "text-blue-900 dark:text-blue-300",
         progress: "bg-blue-500",
     },
+
+    // New message: a solid brand icon and a plain bold title so it stands out.
+    message: {
+        wrapper: "border-blue-200 dark:border-blue-500/30",
+        iconBg: "bg-primary",
+        icon: "text-white",
+        title: "text-slate-900 dark:text-white",
+        progress: "bg-primary",
+    },
 };
 
 function add(toast: Omit<Toast, "id">) {
@@ -77,6 +88,13 @@ function add(toast: Omit<Toast, "id">) {
 
 function remove(id: number) {
     toasts.value = toasts.value.filter((t) => t.id !== id);
+}
+
+function activate(toast: Toast) {
+    if (!toast.onClick) return;
+
+    toast.onClick();
+    remove(toast.id);
 }
 
 onMounted(() => {
@@ -112,14 +130,27 @@ defineExpose({
                     v-for="toast in toasts"
                     :key="toast.id"
                     class="pointer-events-auto relative overflow-hidden rounded-2xl border bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
-                    :class="styles[toast.type].wrapper"
+                    :class="[
+                        styles[toast.type].wrapper,
+                        toast.onClick ? 'cursor-pointer' : '',
+                        toast.type === 'message' ? 'toast-glow' : '',
+                    ]"
                     role="alert"
+                    :tabindex="toast.onClick ? 0 : undefined"
+                    @click="activate(toast)"
+                    @keydown.enter="activate(toast)"
                 >
                     <div class="flex items-start gap-3">
                         <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                            class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                             :class="styles[toast.type].iconBg"
                         >
+                            <span
+                                v-if="toast.type === 'message'"
+                                class="toast-ring"
+                                aria-hidden="true"
+                            />
+
                             <svg
                                 v-if="toast.type === 'success'"
                                 class="h-5 w-5"
@@ -170,6 +201,22 @@ defineExpose({
                             </svg>
 
                             <svg
+                                v-else-if="toast.type === 'message'"
+                                class="relative h-5 w-5"
+                                :class="styles[toast.type].icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                                />
+                            </svg>
+
+                            <svg
                                 v-else
                                 class="h-5 w-5"
                                 :class="styles[toast.type].icon"
@@ -197,13 +244,21 @@ defineExpose({
                             >
                                 {{ toast.description }}
                             </p>
+
+                            <p
+                                v-if="toast.onClick"
+                                class="mt-2 text-xs font-semibold text-primary dark:text-primary-300"
+                            >
+                                Click to open
+                            </p>
                         </div>
 
                         <!-- Close -->
                         <button
                             type="button"
                             class="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-400"
-                            @click="remove(toast.id)"
+                            aria-label="Close"
+                            @click.stop="remove(toast.id)"
                         >
                             <svg
                                 class="h-4 w-4"
@@ -220,6 +275,7 @@ defineExpose({
                     <div
                         class="absolute bottom-0 left-0 h-1 animate-toast-progress"
                         :class="styles[toast.type].progress"
+                        :style="{ animationDuration: `${toast.duration ?? 4000}ms` }"
                     />
                 </div>
             </TransitionGroup>
@@ -240,5 +296,50 @@ defineExpose({
 
 .animate-toast-progress {
     animation: toast-progress 4s linear forwards;
+}
+
+/* New message toast: a soft blue glow and a ring around the icon that pulse
+   a few times to catch the eye, then settle. */
+.toast-glow {
+    animation: toast-glow 1.4s ease-out 2;
+}
+
+@keyframes toast-glow {
+    0%,
+    100% {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    40% {
+        box-shadow:
+            0 0 0 4px rgba(49, 130, 237, 0.28),
+            0 10px 24px -6px rgba(49, 130, 237, 0.55);
+    }
+}
+
+.toast-ring {
+    position: absolute;
+    inset: 0;
+    border: 2px solid rgba(49, 130, 237, 0.6);
+    border-radius: 0.75rem;
+    opacity: 0;
+    animation: toast-ring 1.4s ease-out 3;
+}
+
+@keyframes toast-ring {
+    0% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.7);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast-glow,
+    .toast-ring {
+        animation: none;
+    }
 }
 </style>

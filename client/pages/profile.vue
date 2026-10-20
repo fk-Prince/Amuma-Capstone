@@ -14,6 +14,7 @@
             "
         >
             <div
+                v-if="!headerHasTitle"
                 class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center"
                 :class="headerHasTitle ? 'sm:justify-end' : 'sm:justify-between'"
             >
@@ -29,29 +30,6 @@
                     </p>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <button
-                        type="button"
-                        :disabled="saving || !isDirty"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                        @click="reset"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        :disabled="saving || !isDirty"
-                        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-secondary dark:hover:bg-gray-200"
-                        @click="save"
-                    >
-                        <LoaderCircle
-                            v-if="saving"
-                            class="h-3.5 w-3.5 animate-spin"
-                        />
-                        {{ saving ? "Saving..." : "Save changes" }}
-                    </button>
-                </div>
             </div>
 
             <div class="lg:flex lg:items-start lg:gap-6">
@@ -753,45 +731,75 @@
                                     <p
                                         class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
                                     >
-                                        How AMUMA looks on this device.
+                                        Light, dark, or match your device
+                                        automatically.
                                     </p>
                                 </div>
 
-                                <div
-                                    class="flex w-full max-w-sm items-center justify-between rounded-full bg-slate-100 p-1 dark:bg-white/5"
-                                >
-                                    <button
-                                        type="button"
-                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
-                                        :class="
-                                            !isDark
-                                                ? 'bg-white text-slate-800 shadow-sm dark:bg-secondary dark:text-white'
-                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
-                                        "
-                                        @click="setTheme(false)"
-                                    >
-                                        <Sun class="h-4 w-4" />
-                                        Light
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
-                                        :class="
-                                            isDark
-                                                ? 'bg-secondary text-white shadow-sm'
-                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
-                                        "
-                                        @click="setTheme(true)"
-                                    >
-                                        <Moon class="h-4 w-4" />
-                                        Dark
-                                    </button>
+                                <div class="w-full max-w-sm">
+                                    <ThemeModeSwitcher />
                                 </div>
                             </section>
+
+                            <section
+                                class="grid gap-6 bg-white p-6 lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+                            >
+                                <div>
+                                    <h2
+                                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Color combo
+                                    </h2>
+                                    <p
+                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
+                                    >
+                                        Pick the colors used across your
+                                        dashboard. Saved on this device.
+                                    </p>
+                                </div>
+
+                                <PalettePicker />
+                            </section>
+
+                            <SoundSettings />
                         </div>
                     </template>
                 </div>
             </div>
+
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="translate-y-3 opacity-0"
+                leave-active-class="transition duration-150 ease-in"
+                leave-to-class="translate-y-3 opacity-0"
+            >
+                <StickyActionBar
+                    v-if="!loading && (isDirty || saving)"
+                    hint="You have unsaved changes."
+                >
+                    <button
+                        type="button"
+                        :disabled="saving"
+                        class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                        @click="reset"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        :disabled="saving || !isDirty"
+                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                        @click="save"
+                    >
+                        <LoaderCircle
+                            v-if="saving"
+                            class="h-3.5 w-3.5 animate-spin"
+                        />
+                        {{ saving ? "Saving..." : "Save changes" }}
+                    </button>
+                </StickyActionBar>
+            </Transition>
         </div>
     </div>
 </template>
@@ -816,11 +824,14 @@ import {
     LoaderCircle,
     MapPin,
     MessageSquare,
-    Moon,
     Sun,
     UserRound,
 } from "lucide-vue-next";
 
+import ThemeModeSwitcher from "~/components/ui/ThemeModeSwitcher.vue";
+import StickyActionBar from "~/components/ui/StickyActionBar.vue";
+import PalettePicker from "~/components/ui/PalettePicker.vue";
+import SoundSettings from "~/components/ui/SoundSettings.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
@@ -850,7 +861,10 @@ definePageMeta({
     theme: "light",
 });
 
-useHead({ title: "My Profile" });
+useHead({
+    title: "My Profile",
+    htmlAttrs: { "data-palette-scope": "app" },
+});
 
 const route = useRoute();
 const router = useRouter();
@@ -889,8 +903,6 @@ watch(activeTab, (value) => {
         query: { ...route.query, tab: value },
     });
 });
-
-const isDark = useIsDark();
 
 const preferences = reactive([
     {

@@ -1,17 +1,14 @@
+// Primary/accent are driven by CSS variables (see assets/css/main.css) so users can
+// pick their own color combo. `<alpha-value>` keeps opacity modifiers like bg-primary-500/20 working.
+const rgbVar = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
+const scale = (name: string) => ({
+    DEFAULT: rgbVar(`${name}-500`),
+    ...Object.fromEntries(STEPS.map((step) => [step, rgbVar(`${name}-${step}`)])),
+});
+
 export const colors = {
-    primary: {
-        DEFAULT: "#3182ED",
-        50: "#EAF2FE",
-        100: "#D5E5FD",
-        200: "#ABCBFB",
-        300: "#7FB1F8",
-        400: "#5697F3",
-        500: "#3182ED",
-        600: "#1E68D1",
-        700: "#1650A6",
-        800: "#0F397B",
-        900: "#0A2857",
-    },
+    primary: scale("primary"),
     secondary: {
         DEFAULT: "#1A2133",
         50: "#F4F6FA",
@@ -27,19 +24,8 @@ export const colors = {
         950: "#0E1420",
     },
     surface: '#0E1420',
-    accent: {
-        DEFAULT: "#0E7C7B",
-        50: "#E7F5F5",
-        100: "#CFEBEA",
-        200: "#9FD7D5",
-        300: "#6FC3C0",
-        400: "#3FAFAB",
-        500: "#0E7C7B",
-        600: "#0C6564",
-        700: "#094E4D",
-        800: "#073837",
-        900: "#042221",
-    },
+    accent: scale("accent"),
+    page: rgbVar("page-bg"),
     light: '#ebf2ff',
     muted: {
         DEFAULT: '#6b7280',

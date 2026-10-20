@@ -20,6 +20,7 @@
         </div>
 
         <div
+            v-if="showTrial"
             class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
             aria-hidden="true"
         >
@@ -178,17 +179,21 @@
 <script setup lang="ts">
 import { formatCurrency } from "~/utils/currency";
 
-defineProps<{
-    planLabel: string;
-    title: string;
-    description: string;
-    price: number | undefined | string;
-    branchNote: string;
-    ctaText: string;
-    features: string[];
-    featured?: boolean;
-    savePercent?: number;
-}>();
+withDefaults(
+    defineProps<{
+        planLabel: string;
+        title: string;
+        description: string;
+        price: number | undefined | string;
+        branchNote: string;
+        ctaText: string;
+        features: string[];
+        featured?: boolean;
+        savePercent?: number;
+        showTrial?: boolean;
+    }>(),
+    { showTrial: true },
+);
 
 defineEmits<{
     (e: "select", plan: any): void;

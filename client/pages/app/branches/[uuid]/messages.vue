@@ -4,7 +4,7 @@
             class="grid h-full min-h-0 w-full grid-cols-1 gap-0 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-5"
         >
             <aside
-                class="flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
+                class="relative flex h-full min-h-0 flex-col overflow-hidden bg-white lg:rounded-lg lg:border lg:border-slate-200 dark:bg-secondary dark:lg:border-white/10"
             >
                 <div
                     class="shrink-0 border-b border-slate-200 p-4 dark:border-white/10"
@@ -28,14 +28,6 @@
                             </p>
                         </div>
 
-                        <button
-                            type="button"
-                            class="flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-600 active:scale-95"
-                            @click="openComposer"
-                        >
-                            <PenSquare class="h-3.5 w-3.5" />
-                            New Message
-                        </button>
                     </div>
 
                     <div
@@ -78,7 +70,7 @@
                 </div>
 
                 <div
-                    class="min-h-0 flex-1 overflow-y-auto p-2 overscroll-contain"
+                    class="min-h-0 flex-1 overflow-y-auto p-2 pb-20 overscroll-contain"
                 >
                     <div v-if="loadingList" class="space-y-2 p-1">
                         <div
@@ -161,6 +153,21 @@
                         </button>
                     </template>
                 </div>
+
+                <button
+                    type="button"
+                    aria-label="New Message"
+                    class="group/fab absolute bottom-4 right-20 z-10 flex h-12 items-center overflow-hidden rounded-full bg-primary px-[14px] text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:bg-primary-600 hover:px-5 hover:shadow-xl active:scale-95 lg:right-4"
+                    @click="openComposer"
+                >
+                    <PenSquare class="h-5 w-5 shrink-0" />
+
+                    <span
+                        class="max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold opacity-0 transition-all duration-300 group-hover/fab:ml-2 group-hover/fab:max-w-[120px] group-hover/fab:opacity-100"
+                    >
+                        New Message
+                    </span>
+                </button>
             </aside>
 
             <div

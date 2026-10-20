@@ -7,8 +7,11 @@
     />
 
     <aside
-        class="group fixed inset-y-0 left-0 z-40 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-gray-100 dark:border-white/10 bg-white dark:bg-secondary transition-transform duration-200 ease-in-out lg:static lg:z-20 lg:w-[76px] lg:translate-x-0 lg:rounded-2xl lg:border lg:shadow-sm lg:transition-[width] lg:hover:w-64"
-        :class="open ? 'translate-x-0' : '-translate-x-full'"
+        class="group fixed inset-y-2 left-2 z-40 flex w-[min(17rem,calc(100vw-1rem))] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary shadow-2xl shadow-primary-500/10 dark:shadow-black/40 transition-[transform,visibility] duration-300 ease-out lg:static lg:z-20 lg:h-full lg:w-[76px] lg:translate-x-0 lg:shadow-sm lg:transition-[width] lg:hover:w-64"
+        :class="[
+            open ? 'translate-x-0' : '-translate-x-[120%] max-lg:invisible',
+            { 'di-sidebar': intro },
+        ]"
     >
         <div
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
@@ -18,16 +21,12 @@
                 class="flex items-center gap-2.5"
                 @click="emit('close')"
             >
-                <img
-                    :src="logo"
-                    alt="AMUMA"
-                    class="w-9 h-9 rounded-lg object-contain shrink-0"
-                />
+                <ThemedLogo class="w-9 h-9 rounded-lg shrink-0" />
                 <div
                     class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
                     <p
-                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(49_130_237_/_35%)]"
+                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(var(--primary-500)_/_35%)]"
                     >
                         AMUMA
                     </p>
@@ -95,26 +94,36 @@
         </div>
     </aside>
 
+    <MobileBottomNav
+        :items="privateMenu"
+        @more="emit('open')"
+    />
+
     <AuthTransitionScreen v-if="loadingLogout" />
 </template>
 
 <script setup lang="ts">
+import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { LogOut, UserRound, X } from "lucide-vue-next";
-import logo from "assets/logo/logo.png";
+import ThemedLogo from "~/components/ui/ThemedLogo.vue";
 import { privateMenu, type MenuItem } from "~/config/privateMenu";
 import { authService } from "~/api/auth/AuthService";
 import { resetAuth } from "~/composables/useAuthUser";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import SidebarNavGroup from "~/components/ui/SidebarNavGroup.vue";
+import MobileBottomNav from "~/components/ui/MobileBottomNav.vue";
 
 defineProps<{
     open?: boolean;
 }>();
 
+const intro = useDashboardIntro();
+
 const emit = defineEmits<{
     close: [];
+    open: [];
 }>();
 
 const route = useRoute();

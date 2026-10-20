@@ -71,27 +71,15 @@ const features = [
             "eMAR and vital signs charting",
             "Admission and discharge records",
             "Room and bed tracking for facilities",
-            "VIP and Common room contracts on the Facility plan",
+            "VIP room CCTV access on the Facility plan",
         ],
     },
 ];
 
 const roles = [
     {
-        id: "agency_owner",
-        label: "Agency owner",
-        summary:
-            "Every branch under one account, with full control over each of them.",
-        sees: [
-            "All branches, switched from one login",
-            "Full access to every module in every branch",
-            "Branch managers, staff and their permissions",
-            "Subscription plans and branch settings",
-        ],
-    },
-    {
-        id: "branch_manager",
-        label: "Branch manager",
+        id: "owner",
+        label: "Branch owner",
         summary: "The whole branch at a glance, with the controls to run it.",
         sees: [
             "Dashboard with occupancy, bookings and contracts",
@@ -101,22 +89,9 @@ const roles = [
         ],
     },
     {
-        id: "admission",
-        label: "Admission staff",
-        summary:
-            "The front desk: bookings, new patients and admissions, without billing or clinical charting.",
-        sees: [
-            "Booking requests to approve or reply to",
-            "Patient records, created and updated",
-            "Admissions, room changes and discharges",
-            "Schedules, with rooms, beds and services to view",
-        ],
-    },
-    {
         id: "nurse",
         label: "Nurse and caregiver",
-        summary:
-            "Only their patients and their shifts, with nothing extra on screen.",
+        summary: "Only their patients and their shifts, with nothing extra on screen.",
         sees: [
             "Assigned patients and today's schedule",
             "eMAR and vital signs charting",
@@ -125,21 +100,20 @@ const roles = [
         ],
     },
     {
-        id: "cashier",
-        label: "Cashier",
-        summary:
-            "Money matters for the branch, without access to clinical records.",
+        id: "accounting",
+        label: "Accounting staff",
+        summary: "Money matters across branches, without access to clinical records.",
         sees: [
             "Invoices, balances and payments",
             "Adjustments, refunds and write-offs",
             "Balance statements for families",
+            "Subscription and contract billing",
         ],
     },
     {
         id: "family",
         label: "Family member",
-        summary:
-            "A clear window into their own loved one's care, and no one else's.",
+        summary: "A clear window into their own loved one's care, and no one else's.",
         sees: [
             "Their loved one's profile and records",
             "Upcoming schedule and visit updates",
@@ -190,7 +164,7 @@ const comparison = [
             title="Spend your shifts on care, not on paperwork."
             highlight="care"
             subtitle="AMUMA gives home-care agencies and care facilities one place for bookings, caregiver schedules, patient charts and billing."
-            :primary="{ label: 'Create agency account', to: '/product' }"
+            :primary="{ label: 'Create agency account', to: '/auth/agency/signup' }"
             :secondary="{ label: 'See plans', to: '#plans' }"
             :points="[
                 'Bookings and admissions',
@@ -363,7 +337,9 @@ const comparison = [
                         <div
                             class="grid gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-5 dark:border-white/10 dark:bg-white/[0.03] md:grid-cols-[180px_1fr_1fr] md:items-center md:gap-4"
                         >
-                            <p class="font-bold text-secondary dark:text-white">
+                            <p
+                                class="font-bold text-secondary dark:text-white"
+                            >
                                 {{ row.area }}
                             </p>
                             <p
@@ -382,6 +358,7 @@ const comparison = [
             </div>
         </section>
 
+
         <div id="plans" class="scroll-mt-32">
             <PricingSection />
         </div>
@@ -391,8 +368,8 @@ const comparison = [
         <CtaSection
             title="Ready to run your agency on AMUMA?"
             text="Create your agency account, set up your branch, and choose the plan that fits how you care."
-            :primary="{ label: 'Create agency account', to: '/product' }"
-            :secondary="null"
+            :primary="{ label: 'Create agency account', to: '/auth/agency/signup' }"
+            :secondary="{ label: 'Compare plans', to: '/product' }"
         />
     </div>
 </template>

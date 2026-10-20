@@ -50,6 +50,20 @@ class SubscriptionRepository
             ->exists();
     }
 
+    public function userHasUsedTrial(?int $userId): bool
+    {
+        if (!$userId) {
+            return false;
+        }
+
+        return Subscription::whereIn(
+            'agency_id',
+            Agency::where('registered_by', $userId)->select('agency_id')
+        )
+            ->where('status', '!=', Subscription::STATUS_REJECTED)
+            ->exists();
+    }
+
     public function findByFields(array $payload)
     {
         return Subscription::where($payload)->first();

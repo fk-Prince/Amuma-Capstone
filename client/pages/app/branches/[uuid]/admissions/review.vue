@@ -78,7 +78,7 @@
                     </div>
 
                     <div
-                        class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:border-white/10 dark:bg-secondary"
+                        class="sticky bottom-4 z-20 mt-6 rounded-2xl border border-gray-100 bg-white/95 p-4 shadow-lg shadow-slate-900/10 backdrop-blur dark:border-white/10 dark:bg-secondary/95"
                     >
                         <div class="relative group w-full">
                             <BaseButton
@@ -92,7 +92,7 @@
 
                             <div
                                 v-if="submitDisabled && admitBlockedReason"
-                                class="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-[12px] text-white shadow-lg group-hover:block"
+                                class="pointer-events-none absolute bottom-full right-0 z-50 mb-2 hidden w-max max-w-xs rounded-md bg-gray-900 px-3 py-2 text-[12px] text-white shadow-lg group-hover:block"
                             >
                                 {{ admitBlockedReason }}
                             </div>

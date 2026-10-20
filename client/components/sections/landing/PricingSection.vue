@@ -15,8 +15,9 @@
                     <span class="text-primary">features</span> you need.
                 </h1>
 
+                
                 <PlanTypeToggle
-                    class="mt-8"
+                    :class="trialAvailable && !loading ? 'mt-4' : 'mt-8'"
                     :model-value="checkout.selectedPlanType"
                     @update:model-value="checkout.setSelectedPlanType"
                 />
@@ -86,11 +87,12 @@
 </template>
 
 <script setup lang="ts">
+import { Gift } from "lucide-vue-next";
 import PricingCard from "~/components/ui/PricingCard.vue";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
 import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
 
-const { checkout, loading, formattedPlans } = usePlanCards();
+const { checkout, loading, formattedPlans, trialAvailable } = usePlanCards();
 const { startSubscribe } = useSubscribeFlow();
 </script>

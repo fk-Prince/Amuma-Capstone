@@ -62,6 +62,8 @@ class BranchController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         BranchGuard::mergeRequest($request, $branch);
-        return $this->branchService->dashboard($request->all());
+        $payload = $request->all();
+        $payload['viewer_user_id'] = $request->user()?->user_id;
+        return $this->branchService->dashboard($payload);
     }
 }

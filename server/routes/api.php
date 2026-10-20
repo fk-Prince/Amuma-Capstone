@@ -153,6 +153,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // SUBSCRIPTION
     Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+    Route::get('/subscriptions-trial-status', [SubscriptionController::class, 'trialStatus']);
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
     Route::post('/subscriptions-check-unique',  [SubscriptionController::class, 'checkUnique']);
@@ -177,6 +178,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/recipients', [MessageController::class, 'recipients']);
     Route::post('/messages/open', [MessageController::class, 'openWith']);
     Route::get('/messages/thread', [MessageController::class, 'thread']);
+    Route::get('/messages/details', [MessageController::class, 'details']);
+    Route::post('/messages/pin', [MessageController::class, 'pin']);
     Route::post('/messages', [MessageController::class, 'send']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);

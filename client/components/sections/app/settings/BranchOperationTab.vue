@@ -316,20 +316,25 @@
             </div>
         </div>
 
-        <div class="flex justify-end pt-6">
+        <StickyActionBar hint="Remember to save before leaving this tab.">
             <button
                 type="button"
-                @click="save"
                 :disabled="saving"
-                class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="save"
+                class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
+                <span
+                    v-if="saving"
+                    class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                />
                 {{ saving ? "Saving..." : "Save Settings" }}
             </button>
-        </div>
+        </StickyActionBar>
     </div>
 </template>
 
 <script setup lang="ts">
+import StickyActionBar from "~/components/ui/StickyActionBar.vue";
 import { computed, reactive, ref } from "vue";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 import BaseInput from "~/components/ui/BaseInput.vue";

@@ -118,6 +118,28 @@ class MessageController extends Controller
         return $this->messageService->thread($user, $validated, $request->boolean('as_staff'));
     }
 
+    public function details(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'conversation_id' => ['required', 'integer'],
+        ]);
+
+        return $this->messageService->details($user, $validated, $request->boolean('as_staff'));
+    }
+
+    public function pin(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'message_id' => ['required', 'integer'],
+        ]);
+
+        return $this->messageService->togglePin($user, $validated, $request->boolean('as_staff'));
+    }
+
     public function send(Request $request)
     {
         $user = AuthGuard::requireUser($request->user());

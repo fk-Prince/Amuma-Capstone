@@ -47,13 +47,40 @@
                     <span class="text-sm font-medium dark:text-white"
                         >Notifications</span
                     >
-                    <button
-                        v-if="unreadCount > 0"
-                        @click="markAllRead"
-                        class="text-xs text-blue-500 hover:underline dark:text-blue-300"
-                    >
-                        Mark all as read
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button
+                            v-if="unreadCount > 0"
+                            @click="markAllRead"
+                            class="text-xs text-blue-500 hover:underline dark:text-blue-300"
+                        >
+                            Mark all as read
+                        </button>
+
+                        <button
+                            type="button"
+                            :title="
+                                soundOn
+                                    ? 'Notification sound is on. Click to mute.'
+                                    : 'Notification sound is off. Click to turn on.'
+                            "
+                            :aria-label="
+                                soundOn
+                                    ? 'Mute notification sound'
+                                    : 'Turn on notification sound'
+                            "
+                            :aria-pressed="soundOn"
+                            class="rounded-md p-1 transition hover:bg-gray-100 dark:hover:bg-white/10"
+                            :class="
+                                soundOn
+                                    ? 'text-primary'
+                                    : 'text-gray-400 dark:text-gray-500'
+                            "
+                            @click="toggleSound"
+                        >
+                            <Volume2 v-if="soundOn" class="h-4 w-4" />
+                            <VolumeX v-else class="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
                 <div
@@ -179,7 +206,8 @@ import {
     watch,
 } from "vue";
 import { onClickOutside } from "@vueuse/core";
-import { Bell, Building2 } from "lucide-vue-next";
+import { Bell, Building2, Volume2, VolumeX } from "lucide-vue-next";
+import { playNotificationSound, useSoundPrefs } from "~/composables/useSounds";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -196,6 +224,16 @@ const { $echo } = useNuxtApp();
 
 const isMounted = ref(false);
 const open = ref(false);
+// Quick on/off for the notification sound (same switch as the profile page).
+const { notification: soundOn } = useSoundPrefs();
+
+function toggleSound() {
+    soundOn.value = !soundOn.value;
+
+    // let the person hear what they just turned on
+    if (soundOn.value) playNotificationSound({ force: true });
+}
+
 const dropdownRef = ref<HTMLElement | null>(null);
 const buttonRef = ref<HTMLElement | null>(null);
 const dropdownStyle = ref<Record<string, string>>({});

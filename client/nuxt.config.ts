@@ -1,3 +1,8 @@
+// Runs before first paint: applies Light/Dark/Device mode and the saved dashboard palette.
+// Stored palette CSS is only injected if it matches the rigid `--var:R G B;` shape that
+// utils/colorScale.ts produces (keep PALETTE_CSS_PATTERN in sync with the regex below).
+const THEME_BOOT_SCRIPT = String.raw`(function(){try{var d=document.documentElement,t=localStorage.getItem('theme');var dark=t==='light'?false:t==='system'?matchMedia('(prefers-color-scheme: dark)').matches:true;if(dark)d.classList.add('dark');var p=JSON.parse(localStorage.getItem('palette')||'null');if(p&&typeof p.css==='string'&&/^html\[data-palette-scope\]\{(--[a-z0-9-]+:(\d{1,3}|\d{1,3} \d{1,3} \d{1,3});)+\}$/.test(p.css)){var e=document.createElement('style');e.id='amuma-palette';e.textContent=p.css;document.head.appendChild(e)}}catch(e){}})()`;
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
@@ -60,12 +65,12 @@ export default defineNuxtConfig({
     head: {
       style: [
         {
-          innerHTML: `html{background:#EEF3FB}html.dark{background:#1f2634}`,
+          innerHTML: `html{background:rgb(var(--page-bg,238 243 251))}html.dark{background:rgb(var(--secondary-800,31 38 52))}`,
         },
       ],
       script: [
         {
-          innerHTML: `(function(){try{var t=localStorage.getItem('theme');if(t?t==='dark':true)document.documentElement.classList.add('dark')}catch(e){}})()`,
+          innerHTML: THEME_BOOT_SCRIPT,
         },
         {
           src: 'https://js.xendit.co/v1/xendit.min.js',

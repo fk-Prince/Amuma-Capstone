@@ -1,5 +1,7 @@
 import { computed, onMounted, ref } from "vue";
 import { planService } from "@/api/plan/PlanService";
+import { subscriptionService } from "@/api/subscription/SubscriptionService";
+import { useAuthUser } from "~/composables/useAuthUser";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { branchLimitText, planPrice } from "~/utils/planType";
 
@@ -34,11 +36,29 @@ const MODULE_FEATURES: Record<string, string[]> = {
 
 export function usePlanCards() {
     const checkout = useSubscriptionCheckout();
+    const user = useAuthUser();
     const loading = ref(true);
+    const trialAvailable = ref(true);
+
+    async function loadTrialStatus() {
+        if (!user.value) return;
+
+        try {
+            const res: any = await subscriptionService.trialStatus();
+            trialAvailable.value = (res?.data ?? res)?.trial_available !== false;
+        } catch {
+            trialAvailable.value = true;
+        }
+    }
 
     onMounted(async () => {
         try {
-            checkout.setPlans(await planService.list());
+            await Promise.all([
+                planService
+                    .list()
+                    .then((plans: any) => checkout.setPlans(plans)),
+                loadTrialStatus(),
+            ]);
         } finally {
             loading.value = false;
         }
@@ -71,11 +91,12 @@ export function usePlanCards() {
                 branchNote: branchLimitText(plan.type),
                 ctaText: `Subscribe to ${plan.name}`,
                 featured: plan.plan_code === "C",
+                showTrial: trialAvailable.value,
                 savePercent: plan.plan_code === "C" ? hybridSavePercent(plan.type) : 0,
                 features: MODULE_FEATURES[plan.plan_code] ?? [],
             };
         }),
     );
 
-    return { checkout, loading, formattedPlans };
+    return { checkout, loading, formattedPlans, trialAvailable };
 }
