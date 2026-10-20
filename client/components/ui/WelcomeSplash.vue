@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { ArrowRight } from "lucide-vue-next";
-import BrandLogo from "~/components/ui/BrandLogo.vue";
+import ThemedLogo from "~/components/ui/ThemedLogo.vue";
 
+// Shown right after the agency subscribes and pays. Approval comes later,
+// so this screen says "in review", not "welcome".
 const props = withDefaults(
     defineProps<{
         name?: string;
+        agencyName?: string;
         title?: string;
         subtitle?: string;
         buttonLabel?: string;
@@ -13,11 +16,11 @@ const props = withDefaults(
     }>(),
     {
         name: "",
-        title: "",
-        subtitle:
-            "Your payment was received. We will review your subscription and notify you within 1-2 business days.",
+        agencyName: "",
+        title: "Your subscription is in review",
+        subtitle: "",
         buttonLabel: "Continue",
-        autoCloseMs: 9000,
+        autoCloseMs: 0,
     },
 );
 
@@ -25,31 +28,23 @@ const emit = defineEmits<{
     (e: "continue"): void;
 }>();
 
-const headline = computed(
+const body = computed(
     () =>
-        props.title ||
-        (props.name ? `Welcome aboard, ${props.name}!` : "Welcome aboard!"),
+        props.subtitle ||
+        `We received your payment${
+            props.agencyName ? ` for ${props.agencyName}` : ""
+        }. Our team is checking your details, usually within 1 to 2 business days.`,
 );
 
-const CONFETTI_COLORS = ["#7FB1F8", "#5697F3", "#3182ED", "#6FC3C0", "#FFFFFF"];
-
-const confetti = Array.from({ length: 36 }, (_, i) => {
-    const size = 6 + (i % 4) * 3;
-    return {
-        id: i,
-        style: {
-            left: `${(i * 37 + 11) % 100}%`,
-            width: `${size}px`,
-            height: i % 3 === 0 ? `${size}px` : `${size * 1.8}px`,
-            borderRadius: i % 3 === 0 ? "9999px" : "2px",
-            backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-            animationDelay: `${0.5 + (i % 9) * 0.14}s`,
-            animationDuration: `${2.6 + (i % 5) * 0.4}s`,
-            "--sway": `${((i % 7) - 3) * 22}px`,
-            "--rot": `${240 + (i % 6) * 90}deg`,
-        } as Record<string, string>,
-    };
-});
+const steps = [
+    { label: "Payment received", hint: "", state: "done" },
+    {
+        label: "Reviewing your subscription",
+        hint: "We will email you once it is approved",
+        state: "now",
+    },
+    { label: "Dashboard access", hint: "", state: "next" },
+] as const;
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
 let closed = false;
@@ -69,13 +64,10 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => {
     previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     window.addEventListener("keydown", onKeydown);
     buttonRef.value?.focus({ preventScroll: true });
 
-    if (props.autoCloseMs > 0) {
-        autoTimer = setTimeout(close, props.autoCloseMs);
-    }
+    if (props.autoCloseMs > 0) autoTimer = setTimeout(close, props.autoCloseMs);
 });
 
 onBeforeUnmount(() => {
@@ -88,7 +80,7 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div
-            class="ws-root fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-secondary-950"
+            class="ws-root fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-page px-5 dark:bg-secondary-950"
             role="dialog"
             aria-modal="true"
             aria-labelledby="welcome-splash-title"
@@ -99,104 +91,116 @@ onBeforeUnmount(() => {
                 aria-hidden="true"
             >
                 <div
-                    class="absolute -top-40 left-1/2 h-[560px] w-[560px] -translate-x-1/2 rounded-full bg-primary-500/20 blur-[150px]"
+                    class="absolute inset-0 opacity-60 [background-image:radial-gradient(circle,rgb(var(--primary-500)/0.22)_1px,transparent_1px)] [background-size:26px_26px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_42%,#000_15%,transparent_75%)] dark:opacity-40"
                 />
                 <div
-                    class="absolute -bottom-40 -right-40 h-[440px] w-[440px] rounded-full bg-accent-500/15 blur-[140px]"
-                />
-                <div
-                    class="absolute -bottom-52 -left-40 h-[440px] w-[440px] rounded-full bg-primary-400/10 blur-[140px]"
+                    class="absolute left-1/2 top-[40%] h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/10 blur-3xl dark:bg-primary-500/15"
                 />
             </div>
 
             <div
-                class="pointer-events-none absolute inset-0 overflow-hidden ws-confetti"
-                aria-hidden="true"
+                class="relative z-10 flex w-full max-w-[460px] flex-col items-center text-center"
             >
-                <span
-                    v-for="piece in confetti"
-                    :key="piece.id"
-                    class="ws-piece"
-                    :style="piece.style"
-                />
-            </div>
-
-            <div class="absolute left-6 top-6 z-10">
-                <BrandLogo icon-class="h-8 w-8" text-class="text-lg" />
-            </div>
-
-            <div
-                class="relative z-10 flex max-w-lg flex-col items-center px-6 text-center"
-            >
-                <div class="relative flex h-28 w-28 items-center justify-center">
-                    <span class="ws-pulse" aria-hidden="true" />
-                    <span class="ws-pulse ws-pulse-late" aria-hidden="true" />
-
-                    <div
-                        class="ws-badge relative flex h-24 w-24 items-center justify-center rounded-full border border-white/10 bg-white/5 shadow-[0_20px_60px_-15px_rgba(49,130,237,0.55)]"
-                    >
-                        <svg
-                            class="h-14 w-14"
-                            viewBox="0 0 100 100"
-                            fill="none"
-                            aria-hidden="true"
-                        >
-                            <circle
-                                class="ws-draw ws-circle"
-                                cx="50"
-                                cy="50"
-                                r="44"
-                                pathLength="1"
-                                stroke="#5697F3"
-                                stroke-width="6"
-                                stroke-linecap="round"
-                            />
-                            <path
-                                class="ws-draw ws-tick"
-                                d="M30 52 L44 66 L71 36"
-                                pathLength="1"
-                                stroke="#FFFFFF"
-                                stroke-width="7"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-                        </svg>
-                    </div>
-                </div>
+                <ThemedLogo class="ws-beat h-14 w-14" />
 
                 <p
-                    class="ws-rise mt-6 text-sm font-extrabold tracking-[0.3em] text-primary-300"
-                    style="--d: 0.9s"
+                    class="ws-rise mt-6 text-xs font-extrabold uppercase tracking-[0.3em] text-primary-500"
+                    style="--d: 0.1s"
                 >
-                    AMUMA
+                    Thank you{{ name ? `, ${name}` : "" }}
                 </p>
 
                 <h1
                     id="welcome-splash-title"
-                    class="ws-rise mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl"
-                    style="--d: 1.05s"
+                    class="ws-rise mt-2.5 text-[26px] font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[34px] dark:text-white"
+                    style="--d: 0.25s"
                 >
-                    {{ headline }}
+                    {{ title }}
                 </h1>
 
                 <p
                     id="welcome-splash-desc"
-                    class="ws-rise mt-3 max-w-md text-sm leading-relaxed text-gray-300 sm:text-base"
-                    style="--d: 1.25s"
+                    class="ws-rise mt-3 max-w-[400px] text-[15px] leading-relaxed text-slate-500 dark:text-gray-400"
+                    style="--d: 0.4s"
                 >
-                    {{ subtitle }}
+                    {{ body }}
                 </p>
+
+                <ul
+                    class="ws-rise mt-7 w-full rounded-2xl border border-slate-900/10 bg-white px-4 py-1.5 text-left dark:border-white/10 dark:bg-white/5"
+                    style="--d: 0.6s"
+                >
+                    <li
+                        v-for="(s, i) in steps"
+                        :key="s.label"
+                        class="flex items-center gap-3 py-3 text-sm"
+                        :class="[
+                            i > 0
+                                ? 'border-t border-slate-900/10 dark:border-white/10'
+                                : '',
+                            s.state === 'next'
+                                ? 'text-slate-400 dark:text-gray-500'
+                                : 'text-slate-900 dark:text-white',
+                        ]"
+                    >
+                        <span
+                            class="relative grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold"
+                            :class="{
+                                'bg-primary-500 text-white': s.state === 'done',
+                                'border-2 border-primary-500':
+                                    s.state === 'now',
+                                'border-2 border-dashed border-slate-300 dark:border-white/20':
+                                    s.state === 'next',
+                            }"
+                        >
+                            <template v-if="s.state === 'done'">✓</template>
+                            <span
+                                v-else-if="s.state === 'now'"
+                                class="ws-beat h-2 w-2 rounded-full bg-primary-500"
+                            />
+                        </span>
+                        <div>
+                            {{ s.label }}
+                            <p
+                                v-if="s.hint"
+                                class="mt-px text-xs text-slate-500 dark:text-gray-400"
+                            >
+                                {{ s.hint }}
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+
+                <div
+                    class="ws-rise mt-6 flex items-center gap-1.5"
+                    style="--d: 0.8s"
+                    aria-hidden="true"
+                >
+                    <span
+                        v-for="i in 3"
+                        :key="i"
+                        class="h-1.5 w-1.5 animate-bounce rounded-full bg-primary-500 motion-reduce:animate-none dark:bg-primary-400"
+                        :style="{ animationDelay: `${(i - 1) * 0.15}s` }"
+                    />
+                </div>
 
                 <button
                     ref="buttonRef"
                     type="button"
-                    class="ws-rise mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-[15px] font-semibold text-white outline-none transition-colors hover:bg-primary-600 focus-visible:ring-2 focus-visible:ring-primary-300/60"
-                    style="--d: 1.6s"
+                    class="ws-rise mt-7 inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 text-[15px] font-semibold text-white outline-none transition-colors hover:bg-primary-600 focus-visible:ring-2 focus-visible:ring-primary-300"
+                    style="--d: 0.95s"
                     @click="close"
                 >
                     {{ buttonLabel }}
                     <ArrowRight class="h-4 w-4" />
                 </button>
+
+                <p
+                    class="ws-rise mt-3.5 text-xs text-slate-500 dark:text-gray-400"
+                    style="--d: 1.05s"
+                >
+                    You can close this page. We will notify you.
+                </p>
             </div>
         </div>
     </Teleport>
@@ -204,7 +208,16 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .ws-root {
-    animation: ws-fade 0.35s ease-out both;
+    animation: ws-fade 0.4s ease-out both;
+}
+
+.ws-beat {
+    animation: ws-beat 1.8s ease-in-out infinite;
+}
+
+.ws-rise {
+    opacity: 0;
+    animation: ws-rise 0.55s ease-out var(--d, 0s) forwards;
 }
 
 @keyframes ws-fade {
@@ -216,73 +229,20 @@ onBeforeUnmount(() => {
     }
 }
 
-.ws-badge {
-    animation: ws-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
-}
-
-@keyframes ws-pop {
-    from {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    to {
-        opacity: 1;
+@keyframes ws-beat {
+    0%,
+    100% {
         transform: scale(1);
     }
-}
-
-.ws-draw {
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-}
-
-.ws-circle {
-    animation: ws-draw 0.7s ease-out 0.35s forwards;
-}
-
-.ws-tick {
-    animation: ws-draw 0.45s ease-out 0.95s forwards;
-}
-
-@keyframes ws-draw {
-    to {
-        stroke-dashoffset: 0;
+    50% {
+        transform: scale(1.08);
     }
-}
-
-.ws-pulse {
-    position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    border: 2px solid rgba(86, 151, 243, 0.55);
-    opacity: 0;
-    animation: ws-pulse 2.2s ease-out 1.1s 2 both;
-}
-
-.ws-pulse-late {
-    animation-delay: 1.8s;
-}
-
-@keyframes ws-pulse {
-    from {
-        opacity: 0.7;
-        transform: scale(0.85);
-    }
-    to {
-        opacity: 0;
-        transform: scale(1.7);
-    }
-}
-
-.ws-rise {
-    opacity: 0;
-    animation: ws-rise 0.55s ease-out var(--d, 0s) forwards;
 }
 
 @keyframes ws-rise {
     from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(12px);
     }
     to {
         opacity: 1;
@@ -290,49 +250,16 @@ onBeforeUnmount(() => {
     }
 }
 
-.ws-piece {
-    position: absolute;
-    top: -6vh;
-    opacity: 0;
-    animation-name: ws-fall;
-    animation-timing-function: cubic-bezier(0.25, 0.6, 0.35, 1);
-    animation-fill-mode: both;
-}
-
-@keyframes ws-fall {
-    0% {
-        opacity: 0;
-        transform: translate3d(0, 0, 0) rotate(0deg);
-    }
-    10% {
-        opacity: 1;
-    }
-    85% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        transform: translate3d(var(--sway), 108vh, 0) rotate(var(--rot));
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .ws-confetti,
-    .ws-pulse {
-        display: none;
+    .ws-root,
+    .ws-beat {
+        animation: none;
     }
 
-    .ws-root,
-    .ws-badge,
     .ws-rise {
         animation: none;
         opacity: 1;
         transform: none;
-    }
-
-    .ws-draw {
-        animation: none;
-        stroke-dashoffset: 0;
     }
 }
 </style>

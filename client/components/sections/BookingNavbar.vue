@@ -103,12 +103,16 @@ const DARK_GLOW =
 const INDICATOR_BLEED = 8;
 
 const navInner = computed(() => {
-    if (variant.value === 2 || variant.value === 3 || variant.value === 7)
+    if (
+        variant.value === 2 ||
+        variant.value === 3 ||
+        variant.value === 6 ||
+        variant.value === 7
+    )
         return "px-4 sm:px-10";
     if (variant.value === 1 || variant.value === 4)
         return "mx-auto max-w-[100rem] px-6";
     if (variant.value === 5) return "px-6";
-    if (variant.value === 6) return "mx-auto max-w-[100rem] px-6 sm:px-10";
 
     return "px-6";
 });
@@ -176,11 +180,12 @@ const header = computed(() => {
                 "shadow-[0_10px_40px_-12px_rgba(0,0,0,0.55)]",
             ].join(" ");
         case 6:
+            // Logo + profile only, as a floating card that stays in the page
+            // flow (so pages don't need extra top padding).
             return [
-                "relative w-full h-[90px] flex items-center bg-white dark:bg-secondary",
-            ]
-                .filter(Boolean)
-                .join(" ");
+                "relative z-50 mx-auto mb-3 mt-6 flex h-[90px] w-[88%] max-w-[1600px] items-center rounded-[20px]",
+                `border border-primary-200 bg-light ${DARK_CHROME_RAISED} ${DARK_GLOW}`,
+            ].join(" ");
     }
 });
 
