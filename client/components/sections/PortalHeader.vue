@@ -1,6 +1,10 @@
 <template>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:block">
         <header
+<<<<<<< main
+=======
+            :class="{ 'di-header': intro }"
+>>>>>>> branch
             class="min-w-0 flex-1 min-h-[64px] sm:min-h-[96px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 rounded-3xl lg:rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary max-lg:bg-gradient-to-br max-lg:from-white max-lg:to-primary-50/70 dark:max-lg:from-secondary dark:max-lg:to-secondary-800 shadow-[0_8px_30px_rgba(15,23,42,0.06)] lg:shadow-sm"
         >
             <div class="min-w-0 flex-1">
@@ -87,7 +91,11 @@
         </header>
 
         <!-- Profile: its own floating circle next to the header on phones and tablets -->
+<<<<<<< main
         <div v-if="user" class="shrink-0 lg:hidden">
+=======
+        <div v-if="user" class="shrink-0 lg:hidden" :class="{ 'di-pop': intro }">
+>>>>>>> branch
             <ClientOnly>
                 <NavbarProfileDropdown
                     :user="user"
@@ -101,6 +109,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Calendar, Clock } from "lucide-vue-next";
@@ -111,6 +120,10 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { messageService } from "~/api/message/MessageService";
 import type { ConversationSummary } from "~/types/message";
 
+<<<<<<< main
+=======
+const intro = useDashboardIntro();
+>>>>>>> branch
 
 const user = useAuthUser();
 const { $echo } = useNuxtApp();
@@ -140,6 +153,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "My Loved Ones",
         subtitle: "View and manage your loved one's profile and records.",
     },
+    "/portal/monitoring": {
+        title: "Monitoring",
+        subtitle: "Check in on the room, live and in real time.",
+    },
     "/portal/schedule": {
         title: "Schedule",
         subtitle: "Upcoming appointments and daily care schedule.",
@@ -162,10 +179,6 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "Financial Overview",
         subtitle:
             "View invoices, payments, balances, and available refunds for your loved ones.",
-    },
-    "/profile": {
-        title: "My Profile",
-        subtitle: "Update your personal details, contact information, and preferences.",
     },
 };
 

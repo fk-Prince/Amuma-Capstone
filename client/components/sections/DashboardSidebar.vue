@@ -10,7 +10,12 @@
         class="group fixed inset-y-2 left-2 z-40 flex w-[min(17rem,calc(100vw-1rem))] shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary shadow-2xl shadow-primary-500/10 dark:shadow-black/40 transition-[transform,visibility] duration-300 ease-out lg:static lg:z-20 lg:h-full lg:w-[76px] lg:translate-x-0 lg:shadow-sm lg:transition-[width] lg:hover:w-64"
         :class="[
             open ? 'translate-x-0' : '-translate-x-[120%] max-lg:invisible',
+<<<<<<< main
         ]"
+=======
+            { 'di-sidebar': intro },
+        ]"a
+>>>>>>> branch
     >
         <div
             class="flex shrink-0 items-center justify-between px-[19px] pt-4 pb-3"
@@ -20,15 +25,19 @@
                 class="flex items-center gap-2.5"
                 @click="emit('close')"
             >
-                <img
-                    :src="logo"
-                    alt="AMUMA"
-                    class="w-9 h-9 rounded-lg object-contain shrink-0"
-                />
+                <ThemedLogo class="w-9 h-9 rounded-lg shrink-0" />
                 <div
                     class="whitespace-nowrap leading-tight transition-opacity duration-150 delay-75 lg:opacity-0 lg:group-hover:opacity-100"
                 >
+<<<<<<< main
                     <p class="brand-shine text-2xl font-extrabold tracking-wide">AMUMA</p>
+=======
+                    <p
+                        class="font-extrabold text-primary-500 text-2xl tracking-wide [text-shadow:0_4px_8px_rgb(var(--primary-500)_/_35%)] dark:text-primary-300"
+                    >
+                        AMUMA
+                    </p>
+>>>>>>> branch
                 </div>
             </NuxtLink>
 
@@ -107,7 +116,8 @@
 </template>
 
 <script setup lang="ts">
-import logo from "assets/logo/logo.png";
+import { useDashboardIntro } from "~/composables/useDashboardIntro";
+import ThemedLogo from "~/components/ui/ThemedLogo.vue";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { LogOut, UserRound, X } from "lucide-vue-next";
@@ -124,6 +134,10 @@ interface MenuItem {
     group?: string;
 }
 
+<<<<<<< main
+=======
+const intro = useDashboardIntro();
+>>>>>>> branch
 
 const props = withDefaults(
     defineProps<{
@@ -176,10 +190,6 @@ const loadingLogout = ref(false);
 async function logout() {
     loadingLogout.value = true;
 
-    // The server call is best-effort — if it fails (expired session, network
-    // blip, stale CSRF token) the user must still be logged out locally and
-    // sent to sign-in, never left stranded on the page they clicked
-    // "Logout" from.
     try {
         await authService.logout();
     } catch (err) {

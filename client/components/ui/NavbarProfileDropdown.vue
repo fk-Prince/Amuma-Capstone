@@ -19,7 +19,10 @@
                         <img
                             v-if="showPhoto"
                             :src="user.avatar"
+<<<<<<< main
                             referrerpolicy="no-referrer"
+=======
+>>>>>>> branch
                             alt="Profile"
                             class="h-full w-full rounded-full object-cover shadow-md ring-2 ring-white dark:ring-white/15"
                             @error="avatarFailed = true"
@@ -38,7 +41,10 @@
                     <div v-else class="relative">
                         <img
                             :src="user.avatar"
+<<<<<<< main
                             referrerpolicy="no-referrer"
+=======
+>>>>>>> branch
                             class="w-9 h-9 rounded-full border-2 border-white shadow-sm object-cover"
                             :class="[
                                 themeAware ? 'dark:border-white/20' : '',
@@ -113,7 +119,6 @@
                         <div class="relative shrink-0">
                             <img
                                 :src="user.avatar"
-                                referrerpolicy="no-referrer"
                                 class="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover"
                                 alt="Profile"
                             />
@@ -149,35 +154,8 @@
                         Appearance
                     </p>
 
-                    <div
-                        class="mx-4 my-1 flex items-center justify-between rounded-full bg-gray-50 dark:bg-white/5 p-1"
-                    >
-                        <button
-                            type="button"
-                            class="flex-1 flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-medium transition-colors"
-                            :class="
-                                !isDark
-                                    ? 'bg-white text-gray-800 shadow-sm dark:bg-secondary dark:text-white'
-                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
-                            "
-                            @click="setTheme(false)"
-                        >
-                            <Sun class="w-3.5 h-3.5" />
-                            Light
-                        </button>
-                        <button
-                            type="button"
-                            class="flex-1 flex items-center justify-center gap-1.5 rounded-full py-1.5 text-xs font-medium transition-colors"
-                            :class="
-                                isDark
-                                    ? 'bg-secondary text-white shadow-sm'
-                                    : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400'
-                            "
-                            @click="setTheme(true)"
-                        >
-                            <Moon class="w-3.5 h-3.5" />
-                            Dark
-                        </button>
+                    <div class="mx-4 my-1">
+                        <ThemeModeSwitcher size="sm" />
                     </div>
 
                     <div class="py-1">
@@ -230,7 +208,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
-import { LogOut, LoaderCircle, Sun, Moon } from "lucide-vue-next";
+import { LogOut, LoaderCircle } from "lucide-vue-next";
+import ThemeModeSwitcher from "./ThemeModeSwitcher.vue";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
@@ -309,7 +288,6 @@ async function onMenuItem(item: any, close: () => void) {
         navigating.value = false;
     }
 }
-const isDark = useIsDark();
 const route = useRoute();
 
 const profileFrom = computed(() => {

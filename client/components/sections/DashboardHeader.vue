@@ -1,6 +1,10 @@
 <template>
     <div class="flex shrink-0 items-center gap-2 sm:gap-3 lg:block">
         <header
+<<<<<<< main
+=======
+            :class="{ 'di-header': intro }"
+>>>>>>> branch
             class="min-w-0 flex-1 min-h-[64px] sm:min-h-[96px] lg:h-[120px] px-3 sm:px-6 lg:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4 rounded-3xl lg:rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-secondary max-lg:bg-gradient-to-br max-lg:from-white max-lg:to-primary-50/70 dark:max-lg:from-secondary dark:max-lg:to-secondary-800 shadow-[0_8px_30px_rgba(15,23,42,0.06)] lg:shadow-sm"
         >
             <div v-if="!isMounted" class="min-w-0 flex-1 space-y-2">
@@ -8,11 +12,25 @@
                 <div class="h-3 w-56 rounded-md skeleton-shimmer" />
             </div>
 
+<<<<<<< main
             <button
                 v-else
                 type="button"
                 class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 text-left transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-white/5 sm:-ml-2 sm:px-2"
                 @click="branchStore.openModal"
+=======
+            <component
+                :is="canSwitchBranch ? 'button' : 'div'"
+                v-else
+                :type="canSwitchBranch ? 'button' : undefined"
+                class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 text-left transition-colors duration-200 sm:-ml-2 sm:px-2"
+                :class="
+                    canSwitchBranch
+                        ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
+                        : 'cursor-default'
+                "
+                @click="onBranchClick"
+>>>>>>> branch
             >
                 <div
                     class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10 sm:h-16 sm:w-16 lg:h-20 lg:w-20"
@@ -39,7 +57,11 @@
                         {{ branchStore.activeBranch?.name || "Select a branch" }}
 
                         <ChevronDown
+<<<<<<< main
                             v-if="branchStore.branches.length"
+=======
+                            v-if="canSwitchBranch"
+>>>>>>> branch
                             class="h-4 w-4 shrink-0 text-gray-400 dark:text-white/40"
                         />
                     </h1>
@@ -75,7 +97,11 @@
                         </span>
                     </div>
                 </div>
+<<<<<<< main
             </button>
+=======
+            </component>
+>>>>>>> branch
 
             <div
                 class="flex items-center gap-2 sm:gap-6 lg:gap-8 shrink-0 max-lg:[&>div>button]:h-10 max-lg:[&>div>button]:w-10 max-lg:[&>div>button]:rounded-full max-lg:[&>div>button]:bg-gray-100/80 dark:max-lg:[&>div>button]:bg-white/10 max-lg:[&>div>button]:ring-1 max-lg:[&>div>button]:ring-black/5 dark:max-lg:[&>div>button]:ring-white/10 max-lg:[&>button]:h-10 max-lg:[&>button]:w-10 max-lg:[&>button]:rounded-full max-lg:[&>button]:bg-gray-100/80 dark:max-lg:[&>button]:bg-white/10 max-lg:[&>button]:ring-1 max-lg:[&>button]:ring-black/5 dark:max-lg:[&>button]:ring-white/10"
@@ -114,7 +140,11 @@
         </header>
 
         <!-- Profile: its own floating circle next to the header on phones and tablets -->
+<<<<<<< main
         <div v-if="user" class="shrink-0 lg:hidden">
+=======
+        <div v-if="user" class="shrink-0 lg:hidden" :class="{ 'di-pop': intro }">
+>>>>>>> branch
             <ClientOnly>
                 <NavbarProfileDropdown
                     :user="user"
@@ -130,6 +160,7 @@
 </template>
 
 <script setup lang="ts">
+import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import MessageBell from "../ui/MessageBell.vue";
@@ -142,6 +173,10 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { getBranchImage } from "~/types/branch.js";
 
+<<<<<<< main
+=======
+const intro = useDashboardIntro();
+>>>>>>> branch
 
 const user = useAuthUser();
 
@@ -152,6 +187,26 @@ const branchStore = useBranchStore();
 const brokenImages = reactive(new Set<string>());
 
 const isMounted = ref(false);
+
+// The branch dropdown is for the agency owner. Staff (branch manager,
+// admission, cashier, nurse, caregiver) stay on their own branch, unless they
+// are linked to more than one branch, so they are never locked in.
+const isAgencyOwner = computed(
+    () =>
+        (branchStore.activeBranch?.role_name ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(/[\s-]+/g, "_") === "agency_owner",
+);
+
+const canSwitchBranch = computed(
+    () => branchStore.branches.length > 0 &&
+        (isAgencyOwner.value || branchStore.branches.length > 1),
+);
+
+const onBranchClick = () => {
+    if (canSwitchBranch.value) branchStore.openModal();
+};
 
 onMounted(() => {
     isMounted.value = true;

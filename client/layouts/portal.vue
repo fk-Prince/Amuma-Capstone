@@ -1,6 +1,10 @@
 <template>
     <div
+<<<<<<< main
         class="h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3"
+=======
+        class="h-[100dvh] flex bg-page dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3"
+>>>>>>> branch
     >
         <ClientOnly>
             <AuthTransitionScreen
@@ -36,10 +40,10 @@
                         class="absolute -bottom-40 left-56 w-[380px] h-[380px] rounded-full bg-primary-100/50 dark:bg-primary-500/10 blur-3xl"
                     />
                     <div
-                        class="absolute top-1/3 right-1/4 w-[260px] h-[260px] rounded-full bg-violet-200/30 dark:bg-violet-500/15 blur-3xl"
+                        class="absolute top-1/3 right-1/4 w-[260px] h-[260px] rounded-full bg-accent-200/30 dark:bg-accent-500/15 blur-3xl"
                     />
                     <div
-                        class="absolute top-10 left-[40%] w-[220px] h-[220px] rounded-full bg-emerald-100/40 dark:bg-emerald-500/10 blur-3xl"
+                        class="absolute top-10 left-[40%] w-[220px] h-[220px] rounded-full bg-accent-100/40 dark:bg-accent-500/10 blur-3xl"
                     />
                     <div
                         class="absolute bottom-10 right-16 w-[300px] h-[300px] rounded-full bg-primary-100/40 dark:bg-primary-500/10 blur-3xl"
@@ -67,6 +71,9 @@ const authReady = useAuthReady();
 const user = useAuthUser();
 const tour = usePortalTour(isOpen);
 let tourStarted = false;
+
+// Enables the user's chosen color palette (see composables/useTheme.ts)
+useHead({ htmlAttrs: { "data-palette-scope": "app" } });
 
 watch(
     [authReady, user],

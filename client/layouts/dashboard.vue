@@ -2,7 +2,11 @@
     <UnauthorizedSection v-if="mounted && access === 'no-branch'" full-page />
     <div
         v-else
+<<<<<<< main
         class="relative h-[100dvh] flex bg-[#EEF3FB] dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
+=======
+        class="relative h-[100dvh] flex bg-page dark:bg-surface overflow-hidden p-2 pb-24 sm:p-3 sm:pb-24 lg:gap-3 lg:pb-3 print:h-auto print:gap-0 print:overflow-visible print:p-0"
+>>>>>>> branch
     >
         <ClientOnly>
             <AuthTransitionScreen
@@ -12,11 +16,21 @@
             />
         </ClientOnly>
 
+        <ApprovedSplash
+            v-if="showApproved"
+            :name="authUser?.first_name"
+            :agency-name="approvedAgency"
+            :branch-name="approvedBranch"
+            :valid-until="approvedUntil"
+            @continue="dismissApproved"
+        />
+
         <div
             class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden print:hidden"
             aria-hidden="true"
         >
             <div
+<<<<<<< main
                 class="md:flex hidden absolute -bottom-20 left-1/3 h-[520px] w-[520px] rounded-full bg-sky-300/25 dark:bg-primary-500/15 blur-[140px]"
             ></div>
 
@@ -30,6 +44,21 @@
 
             <div
                 class="md:flex hidden absolute -top-72 -right-32 h-[520px] w-[520px] rounded-full bg-sky-200/25 dark:bg-accent-500/10 blur-[150px]"
+=======
+                class="md:flex hidden absolute -bottom-20 left-1/3 h-[520px] w-[520px] rounded-full bg-primary-300/25 dark:bg-primary-500/15 blur-[140px]"
+            ></div>
+
+            <div
+                class="md:flex hidden absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full bg-primary-200/25 dark:bg-primary-500/10 blur-[140px]"
+            ></div>
+
+            <div
+                class="md:flex hidden absolute -top-60 left-1/2 -translate-x-1/2 h-[560px] w-[560px] rounded-full bg-primary-200/25 dark:bg-primary-500/10 blur-[150px]"
+            ></div>
+
+            <div
+                class="md:flex hidden absolute -top-72 -right-32 h-[520px] w-[520px] rounded-full bg-accent-200/25 dark:bg-accent-500/10 blur-[150px]"
+>>>>>>> branch
             ></div>
         </div>
 
@@ -76,12 +105,14 @@ import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 import TrialNotice from "~/components/sections/TrialNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";
+import ApprovedSplash from "~/components/ui/ApprovedSplash.vue";
+import { useApprovalSplash } from "~/composables/useApprovalSplash";
 import { useRouteAccess } from "~/composables/useRouteAccess";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useBranchStore } from "~/stores/branch";
-import { useAuthReady } from "~/composables/useAuthUser";
+import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
 
 import { authMenuList } from "~/config/authMenu";
 import { PermissionAction } from "~/utils/permissions";
@@ -89,8 +120,19 @@ import { PermissionAction } from "~/utils/permissions";
 const route = useRoute();
 const isOpen = ref(false);
 const authReady = useAuthReady();
+const authUser = useAuthUser();
+const {
+    show: showApproved,
+    agencyName: approvedAgency,
+    branchName: approvedBranch,
+    validUntil: approvedUntil,
+    dismiss: dismissApproved,
+} = useApprovalSplash();
 const access = useRouteAccess();
 const mounted = ref(false);
+
+// Enables the user's chosen color palette (see composables/useTheme.ts)
+useHead({ htmlAttrs: { "data-palette-scope": "app" } });
 
 const branchStore = useBranchStore();
 
