@@ -111,9 +111,6 @@ const {
 const access = useRouteAccess();
 const mounted = ref(false);
 
-// Enables the user's chosen color palette (see composables/useTheme.ts)
-useHead({ htmlAttrs: { "data-palette-scope": "app" } });
-
 const branchStore = useBranchStore();
 
 const homeLink = computed(() => {

@@ -68,9 +68,6 @@ const user = useAuthUser();
 const tour = usePortalTour(isOpen);
 let tourStarted = false;
 
-// Enables the user's chosen color palette (see composables/useTheme.ts)
-useHead({ htmlAttrs: { "data-palette-scope": "app" } });
-
 watch(
     [authReady, user],
     async ([ready, current]) => {

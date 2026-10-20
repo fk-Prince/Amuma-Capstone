@@ -57,7 +57,4 @@ import { useAuthReady } from "~/composables/useAuthUser";
 
 const isOpen = ref(false);
 const authReady = useAuthReady();
-
-// Enables the user's chosen color palette (see composables/useTheme.ts)
-useHead({ htmlAttrs: { "data-palette-scope": "app" } });
 </script>

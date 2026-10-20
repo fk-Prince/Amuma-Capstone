@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sun, Moon, Monitor } from "lucide-vue-next";
+import { Sun, Moon } from "lucide-vue-next";
 import { THEME_MODES, setThemeMode, useThemeMode } from "~/composables/useTheme";
 import type { ThemeMode } from "~/composables/useTheme";
 
@@ -12,7 +12,6 @@ const mode = useThemeMode();
 const OPTIONS: Record<ThemeMode, { label: string; icon: typeof Sun }> = {
     light: { label: "Light", icon: Sun },
     dark: { label: "Dark", icon: Moon },
-    system: { label: "Device", icon: Monitor },
 };
 </script>
 

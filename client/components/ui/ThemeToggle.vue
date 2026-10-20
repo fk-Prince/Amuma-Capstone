@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Sun, Moon, Monitor } from "lucide-vue-next";
+import { Sun, Moon } from "lucide-vue-next";
 import { setThemeMode, useThemeMode } from "~/composables/useTheme";
 import type { ThemeMode } from "~/composables/useTheme";
 
 defineOptions({ name: "ThemeToggle" });
 
-// Cycles Light -> Dark -> Device. The icon shows the mode that is currently selected.
-const ORDER: ThemeMode[] = ["light", "dark", "system"];
+// Switches between Light and Dark. The icon shows the mode that is currently selected.
+const ORDER: ThemeMode[] = ["light", "dark"];
 const LABELS: Record<ThemeMode, string> = {
     light: "Light",
     dark: "Dark",
-    system: "Device",
 };
 
 const mode = useThemeMode();
@@ -30,7 +29,6 @@ const label = computed(
         @click="setThemeMode(next)"
     >
         <Sun v-if="mode === 'light'" class="h-5 w-5" />
-        <Moon v-else-if="mode === 'dark'" class="h-5 w-5" />
-        <Monitor v-else class="h-5 w-5" />
+        <Moon v-else class="h-5 w-5" />
     </button>
 </template>
