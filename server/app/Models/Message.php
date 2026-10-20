@@ -20,10 +20,13 @@ class Message extends Model
         'attachment_url',
         'attachment_name',
         'read_at',
+        'pinned_at',
+        'pinned_by_user_id',
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
+        'pinned_at' => 'datetime',
     ];
 
     public function conversation()
@@ -76,6 +79,8 @@ class Message extends Model
             'preview' => $this->preview(),
             'created_at' => $this->created_at?->toIso8601String(),
             'read_at' => $this->read_at?->toIso8601String(),
+            'is_pinned' => $this->pinned_at !== null,
+            'pinned_at' => $this->pinned_at?->toIso8601String(),
         ];
     }
 }

@@ -38,6 +38,14 @@ class MessageService extends BaseService {
         return await this.request(`${this.resource}/thread`, 'GET', payload);
     }
 
+    async pin(payload: { message_id: number; as_staff?: boolean }): Promise<any> {
+        return await this.request(`${this.resource}/pin`, 'POST', payload);
+    }
+
+    async details(payload: { conversation_id: number; as_staff?: boolean }): Promise<any> {
+        return await this.request(`${this.resource}/details`, 'GET', payload);
+    }
+
     async staffConversations(payload: object): Promise<any> {
         return await this.request(`${this.resource}/staff-conversations`, 'GET', payload);
     }

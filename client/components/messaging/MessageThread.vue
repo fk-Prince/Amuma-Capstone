@@ -8,14 +8,21 @@ import {
     FileText,
     Download,
     ArrowDown,
+    Info,
+    Pin,
+    PinOff,
 } from "lucide-vue-next";
 
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
 import ImagePopup from "~/components/ui/ImagePopup.vue";
+import ConversationDetailsPanel from "~/components/messaging/ConversationDetailsPanel.vue";
+import { messageService } from "~/api/message/MessageService";
+import { playSendSound } from "~/composables/useSounds";
 import { useAuthUser } from "~/composables/useAuthUser";
 
 import type {
     ChatMessage,
+    ConversationDetails,
     MessageSender,
     OutgoingMessage,
 } from "~/types/message";
@@ -68,8 +75,165 @@ const attachment = ref<File | null>(null);
 const attachmentPreview = ref<string | null>(null);
 const attachmentError = ref("");
 const fileInput = ref<HTMLInputElement | null>(null);
+const textarea = ref<HTMLTextAreaElement | null>(null);
+
+function autosize() {
+    const el = textarea.value;
+
+    if (!el) return;
+
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+}
 const scroller = ref<HTMLElement | null>(null);
 const showAllPatients = ref(false);
+
+const detailsOpen = ref(false);
+const detailsLoading = ref(false);
+const detailsError = ref("");
+const details = ref<ConversationDetails | null>(null);
+
+async function loadDetails(silent = false) {
+    if (!props.conversationId) return;
+
+    if (!silent) {
+        detailsLoading.value = true;
+        detailsError.value = "";
+    }
+
+    const requestedFor = props.conversationId;
+
+    try {
+        const res = await messageService.details({
+            conversation_id: requestedFor,
+            as_staff: props.viewer === "staff",
+        });
+
+        if (requestedFor === props.conversationId) details.value = res;
+    } catch (err: any) {
+        if (!silent) {
+            details.value = null;
+            detailsError.value = err?.message ?? "Unable to load the details.";
+        }
+    } finally {
+        if (!silent) detailsLoading.value = false;
+    }
+}
+
+async function openDetails() {
+    if (!props.conversationId) return;
+
+    detailsOpen.value = true;
+    await loadDetails();
+}
+
+function closeDetails() {
+    detailsOpen.value = false;
+}
+
+// ---- Pinned messages -------------------------------------------------------
+const pinOverrides = ref<Record<number, boolean>>({});
+const pinningId = ref<number | null>(null);
+const pinError = ref("");
+const pinnedCursor = ref(0);
+const highlightId = ref<number | null>(null);
+
+let pinErrorTimer: ReturnType<typeof setTimeout> | null = null;
+let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+
+const isPinned = (message: ChatMessage) =>
+    pinOverrides.value[message.message_id] ?? !!message.is_pinned;
+
+const pinnedMessages = computed(() => props.messages.filter(isPinned));
+
+// The bar shows the newest pin first; clicking it jumps there, then cycles
+// to the next older pin.
+const pinnedIndex = computed(() => {
+    const count = pinnedMessages.value.length;
+
+    return count ? count - 1 - (pinnedCursor.value % count) : -1;
+});
+
+const pinnedShown = computed(
+    () => pinnedMessages.value[pinnedIndex.value] ?? null,
+);
+
+async function scrollToMessage(id: number) {
+    await nextTick();
+
+    const element = scroller.value?.querySelector<HTMLElement>(
+        `[data-message-id="${id}"]`,
+    );
+
+    if (!element) return;
+
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    highlightId.value = id;
+
+    if (highlightTimer) clearTimeout(highlightTimer);
+    highlightTimer = setTimeout(() => (highlightId.value = null), 1600);
+}
+
+function jumpToPinned() {
+    const message = pinnedShown.value;
+
+    if (!message) return;
+
+    scrollToMessage(message.message_id);
+    pinnedCursor.value += 1;
+}
+
+async function togglePin(message: ChatMessage) {
+    if (pinningId.value !== null) return;
+
+    pinningId.value = message.message_id;
+    pinError.value = "";
+
+    try {
+        const res = await messageService.pin({
+            message_id: message.message_id,
+            as_staff: props.viewer === "staff",
+        });
+
+        pinOverrides.value = {
+            ...pinOverrides.value,
+            [message.message_id]: !!res?.is_pinned,
+        };
+        pinnedCursor.value = 0;
+
+        if (detailsOpen.value) loadDetails(true);
+    } catch (err: any) {
+        pinError.value = err?.message ?? "Unable to update the pin.";
+
+        if (pinErrorTimer) clearTimeout(pinErrorTimer);
+        pinErrorTimer = setTimeout(() => (pinError.value = ""), 3500);
+    } finally {
+        pinningId.value = null;
+    }
+}
+
+function onPanelDownload(messageId: number) {
+    const message = props.messages.find((item) => item.message_id === messageId);
+
+    if (message) downloadAttachment(message);
+}
+
+// Keep the panel's media list current while it is open.
+watch(
+    () => props.messages.length,
+    () => {
+        if (detailsOpen.value) loadDetails(true);
+    },
+);
+
+// Fresh thread data already carries the saved pins.
+watch(
+    () => props.loading,
+    (isLoading, wasLoading) => {
+        if (wasLoading && !isLoading) pinOverrides.value = {};
+    },
+);
 
 const PATIENT_PREVIEW = 2;
 
@@ -233,6 +397,11 @@ watch(
 watch(
     () => props.conversationId,
     () => {
+        detailsOpen.value = false;
+        details.value = null;
+        pinOverrides.value = {};
+        pinnedCursor.value = 0;
+        highlightId.value = null;
         showAllPatients.value = false;
         attachmentError.value = "";
         setAttachment(null);
@@ -247,13 +416,38 @@ watch(
     },
 );
 
+// "Sent" sound: when the parent finishes sending and our own message has been
+// added to the thread. A failed send adds nothing, so it stays silent.
+let awaitingSent = false;
+let countAtSend = 0;
+
+watch(
+    () => props.sending,
+    (isSending, wasSending) => {
+        if (!wasSending || isSending || !awaitingSent) return;
+
+        awaitingSent = false;
+
+        const latest = props.messages[props.messages.length - 1];
+
+        if (props.messages.length > countAtSend && latest && isMine(latest)) {
+            playSendSound();
+        }
+    },
+);
+
 function submit() {
     if (!canSend.value) return;
 
+    awaitingSent = true;
+    countAtSend = props.messages.length;
+
     emit("send", { body: draft.value.trim(), attachment: attachment.value });
+    playSendSound();
     draft.value = "";
     attachmentError.value = "";
     setAttachment(null);
+    nextTick(autosize);
 }
 
 function isMine(message: ChatMessage) {
@@ -350,8 +544,9 @@ onBeforeUnmount(unsubscribe);
 
 <template>
     <div
-        class="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-secondary"
+        class="relative flex h-full min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
     >
+        <div class="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
         <div
             v-if="loading && !conversationId"
             class="shrink-0 border-b border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4 dark:border-white/10"
@@ -420,6 +615,18 @@ onBeforeUnmount(unsubscribe);
                 </div>
 
                 <button
+                    v-if="conversationId"
+                    type="button"
+                    aria-label="Conversation details"
+                    title="Details"
+                    class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-primary dark:text-gray-500 dark:hover:bg-white/10"
+                    :class="detailsOpen ? 'bg-slate-100 text-primary dark:bg-white/10' : ''"
+                    @click="detailsOpen ? closeDetails() : openDetails()"
+                >
+                    <Info class="h-[18px] w-[18px]" />
+                </button>
+
+                <button
                     v-if="showClose"
                     type="button"
                     aria-label="Close conversation"
@@ -432,8 +639,59 @@ onBeforeUnmount(unsubscribe);
         </div>
 
         <div
+            v-if="pinnedShown"
+            class="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-secondary"
+        >
+            <button
+                type="button"
+                class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-0.5 text-left transition hover:bg-slate-50 dark:hover:bg-white/5"
+                @click="jumpToPinned"
+            >
+                <span class="h-8 w-1 shrink-0 rounded-full bg-primary" />
+
+                <Pin class="h-4 w-4 shrink-0 text-primary" />
+
+                <span class="min-w-0">
+                    <span class="block text-[11px] font-bold text-primary">
+                        Pinned message
+                        <template v-if="pinnedMessages.length > 1">
+                            · {{ pinnedIndex + 1 }} of {{ pinnedMessages.length }}
+                        </template>
+                    </span>
+
+                    <span
+                        class="block truncate text-xs text-slate-600 dark:text-gray-300"
+                    >
+                        {{
+                            pinnedShown.body ??
+                            pinnedShown.preview ??
+                            "Attachment"
+                        }}
+                    </span>
+                </span>
+            </button>
+
+            <button
+                type="button"
+                aria-label="Unpin message"
+                title="Unpin"
+                class="shrink-0 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-primary dark:text-gray-500 dark:hover:bg-white/10"
+                @click="togglePin(pinnedShown)"
+            >
+                <PinOff class="h-4 w-4" />
+            </button>
+        </div>
+
+        <p
+            v-if="pinError"
+            class="shrink-0 bg-red-50 px-4 py-1.5 text-xs font-medium text-red-600 dark:bg-red-500/10 dark:text-red-300"
+        >
+            {{ pinError }}
+        </p>
+
+        <div
             ref="scroller"
-            class="flex-1 min-h-0 space-y-3 overflow-y-auto p-3 sm:p-5"
+            class="flex-1 min-h-0 space-y-3 overflow-y-auto bg-slate-50/70 p-3 sm:p-5 dark:bg-white/[0.02]"
             @scroll.passive="onScroll"
         >
             <div v-if="loading" class="animate-pulse space-y-4">
@@ -469,8 +727,14 @@ onBeforeUnmount(unsubscribe);
                 <div
                     v-for="message in messages"
                     :key="message.message_id"
-                    class="flex"
-                    :class="isMine(message) ? 'justify-end' : 'justify-start'"
+                    :data-message-id="message.message_id"
+                    class="group/msg flex items-center gap-1.5 rounded-xl py-0.5 transition-colors duration-500"
+                    :class="[
+                        isMine(message) ? 'justify-end' : 'justify-start',
+                        highlightId === message.message_id
+                            ? 'bg-primary/10'
+                            : '',
+                    ]"
                 >
                     <div
                         class="flex min-w-0 max-w-[85%] flex-col gap-1.5 sm:max-w-[75%]"
@@ -529,12 +793,47 @@ onBeforeUnmount(unsubscribe);
                         </div>
     
                         <p
-                            class="mt-1 text-[10px] text-slate-400 dark:text-gray-500"
-                            :class="isMine(message) ? 'text-right' : 'text-left'"
+                            class="mt-1 flex items-center gap-1 text-[10px] text-slate-400 dark:text-gray-500"
+                            :class="
+                                isMine(message) ? 'justify-end' : 'justify-start'
+                            "
                         >
+                            <Pin
+                                v-if="isPinned(message)"
+                                class="h-3 w-3 text-primary"
+                            />
+
                             {{ formatTime(message.created_at) }}
                         </p>
                     </div>
+
+                    <button
+                        type="button"
+                        :aria-label="
+                            isPinned(message) ? 'Unpin message' : 'Pin message'
+                        "
+                        :title="isPinned(message) ? 'Unpin' : 'Pin'"
+                        :disabled="pinningId === message.message_id"
+                        class="shrink-0 rounded-full p-1.5 opacity-0 transition hover:bg-slate-200 hover:text-primary focus:opacity-100 group-hover/msg:opacity-100 [@media(hover:none)]:opacity-100 dark:hover:bg-white/10"
+                        :class="[
+                            isMine(message) ? 'order-first' : '',
+                            isPinned(message)
+                                ? 'text-primary'
+                                : 'text-slate-400 dark:text-gray-500',
+                        ]"
+                        @click="togglePin(message)"
+                    >
+                        <LoaderCircle
+                            v-if="pinningId === message.message_id"
+                            class="h-4 w-4 animate-spin"
+                        />
+
+                        <component
+                            :is="isPinned(message) ? PinOff : Pin"
+                            v-else
+                            class="h-4 w-4"
+                        />
+                    </button>
                 </div>
             </template>
         </div>
@@ -548,7 +847,7 @@ onBeforeUnmount(unsubscribe);
             <button
                 v-if="!atBottom && messages.length"
                 type="button"
-                class="absolute bottom-[86px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
+                class="absolute bottom-[96px] left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-600 shadow-lg transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
                 :class="
                     missedCount
                         ? 'border-primary-200 text-primary-600 dark:border-primary-500/20 dark:text-primary-300'
@@ -567,8 +866,11 @@ onBeforeUnmount(unsubscribe);
         </Transition>
 
         <div
-            class="shrink-0 border-t border-slate-200 p-3 dark:border-white/10"
+            class="shrink-0 bg-slate-50/70 px-3 pb-3 pt-1 sm:px-4 sm:pb-4 dark:bg-white/[0.02]"
         >
+            <div
+                class="rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/5 transition focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15 dark:border-white/10 dark:bg-secondary"
+            >
             <div
                 v-if="attachment"
                 class="mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-white/5"
@@ -624,25 +926,27 @@ onBeforeUnmount(unsubscribe);
                     type="button"
                     aria-label="Attach an image or PDF"
                     :disabled="disabled || sending"
-                    class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-white/10"
                     @click="fileInput?.click()"
                 >
-                    <Paperclip class="h-4 w-4" />
+                    <Paperclip class="h-[18px] w-[18px]" />
                 </button>
 
                 <textarea
+                    ref="textarea"
                     v-model="draft"
                     rows="1"
                     :disabled="disabled"
                     placeholder="Write a message..."
-                    class="max-h-32 min-h-[42px] flex-1 resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-100 dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
+                    class="max-h-32 min-h-[40px] flex-1 resize-none bg-transparent px-1.5 py-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed dark:text-gray-100 dark:placeholder:text-gray-500"
+                    @input="autosize"
                     @keydown.enter.exact.prevent="submit"
                 />
 
                 <button
                     type="button"
                     :disabled="!canSend"
-                    class="flex h-[42px] shrink-0 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    class="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:bg-primary-600 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
                     @click="submit"
                 >
                     <LoaderCircle v-if="sending" class="h-4 w-4 animate-spin" />
@@ -653,7 +957,22 @@ onBeforeUnmount(unsubscribe);
                     </span>
                 </button>
             </div>
+            </div>
         </div>
+        </div>
+
+        <ConversationDetailsPanel
+            :open="detailsOpen"
+            :loading="detailsLoading"
+            :error="detailsError"
+            :details="details"
+            :viewer="viewer"
+            @close="closeDetails"
+            @retry="openDetails"
+            @jump="scrollToMessage"
+            @image="openImage"
+            @download="onPanelDownload"
+        />
 
         <Teleport to="body">
             <ImagePopup

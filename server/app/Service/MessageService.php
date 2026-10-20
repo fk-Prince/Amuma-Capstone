@@ -12,6 +12,7 @@ use App\Models\EmployeeBranch;
 use App\Models\Message;
 use App\Models\PatientAccess;
 use App\Models\PatientAdmission;
+use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\User;
 use App\Service\External\SupabaseService;
@@ -727,6 +728,300 @@ class MessageService
         }
 
         throw new Exception('You do not have access to this conversation.', 403);
+    }
+
+    /**
+     * Info panel for the chat header ("i" icon).
+     *  - staff viewing a family  -> the family member + their patients
+     *  - family viewing staff    -> the staff member + who they look after today
+     *                               (only this family's own loved ones)
+     *  - staff viewing staff     -> the colleague + everyone assigned to them today
+     */
+    public function details(User $user, array $payload, bool $asStaff = false)
+    {
+        $conversation = Conversation::with(['branch', 'client'])
+            ->find($payload['conversation_id']);
+
+        if (!$conversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $audience = $this->authorize($user, $conversation, $asStaff);
+        $branchId = (int) $conversation->branch_id;
+
+        if ($conversation->isStaffThread()) {
+            $employeeId = $user->employee?->employee_id;
+
+            $otherId = $conversation->employee_one_id === $employeeId
+                ? $conversation->employee_two_id
+                : $conversation->employee_one_id;
+
+            $result = $this->staffDetails($conversation, $otherId ? (int) $otherId : null, null, false);
+        } elseif ($audience === 'client') {
+            $ownPatientIds = PatientAccess::where('client_id', $conversation->client_id)
+                ->where('have_access', true)
+                ->whereHas('patient', fn($p) => $p->where('branch_id', $branchId))
+                ->pluck('patient_id');
+
+            $result = $this->staffDetails(
+                $conversation,
+                $conversation->employee_one_id ? (int) $conversation->employee_one_id : null,
+                $ownPatientIds,
+                true
+            );
+        } else {
+            $result = $this->familyDetails($conversation);
+        }
+
+        return [...$result, ...$this->sharedItems($conversation, $user)];
+    }
+
+    /**
+     * Pinned messages and every image / file sent in this conversation.
+     */
+    private function sharedItems(Conversation $conversation, User $user): array
+    {
+        $media = $conversation->messages()
+            ->whereNotNull('attachment_url')
+            ->orderByDesc('message_id')
+            ->limit(200)
+            ->get()
+            ->map(function ($message) use ($user) {
+                $attachment = $message->attachment();
+
+                return [
+                    'message_id' => $message->message_id,
+                    'url' => $attachment['url'],
+                    'name' => $attachment['name'],
+                    'type' => $attachment['type'],
+                    'is_mine' => $message->sender_user_id === $user->user_id,
+                    'created_at' => $message->created_at?->toIso8601String(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $pinned = $conversation->messages()
+            ->whereNotNull('pinned_at')
+            ->orderByDesc('pinned_at')
+            ->get()
+            ->map(fn($message) => [
+                'message_id' => $message->message_id,
+                'text' => $message->preview(),
+                'is_mine' => $message->sender_user_id === $user->user_id,
+                'has_attachment' => (bool) $message->attachment_url,
+                'created_at' => $message->created_at?->toIso8601String(),
+                'pinned_at' => $message->pinned_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+
+        return ['media' => $media, 'pinned' => $pinned];
+    }
+
+    private const MAX_PINNED = 5;
+
+    /**
+     * Pin or unpin a message. Pins are shared by everyone in the conversation.
+     */
+    public function togglePin(User $user, array $payload, bool $asStaff = false)
+    {
+        $message = Message::find($payload['message_id']);
+
+        if (!$message) {
+            throw new Exception('Message not found.', 404);
+        }
+
+        $conversation = Conversation::find($message->conversation_id);
+
+        if (!$conversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $this->authorize($user, $conversation, $asStaff);
+
+        if ($message->pinned_at) {
+            $message->update(['pinned_at' => null, 'pinned_by_user_id' => null]);
+        } else {
+            $pinnedCount = $conversation->messages()->whereNotNull('pinned_at')->count();
+
+            if ($pinnedCount >= self::MAX_PINNED) {
+                throw new Exception(
+                    'You can pin up to ' . self::MAX_PINNED . ' messages. Unpin one first.',
+                    422
+                );
+            }
+
+            $message->update(['pinned_at' => now(), 'pinned_by_user_id' => $user->user_id]);
+        }
+
+        return $message->fresh()->toChat($user->user_id);
+    }
+
+    private function familyDetails(Conversation $conversation)
+    {
+        $client = $conversation->client;
+
+        $patients = PatientAccess::where('client_id', $conversation->client_id)
+            ->where('have_access', true)
+            ->whereHas('patient', fn($p) => $p->where('branch_id', $conversation->branch_id))
+            ->with('patient')
+            ->get()
+            ->map(fn($access) => $access->patient)
+            ->filter()
+            ->unique('patient_id')
+            ->map(fn($patient) => [
+                'patient_id' => $patient->patient_id,
+                'name' => $patient->display_name,
+                'avatar' => $patient->avatar,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'kind' => 'family',
+            'person' => [
+                'name' => trim(
+                    ($client?->first_name ?? '') . ' ' . ($client?->last_name ?? '')
+                ) ?: null,
+                'role' => 'Family member',
+                'avatar' => $client?->avatar,
+                'email' => $client?->user?->email,
+                'phone' => $client?->phone_number,
+            ],
+            'branch' => $conversation->branch?->name,
+            'patients' => $patients,
+        ];
+    }
+
+    private function staffDetails(
+        Conversation $conversation,
+        ?int $employeeId,
+        mixed $onlyPatientIds,
+        bool $maskEmail
+    ) {
+        $branchId = (int) $conversation->branch_id;
+
+        if (!$employeeId) {
+            return [
+                'kind' => 'staff',
+                'person' => [
+                    'name' => null,
+                    'role' => 'Branch team',
+                    'avatar' => null,
+                    'email' => null,
+                    'phone' => null,
+                ],
+                'branch' => $conversation->branch?->name,
+                'date' => now()->toDateString(),
+                'today' => [],
+            ];
+        }
+
+        $employee = Employee::find($employeeId);
+
+        $role = EmployeeBranch::where('branch_id', $branchId)
+            ->where('employee_id', $employeeId)
+            ->value('role_name');
+
+        $email = $employee?->users?->email;
+
+        return [
+            'kind' => 'staff',
+            'person' => [
+                'name' => trim(
+                    ($employee?->first_name ?? '') . ' ' . ($employee?->last_name ?? '')
+                ) ?: null,
+                'role' => $this->roleLabel($role),
+                'avatar' => $employee?->avatar,
+                'email' => $maskEmail ? MaskUtil::email($email) : $email,
+                'phone' => $employee?->phone_number,
+            ],
+            'branch' => $conversation->branch?->name,
+            'date' => now()->toDateString(),
+            'today' => $this->assignedToday($employeeId, $branchId, $onlyPatientIds),
+        ];
+    }
+
+    /**
+     * Patients an employee is assigned to today: scheduled home/facility visits
+     * dated today, plus facility patients covered by an active caregiver shift.
+     */
+    private function assignedToday(int $employeeId, int $branchId, mixed $onlyPatientIds = null): array
+    {
+        $name = fn($row) => implode(' ', array_filter([
+            $row->first_name,
+            $row->last_name,
+            $row->suffix,
+        ]));
+
+        $visits = DB::table('schedule_assigned')
+            ->join('schedule_services', 'schedule_services.schedule_services_id', '=', 'schedule_assigned.schedule_services_id')
+            ->join('schedules', 'schedules.schedule_id', '=', 'schedule_services.schedule_id')
+            ->join('patients', 'patients.patient_id', '=', 'schedules.patient_id')
+            ->where('schedule_assigned.employee_id', $employeeId)
+            ->where('schedule_assigned.is_active', true)
+            ->where('patients.branch_id', $branchId)
+            ->whereBetween('schedules.scheduled_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereNotIn('schedules.status', [Schedule::STATUS_CANCELLED, Schedule::STATUS_MISSED])
+            ->when(
+                $onlyPatientIds !== null,
+                fn($q) => $q->whereIn('schedules.patient_id', $onlyPatientIds)
+            )
+            ->select(
+                'schedules.schedule_id',
+                'schedules.scheduled_at',
+                'schedules.status',
+                'schedules.category',
+                'patients.patient_id',
+                'patients.first_name',
+                'patients.last_name',
+                'patients.suffix'
+            )
+            ->orderBy('schedules.scheduled_at')
+            ->get()
+            ->unique('schedule_id')
+            ->map(fn($row) => [
+                'patient_id' => $row->patient_id,
+                'name' => $name($row),
+                'category' => $row->category,
+                'status' => $row->status,
+                'time' => \Illuminate\Support\Carbon::parse($row->scheduled_at)->toIso8601String(),
+                'shift' => null,
+            ]);
+
+        $shifts = DB::table('caregiver_shifts')
+            ->join('patient_admissions', 'patient_admissions.patient_admission_id', '=', 'caregiver_shifts.admission_id')
+            ->join('patients', 'patients.patient_id', '=', 'patient_admissions.patient_id')
+            ->where('caregiver_shifts.caregiver_id', $employeeId)
+            ->where('caregiver_shifts.is_active', true)
+            ->where('patient_admissions.status', PatientAdmission::STATUS_ADMITTED)
+            ->where('patients.branch_id', $branchId)
+            ->when(
+                $onlyPatientIds !== null,
+                fn($q) => $q->whereIn('patients.patient_id', $onlyPatientIds)
+            )
+            ->select(
+                'caregiver_shifts.caregiver_shift_id',
+                'caregiver_shifts.start_time',
+                'caregiver_shifts.end_time',
+                'patients.patient_id',
+                'patients.first_name',
+                'patients.last_name',
+                'patients.suffix'
+            )
+            ->orderBy('caregiver_shifts.start_time')
+            ->get()
+            ->map(fn($row) => [
+                'patient_id' => $row->patient_id,
+                'name' => $name($row),
+                'category' => 'Facility',
+                'status' => null,
+                'time' => null,
+                'shift' => substr((string) $row->start_time, 0, 5) . ' - ' . substr((string) $row->end_time, 0, 5),
+            ]);
+
+        return $visits->concat($shifts)->values()->all();
     }
 
     private function markRead(Conversation $conversation, User $user): void
