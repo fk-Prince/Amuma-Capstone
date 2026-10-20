@@ -123,7 +123,7 @@
                     <div
                         v-for="notif in notifications"
                         :key="notif.id"
-                        @click="markRead(notif.id)"
+                        @click="openNotification(notif)"
                         class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                         :class="{
                             'bg-blue-50 hover:bg-blue-50/80 dark:bg-primary-500/10 dark:hover:bg-primary-500/15':
@@ -211,12 +211,13 @@ import { playNotificationSound, useSoundPrefs } from "~/composables/useSounds";
 import { notificationService } from "~/api/notification/NotificationService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import { useToast } from "~/composables/useToast";
 import { remScale } from "~/utils/rem";
 const { info } = useToast();
 const route = useRoute();
+const router = useRouter();
 
 const failedImages = reactive(new Set<string | number>());
 const user = useAuthUser();
@@ -332,6 +333,26 @@ const markRead = async (id: number) => {
     }
 };
 
+// A booking notification opens that booking's details; others just get marked read.
+const openNotification = async (notif: Notification) => {
+    markRead(notif.id);
+
+    if (notif.message_type !== "Booking" || !notif.reference_id) return;
+
+    open.value = false;
+
+    const query = { reference_id: notif.reference_id };
+
+    if (route.path.startsWith("/portal")) {
+        await router.push({ path: "/portal/bookings", query });
+    } else if (notif.branch?.uuid) {
+        await router.push({
+            path: `/app/branches/${notif.branch.uuid}/bookings`,
+            query,
+        });
+    }
+};
+
 const markAllRead = async () => {
     const previous = notifications.value.map((n) => n.unread);
 
@@ -392,6 +413,7 @@ const bindChannel = (branchUuid?: string) => {
             uuid: generateId(),
             message: e.message,
             message_type: e.message_type,
+            reference_id: e.reference_id,
             created_at: new Date().toISOString(),
             unread: true,
             branch: e.branch ?? null,

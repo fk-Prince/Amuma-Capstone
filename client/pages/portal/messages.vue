@@ -29,6 +29,8 @@ const { error } = useToast();
 const user = useAuthUser();
 
 const { $echo } = useNuxtApp();
+const route = useRoute();
+const router = useRouter();
 
 const rows = ref<ConversationSummary[]>([]);
 const messages = ref<ChatMessage[]>([]);
@@ -57,6 +59,16 @@ const threadSubtitle = computed(() => {
     return [row.staff_role, row.branch?.name].filter(Boolean).join(" · ");
 });
 
+// Opened from the header messages dropdown: ?staff=<staff uuid>
+function staffFromQuery() {
+    const staff =
+        typeof route.query.staff === "string" ? route.query.staff : null;
+
+    return staff
+        ? rows.value.find((r) => r.staff_uuid === staff)
+        : undefined;
+}
+
 async function load() {
     loadingList.value = true;
     loadingContacts.value = true;
@@ -73,7 +85,9 @@ async function load() {
             : (contactRes?.data ?? []);
 
         if (rows.value.length) {
-            await openThread(rows.value[0]!.conversation_id);
+            await openThread(
+                (staffFromQuery() ?? rows.value[0]!).conversation_id,
+            );
         }
     } catch (err: any) {
         error(err?.message ?? "Unable to load your messages.");
@@ -233,7 +247,23 @@ watch(clientChannel, bindChannel, { immediate: true });
 
 onMounted(async () => {
     await load();
+
+    if (route.query.staff) router.replace({ query: {} });
 });
+
+// Opened from the header messages dropdown while already on this page.
+watch(
+    () => route.query.staff,
+    async (staff) => {
+        if (typeof staff !== "string") return;
+
+        const row = staffFromQuery();
+
+        if (row) await openThread(row.conversation_id);
+
+        router.replace({ query: {} });
+    },
+);
 
 onBeforeUnmount(() => {
     if ($echo && channelName && listHandler) {

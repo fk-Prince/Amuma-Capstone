@@ -46,33 +46,7 @@
             <div
                 class="flex items-center gap-2 sm:gap-6 lg:gap-8 shrink-0 max-lg:[&>div>button]:h-10 max-lg:[&>div>button]:w-10 max-lg:[&>div>button]:rounded-full max-lg:[&>div>button]:bg-gray-100/80 dark:max-lg:[&>div>button]:bg-white/10 max-lg:[&>div>button]:ring-1 max-lg:[&>div>button]:ring-black/5 dark:max-lg:[&>div>button]:ring-white/10 max-lg:[&>button]:h-10 max-lg:[&>button]:w-10 max-lg:[&>button]:rounded-full max-lg:[&>button]:bg-gray-100/80 dark:max-lg:[&>button]:bg-white/10 max-lg:[&>button]:ring-1 max-lg:[&>button]:ring-black/5 dark:max-lg:[&>button]:ring-white/10"
             >
-                <button
-                    type="button"
-                    aria-label="Messages"
-                    class="relative w-[38px] h-[38px] flex items-center justify-center rounded-lg hover:bg-gray-50 dark:hover:bg-white/10 text-gray-500 dark:text-white/70 transition-colors"
-                    @click="goToMessages"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path
-                            d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                        />
-                    </svg>
-
-                    <span
-                        v-if="unreadMessageCount"
-                        class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-white dark:border-secondary"
-                    />
-                </button>
+                <MessageBell portal />
 
                 <Notification />
 
@@ -118,27 +92,23 @@
 <script setup lang="ts">
 import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { Calendar, Clock } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
 import Notification from "~/components/ui/Notification.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";
-import { useMessageAlert } from "~/composables/useMessageAlert";
-import { messageService } from "~/api/message/MessageService";
-import type { ConversationSummary } from "~/types/message";
+import MessageBell from "~/components/ui/MessageBell.vue";
 
 const intro = useDashboardIntro();
 
 const user = useAuthUser();
-const { $echo } = useNuxtApp();
 
 const emit = defineEmits<{
     open: [];
 }>();
 
 const route = useRoute();
-const router = useRouter();
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
     "/portal": {
@@ -229,91 +199,15 @@ const formattedTime = computed(() =>
     }),
 );
 
-function goToMessages() {
-    router.push("/portal/messages");
-}
-
-const { notifyNewMessage } = useMessageAlert();
-
-const conversations = ref<ConversationSummary[]>([]);
-
-const unreadMessageCount = computed(() =>
-    conversations.value.reduce((sum, c) => sum + (c.unread_count ?? 0), 0),
-);
-
-async function loadConversations() {
-    try {
-        const res = await messageService.conversations();
-        conversations.value = res ?? [];
-    } catch {
-        conversations.value = [];
-    }
-}
-
-let messageChannel = "";
-let messageHandler: ((payload: any) => void) | null = null;
-
-function bindMessages() {
-    const uuid = (user.value as any)?.uuid;
-
-    if ($echo && messageChannel && messageHandler) {
-        ($echo as any)
-            .private(messageChannel)
-            .stopListening(".MessageSent", messageHandler);
-        messageChannel = "";
-        messageHandler = null;
-    }
-
-    if (!$echo || !uuid) return;
-
-    messageChannel = `Client.Messages.${uuid}`;
-
-    messageHandler = (payload: any) => {
-        const row = conversations.value.find(
-            (c) => c.conversation_id === payload.conversation_id,
-        );
-
-        if (!row) {
-            loadConversations();
-
-            if (payload.sender_type !== "client") notifyNewMessage(payload);
-
-            return;
-        }
-
-        if (payload.sender_type !== "client") {
-            row.unread_count += 1;
-
-            notifyNewMessage(payload, row.staff_name);
-        }
-    };
-
-    ($echo as any)
-        .private(messageChannel)
-        .listen(".MessageSent", messageHandler);
-}
-
-watch(() => (user.value as any)?.uuid, bindMessages, { immediate: true });
-
 onMounted(async () => {
     clockTimer = setInterval(() => {
         now.value = new Date();
     }, 1000 * 30);
-
-    await loadConversations();
 });
 
-// stopListening, not leave: the messages page shares this channel and leave()
-// would tear it down for both.
 onUnmounted(() => {
     if (clockTimer) {
         clearInterval(clockTimer);
-    }
-
-    if ($echo && messageChannel && messageHandler) {
-        ($echo as any)
-            .private(messageChannel)
-            .stopListening(".MessageSent", messageHandler);
     }
 });
 </script>

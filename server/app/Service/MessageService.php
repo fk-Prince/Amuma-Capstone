@@ -43,7 +43,7 @@ class MessageService
     public function clientConversations(Client $client)
     {
         $conversations = Conversation::where('client_id', $client->client_id)
-            ->with(['branch.location', 'patient', 'latestMessage', 'employeeOne'])
+            ->with(['branch.location', 'patient', 'latestMessage', 'employeeOne.users'])
             ->orderByDesc('last_message_at')
             ->get();
 
@@ -224,7 +224,7 @@ class MessageService
                     );
                 });
             })
-            ->with(['client', 'patient', 'latestMessage', 'employeeOne'])
+            ->with(['client.user', 'patient', 'latestMessage', 'employeeOne.users'])
             ->orderByDesc('last_message_at')
             ->get();
 
@@ -364,7 +364,7 @@ class MessageService
     private function staffContact(Conversation $conversation, array $hints = [])
     {
         if (!$conversation->employee_one_id) {
-            return ['name' => null, 'avatar' => null, 'role' => 'Branch team'];
+            return ['name' => null, 'avatar' => null, 'role' => 'Branch team', 'uuid' => null];
         }
 
         $employee = $conversation->employeeOne
@@ -382,6 +382,7 @@ class MessageService
             ) ?: null,
             'avatar' => $employee?->avatar,
             'role' => $this->roleLabel($role),
+            'uuid' => $employee?->users?->uuid,
         ];
     }
 
@@ -1043,7 +1044,7 @@ class MessageService
                 $query->where('employee_one_id', $employeeId)
                     ->orWhere('employee_two_id', $employeeId);
             })
-            ->with(['employeeOne', 'employeeTwo', 'latestMessage'])
+            ->with(['employeeOne.users', 'employeeTwo.users', 'latestMessage'])
             ->orderByDesc('last_message_at')
             ->get()
             ->map(fn($conversation) => $this->summary($conversation, 'staff', $user))
@@ -1244,6 +1245,7 @@ class MessageService
                     ($other?->first_name ?? '') . ' ' . ($other?->last_name ?? '')
                 ) ?: 'Staff',
                 'avatar' => $other?->avatar,
+                'staff_uuid' => $other?->users?->uuid,
                 'patient_name' => null,
                 'last_message' => $latest?->preview(),
                 'last_message_at' => $conversation->last_message_at?->toIso8601String(),
@@ -1284,6 +1286,8 @@ class MessageService
             'staff_role' => $staff['role'],
             'avatar' => $conversation->client?->avatar,
             'staff_avatar' => $staff['avatar'],
+            'staff_uuid' => $staff['uuid'],
+            'client_uuid' => $conversation->client?->user?->uuid,
             'patient_names' => $patientNames,
             'patient_name' => $patientNames[0] ?? null,
             'last_message' => $latest?->preview(),

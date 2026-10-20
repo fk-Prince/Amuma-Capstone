@@ -1,5 +1,6 @@
 ﻿<script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
     ChevronDown,
     CalendarDays,
@@ -373,10 +374,58 @@ function refreshOnReturn() {
     }
 }
 
-onMounted(() => {
-    loadBookings();
+const route = useRoute();
+const router = useRouter();
+
+// Opened from a booking notification: ?reference_id=<reference>. Expands that
+// booking, looking through the pages until it turns up.
+async function openFromReference() {
+    const reference =
+        typeof route.query.reference_id === "string"
+            ? route.query.reference_id
+            : null;
+
+    if (!reference) return;
+
+    const find = () => bookings.value.find((b) => b.reference_id === reference);
+
+    let found = find();
+    let page = meta.value?.current_page ?? 1;
+    const lastPage = meta.value?.last_page ?? 1;
+
+    while (!found && page < lastPage) {
+        page += 1;
+        await loadBookings(page, true);
+        found = find();
+    }
+
+    if (found) {
+        expandedId.value = found.booking_id;
+
+        await nextTick();
+
+        document
+            .getElementById(`booking-${found.booking_id}`)
+            ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    router.replace({ query: {} });
+}
+
+onMounted(async () => {
     document.addEventListener("visibilitychange", refreshOnReturn);
+
+    await loadBookings();
+    await openFromReference();
 });
+
+// Opened from the header while this page is already showing.
+watch(
+    () => route.query.reference_id,
+    (reference) => {
+        if (reference) openFromReference();
+    },
+);
 
 onBeforeUnmount(() => {
     document.removeEventListener("visibilitychange", refreshOnReturn);
@@ -535,6 +584,7 @@ onBeforeUnmount(() => {
             <div v-else class="space-y-4">
                 <div
                     v-for="booking in bookings"
+                    :id="`booking-${booking.booking_id}`"
                     :key="booking.booking_id"
                     class="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:border-gray-200 hover:shadow-md dark:border-white/10 dark:bg-secondary dark:hover:border-white/10"
                     :class="

@@ -24,6 +24,8 @@ export interface ConversationSummary {
     staff_role: string | null;
     avatar: string | null;
     staff_avatar?: string | null;
+    staff_uuid?: string | null;
+    client_uuid?: string | null;
     patient_name: string | null;
     patient_names?: string[];
     last_message: string | null;

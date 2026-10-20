@@ -17,6 +17,7 @@ class Notification extends Model
         'branch_id',
         'message_type',
         'message',
+        'reference_id',
         'has_read',
     ];
 

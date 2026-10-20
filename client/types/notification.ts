@@ -2,6 +2,8 @@ export interface Notification {
     id: number;
     uuid?: string;
     message_type: string;
+    /** Booking notifications carry the booking's reference id. */
+    reference_id?: string | null;
     message: string;
     created_at: string;
     unread: boolean;

@@ -45,6 +45,7 @@ class NotificationService
                 'from_user_id' => $payload['user_id'],
                 'message_type' => 'Booking',
                 'message' => $payload['message'],
+                'reference_id' => $payload['reference_id'],
             ]);
 
             event(new NotificationEvent(
@@ -141,6 +142,7 @@ class NotificationService
                 'from_user_id' => $actor?->user_id ?? $client->user_id,
                 'message_type' => 'Booking',
                 'message' => $message,
+                'reference_id' => (string) $booking->reference_id,
             ]);
 
             if ($client->uuid) {

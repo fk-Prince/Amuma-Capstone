@@ -10,25 +10,31 @@ import {
 import { useRoute, useRouter } from "vue-router";
 import { onClickOutside } from "@vueuse/core";
 
+import { Volume2, VolumeX } from "lucide-vue-next";
+
 import MessageAvatar from "~/components/messaging/MessageAvatar.vue";
 import { messageService } from "~/api/message/MessageService";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useMessageAlert } from "~/composables/useMessageAlert";
+import { playMessageSound, useSoundPrefs } from "~/composables/useSounds";
 import { useBranchStore } from "~/stores/branch";
 import { remScale } from "~/utils/rem";
 
 import type { ConversationSummary } from "~/types/message";
 
-type Tab = "general" | "family" | "staff";
+type Tab = "family" | "staff";
 
 type Row = ConversationSummary & { kind: "family" | "staff" };
+
+// portal: the family portal's bell lists the family member's own conversations
+// with branch staff instead of the Family / Staff tabs.
+const props = defineProps<{ portal?: boolean }>();
 
 const MAX_ROWS = 5;
 const DROPDOWN_MARGIN = 16;
 const DROPDOWN_MAX_WIDTH = 380;
 
 const TABS: { label: string; value: Tab }[] = [
-    { label: "General", value: "general" },
     { label: "Family", value: "family" },
     { label: "Staff", value: "staff" },
 ];
@@ -39,6 +45,24 @@ const branchStore = useBranchStore();
 const user = useAuthUser();
 const { notifyNewMessage } = useMessageAlert();
 
+// Quick mute for the message sound. The volume is set on the profile page.
+const { message: soundVolume } = useSoundPrefs();
+const soundOn = computed(() => soundVolume.value > 0);
+let lastVolume = 100;
+
+function toggleSound() {
+    if (soundOn.value) {
+        lastVolume = soundVolume.value;
+        soundVolume.value = 0;
+        return;
+    }
+
+    soundVolume.value = lastVolume || 100;
+
+    // let the person hear what they just turned on
+    playMessageSound({ force: true });
+}
+
 const { $echo } = useNuxtApp();
 
 const family = ref<ConversationSummary[]>([]);
@@ -46,7 +70,7 @@ const staff = ref<ConversationSummary[]>([]);
 const isMounted = ref(false);
 const open = ref(false);
 const loading = ref(false);
-const tab = ref<Tab>("general");
+const tab = ref<Tab>("family");
 
 const dropdownRef = ref<HTMLElement | null>(null);
 const buttonRef = ref<HTMLElement | null>(null);
@@ -66,11 +90,7 @@ const staffUnread = computed(() => sumUnread(staff.value));
 const unreadCount = computed(() => familyUnread.value + staffUnread.value);
 
 const tabUnread = (value: Tab) =>
-    value === "family"
-        ? familyUnread.value
-        : value === "staff"
-          ? staffUnread.value
-          : unreadCount.value;
+    value === "family" ? familyUnread.value : staffUnread.value;
 
 const byRecent = (a: Row, b: Row) =>
     new Date(b.last_message_at ?? 0).getTime() -
@@ -86,23 +106,26 @@ const rows = computed<Row[]>(() => {
         kind: "staff" as const,
     }));
 
-    const source =
-        tab.value === "family"
-            ? familyRows
-            : tab.value === "staff"
-              ? staffRows
-              : [...familyRows, ...staffRows];
+    const source = tab.value === "family" ? familyRows : staffRows;
 
     return source.sort(byRecent).slice(0, MAX_ROWS);
 });
 
 const displayName = (row: Row) =>
-    (row.kind === "staff" ? row.staff_name : row.client_name) ?? "Unknown";
+    (row.kind === "staff" || props.portal
+        ? row.staff_name
+        : row.client_name) ?? (props.portal ? "Branch team" : "Unknown");
 
 const displayAvatar = (row: Row) =>
-    row.kind === "staff" ? (row.staff_avatar ?? row.avatar) : row.avatar;
+    row.kind === "staff" || props.portal
+        ? (row.staff_avatar ?? row.avatar)
+        : row.avatar;
 
 const subtitle = (row: Row) => {
+    if (props.portal) {
+        return [row.staff_role, row.branch?.name].filter(Boolean).join(" · ");
+    }
+
     if (row.kind === "staff") return row.staff_role ?? "Staff";
 
     const names = row.patient_names?.length
@@ -133,6 +156,19 @@ function timeAgo(value: string | null) {
 }
 
 async function load() {
+    if (props.portal) {
+        loading.value = true;
+
+        try {
+            family.value = (await messageService.conversations()) ?? [];
+        } catch {
+            family.value = [];
+        }
+
+        loading.value = false;
+        return;
+    }
+
     if (!branchUuid.value) return;
 
     loading.value = true;
@@ -151,12 +187,31 @@ async function load() {
     loading.value = false;
 }
 
-function goToMessages() {
+// Opens the page on that conversation. People are identified by uuid in the URL.
+function goToMessages(row?: Row) {
     open.value = false;
+
+    const query: Record<string, string> = {};
+
+    if (row) {
+        if (props.portal || row.kind === "staff") {
+            if (row.staff_uuid) query.staff = row.staff_uuid;
+        } else if (row.client_uuid) {
+            query.client = row.client_uuid;
+        }
+    }
+
+    if (props.portal) {
+        router.push({ path: "/portal/messages", query });
+        return;
+    }
 
     if (!branchUuid.value) return;
 
-    router.push(`/app/branches/${branchUuid.value}/messages`);
+    router.push({
+        path: `/app/branches/${branchUuid.value}/messages`,
+        query,
+    });
 }
 
 function updatePosition() {
@@ -214,20 +269,31 @@ function bindChannel() {
         handler = null;
     }
 
-    if (!$echo || !branchUuid.value) return;
+    if (!$echo || (!props.portal && !branchUuid.value)) return;
 
     const userUuid = (user.value as any)?.uuid;
 
-    joined = userUuid ? [`User.Messages.${userUuid}`] : [];
+    joined = userUuid
+        ? [
+              props.portal
+                  ? `Client.Messages.${userUuid}`
+                  : `User.Messages.${userUuid}`,
+          ]
+        : [];
 
     handler = (payload: any) => {
-        if (payload.branch_uuid && payload.branch_uuid !== branchUuid.value) {
+        if (
+            !props.portal &&
+            payload.branch_uuid &&
+            payload.branch_uuid !== branchUuid.value
+        ) {
             return;
         }
 
-        const mine =
-            Number(payload.sender_user_id) ===
-            Number((user.value as any)?.user_id);
+        const mine = props.portal
+            ? payload.sender_type === "client"
+            : Number(payload.sender_user_id) ===
+              Number((user.value as any)?.user_id);
 
         const row =
             family.value.find(
@@ -249,7 +315,10 @@ function bindChannel() {
 
         row.unread_count += 1;
 
-        notifyNewMessage(payload, row.client_name ?? row.staff_name);
+        notifyNewMessage(
+            payload,
+            props.portal ? row.staff_name : (row.client_name ?? row.staff_name),
+        );
     };
 
     for (const channel of joined) {
@@ -262,6 +331,13 @@ watch(branchUuid, load, { immediate: true });
 watch([branchUuid, () => (user.value as any)?.uuid], bindChannel, {
     immediate: true,
 });
+
+watch(
+    () => route.path,
+    () => {
+        open.value = false;
+    },
+);
 
 onMounted(() => {
     isMounted.value = true;
@@ -334,15 +410,42 @@ onBeforeUnmount(() => {
                         Messages
                     </span>
 
-                    <span
-                        v-if="unreadCount > 0"
-                        class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-600 dark:bg-primary-500/15 dark:text-primary-200"
-                    >
-                        {{ unreadCount }} unread
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <span
+                            v-if="unreadCount > 0"
+                            class="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-600 dark:bg-primary-500/15 dark:text-primary-200"
+                        >
+                            {{ unreadCount }} unread
+                        </span>
+
+                        <button
+                            type="button"
+                            :title="
+                                soundOn
+                                    ? 'Message sound is on. Click to mute.'
+                                    : 'Message sound is off. Click to turn on.'
+                            "
+                            :aria-label="
+                                soundOn
+                                    ? 'Mute message sound'
+                                    : 'Turn on message sound'
+                            "
+                            :aria-pressed="soundOn"
+                            class="rounded-md p-1 transition hover:bg-gray-100 dark:hover:bg-white/10"
+                            :class="
+                                soundOn
+                                    ? 'text-primary'
+                                    : 'text-gray-400 dark:text-gray-500'
+                            "
+                            @click="toggleSound"
+                        >
+                            <Volume2 v-if="soundOn" class="h-4 w-4" />
+                            <VolumeX v-else class="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
-                <div class="px-3 pt-3">
+                <div v-if="!portal" class="px-3 pt-3">
                     <div
                         class="flex rounded-lg bg-slate-100 p-1 dark:bg-white/5"
                         role="tablist"
@@ -395,7 +498,7 @@ onBeforeUnmount(() => {
                             :key="`${row.kind}-${row.conversation_id}`"
                             type="button"
                             class="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-slate-50 dark:hover:bg-white/5"
-                            @click="goToMessages"
+                            @click="goToMessages(row)"
                         >
                             <MessageAvatar
                                 :src="displayAvatar(row)"
@@ -460,7 +563,7 @@ onBeforeUnmount(() => {
                 <button
                     type="button"
                     class="w-full border-t border-gray-100 py-3 text-center text-xs font-semibold text-primary transition hover:bg-slate-50 dark:border-white/10 dark:text-primary-300 dark:hover:bg-white/5"
-                    @click="goToMessages"
+                    @click="goToMessages()"
                 >
                     View all messages
                 </button>

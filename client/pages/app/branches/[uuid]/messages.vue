@@ -516,6 +516,7 @@ definePageMeta({
 useHead({ title: "Messages" });
 
 const route = useRoute();
+const router = useRouter();
 const { error } = useToast();
 const user = useAuthUser();
 
@@ -870,9 +871,19 @@ function bindList(channels: string[]) {
 
 watch(listChannels, bindList, { immediate: true });
 
+async function openStaffConversation(staffUuid: string) {
+    const row = conversations.value.find((c) => c.staff_uuid === staffUuid);
+
+    if (row) await openThread(row.conversation_id);
+}
+
 onMounted(async () => {
     const clientUuid =
         typeof route.query.client === "string" ? route.query.client : null;
+    const staffUuid =
+        typeof route.query.staff === "string" ? route.query.staff : null;
+
+    if (staffUuid) tab.value = "colleagues";
 
     if (clientUuid) {
         loadingThread.value = true;
@@ -896,8 +907,38 @@ onMounted(async () => {
     if (opened) showOpenedConversation(opened);
     else if (clientUuid) mobileThreadOpen.value = false;
 
+    if (staffUuid) await openStaffConversation(staffUuid);
+
+    if (clientUuid || staffUuid) router.replace({ query: {} });
+
     loadingThread.value = false;
 });
+
+// Opened from the header messages dropdown while already on this page.
+watch(
+    () => [route.query.client, route.query.staff],
+    async ([client, staff]) => {
+        if (typeof staff === "string") {
+            if (tab.value !== "colleagues") await switchTab("colleagues");
+
+            await openStaffConversation(staff);
+        } else if (typeof client === "string") {
+            if (tab.value !== "families") await switchTab("families");
+
+            try {
+                showOpenedConversation(
+                    await openFamilyConversation({ client_uuid: client }),
+                );
+            } catch (err: any) {
+                error(err?.message ?? "Unable to open that conversation.");
+            }
+        } else {
+            return;
+        }
+
+        router.replace({ query: {} });
+    },
+);
 
 onBeforeUnmount(() => {
     if ($echo && listHandler) {

@@ -13,6 +13,7 @@ class NotificationResource extends JsonResource
             'id' => $this->notification_id,
             'message' => $this->message,
             'message_type' => $this->message_type,
+            'reference_id' => $this->reference_id,
 
             // The client works in terms of "unread"; the column stores the
             // inverse, so the flip happens here rather than in every consumer.

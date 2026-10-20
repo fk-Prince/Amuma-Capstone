@@ -18,6 +18,7 @@ return new class extends Migration
                 ->constrained('branches', 'branch_id');
             $table->string('message_type');
             $table->text('message');
+            $table->string('reference_id')->nullable();
             $table->boolean('has_read')->default(false);
             $table->timestamps();
 
