@@ -199,24 +199,20 @@ function when(item: { time: string | null; shift: string | null }) {
     return "";
 }
 
-const STATUS_STYLE: Record<string, { pill: string; bar: string }> = {
+const STATUS_STYLE: Record<string, { pill: string }> = {
     pending: {
-        pill: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-        bar: "bg-amber-400",
+        pill: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
     },
     ongoing: {
-        pill: "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
-        bar: "bg-sky-500",
+        pill: "bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300",
     },
     completed: {
-        pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-        bar: "bg-emerald-500",
+        pill: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
     },
 };
 
 const FALLBACK_STYLE = {
-    pill: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
-    bar: "bg-primary",
+    pill: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
 };
 
 const styleFor = (status: string | null) =>
@@ -419,13 +415,8 @@ const styleFor = (status: string | null) =>
                             <li
                                 v-for="(item, index) in today"
                                 :key="`${item.patient_id}-${index}`"
-                                class="relative overflow-hidden rounded-2xl border border-slate-100 bg-white py-2.5 pl-4 pr-3 dark:border-white/10 dark:bg-white/[0.03]"
+                                class="overflow-hidden rounded-2xl border border-slate-100 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-white/[0.03]"
                             >
-                                <span
-                                    class="absolute inset-y-0 left-0 w-1"
-                                    :class="styleFor(item.status).bar"
-                                />
-
                                 <div class="flex items-center justify-between gap-2">
                                     <span
                                         class="min-w-0 truncate text-sm font-semibold text-slate-700 dark:text-gray-100"
