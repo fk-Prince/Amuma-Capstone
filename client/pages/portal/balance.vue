@@ -1334,7 +1334,7 @@ async function openReceipt(receiptNo?: string | null) {
                     class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.6fr)]"
                 >
                     <section
-                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                        class="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
                         <div
                             class="border-b border-gray-100 px-5 py-5 dark:border-white/10 sm:px-6"
@@ -1355,7 +1355,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                         <div class="p-5 sm:p-6">
                             <div
-                                class="flex flex-col items-center rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 dark:border-white/10 dark:from-white/5 dark:to-white/5"
+                                class="flex flex-col items-center rounded-lg border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 dark:border-white/10 dark:from-white/5 dark:to-white/5"
                             >
                                 <div
                                     class="h-20 w-20 animate-pulse rounded-full bg-gray-100 dark:bg-white/10"
@@ -1384,13 +1384,13 @@ async function openReceipt(receiptNo?: string | null) {
                             </div>
 
                             <div
-                                class="mt-4 h-28 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
+                                class="mt-4 h-28 animate-pulse rounded-lg bg-gray-50 dark:bg-white/5"
                             />
                         </div>
                     </section>
 
                     <section
-                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                        class="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
                     >
                         <div
                             class="border-b border-gray-100 px-5 py-5 dark:border-white/10 sm:px-6"
@@ -1448,7 +1448,7 @@ async function openReceipt(receiptNo?: string | null) {
                     <section
                         v-for="n in 2"
                         :key="n"
-                        class="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                        class="rounded-lg border border-gray-100 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
                     >
                         <div
                             class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
@@ -1477,7 +1477,7 @@ async function openReceipt(receiptNo?: string | null) {
                             <div
                                 v-for="row in 3"
                                 :key="row"
-                                class="h-16 animate-pulse rounded-2xl bg-gray-50 dark:bg-white/5"
+                                class="h-16 animate-pulse rounded-lg bg-gray-50 dark:bg-white/5"
                             />
                         </div>
 
@@ -1619,7 +1619,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                 <!-- <div
                 v-if="selectedLovedOne"
-                class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:bg-secondary dark:border-white/10"
+                class="inline-flex items-center gap-3 rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm dark:bg-secondary dark:border-white/10"
             >
                 <div
                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-sm font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
@@ -1653,7 +1653,7 @@ async function openReceipt(receiptNo?: string | null) {
                     class="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(280px,0.8fr)_minmax(0,1.6fr)]"
                 >
                     <section
-                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                        class="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10"
@@ -1740,7 +1740,7 @@ async function openReceipt(receiptNo?: string | null) {
                                         class="w-full shrink-0"
                                     >
                                         <div
-                                            class="flex flex-col items-center rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 text-center dark:border-white/10 dark:from-white/5 dark:to-white/5"
+                                            class="flex flex-col items-center rounded-lg border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 text-center dark:border-white/10 dark:from-white/5 dark:to-white/5"
                                         >
                                             <img
                                                 v-if="lo.photo"
@@ -1852,7 +1852,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                             <div
                                 v-else-if="loadError"
-                                class="rounded-2xl bg-rose-50 p-6 text-center dark:bg-rose-500/10"
+                                class="rounded-lg bg-rose-50 p-6 text-center dark:bg-rose-500/10"
                             >
                                 <div
                                     class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-500 dark:bg-rose-500/15 dark:text-rose-300"
@@ -1905,7 +1905,7 @@ async function openReceipt(receiptNo?: string | null) {
                     </section>
 
                     <section
-                        class="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                        class="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
                     >
                         <div
                             class="border-b border-gray-100 px-5 py-5 sm:px-6 dark:border-white/10"
@@ -2270,7 +2270,7 @@ async function openReceipt(receiptNo?: string | null) {
 
                 <div class="grid gap-5 xl:grid-cols-2">
                     <section
-                        class="flex flex-col rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
+                        class="flex flex-col rounded-lg border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
                     >
                         <div
                             class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
@@ -2331,7 +2331,7 @@ async function openReceipt(receiptNo?: string | null) {
                     </section>
 
                     <section
-                        class="flex flex-col rounded-3xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
+                        class="flex flex-col rounded-lg border border-gray-100 bg-white p-5 shadow-sm sm:p-6 dark:border-white/10 dark:bg-secondary"
                     >
                         <div
                             class="flex items-start justify-between gap-3 border-b border-gray-100 pb-4 dark:border-white/10"
@@ -2431,7 +2431,7 @@ async function openReceipt(receiptNo?: string | null) {
             >
                 <template #default="{ items }">
                     <dl
-                        class="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl bg-gray-50 p-4 text-[11px] dark:bg-white/5 sm:grid-cols-4"
+                        class="mb-4 grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg bg-gray-50 p-4 text-[11px] dark:bg-white/5 sm:grid-cols-4"
                     >
                         <div
                             v-for="row in refundBreakdown"

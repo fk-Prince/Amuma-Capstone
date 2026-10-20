@@ -51,7 +51,7 @@
                 <OverviewStatCard
                     label="Scheduled hours"
                     :value="scheduledHours"
-                    hint="Facility shifts and homecare visits"
+                    hint="Shifts, ADL and medical tasks"
                     :icon="Clock"
                     tone="accent"
                 />
@@ -60,8 +60,8 @@
                     :value="patientCount"
                     :hint="
                         homecareCount
-                            ? `${homecareCount} homecare visit(s)`
-                            : 'No homecare visits'
+                            ? `${homecareCount} homecare task(s)`
+                            : 'No homecare tasks'
                     "
                     :icon="Users"
                     tone="amber"
@@ -116,13 +116,19 @@
                         <div
                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white"
                             :class="
-                                block.type === 'homecare'
+                                block.type === 'adl'
                                     ? 'bg-gradient-to-br from-amber-400 to-amber-600'
-                                    : 'bg-gradient-to-br from-accent to-accent-700'
+                                    : block.type === 'medical'
+                                      ? 'bg-gradient-to-br from-violet-400 to-violet-600'
+                                      : 'bg-gradient-to-br from-accent to-accent-700'
                             "
                         >
-                            <Home
-                                v-if="block.type === 'homecare'"
+                            <HandHeart
+                                v-if="block.type === 'adl'"
+                                class="h-3.5 w-3.5"
+                            />
+                            <Stethoscope
+                                v-else-if="block.type === 'medical'"
                                 class="h-3.5 w-3.5"
                             />
                             <BedDouble v-else class="h-3.5 w-3.5" />
@@ -138,7 +144,9 @@
                                 class="truncate text-[11px] text-muted dark:text-gray-400"
                             >
                                 {{ block.title
-                                }}<template v-if="block.location">
+                                }}<template v-if="block.setting === 'homecare'">
+                                    · Homecare</template
+                                ><template v-if="block.location">
                                     · {{ block.location }}</template
                                 >
                             </p>
@@ -190,8 +198,9 @@ import {
     CalendarClock,
     ClipboardList,
     Clock,
-    Home,
+    HandHeart,
     MessageSquare,
+    Stethoscope,
     Users,
 } from "lucide-vue-next";
 
@@ -279,7 +288,8 @@ const doneCount = computed(
 );
 
 const homecareCount = computed(
-    () => blocks.value.filter((block) => block.type === "homecare").length,
+    () =>
+        blocks.value.filter((block) => block.setting === "homecare").length,
 );
 
 const patientCount = computed(
@@ -318,13 +328,13 @@ const quickLinks = computed(() => {
         {
             label: "My patients",
             icon: Users,
-            to: `${base}/patients`,
+            to: `${base}/patients?assignment=mine`,
             show: hasModule(Modules.Patients),
         },
         {
             label: "Schedule",
             icon: CalendarClock,
-            to: `${base}/schedules`,
+            to: `${base}/schedules?assignment=mine`,
             show: hasModule(Modules.Schedules),
         },
         {

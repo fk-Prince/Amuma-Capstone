@@ -42,7 +42,9 @@ const isFetching = ref(false);
 const searchQuery = ref("");
 const typeFilter = ref("all");
 const statusFilter = ref("all");
-const assignmentFilter = ref("all");
+const assignmentFilter = ref(
+    route.query.assignment === "mine" ? "mine" : "all",
+);
 const dateFrom = ref("");
 const dateTo = ref("");
 

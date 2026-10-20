@@ -2,7 +2,8 @@ import { ref, watch, type Ref } from "vue";
 import { branchService } from "~/api/branch/BranchService";
 
 export interface DutyBlock {
-    type: "shift" | "homecare";
+    type: "shift" | "adl" | "medical";
+    setting?: "facility" | "homecare";
     title: string;
     patient_name: string | null;
     location: string | null;

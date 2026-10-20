@@ -6,6 +6,8 @@ use App\Models\CaregiverShift;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\PatientAdmission;
+use App\Models\ScheduleAssigned;
+use Carbon\Carbon;
 
 class CaregiverShiftRepository
 {
@@ -187,5 +189,35 @@ class CaregiverShiftRepository
         return CaregiverShift::where('admission_id', $admissionId)
             ->where('is_active', true)
             ->count();
+    }
+
+    // ADL and Medical services assigned to staff of this branch that fall on the
+    // given day. Inactive staff are left out.
+    public function dutyTasks(int $branchId, Carbon $day)
+    {
+        $activeStaff = EmployeeBranch::where('branch_id', $branchId)
+            ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+            ->select('employee_id');
+
+        return ScheduleAssigned::active()
+            ->whereIn('employee_id', $activeStaff)
+            ->whereHas(
+                'scheduleService.schedule',
+                fn($schedule) => $schedule
+                    ->whereBetween('scheduled_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()])
+                    ->whereNotIn('status', ['cancelled', 'missed'])
+                    ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
+            )
+            ->with(['scheduleService.service', 'scheduleService.schedule.patient'])
+            ->get();
+    }
+
+    public function staffForBranch(int $branchId, array $employeeIds)
+    {
+        return EmployeeBranch::where('branch_id', $branchId)
+            ->whereIn('employee_id', $employeeIds)
+            ->with('employees')
+            ->get()
+            ->keyBy('employee_id');
     }
 }

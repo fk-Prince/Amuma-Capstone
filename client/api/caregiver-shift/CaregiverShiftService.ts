@@ -23,6 +23,7 @@ class CaregiverShiftService extends BaseService {
         branch_uuid: string;
         search?: string;
         assigned_only?: number;
+        include_tasks?: number;
     }): Promise<any> {
         return await this.request(`${this.resource}/board`, "GET", params);
     }

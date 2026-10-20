@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { BedDouble, CalendarClock, Clock, Home, Hourglass } from "lucide-vue-next";
+import {
+    BedDouble,
+    CalendarClock,
+    Clock,
+    HandHeart,
+    Hourglass,
+    Stethoscope,
+} from "lucide-vue-next";
 
 interface DutyBlock {
-    type: "shift" | "homecare";
+    type: "shift" | "adl" | "medical";
+    setting?: "facility" | "homecare";
     title: string;
     patient_name: string | null;
     location: string | null;
@@ -169,7 +177,14 @@ const stateClass = (state: string) =>
           : "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
 
 const typeBar = (type: string) =>
-    type === "homecare" ? "bg-emerald-500" : "bg-primary";
+    type === "adl"
+        ? "bg-amber-500"
+        : type === "medical"
+          ? "bg-violet-500"
+          : "bg-primary";
+
+const typeIcon = (type: string) =>
+    type === "adl" ? HandHeart : type === "medical" ? Stethoscope : BedDouble;
 </script>
 
 <template>
@@ -279,13 +294,14 @@ const typeBar = (type: string) =>
                 class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-600 dark:text-gray-300"
             >
                 <component
-                    :is="current.type === 'homecare' ? Home : BedDouble"
+                    :is="typeIcon(current.type)"
                     class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300"
                 />
                 <span class="font-medium">{{ current.title }}</span>
                 <span v-if="current.patient_name">
                     · {{ current.patient_name }}
                 </span>
+                <span v-if="current.setting === 'homecare'">· Homecare</span>
                 <span v-if="current.location">· {{ current.location }}</span>
             </p>
         </div>
@@ -361,8 +377,12 @@ const typeBar = (type: string) =>
                     Facility shift
                 </span>
                 <span class="inline-flex items-center gap-1.5">
-                    <span class="h-2 w-2 rounded-sm bg-emerald-500" />
-                    Homecare visit
+                    <span class="h-2 w-2 rounded-sm bg-amber-500" />
+                    ADL
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-2 w-2 rounded-sm bg-violet-500" />
+                    Medical
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-0.5 rounded-full bg-red-500" />
@@ -396,6 +416,9 @@ const typeBar = (type: string) =>
                     <p class="text-[11px] text-gray-400 dark:text-gray-500">
                         {{ formatTime(block.start) }} –
                         {{ formatTime(block.end) }}
+                        <template v-if="block.setting === 'homecare'">
+                            · Homecare
+                        </template>
                     </p>
                 </div>
 

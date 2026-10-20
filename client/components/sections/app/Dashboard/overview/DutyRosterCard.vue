@@ -16,7 +16,7 @@
                         Staff on duty
                     </h2>
                     <p class="text-[11px] text-muted dark:text-gray-400">
-                        Facility caregiver shifts · {{ todayLabel }}
+                        Shifts, ADL and medical · {{ todayLabel }}
                     </p>
                 </div>
             </div>
@@ -53,7 +53,7 @@
             v-else-if="!rows.length"
             class="py-10 text-center text-[11px] text-muted dark:text-gray-400"
         >
-            No caregiver shifts assigned yet.
+            No shifts or tasks assigned today.
         </p>
 
         <div v-else class="mt-3 overflow-x-auto">
@@ -62,7 +62,7 @@
                     <span
                         class="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-gray-400"
                     >
-                        Caregiver
+                        Staff
                     </span>
                     <div class="relative h-4">
                         <span
@@ -114,18 +114,14 @@
                                 <p
                                     class="truncate text-[10px] text-muted dark:text-gray-400"
                                 >
-                                    {{ row.residents.length }}
-                                    {{
-                                        row.residents.length === 1
-                                            ? "resident"
-                                            : "residents"
-                                    }}
+                                    {{ row.subtitle }}
                                 </p>
                             </div>
                         </div>
 
                         <div
-                            class="relative h-7 rounded-md bg-slate-50 dark:bg-white/5"
+                            class="relative rounded-md bg-slate-50 dark:bg-white/5"
+                            :style="{ height: `${trackHeight}px` }"
                         >
                             <div
                                 v-for="mark in hourMarks"
@@ -137,17 +133,15 @@
                             <div
                                 v-for="(segment, index) in row.segments"
                                 :key="index"
-                                class="absolute bottom-1 top-1 flex items-center overflow-hidden rounded px-1.5 text-[10px] font-semibold text-white"
-                                :class="
-                                    row.onDuty
-                                        ? 'bg-accent'
-                                        : 'bg-primary-400 dark:bg-primary-500/70'
-                                "
+                                class="absolute flex items-center overflow-hidden rounded px-1.5 text-[10px] font-semibold text-white"
+                                :class="segmentClass(segment.lane, row.onDuty)"
                                 :style="{
                                     left: `${segment.left}%`,
                                     width: `${segment.width}%`,
+                                    top: `${laneTop(segment.lane)}px`,
+                                    height: `${LANE_HEIGHT}px`,
                                 }"
-                                :title="`${segment.label} · ${row.residents.join(', ')}`"
+                                :title="segment.title"
                             >
                                 <span class="truncate">{{ segment.label }}</span>
                             </div>
@@ -170,7 +164,7 @@
                 no caregiver assigned
             </span>
             <span
-                v-else-if="rows.length"
+                v-else-if="shifts.length"
                 class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
             >
                 All residents have a caregiver
@@ -183,6 +177,16 @@
                 <span
                     class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-primary-400 align-middle"
                 />Scheduled
+                <template v-if="hasAdl">
+                    <span
+                        class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-amber-500 align-middle"
+                    />ADL
+                </template>
+                <template v-if="hasMedical">
+                    <span
+                        class="ml-2 mr-1 inline-block h-2 w-2 rounded-sm bg-violet-500 align-middle"
+                    />Medical
+                </template>
             </span>
         </div>
     </div>
@@ -204,8 +208,22 @@ interface BoardShift {
     resident: { full_name: string };
 }
 
+interface BoardTask {
+    employee_id: number;
+    full_name: string | null;
+    role: string;
+    type: "ADL" | "Medical";
+    title: string;
+    patient_name: string | null;
+    start_time: string;
+    end_time: string;
+}
+
+type Lane = "shift" | "adl" | "medical";
+
 const loading = ref(true);
 const shifts = ref<BoardShift[]>([]);
+const tasks = ref<BoardTask[]>([]);
 const uncoveredCount = ref(0);
 
 const load = async () => {
@@ -216,13 +234,16 @@ const load = async () => {
     try {
         const res: any = await caregiverShiftService.board({
             branch_uuid: props.branchUuid,
+            include_tasks: 1,
         });
 
         shifts.value = res?.data?.shifts ?? [];
+        tasks.value = res?.data?.tasks ?? [];
         uncoveredCount.value = (res?.data?.uncovered ?? []).length;
     } catch (err) {
         console.error("Failed to fetch duty roster:", err);
         shifts.value = [];
+        tasks.value = [];
         uncoveredCount.value = 0;
     } finally {
         loading.value = false;
@@ -288,84 +309,183 @@ const formatTime = (time: string) => {
     return `${h12}:${String(m).padStart(2, "0")} ${period}`;
 };
 
-const isNowInShift = (start: number, end: number) =>
+const isNowIn = (start: number, end: number) =>
     end > start
         ? nowHour.value >= start && nowHour.value < end
         : nowHour.value >= start || nowHour.value < end;
 
+// Shifts, ADL and medical each get their own lane. ADL is duration based, so it
+// reads better on a lane of its own than stacked on the shift bar.
+const hasAdl = computed(() => tasks.value.some((t) => t.type === "ADL"));
+const hasMedical = computed(() =>
+    tasks.value.some((t) => t.type === "Medical"),
+);
+
+const lanes = computed<Lane[]>(() => [
+    ...(shifts.value.length ? (["shift"] as Lane[]) : []),
+    ...(hasAdl.value ? (["adl"] as Lane[]) : []),
+    ...(hasMedical.value ? (["medical"] as Lane[]) : []),
+]);
+
+const LANE_HEIGHT = 18;
+const LANE_GAP = 4;
+
+const trackHeight = computed(
+    () => Math.max(lanes.value.length, 1) * (LANE_HEIGHT + LANE_GAP) + LANE_GAP,
+);
+
+const laneTop = (lane: Lane) =>
+    LANE_GAP + Math.max(lanes.value.indexOf(lane), 0) * (LANE_HEIGHT + LANE_GAP);
+
+const segmentClass = (lane: Lane, onDuty: boolean) =>
+    lane === "adl"
+        ? "bg-amber-500"
+        : lane === "medical"
+          ? "bg-violet-500"
+          : onDuty
+            ? "bg-accent"
+            : "bg-primary-400 dark:bg-primary-500/70";
+
+interface Segment {
+    left: number;
+    width: number;
+    label: string;
+    title: string;
+    lane: Lane;
+}
+
+const toSegments = (
+    start: number,
+    end: number,
+    label: string,
+    title: string,
+    lane: Lane,
+): Segment[] => {
+    if (end > start) {
+        return [
+            {
+                left: (start / 24) * 100,
+                width: ((end - start) / 24) * 100,
+                label,
+                title,
+                lane,
+            },
+        ];
+    }
+
+    // runs past midnight: split at midnight
+    const parts: Segment[] = [
+        {
+            left: (start / 24) * 100,
+            width: ((24 - start) / 24) * 100,
+            label,
+            title,
+            lane,
+        },
+    ];
+
+    if (end > 0) {
+        parts.push({ left: 0, width: (end / 24) * 100, label, title, lane });
+    }
+
+    return parts;
+};
+
 const rows = computed(() => {
-    const byCaregiver = new Map<
+    const byStaff = new Map<
         number,
         {
             id: number;
             name: string;
+            role: string | null;
             residents: Set<string>;
-            windows: Map<string, { start: number; end: number; label: string }>;
+            taskCount: number;
+            segments: Segment[];
+            windows: { start: number; end: number }[];
+            seenShift: Set<string>;
         }
     >();
 
-    for (const shift of shifts.value) {
-        const id = shift.caregiver.employee_id;
-
-        if (!byCaregiver.has(id)) {
-            byCaregiver.set(id, {
+    const entryFor = (id: number, name: string | null, role: string | null) => {
+        if (!byStaff.has(id)) {
+            byStaff.set(id, {
                 id,
-                name: shift.caregiver.full_name ?? "Unnamed caregiver",
+                name: name ?? "Unnamed staff",
+                role,
                 residents: new Set(),
-                windows: new Map(),
+                taskCount: 0,
+                segments: [],
+                windows: [],
+                seenShift: new Set(),
             });
         }
 
-        const entry = byCaregiver.get(id)!;
+        return byStaff.get(id)!;
+    };
+
+    for (const shift of shifts.value) {
+        const entry = entryFor(
+            shift.caregiver.employee_id,
+            shift.caregiver.full_name,
+            null,
+        );
         const key = `${shift.start_time}-${shift.end_time}`;
 
         entry.residents.add(shift.resident.full_name);
 
-        if (!entry.windows.has(key)) {
-            entry.windows.set(key, {
-                start: toHour(shift.start_time),
-                end: toHour(shift.end_time),
-                label: `${formatTime(shift.start_time)} – ${formatTime(shift.end_time)}`,
-            });
-        }
+        if (entry.seenShift.has(key)) continue;
+
+        entry.seenShift.add(key);
+
+        const start = toHour(shift.start_time);
+        const end = toHour(shift.end_time);
+        const label = `${formatTime(shift.start_time)} – ${formatTime(shift.end_time)}`;
+
+        entry.windows.push({ start, end });
+        entry.segments.push(
+            ...toSegments(start, end, label, `Shift · ${label}`, "shift"),
+        );
     }
 
-    return [...byCaregiver.values()]
-        .map((entry) => {
-            const windows = [...entry.windows.values()];
-            const segments: { left: number; width: number; label: string }[] = [];
+    for (const task of tasks.value) {
+        const entry = entryFor(task.employee_id, task.full_name, task.role);
+        const start = toHour(task.start_time);
+        const end = toHour(task.end_time);
+        const time = `${formatTime(task.start_time)} – ${formatTime(task.end_time)}`;
 
-            for (const w of windows) {
-                if (w.end > w.start) {
-                    segments.push({
-                        left: (w.start / 24) * 100,
-                        width: ((w.end - w.start) / 24) * 100,
-                        label: w.label,
-                    });
-                } else {
-                    // overnight shift: split at midnight
-                    segments.push({
-                        left: (w.start / 24) * 100,
-                        width: ((24 - w.start) / 24) * 100,
-                        label: w.label,
-                    });
-                    if (w.end > 0) {
-                        segments.push({
-                            left: 0,
-                            width: (w.end / 24) * 100,
-                            label: w.label,
-                        });
-                    }
-                }
-            }
+        entry.role ??= task.role;
+        entry.taskCount += 1;
+        entry.windows.push({ start, end });
+        entry.segments.push(
+            ...toSegments(
+                start,
+                end,
+                task.title,
+                `${task.type} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""} · ${time}`,
+                task.type === "ADL" ? "adl" : "medical",
+            ),
+        );
+    }
+
+    return [...byStaff.values()]
+        .map((entry) => {
+            const residentCount = entry.residents.size;
+            const parts = [
+                residentCount
+                    ? `${residentCount} ${residentCount === 1 ? "resident" : "residents"}`
+                    : (entry.role ?? "Staff"),
+                entry.taskCount
+                    ? `${entry.taskCount} ${entry.taskCount === 1 ? "task" : "tasks"}`
+                    : null,
+            ].filter(Boolean);
 
             return {
                 id: entry.id,
                 name: entry.name,
-                residents: [...entry.residents],
-                segments,
-                firstStart: Math.min(...windows.map((w) => w.start)),
-                onDuty: windows.some((w) => isNowInShift(w.start, w.end)),
+                subtitle: parts.join(" · "),
+                segments: entry.segments,
+                firstStart: Math.min(...entry.windows.map((w) => w.start)),
+                onDuty: entry.windows.some((w) => isNowIn(w.start, w.end)),
             };
         })
         .sort(

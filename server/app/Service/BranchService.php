@@ -353,6 +353,27 @@ class BranchService
         ];
     }
 
+    private function serviceMinutes(object $service): int
+    {
+        if ($service->hours_booked !== null && (float) $service->hours_booked > 0) {
+            return (int) round(((float) $service->hours_booked) * 60);
+        }
+
+        $maxDuration = $service->service?->maximum_duration;
+
+        if ($maxDuration) {
+            [$hours, $mins] = array_pad(explode(':', (string) $maxDuration), 2, 0);
+
+            $total = ((int) $hours * 60) + (int) $mins;
+
+            if ($total > 0) {
+                return $total;
+            }
+        }
+
+        return 30;
+    }
+
     private function myDuty(int|string $branchId, int|string|null $userId, Carbon $now): ?array
     {
         if (!$userId) {
@@ -400,6 +421,7 @@ class BranchService
 
                 $blocks->push([
                     'type' => 'shift',
+                    'setting' => 'facility',
                     'title' => 'Facility shift',
                     'patient_name' => $shift->admission?->patient?->display_name,
                     'location' => $room?->room_no
@@ -411,9 +433,19 @@ class BranchService
             }
         }
 
+        // Every ADL and Medical service assigned to this employee today, whether the
+        // schedule is in the facility or a homecare visit.
         $assignments = ScheduleAssigned::active()
             ->where('employee_id', $employee->employee_id)
+            ->whereHas(
+                'scheduleService.schedule',
+                fn($schedule) => $schedule
+                    ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+                    ->whereNotIn('status', ['cancelled', 'missed'])
+                    ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
+            )
             ->with(['scheduleService.service', 'scheduleService.schedule.patient'])
+            ->orderBy('schedule_assigned_id')
             ->get()
             ->filter(fn($assignment) => $assignment->scheduleService?->schedule)
             ->groupBy(fn($assignment) => $assignment->scheduleService->schedule_id);
@@ -421,61 +453,48 @@ class BranchService
         foreach ($assignments as $group) {
             $schedule = $group->first()->scheduleService->schedule;
 
-            if ($schedule->category !== 'Homecare' || !$schedule->scheduled_at) {
-                continue;
-            }
+            // Services in one visit run back to back from the scheduled time.
+            $cursor = $schedule->scheduled_at->copy();
 
-            if ((int) $schedule->patient?->branch_id !== (int) $branchId) {
-                continue;
-            }
-
-            if (in_array($schedule->status, ['cancelled', 'missed'], true)) {
-                continue;
-            }
-
-            $minutes = (int) $group->sum(function ($assignment) {
+            foreach ($group as $assignment) {
                 $service = $assignment->scheduleService;
 
-                if ($service->hours_booked !== null) {
-                    return (int) round(((float) $service->hours_booked) * 60);
+                if ($assignment->start_time && $assignment->end_time) {
+                    $start = $schedule->scheduled_at->copy()->setTimeFromTimeString((string) $assignment->start_time);
+                    $end = $schedule->scheduled_at->copy()->setTimeFromTimeString((string) $assignment->end_time);
+
+                    if ($end->lessThanOrEqualTo($start)) {
+                        $end->addDay();
+                    }
+                } else {
+                    $minutes = $this->serviceMinutes($service);
+
+                    $start = $cursor->copy();
+                    $end = $start->copy()->addMinutes($minutes);
+                    $cursor = $end->copy();
                 }
 
-                $maxDuration = $service->service?->maximum_duration;
-
-                if (!$maxDuration) {
-                    return 0;
+                if ($end->lessThanOrEqualTo($dayStart) || $start->greaterThan($dayEnd)) {
+                    continue;
                 }
 
-                [$hours, $mins] = array_pad(explode(':', (string) $maxDuration), 2, 0);
-
-                return ((int) $hours * 60) + (int) $mins;
-            });
-
-            if ($minutes <= 0) {
-                continue;
+                $blocks->push([
+                    'type' => strtolower((string) $service->type),
+                    'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
+                    'title' => $service->service?->service_name ?? $service->type,
+                    'patient_name' => $schedule->patient?->display_name,
+                    'location' => null,
+                    'start' => $start,
+                    'end' => $end,
+                ]);
             }
-
-            $start = $schedule->scheduled_at->copy();
-            $end = $start->copy()->addMinutes($minutes);
-
-            if ($end->lessThanOrEqualTo($dayStart) || $start->greaterThan($dayEnd)) {
-                continue;
-            }
-
-            $blocks->push([
-                'type' => 'homecare',
-                'title' => 'Homecare visit',
-                'patient_name' => $schedule->patient?->display_name,
-                'location' => null,
-                'start' => $start,
-                'end' => $end,
-            ]);
         }
 
         $blocks = $blocks->sortBy(fn($block) => $block['start']->getTimestamp())->values();
 
         $format = fn(array $block) => [
             'type' => $block['type'],
+            'setting' => $block['setting'],
             'title' => $block['title'],
             'patient_name' => $block['patient_name'],
             'location' => $block['location'],

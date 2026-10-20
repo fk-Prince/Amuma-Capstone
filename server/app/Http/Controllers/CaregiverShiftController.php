@@ -34,6 +34,7 @@ class CaregiverShiftController extends Controller
             'branch_uuid' => ['required', 'uuid'],
             'search' => ['nullable', 'string', 'max:100'],
             'assigned_only' => ['nullable', 'boolean'],
+            'include_tasks' => ['nullable', 'boolean'],
         ]);
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);

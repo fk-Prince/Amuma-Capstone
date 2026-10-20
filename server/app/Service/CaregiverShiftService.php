@@ -7,6 +7,7 @@ use App\Models\PatientAdmission;
 use App\Models\User;
 use App\Repository\CaregiverShiftRepository;
 use Exception;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CaregiverShiftService
@@ -61,9 +62,67 @@ class CaregiverShiftService
                     'resident' => $this->boardResident($shift->admission),
                 ])->values(),
                 'uncovered' => $uncovered->map(fn($admission) => $this->boardResident($admission))->values(),
+                'tasks' => !empty($payload['include_tasks']) && !$mine
+                    ? $this->dutyTasks($branchId)
+                    : [],
                 'duty_limit' => self::MAX_DUTY_HOURS,
             ],
         ]);
+    }
+
+    // Today's ADL and Medical services per staff member, for the dashboard roster.
+    private function dutyTasks(int $branchId): array
+    {
+        $day = now();
+        $assignments = $this->shifts->dutyTasks($branchId, $day);
+        $staff = $this->shifts->staffForBranch(
+            $branchId,
+            $assignments->pluck('employee_id')->unique()->values()->all()
+        );
+
+        // Services in one visit run back to back from the scheduled time.
+        $cursors = [];
+
+        return $assignments
+            ->sortBy('schedule_assigned_id')
+            ->map(function ($assignment) use ($staff, &$cursors) {
+                $link = $staff->get($assignment->employee_id);
+                $service = $assignment->scheduleService;
+                $schedule = $service?->schedule;
+
+                if (!$link || !$schedule?->scheduled_at) {
+                    return null;
+                }
+
+                if ($assignment->start_time && $assignment->end_time) {
+                    $start = Carbon::parse($assignment->start_time);
+                    $end = Carbon::parse($assignment->end_time);
+                } else {
+                    $minutes = $service->hours_booked !== null
+                        ? (int) round(((float) $service->hours_booked) * 60)
+                        : 0;
+
+                    $start = ($cursors[$schedule->schedule_id . ':' . $assignment->employee_id] ?? $schedule->scheduled_at)->copy();
+                    $end = $start->copy()->addMinutes($minutes > 0 ? $minutes : 30);
+                    $cursors[$schedule->schedule_id . ':' . $assignment->employee_id] = $end->copy();
+                }
+
+                return [
+                    'employee_id' => $assignment->employee_id,
+                    'full_name' => trim(
+                        ($link->employees?->first_name ?? '') . ' ' . ($link->employees?->last_name ?? '')
+                    ) ?: null,
+                    'role' => ucwords(str_replace('_', ' ', (string) $link->role_name)),
+                    'type' => $service->type,
+                    'title' => $service->service?->service_name ?? $service->type,
+                    'patient_name' => $schedule->patient?->display_name,
+                    'start_time' => $start->format('H:i'),
+                    'end_time' => $end->format('H:i'),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function boardResident(PatientAdmission $admission): array
