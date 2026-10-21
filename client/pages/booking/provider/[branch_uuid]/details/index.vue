@@ -1,18 +1,17 @@
 <template>
     <div
-        class="min-h-screen grid grid-cols-1 lg:grid-cols-[280px_1fr] bg-gray-50 dark:bg-surface"
+        class="min-h-screen lg:h-[calc(100dvh-126px)] lg:min-h-0 lg:overflow-hidden"
+    >
+    <div
+        class="mx-auto grid w-[94%] grid-cols-1 gap-5 pb-6 pt-2 lg:h-full lg:min-h-0 lg:w-[88%] lg:max-w-[1600px] lg:grid-cols-[300px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:pb-4 lg:pt-1"
     >
         <aside
             data-booking-sidebar
-            class="sticky hidden w-[300px] shrink-0 flex-col overflow-hidden border-r border-gray-100 bg-gradient-to-br from-primary-50/70 via-white to-accent-50/50 lg:flex dark:border-white/10 dark:bg-none dark:bg-secondary"
-            :style="{
-                top: `${sidebarTop}px`,
-                height: `calc(100vh - ${sidebarTop}px)`,
-            }"
+            class="hidden flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gradient-to-br from-primary-50/70 via-white to-accent-50/50 shadow-sm lg:flex lg:h-full lg:min-h-0 dark:border-white/10 dark:bg-none dark:bg-secondary"
         >
             <div class="relative z-50 flex h-full min-h-0 flex-col">
                 <div
-                    class="shrink-0 border-b border-gray-100/80 px-6 py-6 dark:border-white/10"
+                    class="shrink-0 border-b border-gray-100/80 px-5 py-4 dark:border-white/10"
                 >
                     <div class="flex items-center justify-between">
                         <div>
@@ -36,7 +35,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-5">
+                    <div class="mt-4">
                         <div class="mb-2 flex items-center justify-between">
                             <span
                                 class="text-xs font-medium text-muted dark:text-gray-400"
@@ -62,8 +61,9 @@
                     </div>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+                <div class="min-h-0 flex-1 overflow-y-auto px-3 py-3">
                     <BookingSteps
+                        compact
                         :active="activeStep"
                         :completed="completedSteps"
                         @go="scrollTo"
@@ -71,7 +71,7 @@
                 </div>
 
                 <div
-                    class="shrink-0 border-t border-gray-100/80 px-6 py-4 dark:border-white/10"
+                    class="shrink-0 border-t border-gray-100/80 px-5 py-3 dark:border-white/10"
                 >
                     <div
                         class="flex items-start gap-3 rounded-xl bg-white/60 p-3 ring-1 ring-gray-100 dark:bg-white/5 dark:ring-white/10"
@@ -100,9 +100,14 @@
             </div>
         </aside>
 
-        <main class="px-5 sm:px-10 py-8 max-w-7xl w-full mx-auto lg:mx-0">
+        <main
+            class="flex min-w-0 flex-col pt-2 lg:h-full lg:min-h-0 lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-100 lg:bg-white lg:pt-0 lg:shadow-sm dark:lg:border-white/10 dark:lg:bg-secondary"
+        >
+            <div
+                class="lg:shrink-0 lg:border-b lg:border-gray-100 lg:px-6 lg:py-4 dark:lg:border-white/10"
+            >
             <Breadcrumb
-                class="mb-5"
+                class="mb-5 lg:mb-2"
                 :items="[
                     { label: 'Find a Provider', to: '/booking/search' },
                     {
@@ -113,7 +118,7 @@
                 ]"
             />
 
-            <header class="mb-8">
+            <header class="mb-6 lg:mb-0">
                 <p
                     class="text-xs font-semibold uppercase tracking-wide text-primary"
                 >
@@ -124,21 +129,22 @@
                     }}
                 </p>
                 <h1
-                    class="font-serif text-3xl text-gray-900 mt-1 dark:text-white"
+                    class="font-serif text-3xl text-gray-900 mt-1 lg:text-2xl dark:text-white"
                 >
                     Patient Booking Request
                 </h1>
                 <p
-                    class="text-[15px] text-gray-500 mt-2 leading-relaxed dark:text-gray-400"
+                    class="text-[15px] text-gray-500 mt-2 leading-relaxed lg:mt-1 lg:text-sm dark:text-gray-400"
                 >
                     Complete the form below to submit your request. Fields
                     marked with
                     <span class="text-red-500">*</span> are required.
                 </p>
             </header>
+            </div>
 
             <div
-                class="sticky top-0 z-[50] -mx-5 mb-3 bg-gray-50/95 px-5 py-3 backdrop-blur-sm sm:-mx-10 sm:px-10 lg:hidden dark:bg-secondary/95"
+                class="sticky top-0 z-[50] mb-3 bg-gray-50/95 py-3 backdrop-blur-sm lg:hidden dark:bg-secondary/95"
             >
                 <button
                     type="button"
@@ -226,11 +232,15 @@
                 </Transition>
             </Teleport>
 
+            <div
+                ref="scrollEl"
+                class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-8 lg:py-6"
+            >
             <div class="flex flex-col">
                 <section
                     id="step1"
                     ref="step1"
-                    class="scroll-mt-28 lg:scroll-mt-8 border-t rounded-t-2xl border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-t rounded-t-2xl border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:lg:bg-transparent"
                 >
                     <HomecareBooking
                         v-if="category === 'homecare'"
@@ -260,7 +270,7 @@
                 <section
                     id="step2"
                     ref="step2"
-                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:lg:bg-transparent"
                 >
                     <PatientForm
                         :category="category"
@@ -275,7 +285,7 @@
                 <section
                     id="step3"
                     ref="step3"
-                    class="scroll-mt-28 lg:scroll-mt-8 border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                    class="scroll-mt-28 lg:scroll-mt-8 border border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:lg:bg-transparent"
                 >
                     <GuardianForm
                         :model="guardianData"
@@ -290,7 +300,7 @@
                 <section
                     id="step4"
                     ref="step4"
-                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:lg:bg-transparent"
                 >
                     <DiagnosisForm
                         :model="diagnosisData"
@@ -315,7 +325,7 @@
                 <section
                     id="step5"
                     ref="step5"
-                    class="scroll-mt-28 lg:scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10"
+                    class="scroll-mt-28 lg:scroll-mt-8 border-x rounded-b-2xl border-b border-gray-100 bg-white shadow-sm dark:bg-secondary dark:border-white/10 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none dark:lg:bg-transparent"
                 >
                     <AssessmentForm
                         :model="assessmentData"
@@ -333,17 +343,9 @@
             </div>
 
             <div
-                class="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm p-6 dark:bg-secondary dark:border-white/10"
+                class="mt-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm lg:border-dashed lg:bg-transparent lg:shadow-none dark:bg-secondary dark:border-white/10 dark:lg:bg-transparent"
             >
-                <BaseButton
-                    variant="primary"
-                    class="w-full rounded-xl py-3"
-                    @click="submit"
-                >
-                    Review Booking Request
-                </BaseButton>
-
-                <div class="mt-4 flex flex-col gap-3">
+                <div class="flex flex-col gap-3">
                     <div
                         class="flex items-start gap-3 text-[13px] text-gray-500 dark:text-gray-400"
                     >
@@ -379,9 +381,29 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+            <div
+                class="sticky bottom-3 z-20 mt-4 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur lg:static lg:mt-0 lg:rounded-none lg:border-0 lg:border-t lg:bg-white lg:px-6 lg:py-3.5 lg:shadow-none lg:backdrop-blur-none dark:border-white/10 dark:bg-secondary/95 dark:lg:bg-secondary"
+            >
+                <p
+                    class="hidden text-xs text-gray-500 sm:block dark:text-gray-400"
+                >
+                    Please double-check your details before you submit.
+                </p>
+
+                <BaseButton
+                    variant="primary"
+                    class="w-full rounded-xl px-6 py-2.5 sm:ml-auto sm:w-auto"
+                    @click="submit"
+                >
+                    Review Booking Request
+                </BaseButton>
+            </div>
         </main>
 
         <ProviderInquiry :branch="branch" />
+    </div>
     </div>
 </template>
 <script lang="ts" setup>
@@ -427,6 +449,8 @@ useHead({ title: "Patient Details" });
 definePageMeta({
     navVariant: 6,
     navTheme: "light",
+    // The page fills the screen on desktop; no footer to scroll down to.
+    footer: false,
     middleware: [
         "auth-client",
         "prevent-staff-booking",
@@ -548,6 +572,8 @@ async function submit() {
     );
 }
 
+const scrollEl = ref<HTMLElement | null>(null);
+
 const step1 = ref<HTMLElement | null>(null);
 const step2 = ref<HTMLElement | null>(null);
 const step3 = ref<HTMLElement | null>(null);
@@ -574,9 +600,23 @@ const scrollTo = async (step: string) => {
         const el = map[step]?.value as HTMLElement | undefined;
         if (!el) return;
 
+        const container = scrollEl.value;
         const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-        const offset = isDesktop ? 32 : 112;
-        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+
+        // Desktop: only the form area scrolls.
+        if (isDesktop && container) {
+            const top =
+                el.getBoundingClientRect().top -
+                container.getBoundingClientRect().top +
+                container.scrollTop -
+                8;
+
+            container.scrollTo({ top, behavior: "smooth" });
+            return;
+        }
+
+        // Mobile: the page scrolls; clear the progress bar.
+        const top = el.getBoundingClientRect().top + window.scrollY - 112;
 
         window.scrollTo({ top, behavior: "smooth" });
     }, 50);
@@ -589,8 +629,6 @@ function goToStepMobile(step: string) {
     stepsSheetOpen.value = false;
 }
 
-const sidebarTop = ref(90);
-
 const stepRefs = {
     step1,
     step2,
@@ -602,7 +640,9 @@ const stepRefs = {
 const stepOrder = ["step1", "step2", "step3", "step4", "step5"] as const;
 
 const updateActiveStepFromScroll = () => {
+    const container = scrollEl.value;
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const base = isDesktop && container ? container.getBoundingClientRect().top : 0;
     const offset = (isDesktop ? 32 : 112) + 24;
 
     let current: (typeof stepOrder)[number] = "step1";
@@ -612,7 +652,7 @@ const updateActiveStepFromScroll = () => {
 
         if (!el) continue;
 
-        if (el.getBoundingClientRect().top - offset <= 0) {
+        if (el.getBoundingClientRect().top - base - offset <= 0) {
             current = key;
         }
     }
@@ -621,20 +661,14 @@ const updateActiveStepFromScroll = () => {
 };
 
 const handleScroll = () => {
-    const sidebar = document.querySelector(
-        "[data-booking-sidebar]",
-    ) as HTMLElement | null;
-
-    if (sidebar) {
-        const top = sidebar.getBoundingClientRect().top;
-        sidebarTop.value = top <= 90 ? 0 : 90;
-    }
-
     updateActiveStepFromScroll();
 };
 
 onMounted(() => {
     window.addEventListener("scroll", handleScroll, {
+        passive: true,
+    });
+    scrollEl.value?.addEventListener("scroll", handleScroll, {
         passive: true,
     });
 
@@ -643,6 +677,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     window.removeEventListener("scroll", handleScroll);
+    scrollEl.value?.removeEventListener("scroll", handleScroll);
 });
 </script>
 

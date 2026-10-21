@@ -333,8 +333,6 @@ const markRead = async (id: number) => {
     }
 };
 
-// Staff: a booking notification opens that booking's details. Family members get
-// no link, so for them (and for other types) a click only marks it as read.
 const openNotification = async (notif: Notification) => {
     markRead(notif.id);
 

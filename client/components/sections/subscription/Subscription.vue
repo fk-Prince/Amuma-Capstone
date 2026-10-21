@@ -1,10 +1,10 @@
 <template>
     <!-- w-[95%] sm:w-[92%] lg:w-[90%] xl:w-[88%] 2xl:w-[85%]  -->
-    <div class="w-full mx-auto py-6">
+    <div class="mx-auto h-full min-h-0 w-full py-2">
         <SubscriptionSkeleton v-if="loading" />
 
-        <div v-else class="flex items-start gap-3 sm:gap-8">
-            <aside class="sticky top-32 hidden shrink-0 self-start sm:block sm:w-60">
+        <div v-else class="flex h-full min-h-0 items-start gap-3 sm:gap-8">
+            <aside class="hidden max-h-full shrink-0 self-start overflow-y-auto sm:block sm:w-60">
                 <ol class="flex flex-col">
                     <li
                         v-for="(step, index) in STEPS"
@@ -52,8 +52,8 @@
                 </ol>
             </aside>
 
-            <div class="min-w-0 flex-1 space-y-3 rounded-2xl">
-                <nav class="pb-2 sm:hidden" aria-label="Subscription progress">
+            <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col rounded-2xl">
+                <nav class="shrink-0 pb-2 sm:hidden" aria-label="Subscription progress">
                     <div class="flex items-center justify-between gap-3">
                         <p
                             class="text-[11px] font-bold uppercase tracking-wider text-primary"
@@ -101,6 +101,10 @@
                     </p>
                 </nav>
 
+                <div
+                    ref="scrollArea"
+                    class="min-h-0 flex-1 space-y-3 overflow-y-auto pb-4 pr-1 sm:pr-2"
+                >
                 <div v-if="currentStep === 1">
                     <p
                         v-if="stepError"
@@ -201,18 +205,6 @@
                         </label>
                     </div>
 
-                    <div class="mb-10 flex justify-end">
-                        <button
-                            type="button"
-                            @click="nextStep"
-                            :disabled="!checkout.selectedPlan"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl sm:w-auto bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-                        >
-                            Continue
-                            <ChevronRight class="h-4 w-4" />
-                        </button>
-                    </div>
-
                     <ComparableTable />
                 </div>
 
@@ -247,11 +239,13 @@
                     />
                 </div>
 
+                </div>
+
                 <div
-                    v-if="currentStep > 1"
-                    class="flex items-center justify-between gap-3 border-t border-slate-200 pt-6 dark:border-white/10"
+                    class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-white/10"
                 >
                     <button
+                        v-if="currentStep > 1"
                         type="button"
                         @click="currentStep--"
                         :disabled="isLoading || paymentBusy"
@@ -266,11 +260,16 @@
                         Previous
                     </button>
 
+                    <span v-else />
+
                     <button
                         v-if="currentStep < STEPS.length"
                         type="button"
                         @click="nextStep"
-                        :disabled="isLoading"
+                        :disabled="
+                            isLoading ||
+                            (currentStep === 1 && !checkout.selectedPlan)
+                        "
                         class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-2.5 sm:flex-none text-sm font-semibold text-white shadow-sm shadow-primary/20 transition-all hover:bg-primary-600 hover:shadow-md hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                     >
                         <template v-if="isLoading">
@@ -325,9 +324,11 @@ const paymentBusy = ref(false);
 const route = useRoute();
 const stepError = ref<string | null>(null);
 
+const scrollArea = ref<HTMLElement | null>(null);
+
 const scrollToTop = async () => {
     await nextTick();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollArea.value?.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 watch(currentStep, scrollToTop);
