@@ -378,7 +378,7 @@ const typeIcon = (type: string) =>
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-amber-500" />
-                    Activities of Daily Living
+                    Activities of Daily Living (ADL)
                 </span>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-2 w-2 rounded-sm bg-violet-500" />

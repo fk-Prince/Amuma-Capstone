@@ -16,7 +16,7 @@
                         Staff on duty
                     </h2>
                     <p class="text-[11px] text-muted dark:text-gray-400">
-                        Facility Shifts, Activities of Daily Living, Medical Services · {{ todayLabel }}
+                        Facility Shifts, Activities of Daily Living (ADL), Medical Services · {{ todayLabel }}
                     </p>
                 </div>
             </div>
@@ -237,7 +237,7 @@ const KIND_STYLE: Record<Kind, { label: string; bar: string; dot: string }> = {
         dot: "bg-primary-400",
     },
     adl: {
-        label: "Activities of Daily Living",
+        label: "Activities of Daily Living (ADL)",
         bar: "bg-amber-500",
         dot: "bg-amber-500",
     },
@@ -536,18 +536,7 @@ const rows = computed(() =>
 
 const onDutyCount = computed(() => rows.value.filter((r) => r.onDuty).length);
 
-// Only list the kinds that actually appear today.
-const legendKinds = computed<Kind[]>(() => {
-    const present = new Set<Kind>();
-
-    for (const entry of staff.value) {
-        for (const item of entry.items) present.add(item.kind);
-    }
-
-    return (["facility", "adl", "medical"] as Kind[]).filter((kind) =>
-        present.has(kind),
-    );
-});
+const legendKinds: Kind[] = ["facility", "adl", "medical"];
 
 const initials = (name: string) =>
     name

@@ -20,6 +20,26 @@
                         @update:dateFrom="dateFrom = $event"
                         @update:dateTo="dateTo = $event"
                     />
+
+                    <div class="flex items-center gap-2 shrink-0 sm:ml-auto">
+                        <button
+                            type="button"
+                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
+                            aria-label="Refresh inquiries"
+                            :disabled="loading"
+                            @click="fetchInquiries"
+                        >
+                            <RefreshCw
+                                class="h-4 w-4"
+                                :class="{ 'animate-spin': loading }"
+                            />
+                        </button>
+
+                        <ViewModeToggle
+                            :model-value="viewMode"
+                            @update:model-value="setViewMode"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -29,24 +49,10 @@
                 :current-page="currentPage"
                 :total-items="totalItems"
                 :page-size="PAGE_SIZE"
+                :view="viewMode"
                 @select="openInquiry"
                 @page-change="onPageChange"
-            >
-                <template #actions>
-                    <button
-                        type="button"
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
-                        aria-label="Refresh inquiries"
-                        :disabled="loading"
-                        @click="fetchInquiries"
-                    >
-                        <RefreshCw
-                            class="h-4 w-4"
-                            :class="{ 'animate-spin': loading }"
-                        />
-                    </button>
-                </template>
-            </InquiryList>
+            />
         </div>
 
         <InquiryDetailModal
@@ -69,6 +75,8 @@ import { RefreshCw } from "lucide-vue-next";
 import InquiryList from "~/components/sections/app/Inquiry/InquiryList.vue";
 import InquiryFilter from "~/components/sections/app/Inquiry/InquiryFilter.vue";
 import InquiryDetailModal from "~/components/sections/app/Inquiry/InquiryDetailModal.vue";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
 import { inquiryService } from "~/api/inquiry/InquiryService";
 import type { Inquiry, InquiryStatus } from "~/types/inquiry";
 import { Modules } from "~/types/module";
@@ -89,6 +97,7 @@ const uuid = route.params.uuid as string;
 
 const { canUpdate } = usePermissions();
 const { success, error } = useToast();
+const { view: viewMode, setView: setViewMode } = useListView();
 
 const canUpdateInquiries = computed(() => canUpdate(Modules.Inquiries));
 

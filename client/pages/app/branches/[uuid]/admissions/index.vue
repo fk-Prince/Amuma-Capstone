@@ -298,7 +298,6 @@
                         <DiagnosisForm
                             :model="diagnosisData"
                             :charges="diagnosisPrices"
-                            :cases="diagnosisCases"
                             :charge-notice="true"
                             :errors="assessmentErrors"
                             @update:model="
@@ -488,7 +487,6 @@ const router = useRouter();
 const uuid = computed(() => route.params.uuid as string);
 
 const diagnosisPrices = ref<{ min: number; max: number } | null>(null);
-const diagnosisCases = ref<DiagnosisCase[]>([]);
 
 async function loadDiagnosisPrices() {
     try {
@@ -496,15 +494,14 @@ async function loadDiagnosisPrices() {
             branch_uuid: uuid.value,
             for: "charges",
         });
-        diagnosisCases.value = res.data ?? [];
-
-        const prices = diagnosisCases.value.map((item) => Number(item.price));
+        const prices = ((res.data ?? []) as DiagnosisCase[]).map((item) =>
+            Number(item.price),
+        );
 
         diagnosisPrices.value = prices.length
             ? { min: Math.min(...prices), max: Math.max(...prices) }
             : null;
     } catch {
-        diagnosisCases.value = [];
         diagnosisPrices.value = null;
     }
 }

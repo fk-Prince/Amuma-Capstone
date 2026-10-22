@@ -18,6 +18,7 @@ const props = withDefaults(
         currentPage?: number;
         totalItems?: number;
         pageSize?: number;
+        view?: "table" | "card";
     }>(),
     {
         currentPage: 1,
@@ -79,6 +80,7 @@ const rows = computed(() =>
         class="flex-1 h-full rounded-t-none rounded-b-xl border-none"
         :columns="columns"
         :rows="rows"
+        :view="view"
         :pagination="pagination"
         :loading="loading"
         :searchable="false"
@@ -88,10 +90,6 @@ const rows = computed(() =>
         :on-row-click="(row) => emit('select', row.raw)"
         @page-change="emit('page-change', $event)"
     >
-        <template #actions>
-            <slot name="actions" />
-        </template>
-
         <template #cell-name="{ row }">
             <div class="flex items-center gap-3">
                 <span
