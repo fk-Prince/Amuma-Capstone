@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 
 class SandboxClient
 {
+    public ?string $lastError = null;
+
     public function enabled(): bool
     {
         return !config('app.sandbox')
@@ -30,10 +32,14 @@ class SandboxClient
 
     public function send(int $branchId): bool
     {
+        $this->lastError = null;
+
         try {
             $payload = $this->payload($branchId);
 
             if (!$payload) {
+                $this->lastError = 'Branch is missing its agency, plan or owner.';
+
                 return false;
             }
 
@@ -45,7 +51,9 @@ class SandboxClient
 
             return true;
         } catch (\Throwable $e) {
-            Log::warning('Sandbox provisioning failed', [
+            $this->lastError = $e->getMessage();
+
+            Log::error('Sandbox provisioning failed', [
                 'branch_id' => $branchId,
                 'error' => $e->getMessage(),
             ]);

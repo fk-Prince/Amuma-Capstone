@@ -44,6 +44,10 @@ class ProvisionExistingSandboxes extends Command
             $failed += $sent ? 0 : 1;
 
             $this->line(($sent ? '<info>sent</info>   ' : '<error>failed</error> ') . $branch->name);
+
+            if (!$sent && $sandboxClient->lastError) {
+                $this->line('       ' . $sandboxClient->lastError);
+            }
         }
 
         $this->info("Done: " . ($branches->count() - $failed) . " sent, {$failed} failed.");
