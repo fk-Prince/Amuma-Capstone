@@ -234,6 +234,7 @@
 
                                                 <button
                                                     v-if="
+                                                        SHOW_WRITE_OFF &&
                                                         canManage &&
                                                         !isClosedStatus(
                                                             invoice,
@@ -410,6 +411,8 @@
 </template>
 
 <script setup lang="ts">
+const SHOW_WRITE_OFF = false;
+
 import { computed, ref, watch } from "vue";
 import { Loader2, Search, X } from "lucide-vue-next";
 

@@ -1063,6 +1063,7 @@
 
                                                         <button
                                                             v-if="
+                                                                SHOW_WRITE_OFF &&
                                                                 canManageInvoices &&
                                                                 !isClosedStatus(
                                                                     invoice.status,
@@ -1915,6 +1916,8 @@
 </template>
 
 <script lang="ts" setup>
+const SHOW_WRITE_OFF = false;
+
 import { computed, h, nextTick, onMounted, ref, watch } from "vue";
 import { FileSpreadsheet, Loader2, Printer, Receipt, Undo2 } from "lucide-vue-next";
 import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
