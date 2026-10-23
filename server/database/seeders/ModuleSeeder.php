@@ -20,15 +20,20 @@ class ModuleSeeder extends Seeder
             Module::updateOrCreate(['module_name' => $module->value]);
         }
 
-        $this->grantAuditLogs();
+        $this->grantRoleDefaults(ModuleEnum::AuditLogs);
+        $this->grantRoleDefaults(ModuleEnum::Medications);
     }
 
-    private function grantAuditLogs(): void
+    private function grantRoleDefaults(ModuleEnum $moduleEnum): void
     {
-        $module = Module::where('module_name', ModuleEnum::AuditLogs->value)->first();
+        $module = Module::where('module_name', $moduleEnum->value)->first();
 
-        foreach ([RoleEnum::AgencyOwner, RoleEnum::BranchManager] as $role) {
-            $actions = $role->permissions()[ModuleEnum::AuditLogs->value] ?? [];
+        foreach (RoleEnum::cases() as $role) {
+            $actions = $role->permissions()[$moduleEnum->value] ?? [];
+
+            if (!$actions) {
+                continue;
+            }
 
             EmployeeBranch::where('role_name', $role->value)
                 ->get(['employee_id', 'branch_id'])

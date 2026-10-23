@@ -23,6 +23,7 @@ import Combobox from "~/components/ui/Combobox.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
 import PatientEditModal from "~/components/sections/app/Patient/PatientEditModal.vue";
+import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import { ChevronRight, Stethoscope, HeartPulse } from "lucide-vue-next";
 import { type ConflictItem } from "~/types/schedule";
 import type {
@@ -40,6 +41,7 @@ import type {
 useHead({ title: "Patient Information" });
 
 const { success, error } = useToast();
+const { canViewMedications } = usePermissions();
 
 definePageMeta({
     layout: "dashboard",
@@ -444,12 +446,12 @@ async function loadSchedulesIfNeeded(from: string, to: string, tab: Tab) {
 // Medications/vitals are only pulled once their tab is actually opened,
 // not on every patient page visit.
 async function loadMedicationsIfNeeded(tab: Tab, page = 1) {
-    if (tab !== "Medication") return;
+    if (tab !== "Medication" || !canViewMedications.value) return;
     await fetchMedications(uuid.value, page);
 }
 
 async function loadVitalsIfNeeded(tab: Tab, page = 1) {
-    if (tab !== "Vital Signs") return;
+    if (tab !== "Vital Signs" || !canViewMedications.value) return;
     await fetchVitals(uuid.value, page);
 }
 
@@ -748,7 +750,20 @@ onMounted(async () => {
                             </nav>
                         </div>
 
-                        <template v-if="activeTab === 'Medication'">
+                        <PlanLockNotice
+                            v-if="
+                                (activeTab === 'Medication' ||
+                                    activeTab === 'Vital Signs') &&
+                                !canViewMedications
+                            "
+                            class="mb-5"
+                            :title="`${activeTab === 'Medication' ? 'Medications' : 'Vital signs'} are restricted`"
+                            message="You need the Medications permission to view and record this patient's medications and vital signs."
+                        />
+
+                        <template
+                            v-else-if="activeTab === 'Medication'"
+                        >
                             <p
                                 v-if="isFetchingMedications"
                                 class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"

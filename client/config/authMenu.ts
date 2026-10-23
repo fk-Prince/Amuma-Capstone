@@ -14,7 +14,8 @@ import {
     BookOpen,
     MessageSquare,
     MessageCircleQuestion,
-    ScrollText
+    ScrollText,
+    Pill
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -56,13 +57,19 @@ export const authMenuList: MenuItems[] = [
         group: "Operations",
     },
     {
+        label: "Medications",
+        icon: Pill,
+        to: "/app/branches/[uuid]/medications",
+        modules: ["Medications"],
+        group: "Operations",
+    },
+    {
         label: "Admissions",
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
         modules: ["Admissions"],
         group: "Operations",
     },
-
     {
         label: "Rooms & Beds",
         icon: BedDouble,

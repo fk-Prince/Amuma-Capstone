@@ -66,6 +66,22 @@ export const usePermissions = () => {
     const careTeamBlockedReason =
         "You need permission to create patients to record this.";
 
+    const canViewMedications = computed(() =>
+        hasModule(Modules.Medications, Modules.Patients),
+    );
+
+    const canAddMedication = computed(() => canCreate(Modules.Medications));
+
+    const canRecordMedication = computed(() =>
+        canUpdate(Modules.Medications),
+    );
+
+    const addMedicationBlockedReason =
+        "You need permission to create medications to record this.";
+
+    const recordMedicationBlockedReason =
+        "You need permission to update medications to record this.";
+
     return {
         actionsFor,
         can,
@@ -83,5 +99,10 @@ export const usePermissions = () => {
         chartingBlockedReason,
         addChartBlockedReason,
         careTeamBlockedReason,
+        canViewMedications,
+        canAddMedication,
+        canRecordMedication,
+        addMedicationBlockedReason,
+        recordMedicationBlockedReason,
     };
 };

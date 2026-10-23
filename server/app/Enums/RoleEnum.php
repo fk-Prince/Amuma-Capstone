@@ -50,6 +50,7 @@ enum RoleEnum: string
                     PermissionAction::Update->value,
                     PermissionAction::Export->value,
                 ],
+                ModuleEnum::Medications->value => ModuleEnum::Medications->actionColumns(),
                 ModuleEnum::Schedules->value => ModuleEnum::Schedules->actionColumns(),
                 ModuleEnum::Admissions->value => ModuleEnum::Admissions->actionColumns(),
                 ModuleEnum::RoomsAndBeds->value => [PermissionAction::Read->value],
@@ -68,6 +69,7 @@ enum RoleEnum: string
                     ModuleEnum::Patients->actionColumns(),
                     [PermissionAction::Export->value]
                 )),
+                ModuleEnum::Medications->value => ModuleEnum::Medications->actionColumns(),
                 ModuleEnum::Schedules->value => [
                     PermissionAction::Read->value,
                     PermissionAction::Update->value,

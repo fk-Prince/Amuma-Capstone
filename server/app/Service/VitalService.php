@@ -19,7 +19,8 @@ class VitalService
     public function listVitals(array $payload)
     {
         $patient = $this->patientRepository->findByFields([
-            ['uuid', '=', $payload['patient_uuid']]
+            ['uuid', '=', $payload['patient_uuid']],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (!$patient) {
@@ -48,7 +49,8 @@ class VitalService
     public function createVital(User $user, array $payload)
     {
         $patient = $this->patientRepository->findByFields([
-            ['uuid', '=', $payload['patient_uuid']]
+            ['uuid', '=', $payload['patient_uuid']],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (!$patient) {
@@ -90,7 +92,7 @@ class VitalService
     {
         $vital = Vital::whereHas(
             'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])
+            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
         )->find($id);
 
         if (!$vital) {

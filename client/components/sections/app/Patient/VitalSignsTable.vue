@@ -4,8 +4,12 @@ import { Pencil, ChevronLeft, ChevronRight, Plus } from "lucide-vue-next";
 import type { Vital } from "~/types/medication";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canChart, canAddChart, chartingBlockedReason, addChartBlockedReason } =
-    usePermissions();
+const {
+    canAddMedication,
+    canRecordMedication,
+    addMedicationBlockedReason,
+    recordMedicationBlockedReason,
+} = usePermissions();
 
 const props = withDefaults(
     defineProps<{
@@ -275,8 +279,8 @@ const emit = defineEmits<{
             <ActionButton
                 variant="primary"
                 extra-class="px-5 py-2"
-                :disabled="!canAddChart"
-                :tooltip="canAddChart ? '' : addChartBlockedReason"
+                :disabled="!canAddMedication"
+                :tooltip="canAddMedication ? '' : addMedicationBlockedReason"
                 @click="emit('add-vital')"
             >
                 <Plus class="h-4 w-4" />
@@ -460,8 +464,12 @@ const emit = defineEmits<{
                                 <div class="flex justify-end gap-2">
                                     <button
                                         class="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-500 dark:hover:bg-white/10"
-                                        :disabled="!canChart"
-                                        :title="canChart ? '' : chartingBlockedReason"
+                                        :disabled="!canRecordMedication"
+                                        :title="
+                                            canRecordMedication
+                                                ? ''
+                                                : recordMedicationBlockedReason
+                                        "
                                         @click="emit('edit-vital', vital)"
                                     >
                                         <Pencil class="h-4 w-4" />

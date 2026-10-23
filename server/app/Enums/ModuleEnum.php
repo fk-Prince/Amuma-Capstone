@@ -8,6 +8,7 @@ enum ModuleEnum: string
     case Schedules = 'Schedules';
     case Admissions = 'Admissions';
     case Patients = 'Patients';
+    case Medications = 'Medications';
     case Contracts = 'Contracts';
     case RoomsAndBeds = 'Rooms & Beds';
     case Services = 'Services';
@@ -38,7 +39,7 @@ enum ModuleEnum: string
                 PermissionAction::Assign,
                 PermissionAction::Export,
             ],
-            self::Admissions => [
+            self::Admissions, self::Medications => [
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,

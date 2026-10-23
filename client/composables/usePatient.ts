@@ -12,6 +12,9 @@ import type { PatientRetrieve } from "~/types/patient";
 import type { ScheduleItem } from "~/types/schedule";
 
 export function usePatient() {
+    const route = useRoute();
+    const branchUuid = () => route.params.uuid as string;
+
     const patientData = ref<PatientRetrieve | null>(null);
     const scheduleData = ref<ScheduleItem[]>([]);
     const employeeData = ref<Employee[]>([]);
@@ -56,6 +59,7 @@ export function usePatient() {
         isFetchingMedications.value = true;
         try {
             const res = await medicationService.list({
+                branch_uuid: branchUuid(),
                 patient_uuid: p_uuid,
                 page,
             });
@@ -74,6 +78,7 @@ export function usePatient() {
         isFetchingVitals.value = true;
         try {
             const res = await vitalService.list({
+                branch_uuid: branchUuid(),
                 patient_uuid: p_uuid,
                 page,
             });
@@ -169,6 +174,7 @@ export function usePatient() {
         try {
             if (action === "create") {
                 const res = await vitalService.create({
+                    branch_uuid: branchUuid(),
                     patient_uuid: p_uuid,
                     payload,
                 });
@@ -183,6 +189,7 @@ export function usePatient() {
                 const index = vitals.value.findIndex((v) => v.id === id);
                 if (index === -1) return;
                 const res = await vitalService.update(id, {
+                    branch_uuid: branchUuid(),
                     patient_uuid: p_uuid,
                     payload,
                 });
@@ -207,6 +214,7 @@ export function usePatient() {
         try {
             if (action === "create") {
                 const res = await medicationService.create({
+                    branch_uuid: branchUuid(),
                     patient_uuid: p_uuid,
                     payload,
                 });
@@ -220,6 +228,7 @@ export function usePatient() {
                 const index = medications.value.findIndex((m) => m.id === id);
                 if (index === -1) return;
                 const res = await medicationService.update(id, {
+                    branch_uuid: branchUuid(),
                     patient_uuid: p_uuid,
                     payload,
                 });
@@ -241,6 +250,7 @@ export function usePatient() {
     ) {
         try {
             const res = await medicationService.dosage({
+                branch_uuid: branchUuid(),
                 patient_uuid: p_uuid,
                 medSchedule: payload,
             });

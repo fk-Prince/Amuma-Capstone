@@ -19,7 +19,8 @@ class MedicationService
     public function listMedications(array $payload)
     {
         $patient = $this->patientRepository->findByFields([
-            ['uuid', '=', $payload['patient_uuid']]
+            ['uuid', '=', $payload['patient_uuid']],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (!$patient) {
@@ -47,7 +48,8 @@ class MedicationService
     public function createMedication(User $user, array $payload)
     {
         $patient = $this->patientRepository->findByFields([
-            ['uuid', '=', $payload['patient_uuid']]
+            ['uuid', '=', $payload['patient_uuid']],
+            ['branch_id', '=', $payload['branch_id']],
         ]);
 
         if (!$patient) {
@@ -91,7 +93,7 @@ class MedicationService
     {
         $medication = Medication::whereHas(
             'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])
+            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
         )->find($id);
 
         if (!$medication) {
@@ -127,7 +129,7 @@ class MedicationService
 
         $medication = Medication::whereHas(
             'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])
+            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
         )->find($schedule['medication_id']);
 
         if (!$medication) {

@@ -8,6 +8,7 @@ export enum Modules {
     Schedules = "Schedules",
     Admissions = "Admissions",
     Patients = "Patients",
+    Medications = "Medications",
     Contracts = "Contracts",
     RoomsAndBeds = "Rooms & Beds",
     Services = "Services",

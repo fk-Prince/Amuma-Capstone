@@ -25,8 +25,12 @@ import { frequencyOptions } from "~/types/medication";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 
-const { canChart, canAddChart, chartingBlockedReason, addChartBlockedReason } =
-    usePermissions();
+const {
+    canAddMedication,
+    canRecordMedication,
+    addMedicationBlockedReason,
+    recordMedicationBlockedReason,
+} = usePermissions();
 
 interface DayColumn {
     label: string;
@@ -483,8 +487,8 @@ const emit = defineEmits<{
                 v-if="isProvider"
                 variant="primary"
                 extra-class="px-5 py-2"
-                :disabled="!canAddChart"
-                :tooltip="canAddChart ? '' : addChartBlockedReason"
+                :disabled="!canAddMedication"
+                :tooltip="canAddMedication ? '' : addMedicationBlockedReason"
                 @click="$emit('add-medication')"
             >
                 <Plus class="h-4 w-4" />
@@ -709,12 +713,14 @@ const emit = defineEmits<{
                                                   : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-secondary dark:hover:bg-emerald-500/10'
                                         "
                                         :disabled="
-                                            disabled || !isProvider || !canChart
+                                            disabled ||
+                                            !isProvider ||
+                                            !canRecordMedication
                                         "
                                         :title="
-                                            canChart
+                                            !isProvider || canRecordMedication
                                                 ? ''
-                                                : chartingBlockedReason
+                                                : recordMedicationBlockedReason
                                         "
                                         :aria-label="
                                             (isTaken(med, time, day.fullDate)

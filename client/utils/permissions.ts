@@ -25,6 +25,11 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Update,
         PermissionAction.Export,
     ],
+    [Modules.Medications]: [
+        PermissionAction.Read,
+        PermissionAction.Create,
+        PermissionAction.Update,
+    ],
     [Modules.Schedules]: [
         PermissionAction.Read,
         PermissionAction.Update,
@@ -85,7 +90,9 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
     [Modules.Admissions]:
         "Set up admissions, place residents in their beds to start billing, and discharge them once settled or, when permitted, with a balance outstanding.",
     [Modules.Patients]:
-        "Open resident profiles and record diagnoses, assessments, activities, ADL and medication entries, correct what is on file, and export records.",
+        "Open resident profiles and record diagnoses, assessments, activities and ADL entries, correct what is on file, and export records.",
+    [Modules.Medications]:
+        "Keep each resident's medication administration record: add medications, mark doses as given, and record vital signs.",
     [Modules.Contracts]:
         "Draw up and maintain accommodation contracts, including their rates and billing cycles.",
     [Modules.RoomsAndBeds]:
@@ -129,13 +136,21 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     },
     [Modules.Patients]: {
         [PermissionAction.Read]:
-            "Open a resident's profile and their records: diagnoses, assessments, medications, ADL and care history.",
+            "Open a resident's profile and their records: diagnoses, assessments, medications, vital signs, ADL and care history.",
         [PermissionAction.Create]:
-            "Add new records for a resident already at the branch, such as a diagnosis, an assessment, an activity, an ADL entry or a medication record.",
+            "Add new records for a resident already at the branch, such as a diagnosis, an assessment, an activity or an ADL entry.",
         [PermissionAction.Update]:
             "Correct records already on file and edit the resident's own profile details.",
         [PermissionAction.Export]:
             "Download a resident's records as a file to share outside the system.",
+    },
+    [Modules.Medications]: {
+        [PermissionAction.Read]:
+            "Open the Medications page and see each resident's medications, the doses given or missed, and their vital sign readings.",
+        [PermissionAction.Create]:
+            "Add a medication to a resident's schedule and record a new set of vital signs.",
+        [PermissionAction.Update]:
+            "Mark a dose as given or undo it, and correct recorded vital signs.",
     },
     [Modules.Schedules]: {
         [PermissionAction.Read]:
@@ -233,6 +248,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.Schedules]: [PermissionAction.Read, PermissionAction.Export],
         [Modules.Admissions]: [PermissionAction.Read],
         [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
+        [Modules.Medications]: [PermissionAction.Read],
         [Modules.Contracts]: MODULE_ACTIONS[Modules.Contracts],
         [Modules.RoomsAndBeds]: MODULE_ACTIONS[Modules.RoomsAndBeds],
         [Modules.Services]: MODULE_ACTIONS[Modules.Services],
@@ -254,6 +270,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
             PermissionAction.Update,
             PermissionAction.Export,
         ],
+        [Modules.Medications]: MODULE_ACTIONS[Modules.Medications],
         [Modules.Schedules]: MODULE_ACTIONS[Modules.Schedules],
         [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions],
         [Modules.RoomsAndBeds]: [PermissionAction.Read],
@@ -270,12 +287,14 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.Patients]: MODULE_ACTIONS[Modules.Patients].filter(
             (action) => action !== PermissionAction.Export,
         ),
+        [Modules.Medications]: MODULE_ACTIONS[Modules.Medications],
         [Modules.Schedules]: [PermissionAction.Read, PermissionAction.Update],
     },
     caregiver: {
         [Modules.Patients]: MODULE_ACTIONS[Modules.Patients].filter(
             (action) => action !== PermissionAction.Export,
         ),
+        [Modules.Medications]: MODULE_ACTIONS[Modules.Medications],
         [Modules.Schedules]: [PermissionAction.Read, PermissionAction.Update],
     },
 };

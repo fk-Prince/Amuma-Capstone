@@ -184,11 +184,13 @@ class PatientRepository
             })
 
             ->when(!empty($payload['category']) && $payload['category'] !== 'all', function ($query) use ($payload) {
-                if ($payload['category'] === 'Homecare') {
-                    $query->whereHas('schedules', function ($subQuery) use ($payload) {
-                        $subQuery->where('category', ucfirst($payload['category']));
+                $category = ucfirst(strtolower($payload['category']));
+
+                if ($category === 'Homecare') {
+                    $query->whereHas('schedules', function ($subQuery) use ($category) {
+                        $subQuery->where('category', $category);
                     });
-                } elseif ($payload['category'] === 'Facility') {
+                } elseif ($category === 'Facility') {
                     $query->whereHas('admissions');
                 }
             })

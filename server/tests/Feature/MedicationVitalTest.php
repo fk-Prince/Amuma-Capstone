@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
+use App\Models\Employee;
+use App\Models\EmployeeBranch;
+use App\Models\EmployeePermission;
 use App\Models\Medication;
 use App\Models\MedicationSchedule;
+use App\Models\Module;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Vital;
@@ -19,6 +25,9 @@ class MedicationVitalTest extends TestCase
 
     private User $nurse;
     private User $guardian;
+    private int $branchId;
+    private string $branchUuid;
+    private int $medicationsModuleId;
     private string $patientUuid;
     private int $patientId;
     private string $otherPatientUuid;
@@ -39,8 +48,10 @@ class MedicationVitalTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $branchId = DB::table('branches')->insertGetId([
-            'uuid' => (string) Str::uuid(),
+        $this->branchUuid = (string) Str::uuid();
+
+        $this->branchId = DB::table('branches')->insertGetId([
+            'uuid' => $this->branchUuid,
             'agency_id' => $agencyId,
             'name' => 'AMUMA Davao City',
             'email' => 'davao@amuma.com',
@@ -48,8 +59,11 @@ class MedicationVitalTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        [$this->patientId, $this->patientUuid] = $this->makePatient($branchId, 'PT-0001', 'Lola', 'Cruz');
-        [, $this->otherPatientUuid] = $this->makePatient($branchId, 'PT-0002', 'Lolo', 'Reyes');
+        $this->medicationsModuleId = Module::create(['module_name' => ModuleEnum::Medications->value])->module_id;
+        $this->grantMedications($this->nurse, ModuleEnum::Medications->actionColumns());
+
+        [$this->patientId, $this->patientUuid] = $this->makePatient($this->branchId, 'PT-0001', 'Lola', 'Cruz');
+        [, $this->otherPatientUuid] = $this->makePatient($this->branchId, 'PT-0002', 'Lolo', 'Reyes');
 
         $clientId = DB::table('clients')->insertGetId([
             'user_id' => $this->guardian->user_id,
@@ -78,6 +92,28 @@ class MedicationVitalTest extends TestCase
             'email' => $email,
             'password' => 'password',
         ]);
+    }
+
+    private function grantMedications(User $user, array $actions): void
+    {
+        $employee = Employee::create([
+            'user_id' => $user->user_id,
+            'first_name' => 'Nina',
+            'last_name' => 'Nurse',
+        ]);
+
+        EmployeeBranch::create([
+            'branch_id' => $this->branchId,
+            'employee_id' => $employee->employee_id,
+            'role_name' => 'nurse',
+            'status' => EmployeeBranch::STATUS_ACTIVE,
+        ]);
+
+        EmployeePermission::create([
+            'employee_id' => $employee->employee_id,
+            'branch_id' => $this->branchId,
+            'module_id' => $this->medicationsModuleId,
+        ] + EmployeePermission::grantColumns($actions));
     }
 
     private function makePatient(int $branchId, string $code, string $first, string $last): array
@@ -136,6 +172,7 @@ class MedicationVitalTest extends TestCase
     private function createMedication(array $overrides = []): Medication
     {
         $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => $this->medicationPayload($overrides),
         ])->assertOk();
@@ -146,6 +183,7 @@ class MedicationVitalTest extends TestCase
     private function createVital(array $overrides = []): Vital
     {
         $this->postJson('/api/vitals', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => $this->vitalPayload($overrides),
         ])->assertOk();
@@ -158,6 +196,7 @@ class MedicationVitalTest extends TestCase
     public function test_recording_vital_signs_stores_every_reading(): void
     {
         $response = $this->postJson('/api/vitals', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => $this->vitalPayload(),
         ]);
@@ -220,6 +259,7 @@ class MedicationVitalTest extends TestCase
     public function test_a_vital_needs_a_known_patient_and_a_recorded_time(): void
     {
         $unknown = $this->postJson('/api/vitals', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => (string) Str::uuid(),
             'payload' => $this->vitalPayload(),
         ]);
@@ -227,6 +267,7 @@ class MedicationVitalTest extends TestCase
         $this->assertFalse($unknown->isSuccessful());
 
         $withoutDate = $this->postJson('/api/vitals', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => $this->vitalPayload(['recordedDate' => null]),
         ]);
@@ -242,6 +283,7 @@ class MedicationVitalTest extends TestCase
         $this->createVital(['recordedDate' => '2026-09-25', 'recordedTime' => '14:00']);
 
         $response = $this->getJson('/api/vitals?' . http_build_query([
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'per_page' => 2,
         ]))->assertOk();
@@ -258,7 +300,7 @@ class MedicationVitalTest extends TestCase
     {
         $this->createVital();
 
-        $response = $this->getJson('/api/vitals?patient_uuid=' . $this->otherPatientUuid)->assertOk();
+        $response = $this->getJson('/api/vitals?branch_uuid=' . $this->branchUuid . '&patient_uuid=' .$this->otherPatientUuid)->assertOk();
 
         $this->assertSame(0, $response->json('meta.total'));
     }
@@ -268,6 +310,7 @@ class MedicationVitalTest extends TestCase
         $vital = $this->createVital();
 
         $this->putJson("/api/vitals/{$vital->vital_id}", [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => ['heartRate' => 90, 'notes' => 'After walking'],
         ])->assertOk()->assertJsonPath('message', 'Successfully updated Vital Signs.');
@@ -285,6 +328,7 @@ class MedicationVitalTest extends TestCase
         $vital = $this->createVital();
 
         $response = $this->putJson("/api/vitals/{$vital->vital_id}", [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->otherPatientUuid,
             'payload' => ['heartRate' => 200],
         ]);
@@ -298,6 +342,7 @@ class MedicationVitalTest extends TestCase
     public function test_adding_a_medication_stores_the_order(): void
     {
         $response = $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => $this->medicationPayload(),
         ]);
@@ -338,6 +383,7 @@ class MedicationVitalTest extends TestCase
     public function test_a_medication_needs_a_known_patient_and_its_required_details(): void
     {
         $unknown = $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => (string) Str::uuid(),
             'payload' => $this->medicationPayload(),
         ]);
@@ -345,6 +391,7 @@ class MedicationVitalTest extends TestCase
         $this->assertFalse($unknown->isSuccessful());
 
         $noName = $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => collect($this->medicationPayload())->except('name')->all(),
         ]);
@@ -358,6 +405,7 @@ class MedicationVitalTest extends TestCase
         $medication = $this->createMedication();
 
         $this->postJson('/api/medications/dosage', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'medSchedule' => [
                 'medication_id' => $medication->medication_id,
@@ -367,14 +415,14 @@ class MedicationVitalTest extends TestCase
             ],
         ])->assertOk();
 
-        $response = $this->getJson('/api/medications?patient_uuid=' . $this->patientUuid)->assertOk();
+        $response = $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' .$this->patientUuid)->assertOk();
 
         $this->assertSame(1, $response->json('meta.total'));
         $this->assertSame('Metformin', $response->json('data.0.name'));
         $this->assertCount(1, $response->json('data.0.schedules'));
         $this->assertSame('taken', $response->json('data.0.schedules.0.status'));
 
-        $other = $this->getJson('/api/medications?patient_uuid=' . $this->otherPatientUuid)->assertOk();
+        $other = $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' .$this->otherPatientUuid)->assertOk();
         $this->assertSame(0, $other->json('meta.total'));
     }
 
@@ -383,6 +431,7 @@ class MedicationVitalTest extends TestCase
         $medication = $this->createMedication();
 
         $this->putJson("/api/medications/{$medication->medication_id}", [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'payload' => ['strength' => '850mg', 'instructions' => 'After meals'],
         ])->assertOk()->assertJsonPath('message', 'Successfully updated Medication.');
@@ -400,6 +449,7 @@ class MedicationVitalTest extends TestCase
         $medication = $this->createMedication();
 
         $response = $this->putJson("/api/medications/{$medication->medication_id}", [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->otherPatientUuid,
             'payload' => ['strength' => '1g'],
         ]);
@@ -413,6 +463,7 @@ class MedicationVitalTest extends TestCase
     private function dose(Medication $medication, string $status, array $extra = [])
     {
         return $this->postJson('/api/medications/dosage', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->patientUuid,
             'medSchedule' => array_merge([
                 'medication_id' => $medication->medication_id,
@@ -487,6 +538,7 @@ class MedicationVitalTest extends TestCase
         $medication = $this->createMedication();
 
         $response = $this->postJson('/api/medications/dosage', [
+            'branch_uuid' => $this->branchUuid,
             'patient_uuid' => $this->otherPatientUuid,
             'medSchedule' => [
                 'medication_id' => $medication->medication_id,
@@ -498,5 +550,117 @@ class MedicationVitalTest extends TestCase
 
         $this->assertFalse($response->isSuccessful());
         $this->assertSame(0, MedicationSchedule::count());
+    }
+
+    // ---- medications permission
+
+    private function readOnlyStaff(): User
+    {
+        $user = $this->makeUser('reader@amuma.com');
+        $this->grantMedications($user, [PermissionAction::Read->value]);
+
+        return $user;
+    }
+
+    public function test_staff_without_the_medications_module_cannot_view_records(): void
+    {
+        Sanctum::actingAs($this->guardian);
+
+        $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertForbidden();
+        $this->getJson('/api/vitals?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertForbidden();
+    }
+
+    public function test_read_only_staff_can_view_but_not_record(): void
+    {
+        $medication = $this->createMedication();
+        $vital = $this->createVital();
+
+        Sanctum::actingAs($this->readOnlyStaff());
+
+        $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertOk();
+        $this->getJson('/api/vitals?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertOk();
+
+        $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
+            'patient_uuid' => $this->patientUuid,
+            'payload' => $this->medicationPayload(),
+        ])->assertForbidden();
+
+        $this->postJson('/api/vitals', [
+            'branch_uuid' => $this->branchUuid,
+            'patient_uuid' => $this->patientUuid,
+            'payload' => $this->vitalPayload(),
+        ])->assertForbidden();
+
+        $this->putJson("/api/vitals/{$vital->vital_id}", [
+            'branch_uuid' => $this->branchUuid,
+            'patient_uuid' => $this->patientUuid,
+            'payload' => ['heartRate' => 90],
+        ])->assertForbidden();
+
+        $this->dose($medication, 'taken')->assertForbidden();
+
+        $this->assertSame(1, Medication::count());
+        $this->assertSame(0, MedicationSchedule::count());
+        $this->assertSame(72, $vital->fresh()->heart_rate);
+    }
+
+    public function test_patient_readers_can_view_but_not_record(): void
+    {
+        $medication = $this->createMedication();
+        $this->createVital();
+
+        $user = $this->makeUser('patients@amuma.com');
+        $this->grantMedications($user, []);
+
+        EmployeePermission::create([
+            'employee_id' => $user->employee->employee_id,
+            'branch_id' => $this->branchId,
+            'module_id' => Module::create(['module_name' => ModuleEnum::Patients->value])->module_id,
+        ] + EmployeePermission::grantColumns([PermissionAction::Read->value]));
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1);
+        $this->getJson('/api/vitals?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1);
+
+        $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
+            'patient_uuid' => $this->patientUuid,
+            'payload' => $this->medicationPayload(),
+        ])->assertForbidden();
+
+        $this->dose($medication, 'taken')->assertForbidden();
+    }
+
+    public function test_a_patient_from_another_branch_is_not_found(): void
+    {
+        $otherBranchId = DB::table('branches')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'agency_id' => DB::table('branches')->where('branch_id', $this->branchId)->value('agency_id'),
+            'name' => 'AMUMA Cebu City',
+            'email' => 'cebu@amuma.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        [, $foreignUuid] = $this->makePatient($otherBranchId, 'PT-0003', 'Lolo', 'Santos');
+
+        $response = $this->postJson('/api/medications', [
+            'branch_uuid' => $this->branchUuid,
+            'patient_uuid' => $foreignUuid,
+            'payload' => $this->medicationPayload(),
+        ]);
+
+        $this->assertFalse($response->isSuccessful());
+        $this->assertSame(0, Medication::count());
     }
 }

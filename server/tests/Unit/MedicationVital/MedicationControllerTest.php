@@ -22,6 +22,7 @@ use Tests\TestCase;
 class MedicationControllerTest extends TestCase
 {
     use UsesTempDatabase;
+    use MedicationFixtures;
 
     private PatientRepository&Stub $patients;
     private NotificationService&MockObject $notifications;
@@ -45,8 +46,10 @@ class MedicationControllerTest extends TestCase
             'password' => 'password',
         ]);
 
+        $this->setUpMedicationStaff($this->nurse);
+
         $patientId = DB::table('patients')->insertGetId([
-            'branch_id' => 1,
+            'branch_id' => $this->branchId,
             'uuid' => (string) Str::uuid(),
             'patient_code' => 'PT-0001',
             'first_name' => 'Lola',
@@ -61,7 +64,7 @@ class MedicationControllerTest extends TestCase
 
     private function request(string $method, array $data): Request
     {
-        return Request::create('/api/medications', $method, $data)
+        return Request::create('/api/medications', $method, $data + ['branch_uuid' => $this->branchUuid])
             ->setUserResolver(fn() => $this->nurse);
     }
 
