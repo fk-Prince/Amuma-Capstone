@@ -143,7 +143,20 @@
                                 class="mt-0.5 h-4 w-4 shrink-0"
                             />
 
-                            <span>
+                            <span v-if="unpaidTrial">
+                                This is a free trial request, so nothing was
+                                paid and there's nothing to refund.<template
+                                    v-if="rejectsAgencyWithRefund"
+                                >
+                                    It's the first branch on the subscription,
+                                    so rejecting it also rejects the agency,
+                                    which hasn't been verified yet.</template
+                                >
+                                The agency can fix the details and resubmit for
+                                free.
+                            </span>
+
+                            <span v-else>
                                 This is the first branch on the subscription,
                                 so rejecting it also refunds the payment<template
                                     v-if="rejectsAgencyWithRefund"
@@ -238,6 +251,7 @@ const props = defineProps<{
     submitting?: boolean;
     serverError?: string;
     agencyUnverified?: boolean;
+    unpaidTrial?: boolean;
 }>();
 
 const canRejectAgency = computed(() => props.agencyUnverified && !props.refunds);
@@ -256,7 +270,7 @@ const error = ref("");
 const scope = ref<RejectionScope>("branch");
 
 const confirmLabel = computed(() =>
-    props.refunds ? "Reject & Refund" : "Reject",
+    props.refunds && !props.unpaidTrial ? "Reject & Refund" : "Reject",
 );
 
 watch(

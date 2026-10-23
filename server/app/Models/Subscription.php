@@ -256,6 +256,43 @@ class Subscription extends Model
         return $this->mode === self::MODE_TEST;
     }
 
+    public function isPaid(): bool
+    {
+        return (bool) ($this->has_paid_payment
+            ?? $this->payments()->where('status', SubscriptionPayment::STATUS_PAID)->exists());
+    }
+
+    public function awaitingTrialPayment(): bool
+    {
+        return $this->isTest()
+            && in_array($this->status, [self::STATUS_PENDING, self::STATUS_ACTIVE, self::STATUS_EXPIRED], true)
+            && !$this->isPaid();
+    }
+
+    public function trialHasEnded(): bool
+    {
+        return $this->isTest()
+            && $this->status !== self::STATUS_PENDING
+            && ($this->status === self::STATUS_EXPIRED || $this->pendingPlanIsDue());
+    }
+
+    public function isRejectedFreeTrial(): bool
+    {
+        return $this->status === self::STATUS_REJECTED
+            && $this->isTest()
+            && !$this->payments()->exists();
+    }
+
+    public function canPayTrial(): bool
+    {
+        return $this->awaitingTrialPayment() && $this->status !== self::STATUS_PENDING;
+    }
+
+    public function isLockedForPayment(): bool
+    {
+        return $this->awaitingTrialPayment() && $this->trialHasEnded();
+    }
+
     public static function termEnd(mixed $from): Carbon
     {
         return Carbon::parse($from)->copy()->addYear();
@@ -341,6 +378,7 @@ class Subscription extends Model
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_ACTIVE], true)
             && $this->plans?->plan_code !== Plan::CODE_HYBRID
             && ($this->isTest() || !$this->pending_plan_id)
+            && !$this->awaitingTrialPayment()
             && $this->upgradeMonths() > 0;
     }
 
@@ -361,6 +399,9 @@ class Subscription extends Model
             'can_cancel' => $this->canCancelTest(),
             'can_upgrade' => $this->canUpgrade(),
             'can_resubscribe' => $this->isCancelled(),
+            'awaiting_payment' => $this->awaitingTrialPayment(),
+            'can_pay' => $this->canPayTrial(),
+            'trial_ended' => $this->trialHasEnded(),
             'upgrade_months' => $this->upgradeMonths(),
             'opens_at' => $this->renewalOpensAt()->toDateString(),
         ];

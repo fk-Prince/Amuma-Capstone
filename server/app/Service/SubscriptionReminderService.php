@@ -87,6 +87,20 @@ class SubscriptionReminderService
         $days = $subscription->daysLeft();
         $date = $subscription->end_date->toFormattedDateString();
 
+        if ($subscription->awaitingTrialPayment()) {
+            if ($days < 0) {
+                return "Your free trial ended on {$date}. Pay for your {$plan} plan to unlock your branch.";
+            }
+
+            if ($days === 0) {
+                return "Your free trial ends today ({$date}). Pay for your {$plan} plan to keep your branch running.";
+            }
+
+            $unit = $days === 1 ? 'day' : 'days';
+
+            return "Your free trial ends in {$days} {$unit} ({$date}). Pay for your {$plan} plan before then to keep your branch running.";
+        }
+
         if ($days < 0) {
             return "Your {$plan} subscription expired on {$date}. Renew it now to keep your branch running.";
         }

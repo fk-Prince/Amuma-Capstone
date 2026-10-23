@@ -99,18 +99,6 @@
                 </div>
 
                 <template v-else>
-                    <div v-if="isSandbox && switchLink">
-                        <button
-                            type="button"
-                            title="Back to your live branch"
-                            class="flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
-                            @click="goLive"
-                        >
-                            <Radio class="h-4 w-4 lg:h-3.5 lg:w-3.5" />
-                            <span class="hidden lg:inline">Go live</span>
-                        </button>
-                    </div>
-
                     <MessageBell
                         v-if="branchStore.activeBranch?.status === 'verified'"
                     />
@@ -170,12 +158,10 @@ import {
     Calendar,
     ChevronDown,
     Clock,
-    Radio,
 } from "lucide-vue-next";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
-import { useSandbox } from "~/composables/useSandbox";
 import { getBranchImage } from "~/types/branch.js";
 
 const intro = useDashboardIntro();
@@ -186,11 +172,6 @@ defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
 
-const { isSandbox, switchLink } = useSandbox();
-
-function goLive() {
-    window.location.href = switchLink.value;
-}
 
 const brokenImages = reactive(new Set<string>());
 

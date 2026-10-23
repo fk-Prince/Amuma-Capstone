@@ -1,13 +1,15 @@
 <template>
     <div
         v-if="isSandbox"
-        class="flex flex-col gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-violet-900 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200"
+        class="flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-violet-900 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-200"
         role="status"
     >
         <div class="flex items-start gap-3">
-            <FlaskConical
-                class="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300"
-            />
+            <span
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300"
+            >
+                <FlaskConical class="h-4 w-4" />
+            </span>
 
             <div class="text-xs leading-5 sm:text-sm">
                 <p>
@@ -25,23 +27,23 @@
         </div>
 
         <a
-            v-if="showExit && liveUrl"
-            :href="liveUrl"
-            class="inline-flex shrink-0 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-lg border border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 sm:self-auto dark:border-violet-500/30 dark:bg-transparent dark:text-violet-200 dark:hover:bg-violet-500/10"
+            v-if="exitLink"
+            :href="exitLink"
+            title="Back to your live branch"
+            class="inline-flex shrink-0 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:self-auto"
         >
             <Radio class="h-4 w-4" />
-            Back to live
+            Go live
         </a>
     </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { FlaskConical, Radio } from "lucide-vue-next";
 import { useSandbox } from "~/composables/useSandbox";
 
-defineProps<{
-    showExit?: boolean;
-}>();
+const { isSandbox, liveUrl, switchLink } = useSandbox();
 
-const { isSandbox, liveUrl } = useSandbox();
+const exitLink = computed(() => switchLink.value || liveUrl.value);
 </script>

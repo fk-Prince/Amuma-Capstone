@@ -11,7 +11,39 @@
             />
         </div>
 
-        <div>
+        <div
+            v-if="withTrial && !loadingTotal"
+            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
+        >
+            <div
+                class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+            >
+                <Gift class="h-5 w-5" />
+            </div>
+
+            <h3
+                class="mt-4 text-base font-semibold text-slate-900 dark:text-white"
+            >
+                Start your 2-week free trial
+            </h3>
+
+            <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
+                No payment today. Set up your branch, and pay for your plan from
+                Manage Subscription whenever you're ready.
+            </p>
+
+            <button
+                type="button"
+                :disabled="processing"
+                class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
+                @click="startTrial"
+            >
+                <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
+                {{ processing ? "Starting your trial…" : "Start free trial" }}
+            </button>
+        </div>
+
+        <div v-else>
             <PaymentForm
                 v-model:card="card"
                 :total-amount="total"
@@ -27,6 +59,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
+import { Gift, LoaderCircle } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
@@ -118,6 +151,39 @@ const payCard = async () => {
     } catch (err: any) {
         xenditProcessing.value = false;
         error(err.message);
+    } finally {
+        processing.value = false;
+    }
+};
+
+const startTrial = async () => {
+    if (processing.value) return;
+
+    processing.value = true;
+
+    try {
+        const payload = checkout.subscriptionPayload;
+        if (!payload) throw new Error("Subscription details are missing.");
+
+        const result = await subscriptionService.startTrial({
+            ...payload,
+            payment_method: null,
+            payment_type: "SUBSCRIPTION",
+        });
+
+        success("Free trial started", result.message);
+
+        await fetchAuthUser();
+
+        await navigateTo({
+            path: "/product/subscription-summary",
+            query: {
+                status: "true",
+                trial: "1",
+            },
+        });
+    } catch (err: any) {
+        error(err?.message ?? "Could not start your free trial.");
     } finally {
         processing.value = false;
     }

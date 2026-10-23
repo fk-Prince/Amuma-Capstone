@@ -27,7 +27,11 @@
                     </button>
 
                     <div class="min-h-0 flex-1 overflow-y-auto p-6 pr-12">
-                        <BranchRenewalTab :uuid="uuid" :end-trial="endTrial" />
+                        <BranchRenewalTab
+                            :uuid="uuid"
+                            :end-trial="endTrial"
+                            :pay="pay"
+                        />
                     </div>
                 </div>
             </div>
@@ -43,6 +47,7 @@ defineProps<{
     open: boolean;
     uuid: string;
     endTrial?: boolean;
+    pay?: boolean;
 }>();
 
 const emit = defineEmits<{

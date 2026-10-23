@@ -236,6 +236,8 @@
                         {{
                             isCancelled
                                 ? "Subscription cancelled"
+                                : awaitingPayment && trialEnded
+                                ? "Your free trial has ended"
                                 : isTest
                                 ? "Free trial"
                                 : hasPendingUpgrade
@@ -255,6 +257,26 @@
                             payment was refunded. Want to keep using AMUMA?
                             Pick any plan type and plan and subscribe now — your
                             paid year starts today, with no free trial.
+                        </template>
+                        <template v-else-if="awaitingPayment && !canPayTrial">
+                            Your free trial request is waiting for an admin to
+                            verify your branch. The 2-week trial starts on
+                            approval, and you can pay for your plan from then
+                            on. Nothing has been charged.
+                        </template>
+                        <template v-else-if="awaitingPayment && trialEnded">
+                            This branch is locked until its plan is paid for.
+                            Pick a plan below and pay. Your paid year starts
+                            today, and everything you recorded during the trial
+                            is still here.
+                        </template>
+                        <template v-else-if="awaitingPayment">
+                            Your free trial runs until
+                            {{ formatDate(pendingPlan?.starts_at) }}, and nothing
+                            has been charged. Pay for your plan before then to
+                            keep your branch running: start your paid year
+                            today, or pay ahead and it starts when the trial
+                            ends.
                         </template>
                         <template v-else-if="isTest">
                             Your paid year is already queued and starts
@@ -323,7 +345,7 @@
 
                 <!-- Already paid for, just waiting its turn -->
                 <div
-                    v-if="pendingPlan && !pendingPlan.is_due"
+                    v-if="pendingPlan && !pendingPlan.is_due && !awaitingPayment"
                     class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4"
                 >
                     <div class="flex items-start gap-3 text-xs text-primary">
@@ -397,7 +419,7 @@
                 </div>
 
                 <div
-                    v-if="canCancel"
+                    v-if="canCancel && !awaitingPayment"
                     class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4"
                 >
                     <div
@@ -457,9 +479,15 @@
                         class="flex flex-wrap items-center justify-between gap-3"
                     >
                         <p class="text-xs text-rose-700 dark:text-rose-300">
-                            Not what you need? Cancel before
-                            {{ formatDate(pendingPlan?.starts_at) }} and we'll
-                            refund your payment in full.
+                            <template v-if="awaitingPayment">
+                                Not what you need? Cancel your free trial. You
+                                haven't been charged anything.
+                            </template>
+                            <template v-else>
+                                Not what you need? Cancel before
+                                {{ formatDate(pendingPlan?.starts_at) }} and
+                                we'll refund your payment in full.
+                            </template>
                         </p>
 
                         <button
@@ -473,8 +501,11 @@
 
                     <div v-else>
                         <p class="text-xs text-rose-700 dark:text-rose-300">
-                            Cancelling ends your free trial now and refunds
-                            ₱{{ formatMoney(refundAmount) }}.
+                            Cancelling ends your free trial now<template
+                                v-if="refundAmount > 0"
+                            >
+                                and refunds ₱{{ formatMoney(refundAmount) }}</template
+                            >.
                             {{
                                 coveredBranches.length > 1
                                     ? `All ${coveredBranches.length} branches on this subscription`
@@ -519,7 +550,9 @@
                                 {{
                                     cancelling
                                         ? "Cancelling…"
-                                        : "Yes, cancel & refund"
+                                        : refundAmount > 0
+                                          ? "Yes, cancel & refund"
+                                          : "Yes, cancel"
                                 }}
                             </button>
                         </div>
@@ -705,6 +738,7 @@
                             <span
                                 v-else-if="
                                     !isCancelled &&
+                                    !awaitingPayment &&
                                     plan.plan_id !== currentPlan?.plan_id &&
                                     daysRemaining > 0
                                 "
@@ -766,7 +800,32 @@
                             </p>
                         </div>
 
+                        <div
+                            v-if="awaitingPayment"
+                            class="flex shrink-0 flex-wrap items-center gap-2"
+                        >
+                            <button
+                                v-if="!trialEnded"
+                                type="button"
+                                :disabled="!canSubmitRenewal"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-white px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary"
+                                @click="openPay(false)"
+                            >
+                                Pay ahead
+                            </button>
+
+                            <button
+                                type="button"
+                                :disabled="!canSubmitRenewal"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                @click="openPay(true)"
+                            >
+                                {{ trialEnded ? "Pay & unlock" : "Pay & start now" }}
+                            </button>
+                        </div>
+
                         <button
+                            v-else
                             type="button"
                             :disabled="!canSubmitRenewal"
                             class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
@@ -1048,6 +1107,7 @@ import { planIcon } from "~/utils/planIcon";
 const props = defineProps<{
     uuid: string;
     endTrial?: boolean;
+    pay?: boolean;
 }>();
 
 const { success, error, info } = useToast();
@@ -1087,6 +1147,13 @@ const syncBranchMode = () => {
     branch.subscription_mode =
         subscription.value.status === "cancelled" ? null : subscription.value.mode;
     branch.subscription_end_date = subscription.value.end_date;
+    branch.subscription_awaiting_payment = Boolean(
+        subscription.value.renewal?.awaiting_payment,
+    );
+    branch.subscription_locked = Boolean(
+        subscription.value.renewal?.awaiting_payment &&
+            subscription.value.renewal?.trial_ended,
+    );
 };
 
 const card = ref<CardDetails>({
@@ -1162,6 +1229,10 @@ const refundedAmount = computed(() =>
 );
 
 const renewal = computed(() => subscription.value?.renewal ?? null);
+const awaitingPayment = computed(() => Boolean(renewal.value?.awaiting_payment));
+const canPayTrial = computed(() => Boolean(renewal.value?.can_pay));
+const trialEnded = computed(() => Boolean(renewal.value?.trial_ended));
+const payStartNow = ref(false);
 const canRenew = computed(() => Boolean(renewal.value?.can_renew));
 const canUpgrade = computed(() => Boolean(renewal.value?.can_upgrade));
 const upgradeMonths = computed(() => Number(renewal.value?.upgrade_months) || 0);
@@ -1186,6 +1257,10 @@ const isOnHybrid = computed(
 
 const selectablePlans = computed(() => {
     if (isCancelled.value) return plansOfType(plans.value, planType.value);
+
+    if (awaitingPayment.value) {
+        return canPayTrial.value ? plansOfType(plans.value, currentType.value) : [];
+    }
 
     if (isOnHybrid.value) {
         return canRenew.value ? plansOfType(plans.value, currentType.value) : [];
@@ -1218,6 +1293,7 @@ const chargedPlan = computed(() =>
 const changesPlan = computed(
     () =>
         !isCancelled.value &&
+        !awaitingPayment.value &&
         Boolean(chargedPlan.value) &&
         chargedPlan.value?.plan_id !== subscription.value?.plan?.plan_id,
 );
@@ -1258,7 +1334,7 @@ const renewTotal = computed(() =>
 );
 
 const canSubmitRenewal = computed(() =>
-    isCancelled.value
+    isCancelled.value || awaitingPayment.value
         ? Boolean(chargedPlan.value)
         : isUpgrading.value
           ? canUpgrade.value
@@ -1342,6 +1418,12 @@ const projectedEndDate = computed(() => {
         ? new Date(subscription.value.end_date)
         : new Date();
 
+    if (awaitingPayment.value) {
+        return payStartNow.value || trialEnded.value
+            ? addYear(new Date())
+            : addYear(pendingPlan.value?.starts_at ?? end);
+    }
+
     if (isUpgrading.value) {
         return isTest.value && pendingPlan.value?.starts_at
             ? addYear(pendingPlan.value.starts_at)
@@ -1358,6 +1440,24 @@ const paymentCopy = computed(() => {
             : "this branch";
     const until = formatDate(projectedEndDate.value);
     const newPlan = `${chargedPlan.value?.name ?? ""} ${planTypeLabel(chargedPlan.value?.type)}`.trim();
+
+    if (awaitingPayment.value) {
+        const startsNow = payStartNow.value || trialEnded.value;
+
+        return {
+            heading: trialEnded.value
+                ? "Pay & unlock"
+                : startsNow
+                  ? "Pay & start now"
+                  : "Pay ahead",
+            subheading: startsNow
+                ? `${newPlan} starts today and runs to ${until}`
+                : `${newPlan} starts ${formatDate(pendingPlan.value?.starts_at)}, when your free trial ends, and runs to ${until}`,
+            formTitle: "Plan payment",
+            description: `Choose how to pay for ${newPlan}.`,
+            submitLabel: startsNow ? "Pay & start" : "Pay now",
+        };
+    }
 
     if (isCancelled.value) {
         return {
@@ -1439,6 +1539,11 @@ const openRenew = () => {
     showRenew.value = true;
 };
 
+const openPay = (startNow: boolean) => {
+    payStartNow.value = startNow || trialEnded.value;
+    openRenew();
+};
+
 const closeRenew = () => {
     if (processing.value) return;
     showRenew.value = false;
@@ -1464,6 +1569,7 @@ const payCard = async () => {
                     payment_method: "CREDIT-CARD",
                     plan_code: chargedPlan.value?.plan_code,
                     plan_type: chargedPlan.value?.type,
+                    start_now: payStartNow.value,
                     token_id,
                     authentication_id,
                 }),
@@ -1552,6 +1658,7 @@ const payGCash = async () => {
                     payment_method: "GCASH",
                     plan_code: chargedPlan.value?.plan_code,
                     plan_type: chargedPlan.value?.type,
+                    start_now: payStartNow.value,
                 }),
 
             onClose: () => {
@@ -1683,6 +1790,11 @@ const formatMoney = (value: number | string) =>
 
 onMounted(async () => {
     await fetchSubscription();
+
+    if (canPayTrial.value && (props.pay || props.endTrial)) {
+        openPay(Boolean(props.endTrial));
+        return;
+    }
 
     // Arrived from the "end trial" link in the header notice.
     if (props.endTrial && canCancel.value) confirmEnd.value = true;

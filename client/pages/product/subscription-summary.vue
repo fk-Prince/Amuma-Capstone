@@ -25,7 +25,7 @@
                 </div>
 
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    Payment Successful
+                    {{ withTrial ? "Free Trial Requested" : "Payment Successful" }}
                 </h1>
 
                 <p class="mt-3 text-sm text-slate-500 dark:text-gray-400">
@@ -33,9 +33,8 @@
                     request's status within 1-2 business days.
                     <template v-if="withTrial">
                         Your 2-week free trial starts once your branch is
-                        approved, and your paid year begins right after it.
-                        You can cancel for a full refund any time during the
-                        test.
+                        approved. Nothing is charged until you pay for your
+                        plan from Manage Subscription.
                     </template>
                     <template v-else>
                         Your paid year starts once your branch is approved.
@@ -72,6 +71,7 @@
             </template>
 
             <div
+                v-if="!(withTrial && isSuccess)"
                 class="mt-8 rounded-2xl bg-slate-50 px-5 py-4 text-left dark:bg-secondary"
             >
                 <div class="flex items-center justify-between">

@@ -53,6 +53,8 @@ class SubscriptionService
     private const ACTION_UPGRADE = 'upgrade';
     private const ACTION_RESUBSCRIBE = 'resubscribe';
     private const ACTION_ADDITIONAL_BRANCH = 'additional_branch';
+    private const ACTION_ACTIVATE = 'activate';
+    private const ACTION_PREPAY = 'prepay';
 
     private const PAYMENT_TYPE_ADDITIONAL_BRANCH = 'additional_branch';
 
@@ -116,6 +118,25 @@ class SubscriptionService
         return $paymentMethod->subscriptionInvoice($payload, $subscription);
     }
 
+    public function startTrial(array $payload, User $user)
+    {
+        AuthGuard::requireUser($user);
+        $this->ensureNoSubscription($payload['agency_id'] ?? null);
+
+        $detail = $this->createSubscription($user, $payload);
+
+        if (($detail['mode'] ?? null) !== Subscription::MODE_TEST) {
+            throw new Exception(__('This agency has already used its free trial. Please pay to subscribe.'), 422);
+        }
+
+        return $this->newSubscriber([
+            'metadata' => json_decode(json_encode($detail), true),
+            'external_id' => null,
+            'xendit_invoice_id' => null,
+            'masked_card_number' => null,
+        ]);
+    }
+
     public function makeRenewal(array $payload, User $user)
     {
         AuthGuard::requireUser($user);
@@ -138,6 +159,10 @@ class SubscriptionService
 
         if ($subscription->isCancelled()) {
             return $this->createResubscription($user, $subscription, $payload);
+        }
+
+        if ($subscription->awaitingTrialPayment()) {
+            return $this->createTrialPayment($user, $subscription, $payload);
         }
 
         if ($subscription->pendingPlanIsDue()) {
@@ -234,6 +259,48 @@ class SubscriptionService
         ];
     }
 
+    private function createTrialPayment(?User $user, Subscription $subscription, array $payload): array
+    {
+        if (!$subscription->canPayTrial()) {
+            throw new Exception(__('You can pay for your plan once an admin has verified your branch.'), 422);
+        }
+
+        $type = $subscription->plans?->type;
+
+        if (!empty($payload['plan_type']) && $payload['plan_type'] !== $type) {
+            throw new Exception(__('The plan type of a subscription can\'t be changed.'), 422);
+        }
+
+        $plan = $this->planRepository->findByCodeAndType(
+            $payload['plan_code'] ?? $subscription->plans?->plan_code,
+            $type
+        );
+
+        if (!$plan) {
+            throw new Exception(__('Plan not found.'), 404);
+        }
+
+        $startNow = $subscription->trialHasEnded()
+            || filter_var($payload['start_now'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        return [
+            'user' => $user,
+            'plan' => $plan,
+            'branch' => ['branch_id' => $payload['branch_id']],
+            'agency' => [],
+            'subscription_uuid' => $subscription->uuid,
+            'method' => $payload['payment_method'],
+            'action' => $startNow ? self::ACTION_ACTIVATE : self::ACTION_PREPAY,
+            'total_amount' => $subscription->renewalAmount($plan),
+            'endDate' => Subscription::termEnd(
+                $startNow ? Carbon::now() : ($subscription->pending_plan_starts_at ?? Carbon::now())
+            )->toDateTimeString(),
+            'type' => 'renewal',
+            'status' => true,
+            'payment_type' => 'RENEWAL',
+        ];
+    }
+
     private function createResubscription(?User $user, Subscription $subscription, array $payload): array
     {
         $planType = $payload['plan_type'] ?? $subscription->plans?->type;
@@ -299,7 +366,19 @@ class SubscriptionService
             $paidPlanId = $meta['plan']['plan_id'] ?? $subscription->plan_id;
             $action = $meta['action'] ?? self::ACTION_RENEW;
 
+            if ($action === self::ACTION_PREPAY && $subscription->trialHasEnded()) {
+                $action = self::ACTION_ACTIVATE;
+            }
+
             $changes = match ($action) {
+                self::ACTION_ACTIVATE => [
+                    ...Subscription::liveTerms($paidPlanId),
+                    'status' => Subscription::STATUS_ACTIVE,
+                ],
+                self::ACTION_PREPAY => [
+                    'plan_id' => $paidPlanId,
+                    'pending_plan_id' => $paidPlanId,
+                ],
                 self::ACTION_RESUBSCRIBE => [
                     'status' => Subscription::STATUS_ACTIVE,
                     'mode' => Subscription::MODE_LIVE,
@@ -337,7 +416,9 @@ class SubscriptionService
                 'price' => $meta['total_amount'],
                 'status' => SubscriptionPayment::STATUS_PAID,
                 'type' => match ($action) {
-                    self::ACTION_RESUBSCRIBE => SubscriptionPayment::TYPE_SUBSCRIPTION,
+                    self::ACTION_RESUBSCRIBE,
+                    self::ACTION_ACTIVATE,
+                    self::ACTION_PREPAY => SubscriptionPayment::TYPE_SUBSCRIPTION,
                     self::ACTION_UPGRADE => SubscriptionPayment::TYPE_UPGRADE,
                     default => SubscriptionPayment::TYPE_RENEWAL,
                 },
@@ -347,6 +428,10 @@ class SubscriptionService
             $subscription->load(['plans', 'pendingPlan']);
 
             $message = match ($action) {
+                self::ACTION_ACTIVATE => __('Payment received. Your paid year starts today.'),
+                self::ACTION_PREPAY => __('Payment received. Your paid year starts on :date, when your free trial ends.', [
+                    'date' => $subscription->pending_plan_starts_at?->toFormattedDateString(),
+                ]),
                 self::ACTION_RESUBSCRIBE => __('You are subscribed again.'),
                 self::ACTION_UPGRADE => __('Upgraded to :plan.', ['plan' => $subscription->plans?->name]),
                 default => !empty($meta['plan_starts_at'])
@@ -541,7 +626,9 @@ class SubscriptionService
 
             return response()->json([
                 'status' => true,
-                'message' => __('Subscription cancelled. Your payment is being refunded.'),
+                'message' => $payments->isNotEmpty()
+                    ? __('Subscription cancelled. Your payment is being refunded.')
+                    : __('Subscription cancelled.'),
                 'subscription' => [
                     'uuid' => $subscription->uuid,
                     'status' => $subscription->status,
@@ -569,6 +656,10 @@ class SubscriptionService
 
             if (!$subscription->canCancelTest() || $subscription->status !== Subscription::STATUS_ACTIVE) {
                 throw new Exception(__('Only an active subscription still in its free trial can be ended early.'), 422);
+            }
+
+            if ($subscription->awaitingTrialPayment()) {
+                throw new Exception(__('Pay for your plan to start your paid year.'), 422);
             }
 
             $subscription->update([
@@ -818,18 +909,22 @@ class SubscriptionService
                     'status' => BranchSubscription::STATUS_PENDING,
                 ]);
 
-                $subscription->payments()->create([
-                    'subscription_id' => $subscription->subscription_id,
-                    'user_id' => $meta['user']['user_id'] ?? null,
-                    'plan_id' => $plan['plan_id'],
-                    'xendit_invoice_id' => $xendit_invoice_id,
-                    'payment_reference_id' => $reference_id,
-                    'masked_card_number' => $masked_card_number,
-                    'price' => $totalAmount,
-                    'status' => SubscriptionPayment::STATUS_PAID,
-                    'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
-                    'payment_method' => $meta['payment_method'] ?? null,
-                ]);
+                $isPaid = $xendit_invoice_id || $reference_id;
+
+                if ($isPaid) {
+                    $subscription->payments()->create([
+                        'subscription_id' => $subscription->subscription_id,
+                        'user_id' => $meta['user']['user_id'] ?? null,
+                        'plan_id' => $plan['plan_id'],
+                        'xendit_invoice_id' => $xendit_invoice_id,
+                        'payment_reference_id' => $reference_id,
+                        'masked_card_number' => $masked_card_number,
+                        'price' => $totalAmount,
+                        'status' => SubscriptionPayment::STATUS_PAID,
+                        'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
+                        'payment_method' => $meta['payment_method'] ?? null,
+                    ]);
+                }
 
                 $employee = $this->employeeRepository->findEmployeeByFields([
                     ['user_id', '=', $user['user_id']],
@@ -858,7 +953,7 @@ class SubscriptionService
                     recipientName: trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: 'there',
                     planName: $plan['name'] ?? $plan['plan_code'],
                     branchName: $branchData->name,
-                    amount: $totalAmount,
+                    amount: $isPaid ? $totalAmount : 0.0,
                     planType: $plan['type'] ?? null,
                 ));
 
@@ -1286,7 +1381,12 @@ class SubscriptionService
             $link = $this->lockRejectedLink($branch);
             $subscription = $link->subscription;
 
-            if (!$this->subscriptionHasRoomFor($subscription, $branch)) {
+            if ($subscription?->isRejectedFreeTrial()) {
+                $subscription->update([
+                    ...Subscription::testTerms($subscription->plan_id),
+                    'status' => Subscription::STATUS_PENDING,
+                ]);
+            } elseif (!$this->subscriptionHasRoomFor($subscription, $branch)) {
                 throw new Exception(
                     'There\'s no free branch slot left on your subscription.',
                     409

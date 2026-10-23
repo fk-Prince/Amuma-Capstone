@@ -75,10 +75,8 @@
                     v-if="isNewAgency"
                     class="rounded-lg bg-emerald-50/70 px-3 py-2 text-xs leading-5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                 >
-                    <span class="font-semibold"
-                        >Cancel anytime during the trial</span
-                    >
-                    for a full refund.
+                    <span class="font-semibold">2-week free trial.</span>
+                    Nothing to pay until you're ready.
                 </p>
             </div>
         </section>

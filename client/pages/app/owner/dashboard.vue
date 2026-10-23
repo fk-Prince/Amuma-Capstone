@@ -1160,7 +1160,23 @@
                                         </span>
 
                                         <p
-                                            v-if="sub.pending_plan"
+                                            v-if="sub.renewal?.awaiting_payment"
+                                            class="mt-1 whitespace-nowrap text-[10px]"
+                                            :class="
+                                                sub.renewal?.trial_ended
+                                                    ? 'text-rose-600 dark:text-rose-300'
+                                                    : 'text-amber-600 dark:text-amber-300'
+                                            "
+                                        >
+                                            {{
+                                                sub.renewal?.trial_ended
+                                                    ? "Trial ended · unpaid"
+                                                    : "Not paid yet"
+                                            }}
+                                        </p>
+
+                                        <p
+                                            v-else-if="sub.pending_plan"
                                             class="mt-1 whitespace-nowrap text-[10px] text-accent-600 dark:text-accent-300"
                                         >
                                             → {{ sub.pending_plan.name }}
@@ -1270,6 +1286,10 @@ interface Subscription {
     end_date: string;
     created_at: string;
     is_test?: boolean;
+    renewal?: {
+        awaiting_payment?: boolean;
+        trial_ended?: boolean;
+    } | null;
     plan?: {
         name: string;
         plan_code: string;

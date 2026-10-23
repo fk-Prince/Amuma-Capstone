@@ -34,7 +34,11 @@ class SubscriptionRepository
         return Subscription::query()
             ->with(['plans', 'pendingPlan', 'branchLinks.branch'])
             ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED])
-            ->whereNull('pending_plan_id')
+            ->where(fn($query) => $query
+                ->whereNull('pending_plan_id')
+                ->orWhere(fn($trial) => $trial
+                    ->where('mode', Subscription::MODE_TEST)
+                    ->whereDoesntHave('payments', fn($payments) => $payments->where('status', SubscriptionPayment::STATUS_PAID))))
             ->whereDate('end_date', '<=', Carbon::today()->addDays($days))
             ->get();
     }
@@ -224,6 +228,10 @@ class SubscriptionRepository
             'cancelled' => (int) ($counts['cancelled'] ?? 0),
             'cancelled_trials' => Subscription::where('status', Subscription::STATUS_CANCELLED)
                 ->where('mode', Subscription::MODE_TEST)
+                ->count(),
+            'unpaid_trials' => Subscription::whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED])
+                ->where('mode', Subscription::MODE_TEST)
+                ->whereDoesntHave('payments', fn($payments) => $payments->where('status', SubscriptionPayment::STATUS_PAID))
                 ->count(),
             'expiring_soon' => $this->expiringSoon(Subscription::query())->count(),
             'rejected' => BranchSubscription::where('status', BranchSubscription::STATUS_REJECTED)->count(),

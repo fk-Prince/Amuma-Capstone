@@ -16,6 +16,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource, 'POST', payload);
     }
 
+    async startTrial(payload: SubscriptionRequest | any): Promise<any> {
+        return await this.request(this.resource + '-trial', 'POST', payload);
+    }
+
     async retrieveSubscriptionDetail(payload: SubscriptionRequest): Promise<any> {
         return await this.request(this.resource + '-detail', 'GET', payload);
     }

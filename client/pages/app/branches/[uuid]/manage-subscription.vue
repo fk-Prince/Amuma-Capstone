@@ -336,6 +336,7 @@
         <RenewalModal
             :open="showRenewal"
             :end-trial="openedToEndTrial"
+            :pay="openedToPay"
             :uuid="route.params.uuid as string"
             @close="closeRenewal"
         />
@@ -420,6 +421,10 @@ const resubmitTarget = ref<{
 } | null>(null);
 
 const purchaseReasonFor = (branch: Branch): string | null => {
+    if (branch.free_trial_resubmit) {
+        return null;
+    }
+
     if (branch.subscription_status === "rejected") {
         return "This branch's subscription was refunded when it was rejected.";
     }
@@ -499,10 +504,10 @@ const onBranchResubmitted = (result: any) => {
                                       }
                                     : b.plan,
                             subscription_status:
-                                purchased || additional
-                                    ? result.subscription.status
-                                    : b.subscription_status,
+                                result?.subscription?.status ??
+                                b.subscription_status,
                             slot_available: true,
+                            free_trial_resubmit: false,
                         })
                       : b,
               );
@@ -587,6 +592,7 @@ type Branch = {
     rejection_reason?: string | null;
     subscription_status?: "active" | "expired" | "pending" | "rejected" | null;
     slot_available?: boolean;
+    free_trial_resubmit?: boolean;
     staffs: number;
     patients: number;
     plan: { plan_code: string; name: string } | null;
@@ -729,6 +735,7 @@ const mapBranch = (b: any): Branch => ({
     rejection_reason: b.rejection_reason ?? null,
     subscription_status: b.subscription_status ?? null,
     slot_available: b.slot_available ?? false,
+    free_trial_resubmit: b.free_trial_resubmit ?? false,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,
     plan: b.plan ?? null,
@@ -847,6 +854,7 @@ onBeforeUnmount(() => clearTimeout(searchDebounce));
 
 const showRenewal = ref(false);
 const openedToEndTrial = ref(false);
+const openedToPay = ref(false);
 const renewalSummary = ref<any>(null);
 const subscriptionPlan = ref<any>(null);
 
@@ -868,6 +876,7 @@ const fetchRenewal = async () => {
 const closeRenewal = () => {
     showRenewal.value = false;
     openedToEndTrial.value = false;
+    openedToPay.value = false;
     fetchRenewal();
 };
 
@@ -886,6 +895,12 @@ onMounted(async () => {
         openedToEndTrial.value = true;
         showRenewal.value = true;
         navigateTo({ query: { ...route.query, end_trial: undefined } }, { replace: true });
+    }
+
+    if (route.query.pay) {
+        openedToPay.value = true;
+        showRenewal.value = true;
+        navigateTo({ query: { ...route.query, pay: undefined } }, { replace: true });
     }
 
     await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);

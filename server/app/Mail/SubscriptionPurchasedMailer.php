@@ -26,6 +26,12 @@ class SubscriptionPurchasedMailer extends Mailable
     public function content(): Content
     {
         $formattedAmount = '₱' . number_format($this->amount, 2);
+        $isTrial = $this->amount <= 0;
+        $badge = $isTrial ? 'Free trial' : 'Payment received';
+        $intro = $isTrial
+            ? "we've received your free trial request for <strong style='color:#0f172a;'>{$this->branchName}</strong>. Nothing is charged until you choose to pay for your plan."
+            : "we've received your payment for <strong style='color:#0f172a;'>{$this->branchName}</strong>.";
+        $amountLabel = $isTrial ? 'Due today' : 'Amount paid';
 
         $logoUrl = config('mail.logo_url');
 
@@ -69,10 +75,10 @@ class SubscriptionPurchasedMailer extends Mailable
                                     <table width='100%' cellpadding='0' cellspacing='0'>
                                         <tr>
                                             <td style='padding:40px 48px 28px;border-bottom:1px solid #f1f5f9;'>
-                                                <p style='margin:0 0 8px;display:inline-block;padding:4px 12px;border-radius:999px;background:#EAF2FE;color:#1E68D1;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'>Payment received</p>
+                                                <p style='margin:0 0 8px;display:inline-block;padding:4px 12px;border-radius:999px;background:#EAF2FE;color:#1E68D1;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'>{$badge}</p>
                                                 <p style='margin:12px 0 6px;font-size:22px;font-weight:700;color:#0f172a;'>Subscription request received</p>
                                                 <p style='margin:0;font-size:14px;color:#64748b;line-height:1.7;'>
-                                                    Hi <strong style='color:#0f172a;'>{$this->recipientName}</strong> — we've received your payment for <strong style='color:#0f172a;'>{$this->branchName}</strong>.
+                                                    Hi <strong style='color:#0f172a;'>{$this->recipientName}</strong> — {$intro}
                                                 </p>
                                             </td>
                                         </tr>
@@ -87,7 +93,7 @@ class SubscriptionPurchasedMailer extends Mailable
                                                         <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$this->planName}</td>
                                                     </tr>{$typeRow}
                                                     <tr>
-                                                        <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>Amount paid</td>
+                                                        <td style='padding:6px 0;font-size:13px;color:#94a3b8;'>{$amountLabel}</td>
                                                         <td align='right' style='padding:6px 0;font-size:13px;font-weight:600;color:#0f172a;'>{$formattedAmount}</td>
                                                     </tr>
                                                 </table>

@@ -2,6 +2,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { authMenuList } from "~/config/authMenu";
 import { PermissionAction } from "~/utils/permissions";
+import { Modules } from "~/types/module";
 import { AUTH_ROUTES, authLandingPath } from "~/utils/authLanding";
 
 export default defineNuxtRouteMiddleware(async (to) => {
@@ -47,6 +48,20 @@ export default defineNuxtRouteMiddleware(async (to) => {
         const readableModules = branch.permissions
             ?.filter((p) => p.actions?.includes(PermissionAction.Read))
             .map((p) => p.module_name) ?? [];
+
+        if (branch.subscription_locked) {
+            const subscriptionPath = `/app/branches/${branchUuid}/manage-subscription`;
+            const lockedPath = `/app/branches/${branchUuid}/locked`;
+            const canPay = readableModules.includes(Modules.ManageSubscription);
+
+            if (canPay && to.path !== subscriptionPath) {
+                return navigateTo({ path: subscriptionPath, query: { pay: "1" } });
+            }
+
+            if (!canPay && to.path !== lockedPath) {
+                return navigateTo(lockedPath);
+            }
+        }
 
         const selectedMenu = authMenuList.find((item) => {
             const uuid = item.to.replace("[uuid]", branchUuid);

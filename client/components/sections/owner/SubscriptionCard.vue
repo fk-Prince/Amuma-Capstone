@@ -391,6 +391,30 @@
 
         <div class="mt-auto">
             <div
+                v-if="!displayPayment && unpaidTrial"
+                class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
+            >
+                <span class="text-[11px] text-muted dark:text-gray-400">
+                    {{ unpaidTrialNote }}
+                </span>
+
+                <span
+                    class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    :class="
+                        props.subscription.renewal?.trial_ended
+                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
+                            : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                    "
+                >
+                    {{
+                        props.subscription.renewal?.trial_ended
+                            ? "Unpaid · locked"
+                            : "Free trial · unpaid"
+                    }}
+                </span>
+            </div>
+
+            <div
                 v-if="displayPayment"
                 class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-slate-100 px-5 py-3 dark:border-white/10"
             >
@@ -642,6 +666,24 @@ const displayPayment = computed(
 const hasMultiplePayments = computed(
     () => (props.subscription.payments?.length ?? 0) > 1,
 );
+
+const unpaidTrial = computed(
+    () =>
+        isFirstBranch.value &&
+        Boolean(props.subscription.renewal?.awaiting_payment),
+);
+
+const unpaidTrialNote = computed(() => {
+    if (props.subscription.renewal?.trial_ended) {
+        return `Trial ended ${formatDate(props.subscription.end_date)} without payment`;
+    }
+
+    if (isPending.value) {
+        return "Free trial request · nothing charged yet";
+    }
+
+    return `Free trial until ${formatDate(props.subscription.end_date)} · not paid yet`;
+});
 
 const showPaymentsModal = ref(false);
 const showLogs = ref(false);

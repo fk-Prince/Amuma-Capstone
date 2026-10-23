@@ -99,7 +99,7 @@
                 <SummaryRow
                     v-if="props.withTrial"
                     label="Free Trial"
-                    value="2 weeks — your paid year starts after"
+                    value="2 weeks, no payment needed to start"
                 />
 
                 <SummaryRow
@@ -109,12 +109,19 @@
                 />
 
                 <SummaryRow
+                    v-if="!props.withTrial"
                     label="Payment Method"
                     :value="checkout.payment_method || '—'"
                 />
 
                 <SummaryRow
-                    label="Amount"
+                    v-if="props.withTrial"
+                    label="Due today"
+                    :value="formatCurrency(0)"
+                />
+
+                <SummaryRow
+                    :label="props.withTrial ? 'Yearly price after the trial' : 'Amount'"
                     :value="
                         props.totalAmount != null
                             ? formatCurrency(props.totalAmount)
@@ -131,9 +138,10 @@
                     class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
                 />
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
-                    <span class="font-semibold">Cancel anytime during the trial.</span>
-                    If AMUMA isn't right for you, cancel within your free month and
-                    we'll refund your payment in full.
+                    <span class="font-semibold">Nothing to pay today.</span>
+                    Try AMUMA free for 2 weeks. Pay for your plan from Manage
+                    Subscription whenever you're ready. If you haven't paid when
+                    the trial ends, your branch is locked until you do.
                 </p>
             </div>
         </section>

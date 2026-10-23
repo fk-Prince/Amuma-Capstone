@@ -125,9 +125,12 @@ class UserService
                         ? null
                         : $branch?->subscriptionLink?->subscription?->mode,
                     'subscription_end_date' => $branch?->subscriptionLink?->subscription?->end_date?->toDateString(),
+                    'subscription_locked' => (bool) $branch?->subscriptionLink?->subscription?->isLockedForPayment(),
+                    'subscription_awaiting_payment' => (bool) $branch?->subscriptionLink?->subscription?->awaitingTrialPayment(),
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
-                        && !$branch->subscriptionLink->subscription?->hasOpenSlot(),
+                        && !$branch->subscriptionLink->subscription?->hasOpenSlot()
+                        && !$branch->subscriptionLink->subscription?->isRejectedFreeTrial(),
                     'resubmit_subscription_status' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
                         ? $branch->subscriptionLink->subscription?->status
                         : null,

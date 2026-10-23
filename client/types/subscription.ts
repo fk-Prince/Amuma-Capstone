@@ -44,6 +44,11 @@ export interface SubscriptionCardData {
     end_date: string;
     is_first_branch?: boolean;
     payments?: SubscriptionPaymentRecord[];
+    renewal?: {
+        awaiting_payment?: boolean;
+        can_pay?: boolean;
+        trial_ended?: boolean;
+    } | null;
 
     branch: {
         branch_id: number;

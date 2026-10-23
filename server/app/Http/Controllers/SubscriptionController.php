@@ -20,27 +20,25 @@ class SubscriptionController extends Controller
 
     public function newSubscription(SubscriptionRequest $request)
     {
+        return $this->subscriptionService->makeSubscription($this->subscriptionData($request), $request->user());
+    }
+
+    public function startTrial(SubscriptionRequest $request)
+    {
+        return $this->subscriptionService->startTrial($this->subscriptionData($request), $request->user());
+    }
+
+    private function subscriptionData(SubscriptionRequest $request): array
+    {
         $data = $request->validated();
-        if ($request->hasFile('branch_image')) {
-            $data['branch_image'] = $request->file('branch_image');
-        }
-        if ($request->hasFile('agency_image')) {
-            $data['agency_image'] = $request->file('branch_image');
+
+        foreach (['branch_image', 'agency_image', 'branch_document', 'agency_document', 'agency_id_back', 'agency_id_front'] as $file) {
+            if ($request->hasFile($file)) {
+                $data[$file] = $request->file($file);
+            }
         }
 
-        if ($request->hasFile('branch_document')) {
-            $data['branch_document'] = $request->file('branch_document');
-        }
-        if ($request->hasFile('agency_document')) {
-            $data['agency_document'] = $request->file('agency_document');
-        }
-        if ($request->hasFile('agency_id_back')) {
-            $data['agency_id_back'] = $request->file('agency_id_back');
-        }
-        if ($request->hasFile('agency_id_front')) {
-            $data['agency_id_front'] = $request->file('agency_id_front');
-        }
-        return $this->subscriptionService->makeSubscription($data, $request->user());
+        return $data;
     }
 
     public function newBranchFromCapacity(SubscriptionRequest $request)

@@ -26,6 +26,8 @@ export interface Branch {
     subscription_status?: "pending" | "approved" | "rejected" | null;
     subscription_mode?: "test" | "live" | null;
     subscription_end_date?: string | null;
+    subscription_locked?: boolean;
+    subscription_awaiting_payment?: boolean;
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;
     resubmit_subscription_status?: "active" | "expired" | "pending" | "rejected" | null;

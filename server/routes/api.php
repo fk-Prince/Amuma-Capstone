@@ -161,6 +161,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // SUBSCRIPTION
     Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
+    Route::post('/subscriptions-trial', [SubscriptionController::class, 'startTrial']);
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
     Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);

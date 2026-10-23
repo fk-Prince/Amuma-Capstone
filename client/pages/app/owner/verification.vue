@@ -206,6 +206,7 @@
                     :open="!!rejecting"
                     :branch-name="rejecting?.branch?.name"
                     :refunds="rejecting?.is_first_branch !== false"
+                    :unpaid-trial="!!rejecting?.renewal?.awaiting_payment"
                     :agency-unverified="
                         !!rejecting &&
                         rejecting.branch?.agency?.status !== 'verified'

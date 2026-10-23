@@ -56,6 +56,7 @@ const overview = computed<any>(() => {
             expired: 0,
             cancelled: 0,
             cancelled_trials: 0,
+            unpaid_trials: 0,
             rejected: 0,
         }
     );
@@ -201,6 +202,14 @@ function select(payload: StatSelectPayload) {
                             {{ overview.active }}
                         </p>
                         <p
+                            v-if="overview.unpaid_trials"
+                            class="mt-3 text-xs text-amber-600 dark:text-amber-300"
+                        >
+                            {{ overview.unpaid_trials }} on a free trial, not
+                            paid yet
+                        </p>
+                        <p
+                            v-else
                             class="mt-3 text-xs text-accent-600 dark:text-accent-300"
                         >
                             Billing normally

@@ -182,6 +182,22 @@
                                     {{ subscriptionStatus }}
                                 </span>
 
+                                <span
+                                    v-if="subscription.renewal?.awaiting_payment"
+                                    class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                                    :class="
+                                        subscription.renewal?.trial_ended
+                                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
+                                            : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                                    "
+                                >
+                                    {{
+                                        subscription.renewal?.trial_ended
+                                            ? "Trial ended · unpaid · locked"
+                                            : "Free trial · not paid yet"
+                                    }}
+                                </span>
+
                                 <button
                                     v-if="payments.length"
                                     type="button"
@@ -201,7 +217,11 @@
                                 v-if="subscription.plan.yearly_total"
                                 class="mt-2 flex items-center gap-2 text-xs text-muted dark:text-gray-400"
                             >
-                                Pays
+                                {{
+                                    subscription.renewal?.awaiting_payment
+                                        ? "Will pay"
+                                        : "Pays"
+                                }}
                                 <span
                                     class="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary ring-1 ring-primary/20 dark:bg-primary-500/15 dark:text-primary-300"
                                 >
