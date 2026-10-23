@@ -234,9 +234,9 @@
 
             <div
                 ref="scrollEl"
-                class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-8 lg:py-6"
+                class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-4 lg:py-4"
             >
-            <div class="flex flex-col">
+            <div class="flex flex-col [&>section>section]:!p-4 sm:[&>section>section]:!p-6">
                 <section
                     id="step1"
                     ref="step1"

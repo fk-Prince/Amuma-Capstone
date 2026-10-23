@@ -465,21 +465,23 @@
                 "
                 class="bg-white dark:bg-secondary"
             >
-                <div class="mb-3">
-                    <h3
-                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                    >
-                        Care Duration
-                    </h3>
+                <div class="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                        <h3
+                            class="text-sm font-semibold text-slate-900 dark:text-white"
+                        >
+                            Care Duration
+                        </h3>
 
-                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
-                        Specify how many hours of care you require.
-                    </p>
-                </div>
+                        <p
+                            class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                        >
+                            Specify how many hours of care you require.
+                        </p>
+                    </div>
 
-                <div class="mb-2 flex justify-end">
                     <div
-                        class="inline-flex rounded-lg border border-slate-200 p-0.5 dark:border-white/10"
+                        class="inline-flex shrink-0 rounded-lg border border-slate-200 p-0.5 dark:border-white/10"
                     >
                         <button
                             v-for="unit in durationUnits"

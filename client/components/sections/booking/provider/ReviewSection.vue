@@ -1,6 +1,6 @@
 <template>
-    <section class="rounded-2xl p-8 md:p-10">
-        <div class="flex items-baseline gap-3 mb-8">
+    <section class="rounded-2xl p-2 md:px-4">
+        <div class="flex items-baseline gap-3 mb-6">
             <span class="text-2xl text-primary">06</span>
             <div>
                 <h2 class="text-xl text-primary">
@@ -53,6 +53,27 @@
                             v-if="row.label === 'Total'"
                             class="mt-2 rounded-lg border border-slate-200 bg-slate-50 pl-4 pr-5 py-4 dark:bg-secondary dark:border-white/10"
                         >
+                            <div
+                                v-if="showPayment && bookingPercent < 100"
+                                class="mb-3 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10"
+                            >
+                                <span
+                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        category === "homecare"
+                                            ? "Downpayment"
+                                            : "Reservation Fee"
+                                    }}
+                                    ({{ bookingPercent }}%)
+                                </span>
+                                <span
+                                    class="text-lg font-bold text-primary tabular-nums"
+                                >
+                                    {{ formatCurrency(bookingAmount) }}
+                                </span>
+                            </div>
+
                             <div class="flex items-center justify-between">
                                 <span
                                     class="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
@@ -62,7 +83,9 @@
                                         v-if="totalBreakdown.length"
                                         type="button"
                                         class="text-slate-400 transition hover:text-primary dark:text-gray-500"
-                                        :class="showBreakdown ? 'text-primary' : ''"
+                                        :class="
+                                            showBreakdown ? 'text-primary' : ''
+                                        "
                                         aria-label="How the total is calculated"
                                         @click="showBreakdown = !showBreakdown"
                                     >
@@ -98,26 +121,6 @@
                                 </div>
                             </div>
 
-                            <div
-                                v-if="showPayment && bookingPercent < 100"
-                                class="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 dark:border-white/10"
-                            >
-                                <span
-                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
-                                >
-                                    {{
-                                        category === "homecare"
-                                            ? "Downpayment"
-                                            : "Reservation Fee"
-                                    }}
-                                    ({{ bookingPercent }}%)
-                                </span>
-                                <span
-                                    class="text-lg font-bold text-primary tabular-nums"
-                                >
-                                    {{ formatCurrency(bookingAmount) }}
-                                </span>
-                            </div>
                             <div
                                 v-if="showPayment && bookingPercent < 100"
                                 class="mt-1 flex items-center justify-between"
@@ -537,9 +540,7 @@ const bookingTotal = computed<number>(() => {
     }
 
     if (props.homecare?.type === "ADL") {
-        return (
-            Number(props.homecare.time_span ?? 0) * adlRatePerHour.value
-        );
+        return Number(props.homecare.time_span ?? 0) * adlRatePerHour.value;
     }
 
     return selectedServicesTotal.value;
@@ -547,8 +548,10 @@ const bookingTotal = computed<number>(() => {
 
 const bookingPercent = computed(() => props.bookingPercent ?? 100);
 
-const bookingAmount = computed(() =>
-    Math.round(bookingTotal.value * (bookingPercent.value / 100) * 100) / 100,
+const bookingAmount = computed(
+    () =>
+        Math.round(bookingTotal.value * (bookingPercent.value / 100) * 100) /
+        100,
 );
 
 const balanceAmount = computed(() =>
@@ -727,7 +730,12 @@ const patientRows = computed<Row[]>(() => {
     return [
         {
             label: "Full Name",
-            value: fullName([p.first_name, p.middle_name, p.last_name, p.suffix]),
+            value: fullName([
+                p.first_name,
+                p.middle_name,
+                p.last_name,
+                p.suffix,
+            ]),
         },
         {
             label: "Gender",

@@ -64,7 +64,7 @@
                 </div>
             </div>
 
-            <div class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-8 lg:py-6">
+            <div class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-4 lg:py-4">
             <div
                 :class="
                     showPayment
