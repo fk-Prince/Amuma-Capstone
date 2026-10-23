@@ -26,9 +26,9 @@ const MODULE_FEATURES: Record<string, string[]> = {
         "Billing, invoices & online payments",
     ],
     C: [
-        "Everything in the Homecare module",
-        "Everything in the Facility module",
-        "One subscription covering both modules",
+        "Everything in Homecare Services",
+        "Everything in In-house Facility",
+        "One subscription covering both plans",
     ],
 };
 

@@ -21,7 +21,7 @@
                     @update:model-value="checkout.setSelectedPlanType"
                 />
 
-                <TrialPromoBanner class="mx-auto mt-6 max-w-3xl" />
+                <TrialPromoBanner class="mx-auto mt-6 max-w-5xl" />
             </div>
 
             <div
