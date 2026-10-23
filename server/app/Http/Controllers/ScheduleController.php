@@ -26,10 +26,7 @@ class ScheduleController extends Controller
     public function index(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        $module = $request->filled('patient_uuid')
-            ? [ModuleEnum::Schedules, ModuleEnum::Patients]
-            : ModuleEnum::Schedules;
-        AuthGuard::requireModule($request->user(), $branch->branch_id, $module, PermissionAction::Read);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
         BranchGuard::mergeRequest($request, $branch);
         return $this->scheduleService->retrieveSchedule($request->user(), $request->all());
     }

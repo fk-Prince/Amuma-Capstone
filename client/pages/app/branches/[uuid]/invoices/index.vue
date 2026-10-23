@@ -40,6 +40,14 @@
                             @update:model-value="setViewMode"
                         />
 
+                        <Combobox
+                            v-if="activeTab === 'transactions'"
+                            v-model="transactionType"
+                            class="w-40 shrink-0"
+                            :items="TRANSACTION_TYPE_FILTERS"
+                            :search-bar="false"
+                        />
+
                         <div class="flex-1 lg:w-80">
                             <BaseInput
                                 v-model="query"
@@ -591,9 +599,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DataTable, { type DataTableColumn } from "~/components/ui/DataTable.vue";
+import Combobox from "~/components/ui/Combobox.vue";
 import { formatAmount } from "~/utils/currency";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import InvoiceOverview from "~/components/sections/app/Billing/InvoiceOverview.vue";
@@ -762,6 +771,20 @@ const refunding = ref(false);
 
 const transactions = ref<TransactionRow[]>([]);
 const transactionsLoading = ref(false);
+
+const TRANSACTION_TYPE_FILTERS = [
+    { label: "All", value: "all" },
+    { label: "Payment", value: "payment" },
+    { label: "Refund", value: "refund" },
+    { label: "Withdraw", value: "withdraw" },
+];
+
+const transactionType = ref("all");
+
+watch(transactionType, () => {
+    transactionPagination.reset();
+    fetchTransactions(1);
+});
 const activeReceipt = ref<PaymentReceiptData | null>(null);
 const transactionPagination = usePagination({
     pageSize: 10,
@@ -1093,6 +1116,10 @@ async function fetchTransactions(
         const res = await invoiceService.transactions({
             branch_uuid: route.params.uuid,
             search: query.value,
+            type:
+                transactionType.value === "all"
+                    ? undefined
+                    : transactionType.value,
             page,
             per_page: transactionPagination.pageSize.value,
         });

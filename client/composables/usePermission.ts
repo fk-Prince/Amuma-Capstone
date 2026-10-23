@@ -66,9 +66,7 @@ export const usePermissions = () => {
     const careTeamBlockedReason =
         "You need permission to create patients to record this.";
 
-    const canViewMedications = computed(() =>
-        hasModule(Modules.Medications, Modules.Patients),
-    );
+    const canViewMedications = computed(() => hasModule(Modules.Medications));
 
     const canAddMedication = computed(() => canCreate(Modules.Medications));
 

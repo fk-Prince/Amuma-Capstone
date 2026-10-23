@@ -26,7 +26,7 @@ class TransactionRepository
     }
 
     // Everything the branch has recorded, with what a payment's receipt needs.
-    public function paginateForBranch(mixed $branchId, string $search, int $perPage)
+    public function paginateForBranch(mixed $branchId, string $search, int $perPage, ?string $type = null)
     {
         return Transaction::with(array_merge(
             ['patient', 'client', 'booking', 'branch.location'],
@@ -36,6 +36,7 @@ class TransactionRepository
             )
         ))
             ->where('branch_id', $branchId)
+            ->when($type, fn($query) => $query->where('type', $type))
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%' . $search . '%';
 

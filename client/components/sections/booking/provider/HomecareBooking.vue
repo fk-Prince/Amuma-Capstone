@@ -477,16 +477,43 @@
                     </p>
                 </div>
 
+                <div class="mb-2 flex justify-end">
+                    <div
+                        class="inline-flex rounded-lg border border-slate-200 p-0.5 dark:border-white/10"
+                    >
+                        <button
+                            v-for="unit in durationUnits"
+                            :key="unit.value"
+                            type="button"
+                            class="rounded-md px-3 py-1 text-xs font-semibold transition"
+                            :class="
+                                durationUnit === unit.value
+                                    ? 'bg-primary text-white'
+                                    : 'text-slate-500 hover:text-primary dark:text-gray-400'
+                            "
+                            @click="durationUnit = unit.value"
+                        >
+                            {{ unit.label }}
+                        </button>
+                    </div>
+                </div>
+
                 <BaseInput
-                    label="Duration (hours)"
-                    :model-value="model.time_span"
-                    @update:model-value="update('time_span', $event)"
+                    :label="`Duration (${currentDurationUnit.label.toLowerCase()})`"
+                    :model-value="durationAmount"
+                    @update:model-value="setDurationAmount"
                     mode="number"
-                    :min="String(minAdlHours)"
-                    placeholder="Enter total hours"
+                    :placeholder="`Enter total ${currentDurationUnit.label.toLowerCase()}`"
                     :error="errors?.time_span"
                     required
                 />
+
+                <p
+                    v-if="durationUnit !== 'hours' && Number(model.time_span) > 0"
+                    class="mt-1.5 text-xs text-slate-500 dark:text-gray-400"
+                >
+                    = {{ Number(model.time_span) }} hrs
+                </p>
 
                 <div class="mt-4">
                     <p
@@ -913,4 +940,55 @@ const addDurationPreset = (hours: number) => {
 const resetDuration = () => {
     update("time_span", String(minAdlHours.value));
 };
+
+const durationUnits = [
+    { label: "Hours", value: "hours", hours: 1 },
+    { label: "Days", value: "days", hours: 24 },
+    { label: "Months", value: "months", hours: 24 * 30 },
+] as const;
+
+const durationUnit = ref<(typeof durationUnits)[number]["value"]>("hours");
+
+const currentDurationUnit = computed(
+    () => durationUnits.find((unit) => unit.value === durationUnit.value)!,
+);
+
+const durationAmount = ref("");
+
+const syncDurationAmount = () => {
+    const hours = Number(props.model.time_span);
+    durationAmount.value =
+        props.model.time_span === "" || isNaN(hours)
+            ? ""
+            : String(
+                  Math.round((hours / currentDurationUnit.value.hours) * 100) /
+                      100,
+              );
+};
+
+const setDurationAmount = (value: string | number) => {
+    durationAmount.value = String(value ?? "");
+    const amount = Number(value);
+    update(
+        "time_span",
+        value === "" || isNaN(amount)
+            ? ""
+            : String(Math.round(amount * currentDurationUnit.value.hours)),
+    );
+};
+
+watch(durationUnit, syncDurationAmount);
+
+watch(
+    () => props.model.time_span,
+    (hours) => {
+        const expected = Math.round(
+            Number(durationAmount.value) * currentDurationUnit.value.hours,
+        );
+        if (durationAmount.value === "" || Number(hours) !== expected) {
+            syncDurationAmount();
+        }
+    },
+    { immediate: true },
+);
 </script>

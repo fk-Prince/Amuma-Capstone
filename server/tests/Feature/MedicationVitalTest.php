@@ -609,7 +609,7 @@ class MedicationVitalTest extends TestCase
         $this->assertSame(72, $vital->fresh()->heart_rate);
     }
 
-    public function test_patient_readers_can_view_but_not_record(): void
+    public function test_patient_readers_without_the_medications_module_cannot_view_records(): void
     {
         $medication = $this->createMedication();
         $this->createVital();
@@ -626,11 +626,9 @@ class MedicationVitalTest extends TestCase
         Sanctum::actingAs($user);
 
         $this->getJson('/api/medications?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
-            ->assertOk()
-            ->assertJsonPath('meta.total', 1);
+            ->assertForbidden();
         $this->getJson('/api/vitals?branch_uuid=' . $this->branchUuid . '&patient_uuid=' . $this->patientUuid)
-            ->assertOk()
-            ->assertJsonPath('meta.total', 1);
+            ->assertForbidden();
 
         $this->postJson('/api/medications', [
             'branch_uuid' => $this->branchUuid,

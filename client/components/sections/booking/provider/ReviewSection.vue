@@ -55,15 +55,47 @@
                         >
                             <div class="flex items-center justify-between">
                                 <span
-                                    class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                    class="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                                 >
                                     Total Amount
+                                    <button
+                                        v-if="totalBreakdown.length"
+                                        type="button"
+                                        class="text-slate-400 transition hover:text-primary dark:text-gray-500"
+                                        :class="showBreakdown ? 'text-primary' : ''"
+                                        aria-label="How the total is calculated"
+                                        @click="showBreakdown = !showBreakdown"
+                                    >
+                                        <Info class="h-3.5 w-3.5" />
+                                    </button>
                                 </span>
                                 <span
-                                    class="text-2xl font-bold text-primary tabular-nums"
+                                    class="text-lg font-bold text-primary tabular-nums"
                                 >
                                     {{ row.value }}
                                 </span>
+                            </div>
+
+                            <div
+                                v-if="showBreakdown && totalBreakdown.length"
+                                class="mt-2 space-y-1 rounded-md border border-slate-200 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-white/5"
+                            >
+                                <div
+                                    v-for="line in totalBreakdown"
+                                    :key="line.label"
+                                    class="flex items-center justify-between gap-3 text-xs"
+                                >
+                                    <span
+                                        class="text-slate-500 dark:text-gray-400"
+                                    >
+                                        {{ line.label }}
+                                    </span>
+                                    <span
+                                        class="font-medium text-slate-700 tabular-nums dark:text-gray-200"
+                                    >
+                                        {{ line.value }}
+                                    </span>
+                                </div>
                             </div>
 
                             <div
@@ -522,6 +554,44 @@ const bookingAmount = computed(() =>
 const balanceAmount = computed(() =>
     Math.max(bookingTotal.value - bookingAmount.value, 0),
 );
+
+const showBreakdown = ref(false);
+
+const totalBreakdown = computed(() => {
+    const lines: { label: string; value: string }[] = [];
+
+    if (props.category !== "homecare") {
+        if (!facilityTotal.value) return lines;
+        lines.push({
+            label: [props.facility.plan, props.facility.billing_cycle]
+                .filter(Boolean)
+                .join(" · "),
+            value: formatCurrency(facilityTotal.value),
+        });
+    } else if (props.homecare?.type === "ADL") {
+        const hours = Number(props.homecare.time_span ?? 0);
+        if (!hours || !adlRatePerHour.value) return lines;
+        lines.push({
+            label: `${hours} hrs × ${formatCurrency(adlRatePerHour.value)}/hr`,
+            value: formatCurrency(bookingTotal.value),
+        });
+    } else {
+        if (!selectedServicesTotal.value) return lines;
+        lines.push({
+            label: selectedServiceLabel.value || "Selected service",
+            value: formatCurrency(selectedServicesTotal.value),
+        });
+    }
+
+    if (props.showPayment && bookingPercent.value < 100) {
+        lines.push({
+            label: `${bookingPercent.value}% of ${formatCurrency(bookingTotal.value)}`,
+            value: formatCurrency(bookingAmount.value),
+        });
+    }
+
+    return lines;
+});
 
 const preferredTime = computed(() => {
     const time = props.homecare?.prefered_time;

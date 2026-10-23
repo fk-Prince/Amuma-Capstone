@@ -37,9 +37,9 @@ class TransactionService
         return $this->transactionRepository->findBookingPayment($transactionCode);
     }
 
-    public function paginateForBranch(mixed $branchId, string $search, int $perPage)
+    public function paginateForBranch(mixed $branchId, string $search, int $perPage, ?string $type = null)
     {
-        return $this->transactionRepository->paginateForBranch($branchId, $search, $perPage);
+        return $this->transactionRepository->paginateForBranch($branchId, $search, $perPage, $type);
     }
 
     public function paymentsForBookings(array $bookingIds)

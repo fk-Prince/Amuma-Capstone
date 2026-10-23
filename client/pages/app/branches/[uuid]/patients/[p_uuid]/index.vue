@@ -23,8 +23,8 @@ import Combobox from "~/components/ui/Combobox.vue";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientAdmission from "~/components/sections/app/Patient/PatientAdmission.vue";
 import PatientEditModal from "~/components/sections/app/Patient/PatientEditModal.vue";
-import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import { ChevronRight, Stethoscope, HeartPulse } from "lucide-vue-next";
+import { Modules } from "~/types/module";
 import { type ConflictItem } from "~/types/schedule";
 import type {
     Medication,
@@ -41,7 +41,8 @@ import type {
 useHead({ title: "Patient Information" });
 
 const { success, error } = useToast();
-const { canViewMedications } = usePermissions();
+const { canViewMedications, hasModule } = usePermissions();
+const canViewSchedules = computed(() => hasModule(Modules.Schedules));
 
 definePageMeta({
     layout: "dashboard",
@@ -420,6 +421,7 @@ function resetSchedule(updated: ScheduleItem) {
 }
 
 async function refreshSchedule() {
+    if (!canViewSchedules.value) return;
     isFetchingSchedule.value = true;
     try {
         await fetchSchedules(
@@ -434,7 +436,7 @@ async function refreshSchedule() {
 }
 
 async function loadSchedulesIfNeeded(from: string, to: string, tab: Tab) {
-    if (tab !== "Schedule") return;
+    if (tab !== "Schedule" || !canViewSchedules.value) return;
     isFetchingSchedule.value = true;
     try {
         await fetchSchedules(uuid.value, b_uuid.value, from, to);
@@ -750,16 +752,21 @@ onMounted(async () => {
                             </nav>
                         </div>
 
-                        <PlanLockNotice
+                        <p
                             v-if="
                                 (activeTab === 'Medication' ||
                                     activeTab === 'Vital Signs') &&
                                 !canViewMedications
                             "
-                            class="mb-5"
-                            :title="`${activeTab === 'Medication' ? 'Medications' : 'Vital signs'} are restricted`"
-                            message="You need the Medications permission to view and record this patient's medications and vital signs."
-                        />
+                            class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
+                        >
+                            You don't have permission to see this
+                            {{
+                                activeTab === "Medication"
+                                    ? "medication"
+                                    : "vital signs"
+                            }}.
+                        </p>
 
                         <template
                             v-else-if="activeTab === 'Medication'"
@@ -898,7 +905,14 @@ onMounted(async () => {
                             v-if="activeTab === 'Admission' && patientData"
                             :patient="patientData"
                         />
-                        <div v-if="activeTab === 'Schedule'">
+                        <p
+                            v-if="activeTab === 'Schedule' && !canViewSchedules"
+                            class="py-8 text-center text-sm text-gray-400 dark:text-gray-500"
+                        >
+                            You don't have permission to see this schedule.
+                        </p>
+
+                        <div v-else-if="activeTab === 'Schedule'">
                             <div
                                 class="mb-5 rounded-2xl bg-white p-4 dark:bg-secondary"
                             >

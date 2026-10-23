@@ -452,10 +452,17 @@ class InvoiceService
 
     public function transactions(array $payload)
     {
+        $type = in_array($payload['type'] ?? null, [
+            Transaction::TYPE_PAYMENT,
+            Transaction::TYPE_REFUND,
+            Transaction::TYPE_WITHDRAW,
+        ], true) ? $payload['type'] : null;
+
         $page = $this->transactions->paginateForBranch(
             $payload['branch_id'],
             trim((string) ($payload['search'] ?? '')),
-            (int) ($payload['per_page'] ?? 10)
+            (int) ($payload['per_page'] ?? 10),
+            $type
         );
 
         return response()->json([

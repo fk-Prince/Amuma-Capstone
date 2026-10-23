@@ -136,7 +136,7 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     },
     [Modules.Patients]: {
         [PermissionAction.Read]:
-            "Open a resident's profile and their records: diagnoses, assessments, medications, vital signs, ADL and care history.",
+            "Open a resident's profile and their records: diagnoses, assessments, ADL and care history.",
         [PermissionAction.Create]:
             "Add new records for a resident already at the branch, such as a diagnosis, an assessment, an activity or an ADL entry.",
         [PermissionAction.Update]:
@@ -146,7 +146,7 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     },
     [Modules.Medications]: {
         [PermissionAction.Read]:
-            "Open the Medications page and see each resident's medications, the doses given or missed, and their vital sign readings.",
+            "See each resident's medications, the doses given or missed, and their vital sign readings, on the Medications page and the patient profile.",
         [PermissionAction.Create]:
             "Add a medication to a resident's schedule and record a new set of vital signs.",
         [PermissionAction.Update]:

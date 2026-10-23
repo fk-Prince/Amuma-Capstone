@@ -68,7 +68,7 @@
             <div
                 :class="
                     showPayment
-                        ? 'grid grid-cols-1 xl:grid-cols-[1fr_450px] gap-6 items-start'
+                        ? 'grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start'
                         : ''
                 "
             >

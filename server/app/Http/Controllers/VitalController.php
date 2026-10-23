@@ -17,7 +17,7 @@ class VitalController extends Controller
 
     public function index(Request $request)
     {
-        $this->requireMedications($request, PermissionAction::Read, [ModuleEnum::Medications, ModuleEnum::Patients]);
+        $this->requireMedications($request, PermissionAction::Read);
         return $this->vitalService->listVitals($request->all());
     }
 
@@ -33,10 +33,10 @@ class VitalController extends Controller
         return $this->vitalService->updateVital($request->user(), $request->all(), $id);
     }
 
-    private function requireMedications(Request $request, PermissionAction $action, ModuleEnum|array $module = ModuleEnum::Medications): void
+    private function requireMedications(Request $request, PermissionAction $action): void
     {
         $branch = BranchGuard::resolveBranch((string) $request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, $module, $action);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Medications, $action);
         BranchGuard::mergeRequest($request, $branch);
     }
 }
