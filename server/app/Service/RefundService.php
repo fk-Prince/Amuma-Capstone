@@ -597,7 +597,7 @@ class RefundService
                 'message' => $message,
             ]);
 
-            event(new NotificationEvent(
+            NotificationEvent::safe(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $withdrawal->branch?->uuid,
                 $message,

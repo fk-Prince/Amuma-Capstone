@@ -64,7 +64,7 @@ class SubscriptionReminderService
                         'message' => $text,
                     ]);
 
-                    event(new NotificationEvent(
+                    NotificationEvent::safe(new NotificationEvent(
                         (string) $recipient['uuid'],
                         (string) $link->branch->uuid,
                         $text,

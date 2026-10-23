@@ -25,15 +25,6 @@ class NotificationService
         private EmployeeRepository $employeeRepository,
     ) {}
 
-    private function broadcast(NotificationEvent $event): void
-    {
-        try {
-            event($event);
-        } catch (\Throwable $e) {
-            Log::error('Real-time notification failed', ['error' => $e->getMessage()]);
-        }
-    }
-
 
 
     private const ADMISSION_ROLES = ['admission'];
@@ -57,7 +48,7 @@ class NotificationService
                 'reference_id' => $payload['reference_id'],
             ]);
 
-            $this->broadcast(new NotificationEvent(
+            NotificationEvent::safe(new NotificationEvent(
                 $employee['uuid'],
                 $branch->uuid,
                 $payload['message'],
@@ -155,7 +146,7 @@ class NotificationService
             ]);
 
             if ($client->uuid) {
-                $this->broadcast(new NotificationEvent(
+                NotificationEvent::safe(new NotificationEvent(
                     $client->uuid,
                     $branch->uuid,
                     $message,
@@ -250,7 +241,7 @@ class NotificationService
             ]);
 
             if ($guardian->uuid) {
-                $this->broadcast(new NotificationEvent(
+                NotificationEvent::safe(new NotificationEvent(
                     $guardian->uuid,
                     $branch?->uuid ?? '',
                     $message,
@@ -285,7 +276,7 @@ class NotificationService
                 'message' => $message,
             ]);
 
-            $this->broadcast(new NotificationEvent(
+            NotificationEvent::safe(new NotificationEvent(
                 $employee['uuid'],
                 $branch->uuid,
                 $message,
@@ -349,7 +340,7 @@ class NotificationService
                 'message' => $message,
             ]);
 
-            $this->broadcast(new NotificationEvent(
+            NotificationEvent::safe(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $branch->uuid,
                 $message,

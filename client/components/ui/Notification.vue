@@ -209,6 +209,7 @@ import { onClickOutside } from "@vueuse/core";
 import { Bell, Building2, Volume2, VolumeX } from "lucide-vue-next";
 import { playNotificationSound, useSoundPrefs } from "~/composables/useSounds";
 import { notificationService } from "~/api/notification/NotificationService";
+import { scheduleService } from "~/api/schedule/ScheduleService";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute, useRouter } from "vue-router";
@@ -333,8 +334,42 @@ const markRead = async (id: number) => {
     }
 };
 
+const openSchedule = async (notif: Notification) => {
+    const branchUuid = notif.branch?.uuid;
+    const code = notif.reference_id;
+
+    if (!branchUuid || !code || !route.path.startsWith("/app/branches")) return;
+
+    try {
+        const res: any = await scheduleService.action({
+            type: "locate",
+            branch_uuid: branchUuid,
+            schedule_code: code,
+        });
+        const found = res?.data;
+
+        open.value = false;
+
+        await router.push({
+            path: `/app/branches/${branchUuid}/schedules`,
+            query: {
+                type: found?.type ?? "medical",
+                ...(found?.date && { date_from: found.date, date_to: found.date }),
+                search: code,
+            },
+        });
+    } catch {
+        return;
+    }
+};
+
 const openNotification = async (notif: Notification) => {
     markRead(notif.id);
+
+    if (notif.message_type === "Schedule") {
+        await openSchedule(notif);
+        return;
+    }
 
     if (notif.message_type !== "Booking" || !notif.reference_id) return;
     if (!notif.branch?.uuid || !route.path.startsWith("/app/branches")) return;

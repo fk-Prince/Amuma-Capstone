@@ -1785,7 +1785,7 @@ class SubscriptionService
             ]);
 
             try {
-                event(new NotificationEvent(
+                NotificationEvent::safe(new NotificationEvent(
                     $admin->uuid,
                     $branch->uuid,
                     $message,
@@ -1996,7 +1996,7 @@ class SubscriptionService
             'message' => $message,
         ]);
 
-        event(new NotificationEvent(
+        NotificationEvent::safe(new NotificationEvent(
             (string) $owner->uuid,
             (string) $branch->uuid,
             $message,
@@ -2283,7 +2283,7 @@ class SubscriptionService
             'message' => $message,
         ]);
 
-        event(new NotificationEvent(
+        NotificationEvent::safe(new NotificationEvent(
             (string) $owner->uuid,
             (string) $branch->uuid,
             $message,

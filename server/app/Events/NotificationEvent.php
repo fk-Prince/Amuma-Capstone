@@ -22,6 +22,15 @@ class NotificationEvent implements ShouldBroadcastNow
         private mixed $booking
     ) {}
 
+    public static function safe(self $event): void
+    {
+        try {
+            event($event);
+        } catch (\Throwable $e) {
+            Log::error('Real-time notification failed', ['error' => $e->getMessage()]);
+        }
+    }
+
 
     public function broadcastOn()
     {

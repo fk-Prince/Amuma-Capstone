@@ -47,6 +47,11 @@ class ScheduleController extends Controller
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             BranchGuard::mergeRequest($request, $branch);
             return $this->scheduleService->overview($request->all());
+        } else if ($request->type === 'locate') {
+            $branch = BranchGuard::resolveBranch($request->branch_uuid);
+            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Read);
+            BranchGuard::mergeRequest($request, $branch);
+            return $this->scheduleService->locate($request->all());
         } else if ($request->type === 'unassigned_today') {
             $branch = BranchGuard::resolveBranch($request->branch_uuid);
             BranchGuard::mergeRequest($request, $branch);

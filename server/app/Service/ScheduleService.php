@@ -559,13 +559,14 @@ class ScheduleService
                 'from_user_id' => $user->user_id,
                 'message_type' => 'Schedule',
                 'message' => $message,
+                'reference_id' => $schedule->schedule_code,
             ]);
 
-            event(new NotificationEvent(
+            NotificationEvent::safe(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $branch->uuid,
                 $message,
-                (string) $schedule->schedule_id,
+                (string) $schedule->schedule_code,
                 'Schedule',
                 null,
             ));
@@ -708,6 +709,28 @@ class ScheduleService
     public function overview(array $payload)
     {
         return $this->scheduleRepository->getOverview($payload);
+    }
+
+    public function locate(array $payload)
+    {
+        $schedule = $this->scheduleRepository->findByCodeForBranch(
+            (string) ($payload['schedule_code'] ?? ''),
+            (int) $payload['branch_id']
+        );
+
+        if (!$schedule) {
+            throw new Exception('Schedule not found.', 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'schedule_code' => $schedule->schedule_code,
+                'type' => $schedule->scheduleServices->contains('type', ScheduleServiceModel::TYPE_ADL)
+                    ? 'adl'
+                    : 'medical',
+                'date' => $schedule->scheduled_at?->toDateString(),
+            ],
+        ]);
     }
 
     public function unassignedToday(array $payload)

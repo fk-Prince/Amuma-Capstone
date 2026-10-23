@@ -126,6 +126,16 @@ class ScheduleRepository
         }
     }
 
+    public function findByCodeForBranch(string $code, int $branchId): ?Schedule
+    {
+        return Schedule::query()
+            ->select(['schedule_id', 'schedule_code', 'patient_id', 'scheduled_at'])
+            ->with('scheduleServices:schedule_services_id,schedule_id,type')
+            ->where('schedule_code', $code)
+            ->whereHas('patient', fn($q) => $q->where('branch_id', $branchId))
+            ->first();
+    }
+
     public function unassignedToday(int $branchId)
     {
         $today = now()->toDateString();
