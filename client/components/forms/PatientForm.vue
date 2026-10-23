@@ -196,6 +196,7 @@
 </template>
 
 <script setup lang="ts">
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 import BaseInput from "../ui/BaseInput.vue";
 import ListInput from "../ui/ListInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
@@ -219,6 +220,11 @@ function update<K extends keyof Patient>(key: K, value: Patient[K]) {
         ...props.model,
         [key]: value,
     });
+
+    if (hasEmoji(value)) {
+        emit("update:errors", { ...props.errors, [key]: EMOJI_MESSAGE });
+        return;
+    }
 
     clearError(key as string);
 }

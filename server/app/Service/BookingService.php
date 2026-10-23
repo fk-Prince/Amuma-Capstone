@@ -183,6 +183,7 @@ class BookingService
             );
         }
 
+        $this->bookingHelper->assertNoEmoji($payload['booking_data'] ?? []);
         $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
 
         $breakdown = $this->bookingHelper->resolveBookingPayment($payload);
@@ -331,6 +332,7 @@ class BookingService
             throw new Exception('Homecare bookings require a downpayment before they can be submitted.', 422);
         }
 
+        $this->bookingHelper->assertNoEmoji($payload['booking_data'] ?? []);
         $this->bookingHelper->assertDiagnoses($payload['booking_data']['diagnoses'] ?? []);
 
         return DB::transaction(function () use ($user, $payload) {
@@ -424,6 +426,7 @@ class BookingService
 
         $this->bookingHelper->assertHomecareLeadTime($data, $branch);
 
+        $this->bookingHelper->assertNoEmoji($payload);
         $this->bookingHelper->assertDiagnoses($payload['diagnoses'] ?? []);
 
         $patient = $this->bookingHelper->resolvePatient($payload['patient']);

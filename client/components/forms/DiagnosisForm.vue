@@ -232,6 +232,7 @@
 </template>
 
 <script setup lang="ts">
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 import { ref, computed, watch, nextTick } from "vue";
 import {
     FileText,
@@ -314,6 +315,15 @@ function update<K extends keyof Diagnosis>(
     diagnoses.value[index] = { ...diagnoses.value[index], [key]: value };
 
     emit("update:model", [...diagnoses.value]);
+
+    if (hasEmoji(value)) {
+        emit("update:errors", {
+            ...props.errors,
+            [`${String(key)}.${index}`]: EMOJI_MESSAGE,
+        });
+        return;
+    }
+
     clearError(`${String(key)}.${index}`);
 }
 

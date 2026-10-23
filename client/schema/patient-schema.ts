@@ -2,6 +2,9 @@ import { z } from "zod";
 import type { Assessment, Diagnosis, Guardian, Patient } from "~/types/patient";
 import { optionalPhoneNumber, phoneNumber } from "~/schema/phone-schema";
 import { getLocalDateStr } from "~/utils/time";
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
+
+const noEmoji = (value: unknown) => !hasEmoji(value);
 
 const decimalString = z
     .string()
@@ -12,13 +15,13 @@ const decimalString = z
 
 export const createPatientSchema = (category: "homecare" | "facility" | "") =>
     z.object({
-        first_name: z.string().min(1, "First name is required"),
-        middle_name: z.string().optional(),
-        last_name: z.string().min(1, "Last name is required"),
-        suffix: z.string().max(20, "Suffix is too long").optional(),
+        first_name: z.string().min(1, "First name is required").refine(noEmoji, EMOJI_MESSAGE),
+        middle_name: z.string().optional().refine(noEmoji, EMOJI_MESSAGE),
+        last_name: z.string().min(1, "Last name is required").refine(noEmoji, EMOJI_MESSAGE),
+        suffix: z.string().max(20, "Suffix is too long").optional().refine(noEmoji, EMOJI_MESSAGE),
         gender: z.string().min(1, "Gender is required"),
-        citizenship: z.string().min(1, "Citizenship is required"),
-        occupation: z.string().min(1, "Occupation is required"),
+        citizenship: z.string().min(1, "Citizenship is required").refine(noEmoji, EMOJI_MESSAGE),
+        occupation: z.string().min(1, "Occupation is required").refine(noEmoji, EMOJI_MESSAGE),
         date_of_birth: z.string().min(1, "Date of birth is required"),
         phone_number: optionalPhoneNumber(),
         marital_status: z.string().min(1, "Marital status is required"),
@@ -40,19 +43,19 @@ export const createPatientSchema = (category: "homecare" | "facility" | "") =>
                 .optional(),
         ),
         blood_type: z.string().optional(),
-        allergies: z.string().optional(),
-        address: z.string().min(1, "Address is required"),
+        allergies: z.string().optional().refine(noEmoji, EMOJI_MESSAGE),
+        address: z.string().min(1, "Address is required").refine(noEmoji, EMOJI_MESSAGE),
     });
 
 export const guardianSchema = z.object({
-    first_name: z.string().min(1, "First name is required"),
-    middle_name: z.string().optional(),
-    last_name: z.string().min(1, "Last name is required"),
+    first_name: z.string().min(1, "First name is required").refine(noEmoji, EMOJI_MESSAGE),
+    middle_name: z.string().optional().refine(noEmoji, EMOJI_MESSAGE),
+    last_name: z.string().min(1, "Last name is required").refine(noEmoji, EMOJI_MESSAGE),
     phone_number: phoneNumber(),
-    email: z.string().min(1, "Email is required").email("Enter a valid email"),
-    relationship: z.string().min(1, "Relationship is required"),
-    occupation: z.string().min(1, "Occupation is required"),
-    address: z.string().min(1, "Address is required"),
+    email: z.string().min(1, "Email is required").email("Enter a valid email").refine(noEmoji, EMOJI_MESSAGE),
+    relationship: z.string().min(1, "Relationship is required").refine(noEmoji, EMOJI_MESSAGE),
+    occupation: z.string().min(1, "Occupation is required").refine(noEmoji, EMOJI_MESSAGE),
+    address: z.string().min(1, "Address is required").refine(noEmoji, EMOJI_MESSAGE),
 });
 
 const MAX_DIAGNOSIS_LENGTH = 200;
@@ -115,7 +118,8 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
                 .max(
                     MAX_DIAGNOSIS_LENGTH,
                     `Diagnosis must be ${MAX_DIAGNOSIS_LENGTH} characters or fewer`,
-                ),
+                )
+                .refine(noEmoji, EMOJI_MESSAGE),
             diagnosis_date: diagnosisDateSchema,
             diagnosis_notes: z
                 .string()
@@ -123,7 +127,8 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
                 .max(
                     MAX_NOTES_LENGTH,
                     `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
-                ),
+                )
+                .refine(noEmoji, EMOJI_MESSAGE),
             diagnosis_file: diagnosisFileSchema,
             diagnosis_file_name: z.string().optional(),
         })

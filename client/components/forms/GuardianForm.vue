@@ -363,6 +363,7 @@ onMounted(() => {
     </section>
 </template>
 <script setup lang="ts">
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 import { reactive, computed, onMounted } from "vue";
 import { Loader2, Lock, Search, UserCheck, X } from "lucide-vue-next";
 import BaseInput from "@/components/ui/BaseInput.vue";
@@ -402,6 +403,11 @@ function update<K extends keyof Guardian>(key: K, value: Guardian[K]) {
         ...props.model,
         [key]: value,
     });
+
+    if (hasEmoji(value)) {
+        emit("update:errors", { ...props.errors, [key]: EMOJI_MESSAGE });
+        return;
+    }
 
     clearError(key as string);
 }

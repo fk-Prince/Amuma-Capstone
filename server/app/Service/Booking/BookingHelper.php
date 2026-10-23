@@ -5,6 +5,7 @@ namespace App\Service\Booking;
 use App\Models\Booking;
 use App\Repository\BranchContractRepository;
 use App\Repository\ServiceRepository;
+use App\Rules\NoEmoji;
 use App\Service\External\SupabaseService;
 use Carbon\Carbon;
 use Exception;
@@ -283,12 +284,33 @@ class BookingHelper
         return $patient;
     }
 
+    public function assertNoEmoji(array $data): void
+    {
+        $fields = [
+            'patient' => $data['patient'] ?? [],
+            'guardian' => $data['guardian'] ?? [],
+            'diagnoses' => $data['diagnoses'] ?? [],
+        ];
+
+        $rules = [
+            'patient.*' => [new NoEmoji()],
+            'guardian.*' => [new NoEmoji()],
+            'diagnoses.*.diagnosis' => [new NoEmoji()],
+            'diagnoses.*.diagnosis_notes' => [new NoEmoji()],
+        ];
+
+        validator($fields, $rules, [], [
+            'patient.*' => 'patient details',
+            'guardian.*' => 'guardian details',
+            'diagnoses.*.diagnosis' => 'diagnosis',
+            'diagnoses.*.diagnosis_notes' => 'diagnosis notes',
+        ])->validate();
+    }
+
     public function assertDiagnoses(mixed $diagnoses): void
     {
         $windowStart = now()->subMonths(self::DIAGNOSIS_WINDOW_MONTHS)->toDateString();
 
-        // A diagnosis is optional: an untouched entry is skipped, a started one
-        // has to be complete and recent.
         $started = collect(is_array($diagnoses) ? $diagnoses : [])
             ->filter(fn($entry) => is_array($entry) && collect([
                 'diagnosis',

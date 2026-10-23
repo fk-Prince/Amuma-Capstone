@@ -30,6 +30,16 @@ class BranchSubscriptionSeeder extends Seeder
         ['plan' => 'B', 'type' => Plan::TYPE_SME, 'branches' => 2, 'status' => 'active'],
         ['plan' => 'A', 'type' => Plan::TYPE_SME, 'branches' => 2, 'status' => 'active'],
         ['plan' => 'C', 'type' => Plan::TYPE_SME, 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'B', 'type' => Plan::TYPE_SME, 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'A', 'type' => Plan::TYPE_SME, 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'C', 'type' => Plan::TYPE_SME, 'branches' => 1, 'status' => 'active'],
+        ['plan' => 'C', 'type' => Plan::TYPE_ENTERPRISE, 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'A', 'type' => Plan::TYPE_SME, 'branches' => 2, 'status' => 'active', 'days_left' => 12],
+        ['plan' => 'C', 'type' => Plan::TYPE_ENTERPRISE, 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'B', 'type' => Plan::TYPE_ENTERPRISE, 'branches' => 2, 'status' => 'active'],
+        ['plan' => 'A', 'type' => Plan::TYPE_SME, 'branches' => 1, 'status' => 'pending'],
+        ['plan' => 'A', 'type' => Plan::TYPE_ENTERPRISE, 'branches' => 3, 'status' => 'active'],
+        ['plan' => 'B', 'type' => Plan::TYPE_SME, 'branches' => 2, 'status' => 'active'],
     ];
 
     private const OWNERS = [
@@ -37,6 +47,16 @@ class BranchSubscriptionSeeder extends Seeder
         ['Marissa', 'Villanueva', 'Sunrise Elder Care'],
         ['Rodrigo', 'Dela Pena', 'Golden Years Care Group'],
         ['Lorenzo', 'Dimaculangan', 'CareStream Home Health Service Inc.'],
+        ['Vilma', 'Ramos', 'Davao Viel Geriatric Home Care Center'],
+        ['Carmela', 'Bautista', 'Tahanan Caregiving Care Services'],
+        ['Remedios', 'Montero', "Riemon Haven's Homecare Nursing Home"],
+        ['Amina', 'Hassan', 'Mindanao Kalinga Care Network'],
+        ['Teresita', 'Gumban', 'SouthPoint Silver Caregivers'],
+        ['Norhaya', 'Mangudadatu', 'SOCCSKSARGEN Wellness Caregivers'],
+        ['Felipe', 'Baclayon', 'Northern Mindanao Golden Haven'],
+        ['Liza', 'Ecleo', 'Surigao Coastal Home Health'],
+        ['Mae', 'Plaza', 'Caraga Compassion Caregivers Inc.'],
+        ['Gerardo', 'Cagas', 'Davao Gulf Senior Living'],
     ];
 
     private const AMUMA_EXTRA_BRANCHES = [
@@ -58,6 +78,25 @@ class BranchSubscriptionSeeder extends Seeder
         ['Golden Years Care Group - Cebu Branch', 'Osmena Boulevard', 'Cebu City', 'Cebu', 10.3081889, 123.8936359],
         ['Golden Years Care Group - Mandaue Branch', 'Magsaysay Street', 'Mandaue City', 'Cebu', 10.3269049, 123.9427295],
         ['CareStream Home Health Service Inc. - Cagayan de Oro Branch', 'Bonifacio Street', 'Cagayan de Oro', 'Misamis Oriental', 8.4756417, 124.6421532],
+        ['Davao Viel Geriatric Home Care Center - Ecoland Branch', 'Ecoland Drive', 'Davao City', 'Davao del Sur', 7.0525000, 125.5935000],
+        ['Tahanan Caregiving Care Services - Quimpo Branch', 'Quimpo Boulevard', 'Davao City', 'Davao del Sur', 7.0670000, 125.5980000],
+        ["Riemon Haven's Homecare Nursing Home - Lanang Branch", 'Damosa Road', 'Davao City', 'Davao del Sur', 7.1010000, 125.6310000],
+        ['Mindanao Kalinga Care Network - Zamboanga Branch', 'Valderosa Street', 'Zamboanga City', 'Zamboanga del Sur', 6.9095000, 122.0760000],
+        ['Mindanao Kalinga Care Network - Pagadian Branch', 'Rizal Avenue', 'Pagadian City', 'Zamboanga del Sur', 7.8257000, 123.4370000],
+        ['Mindanao Kalinga Care Network - Dipolog Branch', 'Rizal Avenue', 'Dipolog City', 'Zamboanga del Norte', 8.5872000, 123.3409000],
+        ['SouthPoint Silver Caregivers - General Santos Branch', 'Pioneer Avenue', 'General Santos City', 'South Cotabato', 6.1164000, 125.1716000],
+        ['SouthPoint Silver Caregivers - Koronadal Branch', 'General Santos Drive', 'Koronadal City', 'South Cotabato', 6.5008000, 124.8469000],
+        ['SOCCSKSARGEN Wellness Caregivers - Kidapawan Branch', 'Quezon Boulevard', 'Kidapawan City', 'Cotabato', 7.0083000, 125.0894000],
+        ['SOCCSKSARGEN Wellness Caregivers - Cotabato Branch', 'Sinsuat Avenue', 'Cotabato City', 'Maguindanao del Norte', 7.2236000, 124.2464000],
+        ['SOCCSKSARGEN Wellness Caregivers - Tacurong Branch', 'National Highway', 'Tacurong City', 'Sultan Kudarat', 6.6925000, 124.6764000],
+        ['Northern Mindanao Golden Haven - Valencia Branch', 'Sayre Highway', 'Valencia City', 'Bukidnon', 7.9064000, 125.0942000],
+        ['Northern Mindanao Golden Haven - Cagayan de Oro Branch', 'Corrales Avenue', 'Cagayan de Oro', 'Misamis Oriental', 8.4822000, 124.6472000],
+        ['Surigao Coastal Home Health - Surigao Branch', 'Rizal Street', 'Surigao City', 'Surigao del Norte', 9.7840000, 125.4888000],
+        ['Caraga Compassion Caregivers Inc. - Butuan Branch', 'J.C. Aquino Avenue', 'Butuan City', 'Agusan del Norte', 8.9475000, 125.5406000],
+        ['Caraga Compassion Caregivers Inc. - Tandag Branch', 'Rizal Street', 'Tandag City', 'Surigao del Sur', 9.0784000, 126.1986000],
+        ['Caraga Compassion Caregivers Inc. - San Francisco Branch', 'National Highway', 'San Francisco', 'Agusan del Sur', 8.5056000, 125.9772000],
+        ['Davao Gulf Senior Living - Sta. Cruz Branch', 'National Highway', 'Sta. Cruz', 'Davao del Sur', 6.8340000, 125.4130000],
+        ['Davao Gulf Senior Living - Malita Branch', 'Poblacion Road', 'Malita', 'Davao Occidental', 6.4044000, 125.6131000],
     ];
 
     private const AGENCY_REJECTION_REASONS = [
