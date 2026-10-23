@@ -24,26 +24,43 @@
             </p>
         </div>
 
-        <button
-            v-if="canStart"
-            type="button"
-            class="inline-flex shrink-0 items-center justify-center self-start whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98] sm:self-auto"
-            @click="startNow"
+        <div
+            v-if="practiceLink || canStart"
+            class="flex shrink-0 flex-wrap items-center gap-2 self-start sm:self-auto"
         >
-            Start now
-        </button>
+            <a
+                v-if="practiceLink"
+                :href="practiceLink"
+                title="Open a copy of this branch filled with demo patients. Nothing you do there touches your real branch."
+                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-transparent dark:text-amber-200 dark:hover:bg-amber-500/10"
+            >
+                <PlayCircle class="h-4 w-4" />
+                Try with demo data
+            </a>
+
+            <button
+                v-if="canStart"
+                type="button"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98]"
+                @click="startNow"
+            >
+                Start now
+            </button>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { FlaskConical } from "lucide-vue-next";
+import { FlaskConical, PlayCircle } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
 import { usePermissions } from "~/composables/usePermission";
+import { useSandbox } from "~/composables/useSandbox";
 import { Modules } from "~/types/module";
 
 const branchStore = useBranchStore();
 const { hasModule } = usePermissions();
+const { isSandbox, switchLink } = useSandbox();
 
 const branch = computed(() => branchStore.activeBranch);
 
@@ -58,6 +75,8 @@ const canStart = computed(
         branch.value?.subscription_status === "approved" &&
         hasModule(Modules.ManageSubscription),
 );
+
+const practiceLink = computed(() => (isSandbox.value ? "" : switchLink.value));
 
 function startNow() {
     if (!branch.value?.uuid) return;

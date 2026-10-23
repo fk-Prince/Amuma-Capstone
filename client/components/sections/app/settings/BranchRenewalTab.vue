@@ -123,11 +123,11 @@
                         <a
                             v-if="sandboxLink"
                             :href="sandboxLink"
-                            title="Open this branch in your sandbox: a copy with demo patients"
+                            title="Open a copy of this branch filled with demo patients. Nothing you do there touches your real branch."
                             class="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
                         >
-                            <FlaskConical class="h-3.5 w-3.5" />
-                            View in sandbox
+                            <PlayCircle class="h-3.5 w-3.5" />
+                            Try with demo data
                         </a>
                     </div>
 
@@ -1009,7 +1009,7 @@ import {
     CheckCircle2,
     CircleX,
     Clock,
-    FlaskConical,
+    PlayCircle,
     Info,
     RefreshCw,
     TriangleAlert,
@@ -1064,13 +1064,9 @@ const plans = ref<any[]>([]);
 
 const branchStore = useBranchStore();
 
-const { sandboxUrl } = useSandbox();
+const { isSandbox, switchLink } = useSandbox();
 
-const sandboxLink = computed(() =>
-    sandboxUrl.value && props.uuid && branchStore.activeBranch?.role_name === "agency_owner"
-        ? `${sandboxUrl.value}/app/branches/${props.uuid}/dashboard`
-        : "",
-);
+const sandboxLink = computed(() => (isSandbox.value ? "" : switchLink.value));
 
 const subscriptionVersion = useSubscriptionVersion();
 const announceChange = () => {

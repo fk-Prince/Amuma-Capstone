@@ -18,6 +18,7 @@
 
         <div class="flex-1 flex flex-col min-w-0 h-full gap-3">
             <PortalHeader @open="isOpen = true" />
+            <SandboxNotice show-exit />
 
             <main
                 class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
@@ -58,6 +59,7 @@
 import { nextTick, ref, watch } from "vue";
 import PortalSidebar from "~/components/sections/PortalSidebar.vue";
 import PortalHeader from "~/components/sections/PortalHeader.vue";
+import SandboxNotice from "~/components/sections/SandboxNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
 import { usePortalTour } from "~/composables/usePortalTour";
