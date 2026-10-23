@@ -30,7 +30,6 @@ class ApplyPendingSubscriptionPlans extends Command
                 'status' => Subscription::STATUS_ACTIVE,
             ]);
         }
-
         $this->info("Applied {$due->count()} pending plan(s).");
 
         return self::SUCCESS;

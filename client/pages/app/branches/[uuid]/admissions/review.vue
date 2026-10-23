@@ -266,7 +266,7 @@ function formatMoney(amount: number | string | null | undefined) {
 }
 
 async function fetchBalance() {
-    if (!referenceId.value) return;
+    if (!referenceId.value || !showPayment.value) return;
 
     try {
         const res = await invoiceService.show(
