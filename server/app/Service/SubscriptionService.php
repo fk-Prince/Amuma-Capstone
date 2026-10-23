@@ -427,6 +427,8 @@ class SubscriptionService
 
             $subscription->load(['plans', 'pendingPlan']);
 
+            $this->sandboxClient->syncLock($subscription);
+
             $message = match ($action) {
                 self::ACTION_ACTIVATE => __('Payment received. Your paid year starts today.'),
                 self::ACTION_PREPAY => __('Payment received. Your paid year starts on :date, when your free trial ends.', [

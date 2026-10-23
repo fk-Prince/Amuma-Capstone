@@ -24,6 +24,14 @@ class SandboxRepository
         return Branch::where('uuid', $uuid)->exists();
     }
 
+    public function setAgencyLock(string $agencyUuid, bool $locked): void
+    {
+        Subscription::whereHas('agency', fn($q) => $q->where('uuid', $agencyUuid))
+            ->update([
+                'status' => $locked ? Subscription::STATUS_EXPIRED : Subscription::STATUS_ACTIVE,
+            ]);
+    }
+
     public function hasBaseData(): bool
     {
         return Module::exists() && Plan::exists();

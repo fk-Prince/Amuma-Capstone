@@ -86,6 +86,13 @@ class AuthGuard
             return;
         }
 
+        if ($subscription->isLockedForPayment()) {
+            throw new Exception(
+                'Your free trial has ended, so this branch is read-only. Subscribe from Manage Subscription to unlock it.',
+                402
+            );
+        }
+
         $ended = in_array($subscription->status, [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED], true)
             || (
                 $subscription->status === Subscription::STATUS_ACTIVE

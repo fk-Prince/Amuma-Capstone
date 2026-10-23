@@ -40,6 +40,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VitalController;
 use App\Http\Controllers\XenditController;
+use App\Http\Middleware\BlockInSandbox;
 use Illuminate\Support\Facades\Route;
 
 
@@ -71,6 +72,7 @@ Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch'
 
 if (config('app.sandbox')) {
     Route::post('/sandbox/provision', [SandboxController::class, 'provision'])->middleware('throttle:30,1');
+    Route::post('/sandbox/lock', [SandboxController::class, 'lock'])->middleware('throttle:120,1');
 }
 
 
@@ -128,7 +130,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/caregiver-shifts', [CaregiverShiftController::class, 'index']);
     Route::post('/caregiver-shifts', [CaregiverShiftController::class, 'store']);
     Route::put('/caregiver-shifts/{id}', [CaregiverShiftController::class, 'update']);
-    Route::post('/subscriptions/action', [SubscriptionController::class, 'action']);
+    Route::post('/subscriptions/action', [SubscriptionController::class, 'action'])->middleware(BlockInSandbox::class);
     Route::apiResource('plans', PlanController::class)->only(['update']);
     Route::apiResource('employee-notes', EmployeeNoteController::class)->only(['index', 'store', 'update', 'destroy']);
 
@@ -160,22 +162,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/branches/dashboard', [BranchController::class, 'dashboard']);
 
     // SUBSCRIPTION
-    Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
-    Route::post('/subscriptions-trial', [SubscriptionController::class, 'startTrial']);
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);
     Route::get('/subscriptions-detail',  [SubscriptionController::class, 'retrieveSubscriptionDetail']);
-    Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
-    Route::post('/subscriptions-check-unique',  [SubscriptionController::class, 'checkUnique']);
-    Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
-    Route::post('/subscriptions-branch', [SubscriptionController::class, 'newBranchFromCapacity']);
-    Route::post('/subscriptions-branch-additional', [SubscriptionController::class, 'newAdditionalBranch']);
-    Route::post('/subscriptions-branch-resubmit', [SubscriptionController::class, 'resubmitBranch']);
-    Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
-    Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
-    Route::post('/subscriptions-cancel-test', [SubscriptionController::class, 'cancelTest']);
-    Route::post('/subscriptions-end-test', [SubscriptionController::class, 'endTest']);
-    Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
     Route::get('/subscriptions/payments/{reference}/invoice', [SubscriptionController::class, 'paymentInvoice']);
+
+    Route::middleware(BlockInSandbox::class)->group(function () {
+        Route::post('/subscriptions', [SubscriptionController::class, 'newSubscription']);
+        Route::post('/subscriptions-trial', [SubscriptionController::class, 'startTrial']);
+        Route::post('/subscriptions-validate',  [SubscriptionController::class, 'validateSubscription']);
+        Route::post('/subscriptions-check-unique',  [SubscriptionController::class, 'checkUnique']);
+        Route::post('/subscriptions-renew',  [SubscriptionController::class, 'renew']);
+        Route::post('/subscriptions-branch', [SubscriptionController::class, 'newBranchFromCapacity']);
+        Route::post('/subscriptions-branch-additional', [SubscriptionController::class, 'newAdditionalBranch']);
+        Route::post('/subscriptions-branch-resubmit', [SubscriptionController::class, 'resubmitBranch']);
+        Route::post('/subscriptions-branch-resubmit-purchase', [SubscriptionController::class, 'resubmitBranchWithPurchase']);
+        Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
+        Route::post('/subscriptions-cancel-test', [SubscriptionController::class, 'cancelTest']);
+        Route::post('/subscriptions-end-test', [SubscriptionController::class, 'endTest']);
+        Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
+    });
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);
 

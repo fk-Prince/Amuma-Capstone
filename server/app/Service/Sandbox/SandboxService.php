@@ -31,6 +31,11 @@ class SandboxService
 
     public function __construct(private SandboxRepository $sandboxRepository) {}
 
+    public function setLock(string $agencyUuid, bool $locked): void
+    {
+        $this->sandboxRepository->setAgencyLock($agencyUuid, $locked);
+    }
+
     public function provision(array $payload): void
     {
         if ($this->sandboxRepository->branchExists($payload['branch']['uuid'])) {

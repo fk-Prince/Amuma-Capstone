@@ -219,6 +219,61 @@ class SandboxProvisionTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_live_tells_the_demo_which_trials_are_locked(): void
+    {
+        config([
+            'app.sandbox' => false,
+            'services.sandbox.url' => 'https://sandbox.test',
+            'services.sandbox.secret' => 's3cret',
+        ]);
+
+        Http::fake(['sandbox.test/*' => Http::response(['message' => 'ok'])]);
+
+        app(ModuleSeeder::class)->run();
+        app(PlanSeeder::class)->run();
+
+        $payload = $this->payload();
+        $branch = app(\App\Repository\SandboxRepository::class)->createBranchWithOwner($payload);
+        Subscription::where('agency_id', $branch->agency_id)->update([
+            'mode' => Subscription::MODE_TEST,
+            'status' => Subscription::STATUS_EXPIRED,
+        ]);
+
+        $this->artisan('sandbox:sync-locks')->assertSuccessful();
+
+        Http::assertSent(fn($request) => $request->url() === 'https://sandbox.test/api/sandbox/lock'
+            && $request['agency_uuid'] === $payload['agency']['uuid']
+            && $request['locked'] === true);
+    }
+
+    public function test_the_demo_locks_and_unlocks_an_agency(): void
+    {
+        app(ModuleSeeder::class)->run();
+        app(PlanSeeder::class)->run();
+
+        $payload = $this->payload();
+        $branch = app(\App\Repository\SandboxRepository::class)->createBranchWithOwner($payload);
+        $service = app(SandboxService::class);
+
+        $service->setLock($payload['agency']['uuid'], true);
+        $this->assertSame(Subscription::STATUS_EXPIRED, Subscription::where('agency_id', $branch->agency_id)->value('status'));
+
+        $service->setLock($payload['agency']['uuid'], false);
+        $this->assertSame(Subscription::STATUS_ACTIVE, Subscription::where('agency_id', $branch->agency_id)->value('status'));
+    }
+
+    public function test_subscription_changes_are_blocked_in_the_demo(): void
+    {
+        $middleware = new \App\Http\Middleware\BlockInSandbox();
+        $next = fn() => response()->json(['ok' => true]);
+
+        config(['app.sandbox' => true]);
+        $this->assertSame(403, $middleware->handle(Request::create('/api/subscriptions-renew', 'POST'), $next)->getStatusCode());
+
+        config(['app.sandbox' => false]);
+        $this->assertSame(200, $middleware->handle(Request::create('/api/subscriptions-renew', 'POST'), $next)->getStatusCode());
+    }
+
     private function request(?string $secret): Request
     {
         $request = Request::create('/api/sandbox/provision', 'POST', $this->payload());

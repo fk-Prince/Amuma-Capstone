@@ -206,7 +206,7 @@
             </div>
 
             <div
-                v-if="canRenew && !hasPendingUpgrade && !isCancelled"
+                v-if="canRenew && !hasPendingUpgrade && !isCancelled && !isSandbox"
                 class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
             >
                 <Clock class="mt-0.5 h-4 w-4 shrink-0" />
@@ -227,6 +227,19 @@
             </div>
 
             <div
+                v-if="isSandbox"
+                class="flex items-start gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-200"
+            >
+                <FlaskConical class="mt-0.5 h-4 w-4 shrink-0" />
+                <p>
+                    <span class="font-semibold">This is the demo.</span>
+                    Subscribing, renewing and adding branches are done on your
+                    live AMUMA, in Manage Subscription.
+                </p>
+            </div>
+
+            <div
+                v-else
                 class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div>
@@ -1068,6 +1081,7 @@ import {
     CheckCircle2,
     CircleX,
     Clock,
+    FlaskConical,
     PlayCircle,
     Info,
     RefreshCw,
@@ -1126,7 +1140,11 @@ const branchStore = useBranchStore();
 
 const { isSandbox, switchLink } = useSandbox();
 
-const sandboxLink = computed(() => (isSandbox.value ? "" : switchLink.value));
+const sandboxLink = computed(() =>
+    isSandbox.value || branchStore.activeBranch?.subscription_locked
+        ? ""
+        : switchLink.value,
+);
 
 const subscriptionVersion = useSubscriptionVersion();
 const announceChange = () => {

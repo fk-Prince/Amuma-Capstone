@@ -21,7 +21,6 @@ export const useSandbox = () => {
 
     const switchUrl = computed(() => sandboxUrl.value || liveUrl.value);
 
-    // Only the agency owner's own login exists on both sides.
     const switchLink = computed(() => {
         const branch = branchStore.activeBranch;
 

@@ -27,6 +27,7 @@ export interface Branch {
     subscription_mode?: "test" | "live" | null;
     subscription_end_date?: string | null;
     subscription_locked?: boolean;
+    demo_locked?: boolean;
     subscription_awaiting_payment?: boolean;
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;

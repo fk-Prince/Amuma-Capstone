@@ -27,20 +27,27 @@
             </div>
 
             <h1 class="text-3xl font-bold text-white">
-                {{ branchName || "This branch" }} is locked
+                The demo of {{ branchName || "this branch" }} is locked
             </h1>
 
             <p class="mt-3 leading-relaxed text-gray-400">
-                The free trial has ended and the plan hasn't been paid for yet.
-                Ask your agency owner to pay for the plan from Manage
-                Subscription. Everything you recorded is kept and will be back
-                as soon as it's paid.
+                Your free trial has ended, so the demo is closed until you
+                subscribe. Subscribe in Manage Subscription on your live AMUMA
+                and the demo opens again. Everything here is kept.
             </p>
 
-            <div class="mt-8 flex justify-center">
+            <div class="mt-8 flex flex-wrap justify-center gap-3">
+                <a
+                    v-if="subscribeLink"
+                    :href="subscribeLink"
+                    class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                    Subscribe on live AMUMA
+                </a>
+
                 <NuxtLink
                     to="/"
-                    class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl"
+                    class="inline-flex items-center gap-2 rounded-xl border border-white/15 px-6 py-3 font-medium text-white transition hover:bg-white/5"
                 >
                     Back to home
                 </NuxtLink>
@@ -54,20 +61,28 @@ import { computed } from "vue";
 import { Lock } from "lucide-vue-next";
 import BrandLogo from "~/components/ui/BrandLogo.vue";
 import { useBranchStore } from "~/stores/branch";
+import { useSandbox } from "~/composables/useSandbox";
 
 definePageMeta({
     layout: false,
     middleware: "auth-client",
 });
 
-useHead({ title: "Branch locked" });
+useHead({ title: "Demo locked" });
 
 const route = useRoute();
 const branchStore = useBranchStore();
+const { liveUrl } = useSandbox();
 
-const branchName = computed(
-    () =>
-        branchStore.branches.find((b) => b?.uuid === route.params.uuid)
-            ?.name ?? "",
+const branch = computed(() =>
+    branchStore.branches.find((b) => b?.uuid === route.params.uuid),
+);
+
+const branchName = computed(() => branch.value?.name ?? "");
+
+const subscribeLink = computed(() =>
+    liveUrl.value && branch.value?.role_name === "agency_owner"
+        ? `${liveUrl.value}/app/branches/${route.params.uuid}/manage-subscription?pay=1`
+        : "",
 );
 </script>

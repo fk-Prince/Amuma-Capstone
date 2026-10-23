@@ -22,9 +22,19 @@
 
             <p class="text-xs leading-5 sm:text-sm">
                 <template v-if="locked">
-                    <span class="font-semibold">Your free trial has ended.</span>
-                    Pay for your plan to unlock this branch. Everything you
-                    recorded is kept.
+                    <span class="font-semibold"
+                        >Your subscription is locked. The free trial has
+                        ended.</span
+                    >
+                    This branch is read-only: you can still view everything,
+                    but nothing can be added or changed.
+                    <template v-if="canManage">
+                        To unlock it, subscribe in the Manage Subscription tab.
+                    </template>
+                    <template v-else>
+                        Ask your agency owner to subscribe in Manage
+                        Subscription.
+                    </template>
                 </template>
 
                 <template
@@ -85,7 +95,7 @@
                 class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98]"
                 @click="goToSubscription({ pay: '1' })"
             >
-                {{ locked ? "Pay & unlock" : "Pay for plan" }}
+                {{ locked ? "Subscribe to unlock" : "Pay for plan" }}
             </button>
 
             <button
@@ -132,6 +142,7 @@ const canPay = computed(
     () =>
         awaitingPayment.value &&
         canManage.value &&
+        !isSandbox.value &&
         branch.value?.subscription_status === "approved",
 );
 

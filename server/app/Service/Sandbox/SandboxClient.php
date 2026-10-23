@@ -3,6 +3,7 @@
 namespace App\Service\Sandbox;
 
 use App\Models\Branch;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -43,11 +44,7 @@ class SandboxClient
                 return false;
             }
 
-            Http::timeout(15)
-                ->acceptJson()
-                ->withHeaders(['X-Sandbox-Secret' => config('services.sandbox.secret')])
-                ->post(rtrim(config('services.sandbox.url'), '/') . '/api/sandbox/provision', $payload)
-                ->throw();
+            $this->post('/api/sandbox/provision', $payload);
 
             return true;
         } catch (\Throwable $e) {
@@ -60,6 +57,44 @@ class SandboxClient
 
             return false;
         }
+    }
+
+    public function syncLock(Subscription $subscription): void
+    {
+        if (!$this->enabled()) {
+            return;
+        }
+
+        $agencyUuid = $subscription->agency()->value('uuid');
+
+        if (!$agencyUuid) {
+            return;
+        }
+
+        $locked = $subscription->isLockedForPayment();
+
+        DB::afterCommit(function () use ($agencyUuid, $locked) {
+            try {
+                $this->post('/api/sandbox/lock', [
+                    'agency_uuid' => $agencyUuid,
+                    'locked' => $locked,
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Sandbox lock sync failed', [
+                    'agency_uuid' => $agencyUuid,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
+    }
+
+    private function post(string $path, array $payload): void
+    {
+        Http::timeout(15)
+            ->acceptJson()
+            ->withHeaders(['X-Sandbox-Secret' => config('services.sandbox.secret')])
+            ->post(rtrim(config('services.sandbox.url'), '/') . $path, $payload)
+            ->throw();
     }
 
     private function payload(int $branchId): ?array

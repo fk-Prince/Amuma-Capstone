@@ -9,7 +9,21 @@ class SandboxController extends Controller
 {
     public function __construct(private SandboxService $sandboxService) {}
 
-    public function provision(Request $request)
+    public function lock(Request $request)
+    {
+        $this->authorizeLive($request);
+
+        $payload = $request->validate([
+            'agency_uuid' => ['required', 'uuid'],
+            'locked' => ['required', 'boolean'],
+        ]);
+
+        $this->sandboxService->setLock($payload['agency_uuid'], (bool) $payload['locked']);
+
+        return response()->json(['message' => 'Lock updated.']);
+    }
+
+    private function authorizeLive(Request $request): void
     {
         $secret = (string) config('services.sandbox.secret');
 
@@ -17,6 +31,11 @@ class SandboxController extends Controller
             config('app.sandbox') && $secret !== '' && hash_equals($secret, (string) $request->header('X-Sandbox-Secret')),
             403
         );
+    }
+
+    public function provision(Request $request)
+    {
+        $this->authorizeLive($request);
 
         $payload = $request->validate([
             'owner.email' => ['required', 'email'],

@@ -44,6 +44,7 @@
                         />
 
                         <ActionButton
+                            v-if="!isSandbox"
                             variant="primary"
                             extra-class="!rounded-xl !px-5 !py-2.5"
                             :disabled="
@@ -394,6 +395,7 @@ import { useToast } from "~/composables/useToast";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { useRoute } from "vue-router";
+import { useSandbox } from "~/composables/useSandbox";
 import logo from "~/assets/logo/logo.png";
 import {
     planTypeBranchLimit,
@@ -410,6 +412,7 @@ useHead({ title: "Manage Subscription" });
 const route = useRoute();
 const { error } = useToast();
 const { canCreate, canUpdate } = usePermissions();
+const { isSandbox } = useSandbox();
 
 const canResubmit = computed(() => canUpdate(Modules.ManageSubscription));
 const canAddBranch = computed(() => canCreate(Modules.ManageSubscription));

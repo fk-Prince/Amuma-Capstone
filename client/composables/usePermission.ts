@@ -1,5 +1,6 @@
 import { useBranchStore } from "~/stores/branch";
 import { useBranchPlan } from "~/composables/useBranchPlan";
+import { useSandbox } from "~/composables/useSandbox";
 import { Modules } from "~/types/module";
 import { PermissionAction, type PermissionActionKey } from "~/utils/permissions";
 
@@ -8,6 +9,7 @@ const FACILITY_MODULES: string[] = [Modules.Admissions, Modules.RoomsAndBeds];
 export const usePermissions = () => {
     const branchStore = useBranchStore();
     const { hasFacilityPlan } = useBranchPlan();
+    const { isSandbox } = useSandbox();
 
     const actionsFor = (module_name: string): PermissionActionKey[] =>
         (branchStore.activeBranch?.permissions ?? []).find(
@@ -19,6 +21,23 @@ export const usePermissions = () => {
             action !== PermissionAction.Read &&
             FACILITY_MODULES.includes(module_name) &&
             !hasFacilityPlan.value
+        ) {
+            return false;
+        }
+
+        const changes =
+            action !== PermissionAction.Read &&
+            action !== PermissionAction.Export;
+        const isSubscriptionModule = module_name === Modules.ManageSubscription;
+
+        if (changes && isSubscriptionModule && isSandbox.value) {
+            return false;
+        }
+
+        if (
+            changes &&
+            !isSubscriptionModule &&
+            branchStore.activeBranch?.subscription_locked
         ) {
             return false;
         }
