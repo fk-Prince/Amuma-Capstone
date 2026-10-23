@@ -73,11 +73,21 @@ function setActiveTab(tab: Tab) {
     router.replace({ query: { ...route.query, tab: tabSlugMap[tab] } });
 }
 
+const PATIENTS_PER_PAGE = 20;
+
 const isLoading = ref(true);
 const isFetchingPatients = ref(false);
+const isLoadingMore = ref(false);
 
 const patients = ref<PatientRetrieve[]>([]);
+const patientsPage = ref(1);
+const patientsLastPage = ref(1);
+const patientsTotal = ref(0);
 const selectedIndex = ref(0);
+
+const hasMorePatients = computed(
+    () => patientsPage.value < patientsLastPage.value,
+);
 
 const searchQuery = ref("");
 const typeFilter = ref("all");
@@ -113,6 +123,10 @@ function updateScrollState() {
 
     canScrollLeft.value = el.scrollLeft > 4;
     canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+
+    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+        loadMorePatients();
+    }
 }
 
 function scrollPatients(direction: 1 | -1) {
@@ -134,28 +148,85 @@ async function loadActiveTab(page = 1) {
     }
 }
 
+let patientsRequestId = 0;
+
+function listPatients(page: number) {
+    return patientService.list({
+        branch_uuid: b_uuid.value,
+        sections: "profile",
+        page,
+        per_page: PATIENTS_PER_PAGE,
+        search: searchQuery.value.trim() || undefined,
+        category: typeFilter.value !== "all" ? typeFilter.value : undefined,
+        assigned_only: assignmentFilter.value === "mine" ? 1 : undefined,
+        date_from: dateFrom.value || undefined,
+        date_to: dateTo.value || undefined,
+    });
+}
+
+function setPatientsMeta(res: any, page: number) {
+    patientsPage.value = res.meta?.current_page ?? page;
+    patientsLastPage.value = res.meta?.last_page ?? page;
+    patientsTotal.value = res.meta?.total ?? patients.value.length;
+}
+
 async function fetchPatients() {
+    const requestId = ++patientsRequestId;
     isFetchingPatients.value = true;
 
     try {
-        const res: any = await patientService.list({
-            branch_uuid: b_uuid.value,
-            sections: "profile",
-            per_page: 50,
-            search: searchQuery.value.trim() || undefined,
-            category: typeFilter.value !== "all" ? typeFilter.value : undefined,
-            assigned_only: assignmentFilter.value === "mine" ? 1 : undefined,
-            date_from: dateFrom.value || undefined,
-            date_to: dateTo.value || undefined,
-        });
+        const res: any = await listPatients(1);
+
+        if (requestId !== patientsRequestId) return;
 
         patients.value = res.data ?? [];
+        setPatientsMeta(res, 1);
     } catch (err) {
+        if (requestId !== patientsRequestId) return;
+
         console.error("Failed fetching patients", err);
         patients.value = [];
+        setPatientsMeta({}, 1);
     } finally {
-        isFetchingPatients.value = false;
+        if (requestId === patientsRequestId) {
+            isFetchingPatients.value = false;
+        }
     }
+}
+
+async function loadMorePatients() {
+    if (
+        !hasMorePatients.value ||
+        isLoadingMore.value ||
+        isFetchingPatients.value
+    ) {
+        return;
+    }
+
+    const requestId = patientsRequestId;
+    const nextPage = patientsPage.value + 1;
+    isLoadingMore.value = true;
+
+    try {
+        const res: any = await listPatients(nextPage);
+
+        if (requestId !== patientsRequestId) return;
+
+        const known = new Set(patients.value.map((p) => p.uuid));
+        patients.value.push(
+            ...(res.data ?? []).filter(
+                (p: PatientRetrieve) => !known.has(p.uuid),
+            ),
+        );
+        setPatientsMeta(res, nextPage);
+    } catch (err) {
+        console.error("Failed loading more patients", err);
+    } finally {
+        isLoadingMore.value = false;
+    }
+
+    await nextTick();
+    updateScrollState();
 }
 
 async function selectIndex(index: number) {
@@ -174,6 +245,8 @@ async function refreshPatients() {
     const currentUuid = patient.value?.uuid;
 
     await fetchPatients();
+
+    patientsScrollRef.value?.scrollTo({ left: 0 });
 
     const kept = patients.value.findIndex((p) => p.uuid === currentUuid);
 
@@ -297,9 +370,12 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="min-h-screen-header rounded-lg bg-slate-100 dark:bg-surface">
-        <div class="flex w-full flex-col gap-4">
+        <div
+            class="flex min-h-[calc(100dvh-var(--header-h)-1rem)] w-full flex-col gap-4"
+        >
             <div
                 class="overflow-hidden rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                :class="patient ? 'shrink-0' : 'flex-1'"
             >
                 <div
                     class="flex flex-col gap-3 border-b border-[#E4EFED] px-3 py-4 sm:px-6 dark:border-white/10"
@@ -323,7 +399,7 @@ onBeforeUnmount(() => {
                             v-if="!isLoading && patients.length"
                             class="shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-white/10 dark:text-gray-400"
                         >
-                            {{ selectedIndex + 1 }} of {{ patients.length }}
+                            {{ selectedIndex + 1 }} of {{ patientsTotal }}
                         </span>
                     </div>
                 </div>
@@ -421,6 +497,17 @@ onBeforeUnmount(() => {
                                 </span>
                             </span>
                         </button>
+
+                        <div
+                            v-if="isLoadingMore"
+                            class="flex shrink-0 animate-pulse items-center gap-2.5 rounded-xl border border-[#E4EFED] bg-white px-3 py-2 dark:border-white/10 dark:bg-secondary"
+                        >
+                            <div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-white/15" />
+                            <div class="space-y-1.5">
+                                <div class="h-3 w-24 rounded bg-slate-200 dark:bg-white/15" />
+                                <div class="h-2.5 w-16 rounded bg-slate-100 dark:bg-white/10" />
+                            </div>
+                        </div>
                     </div>
 
                     <button
@@ -437,7 +524,7 @@ onBeforeUnmount(() => {
 
             <div
                 v-if="patient"
-                class="min-w-0 overflow-hidden rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="min-w-0 flex-1 overflow-hidden rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="flex flex-wrap items-center justify-between gap-3 border-b border-[#E4EFED] px-3 py-4 sm:px-5 dark:border-white/10"
