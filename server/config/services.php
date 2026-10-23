@@ -49,4 +49,9 @@ return [
     'geonames' => [
         'username' => env('GEONAMES_USERNAME'),
     ],
+
+    'sandbox' => [
+        'url'    => env('SANDBOX_API_URL'),
+        'secret' => env('SANDBOX_SECRET'),
+    ],
 ];

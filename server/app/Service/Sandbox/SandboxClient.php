@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Service\Sandbox;
+
+use App\Models\Branch;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class SandboxClient
+{
+    public function enabled(): bool
+    {
+        return !config('app.sandbox')
+            && (bool) config('services.sandbox.url')
+            && (bool) config('services.sandbox.secret');
+    }
+
+    public function provisionBranch(Branch $branch): void
+    {
+        if (!$this->enabled()) {
+            return;
+        }
+
+        $branchId = $branch->branch_id;
+
+        DB::afterCommit(fn() => $this->send($branchId));
+    }
+
+    public function send(int $branchId): bool
+    {
+        try {
+            $payload = $this->payload($branchId);
+
+            if (!$payload) {
+                return false;
+            }
+
+            Http::timeout(15)
+                ->acceptJson()
+                ->withHeaders(['X-Sandbox-Secret' => config('services.sandbox.secret')])
+                ->post(rtrim(config('services.sandbox.url'), '/') . '/api/sandbox/provision', $payload)
+                ->throw();
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Sandbox provisioning failed', [
+                'branch_id' => $branchId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function payload(int $branchId): ?array
+    {
+        $branch = Branch::with([
+            'location',
+            'agencies.locations',
+            'subscriptionLink.subscription.plans',
+        ])->find($branchId);
+
+        $agency = $branch?->agencies;
+        $plan = $branch?->subscriptionLink?->subscription?->plans;
+        $owner = $agency ? User::with('employee')->find($agency->registered_by) : null;
+
+        if (!$branch || !$agency || !$plan || !$owner) {
+            return null;
+        }
+
+        return [
+            'owner' => [
+                'email' => $owner->email,
+                'password' => $owner->getAuthPassword(),
+                'provider' => $owner->provider,
+                'first_name' => $owner->employee?->first_name,
+                'last_name' => $owner->employee?->last_name,
+                'avatar' => $owner->employee?->avatar,
+            ],
+            'agency' => [
+                'uuid' => $agency->uuid,
+                'name' => $agency->name,
+                'description' => $agency->description,
+                'email' => $agency->email,
+                'image' => $agency->image,
+                'location' => $this->location($agency->locations),
+            ],
+            'branch' => [
+                'uuid' => $branch->uuid,
+                'name' => $branch->name,
+                'description' => $branch->description,
+                'email' => $branch->email,
+                'contact_number' => $branch->contact_number,
+                'image' => $branch->image,
+                'settings' => $branch->settings,
+                'location' => $this->location($branch->location),
+            ],
+            'plan' => [
+                'plan_code' => $plan->plan_code,
+                'type' => $plan->type,
+            ],
+        ];
+    }
+
+    private function location($location): ?array
+    {
+        return $location ? [
+            'street' => $location->street,
+            'city' => $location->city,
+            'province' => $location->province,
+            'country' => $location->country,
+            'full_address' => $location->full_address,
+            'latitude' => $location->latitude,
+            'longitude' => $location->longitude,
+        ] : null;
+    }
+}

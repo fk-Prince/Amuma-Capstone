@@ -99,6 +99,36 @@
                 </div>
 
                 <template v-else>
+                    <div v-if="canSwitchEnvironment">
+                        <button
+                            type="button"
+                            :title="
+                                isSandbox
+                                    ? 'Back to your live branch'
+                                    : 'Switch to your sandbox: a copy of this branch with demo patients'
+                            "
+                            class="flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+                            :class="
+                                isSandbox
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20'
+                                    : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20'
+                            "
+                            @click="switchEnvironment"
+                        >
+                            <Radio
+                                v-if="isSandbox"
+                                class="h-4 w-4 lg:h-3.5 lg:w-3.5"
+                            />
+                            <FlaskConical
+                                v-else
+                                class="h-4 w-4 lg:h-3.5 lg:w-3.5"
+                            />
+                            <span class="hidden lg:inline">
+                                {{ isSandbox ? "Go live" : "Sandbox" }}
+                            </span>
+                        </button>
+                    </div>
+
                     <MessageBell
                         v-if="branchStore.activeBranch?.status === 'verified'"
                     />
@@ -153,10 +183,18 @@ import MessageBell from "../ui/MessageBell.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
 import BranchSelectModal from "./BranchSelectModal.vue";
-import { Building2, Calendar, ChevronDown, Clock } from "lucide-vue-next";
+import {
+    Building2,
+    Calendar,
+    ChevronDown,
+    Clock,
+    FlaskConical,
+    Radio,
+} from "lucide-vue-next";
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
+import { useSandbox } from "~/composables/useSandbox";
 import { getBranchImage } from "~/types/branch.js";
 
 const intro = useDashboardIntro();
@@ -166,6 +204,19 @@ const user = useAuthUser();
 defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
+
+const { isSandbox, switchUrl } = useSandbox();
+
+const canSwitchEnvironment = computed(
+    () =>
+        !!switchUrl.value &&
+        !!branchStore.activeBranch?.uuid &&
+        branchStore.activeBranch?.role_name === "agency_owner",
+);
+
+function switchEnvironment() {
+    window.location.href = `${switchUrl.value}/app/branches/${branchStore.activeBranch?.uuid}/dashboard`;
+}
 
 const brokenImages = reactive(new Set<string>());
 

@@ -33,18 +33,30 @@ use App\Service\TransactionService;
 use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class PatientSeeder extends Seeder
 {
+    use SeedsBranches;
+
+    private ?string $guardianEmail = null;
+
+    public function withGuardian(string $email): static
+    {
+        $this->guardianEmail = $email;
+
+        return $this;
+    }
+
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 
@@ -55,6 +67,10 @@ class PatientSeeder extends Seeder
             foreach ($this->renamed($this->patients(), $index) as $data) {
                 if (isset($data['admission']) ? !$facility : !$homecare) {
                     continue;
+                }
+
+                if ($this->guardianEmail) {
+                    $data['guardian']['email'] = $this->guardianEmail;
                 }
 
                 $existing = Patient::where('branch_id', $branch->branch_id)
@@ -310,7 +326,7 @@ class PatientSeeder extends Seeder
             ->first();
 
         if (!$contract || !$bed) {
-            $this->command->warn("Skipped admission for {$patient->first_name} {$patient->last_name}: no matching contract or available bed.");
+            $this->command?->warn("Skipped admission for {$patient->first_name} {$patient->last_name}: no matching contract or available bed.");
             return;
         }
 

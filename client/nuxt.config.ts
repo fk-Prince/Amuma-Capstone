@@ -32,7 +32,10 @@ export default defineNuxtConfig({
       reverbHost: '',
       reverbPort: '',
       reverbScheme: '',
-      xenditPublicKey: ''
+      xenditPublicKey: '',
+      sandbox: '',
+      sandboxUrl: '',
+      liveUrl: ''
     }
   },
   nitro: {

@@ -4,16 +4,21 @@ namespace Database\Seeders;
 
 use App\Models\Bed;
 use App\Models\Room;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 
 class BedSeeder extends Seeder
 {
+    use SeedsBranches;
+
     public function run(): void
     {
-        $rooms = Room::all();
+        $rooms = Room::query()
+            ->when($this->onlyBranch, fn($query) => $query->where('branch_id', $this->onlyBranch->branch_id))
+            ->get();
 
         if ($rooms->isEmpty()) {
-            $this->command->warn('No rooms found. Seed rooms first.');
+            $this->command?->warn('No rooms found. Seed rooms first.');
             return;
         }
 

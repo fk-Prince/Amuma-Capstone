@@ -4,10 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Branch;
 use App\Models\DiagnosisCase;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 
 class DiagnosisCaseSeeder extends Seeder
 {
+    use SeedsBranches;
+
     private const CASES = [
         [
             'title' => 'Pneumonia',
@@ -103,10 +106,10 @@ class DiagnosisCaseSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 

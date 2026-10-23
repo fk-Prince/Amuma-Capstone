@@ -35,6 +35,7 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SandboxController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VitalController;
@@ -67,6 +68,10 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 });
 Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch']);
+
+if (config('app.sandbox')) {
+    Route::post('/sandbox/provision', [SandboxController::class, 'provision'])->middleware('throttle:30,1');
+}
 
 
 // BRNACHES

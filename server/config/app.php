@@ -41,6 +41,8 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'sandbox' => (bool) env('APP_SANDBOX', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

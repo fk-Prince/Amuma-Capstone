@@ -10,12 +10,14 @@ use App\Models\EmployeePermission;
 use App\Models\Module;
 use App\Models\User;
 use Database\Seeders\Concerns\AssignsRandomServices;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class NurseSeeder extends Seeder
 {
     use AssignsRandomServices;
+    use SeedsBranches;
 
     private const NURSE_COUNT = 5;
 
@@ -24,10 +26,10 @@ class NurseSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 
@@ -39,7 +41,7 @@ class NurseSeeder extends Seeder
 
             for ($i = 1; $i <= self::NURSE_COUNT; $i++) {
                 $user = User::firstOrCreate(
-                    ['email' => "nurse{$i}{$branchTag}@gmail.com"],
+                    ['email' => $this->staffEmail("nurse{$i}", $branchTag)],
                     [
                         'password' => Hash::make('password'),
                         'provider' => 'local',

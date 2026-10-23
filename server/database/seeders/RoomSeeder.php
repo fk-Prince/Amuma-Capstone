@@ -4,18 +4,21 @@ namespace Database\Seeders;
 
 use App\Models\Branch;
 use App\Models\Room;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 
 class RoomSeeder extends Seeder
 {
+    use SeedsBranches;
+
     private const FLOORS = ['1st', '2nd', '3rd', '4th', '5th'];
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 

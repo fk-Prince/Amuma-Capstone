@@ -5,18 +5,20 @@ namespace Database\Seeders;
 use App\Models\Branch;
 use App\Models\BranchContract;
 use Database\Seeders\Concerns\PricesPerBranch;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 
 class BranchContractSeeder extends Seeder
 {
     use PricesPerBranch;
+    use SeedsBranches;
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 

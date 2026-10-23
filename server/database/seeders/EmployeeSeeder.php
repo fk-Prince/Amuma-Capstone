@@ -10,6 +10,7 @@ use App\Models\EmployeePermission;
 use App\Models\Module;
 use App\Models\User;
 use Database\Seeders\Concerns\AssignsRandomServices;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -17,6 +18,7 @@ use Illuminate\Support\Str;
 class EmployeeSeeder extends Seeder
 {
     use AssignsRandomServices;
+    use SeedsBranches;
 
     private const ROLES = [
         'branch_manager',
@@ -34,10 +36,10 @@ class EmployeeSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 
@@ -51,7 +53,7 @@ class EmployeeSeeder extends Seeder
                 $count = self::ROLE_COUNTS[$role] ?? 1;
 
                 for ($n = 1; $n <= $count; $n++) {
-                    $email = ($n === 1 ? $role : "{$role}{$n}") . "{$branchTag}@gmail.com";
+                    $email = $this->staffEmail($n === 1 ? $role : "{$role}{$n}", $branchTag);
                     $suffix = ($n === 1 ? '' : " {$n}") . $branchLabel;
 
                     $user = User::firstOrCreate(

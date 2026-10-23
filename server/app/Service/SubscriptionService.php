@@ -35,6 +35,7 @@ use App\Service\External\SupabaseService;
 use App\Service\External\XenditService;
 use App\Utils\MoneyWords;
 use App\Service\Geo\NominatimService;
+use App\Service\Sandbox\SandboxClient;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -67,7 +68,8 @@ class SubscriptionService
         private EmployeeRepository $employeeRepository,
         private ModuleRepository $moduleRepository,
         private NotificationRepository $notificationRepository,
-        private VerificationLogRepository $verificationLogRepository
+        private VerificationLogRepository $verificationLogRepository,
+        private SandboxClient $sandboxClient
     ) {
         $this->secretKey = config('services.xendit.secret_key');
     }
@@ -850,6 +852,8 @@ class SubscriptionService
 
                 $this->grantOwnerPermissions($employee->employee_id, $branchData->branch_id);
 
+                $this->sandboxClient->provisionBranch($branchData);
+
                 $this->sendPurchaseMail($user['email'] ?? null, new SubscriptionPurchasedMailer(
                     recipientName: trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: 'there',
                     planName: $plan['name'] ?? $plan['plan_code'],
@@ -1001,6 +1005,8 @@ class SubscriptionService
 
             $this->grantOwnerPermissions($ownerEmployee->employee_id, $branchData->branch_id);
         }
+
+        $this->sandboxClient->provisionBranch($branchData);
 
         return [$branchData, $location];
     }

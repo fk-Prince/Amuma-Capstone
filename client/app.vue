@@ -5,12 +5,14 @@
         </NuxtLayout>
         <ClientOnly>
             <AppToast ref="toastRef" />
+            <SandboxBadge />
         </ClientOnly>
     </div>
 </template>
 
 <script setup lang="ts">
 import AppToast from "./components/ui/AppToast.vue";
+import SandboxBadge from "./components/ui/SandboxBadge.vue";
 import { ref, watch } from "vue";
 import { registerToast } from "@/composables/useToast";
 

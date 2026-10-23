@@ -6,11 +6,13 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Service;
 use Database\Seeders\Concerns\PricesPerBranch;
+use Database\Seeders\Concerns\SeedsBranches;
 use Illuminate\Database\Seeder;
 
 class ServiceSeeder extends Seeder
 {
     use PricesPerBranch;
+    use SeedsBranches;
 
     private const SERVICES = [
         [
@@ -177,10 +179,10 @@ class ServiceSeeder extends Seeder
 
     public function run(): void
     {
-        $branches = Branch::orderBy('branch_id')->get();
+        $branches = $this->seedBranches();
 
         if ($branches->isEmpty()) {
-            $this->command->warn('No branches found. Seed branches first.');
+            $this->command?->warn('No branches found. Seed branches first.');
             return;
         }
 

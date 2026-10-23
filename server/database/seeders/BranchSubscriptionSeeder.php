@@ -82,7 +82,7 @@ class BranchSubscriptionSeeder extends Seeder
         $adminId = PlatformAdmin::query()->value('user_id');
 
         if ($plans->isEmpty() || $modules->isEmpty()) {
-            $this->command->warn('Run PlanSeeder and ModuleSeeder first.');
+            $this->command?->warn('Run PlanSeeder and ModuleSeeder first.');
             return;
         }
 
