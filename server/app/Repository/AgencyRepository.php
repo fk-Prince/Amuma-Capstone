@@ -126,7 +126,6 @@ class AgencyRepository
             ->with('plans')
             ->where('agency_id', $agencyId)
             ->whereNotIn('status', [Subscription::STATUS_REJECTED, Subscription::STATUS_CANCELLED])
-            ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
             ->get()
             ->sum(fn($subscription) => $subscription->branchLimit() + $subscription->additionalBranchCount());
 
@@ -160,7 +159,6 @@ class AgencyRepository
             ])
             ->where('agency_id', $agencyId)
             ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
-            ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
             ->withOpenSlot()
             ->orderBy('created_at')
             ->get()
@@ -246,8 +244,7 @@ class AgencyRepository
                 'review_status' => $branch->status,
                 'rejection_reason' => $branch->subscriptionLink?->rejection_reason,
                 'subscription_status' => $branch->subscriptionLink?->subscription?->status,
-                'slot_available' => (bool) $branch->subscriptionLink?->subscription?->hasOpenSlot(),
-                'free_trial_resubmit' => (bool) $branch->subscriptionLink?->subscription?->isRejectedFreeTrial(),
+                'slot_available' => (bool) $branch->subscriptionLink?->subscription?->hasFreeResubmitSlot(),
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
                 'tin' => data_get($branch->settings, 'tin'),

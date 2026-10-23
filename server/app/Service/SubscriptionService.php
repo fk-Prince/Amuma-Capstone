@@ -1381,12 +1381,12 @@ class SubscriptionService
             $link = $this->lockRejectedLink($branch);
             $subscription = $link->subscription;
 
-            if ($subscription?->isRejectedFreeTrial()) {
+            if ($subscription?->reopensAsTrial()) {
                 $subscription->update([
                     ...Subscription::testTerms($subscription->plan_id),
                     'status' => Subscription::STATUS_PENDING,
                 ]);
-            } elseif (!$this->subscriptionHasRoomFor($subscription, $branch)) {
+            } elseif (!$subscription?->hasFreeResubmitSlot()) {
                 throw new Exception(
                     'There\'s no free branch slot left on your subscription.',
                     409
@@ -1667,15 +1667,6 @@ class SubscriptionService
         }
 
         return $link;
-    }
-
-    private function subscriptionHasRoomFor(?Subscription $subscription, Branch $branch): bool
-    {
-        if (!$subscription || in_array($subscription->status, [Subscription::STATUS_REJECTED, Subscription::STATUS_EXPIRED], true)) {
-            return false;
-        }
-
-        return (bool) $this->subscriptionRepository->findSubscriptionWithRoom($branch->agency_id, $subscription->uuid);
     }
 
     private function applyResubmission(Branch $branch, array $fields): void

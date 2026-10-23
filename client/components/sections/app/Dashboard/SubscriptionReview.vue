@@ -117,14 +117,6 @@
                         <RotateCw class="h-4 w-4" />
                         Fix details & reapply
                     </ActionButton>
-
-                    <p
-                        v-if="branch?.resubmit_requires_payment"
-                        class="mt-2 text-xs text-muted-DEFAULT"
-                    >
-                        {{ purchaseReason }} You'll pay again after updating the
-                        details.
-                    </p>
                 </template>
 
                 <p v-else class="mt-4 text-xs leading-5 text-muted-DEFAULT">
@@ -227,8 +219,7 @@
             :branch="branch"
             :acting-branch-uuid="branch.uuid"
             :rejection-reason="rejectionReason"
-            :requires-purchase="!!branch.resubmit_requires_payment"
-            :purchase-reason="branch.resubmit_requires_payment ? purchaseReason : null"
+            :requires-purchase="false"
             :agency="branch.agency"
             @close="showReapply = false"
             @resubmitted="onReapplied"
@@ -255,17 +246,6 @@ const branch = computed(() => branchStore.activeBranch);
 const showReapply = ref(false);
 
 const agencyRejected = computed(() => branch.value?.agency?.status === "rejected");
-
-const purchaseReason = computed(() => {
-    switch (branch.value?.resubmit_subscription_status) {
-        case "rejected":
-            return "The payment was refunded when this request was rejected.";
-        case "expired":
-            return "This branch's subscription has expired.";
-        default:
-            return "There's no free branch slot left on your subscription.";
-    }
-});
 
 const onReapplied = (result) => {
     showReapply.value = false;

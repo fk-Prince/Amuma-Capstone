@@ -421,16 +421,12 @@ const resubmitTarget = ref<{
 } | null>(null);
 
 const purchaseReasonFor = (branch: Branch): string | null => {
-    if (branch.free_trial_resubmit) {
-        return null;
-    }
-
-    if (branch.subscription_status === "rejected") {
-        return "This branch's subscription was refunded when it was rejected.";
-    }
-
     if (branch.subscription_status === "expired") {
         return "This branch's subscription has expired.";
+    }
+
+    if (branch.subscription_status === "rejected" && !branch.slot_available) {
+        return "This branch's subscription was refunded when it was rejected.";
     }
 
     if (!branch.slot_available) {
@@ -507,7 +503,6 @@ const onBranchResubmitted = (result: any) => {
                                 result?.subscription?.status ??
                                 b.subscription_status,
                             slot_available: true,
-                            free_trial_resubmit: false,
                         })
                       : b,
               );
@@ -592,7 +587,6 @@ type Branch = {
     rejection_reason?: string | null;
     subscription_status?: "active" | "expired" | "pending" | "rejected" | null;
     slot_available?: boolean;
-    free_trial_resubmit?: boolean;
     staffs: number;
     patients: number;
     plan: { plan_code: string; name: string } | null;
@@ -735,7 +729,6 @@ const mapBranch = (b: any): Branch => ({
     rejection_reason: b.rejection_reason ?? null,
     subscription_status: b.subscription_status ?? null,
     slot_available: b.slot_available ?? false,
-    free_trial_resubmit: b.free_trial_resubmit ?? false,
     staffs: b.staff_count ?? 0,
     patients: b.patients_count ?? 0,
     plan: b.plan ?? null,

@@ -110,7 +110,6 @@ class SubscriptionRepository
             ->where('agency_id', $agencyId)
             ->when($subscriptionUuid, fn($q) => $q->where('uuid', $subscriptionUuid))
             ->whereIn('status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE])
-            ->whereHas('payments', fn($q) => $q->where('status', SubscriptionPayment::STATUS_PAID))
             ->withOpenSlot()
             ->orderBy('created_at')
             ->lockForUpdate()

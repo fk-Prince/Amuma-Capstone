@@ -129,8 +129,7 @@ class UserService
                     'subscription_awaiting_payment' => (bool) $branch?->subscriptionLink?->subscription?->awaitingTrialPayment(),
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
-                        && !$branch->subscriptionLink->subscription?->hasOpenSlot()
-                        && !$branch->subscriptionLink->subscription?->isRejectedFreeTrial(),
+                        && !$branch->subscriptionLink->subscription?->hasFreeResubmitSlot(),
                     'resubmit_subscription_status' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
                         ? $branch->subscriptionLink->subscription?->status
                         : null,

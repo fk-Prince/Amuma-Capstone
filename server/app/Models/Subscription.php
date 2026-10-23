@@ -142,16 +142,28 @@ class Subscription extends Model
             return false;
         }
 
-        $hasPaid = $this->has_paid_payment
-            ?? $this->payments()->where('status', SubscriptionPayment::STATUS_PAID)->exists();
-
         $used = $this->branches_used
             ?? $this->branchLinks()
             ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
             ->where('type', BranchSubscription::TYPE_INCLUDED)
             ->count();
 
-        return $hasPaid && (int) $used < $this->branchLimit();
+        return (int) $used < $this->branchLimit();
+    }
+
+    public function reopensAsTrial(): bool
+    {
+        return $this->status === self::STATUS_REJECTED
+            && ($this->isTest() || !self::where('agency_id', $this->agency_id)
+                ->where('subscription_id', '!=', $this->subscription_id)
+                ->exists());
+    }
+
+    public function hasFreeResubmitSlot(): bool
+    {
+        return $this->status === self::STATUS_REJECTED
+            ? $this->reopensAsTrial()
+            : $this->hasOpenSlot();
     }
 
     public function additionalBranchCount(): int
