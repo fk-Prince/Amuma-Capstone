@@ -18,7 +18,7 @@ use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\OnlineScheduleController;
+use App\Http\Controllers\AdlAttendanceController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientAccessController;
@@ -89,8 +89,8 @@ Route::prefix('branches')->group(function () {
 });
 
 
-Route::middleware('auth:sanctum')->post('/qr/verify', [OnlineScheduleController::class, 'verifyQr']);
-Route::middleware('auth:sanctum')->post('/qr/demo-verify', [OnlineScheduleController::class, 'demoVerifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/verify', [AdlAttendanceController::class, 'verifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/demo-verify', [AdlAttendanceController::class, 'demoVerifyQr']);
 
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
@@ -108,7 +108,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
 
     //SCHEDULES
-    Route::get('/online-schedules/qr', [OnlineScheduleController::class, 'generateQr']);
+    Route::get('/adl-attendances/qr', [AdlAttendanceController::class, 'generateQr']);
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 
     // MEDICATION DOSAGE TRACKING
@@ -234,7 +234,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'admissions' => PatientAdmissionController::class,
         'invoices' => InvoiceController::class,
         'settings' => BranchSettingController::class,
-        'online-schedules' => OnlineScheduleController::class,
+        'adl-attendances' => AdlAttendanceController::class,
     ]);
 
     //VALIDATE INPUTS

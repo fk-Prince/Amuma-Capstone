@@ -2,13 +2,13 @@
 
 namespace App\Repository;
 
-use App\Models\OnlineSchedule;
+use App\Models\AdlAttendance;
 
-class OnlineScheduleRepository
+class AdlAttendanceRepository
 {
     public function forceClockOutSchedule(int $scheduleId): int
     {
-        return OnlineSchedule::whereNotNull('in_timestamp')
+        return AdlAttendance::whereNotNull('in_timestamp')
             ->whereNull('out_timestamp')
             ->whereHas(
                 'assigned.scheduleService',
@@ -16,7 +16,7 @@ class OnlineScheduleRepository
             )
             ->update([
                 'out_timestamp' => now(),
-                'type_out' => OnlineSchedule::TYPE_FORCE,
+                'type_out' => AdlAttendance::TYPE_FORCE,
             ]);
     }
 }

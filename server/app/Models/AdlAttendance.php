@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class OnlineSchedule extends Model
+class AdlAttendance extends Model
 {
     public const TYPE_SCANNED = 'scanned';
     public const TYPE_FORCE = 'force';
+    public const TYPE_HANDOVER = 'handover';
 
-    protected $primaryKey = 'online_schedule_id';
+    protected $table = 'adl_attendance';
+    protected $primaryKey = 'adl_attendance_id';
     public $timestamps = false;
     protected $fillable = [
         'schedule_assigned_id',

@@ -6,14 +6,14 @@
 
 <script lang="ts" setup>
 import Qr from "./qr.vue";
-import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
 
 const token = ref("");
 const show = ref(false);
 
 onMounted(async () => {
     try {
-        const res = await onlineScheduleService.generateQr({});
+        const res = await adlAttendanceService.generateQr({});
 
         token.value = res.data?.token ?? res.token ?? res ?? "";
 

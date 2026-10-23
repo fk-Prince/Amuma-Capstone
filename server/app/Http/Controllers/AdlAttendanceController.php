@@ -5,15 +5,15 @@ namespace App\Http\Controllers;
 use App\Guard\AuthGuard;
 use App\Models\Client;
 use App\Models\ScheduleService;
-use App\Service\OnlineScheduleService;
+use App\Service\AdlAttendanceService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class OnlineScheduleController extends Controller
+class AdlAttendanceController extends Controller
 {
 
-    public function __construct(private OnlineScheduleService $onlineScheduleService) {}
+    public function __construct(private AdlAttendanceService $adlAttendanceService) {}
 
 
     public function generateQr(Request $request)
@@ -35,9 +35,9 @@ class OnlineScheduleController extends Controller
         }
 
         return response()->json([
-            'token' => $this->onlineScheduleService->generateQr($request->all()),
-            'expires_in' => OnlineScheduleService::QR_TTL_MINUTES * 60,
-            ...$this->onlineScheduleService->qrContext((int) $request->input('schedule_services_id')),
+            ...$this->adlAttendanceService->generateQr($request->all()),
+            'expires_in' => AdlAttendanceService::QR_TTL_MINUTES * 60,
+            ...$this->adlAttendanceService->qrContext((int) $request->input('schedule_services_id')),
         ]);
     }
 
@@ -51,7 +51,7 @@ class OnlineScheduleController extends Controller
             'employee_id' => ['required', 'integer'],
         ]);
 
-        return $this->onlineScheduleService->verifyQr($validated);
+        return $this->adlAttendanceService->verifyQr($validated);
     }
 
     private function authorizeClientSchedule(Client $client, int $scheduleServicesId): void
@@ -88,6 +88,6 @@ class OnlineScheduleController extends Controller
 
         $validated['employee_id'] = $user->employee->employee_id;
 
-        return $this->onlineScheduleService->verifyQr($validated);
+        return $this->adlAttendanceService->verifyQr($validated);
     }
 }

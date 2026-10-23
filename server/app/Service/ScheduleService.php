@@ -20,7 +20,7 @@ use App\Models\InvoiceServices;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\NotificationRepository;
-use App\Repository\OnlineScheduleRepository;
+use App\Repository\AdlAttendanceRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -37,7 +37,7 @@ class ScheduleService
         private InvoiceRepository $invoiceRepository,
         private NotificationRepository $notificationRepository,
         private NotificationService $notificationService,
-        private OnlineScheduleRepository $onlineScheduleRepository,
+        private AdlAttendanceRepository $adlAttendanceRepository,
         private InvoiceService $invoiceService
     ) {}
 
@@ -474,7 +474,7 @@ class ScheduleService
             }
 
             if ($isFinalizing) {
-                $this->onlineScheduleRepository->forceClockOutSchedule($schedule->schedule_id);
+                $this->adlAttendanceRepository->forceClockOutSchedule($schedule->schedule_id);
             }
 
             $settled = $newStatus === Schedule::STATUS_CANCELLED
@@ -510,7 +510,7 @@ class ScheduleService
                 },
                 'voided_invoices' => $voidedInvoices,
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned.onlineSchedules',
+                    'scheduleServices.assigned.adlAttendances',
                     'scheduleServices.service',
                     'patient',
                     'location',
@@ -1046,7 +1046,7 @@ class ScheduleService
             return response()->json([
                 'message' => 'Schedule services have been updated successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned.onlineSchedules',
+                    'scheduleServices.assigned.adlAttendances',
                     'scheduleServices.service',
                     'patient',
                     'location',

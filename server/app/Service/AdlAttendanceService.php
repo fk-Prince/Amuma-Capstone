@@ -4,31 +4,89 @@ namespace App\Service;
 
 use App\Events\QrScanned;
 use App\Models\Employee;
-use App\Models\OnlineSchedule;
+use App\Models\AdlAttendance;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\ScheduleService;
-use App\Repository\OnlineScheduleRepository;
+use App\Repository\AdlAttendanceRepository;
+use App\Repository\ScheduleRepository;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class OnlineScheduleService
+class AdlAttendanceService
 {
 
     public const QR_TTL_MINUTES = 5;
 
-    public function __construct() {}
+    public function __construct(private ScheduleRepository $scheduleRepository) {}
 
-    public function generateQr(array $payload)
+    public function generateQr(array $payload): array
     {
+        $scheduleServicesId = (int) $payload['schedule_services_id'];
+        $byEmployee = !empty($payload['employee_id']);
+        $scheduleService = ScheduleService::with('schedule')->find($scheduleServicesId);
+
+        if ($scheduleService?->type === ScheduleService::TYPE_ADL) {
+            if (!in_array(
+                strtolower((string) $scheduleService->schedule?->status),
+                [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING],
+                true
+            )) {
+                throw new Exception('QR codes are not available for this ADL schedule.', 422);
+            }
+
+            if ($byEmployee && in_array($payload['type'], ['in', 'out'], true)) {
+                throw new Exception('Only the family can generate the time-in and time-out QR for this visit.', 403);
+            }
+
+            if (!$byEmployee && $payload['type'] === 'handover') {
+                throw new Exception('Only the caregiver on duty can generate the shift change QR.', 403);
+            }
+        }
+
         return match ($payload['type']) {
-            'in' => $this->generateClockInToken($payload),
-            'out' => $this->generateClockOutToken($payload),
+            'in' => ['type' => 'in', 'token' => $this->generateClockInToken($payload)],
+            'out' => ['type' => 'out', 'token' => $this->generateClockOutToken($payload)],
+            'handover' => ['type' => 'handover', 'token' => $this->generateHandoverToken($payload)],
             default => throw new Exception('Invalid QR type.', 422),
         };
+    }
+
+    public function generateHandoverToken(array $payload): string
+    {
+        $scheduleServicesId = (int) $payload['schedule_services_id'];
+        $session = $this->activeSessionFor($scheduleServicesId);
+
+        if (!$session) {
+            throw new Exception('No caregiver is clocked in for this visit yet.', 409);
+        }
+
+        if ((int) $session->assigned?->employee_id !== (int) ($payload['employee_id'] ?? 0)) {
+            throw new Exception('Only the caregiver on duty can generate the shift change QR.', 403);
+        }
+
+        $hasNextShift = ScheduleAssigned::where('schedule_services_id', $scheduleServicesId)
+            ->where('is_active', true)
+            ->where('employee_id', '!=', $session->assigned?->employee_id)
+            ->exists();
+
+        if (!$hasNextShift) {
+            throw new Exception('No other caregiver is assigned to take over this visit.', 409);
+        }
+
+        $token = Str::random(64);
+
+        Cache::put(
+            $this->qrCacheKey('handover', $token),
+            ['adl_attendance_id' => $session->adl_attendance_id],
+            now()->addMinutes(self::QR_TTL_MINUTES)
+        );
+
+        return $token;
     }
 
     public function generateClockOutToken(array $payload)
@@ -48,7 +106,7 @@ class OnlineScheduleService
 
         Cache::put(
             $this->qrCacheKey('out', $token),
-            ['online_schedule_id' => $session->online_schedule_id],
+            ['adl_attendance_id' => $session->adl_attendance_id],
             now()->addMinutes(self::QR_TTL_MINUTES)
         );
 
@@ -88,8 +146,66 @@ class OnlineScheduleService
         return match ($payload['type']) {
             'in' => $this->verifyClockInToken($payload),
             'out' => $this->verifyClockOutToken($payload),
+            'handover' => $this->verifyHandoverToken($payload),
             default => throw new Exception('Invalid QR type.', 422),
         };
+    }
+
+    private function verifyHandoverToken(array $payload)
+    {
+        $cacheKey = $this->qrCacheKey('handover', $payload['token']);
+        $data = Cache::get($cacheKey);
+
+        if (!$data) {
+            throw new Exception('This QR code is invalid or has expired.', 410);
+        }
+
+        return DB::transaction(function () use ($payload, $data, $cacheKey) {
+            $session = AdlAttendance::with('assigned')
+                ->where('adl_attendance_id', $data['adl_attendance_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$session || $session->out_timestamp || !$session->assigned) {
+                throw new Exception('This QR code is invalid or has expired.', 410);
+            }
+
+            $scheduleServicesId = $session->assigned->schedule_services_id;
+
+            if ((int) $session->assigned->employee_id === (int) $payload['employee_id']) {
+                throw new Exception("You're already on duty. The next shift needs to scan this code.", 409);
+            }
+
+            $next = ScheduleAssigned::where('schedule_services_id', $scheduleServicesId)
+                ->where('employee_id', $payload['employee_id'])
+                ->where('is_active', true)
+                ->first();
+
+            if (!$next) {
+                throw new Exception('You are not assigned to this schedule.', 403);
+            }
+
+            Cache::forget($cacheKey);
+
+            $now = now();
+
+            $session->update([
+                'out_timestamp' => $now,
+                'type_out' => AdlAttendance::TYPE_HANDOVER,
+            ]);
+
+            $handover = AdlAttendance::create([
+                'schedule_assigned_id' => $next->schedule_assigned_id,
+                'type_in' => AdlAttendance::TYPE_HANDOVER,
+                'in_timestamp' => $now,
+            ]);
+
+            $this->startAdlSchedule($scheduleServicesId);
+
+            broadcast(new QrScanned($payload['token'], 'handover'));
+
+            return $handover;
+        });
     }
 
     private function verifyClockInToken(array $payload)
@@ -112,7 +228,7 @@ class OnlineScheduleService
         $this->guardAdlCanClockIn($assigned->schedule_services_id);
 
         return DB::transaction(function () use ($payload, $assigned) {
-            $activeSession = OnlineSchedule::whereHas(
+            $activeSession = AdlAttendance::whereHas(
                 'assigned',
                 fn($query) => $query->where('schedule_services_id', $assigned->schedule_services_id)
             )
@@ -125,9 +241,9 @@ class OnlineScheduleService
                 throw new Exception('Another caregiver is already clocked in for this visit.', 409);
             }
 
-            $session = OnlineSchedule::create([
+            $session = AdlAttendance::create([
                 'schedule_assigned_id' => $assigned->schedule_assigned_id,
-                'type_in' => OnlineSchedule::TYPE_SCANNED,
+                'type_in' => AdlAttendance::TYPE_SCANNED,
                 'in_timestamp' => now(),
             ]);
 
@@ -149,7 +265,7 @@ class OnlineScheduleService
         }
 
         return DB::transaction(function () use ($payload, $data, $cacheKey) {
-            $session = OnlineSchedule::where('online_schedule_id', $data['online_schedule_id'])
+            $session = AdlAttendance::where('adl_attendance_id', $data['adl_attendance_id'])
                 ->lockForUpdate()
                 ->first();
 
@@ -163,8 +279,10 @@ class OnlineScheduleService
 
             $session->update([
                 'out_timestamp' => now(),
-                'type_out' => OnlineSchedule::TYPE_SCANNED,
+                'type_out' => AdlAttendance::TYPE_SCANNED,
             ]);
+
+            $this->completeAdlScheduleIfDue($session->assigned->schedule_services_id);
 
             broadcast(new QrScanned($payload['token'], 'out'));
 
@@ -202,15 +320,15 @@ class OnlineScheduleService
         ];
     }
 
-    private function activeSessionFor(int $scheduleServicesId): ?OnlineSchedule
+    private function activeSessionFor(int $scheduleServicesId): ?AdlAttendance
     {
-        return OnlineSchedule::whereHas(
+        return AdlAttendance::whereHas(
             'assigned',
             fn($query) => $query->where('schedule_services_id', $scheduleServicesId)
         )
             ->whereNotNull('in_timestamp')
             ->whereNull('out_timestamp')
-            ->latest('online_schedule_id')
+            ->latest('adl_attendance_id')
             ->first();
     }
 
@@ -253,11 +371,39 @@ class OnlineScheduleService
             $scheduleService?->type === ScheduleService::TYPE_ADL
             && !in_array(
                 strtolower((string) $scheduleService->schedule?->status),
-                [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING, Schedule::STATUS_MISSED],
+                [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING],
                 true
             )
         ) {
             throw new Exception('Time in is not available for this ADL schedule.', 422);
+        }
+    }
+
+    private function completeAdlScheduleIfDue(int $scheduleServicesId): void
+    {
+        $scheduleService = ScheduleService::with('schedule.scheduleServices.service')->find($scheduleServicesId);
+        $schedule = $scheduleService?->schedule;
+
+        if ($scheduleService?->type !== ScheduleService::TYPE_ADL || !$schedule?->scheduled_at) {
+            return;
+        }
+
+        $scheduledAt = Carbon::parse($schedule->scheduled_at);
+
+        $firstScan = AdlAttendance::whereHas(
+            'assigned',
+            fn($query) => $query->where('schedule_services_id', $scheduleServicesId)
+        )->min('in_timestamp');
+
+        $start = $firstScan && Carbon::parse($firstScan)->lt($scheduledAt)
+            ? Carbon::parse($firstScan)
+            : $scheduledAt;
+
+        $end = $start->copy()
+            ->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule));
+
+        if (now()->diffInSeconds($end, false) < 60) {
+            $schedule->update(['status' => Schedule::STATUS_COMPLETED]);
         }
     }
 

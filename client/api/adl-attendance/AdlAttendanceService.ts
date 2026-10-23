@@ -1,18 +1,18 @@
 import BaseService from '~/api/BaseService';
 
-class OnlineScheduleService extends BaseService {
-    private static instance: OnlineScheduleService;
+class AdlAttendanceService extends BaseService {
+    private static instance: AdlAttendanceService;
 
 
     private get getBackendApi(): string {
         const config = useRuntimeConfig();
         return config.public.backendApi;
     }
-    public static getInstance(): OnlineScheduleService {
-        if (!OnlineScheduleService.instance) {
-            OnlineScheduleService.instance = new OnlineScheduleService();
+    public static getInstance(): AdlAttendanceService {
+        if (!AdlAttendanceService.instance) {
+            AdlAttendanceService.instance = new AdlAttendanceService();
         }
-        return OnlineScheduleService.instance;
+        return AdlAttendanceService.instance;
     }
 
     async generateQr(payload: {}): Promise<any> {
@@ -28,8 +28,8 @@ class OnlineScheduleService extends BaseService {
 
     private get resource(): string {
         const backend = this.getBackendApi;
-        return `${backend}/api/online-schedules`;
+        return `${backend}/api/adl-attendances`;
     }
 }
 
-export const onlineScheduleService = OnlineScheduleService.getInstance();
+export const adlAttendanceService = AdlAttendanceService.getInstance();

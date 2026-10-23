@@ -48,6 +48,7 @@ export interface User {
     hasBooking?: boolean,
     hasPatient?: boolean,
     onboarding?: Onboarding | null,
+    employee?: { employee_id: number } | null,
     // is_active: boolean,
     // is_verified: boolean
     isEmployee?: false,

@@ -2,9 +2,9 @@
     <div class="rounded-2xl bg-white font-sans dark:bg-secondary">
         <div
             v-if="variant !== 3"
-            class="flex flex-col gap-3 p-4 sm:p-5 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-wrap items-start justify-between gap-3 p-4 sm:p-5"
         >
-            <div>
+            <div class="min-w-0 flex-1">
                 <h3
                     class="text-base font-semibold text-secondary dark:text-white"
                 >
@@ -16,9 +16,9 @@
                 </p>
             </div>
 
-            <div class="flex w-full gap-2 sm:w-auto">
+            <div class="flex flex-wrap justify-end gap-2">
                 <ActionButton
-                    v-if="variant === 1"
+                    v-if="variant === 1 || variant === 2"
                     variant="primary"
                     @click="showScanner = true"
                 >
@@ -243,6 +243,23 @@
                                 >
                                     Assign
                                 </ActionButton>
+
+                                <ActionButton
+                                    v-if="canHandOver(log) && isAssignedToMe(log)"
+                                    :loading="generatingQr"
+                                    @click="
+                                        isMyShift(log)
+                                            ? generateQr('handover', log)
+                                            : (showScanner = true)
+                                    "
+                                    variant="primary"
+                                >
+                                    {{
+                                        isMyShift(log)
+                                            ? "Shift change QR"
+                                            : "Scan shift change"
+                                    }}
+                                </ActionButton>
                             </div>
 
                             <ActionButton
@@ -269,12 +286,6 @@
                                 class="order-2"
                                 extra-class="w-full !py-1.5 !text-xs"
                                 :loading="generatingQr"
-                                :disabled="!isOngoing(log)"
-                                :tooltip="
-                                    isOngoing(log)
-                                        ? ''
-                                        : 'Time in opens once this ADL schedule is ongoing.'
-                                "
                                 @click="generateQr('in', log)"
                                 variant="primary"
                             >
@@ -707,10 +718,9 @@
                                                     "
                                                 >
                                                     {{
-                                                        entry.scan.type_in ===
-                                                        "force"
-                                                            ? "Force clocked in"
-                                                            : "QR scanned"
+                                                        SCAN_LABELS.in[
+                                                            entry.scan.type_in
+                                                        ] ?? "QR scanned"
                                                     }}
                                                 </p>
                                             </div>
@@ -748,10 +758,12 @@
                                                     "
                                                 >
                                                     {{
-                                                        entry.scan.type_out ===
-                                                        "force"
-                                                            ? "Force clocked out"
-                                                            : "QR scanned"
+                                                        (entry.scan.type_out &&
+                                                            SCAN_LABELS.out[
+                                                                entry.scan
+                                                                    .type_out
+                                                            ]) ??
+                                                        "QR scanned"
                                                     }}
                                                 </p>
                                             </div>
@@ -822,7 +834,6 @@
         </div>
 
         <QrCodeModal
-            v-if="variant === 1 || variant === 3"
             :show="showQrModal"
             :token="qrToken"
             :mode="qrMode"
@@ -855,7 +866,7 @@
             />
 
             <QrScanner
-                v-if="variant === 1 && showScanner"
+                v-if="showScanner"
                 @close="showScanner = false"
             />
         </template>
@@ -876,7 +887,7 @@ import {
 } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
 import ActionButton from "~/components/ui/ActionButton.vue";
-import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
 import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import { formatDuration, formatDurationShort, formatTime } from "~/utils/time";
@@ -1037,7 +1048,8 @@ async function handleAssignConfirm(payload: {
 const generatingQr = ref(false);
 const qrToken = ref<string | null>(null);
 const showQrModal = ref(false);
-const qrMode = ref<"clock-in" | "clock-out">("clock-in");
+const qrMode = ref<"clock-in" | "clock-out" | "handover">("clock-in");
+const authUser = useAuthUser();
 const qrCaregivers = ref<{ employee_id: number; name: string }[]>([]);
 const qrCheckedIn = ref<{
     employee_id: number;
@@ -1045,20 +1057,27 @@ const qrCheckedIn = ref<{
     in_timestamp: string | null;
 } | null>(null);
 
-async function generateQr(type: "in" | "out", schedule: AuditRow) {
+const QR_MODES = {
+    in: "clock-in",
+    out: "clock-out",
+    handover: "handover",
+} as const;
+
+async function generateQr(type: "in" | "out" | "handover", schedule: AuditRow) {
     generatingQr.value = true;
     qrToken.value = null;
-    qrMode.value = type === "in" ? "clock-in" : "clock-out";
+    qrMode.value = QR_MODES[type];
     showQrModal.value = true;
 
     try {
-        const res = await onlineScheduleService.generateQr({
+        const res = await adlAttendanceService.generateQr({
             type,
             branch_uuid: route.params.uuid,
             schedule_services_id: schedule.schedule_services_id,
             as_family: props.variant === 3,
         });
         qrToken.value = res.data?.token ?? res.token ?? res;
+        qrMode.value = QR_MODES[(res.type ?? type) as keyof typeof QR_MODES];
         qrCaregivers.value = res.caregivers ?? res.data?.caregivers ?? [];
         qrCheckedIn.value = res.checked_in ?? res.data?.checked_in ?? null;
     } catch (err: any) {
@@ -1086,9 +1105,11 @@ function closeQrModal() {
 
 function handleQrScanned() {
     success(
-        qrMode.value === "clock-in"
-            ? "Clocked in successfully."
-            : "Clocked out successfully.",
+        {
+            "clock-in": "Clocked in successfully.",
+            "clock-out": "Clocked out successfully.",
+            handover: "Shift handed over.",
+        }[qrMode.value],
     );
     emit("refresh");
     closeQrModal();
@@ -1336,7 +1357,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
 
             const online_logs = (service.assignees ?? []).flatMap((assignee) =>
                 (assignee.online ?? []).map((scan) => ({
-                    online_schedule_id: scan.online_schedule_id,
+                    adl_attendance_id: scan.adl_attendance_id,
                     type_in: scan.type_in ?? "scanned",
                     type_out: scan.type_out ?? null,
                     in_timestamp: scan.in_timestamp ?? null,
@@ -1454,9 +1475,18 @@ const logGroups = computed(() => {
 
 const QR_GENERATION_BLOCKED_STATUSES = ["cancelled", "completed", "missed"];
 
-function isOngoing(log: AuditRow): boolean {
-    return (log.status ?? "").toLowerCase() === "ongoing";
-}
+const SCAN_LABELS = {
+    in: {
+        scanned: "QR scanned",
+        force: "Force clocked in",
+        handover: "Took over shift (QR)",
+    },
+    out: {
+        scanned: "QR scanned",
+        force: "Force clocked out",
+        handover: "Handed over shift (QR)",
+    },
+} as const;
 
 function canGenerateQr(log: AuditRow): boolean {
     return (
@@ -1505,6 +1535,34 @@ function latestCheckIn(log: AuditRow) {
 function isCurrentlyCheckedIn(log: AuditRow): boolean {
     const latest = latestCheckIn(log);
     return Boolean(latest && !latest.out_timestamp);
+}
+
+function canHandOver(log: AuditRow): boolean {
+    return (
+        canGenerateQr(log) &&
+        isCurrentlyCheckedIn(log) &&
+        log.assignees.length > 1
+    );
+}
+
+function isMyShift(log: AuditRow): boolean {
+    const employeeId = authUser.value?.employee?.employee_id;
+
+    return (
+        !!employeeId &&
+        Number(latestCheckIn(log)?.employee_id) === Number(employeeId)
+    );
+}
+
+function isAssignedToMe(log: AuditRow): boolean {
+    const employeeId = authUser.value?.employee?.employee_id;
+
+    return (
+        !!employeeId &&
+        log.assignees.some(
+            (assignee) => Number(assignee.employee_id) === Number(employeeId),
+        )
+    );
 }
 
 function isOnDuty(

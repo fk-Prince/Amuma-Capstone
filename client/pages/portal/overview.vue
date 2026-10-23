@@ -743,21 +743,29 @@
                     you.
                 </p>
 
+                <p
+                    v-else-if="!canTimeIn"
+                    class="text-[11px] text-gray-400 dark:text-gray-500"
+                >
+                    {{
+                        attendanceVisit?.status?.toLowerCase() === "missed"
+                            ? "This visit was missed, so there is no time-in or time-out."
+                            : "Time-in and time-out are closed for this visit."
+                    }}
+                </p>
+
                 <template v-else>
                     <p
                         class="mb-2.5 text-[11px] text-gray-400 dark:text-gray-500"
                     >
-                        {{
-                            canTimeIn
-                                ? "Show a code to the caregiver to scan on arrival or before they leave."
-                                : "Time-in opens once this visit is ongoing."
-                        }}
+                        Show a code to the caregiver to scan on arrival or
+                        before they leave.
                     </p>
 
                     <div class="grid grid-cols-2 gap-2.5">
                         <button
                             @click="onQrButton('in')"
-                            :disabled="isGeneratingQr || !canTimeIn"
+                            :disabled="isGeneratingQr"
                             class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-300"
                         >
                             <QrCode class="h-3.5 w-3.5" />
@@ -1149,7 +1157,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
-import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import {
@@ -1296,7 +1304,7 @@ const isMedicalVisit = computed(
 );
 
 const canTimeIn = computed(() =>
-    ["ongoing", "pending", "missed"].includes(
+    ["ongoing", "pending"].includes(
         attendanceVisit.value?.status?.toLowerCase() ?? "",
     ),
 );
@@ -1800,7 +1808,7 @@ async function generateAttendanceQr(direction: "in" | "out") {
     qrToken.value = null;
 
     try {
-        const res = await onlineScheduleService.generateQr({
+        const res = await adlAttendanceService.generateQr({
             type: direction,
             schedule_services_id: scheduleServicesId,
         });

@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { QrcodeCapture, QrcodeStream } from "vue-qrcode-reader";
 import { ImageUp } from "lucide-vue-next";
-import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
 import { useToast } from "~/composables/useToast";
 
 const emit = defineEmits<{
@@ -17,11 +17,18 @@ const verifying = ref(false);
 const error = ref<string | null>(null);
 const captureInput = ref<unknown>(null);
 
-function toApiType(type: unknown): "in" | "out" | null {
+function toApiType(type: unknown): "in" | "out" | "handover" | null {
     if (type === "in" || type === "clock-in") return "in";
     if (type === "out" || type === "clock-out") return "out";
+    if (type === "handover") return "handover";
     return null;
 }
+
+const SCAN_SUCCESS = {
+    in: "Clocked in successfully.",
+    out: "Clocked out successfully.",
+    handover: "Shift taken over. You're now on duty.",
+};
 
 async function onDetect(detectedCodes: { rawValue: string }[]) {
     if (paused.value || verifying.value) return;
@@ -51,16 +58,12 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
     error.value = null;
 
     try {
-        await onlineScheduleService.verifyQr({
+        await adlAttendanceService.verifyQr({
             token: parsed.token,
             type,
         });
 
-        success(
-            type === "in"
-                ? "Clocked in successfully."
-                : "Clocked out successfully.",
-        );
+        success(SCAN_SUCCESS[type]);
 
         emit("scanned");
         emit("close");

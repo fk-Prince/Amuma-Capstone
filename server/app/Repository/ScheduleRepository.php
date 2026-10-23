@@ -164,7 +164,7 @@ class ScheduleRepository
                 'patient.primaryGuardian.client',
                 'scheduleServices.service',
                 'scheduleServices.assigned.employee.employees.users',
-                'scheduleServices.assigned.onlineSchedules',
+                'scheduleServices.assigned.adlAttendances',
             ]);
 
         if (!empty($payload['patient_uuid'])) {

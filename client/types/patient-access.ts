@@ -155,7 +155,7 @@ export interface InvoiceItem {
     adjustments: InvoiceAdjustment[];
 }
 
-export type { ScheduleItem, ScheduleServiceItem, ScheduleAssignee, OnlineScheduleAssignment } from "./schedule";
+export type { ScheduleItem, ScheduleServiceItem, ScheduleAssignee, AdlAttendanceAssignment } from "./schedule";
 
 export interface ScheduleContext {
     adl: ScheduleItem | null;

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import QrcodeVue from "qrcode.vue";
 import { computed, onUnmounted, ref, watch } from "vue";
-import { Download, LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
+import { ArrowLeftRight, Download, LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
 import ActionButton from "./ActionButton.vue";
-import { onlineScheduleService } from "~/api/online-schedule/OnlineScheduleService";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
 import { useToast } from "~/composables/useToast";
 
-type QrMode = "check-in" | "clock-in" | "clock-out" | "custom";
+type QrMode = "check-in" | "clock-in" | "clock-out" | "handover" | "custom";
 
 interface QrCaregiver {
     employee_id: number;
@@ -66,6 +66,13 @@ const modePresets: Record<
         description: "Scan this QR code to clock out",
         icon: LogOut,
         accent: "amber",
+    },
+    handover: {
+        title: "Shift Change QR Code",
+        description:
+            "The next caregiver scans this to take over. The caregiver on duty is clocked out at the same time.",
+        icon: ArrowLeftRight,
+        accent: "primary",
     },
     custom: {
         title: "QR Code",
@@ -202,17 +209,26 @@ function saveQr() {
     link.click();
 }
 
-function toApiType(mode: QrMode): "in" | "out" {
-    return mode === "clock-out" ? "out" : "in";
+function toApiType(mode: QrMode): "in" | "out" | "handover" {
+    if (mode === "clock-out") return "out";
+    if (mode === "handover") return "handover";
+    return "in";
 }
 
-const demoCaregivers = computed(() =>
-    toApiType(props.mode) === "out"
-        ? props.checkedIn
-            ? [props.checkedIn]
-            : []
-        : props.caregivers,
-);
+const demoCaregivers = computed(() => {
+    if (toApiType(props.mode) === "out") {
+        return props.checkedIn ? [props.checkedIn] : [];
+    }
+
+    if (toApiType(props.mode) === "handover") {
+        return props.caregivers.filter(
+            (caregiver) =>
+                caregiver.employee_id !== props.checkedIn?.employee_id,
+        );
+    }
+
+    return props.caregivers;
+});
 
 function startDemo() {
     if (demoCaregivers.value.length) {
@@ -248,18 +264,20 @@ async function demoVerify(employeeId?: number) {
         };
 
         if (employeeId) {
-            await onlineScheduleService.demoVerifyQr({
+            await adlAttendanceService.demoVerifyQr({
                 ...payload,
                 employee_id: employeeId,
             });
         } else {
-            await onlineScheduleService.verifyQr(payload);
+            await adlAttendanceService.verifyQr(payload);
         }
 
         success(
-            toApiType(props.mode) === "in"
-                ? "Clocked in successfully."
-                : "Clocked out successfully.",
+            {
+                in: "Clocked in successfully.",
+                out: "Clocked out successfully.",
+                handover: "Shift handed over.",
+            }[toApiType(props.mode)],
         );
 
         emit("scanned");

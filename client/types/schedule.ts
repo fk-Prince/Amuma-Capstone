@@ -1,9 +1,9 @@
-export type OnlineScheduleType = "scanned" | "force";
+export type AdlAttendanceType = "scanned" | "force" | "handover";
 
-export interface OnlineScheduleAssignment {
-    online_schedule_id: number;
-    type_in: OnlineScheduleType;
-    type_out: OnlineScheduleType | null;
+export interface AdlAttendanceAssignment {
+    adl_attendance_id: number;
+    type_in: AdlAttendanceType;
+    type_out: AdlAttendanceType | null;
     in_timestamp: string | null;
     out_timestamp: string | null;
     notes: string | null;
@@ -21,7 +21,7 @@ export interface ScheduleAssignee {
     start_time?: string | null;
     end_time?: string | null;
 
-    online: OnlineScheduleAssignment[];
+    online: AdlAttendanceAssignment[];
     is_active: boolean
     employee_role: string | null;
 }
@@ -191,9 +191,9 @@ export interface AuditRow {
     }[];
 
     online_logs: {
-        online_schedule_id: number;
-        type_in: OnlineScheduleType;
-        type_out: OnlineScheduleType | null;
+        adl_attendance_id: number;
+        type_in: AdlAttendanceType;
+        type_out: AdlAttendanceType | null;
         employee_id?: number | null;
         employee_name?: string | null;
         employee_avatar?: string | null;

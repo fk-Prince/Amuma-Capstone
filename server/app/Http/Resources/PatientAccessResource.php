@@ -445,8 +445,8 @@ class PatientAccessResource extends JsonResource
 
         $assigned = $scheduleService->assigned->first();
 
-        $onlineSchedule = $assigned->relationLoaded('onlineSchedules')
-            ? $assigned->onlineSchedules->first()
+        $adlAttendance = $assigned->relationLoaded('adlAttendances')
+            ? $assigned->adlAttendances->first()
             : null;
 
         return [
@@ -461,13 +461,13 @@ class PatientAccessResource extends JsonResource
                 'last_name' => $assigned->employee->last_name,
             ] : null,
 
-            'online_schedule' => $onlineSchedule ? [
-                'online_schedule_id' => $onlineSchedule->online_schedule_id,
-                'type_in' => $onlineSchedule->type_in,
-                'type_out' => $onlineSchedule->type_out,
-                'in_timestamp' => $onlineSchedule->in_timestamp?->format('Y-m-d H:i:s'),
-                'out_timestamp' => $onlineSchedule->out_timestamp?->format('Y-m-d H:i:s'),
-                'notes' => $onlineSchedule->notes,
+            'adl_attendance' => $adlAttendance ? [
+                'adl_attendance_id' => $adlAttendance->adl_attendance_id,
+                'type_in' => $adlAttendance->type_in,
+                'type_out' => $adlAttendance->type_out,
+                'in_timestamp' => $adlAttendance->in_timestamp?->format('Y-m-d H:i:s'),
+                'out_timestamp' => $adlAttendance->out_timestamp?->format('Y-m-d H:i:s'),
+                'notes' => $adlAttendance->notes,
             ] : null,
         ];
     }

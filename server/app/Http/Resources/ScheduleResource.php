@@ -106,8 +106,8 @@
 //                                         : null,
 //                                     'avatar' => $employee?->avatar,
 //                                     'role' => $assignment->role,
-//                                     'online' => $assignment->relationLoaded('onlineSchedules')
-//                                         ? $assignment->onlineSchedules->map(function ($online) {
+//                                     'online' => $assignment->relationLoaded('adlAttendances')
+//                                         ? $assignment->adlAttendances->map(function ($online) {
 //                                             return [
 //                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),
 //                                                 'out_timestamp' => $online->out_timestamp?->toISOString(),
@@ -304,12 +304,12 @@ class ScheduleResource extends JsonResource
                                     'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
                                     'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
 
-                                    'online' => $assignment->relationLoaded('onlineSchedules')
-                                        ? $assignment->onlineSchedules
+                                    'online' => $assignment->relationLoaded('adlAttendances')
+                                        ? $assignment->adlAttendances
                                         ->filter(fn($online) => $online->in_timestamp !== null)
                                         ->map(function ($online) {
                                             return [
-                                                'online_schedule_id' => $online->online_schedule_id,
+                                                'adl_attendance_id' => $online->adl_attendance_id,
                                                 'type_in' => $online->type_in,
                                                 'type_out' => $online->type_out,
                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),

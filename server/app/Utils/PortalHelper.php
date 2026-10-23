@@ -97,7 +97,7 @@ class PortalHelper
             'scheduleServices.assigned' => fn($query) =>
             $query->with([
                 'employee.employees.employeeBranch',
-                'onlineSchedules',
+                'adlAttendances',
             ]),
         ];
     }
@@ -750,10 +750,10 @@ class PortalHelper
             'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
             'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
 
-            'online' => $assignment->onlineSchedules
+            'online' => $assignment->adlAttendances
                 ->filter(fn($online) => $online->in_timestamp !== null)
                 ->map(fn($online) => [
-                    'online_schedule_id' => $online->online_schedule_id,
+                    'adl_attendance_id' => $online->adl_attendance_id,
                     'type_in' => $online->type_in,
                     'type_out' => $online->type_out,
                     'in_timestamp' => $online->in_timestamp?->toISOString(),
