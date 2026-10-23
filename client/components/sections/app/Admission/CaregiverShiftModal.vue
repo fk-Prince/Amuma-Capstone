@@ -413,7 +413,6 @@ const { success, error } = useToast();
 const PRESETS = [
     { note: "AM Shift", start_time: "00:00", end_time: "12:00" },
     { note: "PM Shift", start_time: "12:00", end_time: "00:00" },
-    { note: "Full Shift", start_time: "00:00", end_time: "23:59" },
 ];
 
 const loading = ref(false);

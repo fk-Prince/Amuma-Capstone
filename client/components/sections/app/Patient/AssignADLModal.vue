@@ -267,6 +267,21 @@
                                     continue.
                                 </p>
 
+                                <p
+                                    v-for="overlap in shiftOverlaps(entry)"
+                                    :key="overlap.employee_id"
+                                    class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                                >
+                                    <TriangleAlert
+                                        class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                    />
+                                    This shift collides with
+                                    {{ nameFor(overlap.employee_id) }}'s shift
+                                    ({{ formatShift(overlap) }}). Only one of
+                                    them can attend during the overlapping
+                                    hours.
+                                </p>
+
                                 <div class="mt-3">
                                     <input
                                         v-model="entry.note"
@@ -745,6 +760,7 @@ import {
     formatTime,
     formatDuration,
     bookingTimeWindow,
+    format24To12,
 } from "~/utils/time";
 import { Check, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
@@ -763,7 +779,7 @@ function formatHoursBooked(hours?: number | null): string {
 
 const NOTE_MAX = 255;
 
-const NOTE_PRESETS = ["AM Shift", "PM Shift", "Full Shift"];
+const NOTE_PRESETS = ["AM Shift", "PM Shift"];
 
 interface AssignmentEntry {
     employee_id: string;
@@ -775,16 +791,15 @@ interface AssignmentEntry {
 const PRESET_HOURS: Record<string, { start: string; end: string }> = {
     "AM Shift": { start: "00:00", end: "12:00" },
     "PM Shift": { start: "12:00", end: "23:59" },
-    "Full Shift": { start: "00:00", end: "23:59" },
 };
 
 const DUTY_LIMIT_HOURS = 12;
 
 function shiftHours(entry: AssignmentEntry) {
-    if (!entry.start_time || !entry.end_time) return 0;
+    const { start, end } = shiftRange(entry);
 
-    const [startHour = 0, startMinute = 0] = entry.start_time.split(":").map(Number);
-    const [endHour = 0, endMinute = 0] = entry.end_time.split(":").map(Number);
+    const [startHour = 0, startMinute = 0] = start.split(":").map(Number);
+    const [endHour = 0, endMinute = 0] = end.split(":").map(Number);
 
     const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
 
@@ -796,6 +811,31 @@ function longDutyHours(entry: AssignmentEntry): number {
     const hours = shiftHours(entry);
 
     return hours > DUTY_LIMIT_HOURS ? hours : 0;
+}
+
+function shiftRange(entry: AssignmentEntry) {
+    return {
+        start: entry.start_time || bookingWindow.value.start || "00:00",
+        end: entry.end_time || bookingWindow.value.end || "23:59",
+    };
+}
+
+function shiftOverlaps(entry: AssignmentEntry): AssignmentEntry[] {
+    const mine = shiftRange(entry);
+
+    return assignments.value.filter((other) => {
+        if (other.employee_id === entry.employee_id) return false;
+
+        const theirs = shiftRange(other);
+
+        return mine.start < theirs.end && theirs.start < mine.end;
+    });
+}
+
+function formatShift(entry: AssignmentEntry) {
+    const { start, end } = shiftRange(entry);
+
+    return `${format24To12(start)} – ${format24To12(end)}`;
 }
 
 function applyPreset(entry: AssignmentEntry, preset: string) {

@@ -1561,7 +1561,7 @@ interface AssignmentEntry {
 
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
 
-const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
+const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift"];
 
 function bookingWindowFor(service: ScheduleServiceItem) {
     if (service.type !== "ADL") return { start: "", end: "" };

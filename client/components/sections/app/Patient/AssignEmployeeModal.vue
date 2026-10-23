@@ -966,7 +966,7 @@ const emit = defineEmits<{
 
 const NOTE_MAX = 255;
 
-const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
+const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift"];
 const NOTE_PRESETS_OTHER = [
     "Primary",
     "Assistant",
