@@ -99,7 +99,7 @@
                 <SummaryRow
                     v-if="props.withTrial"
                     label="Free Trial"
-                    value="2 weeks, no payment needed to start"
+                    value="2 weeks, starts once your branch is approved"
                 />
 
                 <SummaryRow
@@ -139,9 +139,10 @@
                 />
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Nothing to pay today.</span>
-                    Try AMUMA free for 2 weeks. Pay for your plan from Manage
-                    Subscription whenever you're ready. If you haven't paid when
-                    the trial ends, your branch is locked until you do.
+                    Your 2-week free trial starts once an admin approves your
+                    branch. After that, pay for your plan any time, whenever
+                    you're ready. If it isn't paid by the time the trial ends,
+                    your branch is locked until it is.
                 </p>
             </div>
         </section>
