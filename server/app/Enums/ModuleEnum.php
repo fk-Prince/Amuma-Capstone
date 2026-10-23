@@ -6,16 +6,16 @@ enum ModuleEnum: string
 {
     case Bookings = 'Bookings';
     case Schedules = 'Schedules';
+    case Medications = 'Medications';
     case Admissions = 'Admissions';
     case Patients = 'Patients';
-    case Medications = 'Medications';
     case Contracts = 'Contracts';
     case RoomsAndBeds = 'Rooms & Beds';
     case Services = 'Services';
     case EmployeeManagement = 'Employee Management';
     case BillingAndInvoices = 'Billing & Invoices';
-    case ManageSubscription = 'Manage Subscription';
     case BranchSettings = 'Branch Settings';
+    case ManageSubscription = 'Manage Subscription';
     case Inquiries = 'Inquiries';
     case AuditLogs = 'Audit Logs';
 

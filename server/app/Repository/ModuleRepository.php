@@ -11,7 +11,11 @@ class ModuleRepository
 {
     public function getAllModules()
     {
-        return Module::all();
+        $order = array_flip(array_column(ModuleEnum::cases(), 'value'));
+
+        return Module::all()
+            ->sortBy(fn(Module $module) => $order[$module->module_name] ?? PHP_INT_MAX)
+            ->values();
     }
 
     public function getEmployeesModuleWithPermission(array $actions, ModuleEnum $module, string $branchId)
