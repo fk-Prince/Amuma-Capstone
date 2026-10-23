@@ -25,6 +25,15 @@ class NotificationService
         private EmployeeRepository $employeeRepository,
     ) {}
 
+    private function broadcast(NotificationEvent $event): void
+    {
+        try {
+            event($event);
+        } catch (\Throwable $e) {
+            Log::error('Real-time notification failed', ['error' => $e->getMessage()]);
+        }
+    }
+
 
 
     private const ADMISSION_ROLES = ['admission'];
@@ -48,7 +57,7 @@ class NotificationService
                 'reference_id' => $payload['reference_id'],
             ]);
 
-            event(new NotificationEvent(
+            $this->broadcast(new NotificationEvent(
                 $employee['uuid'],
                 $branch->uuid,
                 $payload['message'],
@@ -146,7 +155,7 @@ class NotificationService
             ]);
 
             if ($client->uuid) {
-                event(new NotificationEvent(
+                $this->broadcast(new NotificationEvent(
                     $client->uuid,
                     $branch->uuid,
                     $message,
@@ -241,7 +250,7 @@ class NotificationService
             ]);
 
             if ($guardian->uuid) {
-                event(new NotificationEvent(
+                $this->broadcast(new NotificationEvent(
                     $guardian->uuid,
                     $branch?->uuid ?? '',
                     $message,
@@ -276,7 +285,7 @@ class NotificationService
                 'message' => $message,
             ]);
 
-            event(new NotificationEvent(
+            $this->broadcast(new NotificationEvent(
                 $employee['uuid'],
                 $branch->uuid,
                 $message,
@@ -340,7 +349,7 @@ class NotificationService
                 'message' => $message,
             ]);
 
-            event(new NotificationEvent(
+            $this->broadcast(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $branch->uuid,
                 $message,

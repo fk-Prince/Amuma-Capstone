@@ -46,7 +46,7 @@ class SandboxService
         }
 
         $tag = Str::lower(Str::random(6));
-        $familyEmail = "family.{$tag}@sandbox.amuma.test";
+        $familyEmail = "family.{$tag}@demo.amuma.test";
 
         $branch = DB::transaction(function () use ($payload, $familyEmail) {
             $this->sandboxRepository->createFamily($familyEmail);

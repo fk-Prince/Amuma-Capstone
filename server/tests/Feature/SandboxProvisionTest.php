@@ -105,12 +105,12 @@ class SandboxProvisionTest extends TestCase
             Employee::whereIn('employee_id', EmployeeBranch::where('branch_id', $branch->branch_id)->pluck('employee_id'))->pluck('user_id')
         )->pluck('email');
 
-        $this->assertTrue($staffEmails->contains(fn($email) => str_starts_with($email, 'nurse.') && str_ends_with($email, '@sandbox.amuma.test')));
+        $this->assertTrue($staffEmails->contains(fn($email) => str_starts_with($email, 'nurse.') && str_ends_with($email, '@demo.amuma.test')));
 
         $patients = Patient::where('branch_id', $branch->branch_id)->get();
         $this->assertNotEmpty($patients);
 
-        $family = User::where('email', 'like', 'family.%@sandbox.amuma.test')->firstOrFail();
+        $family = User::where('email', 'like', 'family.%@demo.amuma.test')->firstOrFail();
         $this->assertTrue(PatientAccess::where('client_id', $family->client->client_id)
             ->whereIn('patient_id', $patients->pluck('patient_id'))
             ->exists());

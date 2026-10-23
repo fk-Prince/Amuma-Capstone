@@ -14,9 +14,9 @@
             <div class="text-xs leading-5 sm:text-sm">
                 <p>
                     <span class="font-semibold"
-                        >Sandbox mode: everything here is a simulation.</span
+                        >Demo mode: everything here is a simulation.</span
                     >
-                    Anything you add, book or pay for stays in this sandbox and
+                    Anything you add, book or pay for stays in this demo and
                     never reaches your live branch.
                 </p>
                 <p class="mt-0.5 text-xs text-violet-700/80 dark:text-violet-300/70">

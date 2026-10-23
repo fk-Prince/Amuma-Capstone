@@ -142,9 +142,9 @@ const editRoomClicked = (room: Room) => {
         floor: room.floor,
         branch_uuid: uuid,
         room_type: room.room_type,
-        capacity: room.capacity,
+        capacity: String(room.capacity ?? ""),
         status: room.status,
-        room_id: room.room_id,
+        room_id: String(room.room_id),
     });
     modalOpen.value = true;
     title.value = "Update Room";

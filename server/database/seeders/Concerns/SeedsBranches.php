@@ -29,7 +29,7 @@ trait SeedsBranches
     protected function staffEmail(string $local, string $branchTag): string
     {
         return $this->emailTag
-            ? "{$local}.{$this->emailTag}@sandbox.amuma.test"
+            ? "{$local}.{$this->emailTag}@demo.amuma.test"
             : "{$local}{$branchTag}@gmail.com";
     }
 }

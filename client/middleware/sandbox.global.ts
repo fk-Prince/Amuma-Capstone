@@ -10,8 +10,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     if (import.meta.client) {
         useToast().warning(
-            "Not available in Sandbox mode",
-            "Booking and subscribing are turned off here, since everything in the sandbox is a simulation.",
+            "Not available in Demo mode",
+            "Booking and subscribing are turned off here, since everything in the demo is a simulation.",
         );
     }
 
