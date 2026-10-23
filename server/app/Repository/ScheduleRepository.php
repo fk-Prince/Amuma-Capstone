@@ -126,6 +126,37 @@ class ScheduleRepository
         }
     }
 
+    public function unassignedToday(int $branchId)
+    {
+        $today = now()->toDateString();
+
+        return Schedule::query()
+            ->select(['schedule_id', 'schedule_code', 'patient_id', 'scheduled_at', 'status', 'category'])
+            ->with([
+                'patient:patient_id,first_name,middle_name,last_name',
+                'scheduleServices' => fn($q) => $q
+                    ->select(['schedule_services_id', 'schedule_id', 'service_id', 'type', 'hours_booked'])
+                    ->whereDoesntHave('assigned', fn($a) => $a->where('is_active', true)),
+                'scheduleServices.service:service_id,service_name',
+            ])
+            ->whereHas('patient', fn($q) => $q->where('branch_id', $branchId))
+            ->whereIn('status', [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING])
+            ->whereHas('scheduleServices', fn($q) => $q
+                ->whereDoesntHave('assigned', fn($a) => $a->where('is_active', true)))
+            ->where(fn($q) => $q
+                ->whereDate('scheduled_at', $today)
+                ->orWhere(fn($adl) => $adl
+                    ->whereDate('scheduled_at', '<', $today)
+                    ->whereHas('scheduleServices', fn($s) => $s
+                        ->whereNotNull('hours_booked')
+                        ->whereRaw(
+                            "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') >= ?",
+                            [$today]
+                        ))))
+            ->orderBy('scheduled_at')
+            ->get();
+    }
+
     private function filterByDateRange($query, array $payload, bool $wantsMedical, bool $wantsAdl): void
     {
         if (!empty($payload['date_from'])) {

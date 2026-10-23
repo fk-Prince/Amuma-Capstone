@@ -37,6 +37,9 @@ class SandboxService
             return;
         }
 
+        set_time_limit(0);
+        ignore_user_abort(true);
+
         if (!$this->sandboxRepository->hasBaseData()) {
             app(ModuleSeeder::class)->run();
             app(PlanSeeder::class)->run();

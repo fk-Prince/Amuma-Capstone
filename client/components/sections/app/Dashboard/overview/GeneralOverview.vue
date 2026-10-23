@@ -552,6 +552,8 @@
                     </div>
                 </section>
 
+                <UnassignedTodayCard :branch-uuid="uuid" />
+
                 <DutyRosterCard v-if="showRoster" :branch-uuid="uuid" />
 
                 <section
@@ -684,6 +686,7 @@ import {
 import SubscriptionReview from "~/components/sections/app/Dashboard/SubscriptionReview.vue";
 import StatusBadge from "~/components/ui/StatusBadge.vue";
 import DutyRosterCard from "~/components/sections/app/Dashboard/overview/DutyRosterCard.vue";
+import UnassignedTodayCard from "~/components/sections/app/Dashboard/overview/UnassignedTodayCard.vue";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";

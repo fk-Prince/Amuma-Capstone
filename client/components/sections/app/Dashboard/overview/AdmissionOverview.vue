@@ -172,6 +172,8 @@
                 </div>
             </section>
 
+            <UnassignedTodayCard :branch-uuid="branchUuid" />
+
             <DutyRosterCard v-if="showRoster" :branch-uuid="branchUuid" />
 
             <div
@@ -332,6 +334,7 @@ import {
 } from "lucide-vue-next";
 
 import DutyRosterCard from "~/components/sections/app/Dashboard/overview/DutyRosterCard.vue";
+import UnassignedTodayCard from "~/components/sections/app/Dashboard/overview/UnassignedTodayCard.vue";
 import OverviewDonutCard from "~/components/sections/app/Dashboard/overview/OverviewDonutCard.vue";
 import OverviewStatCard from "~/components/sections/app/Dashboard/overview/OverviewStatCard.vue";
 import StatusBadge from "~/components/ui/StatusBadge.vue";

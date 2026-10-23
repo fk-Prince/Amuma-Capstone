@@ -710,6 +710,26 @@ class ScheduleService
         return $this->scheduleRepository->getOverview($payload);
     }
 
+    public function unassignedToday(array $payload)
+    {
+        $schedules = $this->scheduleRepository->unassignedToday((int) $payload['branch_id']);
+
+        return response()->json([
+            'data' => $schedules->map(fn($schedule) => [
+                'schedule_code' => $schedule->schedule_code,
+                'patient_name' => $schedule->patient?->display_name,
+                'scheduled_at' => $schedule->scheduled_at,
+                'status' => $schedule->status,
+                'type' => $schedule->scheduleServices->contains(
+                    fn($service) => $service->type === ScheduleServiceModel::TYPE_ADL
+                ) ? 'adl' : 'medical',
+                'services' => $schedule->scheduleServices
+                    ->map(fn($service) => $service->service?->service_name ?? 'Activities of Daily Living (ADL)')
+                    ->values(),
+            ])->values(),
+        ]);
+    }
+
     public function deductInvoice(array $payload)
     {
         $schedule = $this->scheduleRepository->findByFields([
