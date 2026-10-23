@@ -119,6 +119,8 @@
                         @update:model-value="checkout.setSelectedPlanType"
                     />
 
+                    <TrialPromoBanner class="mb-5" />
+
                     <div
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 items-stretch"
                     >
@@ -310,6 +312,7 @@ import AgencyForm from "~/components/forms/AgencyForm.vue";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import TrialPromoBanner from "~/components/ui/TrialPromoBanner.vue";
 import { branchLimitText, planPrice } from "~/utils/planType";
 import SubscriptionStepDot from "~/components/sections/subscription/SubscriptionStepDot.vue";
 import SubscriptionSkeleton from "~/components/sections/subscription/SubscriptionSkeleton.vue";
