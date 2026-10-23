@@ -35,7 +35,8 @@ export default defineNuxtConfig({
       xenditPublicKey: '',
       sandbox: '',
       sandboxUrl: '',
-      liveUrl: ''
+      liveUrl: '',
+      xsrfCookie: 'XSRF-TOKEN'
     }
   },
   nitro: {

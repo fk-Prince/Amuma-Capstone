@@ -35,7 +35,7 @@ export default defineNuxtPlugin(() => {
                         headers: {
                             'Content-Type': 'application/json',
                             Accept: 'application/json',
-                            'X-XSRF-TOKEN': getCookie('XSRF-TOKEN') ?? '',
+                            'X-XSRF-TOKEN': getCookie(String(config.public.xsrfCookie || 'XSRF-TOKEN')) ?? '',
                         },
                         body: JSON.stringify({
                             socket_id: socketId,

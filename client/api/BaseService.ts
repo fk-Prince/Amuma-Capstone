@@ -141,7 +141,9 @@ export class BaseService {
             await this.ensureCsrf();
         }
 
-        const xsrfToken = useCookie('XSRF-TOKEN').value;
+        const xsrfToken = useCookie(
+            String(config.public.xsrfCookie || 'XSRF-TOKEN'),
+        ).value;
 
         const headers: Record<string, string> = {
             Accept: 'application/json',

@@ -41,6 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal' => EnsurePortalClient::class,
         ]);
         $middleware->statefulApi();
+        $middleware->web(replace: [
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class => \App\Http\Middleware\ValidateCsrfToken::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {
