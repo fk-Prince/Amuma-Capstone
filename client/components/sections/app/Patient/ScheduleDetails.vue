@@ -60,16 +60,7 @@
                     :lines="missingNurseLines"
                 />
 
-                <ScheduleConflictNotice :lines="conflictLines">
-                    <button
-                        v-if="saveConflicts?.length"
-                        type="button"
-                        class="mt-2 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700"
-                        @click="unassignConflictingStaff"
-                    >
-                        Unassign conflicting staff
-                    </button>
-                </ScheduleConflictNotice>
+                <ScheduleConflictNotice :lines="conflictLines" />
 
                 <div
                     class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 xl:space-y-0"
@@ -705,7 +696,7 @@
                                             <p
                                                 class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                                             >
-                                                Assign
+                                                Assigned
                                                 {{ requiredRoleLabel(service) }}
                                                 <span
                                                     class="text-slate-300 dark:text-gray-500"
@@ -717,65 +708,14 @@
                                                         service.schedule_services_id,
                                                     ).length
                                                 }}
-                                                selected
                                             </p>
-
-                                            <div
-                                                v-if="showRoleFilter(service)"
-                                                class="flex items-center gap-1 rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
-                                            >
-                                                <button
-                                                    v-for="option in ROLE_FILTERS"
-                                                    :key="option.value"
-                                                    type="button"
-                                                    class="rounded-md px-2.5 py-1 text-[11px] font-medium transition"
-                                                    :class="
-                                                        roleFilter === option.value
-                                                            ? 'bg-white text-primary shadow-sm dark:bg-secondary'
-                                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                                    "
-                                                    @click="roleFilter = option.value"
-                                                >
-                                                    {{ option.label }}
-                                                </button>
-                                            </div>
-
-                                            <div
-                                                class="relative w-full sm:w-64"
-                                            >
-                                                <Search
-                                                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
-                                                />
-
-                                                <input
-                                                    v-model="employeeSearch"
-                                                    type="text"
-                                                    placeholder="Search name"
-                                                    class="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
-                                                />
-                                            </div>
-
-                                            <label
-                                                class="inline-flex w-fit cursor-pointer select-none items-center gap-2 text-xs font-medium text-slate-600 dark:text-gray-300"
-                                            >
-                                                <input
-                                                    v-model="availableOnly"
-                                                    type="checkbox"
-                                                    class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-transparent"
-                                                />
-                                                Available only
-                                            </label>
                                         </div>
 
                                         <div
                                             v-if="!eligibleFor(service).length"
                                             class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                                         >
-                                            {{
-                                                employeeSearch
-                                                    ? "No staff match that search."
-                                                    : `No ${requiredRoleLabel(service).toLowerCase()} is available for this branch.`
-                                            }}
+                                            No staff assigned to this service.
                                         </div>
 
                                         <div v-else class="space-y-2">
@@ -784,39 +724,10 @@
                                                     service,
                                                 )"
                                                 :key="employee.employee_id"
-                                                class="rounded-xl border transition dark:border-white/10"
-                                                :class="[
-                                                    isAssigned(
-                                                        service.schedule_services_id,
-                                                        employee.employee_id,
-                                                    )
-                                                        ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
-                                                        : 'border-slate-200 bg-white hover:border-primary/30 dark:border-white/10 dark:bg-secondary',
-                                                    isPickDisabled(
-                                                        service,
-                                                        employee,
-                                                    )
-                                                        ? 'opacity-60'
-                                                        : '',
-                                                ]"
+                                                class="rounded-xl border border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20 dark:border-white/10"
                                             >
-                                                <button
-                                                    type="button"
-                                                    :disabled="
-                                                        isPickDisabled(
-                                                            service,
-                                                            employee,
-                                                        )
-                                                    "
-                                                    class="flex w-full items-start gap-3 p-3 text-left disabled:cursor-not-allowed"
-                                                    @click="
-                                                        toggleAssignee(
-                                                            service.schedule_services_id,
-                                                            Number(
-                                                                employee.employee_id,
-                                                            ),
-                                                        )
-                                                    "
+                                                <div
+                                                    class="flex w-full items-start gap-3 p-3 text-left"
                                                 >
                                                     <span
                                                         class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold"
@@ -992,7 +903,7 @@
                                                     >
                                                         Available
                                                     </span>
-                                                </button>
+                                                </div>
 
                                                 <div
                                                     v-if="
@@ -1010,86 +921,38 @@
                                                         "
                                                         class="mb-3 grid grid-cols-2 gap-3"
                                                     >
-                                                        <label
+                                                        <div
+                                                            v-for="field in (['start_time', 'end_time'] as const)"
+                                                            :key="field"
                                                             class="flex flex-col gap-1"
                                                         >
                                                             <span
                                                                 class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                                             >
-                                                                Start time
+                                                                {{
+                                                                    field ===
+                                                                    "start_time"
+                                                                        ? "Start time"
+                                                                        : "End time"
+                                                                }}
                                                             </span>
-                                                            <input
-                                                                :value="
-                                                                    entryFor(
-                                                                        service.schedule_services_id,
-                                                                        Number(
-                                                                            employee.employee_id,
-                                                                        ),
-                                                                    )?.start_time
-                                                                "
-                                                                type="time"
-                                                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
-                                                                @input="
-                                                                    setTimes(
-                                                                        service.schedule_services_id,
-                                                                        Number(
-                                                                            employee.employee_id,
-                                                                        ),
-                                                                        {
-                                                                            start_time:
-                                                                                (
-                                                                                    $event.target as HTMLInputElement
-                                                                                ).value,
-                                                                        },
-                                                                    )
-                                                                "
-                                                            />
-                                                        </label>
-
-                                                        <label
-                                                            class="flex flex-col gap-1"
-                                                        >
                                                             <span
-                                                                class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                                                class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                                                             >
-                                                                End time
+                                                                {{
+                                                                    format24To12(
+                                                                        entryFor(
+                                                                            service.schedule_services_id,
+                                                                            Number(
+                                                                                employee.employee_id,
+                                                                            ),
+                                                                        )?.[
+                                                                            field
+                                                                        ],
+                                                                    ) || "—"
+                                                                }}
                                                             </span>
-                                                            <input
-                                                                :value="
-                                                                    entryFor(
-                                                                        service.schedule_services_id,
-                                                                        Number(
-                                                                            employee.employee_id,
-                                                                        ),
-                                                                    )?.end_time
-                                                                "
-                                                                type="time"
-                                                                :min="
-                                                                    entryFor(
-                                                                        service.schedule_services_id,
-                                                                        Number(
-                                                                            employee.employee_id,
-                                                                        ),
-                                                                    )?.start_time ||
-                                                                    undefined
-                                                                "
-                                                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
-                                                                @input="
-                                                                    setTimes(
-                                                                        service.schedule_services_id,
-                                                                        Number(
-                                                                            employee.employee_id,
-                                                                        ),
-                                                                        {
-                                                                            end_time:
-                                                                                (
-                                                                                    $event.target as HTMLInputElement
-                                                                                ).value,
-                                                                        },
-                                                                    )
-                                                                "
-                                                            />
-                                                        </label>
+                                                        </div>
                                                     </div>
 
                                                     <p
@@ -1473,6 +1336,7 @@ import {
     formatDuration,
     formatDate,
     bookingTimeWindow,
+    format24To12,
 } from "~/utils/time";
 
 function formatServiceDuration(minutes?: number | null): string {
@@ -1509,7 +1373,6 @@ import {
     Mail,
     Phone,
     Printer,
-    Search,
     TriangleAlert,
     Users,
 } from "lucide-vue-next";
@@ -1700,12 +1563,6 @@ const assignments = ref<Record<number, AssignmentEntry[]>>({});
 
 const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift", "Full Shift"];
 
-const PRESET_HOURS: Record<string, { start: string; end: string }> = {
-    "AM Shift": { start: "00:00", end: "12:00" },
-    "PM Shift": { start: "12:00", end: "23:59" },
-    "Full Shift": { start: "00:00", end: "23:59" },
-};
-
 function bookingWindowFor(service: ScheduleServiceItem) {
     if (service.type !== "ADL") return { start: "", end: "" };
 
@@ -1738,7 +1595,6 @@ const isScheduleLocked = computed(() =>
     ),
 );
 
-const employeeSearch = ref("");
 
 const bodyGridClass =
     "xl:grid xl:items-start xl:gap-x-5 xl:gap-y-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] xl:grid-rows-[repeat(6,min-content)_1fr]";
@@ -1800,10 +1656,6 @@ function performedByLabel(service: ScheduleServiceItem) {
     return PERFORMED_BY_LABELS[performedByOf(service)];
 }
 
-function showRoleFilter(service: ScheduleServiceItem) {
-    return service.type === "Medical" && performedByOf(service) !== "caregiver";
-}
-
 function requiredRoleFor(service: ScheduleServiceItem): string | null {
     if (service.type === "Medical") {
         return performedByOf(service) === "caregiver" ? "caregiver" : "nurse";
@@ -1823,17 +1675,6 @@ function requiredRoleLabel(service: ScheduleServiceItem) {
     const role = requiredRoleFor(service);
 
     return role ? role.charAt(0).toUpperCase() + role.slice(1) : "Staff";
-}
-
-function allowedRolesFor(service: ScheduleServiceItem): string[] | null {
-    if (service.type === "Medical") {
-        const by = performedByOf(service);
-
-        return by === "caregiver" ? ["caregiver"] : ["nurse", "caregiver"];
-    }
-    if (service.type === "ADL") return ["caregiver"];
-
-    return null;
 }
 
 function isAssistant(service: ScheduleServiceItem, employee: Employee) {
@@ -1867,66 +1708,10 @@ const missingNurseLines = computed(() =>
         ),
 );
 
-const availableOnly = ref(false);
-
-const ROLE_FILTERS = [
-    { value: "all", label: "All" },
-    { value: "nurse", label: "Nurse" },
-    { value: "caregiver", label: "Caregiver" },
-] as const;
-
-const roleFilter = ref<"all" | "nurse" | "caregiver">("all");
-
-function assignmentRank(employee: Employee): number {
-    const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
-
-    if (employee.assignment_type === wanted) return 0;
-    if (employee.assignment_type === "both") return 1;
-
-    return 2;
-}
-
-const sortedEmployees = computed(() =>
-    [...(props.employees ?? [])].sort((a, b) => assignmentRank(a) - assignmentRank(b)),
-);
-
 function eligibleFor(service: ScheduleServiceItem) {
-    const allowed = allowedRolesFor(service);
-    const term = employeeSearch.value.trim().toLowerCase();
-
-    return sortedEmployees.value.filter((employee) => {
-        if (
-            allowed &&
-            !allowed.includes((employee.role_name ?? "").toLowerCase())
-        ) {
-            if (
-                !isAssigned(service.schedule_services_id, employee.employee_id)
-            ) {
-                return false;
-            }
-        }
-
-        if (
-            showRoleFilter(service) &&
-            roleFilter.value !== "all" &&
-            (employee.role_name ?? "").toLowerCase() !== roleFilter.value &&
-            !isAssigned(service.schedule_services_id, employee.employee_id)
-        ) {
-            return false;
-        }
-
-        if (
-            availableOnly.value &&
-            !isAssigned(service.schedule_services_id, employee.employee_id) &&
-            isPickDisabled(service, employee)
-        ) {
-            return false;
-        }
-
-        if (!term) return true;
-
-        return employeeLabel(employee).toLowerCase().includes(term);
-    });
+    return (props.employees ?? []).filter((employee) =>
+        isAssigned(service.schedule_services_id, employee.employee_id),
+    );
 }
 
 function entriesFor(serviceId: number): AssignmentEntry[] {
@@ -1942,20 +1727,6 @@ function entryFor(serviceId: number, employeeId: number) {
 function isAssigned(serviceId: number, employeeId: string | number) {
     return entriesFor(serviceId).some(
         (entry) => Number(entry.employee_id) === Number(employeeId),
-    );
-}
-
-function isPickDisabled(service: ScheduleServiceItem, employee: Employee) {
-    if (isAssigned(service.schedule_services_id, employee.employee_id)) {
-        return false;
-    }
-
-    if (employee.is_busy || isAssignmentTypeMismatch(employee)) return true;
-
-    return (
-        service.type !== "ADL" &&
-        !isAssistant(service, employee) &&
-        !employee.is_assigned
     );
 }
 
@@ -1981,21 +1752,6 @@ const conflictLines = computed(() => [
     ...(props.conflictMessages ?? []),
 ]);
 
-function unassignConflictingStaff() {
-    (props.saveConflicts ?? []).forEach(
-        ({ schedule_services_id, employee_id }) => {
-            assignments.value = {
-                ...assignments.value,
-                [schedule_services_id]: entriesFor(schedule_services_id).filter(
-                    (entry) => Number(entry.employee_id) !== employee_id,
-                ),
-            };
-        },
-    );
-
-    emit("clear-save-conflicts");
-}
-
 function isNoteLocked(serviceId: number, employeeId: number) {
     const service = props.schedule?.services?.find(
         (s) => s.schedule_services_id === serviceId,
@@ -2015,89 +1771,6 @@ function noteFor(serviceId: number, employeeId: number) {
     );
 }
 
-function isEmployeeClockedIn(
-    serviceId: number,
-    employeeId: string | number | null | undefined,
-) {
-    if (!employeeId) return false;
-
-    const service = props.schedule?.services?.find(
-        (s) => s.schedule_services_id === serviceId,
-    );
-
-    const assignee = service?.assignees?.find(
-        (a) => Number(a.employee_id) === Number(employeeId),
-    );
-
-    return (assignee?.online ?? []).some(
-        (log) => log.in_timestamp && !log.out_timestamp,
-    );
-}
-
-function toggleAssignee(serviceId: number, employeeId: number) {
-    const current = entriesFor(serviceId);
-
-    const index = current.findIndex(
-        (entry) => Number(entry.employee_id) === Number(employeeId),
-    );
-
-    if (index !== -1 && isEmployeeClockedIn(serviceId, employeeId)) {
-        toastError(
-            "This staff member is currently clocked in and can't be unassigned.",
-        );
-        return;
-    }
-
-    const service = props.schedule?.services?.find(
-        (s) => s.schedule_services_id === serviceId,
-    );
-    const window = service
-        ? bookingWindowFor(service)
-        : { start: "", end: "" };
-
-    const previous = (service?.previous_assignees ?? []).filter(
-        (assignee) => assignee.start_time || assignee.end_time || assignee.note,
-    );
-    const inherited =
-        [...previous]
-            .reverse()
-            .find((assignee) => Number(assignee.employee_id) === employeeId) ??
-        (current.length === 0 ? previous[previous.length - 1] : undefined);
-
-    assignments.value = {
-        ...assignments.value,
-        [serviceId]:
-            index === -1
-                ? [
-                      ...current,
-                      {
-                          employee_id: employeeId,
-                          note: isNoteLocked(serviceId, employeeId)
-                              ? "Assistant"
-                              : (inherited?.note ?? ""),
-                          start_time: inherited?.start_time || window.start,
-                          end_time: inherited?.end_time || window.end,
-                      },
-                  ]
-                : current.filter((_, i) => i !== index),
-    };
-}
-
-function setTimes(
-    serviceId: number,
-    employeeId: number,
-    times: { start_time?: string; end_time?: string },
-) {
-    assignments.value = {
-        ...assignments.value,
-        [serviceId]: entriesFor(serviceId).map((entry) =>
-            Number(entry.employee_id) === Number(employeeId)
-                ? { ...entry, ...times }
-                : entry,
-        ),
-    };
-}
-
 function setNote(serviceId: number, employeeId: number, note: string) {
     assignments.value = {
         ...assignments.value,
@@ -2110,42 +1783,11 @@ function setNote(serviceId: number, employeeId: number, note: string) {
 }
 
 function togglePreset(serviceId: number, employeeId: number, preset: string) {
-    const current = noteFor(serviceId, employeeId);
-    const service = props.schedule?.services?.find(
-        (s) => s.schedule_services_id === serviceId,
+    setNote(
+        serviceId,
+        employeeId,
+        noteFor(serviceId, employeeId) === preset ? "" : preset,
     );
-    const hours = service?.type === "ADL" ? PRESET_HOURS[preset] : undefined;
-
-    if (current === preset) {
-        setNote(serviceId, employeeId, "");
-
-        const entry = entryFor(serviceId, employeeId);
-
-        if (
-            hours &&
-            service &&
-            entry?.start_time === hours.start &&
-            entry?.end_time === hours.end
-        ) {
-            const window = bookingWindowFor(service);
-
-            setTimes(serviceId, employeeId, {
-                start_time: window.start,
-                end_time: window.end,
-            });
-        }
-
-        return;
-    }
-
-    setNote(serviceId, employeeId, preset);
-
-    if (hours) {
-        setTimes(serviceId, employeeId, {
-            start_time: hours.start,
-            end_time: hours.end,
-        });
-    }
 }
 
 const availableTimeSlots = computed(() =>

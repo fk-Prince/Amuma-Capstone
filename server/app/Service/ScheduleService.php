@@ -112,6 +112,8 @@ class ScheduleService
             ['schedule_id', '=', $payload['schedule_id']]
         ]);
 
+        $payload['assignments'] = $this->currentAssignments($schedule, $payload['assignments'] ?? []);
+
         $newStatus = strtolower($payload['status'] ?? '');
 
         // Completing or cancelling closes the schedule out rather than
@@ -179,6 +181,31 @@ class ScheduleService
         return $this->updateSchedule($user, $schedule, $payload);
     }
 
+
+    private function currentAssignments(Schedule $schedule, array $requested): array
+    {
+        $requested = collect($requested)->keyBy(
+            fn($row) => ($row['schedule_services_id'] ?? '') . ':' . ($row['employee_id'] ?? '')
+        );
+
+        return $schedule->scheduleServices
+            ->flatMap(fn($scheduleService) => $scheduleService->assigned()
+                ->where('is_active', true)
+                ->get()
+                ->map(function ($assigned) use ($scheduleService, $requested) {
+                    $row = $requested->get("{$scheduleService->schedule_services_id}:{$assigned->employee_id}", []);
+
+                    return [
+                        'schedule_services_id' => $scheduleService->schedule_services_id,
+                        'employee_id' => (int) $assigned->employee_id,
+                        'note' => array_key_exists('note', $row) ? $row['note'] : $assigned->note,
+                        'start_time' => $assigned->start_time,
+                        'end_time' => $assigned->end_time,
+                    ];
+                }))
+            ->values()
+            ->all();
+    }
 
     private const ASSISTANT_NOTE = 'Assistant';
 

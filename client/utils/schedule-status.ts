@@ -53,3 +53,10 @@ export function scheduleStatusLabel(status?: string | null) {
             return "Pending";
     }
 }
+export function hasScheduleAssignees(schedule?: {
+    services?: { assignees?: { is_active?: boolean }[] | null }[] | null;
+} | null) {
+    return !!schedule?.services?.some((service) =>
+        service.assignees?.some((assignee) => assignee.is_active !== false),
+    );
+}

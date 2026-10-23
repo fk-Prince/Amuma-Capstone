@@ -228,18 +228,22 @@
                                                 ].includes(
                                                     schedule.status?.toLowerCase() ??
                                                         '',
-                                                ) &&
-                                                schedule.services?.some(
-                                                    (service) =>
-                                                        !service.assignees
-                                                            ?.length,
                                                 )
                                             "
                                             type="button"
-                                            class="flex-1 rounded-md border border-rose-600/20 bg-rose-50 px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
+                                            class="flex-1 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold transition"
+                                            :class="
+                                                hasScheduleAssignees(schedule)
+                                                    ? 'border-primary/20 bg-primary/[0.03] text-primary hover:bg-primary/10'
+                                                    : 'border-rose-600/20 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15'
+                                            "
                                             @click="$emit('assign', schedule)"
                                         >
-                                            Assign now
+                                            {{
+                                                hasScheduleAssignees(schedule)
+                                                    ? "Update assign"
+                                                    : "Assign now"
+                                            }}
                                         </button>
                                     </div>
                                 </div>
@@ -419,6 +423,7 @@ import {
     watch,
 } from "vue";
 import type { ScheduleItem } from "~/types/schedule";
+import { hasScheduleAssignees } from "~/utils/schedule-status";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
 import { usePermissions } from "~/composables/usePermission";

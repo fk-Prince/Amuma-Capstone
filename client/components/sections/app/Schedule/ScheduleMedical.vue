@@ -291,15 +291,21 @@
                                             ].includes(
                                                 schedule.status?.toLowerCase() ??
                                                     '',
-                                            ) &&
-                                            schedule.services?.some(
-                                                (s) => !s.assignees?.length,
                                             )
                                         "
-                                        class="flex-1 rounded-md bg-rose-50 px-2 py-1 text-[10.5px] font-semibold text-rose-600 border-rose-600/20 border transition hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15"
+                                        class="flex-1 rounded-md border px-2 py-1 text-[10.5px] font-semibold transition"
+                                        :class="
+                                            hasScheduleAssignees(schedule)
+                                                ? 'border-primary/20 bg-primary/[0.03] text-primary hover:bg-primary/10'
+                                                : 'border-rose-600/20 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/15'
+                                        "
                                         @click="$emit('assign', schedule)"
                                     >
-                                        Assign
+                                        {{
+                                            hasScheduleAssignees(schedule)
+                                                ? "Update assign"
+                                                : "Assign"
+                                        }}
                                     </button>
                                 </div>
                             </div>
@@ -483,6 +489,7 @@ import {
 } from "vue";
 
 import type { ScheduleItem } from "~/types/schedule";
+import { hasScheduleAssignees } from "~/utils/schedule-status";
 import { initials } from "~/utils/user";
 import { useSchedule } from "~/composables/useSchedule";
 import { usePermissions } from "~/composables/usePermission";

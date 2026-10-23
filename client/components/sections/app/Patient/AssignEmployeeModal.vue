@@ -32,7 +32,11 @@
                             <p
                                 class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
                             >
-                                Assign Employee
+                                {{
+                                    hasScheduleAssignees(schedule)
+                                        ? "Update Assignment"
+                                        : "Assign Employee"
+                                }}
                             </p>
 
                             <h2
@@ -886,7 +890,15 @@
                                 v-if="isSaving"
                                 class="h-4 w-4 animate-spin"
                             />
-                            {{ isSaving ? "Assigning..." : "Assign" }}
+                            {{
+                                hasScheduleAssignees(schedule)
+                                    ? isSaving
+                                        ? "Updating..."
+                                        : "Update assign"
+                                    : isSaving
+                                      ? "Assigning..."
+                                      : "Assign"
+                            }}
                         </button>
                     </div>
                 </div>
@@ -897,6 +909,7 @@
 
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
+import { hasScheduleAssignees } from "~/utils/schedule-status";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import { computed, ref, watch } from "vue";
