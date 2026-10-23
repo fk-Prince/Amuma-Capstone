@@ -176,10 +176,6 @@ class PatientRepository
                             "LOWER(CONCAT(first_name, ' ', last_name)) LIKE ?",
                             ['%' . strtolower($search) . '%']
                         );
-
-                    if (Str::isUuid($search)) {
-                        $q->orWhere('uuid', '=', $search);
-                    }
                 });
             })
 
