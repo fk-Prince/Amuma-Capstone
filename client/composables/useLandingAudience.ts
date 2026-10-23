@@ -31,7 +31,5 @@ export const useLandingAudience = () => {
         landingPath: computed(() => landingPathFor(audience.value)),
         isFamily: computed(() => audience.value === "family"),
         isAgency: computed(() => audience.value === "agency"),
-        // Families book care; they never see subscription/plan content.
-        canSeeSubscription: computed(() => audience.value !== "family"),
     };
 };

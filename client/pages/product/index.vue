@@ -102,7 +102,6 @@ definePageMeta({
     layout: "default",
     navVariant: 3,
     navTheme: "light",
-    middleware: ["prevent-staff-subscription"],
 });
 
 const { checkout, loading, formattedPlans } = usePlanCards();

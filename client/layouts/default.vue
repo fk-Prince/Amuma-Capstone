@@ -55,16 +55,14 @@ const navInFlow = computed(
     () => isBookingRoute.value && route.meta.navVariant === 6,
 );
 
-const { landingPath, canSeeSubscription } = useLandingAudience();
+const { landingPath } = useLandingAudience();
 
 const navList = computed(() => {
     const custom = route.meta.navList as typeof defaultNavList | undefined;
     if (custom) return custom;
 
-    return defaultNavList
-        .filter((item) => canSeeSubscription.value || item.to !== "/product")
-        .map((item) =>
-            item.to === "/" ? { ...item, to: landingPath.value } : item,
-        );
+    return defaultNavList.map((item) =>
+        item.to === "/" ? { ...item, to: landingPath.value } : item,
+    );
 });
 </script>
