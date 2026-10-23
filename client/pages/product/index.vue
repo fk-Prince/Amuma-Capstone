@@ -20,6 +20,8 @@
                     :model-value="checkout.selectedPlanType"
                     @update:model-value="checkout.setSelectedPlanType"
                 />
+
+                <TrialPromoBanner class="mx-auto mt-6 max-w-3xl" />
             </div>
 
             <div
@@ -92,6 +94,7 @@
 <script setup lang="ts">
 import PricingCard from "~/components/ui/PricingCard.vue";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import TrialPromoBanner from "~/components/ui/TrialPromoBanner.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
 import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
