@@ -21,37 +21,7 @@
                     @update:model-value="checkout.setSelectedPlanType"
                 />
 
-                <div
-                    v-if="isAgencyOwner"
-                    class="mx-auto mt-6 flex max-w-5xl flex-col items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-left sm:flex-row sm:justify-between dark:border-amber-500/30 dark:bg-amber-500/10"
-                >
-                    <div class="flex items-start gap-3">
-                        <TriangleAlert
-                            class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300"
-                        />
-                        <div>
-                            <p
-                                class="text-sm font-bold text-amber-800 dark:text-amber-200"
-                            >
-                                {{ SUBSCRIBE_ONCE_TITLE }}
-                            </p>
-                            <p
-                                class="text-xs text-amber-700 dark:text-amber-300/90"
-                            >
-                                {{ SUBSCRIBE_ONCE_MESSAGE }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <NuxtLink
-                        :to="manageSubscriptionPath"
-                        class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-amber-700"
-                    >
-                        Manage Subscription
-                    </NuxtLink>
-                </div>
-
-                <TrialPromoBanner v-else class="mx-auto mt-6 max-w-5xl" />
+                <TrialPromoBanner class="mx-auto mt-6 max-w-5xl" />
             </div>
 
             <div
@@ -127,14 +97,7 @@ import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import TrialPromoBanner from "~/components/ui/TrialPromoBanner.vue";
 import ComparableTable from "~/components/ui/ComparableTable.vue";
 import { usePlanCards } from "~/composables/usePlanCards";
-import { onMounted } from "vue";
-import { TriangleAlert } from "lucide-vue-next";
 import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
-import {
-    SUBSCRIBE_ONCE_MESSAGE,
-    SUBSCRIBE_ONCE_TITLE,
-    useSubscribeAccess,
-} from "~/composables/useSubscribeAccess";
 
 useHead({ title: "Product" });
 
@@ -146,7 +109,4 @@ definePageMeta({
 
 const { checkout, loading, formattedPlans } = usePlanCards();
 const { startSubscribe } = useSubscribeFlow();
-const { isAgencyOwner, manageSubscriptionPath, ensureLoaded } = useSubscribeAccess();
-
-onMounted(ensureLoaded);
 </script>
