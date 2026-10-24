@@ -491,13 +491,32 @@ class BranchService
                         continue;
                     }
 
-                    $clockedIn = AdlAttendance::where('schedule_assigned_id', $assignment->schedule_assigned_id)
+                    $onDutyAssignmentId = AdlAttendance::whereHas(
+                        'assigned',
+                        fn($assigned) => $assigned->where('schedule_services_id', $service->schedule_services_id)
+                    )
                         ->whereNotNull('in_timestamp')
                         ->whereNull('out_timestamp')
-                        ->exists();
+                        ->value('schedule_assigned_id');
+
+                    $attendance = match (true) {
+                        !$onDutyAssignmentId => null,
+                        (int) $onDutyAssignmentId === (int) $assignment->schedule_assigned_id => 'me',
+                        default => 'other',
+                    };
+
+                    $canHandOver = $attendance === 'me'
+                        && $now->lessThan($visitEnd)
+                        && ScheduleAssigned::active()
+                            ->where('schedule_services_id', $service->schedule_services_id)
+                            ->where('employee_id', '!=', $employee->employee_id)
+                            ->exists();
 
                     $blocks->push([
-                        'clocked_in' => $clockedIn,
+                        'clocked_in' => $attendance === 'me',
+                        'attendance' => $attendance,
+                        'schedule_services_id' => $service->schedule_services_id,
+                        'can_hand_over' => $canHandOver,
                         'type' => 'adl',
                         'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
                         'title' => $service->service?->service_name ?? $service->type,
@@ -559,11 +578,16 @@ class BranchService
             'visit_start_at' => isset($block['visit_start']) ? $block['visit_start']->toISOString() : null,
             'visit_end_at' => isset($block['visit_end']) ? $block['visit_end']->toISOString() : null,
             'clocked_in' => (bool) ($block['clocked_in'] ?? false),
+            'attendance' => $block['attendance'] ?? null,
+            'schedule_services_id' => $block['schedule_services_id'] ?? null,
+            'can_hand_over' => (bool) ($block['can_hand_over'] ?? false),
             'total_minutes' => (int) $block['start']->diffInMinutes($block['end']),
         ];
 
         $current = $blocks->first(fn($block) => !empty($block['clocked_in']))
-            ?? $blocks->first(fn($block) => $now->greaterThanOrEqualTo($block['start']) && $now->lessThan($block['end']));
+            ?? $blocks->first(fn($block) => $block['type'] !== 'adl'
+                && $now->greaterThanOrEqualTo($block['start'])
+                && $now->lessThan($block['end']));
         $next = $blocks->first(fn($block) => $block['start']->greaterThan($now));
 
         return [

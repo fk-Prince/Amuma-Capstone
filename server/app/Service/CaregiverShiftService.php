@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Http\Resources\CaregiverShiftResource;
+use App\Models\AdlAttendance;
 use App\Models\PatientAdmission;
 use App\Models\User;
 use App\Repository\CaregiverShiftRepository;
@@ -107,6 +108,16 @@ class CaregiverShiftService
                     $cursors[$schedule->schedule_id . ':' . $assignment->employee_id] = $end->copy();
                 }
 
+                $onDutyAssignmentId = $service->type === 'ADL'
+                    ? AdlAttendance::whereHas(
+                        'assigned',
+                        fn($assigned) => $assigned->where('schedule_services_id', $service->schedule_services_id)
+                    )
+                        ->whereNotNull('in_timestamp')
+                        ->whereNull('out_timestamp')
+                        ->value('schedule_assigned_id')
+                    : null;
+
                 return [
                     'employee_id' => $assignment->employee_id,
                     'full_name' => trim(
@@ -116,8 +127,14 @@ class CaregiverShiftService
                     'type' => $service->type,
                     'title' => $service->service?->service_name ?? $service->type,
                     'patient_name' => $schedule->patient?->display_name,
+                    'schedule_code' => $schedule->schedule_code,
                     'start_time' => $start->format('H:i'),
                     'end_time' => $end->format('H:i'),
+                    'attendance' => match (true) {
+                        !$onDutyAssignmentId => null,
+                        (int) $onDutyAssignmentId === (int) $assignment->schedule_assigned_id => 'me',
+                        default => 'other',
+                    },
                 ];
             })
             ->filter()

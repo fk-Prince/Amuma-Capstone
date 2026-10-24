@@ -137,6 +137,73 @@ class AdlShiftQrTest extends TestCase
             ->first()?->assigned?->employee_id;
     }
 
+    private function setShift(int $employeeId, string $start, string $end): void
+    {
+        ScheduleAssigned::where('employee_id', $employeeId)
+            ->update(['start_time' => $start, 'end_time' => $end, 'note' => 'AM Shift']);
+    }
+
+    public function test_clock_in_is_refused_outside_the_shift(): void
+    {
+        $this->setShift($this->firstShift, '08:00', '12:00');
+        $this->travelTo(now()->startOfDay()->setTime(14, 0));
+
+        $this->expectExceptionCode(422);
+
+        $this->scan($this->familyQr('in'), $this->firstShift);
+    }
+
+    public function test_clock_in_is_allowed_up_to_an_hour_before_the_shift(): void
+    {
+        $this->setShift($this->firstShift, '08:00', '12:00');
+        $this->travelTo(now()->startOfDay()->setTime(7, 15));
+
+        $this->scan($this->familyQr('in'), $this->firstShift);
+
+        $this->assertSame($this->firstShift, (int) $this->onDuty());
+    }
+
+    public function test_a_refused_clock_in_keeps_the_qr_usable(): void
+    {
+        $this->setShift($this->firstShift, '08:00', '12:00');
+        $this->travelTo(now()->startOfDay()->setTime(14, 0));
+
+        $qr = $this->familyQr('in');
+
+        try {
+            $this->scan($qr, $this->firstShift);
+        } catch (\Exception) {
+        }
+
+        $this->scan($qr, $this->secondShift);
+
+        $this->assertSame($this->secondShift, (int) $this->onDuty());
+    }
+
+    public function test_an_ongoing_visit_with_nobody_on_duty_can_be_picked_up_any_time(): void
+    {
+        $this->scan($this->familyQr('in'), $this->firstShift);
+        $this->scan($this->familyQr('out'), $this->firstShift);
+
+        $this->setShift($this->secondShift, '08:00', '12:00');
+        $this->travelTo(now()->startOfDay()->setTime(20, 0));
+
+        $this->scan($this->familyQr('in'), $this->secondShift);
+
+        $this->assertSame($this->secondShift, (int) $this->onDuty());
+    }
+
+    public function test_shift_change_is_allowed_outside_the_shift(): void
+    {
+        $this->setShift($this->secondShift, '08:00', '12:00');
+        $this->travelTo(now()->startOfDay()->setTime(20, 0));
+
+        $this->scan($this->familyQr('in'), $this->firstShift);
+        $this->scan($this->handoverQr($this->firstShift), $this->secondShift);
+
+        $this->assertSame($this->secondShift, (int) $this->onDuty());
+    }
+
     public function test_employee_cannot_generate_the_time_in_qr_for_adl(): void
     {
         $this->expectExceptionCode(403);

@@ -204,7 +204,17 @@ class CaregiverShiftRepository
             ->whereHas(
                 'scheduleService.schedule',
                 fn($schedule) => $schedule
-                    ->whereBetween('scheduled_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()])
+                    ->where(fn($today) => $today
+                        ->whereBetween('scheduled_at', [$day->copy()->startOfDay(), $day->copy()->endOfDay()])
+                        ->orWhere(fn($adl) => $adl
+                            ->where('scheduled_at', '<', $day->copy()->startOfDay())
+                            ->whereHas('scheduleServices', fn($service) => $service
+                                ->where('type', 'ADL')
+                                ->whereNotNull('hours_booked')
+                                ->whereRaw(
+                                    "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') > ?",
+                                    [$day->copy()->startOfDay()]
+                                ))))
                     ->whereNotIn('status', ['cancelled', 'missed'])
                     ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
             )

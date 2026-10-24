@@ -210,7 +210,8 @@ class AdlAttendanceService
 
     private function verifyClockInToken(array $payload)
     {
-        $data = Cache::pull($this->qrCacheKey('in', $payload['token']));
+        $cacheKey = $this->qrCacheKey('in', $payload['token']);
+        $data = Cache::get($cacheKey);
 
         if (!$data) {
             throw new Exception('This QR code is invalid or has expired.', 410);
@@ -226,6 +227,9 @@ class AdlAttendanceService
         }
 
         $this->guardAdlCanClockIn($assigned->schedule_services_id);
+        $this->guardWithinShift($assigned);
+
+        Cache::forget($cacheKey);
 
         return DB::transaction(function () use ($payload, $assigned) {
             $activeSession = AdlAttendance::whereHas(
@@ -361,6 +365,56 @@ class AdlAttendanceService
         if (!$exists) {
             throw new Exception('No active caregiver is assigned to this schedule.', 404);
         }
+    }
+
+    public const EARLY_CLOCK_IN_MINUTES = 60;
+
+    private function guardWithinShift(ScheduleAssigned $assigned): void
+    {
+        if (!$assigned->start_time || !$assigned->end_time || !$this->isAdl($assigned->schedule_services_id)) {
+            return;
+        }
+
+        $schedule = ScheduleService::with('schedule')->find($assigned->schedule_services_id)?->schedule;
+
+        if (
+            strtolower((string) $schedule?->status) === Schedule::STATUS_ONGOING
+            && !$this->activeSessionFor($assigned->schedule_services_id)
+        ) {
+            return;
+        }
+
+        $now = now();
+
+        foreach ([-1, 0] as $offset) {
+            $day = $now->copy()->startOfDay()->addDays($offset);
+            $start = $day->copy()->setTimeFromTimeString((string) $assigned->start_time);
+            $end = $day->copy()->setTimeFromTimeString((string) $assigned->end_time);
+
+            if ($end->lessThanOrEqualTo($start)) {
+                $end->addDay();
+            }
+
+            if ($now->betweenIncluded($start->copy()->subMinutes(self::EARLY_CLOCK_IN_MINUTES), $end)) {
+                return;
+            }
+        }
+
+        $shift = trim(($assigned->note ? $assigned->note . ', ' : '')
+            . Carbon::parse((string) $assigned->start_time)->format('g:i A')
+            . ' – '
+            . Carbon::parse((string) $assigned->end_time)->format('g:i A'));
+
+        throw new Exception(
+            "You can only clock in during your shift ({$shift}), or up to 1 hour before it starts.",
+            422
+        );
+    }
+
+    private function isAdl(int $scheduleServicesId): bool
+    {
+        return ScheduleService::where('schedule_services_id', $scheduleServicesId)
+            ->value('type') === ScheduleService::TYPE_ADL;
     }
 
     private function guardAdlCanClockIn(int $scheduleServicesId): void

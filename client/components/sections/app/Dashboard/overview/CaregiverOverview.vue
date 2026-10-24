@@ -68,7 +68,7 @@
                 />
             </section>
 
-            <DutyStatusCard v-if="duty" :duty="duty" />
+            <DutyStatusCard v-if="duty" :duty="duty" @refresh="reload" />
 
             <section
                 class="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-sm ring-1 ring-slate-100/60 dark:border-white/10 dark:bg-white/5 dark:ring-white/10"
@@ -217,7 +217,7 @@ const props = withDefaults(
     { roleLabel: "Caregiver" },
 );
 
-const { overview, loading, accessDenied, accessDeniedMessage } =
+const { overview, loading, accessDenied, accessDeniedMessage, reload } =
     useBranchOverview(toRef(props, "branchUuid"));
 
 const { hasModule } = usePermissions();

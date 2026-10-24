@@ -224,8 +224,10 @@ interface BoardTask {
     type: "ADL" | "Medical";
     title: string;
     patient_name: string | null;
+    schedule_code?: string | null;
     start_time: string;
     end_time: string;
+    attendance?: "me" | "other" | null;
 }
 
 type Kind = "facility" | "adl" | "medical";
@@ -350,7 +352,10 @@ interface RawSegment {
     end: number;
     label: string;
     title: string;
+    active?: boolean;
 }
+
+const isActive = (item: RawSegment) => item.active ?? isNowIn(item.start, item.end);
 
 interface StaffEntry {
     id: number;
@@ -414,14 +419,30 @@ const staff = computed(() => {
     for (const task of tasks.value) {
         const entry = entryFor(task.employee_id, task.full_name, task.role);
         const time = `${formatTime(task.start_time)} – ${formatTime(task.end_time)}`;
+        const start = toHour(task.start_time);
+        const end = toHour(task.end_time);
+        const isAdl = task.type === "ADL";
+        const inShift = isNowIn(start, end);
+        const status = !isAdl
+            ? ""
+            : task.attendance === "me"
+              ? inShift
+                  ? ""
+                  : " · On duty, not in shift"
+              : inShift
+                ? task.attendance === "other"
+                    ? " · Someone on duty"
+                    : " · Not clocked in"
+                : "";
 
         entry.taskCount += 1;
         entry.items.push({
-            kind: task.type === "ADL" ? "adl" : "medical",
-            start: toHour(task.start_time),
-            end: toHour(task.end_time),
-            label: `${time} · ${task.title}`,
-            title: `${KIND_STYLE[task.type === "ADL" ? "adl" : "medical"].label} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""} · ${time}`,
+            kind: isAdl ? "adl" : "medical",
+            start,
+            end,
+            active: isAdl ? task.attendance === "me" : undefined,
+            label: `${time} · ${task.title}${status}`,
+            title: `${KIND_STYLE[isAdl ? "adl" : "medical"].label} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""}${task.schedule_code ? ` · ${task.schedule_code}` : ""} · ${time}${status}`,
         });
     }
 
@@ -444,7 +465,7 @@ const placeSegments = (items: RawSegment[]) => {
     const pieces: (Omit<Segment, "top"> & { right: number })[] = [];
 
     for (const item of items) {
-        const active = isNowIn(item.start, item.end);
+        const active = isActive(item);
         const base = { label: item.label, title: item.title, kind: item.kind, active };
 
         if (item.end > item.start) {
@@ -523,7 +544,7 @@ const rows = computed(() =>
                 segments,
                 height,
                 firstStart: Math.min(...entry.items.map((item) => item.start)),
-                onDuty: entry.items.some((item) => isNowIn(item.start, item.end)),
+                onDuty: entry.items.some(isActive),
             };
         })
         .sort(

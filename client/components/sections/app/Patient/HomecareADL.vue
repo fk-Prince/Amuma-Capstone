@@ -375,7 +375,7 @@
                                 class="flex w-full flex-wrap items-center gap-2"
                             >
                                 <div
-                                    class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
+                                    class="w-full rounded-xl border border-primary/20 bg-primary/5 px-4 py-2"
                                 >
                                     <p
                                         class="text-[10px] uppercase text-primary/60"
@@ -414,11 +414,16 @@
 
                                     <template v-if="log.assignees.length">
                                         <div
-                                            v-for="assignee in visibleAssignees(
-                                                log,
-                                            )"
+                                            v-for="(
+                                                assignee, assigneeIndex
+                                            ) in visibleAssignees(log)"
                                             :key="assignee.employee_id"
-                                            class="flex items-center justify-between gap-3"
+                                            class="flex items-center justify-between gap-3 py-3"
+                                            :class="
+                                                assigneeIndex > 0
+                                                    ? 'border-t border-muted-light dark:border-white/10'
+                                                    : 'pt-1'
+                                            "
                                         >
                                             <div
                                                 class="flex items-center gap-3 min-w-0"
@@ -490,59 +495,68 @@
                                             </div>
 
                                             <div
-                                                class="flex shrink-0 flex-col items-end gap-1"
+                                                class="flex shrink-0 flex-col items-end gap-1.5 text-right"
                                             >
-                                                <span
+                                                <template
                                                     v-if="
                                                         isOnDuty(
                                                             log,
                                                             assignee.employee_id,
                                                         )
                                                     "
-                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                                 >
                                                     <span
-                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                                    />
-                                                    On Duty
-                                                </span>
+                                                        v-if="
+                                                            shiftEnded(
+                                                                log,
+                                                                assignee,
+                                                            )
+                                                        "
+                                                        class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                                    >
+                                                        <TriangleAlert
+                                                            class="h-3 w-3"
+                                                        />
+                                                        On duty · not in shift
+                                                    </span>
 
-                                                <span
+                                                    <span
+                                                        v-else
+                                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                                    >
+                                                        <span
+                                                            class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
+                                                        />
+                                                        On duty
+                                                    </span>
+                                                </template>
+
+                                                <div
                                                     v-if="
                                                         assignee.note ||
                                                         shiftHours(assignee)
                                                     "
-                                                    class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
+                                                    class="min-w-[9rem] rounded-lg border border-primary/15 bg-primary/5 px-3 py-1.5 dark:border-primary/20"
                                                 >
-                                                    {{ assignee.note }}
-                                                    <template
+                                                    <p
+                                                        class="text-[11px] font-semibold text-primary"
+                                                    >
+                                                        {{
+                                                            assignee.note ||
+                                                            "Shift"
+                                                        }}
+                                                    </p>
+                                                    <p
                                                         v-if="
-                                                            assignee.note &&
                                                             shiftHours(assignee)
                                                         "
-                                                        >·</template
+                                                        class="text-[11px] tabular-nums text-muted dark:text-gray-400"
                                                     >
-                                                    {{ shiftHours(assignee) }}
-                                                </span>
-
-                                                <span
-                                                    v-if="
-                                                        shiftEnded(
-                                                            log,
-                                                            assignee,
-                                                        ) &&
-                                                        isOnDuty(
-                                                            log,
-                                                            assignee.employee_id,
-                                                        )
-                                                    "
-                                                    class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
-                                                >
-                                                    <TriangleAlert
-                                                        class="h-3 w-3"
-                                                    />
-                                                    Shift ended · still on duty
-                                                </span>
+                                                        {{
+                                                            shiftHours(assignee)
+                                                        }}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
 

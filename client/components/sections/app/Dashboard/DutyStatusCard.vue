@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 import {
+    ArrowLeftRight,
     BedDouble,
     CalendarClock,
     Clock,
     HandHeart,
     Hourglass,
+    ScanLine,
     Stethoscope,
 } from "lucide-vue-next";
+import QrCodeModal from "~/components/ui/QrCodeModal.vue";
+import QrScanner from "~/components/ui/QrScanner.vue";
+import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { useToast } from "~/composables/useToast";
 
 interface DutyBlock {
     type: "shift" | "adl" | "medical";
@@ -21,6 +28,9 @@ interface DutyBlock {
     visit_start_at?: string | null;
     visit_end_at?: string | null;
     clocked_in?: boolean;
+    attendance?: "me" | "other" | null;
+    schedule_services_id?: number | null;
+    can_hand_over?: boolean;
     total_minutes: number;
 }
 
@@ -35,6 +45,45 @@ interface DutyData {
 const props = defineProps<{
     duty: DutyData;
 }>();
+
+const emit = defineEmits<{ (e: "refresh"): void }>();
+
+const route = useRoute();
+const { error: toastError } = useToast();
+
+const handoverToken = ref<string | null>(null);
+const showHandoverQr = ref(false);
+const generatingHandover = ref(false);
+const showScanner = ref(false);
+
+async function openHandoverQr(scheduleServicesId?: number | null) {
+    if (!scheduleServicesId || generatingHandover.value) return;
+
+    generatingHandover.value = true;
+    handoverToken.value = null;
+    showHandoverQr.value = true;
+
+    try {
+        const res: any = await adlAttendanceService.generateQr({
+            type: "handover",
+            branch_uuid: route.params.uuid,
+            schedule_services_id: scheduleServicesId,
+        });
+
+        handoverToken.value = res?.token ?? res?.data?.token ?? null;
+    } catch (err: any) {
+        showHandoverQr.value = false;
+        toastError(err?.message ?? "Couldn't create the shift change QR.");
+    } finally {
+        generatingHandover.value = false;
+    }
+}
+
+function onHandedOver() {
+    showHandoverQr.value = false;
+    handoverToken.value = null;
+    emit("refresh");
+}
 
 const TICK_MS = 15000;
 
@@ -77,7 +126,11 @@ const blocks = computed(() =>
                 : now.value >= end
                   ? "done"
                   : now.value >= start
-                    ? "now"
+                    ? block.type === "adl"
+                        ? block.attendance === "other"
+                            ? "covered"
+                            : "missing"
+                        : "now"
                     : "upcoming",
         };
     }),
@@ -106,7 +159,10 @@ const currentWindow = computed(() => {
 const remainingMinutes = computed(() => {
     if (!currentWindow.value) return 0;
 
-    return Math.max(Math.ceil((currentWindow.value.end - now.value) / 60000), 0);
+    return Math.max(
+        Math.ceil((currentWindow.value.end - now.value) / 60000),
+        0,
+    );
 });
 
 const percent = computed(() => {
@@ -119,7 +175,10 @@ const percent = computed(() => {
     if (total <= 0) return 0;
 
     return Math.min(
-        Math.max(Math.round(((now.value - block.start) / total) * 1000) / 10, 0),
+        Math.max(
+            Math.round(((now.value - block.start) / total) * 1000) / 10,
+            0,
+        ),
         100,
     );
 });
@@ -197,15 +256,33 @@ const nowPercent = computed(() =>
 
 const hourLabels = ["12 AM", "6 AM", "12 PM", "6 PM", "12 AM"];
 
-const stateLabel = (state: string) =>
-    state === "now" ? "On duty now" : state === "done" ? "Done" : "Upcoming";
+const STATE_LABELS: Record<string, string> = {
+    now: "On duty now",
+    covered: "Someone on duty",
+    missing: "Not clocked in",
+    done: "Done",
+    upcoming: "Upcoming",
+};
 
-const stateClass = (state: string) =>
-    state === "now"
-        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-        : state === "done"
-          ? "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400"
-          : "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300";
+const STATE_CLASSES: Record<string, string> = {
+    now: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+    covered: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+    missing: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
+    done: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
+    upcoming:
+        "bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300",
+};
+
+const stateLabel = (state: string) => STATE_LABELS[state] ?? state;
+
+const stateClass = (state: string) => STATE_CLASSES[state] ?? STATE_CLASSES.upcoming;
+
+const shiftWithoutMe = computed(
+    () =>
+        blocks.value.find(
+            (block) => block.state === "missing" || block.state === "covered",
+        ) ?? null,
+);
 
 const typeBar = (type: string) =>
     type === "adl"
@@ -289,9 +366,7 @@ const typeIcon = (type: string) =>
                     </p>
                 </div>
 
-                <p
-                    class="text-right text-xs text-gray-500 dark:text-gray-400"
-                >
+                <p class="text-right text-xs text-gray-500 dark:text-gray-400">
                     <template v-if="currentWindow">
                         {{ formatWindowEdge(currentWindow.start) }} –
                         {{ formatWindowEdge(currentWindow.end) }}
@@ -340,24 +415,83 @@ const typeIcon = (type: string) =>
                 >
                 <span v-if="current.location">· {{ current.location }}</span>
             </p>
+
+            <div
+                v-if="current.can_hand_over && remainingMinutes > 0"
+                class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-emerald-100 pt-3 dark:border-white/10"
+            >
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Ending your shift early? Let the next caregiver scan your
+                    code to take over.
+                </p>
+
+                <button
+                    type="button"
+                    :disabled="generatingHandover"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                    @click="openHandoverQr(current.schedule_services_id)"
+                >
+                    <ArrowLeftRight class="h-3.5 w-3.5" />
+                    Shift change QR
+                </button>
+            </div>
         </div>
 
         <!-- Off duty -->
-        <div
-            v-else
-            class="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-white/5"
-        >
+        <div v-else class="mt-4 rounded-xl bg-gray-50 p-4 dark:bg-white/5">
             <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                You're not on duty right now
+                <template v-if="shiftWithoutMe?.state === 'covered'">
+                    It's your shift, but someone else is on duty
+                </template>
+                <template v-else-if="shiftWithoutMe">
+                    It's your shift, but you're not clocked in
+                </template>
+                <template v-else>You're not on duty right now</template>
             </p>
 
             <p
-                v-if="next"
+                v-if="shiftWithoutMe"
+                class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+                {{ shiftWithoutMe.title }}
+                <template v-if="shiftWithoutMe.patient_name">
+                    · {{ shiftWithoutMe.patient_name }}
+                </template>
+                <template v-if="shiftWithoutMe.schedule_code">
+                    · {{ shiftWithoutMe.schedule_code }}
+                </template>
+                · {{ formatTime(shiftWithoutMe.start) }} –
+                {{ formatTime(shiftWithoutMe.end) }}.
+                {{
+                    shiftWithoutMe.state === "covered"
+                        ? "Take over with a shift change QR when you arrive."
+                        : "Scan the family's Time-In QR when you arrive."
+                }}
+            </p>
+
+            <button
+                v-if="shiftWithoutMe"
+                type="button"
+                class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                @click="showScanner = true"
+            >
+                <ScanLine class="h-3.5 w-3.5" />
+                {{
+                    shiftWithoutMe.state === "covered"
+                        ? "Scan shift change"
+                        : "Scan Time-In QR"
+                }}
+            </button>
+
+            <p
+                v-else-if="next"
                 class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"
             >
                 <Clock class="h-3.5 w-3.5" />
                 Next: {{ next.title }}
-                <span v-if="next.patient_name">for {{ next.patient_name }}</span>
+                <span v-if="next.patient_name"
+                    >for {{ next.patient_name }}</span
+                >
                 starts in {{ formatSpan(minutesUntilNext) }} ({{
                     formatTime(next.start)
                 }}
@@ -471,5 +605,19 @@ const typeIcon = (type: string) =>
                 </span>
             </li>
         </ul>
+
+        <QrCodeModal
+            :show="showHandoverQr"
+            :token="handoverToken"
+            mode="handover"
+            @close="showHandoverQr = false"
+            @scanned="onHandedOver"
+        />
+
+        <QrScanner
+            v-if="showScanner"
+            @close="showScanner = false"
+            @scanned="emit('refresh')"
+        />
     </section>
 </template>
