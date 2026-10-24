@@ -13,7 +13,7 @@
                     <h2
                         class="text-sm font-bold tracking-tight text-secondary dark:text-white"
                     >
-                        Staff on duty
+                        Today's schedule
                     </h2>
                     <p class="text-[11px] text-muted dark:text-gray-400">
                         Facility Shifts, Activities of Daily Living (ADL), Medical Services · {{ todayLabel }}
