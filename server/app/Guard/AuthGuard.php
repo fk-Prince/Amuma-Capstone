@@ -112,18 +112,4 @@ class AuthGuard
             );
         }
     }
-
-    private static function ownsAgencyFor(Employee $employee, string $branchId): bool
-    {
-        $agencyId = Branch::where('branch_id', $branchId)->value('agency_id');
-
-        if (!$agencyId) {
-            return false;
-        }
-
-        return EmployeeBranch::where('employee_id', $employee->employee_id)
-            ->where('role_name', RoleEnum::AgencyOwner->value)
-            ->whereHas('branches', fn($q) => $q->where('agency_id', $agencyId))
-            ->exists();
-    }
 }

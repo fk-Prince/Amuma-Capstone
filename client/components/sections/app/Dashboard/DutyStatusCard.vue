@@ -14,9 +14,12 @@ interface DutyBlock {
     setting?: "facility" | "homecare";
     title: string;
     patient_name: string | null;
+    schedule_code?: string | null;
     location: string | null;
     start_at: string;
     end_at: string;
+    visit_start_at?: string | null;
+    visit_end_at?: string | null;
     total_minutes: number;
 }
 
@@ -88,14 +91,24 @@ const next = computed(
 
 const onDuty = computed(() => Boolean(current.value));
 
-const remainingMinutes = computed(() => {
-    if (!current.value) return 0;
+const currentWindow = computed(() => {
+    const block = current.value;
 
-    return Math.max(Math.ceil((current.value.end - now.value) / 60000), 0);
+    if (!block) return null;
+
+    return block.visit_start_at && block.visit_end_at
+        ? { start: ms(block.visit_start_at), end: ms(block.visit_end_at) }
+        : { start: block.start, end: block.end };
+});
+
+const remainingMinutes = computed(() => {
+    if (!currentWindow.value) return 0;
+
+    return Math.max(Math.ceil((currentWindow.value.end - now.value) / 60000), 0);
 });
 
 const percent = computed(() => {
-    const block = current.value;
+    const block = currentWindow.value;
 
     if (!block) return 0;
 
@@ -120,15 +133,31 @@ function formatSpan(totalMinutes: number) {
 
     if (minutes < 1) return "less than a minute";
 
-    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor((minutes % 1440) / 60);
     const rest = minutes % 60;
 
     const parts: string[] = [];
 
+    if (days) parts.push(`${days} ${days === 1 ? "day" : "days"}`);
     if (hours) parts.push(`${hours} ${hours === 1 ? "hr" : "hrs"}`);
     if (rest) parts.push(`${rest} ${rest === 1 ? "min" : "mins"}`);
 
     return parts.join(" ");
+}
+
+function formatWindowEdge(value: number) {
+    const sameDay =
+        new Date(value).toDateString() === new Date(now.value).toDateString();
+
+    return sameDay
+        ? formatTime(value)
+        : new Date(value).toLocaleString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+          });
 }
 
 function formatTime(value: number) {
@@ -261,8 +290,10 @@ const typeIcon = (type: string) =>
                 <p
                     class="text-right text-xs text-gray-500 dark:text-gray-400"
                 >
-                    {{ formatTime(current.start) }} –
-                    {{ formatTime(current.end) }}
+                    <template v-if="currentWindow">
+                        {{ formatWindowEdge(currentWindow.start) }} –
+                        {{ formatWindowEdge(currentWindow.end) }}
+                    </template>
                 </p>
             </div>
 
@@ -302,6 +333,9 @@ const typeIcon = (type: string) =>
                     · {{ current.patient_name }}
                 </span>
                 <span v-if="current.setting === 'homecare'">· Homecare</span>
+                <span v-if="current.schedule_code" class="font-mono"
+                    >· {{ current.schedule_code }}</span
+                >
                 <span v-if="current.location">· {{ current.location }}</span>
             </p>
         </div>
@@ -414,6 +448,11 @@ const typeIcon = (type: string) =>
                         </span>
                     </p>
                     <p class="text-[11px] text-gray-400 dark:text-gray-500">
+                        <span
+                            v-if="block.schedule_code"
+                            class="font-mono text-gray-500 dark:text-gray-400"
+                            >{{ block.schedule_code }} ·</span
+                        >
                         {{ formatTime(block.start) }} –
                         {{ formatTime(block.end) }}
                         <template v-if="block.setting === 'homecare'">

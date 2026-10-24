@@ -424,6 +424,7 @@ class BranchService
                     'setting' => 'facility',
                     'title' => 'Facility shift',
                     'patient_name' => $shift->admission?->patient?->display_name,
+                    'schedule_code' => null,
                     'location' => $room?->room_no
                         ? 'Room ' . $room->room_no . ($shift->admission?->bed?->bed_no ? ' · Bed ' . $shift->admission->bed->bed_no : '')
                         : null,
@@ -440,7 +441,17 @@ class BranchService
             ->whereHas(
                 'scheduleService.schedule',
                 fn($schedule) => $schedule
-                    ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+                    ->where(fn($day) => $day
+                        ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+                        ->orWhere(fn($adl) => $adl
+                            ->where('scheduled_at', '<', $dayStart)
+                            ->whereHas('scheduleServices', fn($service) => $service
+                                ->where('type', 'ADL')
+                                ->whereNotNull('hours_booked')
+                                ->whereRaw(
+                                    "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') > ?",
+                                    [$dayStart]
+                                ))))
                     ->whereNotIn('status', ['cancelled', 'missed'])
                     ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
             )
@@ -458,6 +469,45 @@ class BranchService
 
             foreach ($group as $assignment) {
                 $service = $assignment->scheduleService;
+
+                if ($service->type === 'ADL') {
+                    $visitStart = $schedule->startedAt() ?? $schedule->scheduled_at->copy();
+                    $visitEnd = $visitStart->copy()->addMinutes($this->serviceMinutes($service));
+
+                    if ($assignment->start_time && $assignment->end_time) {
+                        $start = $dayStart->copy()->setTimeFromTimeString((string) $assignment->start_time);
+                        $end = $dayStart->copy()->setTimeFromTimeString((string) $assignment->end_time);
+
+                        if ($end->lessThanOrEqualTo($start)) {
+                            $end->addDay();
+                        }
+                    } else {
+                        $start = $dayStart->copy();
+                        $end = $dayEnd->copy();
+                    }
+
+                    $start = $start->max($visitStart);
+                    $end = $end->min($visitEnd);
+
+                    if ($end->lessThanOrEqualTo($start)) {
+                        continue;
+                    }
+
+                    $blocks->push([
+                        'type' => 'adl',
+                        'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
+                        'title' => $service->service?->service_name ?? $service->type,
+                        'patient_name' => $schedule->patient?->display_name,
+                        'schedule_code' => $schedule->schedule_code,
+                        'location' => null,
+                        'start' => $start,
+                        'end' => $end,
+                        'visit_start' => $visitStart,
+                        'visit_end' => $visitEnd,
+                    ]);
+
+                    continue;
+                }
 
                 if ($assignment->start_time && $assignment->end_time) {
                     $start = $schedule->scheduled_at->copy()->setTimeFromTimeString((string) $assignment->start_time);
@@ -483,6 +533,7 @@ class BranchService
                     'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
                     'title' => $service->service?->service_name ?? $service->type,
                     'patient_name' => $schedule->patient?->display_name,
+                    'schedule_code' => $schedule->schedule_code,
                     'location' => null,
                     'start' => $start,
                     'end' => $end,
@@ -497,9 +548,12 @@ class BranchService
             'setting' => $block['setting'],
             'title' => $block['title'],
             'patient_name' => $block['patient_name'],
+            'schedule_code' => $block['schedule_code'],
             'location' => $block['location'],
             'start_at' => $block['start']->toISOString(),
             'end_at' => $block['end']->toISOString(),
+            'visit_start_at' => isset($block['visit_start']) ? $block['visit_start']->toISOString() : null,
+            'visit_end_at' => isset($block['visit_end']) ? $block['visit_end']->toISOString() : null,
             'total_minutes' => (int) $block['start']->diffInMinutes($block['end']),
         ];
 

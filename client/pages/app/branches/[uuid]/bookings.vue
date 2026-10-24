@@ -326,7 +326,6 @@
                     <BookingDetails
                         :booking="selectedBooking"
                         :loading="isSubmitting"
-                        @print="printing = selectedBooking"
                     />
                 </div>
 
@@ -432,14 +431,30 @@
                                     </div>
                                 </div>
 
-                                <span
-                                    class="px-3 py-1 rounded-sm text-xs font-medium capitalize"
-                                    :class="
-                                        statusClasses(selectedBooking.status)
-                                    "
-                                >
-                                    {{ formatStatus(selectedBooking.status) }}
-                                </span>
+                                <div class="flex shrink-0 items-center gap-2">
+                                    <button
+                                        type="button"
+                                        title="Print booking"
+                                        class="inline-flex items-center gap-1.5 rounded-lg border border-[#D7E6E3] bg-white px-2.5 py-1 text-xs font-semibold text-[#0E7C7B] transition hover:bg-[#EAF4F2] dark:border-white/10 dark:bg-transparent dark:text-accent-300 dark:hover:bg-white/10"
+                                        @click="printing = selectedBooking"
+                                    >
+                                        <Printer class="h-3.5 w-3.5" />
+                                        Print
+                                    </button>
+
+                                    <span
+                                        class="px-3 py-1 rounded-sm text-xs font-medium capitalize"
+                                        :class="
+                                            statusClasses(
+                                                selectedBooking.status,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            formatStatus(selectedBooking.status)
+                                        }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -775,6 +790,7 @@ import {
     PanelRightClose,
     PanelRightOpen,
     Plus,
+    Printer,
     RefreshCw,
     X,
 } from "lucide-vue-next";
