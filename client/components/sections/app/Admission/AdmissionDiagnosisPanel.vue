@@ -287,11 +287,31 @@
                             mode="number"
                             placeholder="0.00"
                             required
+                            :readonly="!active.amount_editing"
                             :error="errorFor(activeIndex, 'amount')"
                             @update:modelValue="
                                 clearError(activeIndex, 'amount')
                             "
-                        />
+                        >
+                            <template #suffix>
+                                <button
+                                    type="button"
+                                    class="mr-1.5 flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-50 dark:text-primary-300"
+                                    :disabled="submitting"
+                                    @click="
+                                        active.amount_editing =
+                                            !active.amount_editing
+                                    "
+                                >
+                                    <Check
+                                        v-if="active.amount_editing"
+                                        class="h-3.5 w-3.5"
+                                    />
+                                    <Pencil v-else class="h-3.5 w-3.5" />
+                                    {{ active.amount_editing ? "Done" : "Edit" }}
+                                </button>
+                            </template>
+                        </BaseInput>
 
                         <BaseInput
                             :key="`description-${active.key}`"
@@ -852,6 +872,7 @@ interface Entry {
     diagnosis_uuid: string;
     case_uuid: string;
     amount: number | string;
+    amount_editing: boolean;
     description: string;
     billed: boolean;
     is_active: boolean;
@@ -891,6 +912,7 @@ const newEntry = (): Entry => ({
     diagnosis_uuid: "",
     case_uuid: "",
     amount: "",
+    amount_editing: false,
     description: "",
     billed: true,
     is_active: true,
@@ -1085,12 +1107,13 @@ function pickDiagnosis(uuid: string) {
     clearError(activeIndex.value, "patient_diagnosis_uuid");
 }
 
-// Picking a case starts the amount from its price, which can then be changed.
+// Picking a case locks the amount to its price; Edit unlocks it.
 function selectCase(uuid: string) {
     const entry = active.value;
     const item = cases.value.find((candidate) => candidate.uuid === uuid);
 
     entry.case_uuid = uuid;
+    entry.amount_editing = false;
 
     if (item) entry.amount = Number(item.price);
 

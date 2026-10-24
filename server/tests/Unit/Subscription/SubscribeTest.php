@@ -54,6 +54,13 @@ class SubscribeTest extends TestCase
     {
         $this->actingAs($this->user);
 
+        return $this->app->make(SubscriptionService::class)->startTrial($this->payload($overrides), $this->user);
+    }
+
+    private function payUpFront(array $overrides = [])
+    {
+        $this->actingAs($this->user);
+
         return $this->app->make(SubscriptionService::class)->makeSubscription($this->payload($overrides), $this->user);
     }
 
@@ -110,9 +117,21 @@ class SubscribeTest extends TestCase
         $this->assertSame($subscription->plan_id, $subscription->pending_plan_id);
     }
 
-    public function test_subscription_payment_is_recorded(): void
+    public function test_the_free_trial_request_takes_no_payment(): void
     {
         $this->subscribe();
+
+        $subscription = Subscription::firstOrFail();
+
+        $this->assertSame(0, SubscriptionPayment::count());
+        $this->assertTrue($subscription->awaitingTrialPayment());
+        $this->assertFalse($subscription->canPayTrial());
+        Http::assertNotSent(fn($request) => str_contains($request->url(), 'xendit'));
+    }
+
+    public function test_paying_up_front_records_the_payment(): void
+    {
+        $this->payUpFront();
 
         $payment = SubscriptionPayment::firstOrFail();
 
@@ -204,7 +223,7 @@ class SubscribeTest extends TestCase
     {
         $this->declineCard = true;
 
-        $response = $this->subscribe();
+        $response = $this->payUpFront();
 
         $this->assertSame(502, $response->getStatusCode());
         $this->assertSame('Payment failed.', $this->data($response)['message']);
@@ -214,7 +233,7 @@ class SubscribeTest extends TestCase
 
     public function test_card_is_charged_the_plan_price(): void
     {
-        $this->subscribe(['plan_code' => 'C', 'plan_type' => Plan::TYPE_ENTERPRISE]);
+        $this->payUpFront(['plan_code' => 'C', 'plan_type' => Plan::TYPE_ENTERPRISE]);
 
         Http::assertSent(fn($request) => str_ends_with($request->url(), '/credit_card_charges') && (float) $request['amount'] === 100000.0);
     }

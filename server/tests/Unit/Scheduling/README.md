@@ -39,3 +39,42 @@ D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite
 - [MonitoringTest.php:97](MonitoringTest.php#L97) Each staff member sees the patients they look after
 - [MonitoringTest.php:121](MonitoringTest.php#L121) Staff on leave is not listed
 - [MonitoringTest.php:145](MonitoringTest.php#L145) Insufficient permissions to see the staff workload
+
+## ADM-04 Clock in to an ADL visit by QR
+
+```
+D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/phpunit tests/Feature/AdlShiftQrTest.php --testdox --filter "test_first_scan_clocks_in_and_starts_the_schedule|test_clock_in_is_refused_outside_the_shift|test_clock_in_is_allowed_up_to_an_hour_before_the_shift|test_a_refused_clock_in_keeps_the_qr_usable|test_an_ongoing_visit_with_nobody_on_duty_can_be_picked_up_any_time|test_missed_schedule_has_no_qr|test_family_time_in_is_refused_while_someone_is_on_duty|test_employee_cannot_generate_the_time_in_qr_for_adl"
+```
+
+- [AdlShiftQrTest.php:250](../../Feature/AdlShiftQrTest.php#L250) First scan clocks in and starts the schedule
+- [AdlShiftQrTest.php:147](../../Feature/AdlShiftQrTest.php#L147) Clock in is refused outside the shift
+- [AdlShiftQrTest.php:157](../../Feature/AdlShiftQrTest.php#L157) Clock in is allowed up to an hour before the shift
+- [AdlShiftQrTest.php:167](../../Feature/AdlShiftQrTest.php#L167) A refused clock in keeps the qr usable
+- [AdlShiftQrTest.php:184](../../Feature/AdlShiftQrTest.php#L184) An ongoing visit with nobody on duty can be picked up any time
+- [AdlShiftQrTest.php:296](../../Feature/AdlShiftQrTest.php#L296) Missed schedule has no qr
+- [AdlShiftQrTest.php:276](../../Feature/AdlShiftQrTest.php#L276) Family time in is refused while someone is on duty
+- [AdlShiftQrTest.php:239](../../Feature/AdlShiftQrTest.php#L239) Employee cannot generate the time in qr for adl
+
+## ADM-05 Hand over an ADL visit to the next shift by QR
+
+```
+D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/phpunit tests/Feature/AdlShiftQrTest.php --testdox --filter "test_second_shift_can_scan_the_first_shifts_handover_qr|test_the_family_is_told_about_a_shift_change|test_shift_change_is_allowed_outside_the_shift|test_family_cannot_generate_a_shift_change_qr|test_only_the_caregiver_on_duty_can_generate_a_handover_qr|test_the_caregiver_on_duty_cannot_scan_their_own_handover"
+```
+
+- [AdlShiftQrTest.php:285](../../Feature/AdlShiftQrTest.php#L285) Second shift can scan the first shifts handover qr
+- [AdlShiftQrTest.php:197](../../Feature/AdlShiftQrTest.php#L197) The family is told about a shift change
+- [AdlShiftQrTest.php:228](../../Feature/AdlShiftQrTest.php#L228) Shift change is allowed outside the shift
+- [AdlShiftQrTest.php:267](../../Feature/AdlShiftQrTest.php#L267) Family cannot generate a shift change qr
+- [AdlShiftQrTest.php:305](../../Feature/AdlShiftQrTest.php#L305) Only the caregiver on duty can generate a handover qr
+- [AdlShiftQrTest.php:314](../../Feature/AdlShiftQrTest.php#L314) The caregiver on duty cannot scan their own handover
+
+## ADM-06 Clock out of an ADL visit by QR
+
+```
+D:\xampp\php\php.exe -d extension_dir="D:\xampp\php\ext" -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/phpunit tests/Feature/AdlShiftQrTest.php --testdox --filter "test_either_shift_can_time_out_with_the_family_qr|test_time_out_completes_the_schedule_when_under_a_minute_remains|test_early_first_scan_moves_the_visit_end_earlier|test_on_time_first_scan_keeps_the_scheduled_end"
+```
+
+- [AdlShiftQrTest.php:323](../../Feature/AdlShiftQrTest.php#L323) Either shift can time out with the family qr
+- [AdlShiftQrTest.php:336](../../Feature/AdlShiftQrTest.php#L336) Time out completes the schedule when under a minute remains
+- [AdlShiftQrTest.php:348](../../Feature/AdlShiftQrTest.php#L348) Early first scan moves the visit end earlier
+- [AdlShiftQrTest.php:362](../../Feature/AdlShiftQrTest.php#L362) On time first scan keeps the scheduled end
