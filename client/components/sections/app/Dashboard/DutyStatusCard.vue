@@ -20,6 +20,7 @@ interface DutyBlock {
     end_at: string;
     visit_start_at?: string | null;
     visit_end_at?: string | null;
+    clocked_in?: boolean;
     total_minutes: number;
 }
 
@@ -71,12 +72,13 @@ const blocks = computed(() =>
             ...block,
             start,
             end,
-            state:
-                now.value >= end
-                    ? "done"
-                    : now.value >= start
-                      ? "now"
-                      : "upcoming",
+            state: block.clocked_in
+                ? "now"
+                : now.value >= end
+                  ? "done"
+                  : now.value >= start
+                    ? "now"
+                    : "upcoming",
         };
     }),
 );

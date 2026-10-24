@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Models\Booking;
+use App\Models\AdlAttendance;
 use App\Models\CaregiverShift;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
@@ -482,18 +483,21 @@ class BranchService
                             $end->addDay();
                         }
                     } else {
-                        $start = $dayStart->copy();
-                        $end = $dayEnd->copy();
+                        $start = $dayStart->copy()->max($visitStart);
+                        $end = $dayEnd->copy()->min($visitEnd);
                     }
-
-                    $start = $start->max($visitStart);
-                    $end = $end->min($visitEnd);
 
                     if ($end->lessThanOrEqualTo($start)) {
                         continue;
                     }
 
+                    $clockedIn = AdlAttendance::where('schedule_assigned_id', $assignment->schedule_assigned_id)
+                        ->whereNotNull('in_timestamp')
+                        ->whereNull('out_timestamp')
+                        ->exists();
+
                     $blocks->push([
+                        'clocked_in' => $clockedIn,
                         'type' => 'adl',
                         'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
                         'title' => $service->service?->service_name ?? $service->type,
@@ -554,10 +558,12 @@ class BranchService
             'end_at' => $block['end']->toISOString(),
             'visit_start_at' => isset($block['visit_start']) ? $block['visit_start']->toISOString() : null,
             'visit_end_at' => isset($block['visit_end']) ? $block['visit_end']->toISOString() : null,
+            'clocked_in' => (bool) ($block['clocked_in'] ?? false),
             'total_minutes' => (int) $block['start']->diffInMinutes($block['end']),
         ];
 
-        $current = $blocks->first(fn($block) => $now->greaterThanOrEqualTo($block['start']) && $now->lessThan($block['end']));
+        $current = $blocks->first(fn($block) => !empty($block['clocked_in']))
+            ?? $blocks->first(fn($block) => $now->greaterThanOrEqualTo($block['start']) && $now->lessThan($block['end']));
         $next = $blocks->first(fn($block) => $block['start']->greaterThan($now));
 
         return [
