@@ -1934,6 +1934,10 @@ class SubscriptionService
                     ]);
             }
 
+            if ($subscription) {
+                $this->sandboxClient->syncLock($subscription->fresh());
+            }
+
             DB::afterCommit(function () use ($branch, $subscription) {
                 try {
                     $this->announceApproval($branch, $subscription?->fresh('plans'));

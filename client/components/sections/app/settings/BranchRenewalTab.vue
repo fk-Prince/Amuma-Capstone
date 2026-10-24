@@ -1141,7 +1141,9 @@ const branchStore = useBranchStore();
 const { isSandbox, switchLink } = useSandbox();
 
 const sandboxLink = computed(() =>
-    isSandbox.value || branchStore.activeBranch?.subscription_locked
+    isSandbox.value ||
+    branchStore.activeBranch?.subscription_locked ||
+    branchStore.activeBranch?.subscription_status !== "approved"
         ? ""
         : switchLink.value,
 );

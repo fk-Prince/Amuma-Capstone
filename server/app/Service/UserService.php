@@ -126,8 +126,11 @@ class UserService
                         : $branch?->subscriptionLink?->subscription?->mode,
                     'subscription_end_date' => $branch?->subscriptionLink?->subscription?->end_date?->toDateString(),
                     'subscription_locked' => (bool) $branch?->subscriptionLink?->subscription?->isLockedForPayment(),
-                    'demo_locked' => config('app.sandbox')
-                        && $branch?->subscriptionLink?->subscription?->status === Subscription::STATUS_EXPIRED,
+                    'demo_locked' => match (config('app.sandbox') ? $branch?->subscriptionLink?->subscription?->status : null) {
+                        Subscription::STATUS_EXPIRED => 'ended',
+                        Subscription::STATUS_PENDING => 'review',
+                        default => null,
+                    },
                     'subscription_awaiting_payment' => (bool) $branch?->subscriptionLink?->subscription?->awaitingTrialPayment(),
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED

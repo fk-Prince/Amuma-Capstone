@@ -165,7 +165,11 @@ const trialEndsOn = computed(() => {
     });
 });
 
-const practiceLink = computed(() => (isSandbox.value ? "" : switchLink.value));
+const practiceLink = computed(() =>
+    isSandbox.value || branch.value?.subscription_status !== "approved"
+        ? ""
+        : switchLink.value,
+);
 
 function goToSubscription(query: Record<string, string>) {
     if (!branch.value?.uuid) return;

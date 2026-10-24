@@ -24,12 +24,19 @@ class SandboxRepository
         return Branch::where('uuid', $uuid)->exists();
     }
 
-    public function setAgencyLock(string $agencyUuid, bool $locked): void
+    public function setAgencyLock(string $agencyUuid, string $state): void
     {
         Subscription::whereHas('agency', fn($q) => $q->where('uuid', $agencyUuid))
-            ->update([
-                'status' => $locked ? Subscription::STATUS_EXPIRED : Subscription::STATUS_ACTIVE,
-            ]);
+            ->update(['status' => self::statusForState($state)]);
+    }
+
+    private static function statusForState(?string $state): string
+    {
+        return match ($state) {
+            'ended' => Subscription::STATUS_EXPIRED,
+            'review' => Subscription::STATUS_PENDING,
+            default => Subscription::STATUS_ACTIVE,
+        };
     }
 
     public function hasBaseData(): bool
@@ -68,7 +75,7 @@ class SandboxRepository
             ?? Subscription::create([
                 ...Subscription::liveTerms($plan->plan_id),
                 'agency_id' => $agency->agency_id,
-                'status' => Subscription::STATUS_ACTIVE,
+                'status' => self::statusForState($payload['state'] ?? null),
             ]);
 
         BranchSubscription::create([

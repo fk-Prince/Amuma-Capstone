@@ -71,13 +71,13 @@ class SandboxClient
             return;
         }
 
-        $locked = $subscription->isLockedForPayment();
+        $state = self::demoState($subscription);
 
-        DB::afterCommit(function () use ($agencyUuid, $locked) {
+        DB::afterCommit(function () use ($agencyUuid, $state) {
             try {
                 $this->post('/api/sandbox/lock', [
                     'agency_uuid' => $agencyUuid,
-                    'locked' => $locked,
+                    'state' => $state,
                 ]);
             } catch (\Throwable $e) {
                 Log::error('Sandbox lock sync failed', [
@@ -86,6 +86,16 @@ class SandboxClient
                 ]);
             }
         });
+    }
+
+    public static function demoState(?Subscription $subscription): string
+    {
+        return match (true) {
+            !$subscription => 'open',
+            $subscription->isLockedForPayment() => 'ended',
+            $subscription->status === Subscription::STATUS_PENDING => 'review',
+            default => 'open',
+        };
     }
 
     private function post(string $path, array $payload): void
@@ -144,6 +154,7 @@ class SandboxClient
                 'plan_code' => $plan->plan_code,
                 'type' => $plan->type,
             ],
+            'state' => self::demoState($branch->subscriptionLink?->subscription),
         ];
     }
 

@@ -27,13 +27,25 @@
             </div>
 
             <h1 class="text-3xl font-bold text-white">
-                The demo of {{ branchName || "this branch" }} is locked
+                <template v-if="underReview">
+                    The demo of {{ branchName || "this branch" }} opens after
+                    review
+                </template>
+                <template v-else>
+                    The demo of {{ branchName || "this branch" }} is locked
+                </template>
             </h1>
 
             <p class="mt-3 leading-relaxed text-gray-400">
-                Your free trial has ended, so the demo is closed until you
-                subscribe. Subscribe in Manage Subscription on your live AMUMA
-                and the demo opens again. Everything here is kept.
+                <template v-if="underReview">
+                    Your free trial request is still being reviewed. The demo
+                    opens as soon as an admin verifies your branch.
+                </template>
+                <template v-else>
+                    Your free trial has ended, so the demo is closed until you
+                    subscribe. Subscribe in Manage Subscription on your live
+                    AMUMA and the demo opens again. Everything here is kept.
+                </template>
             </p>
 
             <div class="mt-8 flex flex-wrap justify-center gap-3">
@@ -80,8 +92,12 @@ const branch = computed(() =>
 
 const branchName = computed(() => branch.value?.name ?? "");
 
+const underReview = computed(() => branch.value?.demo_locked === "review");
+
 const subscribeLink = computed(() =>
-    liveUrl.value && branch.value?.role_name === "agency_owner"
+    !underReview.value &&
+    liveUrl.value &&
+    branch.value?.role_name === "agency_owner"
         ? `${liveUrl.value}/app/branches/${route.params.uuid}/manage-subscription?pay=1`
         : "",
 );

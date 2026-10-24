@@ -15,10 +15,10 @@ class SandboxController extends Controller
 
         $payload = $request->validate([
             'agency_uuid' => ['required', 'uuid'],
-            'locked' => ['required', 'boolean'],
+            'state' => ['required', 'in:open,review,ended'],
         ]);
 
-        $this->sandboxService->setLock($payload['agency_uuid'], (bool) $payload['locked']);
+        $this->sandboxService->setLock($payload['agency_uuid'], $payload['state']);
 
         return response()->json(['message' => 'Lock updated.']);
     }
@@ -60,6 +60,7 @@ class SandboxController extends Controller
             'branch.location' => ['nullable', 'array'],
             'plan.plan_code' => ['required', 'string'],
             'plan.type' => ['required', 'string'],
+            'state' => ['nullable', 'in:open,review,ended'],
         ]);
 
         dispatch(fn() => $this->sandboxService->provision($payload))->afterResponse();

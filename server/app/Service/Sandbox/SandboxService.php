@@ -31,9 +31,9 @@ class SandboxService
 
     public function __construct(private SandboxRepository $sandboxRepository) {}
 
-    public function setLock(string $agencyUuid, bool $locked): void
+    public function setLock(string $agencyUuid, string $state): void
     {
-        $this->sandboxRepository->setAgencyLock($agencyUuid, $locked);
+        $this->sandboxRepository->setAgencyLock($agencyUuid, $state);
     }
 
     public function provision(array $payload): void

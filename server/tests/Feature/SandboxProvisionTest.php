@@ -243,7 +243,7 @@ class SandboxProvisionTest extends TestCase
 
         Http::assertSent(fn($request) => $request->url() === 'https://sandbox.test/api/sandbox/lock'
             && $request['agency_uuid'] === $payload['agency']['uuid']
-            && $request['locked'] === true);
+            && $request['state'] === 'ended');
     }
 
     public function test_the_demo_locks_and_unlocks_an_agency(): void
@@ -255,11 +255,18 @@ class SandboxProvisionTest extends TestCase
         $branch = app(\App\Repository\SandboxRepository::class)->createBranchWithOwner($payload);
         $service = app(SandboxService::class);
 
-        $service->setLock($payload['agency']['uuid'], true);
+        $service->setLock($payload['agency']['uuid'], 'ended');
         $this->assertSame(Subscription::STATUS_EXPIRED, Subscription::where('agency_id', $branch->agency_id)->value('status'));
 
-        $service->setLock($payload['agency']['uuid'], false);
+        $service->setLock($payload['agency']['uuid'], 'open');
         $this->assertSame(Subscription::STATUS_ACTIVE, Subscription::where('agency_id', $branch->agency_id)->value('status'));
+    }
+
+    public function test_a_branch_under_review_starts_locked_in_the_demo(): void
+    {
+        app(SandboxService::class)->provision($this->payload(['state' => 'review']));
+
+        $this->assertSame(Subscription::STATUS_PENDING, Subscription::query()->value('status'));
     }
 
     public function test_subscription_changes_are_blocked_in_the_demo(): void

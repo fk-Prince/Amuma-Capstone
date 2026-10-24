@@ -42,8 +42,12 @@
 import { computed } from "vue";
 import { FlaskConical, Radio } from "lucide-vue-next";
 import { useSandbox } from "~/composables/useSandbox";
+import { useRoute } from "vue-router";
 
-const { isSandbox, liveUrl, switchLink } = useSandbox();
+const { isSandbox, liveUrl } = useSandbox();
+const route = useRoute();
 
-const exitLink = computed(() => switchLink.value || liveUrl.value);
+const exitLink = computed(() =>
+    liveUrl.value ? `${liveUrl.value}${route.fullPath}` : "",
+);
 </script>
