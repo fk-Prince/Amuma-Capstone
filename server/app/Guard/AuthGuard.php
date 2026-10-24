@@ -77,6 +77,11 @@ class AuthGuard
             return;
         }
 
+        self::requireOpenSubscription($branchId);
+    }
+
+    public static function requireOpenSubscription(string|int $branchId): void
+    {
         $subscription = Subscription::query()
             ->whereHas('branchLinks', fn($q) => $q->where('branch_id', $branchId))
             ->latest('created_at')

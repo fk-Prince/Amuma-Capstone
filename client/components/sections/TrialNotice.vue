@@ -93,9 +93,9 @@
                 v-if="canPay"
                 type="button"
                 class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98]"
-                @click="goToSubscription({ pay: '1' })"
+                @click="goToSubscription({})"
             >
-                {{ locked ? "Subscribe to unlock" : "Pay for plan" }}
+                Manage subscription
             </button>
 
             <button

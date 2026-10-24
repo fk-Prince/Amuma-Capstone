@@ -29,16 +29,17 @@ class BranchGuard
             throw new Exception("Branch doesn't exist.", 404);
         }
 
-        if ($facility && !$branch->hasFacilitySubscription()) {
-            throw new Exception(__('No active facility subscription.'), 403);
-        }
+        $missing = match (true) {
+            $facility && !$branch->hasFacilitySubscription() => __('No active facility subscription.'),
+            $homecare && !$branch->hasHomecareSubscription() => __('No active homecare subscription.'),
+            $active && !$branch->hasActiveSubscription() => __('No active subscription.'),
+            default => null,
+        };
 
-        if ($homecare && !$branch->hasHomecareSubscription()) {
-            throw new Exception(__('No active homecare subscription.'), 403);
-        }
+        if ($missing) {
+            AuthGuard::requireOpenSubscription($branch->branch_id);
 
-        if ($active && !$branch->hasActiveSubscription()) {
-            throw new Exception(__('No active subscription.'), 403);
+            throw new Exception($missing, 403);
         }
 
         $employee = Auth::user()?->employee;

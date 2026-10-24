@@ -11,6 +11,10 @@ type ToastInstance = {
 const _toastRef = ref<ToastInstance | null>(null);
 
 let lastToastId: number | null = null;
+let lastToastKey = "";
+let lastToastAt = 0;
+
+const DUPLICATE_WINDOW_MS = 1500;
 
 export function registerToast(instance: ToastInstance) {
     _toastRef.value = instance;
@@ -21,6 +25,16 @@ export function useToast() {
     function show(payload: ToastPayload) {
         const toast = _toastRef.value;
         if (!toast) return;
+
+        const key = `${payload.type}|${payload.title}|${payload.description ?? ""}`;
+        const now = Date.now();
+
+        if (key === lastToastKey && now - lastToastAt < DUPLICATE_WINDOW_MS) {
+            return;
+        }
+
+        lastToastKey = key;
+        lastToastAt = now;
 
         if (lastToastId !== null) {
             toast.remove(lastToastId);
