@@ -22,7 +22,10 @@ class AdlAttendanceService
 
     public const QR_TTL_MINUTES = 5;
 
-    public function __construct(private ScheduleRepository $scheduleRepository) {}
+    public function __construct(
+        private ScheduleRepository $scheduleRepository,
+        private NotificationService $notificationService,
+    ) {}
 
     public function generateQr(array $payload): array
     {
@@ -202,6 +205,10 @@ class AdlAttendanceService
 
             $this->startAdlSchedule($scheduleServicesId);
 
+            $previous = $session->assigned->employee_id;
+
+            DB::afterCommit(fn() => $this->notifyFamilyOfHandover($scheduleServicesId, $previous, $next->employee_id));
+
             broadcast(new QrScanned($payload['token'], 'handover'));
 
             return $handover;
@@ -364,6 +371,35 @@ class AdlAttendanceService
 
         if (!$exists) {
             throw new Exception('No active caregiver is assigned to this schedule.', 404);
+        }
+    }
+
+    private function notifyFamilyOfHandover(int $scheduleServicesId, int $fromEmployeeId, int $toEmployeeId): void
+    {
+        try {
+            $schedule = ScheduleService::with('schedule.patient')->find($scheduleServicesId)?->schedule;
+            $patient = $schedule?->patient;
+
+            if (!$patient) {
+                return;
+            }
+
+            $from = Employee::find($fromEmployeeId);
+            $to = Employee::with('users')->find($toEmployeeId);
+
+            $this->notificationService->notifyPatientAccess(
+                $patient,
+                "{$patient->display_name}'s daily care (ADL) visit {$schedule->schedule_code}: shift change. "
+                    . ($to?->full_name ?? 'The next caregiver') . ' took over from '
+                    . ($from?->full_name ?? 'the previous caregiver') . '.',
+                'Schedule',
+                $to?->users,
+            );
+        } catch (\Throwable $e) {
+            Log::error('Shift change family notice failed', [
+                'schedule_services_id' => $scheduleServicesId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

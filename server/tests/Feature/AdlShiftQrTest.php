@@ -24,6 +24,7 @@ class AdlShiftQrTest extends TestCase
     private int $scheduleServicesId;
     private int $firstShift;
     private int $secondShift;
+    private int $patientId;
 
     protected function setUp(): void
     {
@@ -53,7 +54,7 @@ class AdlShiftQrTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $patientId = DB::table('patients')->insertGetId([
+        $patientId = $this->patientId = DB::table('patients')->insertGetId([
             'branch_id' => $branchId,
             'uuid' => (string) Str::uuid(),
             'patient_code' => 'PT-0001',
@@ -191,6 +192,37 @@ class AdlShiftQrTest extends TestCase
         $this->scan($this->familyQr('in'), $this->secondShift);
 
         $this->assertSame($this->secondShift, (int) $this->onDuty());
+    }
+
+    public function test_the_family_is_told_about_a_shift_change(): void
+    {
+        $family = $this->makeUser('family@amuma.com');
+        $clientId = DB::table('clients')->insertGetId([
+            'user_id' => $family->user_id,
+            'first_name' => 'Gina',
+            'last_name' => 'Cruz',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('patient_accesses')->insert([
+            'client_id' => $clientId,
+            'patient_id' => $this->patientId,
+            'have_access' => true,
+            'relationship_type' => 'relative',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->scan($this->familyQr('in'), $this->firstShift);
+        $this->scan($this->handoverQr($this->firstShift), $this->secondShift);
+
+        $this->assertTrue(
+            DB::table('notifications')
+                ->where('to_user_id', $family->user_id)
+                ->where('message_type', 'Schedule')
+                ->where('message', 'like', '%shift change%')
+                ->exists()
+        );
     }
 
     public function test_shift_change_is_allowed_outside_the_shift(): void

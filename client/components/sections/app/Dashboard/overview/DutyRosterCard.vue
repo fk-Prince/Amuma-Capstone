@@ -99,7 +99,13 @@
                         v-for="row in rows"
                         :key="row.id"
                         class="grid items-center gap-2 border-t border-slate-100 py-2 dark:border-white/10"
+                        :class="
+                            canOpen && row.to
+                                ? 'cursor-pointer transition hover:bg-slate-50 dark:hover:bg-white/5'
+                                : ''
+                        "
                         :style="gridStyle"
+                        @click="open(row.to)"
                     >
                         <div class="flex min-w-0 items-center gap-2">
                             <div
@@ -114,9 +120,16 @@
                             </div>
                             <div class="min-w-0">
                                 <p
-                                    class="truncate text-[11px] font-semibold text-secondary dark:text-white"
+                                    class="flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-secondary dark:text-white"
                                 >
-                                    {{ row.name }}
+                                    <span class="truncate">{{ row.name }}</span>
+                                    <span
+                                        v-for="kind in row.kinds"
+                                        :key="kind"
+                                        class="h-2 w-2 shrink-0 rounded-full"
+                                        :class="KIND_STYLE[kind].dot"
+                                        :title="KIND_STYLE[kind].label"
+                                    />
                                 </p>
                                 <p
                                     class="truncate text-[10px] text-muted dark:text-gray-400"
@@ -141,11 +154,14 @@
                                 v-for="(segment, index) in row.segments"
                                 :key="index"
                                 class="absolute flex items-center overflow-hidden rounded px-1.5 text-[10px] font-semibold text-white"
-                                :class="
+                                :class="[
                                     segment.active
                                         ? 'bg-accent ring-1 ring-accent-300'
-                                        : KIND_STYLE[segment.kind].bar
-                                "
+                                        : KIND_STYLE[segment.kind].bar,
+                                    canOpen && segment.to
+                                        ? 'cursor-pointer hover:brightness-110'
+                                        : '',
+                                ]"
                                 :style="{
                                     left: `${segment.left}%`,
                                     width: `${segment.width}%`,
@@ -153,6 +169,7 @@
                                     height: `${BAR_HEIGHT}px`,
                                 }"
                                 :title="segment.title"
+                                @click.stop="open(segment.to ?? row.to)"
                             >
                                 <span class="truncate">{{ segment.label }}</span>
                             </div>
@@ -206,8 +223,40 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { CalendarClock } from "lucide-vue-next";
 
 import { caregiverShiftService } from "~/api/caregiver-shift/CaregiverShiftService";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
+import { getLocalDateStr } from "~/utils/time";
 
 const props = defineProps<{ branchUuid: string }>();
+
+type RosterLink = { path: string; query: Record<string, string> };
+
+const { hasModule } = usePermissions();
+const canOpen = computed(() => hasModule(Modules.Schedules));
+
+const schedulesPath = computed(
+    () => `/app/branches/${props.branchUuid}/schedules`,
+);
+
+const taskLink = (type: "ADL" | "Medical", code?: string | null): RosterLink => {
+    const today = getLocalDateStr(new Date());
+
+    return {
+        path: schedulesPath.value,
+        query: {
+            type: type === "ADL" ? "adl" : "medical",
+            date_from: today,
+            date_to: today,
+            ...(code ? { search: code } : {}),
+        },
+    };
+};
+
+const open = (to?: RosterLink | null) => {
+    if (!canOpen.value || !to) return;
+
+    navigateTo(to);
+};
 
 interface BoardShift {
     caregiver_shift_id: number;
@@ -353,6 +402,7 @@ interface RawSegment {
     label: string;
     title: string;
     active?: boolean;
+    to?: RosterLink;
 }
 
 const isActive = (item: RawSegment) => item.active ?? isNowIn(item.start, item.end);
@@ -413,6 +463,15 @@ const staff = computed(() => {
             end: toHour(shift.end_time),
             label: time,
             title: `Facility shift · ${time}`,
+            to: {
+                path: schedulesPath.value,
+                query: {
+                    type: "shifts",
+                    ...(shift.caregiver.full_name
+                        ? { search: shift.caregiver.full_name }
+                        : {}),
+                },
+            },
         });
     }
 
@@ -441,6 +500,7 @@ const staff = computed(() => {
             start,
             end,
             active: isAdl ? task.attendance === "me" : undefined,
+            to: taskLink(task.type, task.schedule_code),
             label: `${time} · ${task.title}${status}`,
             title: `${KIND_STYLE[isAdl ? "adl" : "medical"].label} · ${task.title}${task.patient_name ? ` · ${task.patient_name}` : ""}${task.schedule_code ? ` · ${task.schedule_code}` : ""} · ${time}${status}`,
         });
@@ -457,6 +517,7 @@ interface Segment {
     title: string;
     kind: Kind;
     active: boolean;
+    to?: RosterLink;
 }
 
 // Bars that overlap in time are stacked on separate lines; otherwise a row
@@ -466,7 +527,13 @@ const placeSegments = (items: RawSegment[]) => {
 
     for (const item of items) {
         const active = isActive(item);
-        const base = { label: item.label, title: item.title, kind: item.kind, active };
+        const base = {
+            label: item.label,
+            title: item.title,
+            kind: item.kind,
+            active,
+            to: item.to,
+        };
 
         if (item.end > item.start) {
             pieces.push({
@@ -543,6 +610,12 @@ const rows = computed(() =>
                     .join(" · "),
                 segments,
                 height,
+                kinds: legendKinds.filter((kind) =>
+                    entry.items.some((item) => item.kind === kind),
+                ),
+                to:
+                    (entry.items.find(isActive) ?? entry.items.find((item) => item.to))
+                        ?.to ?? null,
                 firstStart: Math.min(...entry.items.map((item) => item.start)),
                 onDuty: entry.items.some(isActive),
             };
