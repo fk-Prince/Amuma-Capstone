@@ -44,7 +44,7 @@
                     </div>
 
                     <NuxtLink
-                        :to="MANAGE_SUBSCRIPTION_PATH"
+                        :to="manageSubscriptionPath"
                         class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-amber-700"
                     >
                         Manage Subscription
@@ -131,7 +131,6 @@ import { onMounted } from "vue";
 import { TriangleAlert } from "lucide-vue-next";
 import { useSubscribeFlow } from "~/composables/useSubscribeFlow";
 import {
-    MANAGE_SUBSCRIPTION_PATH,
     SUBSCRIBE_ONCE_MESSAGE,
     SUBSCRIBE_ONCE_TITLE,
     useSubscribeAccess,
@@ -147,7 +146,7 @@ definePageMeta({
 
 const { checkout, loading, formattedPlans } = usePlanCards();
 const { startSubscribe } = useSubscribeFlow();
-const { isAgencyOwner, ensureLoaded } = useSubscribeAccess();
+const { isAgencyOwner, manageSubscriptionPath, ensureLoaded } = useSubscribeAccess();
 
 onMounted(ensureLoaded);
 </script>
