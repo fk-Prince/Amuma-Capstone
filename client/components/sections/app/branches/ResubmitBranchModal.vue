@@ -40,6 +40,8 @@
                                             ? "Fix your agency details, then send"
                                             : step === "details"
                                               ? "Fix the details below and send"
+                                              : step === "review"
+                                                ? "Check everything, then send"
                                               : usesAdditional
                                                 ? "Pay for an additional branch to send"
                                                 : "Choose a plan and pay to send"
@@ -125,6 +127,58 @@
                             v-model:branch="form"
                             v-model:errors="errors"
                         />
+
+                        <div
+                            v-if="step === 'review'"
+                            class="mx-auto w-full max-w-2xl space-y-4"
+                        >
+                            <section
+                                v-for="group in reviewGroups"
+                                :key="group.title"
+                                class="rounded-xl border border-slate-200 dark:border-white/10"
+                            >
+                                <h3
+                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                >
+                                    {{ group.title }}
+                                </h3>
+
+                                <dl
+                                    class="divide-y divide-slate-100 dark:divide-white/10"
+                                >
+                                    <div
+                                        v-for="row in group.rows"
+                                        :key="row.label"
+                                        class="flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:gap-4"
+                                    >
+                                        <dt
+                                            class="w-40 shrink-0 text-xs text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{ row.label }}
+                                        </dt>
+                                        <dd
+                                            class="min-w-0 break-words text-sm font-medium text-secondary dark:text-white"
+                                        >
+                                            {{ row.value }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </section>
+
+                            <div
+                                v-if="isTrial"
+                                class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+                            >
+                                <p class="font-semibold">
+                                    {{ planName ? `${planName} · ` : "" }}2-week
+                                    free trial
+                                </p>
+                                <p class="mt-0.5 text-xs">
+                                    Your trial starts once an admin approves
+                                    your branch. Nothing is charged now.
+                                </p>
+                            </div>
+                        </div>
 
                         <div
                             v-if="step === 'payment' && usesAdditional"
@@ -391,15 +445,27 @@
                             />
                             <template v-if="purchaseMode">
                                 Continue to payment
-                                <ChevronRight class="h-4 w-4" />
                             </template>
-                            <template v-else>
-                                {{
-                                    processing
-                                        ? "Resubmitting..."
-                                        : "Resubmit for review"
-                                }}
-                            </template>
+                            <template v-else>Review</template>
+                            <ChevronRight class="h-4 w-4" />
+                        </button>
+
+                        <button
+                            v-if="step === 'review'"
+                            type="button"
+                            :disabled="processing"
+                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            @click="send"
+                        >
+                            <LoaderCircle
+                                v-if="processing"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            {{
+                                processing
+                                    ? "Resubmitting..."
+                                    : "Resubmit for review"
+                            }}
                         </button>
                     </div>
                 </div>
@@ -512,7 +578,7 @@ const form = ref<Branch>({
     },
 });
 
-type Step = "agency" | "details" | "payment";
+type Step = "agency" | "details" | "review" | "payment";
 
 const firstStep: Step = props.agency ? "agency" : "details";
 const step = ref<Step>(firstStep);
@@ -597,7 +663,7 @@ const continueFromAgency = async () => {
 const goBack = () => {
     formError.value = null;
     step.value =
-        step.value === "payment"
+        step.value === "payment" || step.value === "review"
             ? "details"
             : step.value === "details" && props.agency
               ? "agency"
@@ -839,6 +905,13 @@ const submit = async () => {
         return;
     }
 
+    step.value = "review";
+};
+
+const send = async () => {
+    if (processing.value) return;
+
+    formError.value = null;
     processing.value = true;
 
     try {
@@ -861,6 +934,63 @@ const submit = async () => {
         processing.value = false;
     }
 };
+
+const planName = computed(() => props.branch.plan?.[0]?.name ?? null);
+
+const isTrial = computed(
+    () => !!props.agency && props.branch.subscription_mode !== "live",
+);
+
+const addressOf = (location?: {
+    full_address?: string | null;
+    street?: string | null;
+    city?: string | null;
+    province?: string | null;
+}) =>
+    location?.full_address ||
+    [location?.street, location?.city, location?.province]
+        .filter(Boolean)
+        .join(", ") ||
+    "—";
+
+const reviewGroups = computed(() => {
+    const groups: { title: string; rows: { label: string; value: string }[] }[] =
+        [];
+    const agency = agencyForm.value;
+    const branch = form.value;
+
+    if (agency) {
+        groups.push({
+            title: "Agency",
+            rows: [
+                { label: "Name", value: agency.name || "—" },
+                { label: "Email", value: agency.email || "—" },
+                { label: "Address", value: addressOf(agency.location) },
+                ...(agency.id_front instanceof File ||
+                agency.id_back instanceof File ||
+                agency.document instanceof File
+                    ? [{ label: "Documents", value: "New files attached" }]
+                    : []),
+            ],
+        });
+    }
+
+    groups.push({
+        title: "Branch",
+        rows: [
+            { label: "Name", value: branch.name || "—" },
+            { label: "Email", value: branch.email || "—" },
+            { label: "Contact number", value: branch.contact_number || "—" },
+            { label: "TIN", value: branch.tin || "—" },
+            { label: "Address", value: addressOf(branch.location) },
+            ...(branch.document instanceof File
+                ? [{ label: "Document", value: "New file attached" }]
+                : []),
+        ],
+    });
+
+    return groups;
+});
 
 const slotPrompt = ref<string | null>(null);
 

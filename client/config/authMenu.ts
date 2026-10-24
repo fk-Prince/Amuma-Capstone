@@ -163,9 +163,9 @@ export const ownerMenuList: MenuItems[] = [
         modules: ["AMUMA Subscription"],
     },
     {
-        label: "Subscription",
+        label: "Subscriptions",
         icon: Building2,
-        to: "/app/owner/branches",
+        to: "/app/owner/subscriptions",
         modules: ["AMUMA Subscription"],
     },
 ];

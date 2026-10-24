@@ -192,6 +192,26 @@
                             {{ branchName }}
                         </p>
                     </div>
+                    <div v-if="planLabel || isTrial" class="px-4 py-3">
+                        <p
+                            class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                        >
+                            Plan
+                        </p>
+                        <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
+                            {{ planLabel }}
+                            <template v-if="isTrial">
+                                {{ planLabel ? "·" : "" }} 2-week free trial
+                            </template>
+                        </p>
+                        <p
+                            v-if="isTrial"
+                            class="mt-0.5 text-xs text-muted-DEFAULT"
+                        >
+                            Your trial starts once your branch is approved.
+                            Nothing has been charged.
+                        </p>
+                    </div>
                 </div>
 
                 <div
@@ -283,6 +303,9 @@ const onReapplied = (result) => {
             settings: updated.settings,
             status: updated.status,
             subscription_status: "pending",
+            subscription_awaiting_payment:
+                result.subscription?.status === "pending" ||
+                next.subscription_awaiting_payment,
             rejection_reason: null,
             resubmit_requires_payment: false,
             resubmit_subscription_status: null,
@@ -307,5 +330,11 @@ const isPending = computed(() => {
 
 const agencyName = computed(() => branch.value?.agency?.name ?? null);
 const branchName = computed(() => branch.value?.name ?? null);
+const planLabel = computed(() => branch.value?.plan?.[0]?.name ?? null);
+const isTrial = computed(
+    () =>
+        branch.value?.subscription_mode === "test" ||
+        Boolean(branch.value?.subscription_awaiting_payment),
+);
 const rejectionReason = computed(() => branch.value?.rejection_reason ?? null);
 </script>

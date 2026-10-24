@@ -116,8 +116,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         subtitle:
             "Review agency and branch documents before a subscription goes live.",
     },
-    "/app/owner/branches": {
-        title: "Subscription",
+    "/app/owner/subscriptions": {
+        title: "Subscriptions",
         subtitle:
             "Browse every subscription already approved, and its billing status.",
     },

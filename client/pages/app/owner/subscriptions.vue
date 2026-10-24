@@ -251,7 +251,7 @@ definePageMeta({
 });
 
 useHead({
-    title: "Subscription",
+    title: "Subscriptions",
 });
 
 const {

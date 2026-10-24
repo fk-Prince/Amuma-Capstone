@@ -556,7 +556,7 @@
                     {{
                         actionLoading === "reject"
                             ? "Rejecting…"
-                            : isFirstBranch || branchPayment
+                            : !unpaidTrial && (isFirstBranch || branchPayment)
                               ? "Reject & Refund"
                               : "Reject"
                     }}

@@ -23,8 +23,8 @@ export const privateMenu: MenuItem[] = [
         group: "Management",
     },
     {
-        label: "Branches",
-        to: "/app/owner/branches",
+        label: "Subscriptions",
+        to: "/app/owner/subscriptions",
         icon: Building2,
         group: "Management",
     },

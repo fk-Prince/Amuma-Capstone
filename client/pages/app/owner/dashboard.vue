@@ -1017,7 +1017,7 @@
                         </div>
 
                         <NuxtLink
-                            to="/app/owner/branches"
+                            to="/app/owner/subscriptions"
                             class="group inline-flex w-fit items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-primary-600 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-primary-300 dark:hover:bg-white/10 dark:hover:text-primary-200"
                         >
                             View all
