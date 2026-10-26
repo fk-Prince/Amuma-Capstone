@@ -1,4 +1,5 @@
 import { useToast } from '~/composables/useToast';
+import { xsrfCookieName } from '~/utils/sandbox';
 
 type HttpMethod =
     | 'GET'
@@ -141,9 +142,7 @@ export class BaseService {
             await this.ensureCsrf();
         }
 
-        const xsrfToken = useCookie(
-            String(config.public.xsrfCookie || 'XSRF-TOKEN'),
-        ).value;
+        const xsrfToken = useCookie(xsrfCookieName(config)).value;
 
         const headers: Record<string, string> = {
             Accept: 'application/json',

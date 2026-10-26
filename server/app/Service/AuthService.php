@@ -90,9 +90,29 @@ class AuthService
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json([
+        $response = response()->json([
             'message' => __('Logged out successfully'),
         ], 200);
+
+        foreach ($this->sessionCookieNames() as $name) {
+            $response->withoutCookie($name, config('session.path'), config('session.domain'));
+        }
+
+        return $response;
+    }
+
+    private function sessionCookieNames(): array
+    {
+        $session = Str::slug((string) config('app.name')) . '-session';
+
+        return array_unique([
+            config('session.cookie'),
+            config('session.xsrf_cookie'),
+            $session,
+            $session . '-sandbox',
+            'XSRF-TOKEN',
+            'XSRF-TOKEN-SANDBOX',
+        ]);
     }
 
     public function signup(array $payload)

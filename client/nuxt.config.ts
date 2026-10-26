@@ -19,12 +19,6 @@ export default defineNuxtConfig({
       '~~/postcss/px-to-rem': {},
     },
   },
-  // runtimeConfig: {
-  //   public: {
-  //     backendApi: 'http://localhost:8000',
-  //     xenditPublicKey: ''
-  //   }
-  // },
   runtimeConfig: {
     public: {
       backendApi: '',
@@ -36,7 +30,7 @@ export default defineNuxtConfig({
       sandbox: '',
       sandboxUrl: '',
       liveUrl: '',
-      xsrfCookie: 'XSRF-TOKEN'
+      xsrfCookie: ''
     }
   },
   nitro: {

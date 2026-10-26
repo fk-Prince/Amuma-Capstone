@@ -129,10 +129,10 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')) . '-session'
+        Str::slug((string) env('APP_NAME', 'laravel')) . '-session' . (env('APP_SANDBOX', false) ? '-sandbox' : '')
     ),
 
-    'xsrf_cookie' => env('XSRF_COOKIE', 'XSRF-TOKEN'),
+    'xsrf_cookie' => env('XSRF_COOKIE', env('APP_SANDBOX', false) ? 'XSRF-TOKEN-SANDBOX' : 'XSRF-TOKEN'),
 
     /*
     |--------------------------------------------------------------------------

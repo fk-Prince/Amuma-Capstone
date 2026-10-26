@@ -136,7 +136,11 @@ class BranchRepository
                 });
             })
             ->when(!empty($filters['provider_name']), function ($query) use ($filters) {
-                $query->where('name', 'ILIKE', '%' . $filters['provider_name'] . '%');
+                $search = '%' . trim($filters['provider_name']) . '%';
+
+                $query->where(fn($match) => $match
+                    ->where('branches.name', 'ILIKE', $search)
+                    ->orWhereHas('agencies', fn($agency) => $agency->where('name', 'ILIKE', $search)));
             })
 
             ->when(

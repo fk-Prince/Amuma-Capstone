@@ -28,8 +28,8 @@
             </h3>
 
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                No payment today. An admin reviews your branch first, and your
-                2-week trial starts once it's approved. After that, pay for
+                No payment today. An admin reviews your subscription and branch
+                first, and your 2-week trial starts once they're approved. After that, pay for
                 your plan any time, whenever you're ready.
             </p>
 

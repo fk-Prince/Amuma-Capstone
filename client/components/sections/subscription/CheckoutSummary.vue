@@ -140,7 +140,7 @@
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Nothing to pay today.</span>
                     Your 2-week free trial starts once an admin approves your
-                    branch. After that, pay for your plan any time, whenever
+                    subscription and branch. After that, pay for your plan any time, whenever
                     you're ready. If it isn't paid by the time the trial ends,
                     your branch is locked until it is.
                 </p>

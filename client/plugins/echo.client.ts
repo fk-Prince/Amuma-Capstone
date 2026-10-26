@@ -1,6 +1,7 @@
 
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
+import { xsrfCookieName } from '~/utils/sandbox'
 
 function getCookie(name: string): string | null {
     const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
@@ -35,7 +36,7 @@ export default defineNuxtPlugin(() => {
                         headers: {
                             'Content-Type': 'application/json',
                             Accept: 'application/json',
-                            'X-XSRF-TOKEN': getCookie(String(config.public.xsrfCookie || 'XSRF-TOKEN')) ?? '',
+                            'X-XSRF-TOKEN': getCookie(xsrfCookieName(config)) ?? '',
                         },
                         body: JSON.stringify({
                             socket_id: socketId,
