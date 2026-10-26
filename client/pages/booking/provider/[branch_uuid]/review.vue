@@ -157,6 +157,13 @@
                             compact
                             :card="card"
                             :total-amount="bookingAmount"
+                            :amount-label="
+                                bookingPercent >= 100
+                                    ? 'Amount to pay'
+                                    : isHomecare
+                                      ? 'Downpayment to pay'
+                                      : 'Reservation fee to pay'
+                            "
                             :processing="
                                 processingPayment ||
                                 loadingTotal ||

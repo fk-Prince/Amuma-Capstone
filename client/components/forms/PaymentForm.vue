@@ -49,6 +49,7 @@ interface Props {
     enableGCash?: boolean;
     enableCash?: boolean;
     totalAmount: number;
+    amountLabel?: string;
     currency?: string;
     allowShortCash?: boolean;
     termsContext?: string;
@@ -620,6 +621,22 @@ watch(isCash, (active) => {
                     />
                 </div>
 
+                <div
+                    v-if="amountLabel"
+                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-white/5"
+                    :class="compact ? 'py-2' : 'py-3'"
+                >
+                    <span
+                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                    >
+                        {{ amountLabel }}
+                    </span>
+
+                    <span class="text-lg font-bold tabular-nums text-primary">
+                        {{ currency }}{{ formatMoney(totalAmount) }}
+                    </span>
+                </div>
+
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
@@ -721,12 +738,22 @@ watch(isCash, (active) => {
                     class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-secondary"
                     :class="compact ? 'py-2' : 'py-3'"
                 >
-                    <span class="text-sm text-slate-500 dark:text-gray-400">
-                        Amount to pay
+                    <span
+                        :class="
+                            amountLabel
+                                ? 'text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400'
+                                : 'text-sm text-slate-500 dark:text-gray-400'
+                        "
+                    >
+                        {{ amountLabel ?? "Amount to pay" }}
                     </span>
 
                     <span
-                        class="text-base font-bold text-slate-900 dark:text-white"
+                        :class="
+                            amountLabel
+                                ? 'text-lg font-bold tabular-nums text-primary'
+                                : 'text-base font-bold text-slate-900 dark:text-white'
+                        "
                     >
                         {{ currency }}{{ formatMoney(totalAmount) }}
                     </span>
