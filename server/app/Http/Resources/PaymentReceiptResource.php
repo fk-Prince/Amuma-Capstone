@@ -75,8 +75,9 @@ class PaymentReceiptResource extends JsonResource
 
     protected function taxSummary(): array
     {
-        $taxed = $this->allocations
-            ->filter(fn($allocation) => (float) $allocation->invoice?->vat_rate > 0 && (float) $allocation->amount > 0);
+        [$taxed, $exempt] = $this->allocations
+            ->filter(fn($allocation) => (float) $allocation->amount > 0)
+            ->partition(fn($allocation) => (float) $allocation->invoice?->vat_rate > 0);
 
         $vat = round($taxed->sum(fn($allocation) => Vat::portion(
             (float) $allocation->amount,
@@ -88,6 +89,7 @@ class PaymentReceiptResource extends JsonResource
         return [
             'vat_rate'      => $rates->count() === 1 ? $rates->first() : null,
             'vatable_sales' => round((float) $taxed->sum('amount') - $vat, 2),
+            'vat_exempt_sales' => round((float) $exempt->sum('amount'), 2),
             'vat_amount'    => $vat,
         ];
     }

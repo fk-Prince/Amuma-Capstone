@@ -50,6 +50,7 @@ class BookingReceiptResource extends JsonResource
             'tax' => [
                 'vat_rate'      => Vat::RATE,
                 'vatable_sales' => round($amount - $vat, 2),
+                'vat_exempt_sales' => 0.0,
                 'vat_amount'    => $vat,
             ],
 

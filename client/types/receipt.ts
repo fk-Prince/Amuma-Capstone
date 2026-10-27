@@ -31,6 +31,7 @@ export interface PaymentReceipt {
     tax?: {
         vat_rate: number | null;
         vatable_sales: number;
+        vat_exempt_sales?: number;
         vat_amount: number;
     };
 

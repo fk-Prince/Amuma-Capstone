@@ -38,7 +38,11 @@ const tableRows = computed(() =>
 
 const isOnline = computed(() => props.receipt.channel === "portal");
 
-const hasVat = computed(() => Number(props.receipt.tax?.vat_amount) > 0);
+const hasVat = computed(
+    () =>
+        Number(props.receipt.tax?.vat_amount) > 0 ||
+        Number(props.receipt.tax?.vat_exempt_sales) > 0,
+);
 
 const vatLabel = computed(() => {
     const rate = props.receipt.tax?.vat_rate;
@@ -421,6 +425,23 @@ onBeforeUnmount(() => {
                                         <span class="font-mono font-bold">
                                             {{
                                                 peso(receipt.tax?.vatable_sales)
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex justify-between border-b border-black px-2 py-1"
+                                    >
+                                        <span class="uppercase">
+                                            VAT-Exempt Sales
+                                        </span>
+
+                                        <span class="font-mono font-bold">
+                                            {{
+                                                peso(
+                                                    receipt.tax
+                                                        ?.vat_exempt_sales,
+                                                )
                                             }}
                                         </span>
                                     </div>
