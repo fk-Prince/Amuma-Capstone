@@ -20,6 +20,7 @@ export interface SalesVatSummary {
     vatable_sales: number;
     vat_exempt_sales: number;
     output_vat: number;
+    accounts_receivable: number;
     invoice_count: number;
 }
 

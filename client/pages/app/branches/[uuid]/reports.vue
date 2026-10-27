@@ -6,6 +6,7 @@
                 :value="money(summary?.gross_sales)"
                 :icon="Receipt"
                 tone="primary"
+                :chip="`Receivable ${money(summary?.accounts_receivable)}`"
                 :note="periodLabel"
             />
             <OverviewStatCard

@@ -44,6 +44,7 @@ class ReportService
             'vatable_sales'    => round((float) $taxed->sum('sales_amount') - $vat, 2),
             'vat_exempt_sales' => round((float) $exempt->sum('sales_amount'), 2),
             'output_vat'       => $vat,
+            'accounts_receivable' => round((float) $invoices->sum('balance_due'), 2),
             'invoice_count'    => $invoices->count(),
         ];
     }
