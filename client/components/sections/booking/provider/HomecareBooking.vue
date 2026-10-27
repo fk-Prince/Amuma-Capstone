@@ -610,7 +610,7 @@
                     <Info class="mt-0.5 h-4 w-4 shrink-0" />
                     <p>
                         Want a long-term, stay-in caregiver? Please visit the
-                        facility to arrange it in person.
+                        branch to arrange it in person.
                     </p>
                 </div>
             </div>
