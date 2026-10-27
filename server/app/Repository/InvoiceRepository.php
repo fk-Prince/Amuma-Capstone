@@ -16,6 +16,7 @@ use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\Schedule;
 use App\Utils\InvoiceMoney;
+use App\Utils\Vat;
 use Carbon\Carbon;
 
 class InvoiceRepository
@@ -1245,6 +1246,7 @@ class InvoiceRepository
 
         $invoices = $this->invoicesIssued($branchId, $period['from'], $period['to']);
         $billed = $this->billedTotal($invoices);
+        $revenue = $this->revenueTotal($invoices);
         $paid = $this->paidTotal($invoices);
         $refunds = $this->refundsIssuedBetween($branchId, $period['from'], $period['to']);
 
@@ -1260,6 +1262,7 @@ class InvoiceRepository
             : null;
 
         $previousBilled = $previousInvoices ? $this->billedTotal($previousInvoices) : null;
+        $previousRevenue = $previousInvoices ? $this->revenueTotal($previousInvoices) : null;
         $previousPaid = $previousInvoices ? $this->paidTotal($previousInvoices) : null;
 
         $previousRefunds = $compare
@@ -1271,12 +1274,22 @@ class InvoiceRepository
             'chart' => $this->overviewChart($branchId, $period, $invoices),
 
             'total_revenue' => [
+                'value' => $revenue,
+                'secondary' => $compare
+                    ? $this->changeLabel($revenue, $previousRevenue, $period['previous'])
+                    : $this->countLabel($invoices->count(), 'invoice'),
+                'trend' => $compare && $revenue < $previousRevenue ? 'down' : 'up',
+            ],
+
+            'total_billed' => [
                 'value' => $billed,
                 'secondary' => $compare
                     ? $this->changeLabel($billed, $previousBilled, $period['previous'])
                     : $this->countLabel($invoices->count(), 'invoice'),
                 'trend' => $compare && $billed < $previousBilled ? 'down' : 'up',
             ],
+
+            'vat_collected' => round($billed - $revenue, 2),
 
             'payments_received' => [
                 'value' => $paid,
@@ -1377,7 +1390,7 @@ class InvoiceRepository
                 return [
                     'title' => 'Revenue over time',
                     'labels' => $months->map(fn(Carbon $month) => $month->format('M Y'))->all(),
-                    'revenue' => $months->map(fn(Carbon $month) => $this->billedTotal($byMonth->get($month->format('Y-m'), collect())))->all(),
+                    'revenue' => $months->map(fn(Carbon $month) => $this->revenueTotal($byMonth->get($month->format('Y-m'), collect())))->all(),
                     'highlight' => [],
                 ];
             }
@@ -1388,7 +1401,7 @@ class InvoiceRepository
             return [
                 'title' => 'Revenue by year',
                 'labels' => array_map('strval', $years),
-                'revenue' => array_map(fn($year) => $this->billedTotal($byYear->get($year, collect())), $years),
+                'revenue' => array_map(fn($year) => $this->revenueTotal($byYear->get($year, collect())), $years),
                 'highlight' => [],
             ];
         }
@@ -1412,7 +1425,7 @@ class InvoiceRepository
         return [
             'title' => "Revenue in {$year}",
             'labels' => array_map(fn($month) => Carbon::create($year, $month, 1)->format('M'), $months),
-            'revenue' => array_map(fn($month) => $this->billedTotal($byMonth->get($month, collect())), $months),
+            'revenue' => array_map(fn($month) => $this->revenueTotal($byMonth->get($month, collect())), $months),
             'highlight' => array_map(fn($month) => $month - 1, $highlight),
         ];
     }
@@ -1427,14 +1440,26 @@ class InvoiceRepository
             ->get();
     }
 
+    private function billedAmount(Invoice $invoice): float
+    {
+        return (float) ($invoice->status === Invoice::STATUS_WRITTEN_OFF
+            ? min($invoice->net_paid_amount, $invoice->adjusted_total)
+            : $invoice->adjusted_total);
+    }
+
     private function billedTotal($invoices): float
     {
+        return round((float) $invoices->sum(fn(Invoice $invoice) => $this->billedAmount($invoice)), 2);
+    }
+
+    private function revenueTotal($invoices): float
+    {
         return round(
-            (float) $invoices->sum(
-                fn(Invoice $invoice) => $invoice->status === Invoice::STATUS_WRITTEN_OFF
-                    ? min($invoice->net_paid_amount, $invoice->adjusted_total)
-                    : $invoice->adjusted_total
-            ),
+            (float) $invoices->sum(function (Invoice $invoice) {
+                $billed = $this->billedAmount($invoice);
+
+                return $billed - Vat::portion($billed, (float) $invoice->vat_rate);
+            }),
             2
         );
     }
