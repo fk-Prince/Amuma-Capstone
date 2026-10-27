@@ -18,4 +18,5 @@ export enum Modules {
     ManageSubscription = "Manage Subscription",
     Inquiries = "Inquiries",
     AuditLogs = "Audit Logs",
+    Reports = "Reports",
 }

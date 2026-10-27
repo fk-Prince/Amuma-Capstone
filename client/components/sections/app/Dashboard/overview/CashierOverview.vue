@@ -22,7 +22,7 @@
                 class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
             >
                 <OverviewStatCard
-                    label="Total Billed"
+                    label="Gross Sales"
                     :value="money(overview?.total_billed?.value)"
                     :icon="Receipt"
                     tone="primary"

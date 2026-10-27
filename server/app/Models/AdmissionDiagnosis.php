@@ -4,12 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-// A diagnosis of the patient, billed under a diagnosis case as part of an
-// admission_charge_diagnosis, which holds the period and the invoice.
 class AdmissionDiagnosis extends Model
 {
-    // What billed holds for a case that is billed again every month. A case
-    // billed once leaves it empty.
     public const BILLED_MONTHLY = 'monthly';
 
     protected $table = 'admission_diagnosis';
@@ -33,7 +29,6 @@ class AdmissionDiagnosis extends Model
         'date_billed' => 'date',
     ];
 
-    // The admission period, through the charge the diagnosis is under.
     public function admissionPeriod()
     {
         return $this->hasOneThrough(
@@ -65,13 +60,11 @@ class AdmissionDiagnosis extends Model
         return $this->belongsTo(DiagnosisCase::class, 'diagnosis_case_id', 'diagnosis_case_id');
     }
 
-    // What it was billed for, as entered.
     public function getBilledAmountAttribute(): float
     {
         return round((float) $this->amount, 2);
     }
 
-    // The admission it was billed on, through its period.
     public function getPatientAdmissionAttribute(): ?PatientAdmission
     {
         return $this->admissionPeriod?->patientAdmission;
@@ -82,7 +75,6 @@ class AdmissionDiagnosis extends Model
         return $this->admissionPeriod?->patient_admission_id;
     }
 
-    // The shape an additional charge has when an invoice lists its charges.
     public function asCharge(): array
     {
         return [

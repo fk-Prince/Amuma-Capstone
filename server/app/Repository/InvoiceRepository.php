@@ -8,15 +8,12 @@ use App\Http\Resources\RefundResource;
 use App\Models\AdmissionPeriod;
 use App\Models\Invoice;
 use App\Models\InvoiceAdmission;
-use App\Models\InvoiceAdjustment;
 use App\Models\InvoiceServices;
 use App\Models\Patient;
 use App\Models\PatientAdmission;
 use App\Models\Payment;
-use App\Models\Refund;
 use App\Models\Schedule;
 use App\Utils\InvoiceMoney;
-use App\Utils\Vat;
 use Carbon\Carbon;
 
 class InvoiceRepository
@@ -1440,26 +1437,15 @@ class InvoiceRepository
             ->get();
     }
 
-    private function billedAmount(Invoice $invoice): float
-    {
-        return (float) ($invoice->status === Invoice::STATUS_WRITTEN_OFF
-            ? min($invoice->net_paid_amount, $invoice->adjusted_total)
-            : $invoice->adjusted_total);
-    }
-
     private function billedTotal($invoices): float
     {
-        return round((float) $invoices->sum(fn(Invoice $invoice) => $this->billedAmount($invoice)), 2);
+        return round((float) $invoices->sum('sales_amount'), 2);
     }
 
     private function revenueTotal($invoices): float
     {
         return round(
-            (float) $invoices->sum(function (Invoice $invoice) {
-                $billed = $this->billedAmount($invoice);
-
-                return $billed - Vat::portion($billed, (float) $invoice->vat_rate);
-            }),
+            (float) $invoices->sum(fn(Invoice $invoice) => $invoice->sales_amount - $invoice->sales_vat),
             2
         );
     }

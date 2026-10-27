@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdditionalChargeController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
@@ -105,6 +106,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // AUDIT LOGS
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
     Route::get('/audit-logs/{uuid}', [AuditLogController::class, 'show']);
+
+    // REPORTS
+    Route::get('/reports/sales-vat', [ReportController::class, 'salesVat']);
+    Route::get('/reports/sales-vat/summary', [ReportController::class, 'salesVatSummary']);
+    Route::get('/reports/sales-vat/export', [ReportController::class, 'salesVatExport']);
 
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);

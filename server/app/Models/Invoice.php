@@ -314,6 +314,18 @@ class Invoice extends Model
         return Vat::portion((float) $this->adjusted_total, (float) $this->vat_rate);
     }
 
+    public function getSalesAmountAttribute(): float
+    {
+        return round((float) ($this->status === self::STATUS_WRITTEN_OFF
+            ? min($this->net_paid_amount, $this->adjusted_total)
+            : $this->adjusted_total), 2);
+    }
+
+    public function getSalesVatAttribute(): float
+    {
+        return Vat::portion($this->sales_amount, (float) $this->vat_rate);
+    }
+
     public function getAmountPaidAttribute()
     {
         return round((float) $this->allocations->sum('amount'), 2);

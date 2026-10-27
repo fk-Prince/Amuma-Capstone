@@ -22,6 +22,7 @@ class ModuleSeeder extends Seeder
 
         $this->grantRoleDefaults(ModuleEnum::AuditLogs);
         $this->grantRoleDefaults(ModuleEnum::Medications);
+        $this->grantRoleDefaults(ModuleEnum::Reports);
     }
 
     private function grantRoleDefaults(ModuleEnum $moduleEnum): void
