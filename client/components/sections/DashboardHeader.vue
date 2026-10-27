@@ -9,10 +9,15 @@
                 <div class="h-3 w-56 rounded-md skeleton-shimmer" />
             </div>
 
-            <button
+            <component
+                :is="branchStore.isAgencyOwner ? 'button' : 'div'"
                 v-else
-                type="button"
-                class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 text-left transition-colors duration-200 sm:-ml-2 sm:px-2 hover:bg-gray-50 dark:hover:bg-white/5"
+                :type="branchStore.isAgencyOwner ? 'button' : undefined"
+                class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg py-1 text-left transition-colors duration-200 sm:-ml-2 sm:px-2"
+                :class="{
+                    'hover:bg-gray-50 dark:hover:bg-white/5':
+                        branchStore.isAgencyOwner,
+                }"
                 @click="branchStore.openModal"
             >
                 <div
@@ -49,7 +54,10 @@
                         }}
 
                         <ChevronDown
-                            v-if="branchStore.branches.length"
+                            v-if="
+                                branchStore.isAgencyOwner &&
+                                branchStore.branches.length
+                            "
                             class="h-4 w-4 shrink-0 text-gray-400 dark:text-white/40"
                         />
                     </h1>
@@ -89,7 +97,7 @@
                         </span>
                     </div>
                 </div>
-            </button>
+            </component>
 
             <div
                 class="flex items-center gap-2 sm:gap-6 lg:gap-8 shrink-0 max-lg:[&>div>button]:h-10 max-lg:[&>div>button]:w-10 max-lg:[&>div>button]:rounded-full max-lg:[&>div>button]:bg-gray-100/80 dark:max-lg:[&>div>button]:bg-white/10 max-lg:[&>div>button]:ring-1 max-lg:[&>div>button]:ring-black/5 dark:max-lg:[&>div>button]:ring-white/10 max-lg:[&>button]:h-10 max-lg:[&>button]:w-10 max-lg:[&>button]:rounded-full max-lg:[&>button]:bg-gray-100/80 dark:max-lg:[&>button]:bg-white/10 max-lg:[&>button]:ring-1 max-lg:[&>button]:ring-black/5 dark:max-lg:[&>button]:ring-white/10"

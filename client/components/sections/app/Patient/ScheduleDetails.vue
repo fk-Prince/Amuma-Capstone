@@ -1304,13 +1304,9 @@
         @cancel="cancelConfirmOpen = false"
     />
 
-    <ConfirmDialog
+    <ScheduleComplete
         :open="completeConfirmOpen"
-        title="Complete this schedule?"
-        message="This action cannot be undone."
-        description="This schedule will be marked as completed and can no longer be edited afterward."
-        confirm-label="Complete Schedule"
-        cancel-label="Keep Editing"
+        :schedule="schedule"
         :loading="submitLoading"
         @confirm="confirmCompleteSchedule"
         @cancel="completeConfirmOpen = false"
@@ -1323,8 +1319,8 @@ import { ref, computed, watch, nextTick } from "vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
-import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue";
+import ScheduleComplete from "~/components/sections/app/Patient/ScheduleComplete.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";

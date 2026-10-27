@@ -621,6 +621,35 @@ class ScheduleService
         ];
     }
 
+    public function completePreview(array $payload)
+    {
+        $schedule = $this->scheduleRepository->findByFields([
+            ['schedule_id', '=', $payload['schedule_id']],
+        ]);
+
+        if (!$schedule) {
+            throw new Exception('Schedule not found.', 404);
+        }
+
+        $invoices = $this->invoiceRepository->openForSchedule($schedule, $payload['branch_id']);
+
+        if ($invoices->isEmpty()) {
+            return ['invoice' => null];
+        }
+
+        $billed = round((float) $invoices->sum(fn(Invoice $invoice) => $invoice->adjusted_total), 2);
+        $paid = round((float) $invoices->sum(fn(Invoice $invoice) => $invoice->net_paid_amount), 2);
+
+        return [
+            'invoice' => [
+                'invoice_code' => $invoices->pluck('invoice_code')->implode(', '),
+                'billed' => $billed,
+                'paid' => $paid,
+                'balance' => max(0, round($billed - $paid, 2)),
+            ],
+        ];
+    }
+
     private function invoicesToSettle(Schedule $schedule, mixed $branchId): array
     {
         [$shared, $own] = $this->invoiceRepository->openForSchedule($schedule, $branchId)

@@ -43,6 +43,10 @@ export const useBranchStore = defineStore("branch", () => {
         () => eligibleBranches.value.length > 1,
     );
 
+    const isAgencyOwner = computed(() =>
+        branches.value.some((b) => b.role_name === "agency_owner"),
+    );
+
     function pickDefaultBranch(list: Branch[]): Branch | undefined {
         const score = (b: Branch) => {
             if (b.status === "verified" && b.agency?.status !== "rejected") return 0;
@@ -118,7 +122,7 @@ export const useBranchStore = defineStore("branch", () => {
         }
     }
     function openModal() {
-        if (!branches.value.length) return;
+        if (!branches.value.length || !isAgencyOwner.value) return;
         showModal.value = true;
     }
 
@@ -149,6 +153,7 @@ export const useBranchStore = defineStore("branch", () => {
         activeBranch,
         eligibleBranches,
         hasMultipleBranches,
+        isAgencyOwner,
         fetchBranches,
         openModal,
         closeModal,

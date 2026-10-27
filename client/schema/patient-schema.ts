@@ -77,8 +77,7 @@ export const diagnosisWindowStart = (): string => {
     return getLocalDateStr(date);
 };
 
-// A diagnosis is optional, so an empty date passes; one that is filled in has
-// to fall within the last few months.
+
 const recentDiagnosisDateSchema = z
     .string()
     .refine((val) => val === "" || !isNaN(Date.parse(val)), {
