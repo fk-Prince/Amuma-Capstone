@@ -305,9 +305,7 @@ class Invoice extends Model
                 );
             }
 
-            if ($invoice->vat_rate === null) {
-                $invoice->vat_rate = Branch::find($invoice->branch_id)?->vatRate() ?? 0;
-            }
+            $invoice->vat_rate ??= Vat::RATE;
         });
     }
 

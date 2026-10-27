@@ -4,6 +4,8 @@ namespace App\Utils;
 
 class Vat
 {
+    public const RATE = 12.0;
+
     public static function portion(float $amount, float $rate): float
     {
         if ($amount <= 0 || $rate <= 0) {

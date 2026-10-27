@@ -9,6 +9,7 @@ use App\Models\BranchContract;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
+use App\Utils\Vat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -71,7 +72,7 @@ class BranchResource extends JsonResource
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'currency' => $settings['currency'] ?? 'PHP',
                 'tin' => $settings['tin'] ?? null,
-                'vat_rate' => (float) ($settings['vat_rate'] ?? 0),
+                'vat_rate' => Vat::RATE,
             ],
 
             'location' => $this->location,

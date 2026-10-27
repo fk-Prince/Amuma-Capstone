@@ -268,19 +268,15 @@
 
             <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
-                    v-model="setting.vat_rate"
+                    :model-value="vatRate"
                     label="VAT Rate (%)"
                     mode="number"
-                    placeholder="Example: 12"
-                    :error="errors.vat_rate"
-                    @update:modelValue="clearError('vat_rate')"
+                    disabled
                 />
 
                 <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
-                    Set to 12 if the branch is VAT-registered, 0 if not. Prices
-                    already include VAT; new invoices and receipts show the VAT
-                    portion. Existing invoices keep the rate they were made
-                    with.
+                    Fixed at {{ vatRate }}%. Prices already include VAT;
+                    invoices and receipts show the VAT portion.
                 </p>
             </div>
         </div>
@@ -410,8 +406,9 @@ const setting = reactive<OperationSetting>({
             ? "23:59"
             : (activeBranch.value?.settings?.closing ?? ""),
     currency: activeBranch.value?.settings?.currency ?? "",
-    vat_rate: activeBranch.value?.settings?.vat_rate ?? 0,
 });
+
+const vatRate = computed(() => activeBranch.value?.settings?.vat_rate ?? 12);
 
 const saving = ref(false);
 

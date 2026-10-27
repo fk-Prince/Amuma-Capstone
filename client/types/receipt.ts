@@ -26,9 +26,7 @@ export interface PaymentReceipt {
         contact: string | null;
         email: string | null;
         tin: string | null;
-        permit_no: string | null;
-        vat_registered?: boolean;
-    };
+        permit_no: string | null;    };
 
     tax?: {
         vat_rate: number | null;

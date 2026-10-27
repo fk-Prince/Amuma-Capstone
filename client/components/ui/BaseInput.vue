@@ -9,6 +9,21 @@
             >
                 ({{ labelHint }})
             </span>
+            <span
+                v-if="info"
+                class="group relative ml-1 inline-flex align-middle"
+                tabindex="0"
+                :aria-label="info"
+            >
+                <Info
+                    class="h-3.5 w-3.5 cursor-help text-slate-400 transition group-hover:text-primary group-focus:text-primary dark:text-gray-500"
+                />
+                <span
+                    class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-[220px] -translate-x-1/2 rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-normal leading-4 text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus:opacity-100 dark:bg-white dark:text-slate-900"
+                >
+                    {{ info }}
+                </span>
+            </span>
         </label>
 
         <div
@@ -97,6 +112,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, useSlots } from "vue";
 import { type ZodType } from "zod";
+import { Info } from "lucide-vue-next";
 
 import Search from "../icons/search.vue";
 
@@ -112,6 +128,10 @@ const props = defineProps({
         default: "",
     },
     labelHint: {
+        type: String,
+        default: "",
+    },
+    info: {
         type: String,
         default: "",
     },

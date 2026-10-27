@@ -189,12 +189,7 @@ onBeforeUnmount(() => {
                                         v-if="receipt.issuer.tin"
                                         class="text-[9px] font-semibold"
                                     >
-                                        {{
-                                            receipt.issuer.vat_registered
-                                                ? "VAT REG. TIN"
-                                                : "NON-VAT REG. TIN"
-                                        }}
-                                        {{ receipt.issuer.tin }}
+                                        VAT REG. TIN {{ receipt.issuer.tin }}
                                     </p>
                                 </div>
                             </div>

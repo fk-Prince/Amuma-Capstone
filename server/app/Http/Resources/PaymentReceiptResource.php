@@ -22,9 +22,7 @@ class PaymentReceiptResource extends JsonResource
                 'contact'     => $this->branch?->contact_number,
                 'email'       => $this->branch?->email,
                 'tin'         => data_get($this->branch?->settings, 'tin'),
-                'permit_no'   => data_get($this->branch?->settings, 'bir_permit_no'),
-                'vat_registered' => ($this->branch?->vatRate() ?? 0) > 0,
-            ],
+                'permit_no'   => data_get($this->branch?->settings, 'bir_permit_no'),            ],
 
             'tax' => $this->taxSummary(),
 

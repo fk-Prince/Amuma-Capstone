@@ -103,6 +103,7 @@
                             :model-value="form.price"
                             @update:model-value="update('price', $event)"
                             :label="priceLabel"
+                            :info="vatInfo"
                             mode="number"
                             placeholder="0.00"
                             :error="errors.price"
@@ -304,6 +305,9 @@ import { useRoute } from "vue-router";
 import { X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
+import { useVatInfo } from "~/composables/useVatInfo";
+
+const vatInfo = useVatInfo();
 import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 

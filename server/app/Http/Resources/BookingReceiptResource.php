@@ -23,8 +23,7 @@ class BookingReceiptResource extends JsonResource
 
         $description = $this->description ?: 'Booking downpayment';
 
-        $vatRate = $this->branch?->vatRate() ?? 0;
-        $vat = Vat::portion($amount, $vatRate);
+        $vat = Vat::portion($amount, Vat::RATE);
 
         $patientName = trim(implode(' ', array_filter([
             $patient['first_name'] ?? null,
@@ -46,12 +45,11 @@ class BookingReceiptResource extends JsonResource
                 'email'       => $this->branch?->email,
                 'tin'         => data_get($this->branch?->settings, 'tin'),
                 'permit_no'   => data_get($this->branch?->settings, 'bir_permit_no'),
-                'vat_registered' => $vatRate > 0,
             ],
 
             'tax' => [
-                'vat_rate'      => $vatRate > 0 ? $vatRate : null,
-                'vatable_sales' => $vat > 0 ? round($amount - $vat, 2) : 0.0,
+                'vat_rate'      => Vat::RATE,
+                'vatable_sales' => round($amount - $vat, 2),
                 'vat_amount'    => $vat,
             ],
 
