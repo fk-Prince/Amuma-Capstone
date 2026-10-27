@@ -69,6 +69,41 @@ class ClientSeeder extends Seeder
                 'last_name' => 'Sestoso',
                 'phone_number' => '9171234506',
             ],
+            [
+                'email' => 'prince1@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'One',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234511',
+            ],
+            [
+                'email' => 'prince2@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Two',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234512',
+            ],
+            [
+                'email' => 'prince3@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Three',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234513',
+            ],
+            [
+                'email' => 'prince4@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Four',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234514',
+            ],
+            [
+                'email' => 'prince5@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Five',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234515',
+            ],
         ];
 
         $location = Location::firstOrCreate(
@@ -85,7 +120,7 @@ class ClientSeeder extends Seeder
         );
 
         foreach ($clients as $client) {
-            $user = User::firstOrCreate(
+            $user = User::updateOrCreate(
                 ['email' => $client['email']],
                 [
                     'password' => Hash::make('password'),
