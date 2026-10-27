@@ -46,6 +46,7 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
     auth: "Authentication",
     bookings: "Bookings",
     admissions: "Admissions",
+    schedules: "Schedules",
     billing: "Billing",
     rooms: "Rooms & Beds",
     services: "Services",

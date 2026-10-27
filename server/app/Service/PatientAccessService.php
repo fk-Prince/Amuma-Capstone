@@ -115,6 +115,7 @@ class PatientAccessService
                 'latitude'      => $payload['latitude'] ?? null,
                 'longitude'     => $payload['longitude'] ?? null,
                 'services'      => $payload['services'] ?? [],
+                'note'          => trim((string) ($payload['note'] ?? '')) ?: null,
                 'price'         => $payload['type'] === ScheduleService::TYPE_ADL
                     ? ($payload['rate'] ?? null)
                     : null,

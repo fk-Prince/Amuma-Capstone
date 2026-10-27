@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\BranchContract;
 
+use App\Rules\NoEmoji;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,18 @@ class StoreBranchContractRequest extends FormRequest
             'price' => ['required',  'numeric',  'min:1'],
             'billing_cycle' => ['required',   Rule::in(['MONTHLY', 'YEARLY', 'OPEN', 'HOURLY'])],
             'description' => ['nullable', 'string',  'max:1000'],
+            'activities' => ['required_if:accommodation_type,ADL', 'nullable', 'array', 'min:1'],
+            'activities.*' => ['required', 'string', 'max:60', 'distinct:ignore_case', new NoEmoji()],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'activities.required_if' => 'Select at least one activity.',
+            'activities.min' => 'Select at least one activity.',
+            'activities.*.distinct' => 'Each activity can only be added once.',
+            'activities.*.max' => 'Activity must be 60 characters or fewer.',
         ];
     }
 }

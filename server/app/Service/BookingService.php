@@ -418,6 +418,7 @@ class BookingService
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'services' => ['nullable', 'array'],
+            'note' => ['nullable', 'string', 'max:500'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'rate' => ['nullable', 'numeric', 'min:0'],
             'diagnoses' => ['nullable', 'array'],
@@ -451,6 +452,7 @@ class BookingService
                 'latitude'      => $data['latitude'] ?? null,
                 'longitude'     => $data['longitude'] ?? null,
                 'services'      => $data['services'] ?? [],
+                'note'          => trim((string) ($data['note'] ?? '')) ?: null,
                 'price'         => $data['type'] === Booking::TYPE_ADL ? ($data['rate'] ?? null) : null,
             ],
             'payment' => [

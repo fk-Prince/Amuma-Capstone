@@ -227,6 +227,7 @@ class PatientService
             'location_id'           => $scheduleLocation->location_id,
             'status'                => Schedule::STATUS_PENDING,
             'category'              => ucfirst($category),
+            'note'                  => trim((string) ($homecare['note'] ?? '')) ?: null,
         ]);
 
         $invoiceServices = [];

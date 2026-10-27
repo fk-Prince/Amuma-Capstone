@@ -44,7 +44,7 @@
 
                 <form
                     ref="formRef"
-                    class="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto"
+                    class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
                     @submit.prevent="submit"
                 >
                     <div
@@ -82,15 +82,16 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label
                             class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
-                            Billing Cycle
+                            Billing Cycle <span class="text-danger">*</span>
                         </label>
                         <div
                             v-if="isEditMode"
-                            class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            class="flex h-11 w-full items-center rounded-lg border border-slate-200 bg-slate-100 px-3.5 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
                             {{ billingCycleLabel }}
                         </div>
@@ -132,14 +133,82 @@
                             :error="errors.price"
                             required
                         />
-                        <p
-                            class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400"
+                    </div>
+                    </div>
+
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
-                            {{
-                                isMonthly
-                                    ? "Set the monthly base price charged for this service"
-                                    : "Set the hourly rate charged for this service"
-                            }}
+                            Activities Included
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div
+                            class="rounded-lg border border-slate-200 p-2.5 dark:border-white/10"
+                        >
+                            <div class="flex flex-wrap gap-1.5">
+                                <span
+                                    v-for="activity in form.activities"
+                                    :key="activity"
+                                    class="inline-flex items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1 text-[11px] font-medium text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                                >
+                                    {{ activity }}
+                                    <button
+                                        type="button"
+                                        class="rounded-full p-0.5 hover:bg-primary/15"
+                                        :aria-label="`Remove ${activity}`"
+                                        @click="toggleActivity(activity)"
+                                    >
+                                        <X class="h-3 w-3" />
+                                    </button>
+                                </span>
+
+                                <input
+                                    v-model="newActivity"
+                                    type="text"
+                                    maxlength="60"
+                                    placeholder="Add activity…"
+                                    class="h-6 min-w-[8rem] flex-1 bg-transparent px-1 text-xs text-slate-800 outline-none placeholder:text-slate-400 dark:text-white"
+                                    @keydown.enter.prevent="addActivity"
+                                />
+                            </div>
+                        </div>
+
+                        <div
+                            v-if="unselectedSuggestions.length"
+                            class="mt-2 flex flex-wrap items-center gap-1.5"
+                        >
+                            <button
+                                type="button"
+                                class="text-[11px] font-medium text-slate-500 hover:text-primary dark:text-gray-400"
+                                @click="showSuggestions = !showSuggestions"
+                            >
+                                {{
+                                    showSuggestions
+                                        ? "Hide suggestions"
+                                        : `+ ${unselectedSuggestions.length} suggestions`
+                                }}
+                            </button>
+
+                            <template v-if="showSuggestions">
+                                <button
+                                    v-for="activity in unselectedSuggestions"
+                                    :key="activity"
+                                    type="button"
+                                    class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 transition-colors hover:border-primary-200 hover:text-primary dark:border-white/10 dark:text-gray-400"
+                                    @click="toggleActivity(activity)"
+                                >
+                                    <Plus class="h-3 w-3" />
+                                    {{ activity }}
+                                </button>
+                            </template>
+                        </div>
+
+                        <p
+                            v-if="errors.activities"
+                            class="text-xs text-red-500 mt-2 ml-1"
+                        >
+                            {{ errors.activities }}
                         </p>
                     </div>
 
@@ -154,7 +223,7 @@
                                 placeholder="Describe the service, visit frequency, and caregiver support..."
                                 :error="errors.description"
                                 mode="textarea"
-                                :rows="6"
+                                :rows="3"
                                 :allowResize="true"
                                 :textMax="1000"
                             />
@@ -162,8 +231,9 @@
                             <!-- Suggestions -->
                             <div
                                 v-if="
-                                    existingPackageDescription ||
-                                    suggestedDescription
+                                    !form.description &&
+                                    (existingPackageDescription ||
+                                        suggestedDescription)
                                 "
                                 class="space-y-2"
                             >
@@ -325,14 +395,19 @@
 <script setup lang="ts">
 import { reactive, computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { X } from "lucide-vue-next";
+import { Plus, X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 
 import { branchContractService } from "~/api/branch-contract/BranchContractService";
-import { homecarePlanForm, homecarePlanSchema } from "~/types/contract";
+import {
+    ADL_SUGGESTED_ACTIVITIES,
+    homecarePlanForm,
+    homecarePlanSchema,
+} from "~/types/contract";
 import { useToast } from "~/composables/useToast";
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 
 const { success, error } = useToast();
 const route = useRoute();
@@ -411,8 +486,75 @@ const errors = reactive<Record<string, string>>({
     price: "",
     billing_cycle: "",
     description: "",
+    activities: "",
     general: "",
 });
+
+const newActivity = ref("");
+const customActivities = ref<string[]>([]);
+
+const sameActivity = (a: string, b: string) =>
+    a.trim().toLowerCase() === b.trim().toLowerCase();
+
+const activityOptions = computed(() =>
+    [
+        ...ADL_SUGGESTED_ACTIVITIES,
+        ...customActivities.value,
+        ...form.activities,
+    ].filter(
+        (activity, index, list) =>
+            list.findIndex((other) => sameActivity(other, activity)) === index,
+    ),
+);
+
+const isActivitySelected = (activity: string) =>
+    form.activities.some((selected) => sameActivity(selected, activity));
+
+const showSuggestions = ref(false);
+
+const unselectedSuggestions = computed(() =>
+    activityOptions.value.filter((activity) => !isActivitySelected(activity)),
+);
+
+function toggleActivity(activity: string) {
+    form.activities = isActivitySelected(activity)
+        ? form.activities.filter((selected) => !sameActivity(selected, activity))
+        : [...form.activities, activity];
+
+    clearError("activities");
+}
+
+function addActivity() {
+    const activity = newActivity.value.trim().replace(/\s+/g, " ");
+
+    if (!activity) return;
+
+    if (hasEmoji(activity)) {
+        errors.activities = EMOJI_MESSAGE;
+        return;
+    }
+
+    const existing = activityOptions.value.find((option) =>
+        sameActivity(option, activity),
+    );
+
+    if (!existing) {
+        customActivities.value.push(activity);
+    }
+
+    if (!isActivitySelected(existing ?? activity)) {
+        form.activities = [...form.activities, existing ?? activity];
+    }
+
+    newActivity.value = "";
+    clearError("activities");
+}
+
+function resetActivityInput() {
+    newActivity.value = "";
+    customActivities.value = [];
+    showSuggestions.value = false;
+}
 
 const formRef = ref<HTMLFormElement | null>(null);
 
@@ -426,6 +568,7 @@ watch(
         Object.assign(form, homecarePlanForm(), newData ?? {}, {
             branch_uuid: uuid.value,
         });
+        ensureActivities();
 
         clearErrors();
     },
@@ -449,6 +592,8 @@ watch(
                     branch_uuid: uuid.value,
                 },
             );
+            ensureActivities();
+            resetActivityInput();
             clearErrors();
         } else {
             document.body.style.overflow = "auto";
@@ -484,7 +629,14 @@ function resetForm() {
         branch_uuid: uuid.value,
     });
 
+    resetActivityInput();
     clearErrors();
+}
+
+function ensureActivities() {
+    if (!Array.isArray(form.activities) || !form.activities.length) {
+        form.activities = homecarePlanForm().activities;
+    }
 }
 
 function useExistingDescription() {
@@ -573,7 +725,9 @@ async function submit() {
 
         if (apiErrors && Object.keys(apiErrors).length > 0) {
             Object.entries(apiErrors).forEach(([key, value]: any) => {
-                errors[key] = Array.isArray(value) ? value[0] : value;
+                errors[key.split(".")[0]!] = Array.isArray(value)
+                    ? value[0]
+                    : value;
             });
         } else {
             errors.general = message;

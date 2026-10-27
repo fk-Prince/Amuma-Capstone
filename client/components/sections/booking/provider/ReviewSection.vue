@@ -661,6 +661,14 @@ const bookingRows = computed<Row[]>(() => {
             span: true,
         });
 
+        if (hc.note?.trim()) {
+            rows.push({
+                label: "Location Instructions",
+                value: hc.note.trim(),
+                span: true,
+            });
+        }
+
         if (hc.type === "ADL") {
             const hours = Number(hc.time_span ?? 0);
             const amount = hours * adlRatePerHour.value;

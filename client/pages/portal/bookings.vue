@@ -851,6 +851,27 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <div
+                                    v-if="
+                                        !isFacility(booking) &&
+                                        booking.homecare?.note
+                                    "
+                                    class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
+                                >
+                                    <p
+                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                    >
+                                        <MapPin class="h-3.5 w-3.5" />
+                                        Location Instructions
+                                    </p>
+
+                                    <p
+                                        class="mt-2 whitespace-pre-line text-sm leading-6 text-gray-800 dark:text-gray-200"
+                                    >
+                                        {{ booking.homecare.note }}
+                                    </p>
+                                </div>
+
+                                <div
                                     class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
                                 >
                                     <PatientDetails :booking="booking" />

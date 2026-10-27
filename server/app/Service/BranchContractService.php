@@ -61,6 +61,9 @@ class BranchContractService
             'price' => $payload['price'],
             'billing_cycle' => $payload['billing_cycle'],
             'description' => $payload['description'] ?? null,
+            'activities' => $payload['accommodation_type'] === BranchContract::ACCOMMODATION_TYPE_ADL
+                ? ($payload['activities'] ?? null)
+                : null,
         ];
 
         $contract = $this->branchContractRepository->create($payload);
@@ -107,6 +110,9 @@ class BranchContractService
             'price' => $payload['price'],
             'billing_cycle' => $payload['billing_cycle'],
             'description' => $payload['description'] ?? null,
+            'activities' => $payload['accommodation_type'] === BranchContract::ACCOMMODATION_TYPE_ADL
+                ? ($payload['activities'] ?? $contract->activities)
+                : null,
             'is_active' => array_key_exists('is_active', $payload)
                 ? filter_var($payload['is_active'], FILTER_VALIDATE_BOOLEAN)
                 : $contract->is_active,

@@ -42,7 +42,7 @@
                 <!-- Form -->
                 <form
                     ref="formRef"
-                    class="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto"
+                    class="p-5 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
                     @submit.prevent="submit"
                 >
                     <div
@@ -79,12 +79,9 @@
                             :error="errors.accommodation_type"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
-                            Choose between private VIP rooms or shared common
-                            wards
-                        </p>
                     </div>
 
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <!-- Billing Cycle -->
                     <div>
                         <Combobox
@@ -98,9 +95,6 @@
                             :error="errors.billing_cycle"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
-                            {{ billingCycleDescription }}
-                        </p>
                     </div>
 
                     <!-- Price -->
@@ -108,21 +102,13 @@
                         <BaseInput
                             :model-value="form.price"
                             @update:model-value="update('price', $event)"
-                            label="Price"
+                            :label="priceLabel"
                             mode="number"
                             placeholder="0.00"
                             :error="errors.price"
                             required
                         />
-                        <p class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400">
-                            Set the
-                            {{
-                                form.billing_cycle === "MONTHLY"
-                                    ? "monthly"
-                                    : "yearly"
-                            }}
-                            accommodation rate
-                        </p>
+                    </div>
                     </div>
 
                     <!-- Description Section -->
@@ -139,7 +125,7 @@
                                 placeholder="Describe the room features, amenities, and patient experience..."
                                 :error="errors.description"
                                 mode="textarea"
-                                :rows="6"
+                                :rows="3"
                                 :allowResize="true"
                                 :textMax="1000"
                             />
@@ -147,8 +133,9 @@
                             <!-- Suggestions -->
                             <div
                                 v-if="
-                                    existingRoomDescription ||
-                                    suggestedDescription
+                                    !form.description &&
+                                    (existingRoomDescription ||
+                                        suggestedDescription)
                                 "
                                 class="space-y-2"
                             >
@@ -350,17 +337,13 @@ const billingIntervals = [
     { label: "Yearly", value: "YEARLY" },
 ];
 
-const billingDescriptions: Record<string, string> = {
-    MONTHLY: "Charged once per month during patient stay",
-    YEARLY: "Charged annually, typically at a discount",
-};
-
 const uuid = computed(() => route.params.uuid as string);
 const isEditMode = computed(() => !!props.data?.branch_contract_id);
 
-const billingCycleDescription = computed(() => {
-    if (!form.billing_cycle) return "";
-    return billingDescriptions[form.billing_cycle as string] || "";
+const priceLabel = computed(() => {
+    if (form.billing_cycle === "MONTHLY") return "Monthly Rate";
+    if (form.billing_cycle === "YEARLY") return "Yearly Rate";
+    return "Price";
 });
 
 const existingRoomDescription = computed(() => {

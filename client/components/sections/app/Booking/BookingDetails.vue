@@ -322,6 +322,18 @@
                                     </span>
                                 </template>
                             </Field>
+
+                            <Field
+                                v-if="booking.homecare?.note"
+                                label="Location Instructions"
+                                class="sm:col-span-2"
+                            >
+                                <template #value>
+                                    <span class="whitespace-pre-line">
+                                        {{ booking.homecare.note }}
+                                    </span>
+                                </template>
+                            </Field>
                         </template>
 
                         <Field

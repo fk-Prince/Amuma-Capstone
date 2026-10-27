@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Utils\BranchCode;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -10,6 +11,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
+    use Auditable;
+
+    protected string $auditModule = 'schedules';
+
     protected $primaryKey = 'schedule_id';
 
     public const STATUS_PENDING = 'pending';
@@ -56,6 +61,45 @@ class Schedule extends Model
     protected $casts = [
         'scheduled_at' => 'datetime',
     ];
+
+    public function auditBranchId(): ?int
+    {
+        $branchId = Patient::where('patient_id', $this->patient_id)->value('branch_id');
+
+        return is_numeric($branchId) ? (int) $branchId : null;
+    }
+
+    public function auditDescription(string $action): ?string
+    {
+        $code = $this->schedule_code ?: 'a schedule';
+        $name = trim((string) $this->patient?->display_name);
+        $for = $name ? " for {$name}" : '';
+
+        if ($action === 'created') {
+            return "Created schedule {$code}{$for}.";
+        }
+
+        if ($this->wasChanged('status')) {
+            return match ($this->status) {
+                self::STATUS_ONGOING => "Started schedule {$code}{$for}.",
+                self::STATUS_COMPLETED => "Completed schedule {$code}{$for}.",
+                self::STATUS_CANCELLED => "Cancelled schedule {$code}{$for}.",
+                self::STATUS_MISSED => "Marked schedule {$code}{$for} as missed.",
+                self::STATUS_PENDING => "Set schedule {$code}{$for} back to pending.",
+                default => null,
+            };
+        }
+
+        if ($this->wasChanged('scheduled_at')) {
+            return "Rescheduled {$code}{$for}.";
+        }
+
+        if ($this->wasChanged('note')) {
+            return "Updated the note on schedule {$code}.";
+        }
+
+        return "Updated schedule {$code}.";
+    }
 
     public function patient()
     {

@@ -2,6 +2,7 @@ import { reactive } from "vue";
 import { z } from "zod";
 import type { FacilityBooking, HomecareBooking } from "~/types/booking";
 import { getLocalDateStr } from "~/utils/time";
+import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 
 export const homecareData = reactive<HomecareBooking>({
     type: "Medical",
@@ -12,6 +13,7 @@ export const homecareData = reactive<HomecareBooking>({
     longitude: null,
     time_span: "",
     services: [],
+    note: "",
 });
 
 const bookedServiceSchema = z.object({
@@ -46,14 +48,18 @@ const baseSchema = z.object({
         .string()
         .min(1, "Preferred time is required"),
 
-    // The map picker fills the address and both coordinates together, so
-    // gating on the address alone is enough to guarantee all three.
     address: z
         .string()
         .min(5, "Pick the service location on the map"),
 
     latitude: z.number().nullish(),
     longitude: z.number().nullish(),
+
+    note: z
+        .string()
+        .max(500, "Location instructions must be 500 characters or fewer")
+        .optional()
+        .refine((val) => !hasEmoji(val), EMOJI_MESSAGE),
 });
 
 

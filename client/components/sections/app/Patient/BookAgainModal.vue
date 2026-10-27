@@ -281,6 +281,7 @@ function emptyModel(): HomecareBookingModel {
         latitude: null,
         longitude: null,
         services: [],
+        note: "",
     };
 }
 
@@ -403,6 +404,7 @@ function bookingPayload() {
         latitude: model.latitude,
         longitude: model.longitude,
         services: model.services,
+        note: model.note?.trim() || null,
         rate:
             model.type === "ADL"
                 ? Number(branch.value?.homecare?.adl_hourly_rate ?? 0)

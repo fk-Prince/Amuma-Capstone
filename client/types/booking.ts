@@ -23,6 +23,7 @@ export interface HomecareBooking {
     price?: number;
     latitude?: number | null;
     longitude?: number | null;
+    note?: string;
 }
 
 export interface BookedService {

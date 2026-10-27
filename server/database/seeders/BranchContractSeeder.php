@@ -57,6 +57,7 @@ class BranchContractSeeder extends Seeder
                 'price'              => 350.00,
                 'billing_cycle'      => BranchContract::BILLING_CYCLE_HOURLY,
                 'description'        => 'This package provides dedicated, hourly support for essential personal care and fundamental physical needs. Services include hands-on assistance with dressing, bathing, personal hygiene, and grooming. Caregivers also support safe mobility, transfers (e.g., bed to chair), mealtime feeding assistance, and sensitive toileting or continence care to maintain client comfort and dignity.',
+                'activities'         => BranchContract::ADL_ACTIVITIES,
             ],
         ];
 
@@ -81,6 +82,7 @@ class BranchContractSeeder extends Seeder
                     [
                         'price' => $this->branchPrice($contract['price'], $position),
                         'description' => $contract['description'],
+                        'activities' => $contract['activities'] ?? null,
                         'is_active' => true,
                     ]
                 );

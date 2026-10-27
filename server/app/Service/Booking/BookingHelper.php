@@ -292,6 +292,7 @@ class BookingHelper
             'patient' => $data['patient'] ?? [],
             'guardian' => $data['guardian'] ?? [],
             'diagnoses' => $data['diagnoses'] ?? [],
+            'homecare' => ['note' => $data['homecare']['note'] ?? $data['note'] ?? null],
         ];
 
         $rules = [
@@ -299,6 +300,7 @@ class BookingHelper
             'guardian.*' => [new NoEmoji()],
             'diagnoses.*.diagnosis' => [new NoEmoji()],
             'diagnoses.*.diagnosis_notes' => [new NoEmoji()],
+            'homecare.note' => ['nullable', 'string', 'max:500', new NoEmoji()],
         ];
 
         validator($fields, $rules, [], [
@@ -306,6 +308,7 @@ class BookingHelper
             'guardian.*' => 'guardian details',
             'diagnoses.*.diagnosis' => 'diagnosis',
             'diagnoses.*.diagnosis_notes' => 'diagnosis notes',
+            'homecare.note' => 'location instructions',
         ])->validate();
     }
 

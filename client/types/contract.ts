@@ -55,6 +55,26 @@ export const facilityPlanForm = () => ({
     description: "",
 });
 
+export const ADL_DEFAULT_ACTIVITIES = [
+    "Bathing",
+    "Dressing",
+    "Grooming",
+    "Toileting",
+    "Transferring",
+    "Eating",
+    "Mobility",
+];
+
+export const ADL_SUGGESTED_ACTIVITIES = [
+    ...ADL_DEFAULT_ACTIVITIES,
+    "Medication Reminders",
+    "Meal Preparation",
+    "Light Housekeeping",
+    "Laundry",
+    "Companionship",
+    "Escort to Appointments",
+];
+
 export const homecarePlanSchema = z.object({
     category: z.literal("Homecare", {
         message: "Category must be Homecare",
@@ -71,6 +91,9 @@ export const homecarePlanSchema = z.object({
         .max(1000, "Description must not exceed 1000 characters")
         .optional()
         .nullable(),
+    activities: z
+        .array(z.string().trim().min(1).max(60, "Activity must be 60 characters or fewer"))
+        .min(1, "Select at least one activity"),
 });
 
 export type HomecarePlan = z.infer<typeof homecarePlanSchema>;
@@ -82,6 +105,7 @@ export const homecarePlanForm = () => ({
     billing_cycle: "HOURLY",
     is_active: true,
     description: "",
+    activities: [...ADL_DEFAULT_ACTIVITIES],
 });
 
 export interface Contract {

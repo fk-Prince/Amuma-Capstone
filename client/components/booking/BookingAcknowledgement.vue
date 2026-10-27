@@ -351,6 +351,20 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div
+                            v-if="booking.category !== 'facility' && booking.homecare?.note"
+                            class="col-span-2"
+                        >
+                            <p
+                                class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
+                            >
+                                Location Instructions
+                            </p>
+                            <p class="mt-0.5 whitespace-pre-line text-sm">
+                                {{ booking.homecare.note }}
+                            </p>
+                        </div>
+
+                        <div
                             v-if="
                                 booking.valid_until &&
                                 booking.status === 'pending'

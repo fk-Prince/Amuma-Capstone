@@ -230,6 +230,7 @@ function emptyModel(): HomecareBookingModel {
         latitude: null,
         longitude: null,
         services: [],
+        note: "",
     };
 }
 
@@ -585,6 +586,7 @@ async function submit() {
             latitude: model.latitude,
             longitude: model.longitude,
             services: model.services,
+            note: model.note?.trim() || null,
             price: priceFor(model),
             rate:
                 model.type === "ADL"

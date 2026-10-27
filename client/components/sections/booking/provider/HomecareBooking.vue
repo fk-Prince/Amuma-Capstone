@@ -609,8 +609,8 @@
                 >
                     <Info class="mt-0.5 h-4 w-4 shrink-0" />
                     <p>
-                        Need a permanent caregiver? Please visit the facility
-                        to arrange it in person.
+                        Want a long-term, stay-in caregiver? Please visit the
+                        facility to arrange it in person.
                     </p>
                 </div>
             </div>
@@ -668,6 +668,32 @@
                         {{ errors.address }}
                     </p>
                 </div>
+            </div>
+
+            <div v-if="!loading">
+                <div class="mb-2">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
+                        Location Instructions
+                    </h3>
+
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                        Help the caregiver or nurse find the exact spot: building,
+                        floor, unit or door number, gate, and nearby landmarks.
+                    </p>
+                </div>
+
+                <BaseInput
+                    :model-value="model.note ?? ''"
+                    @update:model-value="update('note', $event)"
+                    mode="textarea"
+                    :rows="3"
+                    :allowResize="true"
+                    :textMax="500"
+                    placeholder="e.g. Tower B, 5th floor, Unit 512. Enter through the side gate beside the 7-Eleven."
+                    :error="errors?.note"
+                />
             </div>
         </div>
 
@@ -956,7 +982,6 @@ const resetDuration = () => {
 const durationUnits = [
     { label: "Hours", value: "hours", hours: 1 },
     { label: "Days", value: "days", hours: 24 },
-    { label: "Months", value: "months", hours: 24 * 30 },
 ] as const;
 
 const durationUnit = ref<(typeof durationUnits)[number]["value"]>("hours");
