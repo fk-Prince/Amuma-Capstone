@@ -15,25 +15,64 @@ class ScheduleService extends Model
     public const TYPE_MEDICAL = 'Medical';
     public const TYPE_ADL = 'ADL';
 
+    public const BILLING_HOURLY = 'hourly';
+    public const BILLING_MONTHLY = 'monthly';
+
     protected $fillable = [
         'schedule_id',
         'service_id',
-        'hours_booked',
+        'duration',
         'status',
         'type',
+        'billing_cycle',
         'activities',
     ];
 
     protected $casts = [
-        'hours_booked' => 'decimal:2',
+        'duration' => 'decimal:2',
     ];
+
+    public function isMonthly(): bool
+    {
+        return $this->type === self::TYPE_ADL
+            && $this->billing_cycle === self::BILLING_MONTHLY;
+    }
+
+    public function billedMonths(): ?int
+    {
+        if (!$this->isMonthly() || !$this->schedule?->scheduled_at) {
+            return null;
+        }
+
+        $start = $this->schedule->scheduled_at->copy()->startOfDay();
+        $end = $start->copy()->addMinutes((int) round((float) $this->duration * 60));
+
+        return max(1, (int) round($start->diffInMonths($end)));
+    }
+
+    public function billedQuantity(): float
+    {
+        if ($this->service_id !== null) {
+            return 1;
+        }
+
+        return $this->isMonthly()
+            ? (float) ($this->billedMonths() ?? 1)
+            : (float) ($this->duration ?? 0);
+    }
 
     protected static function booted()
     {
         static::creating(function ($scheduleService) {
-            if ($scheduleService->type === self::TYPE_ADL && empty($scheduleService->activities)) {
+            if ($scheduleService->type !== self::TYPE_ADL) {
+                return;
+            }
+
+            if (empty($scheduleService->activities)) {
                 $scheduleService->activities = BranchContract::ADL_ACTIVITIES;
             }
+
+            $scheduleService->billing_cycle ??= self::BILLING_HOURLY;
         });
     }
 

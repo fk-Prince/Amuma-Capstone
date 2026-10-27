@@ -101,7 +101,7 @@ export interface InvoiceServiceItem {
     type: string;
     schedule_services_id: number;
     price: number;
-    hours_booked: number | null;
+    duration: number | null;
     service: ServiceInfo | null;
     schedule: ScheduleInfo | null;
 }

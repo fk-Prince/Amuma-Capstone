@@ -270,8 +270,8 @@ class PatientAccessResource extends JsonResource
 
                         'price' => (float) $invoiceService->price,
 
-                        'hours_booked' => $invoiceService->scheduleService?->hours_booked !== null
-                            ? (float) $invoiceService->scheduleService->hours_booked
+                        'duration' => $invoiceService->scheduleService?->duration !== null
+                            ? (float) $invoiceService->scheduleService->duration
                             : null,
 
                         'service' => $invoiceService->scheduleService?->service ? [
@@ -419,8 +419,8 @@ class PatientAccessResource extends JsonResource
                 ->map(fn($service) => [
                     'schedule_services_id' => $service->schedule_services_id,
                     'type' => $service->type,
-                    'hours_booked' => $service->hours_booked !== null
-                        ? (float) $service->hours_booked
+                    'duration' => $service->duration !== null
+                        ? (float) $service->duration
                         : null,
 
                     'service' => $service->relationLoaded('service') && $service->service ? [

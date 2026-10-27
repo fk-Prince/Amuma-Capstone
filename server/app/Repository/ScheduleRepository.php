@@ -25,7 +25,7 @@ class ScheduleRepository
         $durationMinutes = "
             CASE
                 WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
-                WHEN ss.hours_booked IS NOT NULL THEN ss.hours_booked * 60
+                WHEN ss.duration IS NOT NULL THEN ss.duration * 60
                 ELSE 60
             END
         ";
@@ -93,8 +93,8 @@ class ScheduleRepository
                 }
             }
 
-            if ($scheduleService->hours_booked !== null) {
-                return (float) $scheduleService->hours_booked * 60;
+            if ($scheduleService->duration !== null) {
+                return (float) $scheduleService->duration * 60;
             }
 
             return 60;
@@ -111,7 +111,7 @@ class ScheduleRepository
         return Schedule::where($conditions)->first();
     }
 
-    private function filterByStatus($query, array $payload): void
+    private function filterByStatus(mixed $query, array $payload): void
     {
         if (!empty($payload['status'])) {
             $query->whereIn('status', (array) $payload['status']);
@@ -145,7 +145,7 @@ class ScheduleRepository
             ->with([
                 'patient:patient_id,first_name,middle_name,last_name',
                 'scheduleServices' => fn($q) => $q
-                    ->select(['schedule_services_id', 'schedule_id', 'service_id', 'type', 'hours_booked'])
+                    ->select(['schedule_services_id', 'schedule_id', 'service_id', 'type', 'duration'])
                     ->whereDoesntHave('assigned', fn($a) => $a->where('is_active', true)),
                 'scheduleServices.service:service_id,service_name',
             ])
@@ -158,16 +158,16 @@ class ScheduleRepository
                 ->orWhere(fn($adl) => $adl
                     ->whereDate('scheduled_at', '<', $today)
                     ->whereHas('scheduleServices', fn($s) => $s
-                        ->whereNotNull('hours_booked')
+                        ->whereNotNull('duration')
                         ->whereRaw(
-                            "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') >= ?",
+                            "schedules.scheduled_at + (schedule_services.duration * interval '1 hour') >= ?",
                             [$today]
                         ))))
             ->orderBy('scheduled_at')
             ->get();
     }
 
-    private function filterByDateRange($query, array $payload, bool $wantsMedical, bool $wantsAdl): void
+    private function filterByDateRange(mixed $query, array $payload, bool $wantsMedical, bool $wantsAdl): void
     {
         if (!empty($payload['date_from'])) {
             $dateFrom = $payload['date_from'];
@@ -180,9 +180,9 @@ class ScheduleRepository
                 if ($wantsAdl) {
 
                     $q->orWhereHas('scheduleServices', function ($sub) use ($dateFrom) {
-                        $sub->whereNotNull('hours_booked')
+                        $sub->whereNotNull('duration')
                             ->whereRaw(
-                                "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') >= ?",
+                                "schedules.scheduled_at + (schedule_services.duration * interval '1 hour') >= ?",
                                 [$dateFrom]
                             );
                     });
@@ -239,7 +239,7 @@ class ScheduleRepository
                         $sub->orWhereNotNull('service_id');
                     }
                     if (in_array('adl', $types, true)) {
-                        $sub->orWhereNotNull('hours_booked');
+                        $sub->orWhereNotNull('duration');
                     }
                 });
             });
@@ -256,9 +256,9 @@ class ScheduleRepository
 
                 if ($wantsAdl) {
                     $q->orWhereHas('scheduleServices', function ($sub) use ($date) {
-                        $sub->whereNotNull('hours_booked')
+                        $sub->whereNotNull('duration')
                             ->whereRaw(
-                                "?::date BETWEEN schedules.scheduled_at::date AND (schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour'))::date",
+                                "?::date BETWEEN schedules.scheduled_at::date AND (schedules.scheduled_at + (schedule_services.duration * interval '1 hour'))::date",
                                 [$date]
                             );
                     });
@@ -372,7 +372,7 @@ class ScheduleRepository
                     $query->where('is_active', true)
                         ->whereHas('scheduleService.schedule', $scheduleScope)
                         ->with([
-                            'scheduleService:schedule_services_id,schedule_id,service_id,hours_booked,type',
+                            'scheduleService:schedule_services_id,schedule_id,service_id,duration,type',
                             'scheduleService.service:service_id,service_name,maximum_duration',
                             'scheduleService.schedule:schedule_id,schedule_code,patient_id,scheduled_at,status,category',
                             'scheduleService.schedule.patient:patient_id,first_name,last_name,suffix',
@@ -394,15 +394,7 @@ class ScheduleRepository
             ->where('schedule_id', $scheduleId)
             ->firstOrFail();
 
-        $targetDurationMinutes = $targetSchedule->scheduleServices
-            ->sum(function ($ss) {
-                $duration = $ss->service->maximum_duration ?? null;
-                if (!$duration) {
-                    return 60;
-                }
-                [$hours, $minutes, $seconds] = explode(':', $duration);
-                return ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
-            });
+        $targetDurationMinutes = $this->calculateScheduleDurationMinutes($targetSchedule);
 
         $targetEnd = $targetStart->copy()->addMinutes($targetDurationMinutes);
 

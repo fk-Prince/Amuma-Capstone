@@ -790,9 +790,13 @@ class InvoiceRepository
 
                     'type' => $scheduleService?->type,
 
-                    'hours_booked' => $scheduleService?->hours_booked !== null
-                        ? (float) $scheduleService->hours_booked
+                    'duration' => $scheduleService?->duration !== null
+                        ? (float) $scheduleService->duration
                         : null,
+
+                    'billing_cycle' => $scheduleService?->billing_cycle,
+
+                    'months_billed' => $scheduleService?->billedMonths(),
 
                     'invoices' => $invoices,
                 ];
@@ -1107,10 +1111,16 @@ class InvoiceRepository
                     'type' =>
                     $invoiceService->scheduleService?->type,
 
-                    'hours_booked' =>
-                    $invoiceService->scheduleService?->hours_booked !== null
-                        ? (float) $invoiceService->scheduleService->hours_booked
+                    'duration' =>
+                    $invoiceService->scheduleService?->duration !== null
+                        ? (float) $invoiceService->scheduleService->duration
                         : null,
+
+                    'billing_cycle' =>
+                    $invoiceService->scheduleService?->billing_cycle,
+
+                    'months_billed' =>
+                    $invoiceService->scheduleService?->billedMonths(),
                 ])
                 ->values(),
 

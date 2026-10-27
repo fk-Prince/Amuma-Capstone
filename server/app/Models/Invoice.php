@@ -223,8 +223,8 @@ class Invoice extends Model
                 ->map(fn($group, $description) => [
                     'description' => $description,
                     'weight' => (float) $group->sum(fn($line) => (float) $line->price * (
-                        $line->scheduleService?->service_id === null
-                        ? max(1, (float) ($line->scheduleService?->hours_booked ?? 1))
+                        $line->scheduleService
+                        ? max(1, $line->scheduleService->billedQuantity())
                         : 1
                     )),
                 ])
@@ -246,11 +246,20 @@ class Invoice extends Model
             ->values();
     }
 
-    public function adlHoursBooked(): ?float
+    public function adlMonthsBilled(): ?int
+    {
+        $months = (int) $this->invoiceServices
+            ->filter(fn($line) => $line->scheduleService?->isMonthly())
+            ->sum(fn($line) => (int) $line->scheduleService->billedMonths());
+
+        return $months > 0 ? $months : null;
+    }
+
+    public function adlDuration(): ?float
     {
         $hours = $this->invoiceServices
             ->filter(fn($line) => $line->scheduleService?->service_id === null)
-            ->sum(fn($line) => (float) ($line->scheduleService?->hours_booked ?? 0));
+            ->sum(fn($line) => (float) ($line->scheduleService?->duration ?? 0));
 
         return $hours > 0 ? $hours : null;
     }

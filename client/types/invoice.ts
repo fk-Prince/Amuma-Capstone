@@ -123,9 +123,12 @@ export interface InvoiceServiceLine {
     description?: string | null;
     service_name: string | null;
     type?: string | null;
-    hours_booked?: number | null;
+    duration?: number | null;
+    billing_cycle?: "hourly" | "monthly" | null;
+    months_billed?: number | null;
     quantity?: number | null;
     amount?: number | null;
+    unit?: "hour" | "month" | null;
 }
 
 export interface InvoiceAccommodationLine {
@@ -444,7 +447,7 @@ export interface ScheduleInvoiceSummary {
         schedule_code: string;
         status: string;
         type: string;
-        hours_booked: number;
+        duration: number;
     } | null;
     patient: InvoicePatient | null;
     total_amount: number;

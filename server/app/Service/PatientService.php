@@ -12,6 +12,7 @@ use App\Models\PatientDiagnosis;
 use App\Service\External\SupabaseService;
 use Illuminate\Http\UploadedFile;
 use App\Models\Schedule;
+use App\Models\ScheduleService as ScheduleServiceModel;
 use App\Models\User;
 use App\Repository\LocationRepository;
 use App\Repository\PatientRepository;
@@ -228,6 +229,8 @@ class PatientService
             'status'                => Schedule::STATUS_PENDING,
             'category'              => ucfirst($category),
             'note'                  => trim((string) ($homecare['note'] ?? '')) ?: null,
+            'is_stay_in'            => ($homecare['billing'] ?? null) === ScheduleServiceModel::BILLING_MONTHLY
+                && filter_var($homecare['stay_in'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ]);
 
         $invoiceServices = [];
@@ -237,7 +240,7 @@ class PatientService
             foreach ($homecare['services'] as $item) {
                 $scheduleService = $schedule->scheduleServices()->create([
                     'service_id'   => $item['service_id'] ?? null,
-                    'hours_booked' => $homecare['time_span'] ?? null,
+                    'duration' => $homecare['time_span'] ?? null,
                     'type'         => $homecare['type'],
                 ]);
 
@@ -251,8 +254,11 @@ class PatientService
         // FOR ADL
         if (empty($homecare['services'])) {
             $scheduleService = $schedule->scheduleServices()->create([
-                'hours_booked' => $homecare['time_span'] ?? null,
+                'duration' => $homecare['time_span'] ?? null,
                 'type'         => $homecare['type'],
+                'billing_cycle' => ($homecare['billing'] ?? null) === ScheduleServiceModel::BILLING_MONTHLY
+                    ? ScheduleServiceModel::BILLING_MONTHLY
+                    : ScheduleServiceModel::BILLING_HOURLY,
                 'activities'   => $homecare['activities'] ?? null,
             ]);
 
@@ -778,7 +784,7 @@ class PatientService
                     ? 'Activity of Daily Living (ADL)'
                     : $scheduleService->service?->service_name,
                 'type' => $scheduleService->type,
-                'hours_booked' => $scheduleService->hours_booked,
+                'duration' => $scheduleService->duration,
                 'duration_minutes' => $scheduleService->service?->maximum_duration,
             ])->values()->all(),
         ])->values()->all();

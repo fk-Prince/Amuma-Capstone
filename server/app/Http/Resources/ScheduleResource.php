@@ -37,7 +37,7 @@
 //             'total_hours' => (float) $totalHours,
 
 //             'type' => $this->scheduleServices->contains(
-//                 fn($service) => $service->hours_booked !== null
+//                 fn($service) => $service->duration !== null
 //             )
 //                 ? 'adl'
 //                 : 'medical',
@@ -84,8 +84,8 @@
 //                         'service_id' => $scheduleService->service_id,
 //                         'service_name' => $scheduleService->service?->service_name,
 
-//                         'hours_booked' => $scheduleService->hours_booked !== null
-//                             ? (float) $scheduleService->hours_booked
+//                         'duration' => $scheduleService->duration !== null
+//                             ? (float) $scheduleService->duration
 //                             : null,
 
 //                         'duration_minutes' => $this->resolveDurationMinutes($scheduleService),
@@ -127,9 +127,9 @@
 
 //     private function resolveDurationMinutes($scheduleService): int
 //     {
-//         if ($scheduleService->hours_booked !== null) {
+//         if ($scheduleService->duration !== null) {
 //             return (int) round(
-//                 ((float) $scheduleService->hours_booked) * 60
+//                 ((float) $scheduleService->duration) * 60
 //             );
 //         }
 
@@ -192,6 +192,7 @@ class ScheduleResource extends JsonResource
             'status' => $this->status,
             'category' => $this->category,
             'note' => $this->note,
+            'is_stay_in' => (bool) $this->is_stay_in,
 
             'scheduled_at' => $this->scheduled_at?->toISOString(),
             'scheduled_date' => $this->scheduled_at?->format('Y-m-d'),
@@ -202,7 +203,7 @@ class ScheduleResource extends JsonResource
             'total_hours' => (float) $totalHours,
 
             'type' => $this->scheduleServices->contains(
-                fn($service) => $service->hours_booked !== null
+                fn($service) => $service->duration !== null
             ) ? 'adl' : 'medical',
 
             // Where the care actually happens. patient.address is overloaded:
@@ -273,8 +274,8 @@ class ScheduleResource extends JsonResource
                         'description' => $scheduleService->service?->description,
                         'performed_by' => $scheduleService->service?->performed_by,
 
-                        'hours_booked' => $scheduleService->hours_booked !== null
-                            ? (float) $scheduleService->hours_booked
+                        'duration' => $scheduleService->duration !== null
+                            ? (float) $scheduleService->duration
                             : null,
 
                         'price' => (float) ($scheduleService->invoiceServices->first()->price ?? 0),
@@ -282,6 +283,10 @@ class ScheduleResource extends JsonResource
                         'duration_minutes' => $this->resolveDurationMinutes($scheduleService),
 
                         'type' => $scheduleService->type,
+
+                        'billing_cycle' => $scheduleService->billing_cycle,
+
+                        'activities' => $scheduleService->activities,
 
                         'assignees' => $scheduleService->relationLoaded('assigned')
                             ? $scheduleService->assigned->where('is_active', true)->values()->map(function ($assignment) {
@@ -349,9 +354,9 @@ class ScheduleResource extends JsonResource
 
     private function resolveDurationMinutes(mixed $scheduleService): int
     {
-        if ($scheduleService->hours_booked !== null) {
+        if ($scheduleService->duration !== null) {
             return (int) round(
-                ((float) $scheduleService->hours_booked) * 60
+                ((float) $scheduleService->duration) * 60
             );
         }
 

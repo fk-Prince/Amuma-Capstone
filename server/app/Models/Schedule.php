@@ -56,10 +56,12 @@ class Schedule extends Model
         'category',
         'schedule_code',
         'note',
+        'is_stay_in',
     ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
+        'is_stay_in' => 'boolean',
     ];
 
     public function auditBranchId(): ?int

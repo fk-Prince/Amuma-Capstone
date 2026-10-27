@@ -29,7 +29,8 @@ const tableRows = computed(() =>
             key: `${line.line_no}-${index}`,
             description: row.description,
             amount: row.amount,
-            hoursBooked: index === 0 ? line.hours_booked : null,
+            duration: index === 0 ? line.duration : null,
+            monthsBilled: index === 0 ? line.months_billed : null,
             creditDrawn: index === 0 && Number(line.amount_applied) < 0,
         })),
     ),
@@ -278,8 +279,19 @@ onBeforeUnmount(() => {
                                     <td class="border-r border-black px-2 py-1">
                                         {{ row.description }}
 
-                                        <span v-if="row.hoursBooked">
-                                            · {{ formatDuration(row.hoursBooked) }} booked
+                                        <span v-if="row.monthsBilled">
+                                            · Duration: {{ row.monthsBilled }}
+                                            {{
+                                                row.monthsBilled === 1
+                                                    ? "month"
+                                                    : "months"
+                                            }}
+                                            (monthly rate)
+                                        </span>
+
+                                        <span v-else-if="row.duration">
+                                            · Duration:
+                                            {{ formatDuration(row.duration) }}
                                         </span>
 
                                         <span

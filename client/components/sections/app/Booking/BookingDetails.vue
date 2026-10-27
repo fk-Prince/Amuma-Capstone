@@ -286,6 +286,12 @@
                                 <Field label="Billing" :value="billingLabel" />
 
                                 <Field
+                                    v-if="isMonthlyAdl"
+                                    label="Stay-in Caregiver"
+                                    :value="booking.homecare?.stay_in ? 'Yes' : 'No'"
+                                />
+
+                                <Field
                                     v-if="adlRateLabel"
                                     :label="isMonthlyAdl ? 'Base Price' : 'Hourly Rate'"
                                     :value="adlRateLabel"

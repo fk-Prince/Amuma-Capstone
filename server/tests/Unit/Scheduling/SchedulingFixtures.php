@@ -162,7 +162,7 @@ trait SchedulingFixtures
     protected function adlService(Schedule $schedule, float $hours = 4): ScheduleService
     {
         return $schedule->scheduleServices()->create([
-            'hours_booked' => $hours,
+            'duration' => $hours,
             'type' => ScheduleService::TYPE_ADL,
         ]);
     }

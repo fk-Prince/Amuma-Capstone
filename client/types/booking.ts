@@ -26,6 +26,7 @@ export interface HomecareBooking {
     note?: string;
     billing?: "hourly" | "monthly";
     months?: number;
+    stay_in?: boolean;
     monthly_rate?: string | number;
     activities?: string[];
 }

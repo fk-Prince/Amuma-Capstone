@@ -52,10 +52,9 @@ class InvoiceResource extends JsonResource
                 $this->invoiceServices->map(function ($service) {
                     $scheduleService = $service->scheduleService;
                     $isAdl = $scheduleService?->service_id === null;
+                    $isMonthly = (bool) $scheduleService?->isMonthly();
 
-                    $quantity = $isAdl
-                        ? (float) ($scheduleService?->hours_booked ?? 0)
-                        : 1;
+                    $quantity = $scheduleService ? $scheduleService->billedQuantity() : 1;
 
                     return [
                         'schedule_services_id' => $service->schedule_services_id,
@@ -68,6 +67,7 @@ class InvoiceResource extends JsonResource
                             : ($scheduleService?->service?->service_name ?? null),
                         'type'                 => $isAdl ? 'ADL' : 'Medical',
                         'quantity'             => $quantity,
+                        'unit'                 => $isAdl ? ($isMonthly ? 'month' : 'hour') : null,
                     ];
                 })
             ),

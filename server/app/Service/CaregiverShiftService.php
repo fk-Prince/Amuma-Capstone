@@ -99,8 +99,8 @@ class CaregiverShiftService
                     $start = Carbon::parse($assignment->start_time);
                     $end = Carbon::parse($assignment->end_time);
                 } else {
-                    $minutes = $service->hours_booked !== null
-                        ? (int) round(((float) $service->hours_booked) * 60)
+                    $minutes = $service->duration !== null
+                        ? (int) round(((float) $service->duration) * 60)
                         : 0;
 
                     $start = ($cursors[$schedule->schedule_id . ':' . $assignment->employee_id] ?? $schedule->scheduled_at)->copy();

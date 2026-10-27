@@ -64,18 +64,36 @@
                 <div class="grid flex-1 overflow-hidden lg:grid-cols-[60%_40%]">
                     <div class="overflow-y-auto p-6 space-y-4">
                         <div
-                            class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
+                            class="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5"
                         >
-                            <p
-                                class="text-sm font-semibold text-slate-800 dark:text-white"
+                            <div>
+                                <p
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    Duration Booked
+                                </p>
+                                <p
+                                    class="mt-1 text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ formatHoursBooked(schedule?.total_hours) }}
+                                </p>
+                            </div>
+
+                            <span
+                                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                :class="
+                                    schedule?.is_stay_in
+                                        ? 'bg-primary/10 text-primary dark:bg-primary-500/15 dark:text-primary-300'
+                                        : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300'
+                                "
                             >
-                                Duration Booked
-                            </p>
-                            <p
-                                class="mt-1 text-xs text-slate-500 dark:text-gray-400"
-                            >
-                                {{ formatHoursBooked(schedule?.total_hours) }}
-                            </p>
+                                <Home class="h-3.5 w-3.5" />
+                                {{
+                                    schedule?.is_stay_in
+                                        ? "Stay-in caregiver"
+                                        : "Not stay-in"
+                                }}
+                            </span>
                         </div>
 
                         <div class="flex items-center justify-between">
@@ -762,7 +780,7 @@ import {
     bookingTimeWindow,
     format24To12,
 } from "~/utils/time";
-import { Check, TriangleAlert } from "lucide-vue-next";
+import { Check, Home, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";

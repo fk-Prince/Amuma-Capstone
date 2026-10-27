@@ -403,6 +403,53 @@
                         <div v-show="isExpanded(log)" class="overflow-hidden">
                             <div class="px-4 sm:px-5">
                                 <div
+                                    v-if="
+                                        log.note ||
+                                        log.is_stay_in ||
+                                        log.activities?.length
+                                    "
+                                    class="mt-4 space-y-3 border-b border-muted-light pb-4 dark:border-white/10"
+                                >
+                                    <span
+                                        v-if="log.is_stay_in"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                                    >
+                                        <Home class="h-3.5 w-3.5" />
+                                        Stay-in caregiver
+                                    </span>
+
+                                    <div v-if="log.activities?.length">
+                                        <p
+                                            class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
+                                        >
+                                            Activities Included
+                                        </p>
+                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                            <span
+                                                v-for="activity in log.activities"
+                                                :key="activity"
+                                                class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                                            >
+                                                {{ activity }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div v-if="log.note">
+                                        <p
+                                            class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
+                                        >
+                                            Note
+                                        </p>
+                                        <p
+                                            class="mt-1 whitespace-pre-line text-sm text-secondary dark:text-gray-200"
+                                        >
+                                            {{ log.note }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div
                                     class="mt-4 space-y-2 border-b border-muted-light dark:border-white/10 pb-4"
                                 >
                                     <p
@@ -897,6 +944,7 @@ import {
     Phone,
     Mail,
     Bell,
+    Home,
     Minus,
 } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
@@ -1402,7 +1450,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 schedule_code: schedule.schedule_code,
                 scheduled_at: schedule.scheduled_at ?? null,
                 schedule_services_id: service.schedule_services_id,
-                total_hours: service.hours_booked ?? schedule.total_hours ?? 0,
+                total_hours: service.duration ?? schedule.total_hours ?? 0,
                 price: service.price ?? 0,
 
                 is_active: !!firstAssignee,
@@ -1410,6 +1458,8 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 full_name: firstAssignee?.full_name ?? null,
                 avatar: firstAssignee?.avatar ?? null,
                 note: schedule.note ?? null,
+                is_stay_in: !!schedule.is_stay_in,
+                activities: service.activities ?? [],
 
                 assignees,
                 previous_assignees: service.previous_assignees ?? [],

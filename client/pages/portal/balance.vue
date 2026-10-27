@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService.js";
 import { refundService } from "~/api/refund/RefundService";
@@ -453,10 +453,10 @@ function mapInvoices(items: any[]): InvoiceSummary[] {
                 type: service.type ?? null,
                 schedule_services_id: service.schedule_services_id,
                 price: Number(service.price ?? 0),
-                hours_booked:
-                    service.hours_booked !== null &&
-                    service.hours_booked !== undefined
-                        ? Number(service.hours_booked)
+                duration:
+                    service.duration !== null &&
+                    service.duration !== undefined
+                        ? Number(service.duration)
                         : null,
                 service: service.service
                     ? {

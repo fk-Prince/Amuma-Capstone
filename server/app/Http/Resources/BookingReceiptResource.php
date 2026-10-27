@@ -84,7 +84,7 @@ class BookingReceiptResource extends JsonResource
                 'rows'              => [['description' => $description, 'amount' => $amount]],
                 'invoice_date'      => null,
                 'amount_applied'    => $amount,
-                'hours_booked'      => null,
+                'duration'      => null,
             ]],
         ];
     }

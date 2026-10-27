@@ -445,6 +445,7 @@ class BookingService
                     ? ($monthly ? BookingHelper::ADL_BILLING_MONTHLY : BookingHelper::ADL_BILLING_HOURLY)
                     : null,
                 'months'        => $monthly ? (int) $data['months'] : null,
+                'stay_in'       => $monthly && filter_var($data['stay_in'] ?? true, FILTER_VALIDATE_BOOLEAN),
                 'activities'    => $activities,
                 'price'         => $data['type'] === Booking::TYPE_ADL ? $rate : null,
             ],

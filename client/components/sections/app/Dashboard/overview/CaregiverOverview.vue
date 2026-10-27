@@ -110,9 +110,10 @@
                     <li
                         v-for="(block, index) in blocks"
                         :key="`${block.start_at}-${index}`"
-                        class="flex items-center gap-3 px-3 py-2.5"
+                        class="px-3 py-2.5"
                         :class="block.state === 'done' ? 'opacity-60' : ''"
                     >
+                    <div class="flex items-center gap-3">
                         <div
                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white"
                             :class="
@@ -166,6 +167,45 @@
                                 {{ STATE_LABELS[block.state] }}
                             </span>
                         </div>
+                    </div>
+
+                    <div
+                        v-if="
+                            block.is_stay_in ||
+                            block.note ||
+                            block.activities?.length
+                        "
+                        class="mt-2 space-y-1.5 pl-11"
+                    >
+                        <span
+                            v-if="block.is_stay_in"
+                            class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                        >
+                            <Home class="h-3 w-3" />
+                            Stay-in caregiver
+                        </span>
+
+                        <div
+                            v-if="block.activities?.length"
+                            class="flex flex-wrap gap-1"
+                        >
+                            <span
+                                v-for="activity in block.activities"
+                                :key="activity"
+                                class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                            >
+                                {{ activity }}
+                            </span>
+                        </div>
+
+                        <p
+                            v-if="block.note"
+                            class="whitespace-pre-line rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] leading-4 text-slate-600 dark:bg-white/5 dark:text-gray-300"
+                        >
+                            <span class="font-semibold">Note:</span>
+                            {{ block.note }}
+                        </p>
+                    </div>
                     </li>
                 </ul>
             </section>
@@ -199,6 +239,7 @@ import {
     ClipboardList,
     Clock,
     HandHeart,
+    Home,
     MessageSquare,
     Stethoscope,
     Users,

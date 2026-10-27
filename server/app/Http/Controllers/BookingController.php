@@ -63,7 +63,8 @@ class BookingController extends Controller
             return $this->bookingService->accept($request->all());
         } else if ($request->action === 'staff_homecare') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
-            $data = app(StaffHomecareBookingRequest::class)->validated();
+            $rules = new StaffHomecareBookingRequest();
+            $data = $request->validate($rules->rules(), $rules->messages());
             return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all(), $data);
         } else if ($request->action === 'reject') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);

@@ -77,7 +77,7 @@ class AdlShiftQrTest extends TestCase
 
         $this->scheduleServicesId = DB::table('schedule_services')->insertGetId([
             'schedule_id' => $this->scheduleId,
-            'hours_booked' => 4,
+            'duration' => 4,
             'type' => 'ADL',
             'created_at' => now(),
             'updated_at' => now(),

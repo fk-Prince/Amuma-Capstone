@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('schedule_code')->unique();
             $table->foreignId('patient_id')
                 ->constrained('patients', 'patient_id');
-
-
             $table->foreignId('location_id')
                 ->nullable()
                 ->constrained('locations', 'location_id');
@@ -31,6 +29,7 @@ return new class extends Migration
                 'missed'
             ])->default('pending')->index();
             $table->string('note', 500)->nullable();
+            $table->boolean('is_stay_in')->default(false);
             $table->enum('category', ['Homecare', 'Facility'])->index();
             $table->timestamps();
         });

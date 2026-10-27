@@ -20,9 +20,10 @@ return new class extends Migration
             $table->foreignId('service_id')
                 ->nullable()
                 ->constrained('services', 'service_id');
-            $table->decimal('hours_booked', 10, 2)
+            $table->decimal('duration', 10, 2)
                 ->nullable()->index();
             $table->enum('type', ['Medical', 'ADL'])->index();
+            $table->enum('billing_cycle', ['hourly', 'monthly'])->nullable();
             $table->jsonb('activities')->nullable();
             $table->timestamps();
         });

@@ -33,7 +33,7 @@ export interface ScheduleServiceItem {
     service_name: string | null;
     description?: string | null;
     performed_by?: "both" | "nurse" | "caregiver" | null;
-    hours_booked: number | null;
+    duration: number | null;
     price: number;
     duration_minutes: number;
     end_service: string;
@@ -99,6 +99,7 @@ export interface ScheduleItem {
     status: string;
     category: string | null;
     note: string | null;
+    is_stay_in?: boolean;
 
     scheduled_date: string | null;
     scheduled_at?: string | null;
@@ -162,6 +163,8 @@ export interface AuditRow {
     avatar: string | null;
 
     note: string | null;
+    is_stay_in?: boolean;
+    activities?: string[];
 
     address: string | null;
     patient_id: number | null;

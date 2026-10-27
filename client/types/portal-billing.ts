@@ -2,7 +2,7 @@ export interface PortalInvoiceService {
     type: string | null;
     schedule_services_id: number;
     price: number;
-    hours_booked: number | null;
+    duration: number | null;
     service: {
         service_id: number;
         service_name: string;

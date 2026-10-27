@@ -210,9 +210,9 @@ class CaregiverShiftRepository
                             ->where('scheduled_at', '<', $day->copy()->startOfDay())
                             ->whereHas('scheduleServices', fn($service) => $service
                                 ->where('type', 'ADL')
-                                ->whereNotNull('hours_booked')
+                                ->whereNotNull('duration')
                                 ->whereRaw(
-                                    "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') > ?",
+                                    "schedules.scheduled_at + (schedule_services.duration * interval '1 hour') > ?",
                                     [$day->copy()->startOfDay()]
                                 ))))
                     ->whereNotIn('status', ['cancelled', 'missed'])

@@ -116,9 +116,6 @@ class ScheduleService
 
         $newStatus = strtolower($payload['status'] ?? '');
 
-        // Completing or cancelling closes the schedule out rather than
-        // committing the employee to be free at that time going forward, so
-        // there is nothing to re-check for a conflict against.
         if (in_array($newStatus, [Schedule::STATUS_COMPLETED, Schedule::STATUS_CANCELLED], true)) {
             return $this->updateSchedule($user, $schedule, $payload);
         }
@@ -209,12 +206,12 @@ class ScheduleService
 
     private const ASSISTANT_NOTE = 'Assistant';
 
-    private function performedBy($scheduleService): string
+    private function performedBy(mixed $scheduleService): string
     {
         return $scheduleService->service?->performed_by ?? 'both';
     }
 
-    private function assistingIds(?string $type, $employeeIds, $branchId, string $performedBy = 'both')
+    private function assistingIds(?string $type, mixed $employeeIds, mixed $branchId, string $performedBy = 'both')
     {
         $employeeIds = collect($employeeIds);
 
@@ -229,7 +226,7 @@ class ScheduleService
             ->map(fn($id) => (int) $id);
     }
 
-    private function assertAssignmentType(Schedule $schedule, $employeeIds, $branchId): void
+    private function assertAssignmentType(Schedule $schedule, mixed $employeeIds, mixed $branchId): void
     {
         $employeeIds = collect($employeeIds);
 
@@ -261,7 +258,7 @@ class ScheduleService
         }
     }
 
-    private function assertStaffing(?string $type, $employeeIds, $branchId, string $performedBy = 'both'): void
+    private function assertStaffing(?string $type, mixed $employeeIds, mixed $branchId, string $performedBy = 'both'): void
     {
         $employeeIds = collect($employeeIds);
 
@@ -910,7 +907,7 @@ class ScheduleService
 
     private function assignmentWindow(Carbon $scheduleStart, Carbon $scheduleEnd, ?string $startTime, ?string $endTime): array
     {
-        if (!$startTime || !$endTime) {
+        if (!$startTime || !$endTime || $scheduleStart->diffInHours($scheduleEnd) > 24) {
             return [$scheduleStart, $scheduleEnd];
         }
 

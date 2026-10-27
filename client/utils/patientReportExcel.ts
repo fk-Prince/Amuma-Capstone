@@ -372,8 +372,8 @@ function scheduleSheet(report: any): ExcelCell[][] {
                     .map(
                         (service: any) =>
                             `${service.service_name ?? "Service"}${
-                                service.hours_booked
-                                    ? ` (${Number(service.hours_booked)} hrs)`
+                                service.duration
+                                    ? ` (${Number(service.duration)} hrs)`
                                     : ""
                             }`,
                     )

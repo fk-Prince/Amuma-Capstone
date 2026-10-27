@@ -601,6 +601,35 @@
                 </p>
 
                 <div v-if="isMonthly" class="mt-4 space-y-4">
+                    <label
+                        class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 transition-colors hover:border-primary-200 dark:border-white/10"
+                    >
+                        <input
+                            type="checkbox"
+                            class="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+                            :checked="model.stay_in ?? true"
+                            @change="
+                                update(
+                                    'stay_in',
+                                    ($event.target as HTMLInputElement).checked,
+                                )
+                            "
+                        />
+                        <span>
+                            <span
+                                class="block text-sm font-semibold text-slate-800 dark:text-white"
+                            >
+                                Stay-in caregiver
+                            </span>
+                            <span
+                                class="mt-0.5 block text-xs text-slate-500 dark:text-gray-400"
+                            >
+                                The caregiver lives with the patient for the
+                                whole stay.
+                            </span>
+                        </span>
+                    </label>
+
                     <BaseInput
                         label="Base Price per Month"
                         :model-value="model.monthly_rate ?? ''"
@@ -1033,6 +1062,7 @@ function setBilling(value: "hourly" | "monthly") {
         ...props.model,
         billing: value,
         months: monthly ? 1 : undefined,
+        stay_in: monthly ? true : undefined,
         time_span: monthly
             ? String(hoursForMonths(1))
             : String(minAdlHours.value),

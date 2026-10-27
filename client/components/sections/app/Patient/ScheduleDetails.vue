@@ -605,6 +605,24 @@
                     </div>
 
                     <div
+                        v-if="scheduleHasAdlService"
+                        class="flex items-center gap-2 rounded-xl border p-3 text-sm font-medium"
+                        :class="[
+                            leftColClass,
+                            schedule.is_stay_in
+                                ? 'border-primary/20 bg-primary/5 text-primary dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300'
+                                : 'border-slate-100 text-slate-600 dark:border-white/10 dark:text-gray-300',
+                        ]"
+                    >
+                        <Home class="h-4 w-4 shrink-0" />
+                        {{
+                            schedule.is_stay_in
+                                ? "Stay-in caregiver"
+                                : "Not stay-in"
+                        }}
+                    </div>
+
+                    <div
                         v-if="!isEditing && schedule.note"
                         class="rounded-xl border border-slate-100 p-3 dark:border-white/10"
                         :class="leftColClass"
@@ -1365,6 +1383,7 @@ import {
     CalendarCheck2,
     Check,
     CircleHelp,
+    Home,
     LoaderCircle,
     Mail,
     Phone,

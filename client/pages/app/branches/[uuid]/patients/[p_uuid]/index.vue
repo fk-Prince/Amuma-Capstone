@@ -403,7 +403,7 @@ const filteredScheduleData = computed(() => {
             const services = (schedule.services ?? []).filter(
                 (service: any) => {
                     if (scheduleType.value === "homecare") {
-                        return service.hours_booked != null;
+                        return service.duration != null;
                     }
                     return service.service_id != null;
                 },

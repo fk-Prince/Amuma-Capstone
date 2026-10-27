@@ -74,8 +74,8 @@ class EmployeeScheduleResource extends JsonResource
                             }
                         } else {
                             $category = 'adl';
-                            $durationMinutes = $scheduleService->hours_booked !== null
-                                ? ((float) $scheduleService->hours_booked) * 60
+                            $durationMinutes = $scheduleService->duration !== null
+                                ? ((float) $scheduleService->duration) * 60
                                 : null;
                         }
 

@@ -138,12 +138,12 @@
                                         >
                                             {{ invoice.description }}
                                             <template
-                                                v-if="adlHoursBooked(invoice)"
+                                                v-if="adlDuration(invoice)"
                                             >
                                                 ·
                                                 {{
                                                     formatDuration(
-                                                        adlHoursBooked(
+                                                        adlDuration(
                                                             invoice,
                                                         ) as number,
                                                     )
@@ -455,10 +455,10 @@ function isPaidStatus(invoice: PatientInvoiceItem) {
     return (invoice.status ?? "").toLowerCase() === "paid";
 }
 
-function adlHoursBooked(invoice: PatientInvoiceItem) {
+function adlDuration(invoice: PatientInvoiceItem) {
     const line = invoice.services?.find((s) => s.type === "ADL");
 
-    return line?.hours_booked ?? null;
+    return line?.duration ?? null;
 }
 
 const query = ref("");

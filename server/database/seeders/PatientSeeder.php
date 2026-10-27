@@ -712,7 +712,7 @@ class PatientSeeder extends Seeder
 
             $scheduleService = $schedule->scheduleServices()->create([
                 'service_id' => $service->service_id,
-                'hours_booked' => null,
+                'duration' => null,
                 'type' => 'Medical',
             ]);
 
@@ -735,7 +735,7 @@ class PatientSeeder extends Seeder
 
             $scheduleService = $schedule->scheduleServices()->create([
                 'service_id' => null,
-                'hours_booked' => $homecare['hours'],
+                'duration' => $homecare['hours'],
                 'type' => 'ADL',
             ]);
 

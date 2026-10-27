@@ -41,6 +41,7 @@ class StaffHomecareBookingRequest extends FormRequest
             'billing' => ['nullable', Rule::in([BookingHelper::ADL_BILLING_HOURLY, BookingHelper::ADL_BILLING_MONTHLY])],
             'months' => ['required_if:billing,' . BookingHelper::ADL_BILLING_MONTHLY, 'nullable', 'integer', 'min:1'],
             'monthly_rate' => ['nullable', 'numeric', 'min:1'],
+            'stay_in' => ['nullable', 'boolean'],
             'activities' => ['nullable', 'array', 'min:1'],
             'activities.*' => ['required', 'string', 'max:60', 'distinct:ignore_case', new NoEmoji()],
             'address' => ['required', 'string', 'max:255'],

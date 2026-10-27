@@ -8,7 +8,8 @@ export interface ReceiptLine {
     rows?: { description: string; amount: number }[];
     invoice_date: string | null;
     amount_applied: number;
-    hours_booked?: number | null;
+    duration?: number | null;
+    months_billed?: number | null;
 }
 
 export type ReceiptChannel = "portal" | "counter";

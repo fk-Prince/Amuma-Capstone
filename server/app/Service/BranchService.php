@@ -356,8 +356,8 @@ class BranchService
 
     private function serviceMinutes(object $service): int
     {
-        if ($service->hours_booked !== null && (float) $service->hours_booked > 0) {
-            return (int) round(((float) $service->hours_booked) * 60);
+        if ($service->duration !== null && (float) $service->duration > 0) {
+            return (int) round(((float) $service->duration) * 60);
         }
 
         $maxDuration = $service->service?->maximum_duration;
@@ -448,9 +448,9 @@ class BranchService
                             ->where('scheduled_at', '<', $dayStart)
                             ->whereHas('scheduleServices', fn($service) => $service
                                 ->where('type', 'ADL')
-                                ->whereNotNull('hours_booked')
+                                ->whereNotNull('duration')
                                 ->whereRaw(
-                                    "schedules.scheduled_at + (schedule_services.hours_booked * interval '1 hour') > ?",
+                                    "schedules.scheduled_at + (schedule_services.duration * interval '1 hour') > ?",
                                     [$dayStart]
                                 ))))
                     ->whereNotIn('status', ['cancelled', 'missed'])
@@ -523,6 +523,9 @@ class BranchService
                         'patient_name' => $schedule->patient?->display_name,
                         'schedule_code' => $schedule->schedule_code,
                         'location' => null,
+                        'note' => $schedule->note,
+                        'is_stay_in' => (bool) $schedule->is_stay_in,
+                        'activities' => $service->activities,
                         'start' => $start,
                         'end' => $end,
                         'visit_start' => $visitStart,
@@ -558,6 +561,7 @@ class BranchService
                     'patient_name' => $schedule->patient?->display_name,
                     'schedule_code' => $schedule->schedule_code,
                     'location' => null,
+                    'note' => $schedule->note,
                     'start' => $start,
                     'end' => $end,
                 ]);
@@ -573,6 +577,9 @@ class BranchService
             'patient_name' => $block['patient_name'],
             'schedule_code' => $block['schedule_code'],
             'location' => $block['location'],
+            'note' => $block['note'] ?? null,
+            'is_stay_in' => (bool) ($block['is_stay_in'] ?? false),
+            'activities' => $block['activities'] ?? null,
             'start_at' => $block['start']->toISOString(),
             'end_at' => $block['end']->toISOString(),
             'visit_start_at' => isset($block['visit_start']) ? $block['visit_start']->toISOString() : null,

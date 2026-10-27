@@ -686,7 +686,7 @@ class PortalHelper
             'total_hours' => (float) $totalHours,
 
             'type' => $schedule->scheduleServices->contains(
-                fn($service) => $service->hours_booked !== null
+                fn($service) => $service->duration !== null
             ) ? 'adl' : 'medical',
 
             'is_onsite' => $isOnsite,
@@ -715,8 +715,8 @@ class PortalHelper
             'service_id' => $scheduleService->service_id,
             'service_name' => $scheduleService->service?->service_name,
 
-            'hours_booked' => $scheduleService->hours_booked !== null
-                ? (float) $scheduleService->hours_booked
+            'duration' => $scheduleService->duration !== null
+                ? (float) $scheduleService->duration
                 : null,
 
             'price' => (float) ($scheduleService->invoiceServices->first()->price ?? 0),
@@ -767,9 +767,9 @@ class PortalHelper
 
     private function resolveDurationMinutes(object $scheduleService)
     {
-        if ($scheduleService->hours_booked !== null) {
+        if ($scheduleService->duration !== null) {
             return (int) round(
-                ((float) $scheduleService->hours_booked) * 60
+                ((float) $scheduleService->duration) * 60
             );
         }
 
@@ -863,7 +863,7 @@ class PortalHelper
         foreach ($invoice->invoiceServices as $line) {
             $scheduleService = $line->scheduleService;
             $isAdl = $scheduleService?->service_id === null;
-            $hours = (float) ($scheduleService?->hours_booked ?? 0);
+            $hours = (float) ($scheduleService?->duration ?? 0);
 
             $lines->push([
                 'category' => $isAdl ? 'Daily Living (ADL)' : 'Service',

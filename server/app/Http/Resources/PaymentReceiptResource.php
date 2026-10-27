@@ -65,7 +65,8 @@ class PaymentReceiptResource extends JsonResource
                 'rows'              => $this->lineRows($allocation),
                 'invoice_date'      => $allocation->invoice?->created_at?->toIso8601String(),
                 'amount_applied'    => (float) $allocation->amount,
-                'hours_booked'      => $allocation->invoice?->adlHoursBooked(),
+                'duration'      => $allocation->invoice?->adlDuration(),
+                'months_billed'     => $allocation->invoice?->adlMonthsBilled(),
             ]),
         ];
     }

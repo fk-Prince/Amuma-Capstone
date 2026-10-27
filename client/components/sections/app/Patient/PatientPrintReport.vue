@@ -963,8 +963,8 @@ function serviceSummary(services: any[]) {
     if (!services?.length) return "—";
     return services
         .map((service) => {
-            const hours = service.hours_booked
-                ? ` (${Number(service.hours_booked)} hrs)`
+            const hours = service.duration
+                ? ` (${Number(service.duration)} hrs)`
                 : "";
             return `${service.service_name ?? "Service"}${hours}`;
         })

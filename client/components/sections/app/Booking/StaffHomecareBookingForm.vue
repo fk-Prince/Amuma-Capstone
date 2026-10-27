@@ -591,6 +591,10 @@ async function submit() {
                 model.type === "ADL" && model.billing === "monthly"
                     ? Number(model.monthly_rate)
                     : undefined,
+            stay_in:
+                model.type === "ADL" && model.billing === "monthly"
+                    ? (model.stay_in ?? true)
+                    : undefined,
             activities:
                 model.type === "ADL" && model.billing === "monthly"
                     ? model.activities

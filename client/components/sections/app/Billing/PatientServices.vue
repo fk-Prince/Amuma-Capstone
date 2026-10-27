@@ -48,16 +48,13 @@
                             </p> -->
 
                             <p
-                                v-if="isAdl(service) && service.hours_booked"
+                                v-if="isAdl(service) && quantity(service)"
                                 class="mt-1 text-xs text-muted dark:text-gray-400"
                             >
-                                {{ service.hours_booked }}
-                                {{
-                                    service.hours_booked === 1
-                                        ? "hour"
-                                        : "hours"
-                                }}
-                                booked
+                                Duration: {{ quantity(service) }}
+                                {{ unitLabel(service) }} ·
+                                ₱{{ formatMoney(service.price) }} /
+                                {{ isMonthly(service) ? "month" : "hour" }}
                             </p>
                         </div>
                     </div>
@@ -73,7 +70,7 @@
                             <p
                                 class="mt-1 text-base font-bold text-accent-700 dark:text-accent-300"
                             >
-                                ₱{{ formatMoney(service.price) }}
+                                ₱{{ formatMoney(lineAmount(service)) }}
                             </p>
                         </div>
 
@@ -145,5 +142,33 @@ function formatMoney(amount: number | string | null | undefined) {
 
 function isAdl(service: InvoiceServiceLine) {
     return (service.type ?? "").toUpperCase() === "ADL";
+}
+
+function isMonthly(service: InvoiceServiceLine) {
+    return (
+        isAdl(service) &&
+        service.billing_cycle === "monthly" &&
+        Number(service.months_billed) > 0
+    );
+}
+
+function quantity(service: InvoiceServiceLine) {
+    if (!isAdl(service)) return 1;
+
+    return isMonthly(service)
+        ? Number(service.months_billed)
+        : Number(service.duration ?? 0);
+}
+
+function unitLabel(service: InvoiceServiceLine) {
+    const count = quantity(service);
+
+    if (isMonthly(service)) return count === 1 ? "month" : "months";
+
+    return count === 1 ? "hour" : "hours";
+}
+
+function lineAmount(service: InvoiceServiceLine) {
+    return Number(service.price ?? 0) * (quantity(service) || 1);
 }
 </script>

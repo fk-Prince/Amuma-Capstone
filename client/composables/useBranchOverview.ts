@@ -7,6 +7,9 @@ export interface DutyBlock {
     title: string;
     patient_name: string | null;
     location: string | null;
+    note?: string | null;
+    is_stay_in?: boolean;
+    activities?: string[] | null;
     start_at: string;
     end_at: string;
     total_minutes: number;

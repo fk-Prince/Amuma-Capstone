@@ -923,6 +923,23 @@ onBeforeUnmount(() => {
                                             </dd>
                                         </div>
 
+                                        <div v-if="isMonthlyAdl(booking)">
+                                            <dt
+                                                class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                            >
+                                                Stay-in Caregiver
+                                            </dt>
+                                            <dd
+                                                class="mt-1 font-semibold text-gray-800 dark:text-white"
+                                            >
+                                                {{
+                                                    booking.homecare?.stay_in
+                                                        ? "Yes"
+                                                        : "No"
+                                                }}
+                                            </dd>
+                                        </div>
+
                                         <div v-if="booking.homecare?.time_span">
                                             <dt
                                                 class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"

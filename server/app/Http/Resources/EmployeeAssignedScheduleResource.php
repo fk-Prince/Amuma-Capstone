@@ -51,7 +51,7 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'schedule_code' => $schedule->schedule_code,
             'status' => $schedule->status,
             'category' => $schedule->category,
-            'type' => $services->contains(fn($service) => $service->hours_booked !== null) ? 'adl' : 'medical',
+            'type' => $services->contains(fn($service) => $service->duration !== null) ? 'adl' : 'medical',
             'patient_name' => $patient?->display_name,
             'services' => $services
                 ->map(fn($service) => $service->service?->service_name ?? 'ADL')
@@ -69,8 +69,8 @@ class EmployeeAssignedScheduleResource extends JsonResource
 
     private function durationMinutes($service): int
     {
-        if ($service->hours_booked !== null) {
-            return (int) round(((float) $service->hours_booked) * 60);
+        if ($service->duration !== null) {
+            return (int) round(((float) $service->duration) * 60);
         }
 
         $maxDuration = $service->service?->maximum_duration;
