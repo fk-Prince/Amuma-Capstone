@@ -20,6 +20,7 @@ const props = withDefaults(
         currentPage?: number;
         totalItems?: number;
         pageSize?: number;
+        view?: "table" | "card";
     }>(),
     {
         currentPage: 1,
@@ -82,6 +83,7 @@ const rows = computed(() =>
         :rows="rows"
         :pagination="pagination"
         :loading="loading"
+        :view="view"
         :searchable="false"
         empty-title="No activity found"
         empty-description="Actions taken in this branch will be recorded here."

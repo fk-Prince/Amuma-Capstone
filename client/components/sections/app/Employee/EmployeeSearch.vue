@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
+import { useListView } from "~/composables/useListView";
 const { canCreate } = usePermissions();
+const { view, setView } = useListView();
 
 defineProps<{
     modelValue: string;
@@ -55,6 +58,8 @@ const tabs = [
                     placeholder="Select employee type"
                     class="min-w-0 flex-1 sm:w-56 sm:flex-none"
                 />
+
+                <ViewModeToggle :model-value="view" @update:model-value="setView" />
 
                 <button
                     v-if="canCreate(Modules.EmployeeManagement)"
