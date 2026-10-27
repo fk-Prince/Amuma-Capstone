@@ -136,6 +136,18 @@
                     </div>
                     </div>
 
+                    <div
+                        v-if="isMonthly"
+                        class="flex items-start gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs leading-5 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
+                    >
+                        <Info class="mt-0.5 h-4 w-4 shrink-0" />
+                        <p>
+                            Monthly packages are for long-term care. Families
+                            can't book them online; staff book them from the
+                            branch through Bookings → Homecare Booking.
+                        </p>
+                    </div>
+
                     <div>
                         <label
                             class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -335,7 +347,7 @@
 <script setup lang="ts">
 import { reactive, computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { X } from "lucide-vue-next";
+import { Info, X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
@@ -411,9 +423,14 @@ const existingPackageDescription = computed(() => {
 const DEFAULT_DESCRIPTION =
     "This package provides dedicated, hourly support for essential personal care and fundamental physical needs. Services include hands-on assistance with dressing, bathing, personal hygiene, and grooming. Caregivers also support safe mobility, transfers (e.g., bed to chair), mealtime feeding assistance, and sensitive toileting or continence care to maintain client comfort and dignity.";
 
-const suggestedDescription = computed(() =>
-    isEditMode.value ? null : DEFAULT_DESCRIPTION,
-);
+const MONTHLY_DESCRIPTION =
+    "This long-term package provides a dedicated caregiver for the whole month, booked at the branch. The caregiver helps with dressing, bathing, personal hygiene and grooming, safe mobility and transfers, mealtimes, and toileting or continence care, and can stay in with the patient for round-the-clock support.";
+
+const suggestedDescription = computed(() => {
+    if (isEditMode.value) return null;
+
+    return isMonthly.value ? MONTHLY_DESCRIPTION : DEFAULT_DESCRIPTION;
+});
 
 const form = reactive({
     ...homecarePlanForm(),

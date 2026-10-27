@@ -72,7 +72,7 @@
 
                         <BaseInput
                             v-model="form.price"
-                            label="Price"
+                            label="Base Price"
                             mode="number"
                             step="0.01"
                             min="0.01"

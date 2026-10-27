@@ -58,7 +58,7 @@ const features = [
         points: [
             "Invoices generated from completed care",
             "Family balances and online payments",
-            "Adjustments, refunds and write-offs on record",
+            "Adjustments and refunds on record",
             "Plans and contracts for Homecare and Facility",
         ],
     },
@@ -131,7 +131,7 @@ const roles = [
             "Money matters for the branch, without access to clinical records.",
         sees: [
             "Invoices, balances and payments",
-            "Adjustments, refunds and write-offs",
+            "Adjustments and refunds",
             "Balance statements for families",
         ],
     },
