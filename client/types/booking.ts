@@ -24,6 +24,10 @@ export interface HomecareBooking {
     latitude?: number | null;
     longitude?: number | null;
     note?: string;
+    billing?: "hourly" | "monthly";
+    months?: number;
+    monthly_rate?: string | number;
+    activities?: string[];
 }
 
 export interface BookedService {

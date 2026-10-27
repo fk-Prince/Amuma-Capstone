@@ -97,16 +97,49 @@ const createAdlSchema = (minAdlHours: number) =>
         services: z
             .array(bookedServiceSchema)
             .optional(),
+
+        billing: z.enum(["hourly", "monthly"]).optional(),
+        months: z.number().optional(),
+        monthly_rate: z.union([z.string(), z.number()]).optional(),
+        activities: z.array(z.string()).optional(),
     });
 
 
 export const createHomecareBookingSchema = (
     minAdlHours: number,
 ) =>
-    z.discriminatedUnion("type", [
-        medicalSchema,
-        createAdlSchema(minAdlHours),
-    ]);
+    z
+        .discriminatedUnion("type", [
+            medicalSchema,
+            createAdlSchema(minAdlHours),
+        ])
+        .superRefine((data, ctx) => {
+            if (data.type !== "ADL" || data.billing !== "monthly") return;
+
+            if (!(Number(data.monthly_rate) > 0)) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["monthly_rate"],
+                    message: "Enter a monthly base price greater than zero",
+                });
+            }
+
+            if (!data.activities?.length) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["activities"],
+                    message: "Select at least one activity",
+                });
+            }
+
+            if (!data.months || !Number.isInteger(data.months) || data.months < 1) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["time_span"],
+                    message: "Enter at least 1 whole month",
+                });
+            }
+        });
 
 
 

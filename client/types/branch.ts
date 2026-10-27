@@ -96,6 +96,9 @@ export interface BranchRetrieve {
 
 export interface BranchHomecare {
     adl_hourly_rate?: number;
+    adl_activities?: string[] | null;
+    adl_monthly_rate?: number;
+    adl_monthly_activities?: string[] | null;
     adl_min_hour?: number;
     description?: string;
 }

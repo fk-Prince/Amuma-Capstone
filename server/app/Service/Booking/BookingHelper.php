@@ -18,6 +18,9 @@ class BookingHelper
 
     public const HOMECARE_LEAD_MINUTES = 60;
 
+    public const ADL_BILLING_HOURLY = 'hourly';
+    public const ADL_BILLING_MONTHLY = 'monthly';
+
     public function __construct(
         private BranchContractRepository $branchContractRepository,
         private ServiceRepository $serviceRepository
@@ -72,6 +75,53 @@ class BookingHelper
         return [
             'total' => $total,
             'price' => $contract['price']
+        ];
+    }
+
+    public function hourlyAdlActivities(mixed $branchId): ?array
+    {
+        return $this->branchContractRepository->findByField([
+            ['branch_id', '=', $branchId],
+            ['category', '=', BranchContract::CAREGORY_HOMECARE],
+            ['accommodation_type', '=', BranchContract::ACCOMMODATION_TYPE_ADL],
+            ['billing_cycle', '=', BranchContract::BILLING_CYCLE_HOURLY],
+            ['is_active', '=', true],
+        ])?->activities;
+    }
+
+    public function monthlyAdlTotal(mixed $branchId, int $months, string $startDate, mixed $price = null): array
+    {
+        $contract = $this->branchContractRepository->findByField([
+            ['branch_id', '=', $branchId],
+            ['category', '=', BranchContract::CAREGORY_HOMECARE],
+            ['accommodation_type', '=', BranchContract::ACCOMMODATION_TYPE_ADL],
+            ['billing_cycle', '=', BranchContract::BILLING_CYCLE_MONTHLY],
+            ['is_active', '=', true],
+        ]);
+
+        if (!$contract) {
+            throw new Exception('No active monthly ADL plan is set up for this branch.', 422);
+        }
+
+        if ($months < 1) {
+            throw new Exception('Monthly ADL care is booked in whole months.', 422);
+        }
+
+        $start = Carbon::parse($startDate)->startOfDay();
+        $hours = (int) $start->diffInHours($start->copy()->addMonthsNoOverflow($months));
+
+        $price = $price !== null && $price !== '' ? round((float) $price, 2) : (float) $contract->price;
+
+        if ($price <= 0) {
+            throw new Exception('The monthly base price must be greater than zero.', 422);
+        }
+
+        return [
+            'months' => $months,
+            'hours' => $hours,
+            'price' => $price,
+            'total' => round($months * $price, 2),
+            'activities' => $contract->activities,
         ];
     }
 

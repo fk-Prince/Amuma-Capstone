@@ -28,7 +28,7 @@ import { paymentService } from "~/api/payment/PaymentService";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { formatCurrency } from "~/utils/currency";
 import type { BookingRetrieve } from "~/types/booking";
-import { stringToDateTime } from "~/utils/time";
+import { formatDuration, stringToDateTime } from "~/utils/time";
 import { fullName } from "~/utils/user";
 import { useToast } from "~/composables/useToast";
 
@@ -271,6 +271,35 @@ function typeLabel(booking: PortalBooking) {
     if (type === "Pre-Admission") return "Pre-Admission";
 
     return type || "—";
+}
+
+function isMonthlyAdl(booking: PortalBooking) {
+    return booking.homecare?.billing === "monthly";
+}
+
+function adlBillingLabel(booking: PortalBooking) {
+    return isMonthlyAdl(booking) ? "Monthly" : "Hourly";
+}
+
+function adlRateLabel(booking: PortalBooking) {
+    const price = Number(booking.homecare?.price);
+
+    if (!price) return "";
+
+    return `${formatMoney(price)} / ${isMonthlyAdl(booking) ? "month" : "hour"}`;
+}
+
+function adlDurationLabel(booking: PortalBooking) {
+    const hours = Number(booking.homecare?.time_span);
+    const months = booking.homecare?.months;
+
+    if (isMonthlyAdl(booking) && months) {
+        return `${months} month${months > 1 ? "s" : ""} (${hours} hrs)`;
+    }
+
+    const label = formatDuration(hours);
+
+    return hours >= 24 ? `${label} (${hours} hrs)` : label;
 }
 
 function serviceDateLabel(booking: PortalBooking) {
@@ -847,6 +876,86 @@ onBeforeUnmount(() => {
                                             <Printer class="h-3.5 w-3.5" />
                                             Print booking form
                                         </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="booking.homecare?.type === 'ADL'"
+                                    class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
+                                >
+                                    <p
+                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                    >
+                                        <HeartPulse class="h-3.5 w-3.5" />
+                                        Activities of Daily Living
+                                    </p>
+
+                                    <dl
+                                        class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3"
+                                    >
+                                        <div>
+                                            <dt
+                                                class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                            >
+                                                Billing
+                                            </dt>
+                                            <dd
+                                                class="mt-1 font-semibold text-gray-800 dark:text-white"
+                                            >
+                                                {{ adlBillingLabel(booking) }}
+                                            </dd>
+                                        </div>
+
+                                        <div v-if="adlRateLabel(booking)">
+                                            <dt
+                                                class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                            >
+                                                {{
+                                                    isMonthlyAdl(booking)
+                                                        ? "Base Price"
+                                                        : "Hourly Rate"
+                                                }}
+                                            </dt>
+                                            <dd
+                                                class="mt-1 font-semibold text-gray-800 dark:text-white"
+                                            >
+                                                {{ adlRateLabel(booking) }}
+                                            </dd>
+                                        </div>
+
+                                        <div v-if="booking.homecare?.time_span">
+                                            <dt
+                                                class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                            >
+                                                Duration
+                                            </dt>
+                                            <dd
+                                                class="mt-1 font-semibold text-gray-800 dark:text-white"
+                                            >
+                                                {{ adlDurationLabel(booking) }}
+                                            </dd>
+                                        </div>
+                                    </dl>
+
+                                    <div
+                                        v-if="booking.homecare?.activities?.length"
+                                        class="mt-4"
+                                    >
+                                        <p
+                                            class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                        >
+                                            Activities Included
+                                        </p>
+
+                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                            <span
+                                                v-for="activity in booking.homecare.activities"
+                                                :key="activity"
+                                                class="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
+                                            >
+                                                {{ activity }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 

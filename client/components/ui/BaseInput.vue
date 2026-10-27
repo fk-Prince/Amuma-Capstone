@@ -220,6 +220,10 @@ function blockSignKeys(event: KeyboardEvent) {
     if (inputType.value === "number" && nonNegative && ["-", "+", "e", "E"].includes(event.key)) {
         event.preventDefault();
     }
+
+    if (inputType.value === "number" && props.step === "1" && [".", ","].includes(event.key)) {
+        event.preventDefault();
+    }
 }
 
 const slots = useSlots();

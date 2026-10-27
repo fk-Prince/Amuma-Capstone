@@ -219,6 +219,32 @@
                     <p v-if="errors?.type" class="mt-2 text-xs text-red-500">
                         {{ errors.type }}
                     </p>
+
+                    <div
+                        v-if="
+                            model.type === 'ADL' &&
+                            !isMonthly &&
+                            includedActivities.length
+                        "
+                        class="mt-4 rounded-xl border border-dashed border-primary/30 bg-primary-50/60 px-4 py-3 dark:border-primary-500/30 dark:bg-primary-500/10"
+                    >
+                        <p
+                            class="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                        >
+                            Activities included
+                        </p>
+
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span
+                                v-for="activity in includedActivities"
+                                :key="activity"
+                                class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                            >
+                                <Check class="h-3 w-3" />
+                                {{ activity }}
+                            </span>
+                        </div>
+                    </div>
                 </template>
             </div>
 
@@ -465,6 +491,38 @@
                 "
                 class="bg-white dark:bg-secondary"
             >
+                <div v-if="showBillingChoice" class="mb-5">
+                    <h3
+                        class="text-sm font-semibold text-slate-900 dark:text-white"
+                    >
+                        Billing
+                    </h3>
+
+                    <p class="mt-0.5 text-xs text-slate-500 dark:text-gray-400">
+                        Charge by the hour, or by the month for long-term,
+                        stay-in care.
+                    </p>
+
+                    <div
+                        class="mt-2 inline-flex h-10 w-full max-w-xs items-center rounded-lg border border-slate-200 bg-slate-50 p-1 dark:bg-secondary dark:border-white/10"
+                    >
+                        <button
+                            v-for="option in billingOptions"
+                            :key="option.value"
+                            type="button"
+                            class="h-full flex-1 rounded-md px-4 text-sm font-medium transition-colors"
+                            :class="
+                                billing === option.value
+                                    ? 'bg-white text-primary shadow-sm dark:bg-white/10'
+                                    : 'text-muted hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            "
+                            @click="setBilling(option.value)"
+                        >
+                            {{ option.label }}
+                        </button>
+                    </div>
+                </div>
+
                 <div class="mb-3 flex items-start justify-between gap-3">
                     <div>
                         <h3
@@ -476,11 +534,16 @@
                         <p
                             class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
                         >
-                            Specify how many hours of care you require.
+                            {{
+                                isMonthly
+                                    ? "Specify how many months of care you require."
+                                    : "Specify how many hours of care you require."
+                            }}
                         </p>
                     </div>
 
                     <div
+                        v-if="!isMonthly"
                         class="inline-flex shrink-0 rounded-lg border border-slate-200 p-0.5 dark:border-white/10"
                     >
                         <button
@@ -501,6 +564,20 @@
                 </div>
 
                 <BaseInput
+                    v-if="isMonthly"
+                    label="Duration (months)"
+                    :model-value="monthsAmount"
+                    @update:model-value="setMonths"
+                    mode="number"
+                    min="1"
+                    step="1"
+                    placeholder="Enter total months"
+                    :error="errors?.time_span ?? errors?.months"
+                    required
+                />
+
+                <BaseInput
+                    v-else
                     :label="`Duration (${currentDurationUnit.label.toLowerCase()})`"
                     :model-value="durationAmount"
                     @update:model-value="setDurationAmount"
@@ -511,13 +588,49 @@
                 />
 
                 <p
-                    v-if="durationUnit !== 'hours' && Number(model.time_span) > 0"
+                    v-if="
+                        (isMonthly || durationUnit !== 'hours') &&
+                        Number(model.time_span) > 0
+                    "
                     class="mt-1.5 text-xs text-slate-500 dark:text-gray-400"
                 >
-                    = {{ Number(model.time_span) }} hrs
+                    = {{ Number(model.time_span).toLocaleString() }} hrs
+                    <template v-if="isMonthly && monthsEndLabel">
+                        · until {{ monthsEndLabel }}
+                    </template>
                 </p>
 
-                <div class="mt-4">
+                <div v-if="isMonthly" class="mt-4 space-y-4">
+                    <BaseInput
+                        label="Base Price per Month"
+                        :model-value="model.monthly_rate ?? ''"
+                        @update:model-value="update('monthly_rate', $event)"
+                        mode="number"
+                        min="1"
+                        step="0.01"
+                        placeholder="0.00"
+                        :error="errors?.monthly_rate"
+                        required
+                    />
+
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-gray-300"
+                        >
+                            Activities Included
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <ActivityChipsInput
+                            :model-value="model.activities ?? []"
+                            :suggestions="ADL_SUGGESTED_ACTIVITIES"
+                            :error="errors?.activities"
+                            @update:model-value="update('activities', $event)"
+                        />
+                    </div>
+                </div>
+
+                <div v-if="!isMonthly" class="mt-4">
                     <p
                         class="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
                     >
@@ -549,7 +662,22 @@
                 <div
                     class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:bg-secondary dark:border-white/10"
                 >
-                    <div class="flex items-center justify-between text-xs">
+                    <div
+                        v-if="isMonthly"
+                        class="flex items-center justify-between text-xs"
+                    >
+                        <span class="text-slate-500 dark:text-gray-400"
+                            >Monthly Base Price</span
+                        >
+
+                        <span
+                            class="font-semibold text-slate-700 dark:text-gray-300"
+                        >
+                            {{ formatCurrency(monthlyRate) }} / month
+                        </span>
+                    </div>
+
+                    <div v-else class="flex items-center justify-between text-xs">
                         <span class="text-slate-500 dark:text-gray-400"
                             >Hourly Rate</span
                         >
@@ -561,7 +689,10 @@
                         </span>
                     </div>
 
-                    <div class="mt-2 flex items-center justify-between text-xs">
+                    <div
+                        v-if="!isMonthly"
+                        class="mt-2 flex items-center justify-between text-xs"
+                    >
                         <span class="text-slate-500 dark:text-gray-400"
                             >Minimum Hours</span
                         >
@@ -605,6 +736,7 @@
                 </div>
 
                 <div
+                    v-if="!allowMonthly"
                     class="mt-3 flex items-start gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs leading-5 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
                 >
                     <Info class="mt-0.5 h-4 w-4 shrink-0" />
@@ -723,6 +855,11 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
+import ActivityChipsInput from "~/components/ui/ActivityChipsInput.vue";
+import {
+    ADL_DEFAULT_ACTIVITIES,
+    ADL_SUGGESTED_ACTIVITIES,
+} from "~/types/contract";
 import {
     getLocalDateStr,
     generateAvailableAmPmTimesBySchedule,
@@ -743,6 +880,7 @@ const props = defineProps<{
     homecare?: BranchHomecare;
     settings?: BranchSettings;
     showDownpayment?: boolean;
+    allowMonthly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -865,8 +1003,129 @@ const handleLocationCleared = () => {
     });
 };
 
+const HOURS_PER_MONTH = 24 * 30;
+
+const adlRatePerMonth = computed<number>(() =>
+    Number(props.homecare?.adl_monthly_rate ?? 0),
+);
+
+const showBillingChoice = computed(
+    () => !!props.allowMonthly && adlRatePerMonth.value > 0,
+);
+
+const billingOptions = [
+    { label: "Hourly", value: "hourly" },
+    { label: "Monthly", value: "monthly" },
+] as const;
+
+const billing = computed(() => props.model.billing ?? "hourly");
+
+const isMonthly = computed(
+    () => showBillingChoice.value && billing.value === "monthly",
+);
+
+function setBilling(value: "hourly" | "monthly") {
+    if (value === billing.value) return;
+
+    const monthly = value === "monthly";
+
+    emit("update:model", {
+        ...props.model,
+        billing: value,
+        months: monthly ? 1 : undefined,
+        time_span: monthly
+            ? String(hoursForMonths(1))
+            : String(minAdlHours.value),
+        monthly_rate: monthly ? adlRatePerMonth.value : undefined,
+        activities: monthly
+            ? [
+                  ...(props.homecare?.adl_monthly_activities?.length
+                      ? props.homecare.adl_monthly_activities
+                      : ADL_DEFAULT_ACTIVITIES),
+              ]
+            : undefined,
+    });
+
+    emit("update:errors", {});
+}
+
+const monthlyRate = computed(() => Number(props.model.monthly_rate) || 0);
+
+const includedActivities = computed(() =>
+    props.homecare?.adl_activities?.length
+        ? props.homecare.adl_activities
+        : ADL_DEFAULT_ACTIVITIES,
+);
+
+function monthsEnd(date: string, months: number): Date | null {
+    const [year, month, day] = date.split("-").map(Number);
+
+    if (!year || !month || !day) return null;
+
+    const lastDay = new Date(year, month - 1 + months + 1, 0).getDate();
+
+    return new Date(year, month - 1 + months, Math.min(day, lastDay));
+}
+
+function hoursForMonths(months: number): number {
+    const end = monthsEnd(props.model.date, months);
+
+    if (!end) return months * HOURS_PER_MONTH;
+
+    const [year, month, day] = props.model.date.split("-").map(Number);
+    const start = new Date(year!, month! - 1, day!);
+
+    return Math.round((end.getTime() - start.getTime()) / 3_600_000);
+}
+
+const monthsAmount = computed(() =>
+    props.model.months ? String(props.model.months) : "",
+);
+
+const monthsEndLabel = computed(() => {
+    const end = props.model.months
+        ? monthsEnd(props.model.date, props.model.months)
+        : null;
+
+    return end
+        ? end.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+          })
+        : "";
+});
+
+function setMonths(value: string | number) {
+    const months = Math.floor(Number(value));
+    const valid = value !== "" && !isNaN(months) && months >= 1;
+
+    emit("update:model", {
+        ...props.model,
+        months: valid ? months : undefined,
+        time_span: valid ? String(hoursForMonths(months)) : "",
+    });
+
+    clearError("time_span");
+}
+
+watch(
+    () => props.model.date,
+    () => {
+        if (isMonthly.value && props.model.months) {
+            update("time_span", String(hoursForMonths(props.model.months)));
+        }
+    },
+);
+
 const adlTotal = computed(() => {
     const hours = Number(props.model.time_span);
+
+    if (isMonthly.value) {
+        const months = props.model.months ?? 0;
+
+        return months >= 1 ? months * monthlyRate.value : 0;
+    }
 
     if (isNaN(hours) || hours < minAdlHours.value) {
         return 0;
@@ -956,6 +1215,10 @@ watch(
             }
         } else {
             update("time_span", "");
+
+            if (props.model.billing === "monthly") {
+                update("billing", "hourly");
+            }
         }
 
         if (props.errors) {

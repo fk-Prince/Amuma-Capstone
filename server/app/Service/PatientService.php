@@ -253,6 +253,7 @@ class PatientService
             $scheduleService = $schedule->scheduleServices()->create([
                 'hours_booked' => $homecare['time_span'] ?? null,
                 'type'         => $homecare['type'],
+                'activities'   => $homecare['activities'] ?? null,
             ]);
 
             $invoiceServices[] = [

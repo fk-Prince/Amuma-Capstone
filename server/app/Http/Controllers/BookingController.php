@@ -6,6 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Requests\Booking\StaffHomecareBookingRequest;
 use App\Service\Booking\BookingHelper;
 use App\Service\BookingService;
 use Illuminate\Http\Request;
@@ -62,7 +63,8 @@ class BookingController extends Controller
             return $this->bookingService->accept($request->all());
         } else if ($request->action === 'staff_homecare') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Create);
-            return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all());
+            $data = app(StaffHomecareBookingRequest::class)->validated();
+            return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all(), $data);
         } else if ($request->action === 'reject') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
             $request->merge([

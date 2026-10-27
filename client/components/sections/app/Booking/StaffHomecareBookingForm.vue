@@ -1,26 +1,22 @@
 <template>
-    <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
+    <div
+        v-if="open"
+        class="flex w-full flex-col rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
     >
-        <div
-            v-if="open"
-            class="fixed inset-0 z-[60] flex items-center justify-center p-4"
-        >
-            <div
-                class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
-            />
-
-            <div
-                class="relative z-10 flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
-            >
+            <div class="flex w-full flex-col">
                 <div
-                    class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
+                    class="flex shrink-0 items-center gap-3 border-b border-[#E4EFED] px-6 py-4 dark:border-white/10"
                 >
+                    <button
+                        type="button"
+                        class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-[#E4EFED] px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-primary dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                        :disabled="submitting"
+                        @click="close"
+                    >
+                        <ArrowLeft class="h-4 w-4" />
+                        Back
+                    </button>
+
                     <div class="min-w-0">
                         <p
                             class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"
@@ -29,22 +25,14 @@
                         </p>
 
                         <h2
-                            class="mt-1 text-lg font-semibold text-gray-900 dark:text-white"
+                            class="text-lg font-semibold text-gray-900 dark:text-white"
                         >
                             New booking
                         </h2>
                     </div>
-
-                    <button
-                        type="button"
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-white/80"
-                        @click="close"
-                    >
-                        <X class="h-4.5 w-4.5" />
-                    </button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto">
+                <div>
                     <div v-if="loadingBranch" class="space-y-4 p-8">
                         <div
                             class="h-5 w-40 animate-pulse rounded bg-slate-200 dark:bg-white/10"
@@ -75,6 +63,7 @@
                             :homecare="branch?.homecare"
                             :settings="branch?.settings"
                             :errors="errors"
+                            allow-monthly
                             @update:model="(value) => Object.assign(model, value)"
                             @update:errors="(value) => (errors = value)"
                         />
@@ -132,11 +121,12 @@
                 </div>
 
                 <div
-                    class="flex shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-4 dark:border-white/10"
+                    class="sticky bottom-0 flex shrink-0 items-center justify-end gap-3 rounded-b-lg border-t border-[#E4EFED] bg-white px-6 py-4 dark:border-white/10 dark:bg-secondary"
                 >
                     <button
                         type="button"
                         class="rounded-xl px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-white/10"
+                        :disabled="submitting"
                         @click="close"
                     >
                         Cancel
@@ -156,8 +146,7 @@
                     </button>
                 </div>
             </div>
-        </div>
-    </Transition>
+    </div>
 
     <ConfirmDialog
         :open="showEmailExistsWarning"
@@ -173,7 +162,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
-import { Loader2, X } from "lucide-vue-next";
+import { ArrowLeft, Loader2 } from "lucide-vue-next";
 import PatientForm from "~/components/forms/PatientForm.vue";
 import GuardianForm from "~/components/forms/GuardianForm.vue";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
@@ -231,6 +220,7 @@ function emptyModel(): HomecareBookingModel {
         longitude: null,
         services: [],
         note: "",
+        billing: "hourly",
     };
 }
 
@@ -508,6 +498,11 @@ function priceFor(booking: HomecareBookingModel): number {
     }
 
     const hours = Number(booking.time_span) || 0;
+
+    if (booking.billing === "monthly") {
+        return (booking.months ?? 0) * (Number(booking.monthly_rate) || 0);
+    }
+
     const rate = Number(branch.value?.homecare?.adl_hourly_rate ?? 0);
 
     return hours * rate;
@@ -587,6 +582,19 @@ async function submit() {
             longitude: model.longitude,
             services: model.services,
             note: model.note?.trim() || null,
+            billing: model.type === "ADL" ? (model.billing ?? "hourly") : undefined,
+            months:
+                model.type === "ADL" && model.billing === "monthly"
+                    ? model.months
+                    : undefined,
+            monthly_rate:
+                model.type === "ADL" && model.billing === "monthly"
+                    ? Number(model.monthly_rate)
+                    : undefined,
+            activities:
+                model.type === "ADL" && model.billing === "monthly"
+                    ? model.activities
+                    : undefined,
             price: priceFor(model),
             rate:
                 model.type === "ADL"

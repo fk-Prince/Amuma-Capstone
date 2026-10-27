@@ -7,8 +7,6 @@ use App\Factories\PaymentFactory;
 use App\Http\Resources\BookingResource;
 use App\Guard\GuardianEmailGuard;
 use App\Models\Booking;
-use App\Models\Patient;
-use App\Models\PatientAccess;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Repository\BookingRepository;
@@ -181,6 +179,12 @@ class BookingService
                 $payload['booking_data']['homecare'] ?? [],
                 $payload['branch'] ?? null
             );
+
+            if (($payload['booking_data']['homecare']['type'] ?? null) === Booking::TYPE_ADL) {
+                $payload['booking_data']['homecare']['billing'] = BookingHelper::ADL_BILLING_HOURLY;
+                $payload['booking_data']['homecare']['activities'] = $this->bookingHelper
+                    ->hourlyAdlActivities($payload['branch_id']);
+            }
         }
 
         $this->bookingHelper->assertNoEmoji($payload['booking_data'] ?? []);
@@ -274,7 +278,6 @@ class BookingService
         }
     }
 
-    // A failed alert must never undo a payment that has already gone through.
     private function notifyPayment(Booking $booking, float $amount, ?User $actor): void
     {
         try {
@@ -288,7 +291,6 @@ class BookingService
         }
     }
 
-    // Bookings made on the public page aren't audited; only staff actions are.
     private function createUnaudited(array $attributes): Booking
     {
         return app(AuditService::class)->withoutAuditing(
@@ -296,7 +298,6 @@ class BookingService
         );
     }
 
-    // Only a booking that was actually paid for has a downpayment to record.
     private function recordDownpayment(User $user, Booking $booking, array $payment): void
     {
         $amount = (float) ($payment['booking_amount'] ?? 0);
@@ -384,46 +385,13 @@ class BookingService
         });
     }
     //USED
-    // A homecare service booked by staff for a new patient and guardian.
-    public function createStaffHomecareBooking(User $staff, array $payload)
+    public function createStaffHomecareBooking(User $staff, array $payload, array $data)
     {
         $branch = $payload['branch'];
 
         if (!$branch->hasHomecareSubscription()) {
             throw new Exception('This branch has no Homecare Service subscription.', 422);
         }
-
-        $data = validator($payload, [
-            'patient' => ['required', 'array'],
-            'patient.first_name' => ['required', 'string', 'max:100'],
-            'patient.middle_name' => ['nullable', 'string', 'max:100'],
-            'patient.last_name' => ['required', 'string', 'max:100'],
-            'patient.suffix' => ['nullable', 'string', 'max:20'],
-            'patient.gender' => ['required', 'string', 'max:20'],
-            'patient.date_of_birth' => ['required', 'date', 'before:today'],
-            'patient.address' => ['required', 'string', 'max:255'],
-            'patient.phone_number' => ['nullable', 'string', 'max:30'],
-            'guardian' => ['required', 'array'],
-            'guardian.first_name' => ['required', 'string', 'max:100'],
-            'guardian.middle_name' => ['nullable', 'string', 'max:100'],
-            'guardian.last_name' => ['required', 'string', 'max:100'],
-            'guardian.email' => ['required', 'email', 'max:255'],
-            'guardian.phone_number' => ['required', 'string', 'max:30'],
-            'guardian.relationship' => ['required', 'string', 'max:50'],
-            'type' => ['required', 'in:' . Booking::TYPE_ADL . ',' . Booking::TYPE_MEDICAL],
-            'date' => ['required', 'date', 'after_or_equal:today'],
-            'prefered_time' => ['required', 'string', 'max:10'],
-            'time_span' => ['nullable'],
-            'address' => ['required', 'string', 'max:255'],
-            'latitude' => ['nullable', 'numeric'],
-            'longitude' => ['nullable', 'numeric'],
-            'services' => ['nullable', 'array'],
-            'note' => ['nullable', 'string', 'max:500'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'rate' => ['nullable', 'numeric', 'min:0'],
-            'diagnoses' => ['nullable', 'array'],
-            'assessment' => ['nullable', 'array'],
-        ])->validate();
 
         $this->bookingHelper->assertHomecareLeadTime($data, $branch);
 
@@ -439,6 +407,26 @@ class BookingService
         $owner = User::where('email', $data['guardian']['email'])->first();
 
         $total = round((float) ($data['price'] ?? 0), 2);
+        $rate = $data['rate'] ?? null;
+        $monthly = $data['type'] === Booking::TYPE_ADL
+            && ($data['billing'] ?? null) === BookingHelper::ADL_BILLING_MONTHLY;
+
+        $activities = $data['type'] === Booking::TYPE_ADL
+            ? $this->bookingHelper->hourlyAdlActivities($branch->branch_id)
+            : null;
+
+        if ($monthly) {
+            $plan = $this->bookingHelper->monthlyAdlTotal(
+                $branch->branch_id,
+                (int) $data['months'],
+                $data['date'],
+                $data['monthly_rate'] ?? null
+            );
+            $total = $plan['total'];
+            $rate = $plan['price'];
+            $data['time_span'] = $plan['hours'];
+            $activities = array_values($data['activities'] ?? $plan['activities'] ?? []) ?: null;
+        }
 
         $bookingData = [
             'patient' => $patient + ['middle_name' => null],
@@ -453,7 +441,12 @@ class BookingService
                 'longitude'     => $data['longitude'] ?? null,
                 'services'      => $data['services'] ?? [],
                 'note'          => trim((string) ($data['note'] ?? '')) ?: null,
-                'price'         => $data['type'] === Booking::TYPE_ADL ? ($data['rate'] ?? null) : null,
+                'billing'       => $data['type'] === Booking::TYPE_ADL
+                    ? ($monthly ? BookingHelper::ADL_BILLING_MONTHLY : BookingHelper::ADL_BILLING_HOURLY)
+                    : null,
+                'months'        => $monthly ? (int) $data['months'] : null,
+                'activities'    => $activities,
+                'price'         => $data['type'] === Booking::TYPE_ADL ? $rate : null,
             ],
             'payment' => [
                 'total_amount' => $total,
@@ -493,8 +486,6 @@ class BookingService
         return new BookingResource($booking);
     }
 
-    // A rejected booking is always marked refunded; $markRefundedAnyway keeps
-    // that true even when the gateway call fails, and logs it for follow-up.
     private function refundBookingPayment(
         Booking $booking,
         array &$bookingData,
@@ -510,8 +501,6 @@ class BookingService
             return false;
         }
 
-        // Paid online it goes back through the gateway; paid at the counter
-        // it is handed back in person.
         $refunded = empty($payment['xendit_invoice_id']) || XenditService::refundXenditPayment(
             $payment['xendit_invoice_id'],
             $amount,

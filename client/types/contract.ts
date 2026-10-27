@@ -67,7 +67,6 @@ export const ADL_DEFAULT_ACTIVITIES = [
 
 export const ADL_SUGGESTED_ACTIVITIES = [
     ...ADL_DEFAULT_ACTIVITIES,
-    "Medication Reminders",
     "Meal Preparation",
     "Light Housekeeping",
     "Laundry",

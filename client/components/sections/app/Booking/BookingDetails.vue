@@ -282,6 +282,34 @@
                                 :value="durationLabel"
                             />
 
+                            <template v-if="booking.homecare?.type === 'ADL'">
+                                <Field label="Billing" :value="billingLabel" />
+
+                                <Field
+                                    v-if="adlRateLabel"
+                                    :label="isMonthlyAdl ? 'Base Price' : 'Hourly Rate'"
+                                    :value="adlRateLabel"
+                                />
+
+                                <Field
+                                    v-if="booking.homecare?.activities?.length"
+                                    label="Activities Included"
+                                    class="sm:col-span-2"
+                                >
+                                    <template #value>
+                                        <span class="flex flex-wrap gap-1.5">
+                                            <span
+                                                v-for="activity in booking.homecare.activities"
+                                                :key="activity"
+                                                class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium normal-case text-primary dark:bg-primary-500/15 dark:text-primary-300"
+                                            >
+                                                {{ activity }}
+                                            </span>
+                                        </span>
+                                    </template>
+                                </Field>
+                            </template>
+
                             <Field label="Service Address">
                                 <template #value>
                                     <span
@@ -607,11 +635,33 @@ const isCompleteAdmission = computed(
 const highlightClass =
     "rounded-xl bg-[#EAF4F2] px-4 py-3 ring-1 ring-[#0E7C7B]/25 dark:bg-accent-500/10 dark:ring-accent-500/30";
 
+const isMonthlyAdl = computed(
+    () => props.booking.homecare?.billing === "monthly",
+);
+
 const durationLabel = computed(() => {
     const hours = Number(props.booking.homecare?.time_span);
+    const months = props.booking.homecare?.months;
+
+    if (isMonthlyAdl.value && months) {
+        return `${months} month${months > 1 ? "s" : ""} (${hours} hrs)`;
+    }
+
     const label = formatDuration(hours);
 
     return hours >= 24 ? `${label} (${hours} hrs)` : label;
+});
+
+const billingLabel = computed(() =>
+    isMonthlyAdl.value ? "Monthly" : "Hourly",
+);
+
+const adlRateLabel = computed(() => {
+    const price = Number(props.booking.homecare?.price);
+
+    if (!price) return "";
+
+    return `${formatCurrency(price)} / ${isMonthlyAdl.value ? "month" : "hour"}`;
 });
 
 const serviceType = computed(() => {

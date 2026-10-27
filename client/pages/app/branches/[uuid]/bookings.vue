@@ -2,7 +2,15 @@
     <div
         class="min-h-screen-header bg-[#EEF3FB] dark:bg-surface overflow-visible flex flex-col"
     >
+        <StaffHomecareBookingForm
+            :open="homecareBookingOpen"
+            :branch-uuid="branch_uuid"
+            @close="closeHomecareBooking"
+            @booked="onHomecareBooked"
+        />
+
         <div
+            v-if="!homecareBookingOpen"
             class="grid grid-cols-1 gap-4 items-stretch w-full flex-1 min-h-0"
             :class="asideVisible ? 'lg:grid-cols-[minmax(0,1fr)_400px]' : ''"
         >
@@ -14,7 +22,9 @@
                         <div
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
                         >
-                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <div
+                                class="flex flex-col gap-3 sm:flex-row sm:items-center"
+                            >
                                 <BookingFilter
                                     :search="searchQuery"
                                     :type="typeFilter"
@@ -32,7 +42,9 @@
                                     @update:dateTo="dateTo = $event"
                                 />
 
-                                <div class="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto">
+                                <div
+                                    class="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto"
+                                >
                                     <ViewModeToggle
                                         :model-value="viewMode"
                                         @update:model-value="setViewMode"
@@ -58,7 +70,7 @@
                                         v-if="showHomecareBooking"
                                         type="button"
                                         class="inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 sm:flex-none"
-                                        @click="homecareBookingOpen = true"
+                                        @click="openHomecareBooking"
                                     >
                                         <Plus class="h-4 w-4" />
                                         Homecare Booking
@@ -757,13 +769,6 @@
             :require-admission-date="false"
         />
 
-        <StaffHomecareBookingModal
-            :open="homecareBookingOpen"
-            :branch-uuid="branch_uuid"
-            @close="homecareBookingOpen = false"
-            @booked="onHomecareBooked"
-        />
-
         <BookingAcknowledgement
             v-if="printing"
             :booking="printing"
@@ -798,7 +803,7 @@ import { bookingService } from "~/api/booking/BookingService";
 import BookingSidebar from "~/components/sections/app/Booking/BookingSidebar.vue";
 import BookingFilter from "~/components/sections/app/Booking/BookingFilter.vue";
 import BookingDetails from "~/components/sections/app/Booking/BookingDetails.vue";
-import StaffHomecareBookingModal from "~/components/sections/app/Booking/StaffHomecareBookingModal.vue";
+import StaffHomecareBookingForm from "~/components/sections/app/Booking/StaffHomecareBookingForm.vue";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import { useBranchStore } from "~/stores/branch";
 import { Modules } from "~/types/module";
@@ -885,6 +890,16 @@ const showHomecareBooking = computed(
 );
 
 const homecareBookingOpen = ref(false);
+
+function openHomecareBooking() {
+    homecareBookingOpen.value = true;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeHomecareBooking() {
+    homecareBookingOpen.value = false;
+}
+
 const printing = ref<BookingRetrieve | null>(null);
 const branchStore = useBranchStore();
 const activeBranch = computed(() => branchStore.activeBranch);
@@ -919,7 +934,8 @@ function onHomecareBooked(booking: any) {
     const counts = overview.value?.bookings;
 
     if (counts && !listed) {
-        counts.pending_confirmation = Number(counts.pending_confirmation ?? 0) + 1;
+        counts.pending_confirmation =
+            Number(counts.pending_confirmation ?? 0) + 1;
         counts.today = Number(counts.today ?? 0) + 1;
         counts.recent = [
             {

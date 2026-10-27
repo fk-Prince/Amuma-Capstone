@@ -165,6 +165,21 @@ class BranchResource extends JsonResource
                     ->where('accommodation_type', 'ADL')
                     ->where('billing_cycle', BranchContract::BILLING_CYCLE_HOURLY)
                     ->first()?->price,
+                'adl_activities' => $this->activeContracts()
+                    ->where('category', 'Homecare')
+                    ->where('accommodation_type', 'ADL')
+                    ->where('billing_cycle', BranchContract::BILLING_CYCLE_HOURLY)
+                    ->first()?->activities,
+                'adl_monthly_rate' => $this->activeContracts()
+                    ->where('category', 'Homecare')
+                    ->where('accommodation_type', 'ADL')
+                    ->where('billing_cycle', BranchContract::BILLING_CYCLE_MONTHLY)
+                    ->first()?->price,
+                'adl_monthly_activities' => $this->activeContracts()
+                    ->where('category', 'Homecare')
+                    ->where('accommodation_type', 'ADL')
+                    ->where('billing_cycle', BranchContract::BILLING_CYCLE_MONTHLY)
+                    ->first()?->activities,
                 'adl_min_hour' => $settings['minimum_adl_hours'] ?? 8,
                 'description' => $this->activeContracts()
                     ->where('category', 'Homecare')
