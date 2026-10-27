@@ -745,6 +745,17 @@ onBeforeUnmount(() => {
                                 </div>
                             </div>
 
+                            <p
+                                v-if="booking.status === 'rejected'"
+                                class="mt-4 line-clamp-2 rounded-xl bg-rose-50 px-3.5 py-2.5 text-xs text-rose-800 dark:bg-rose-500/10 dark:text-rose-200"
+                            >
+                                <span class="font-semibold">Rejected:</span>
+                                {{
+                                    booking.reason ||
+                                    "The branch didn't give a reason."
+                                }}
+                            </p>
+
                             <div
                                 class="mt-5 grid grid-cols-2 gap-3"
                                 :class="summaryGridClass(booking)"
@@ -876,6 +887,79 @@ onBeforeUnmount(() => {
                                             <Printer class="h-3.5 w-3.5" />
                                             Print booking form
                                         </button>
+                                    </div>
+                                </div>
+
+                                <div
+                                    v-if="booking.status === 'rejected'"
+                                    class="rounded-2xl border border-rose-100 bg-rose-50 p-4 sm:p-5 dark:border-rose-500/20 dark:bg-rose-500/10"
+                                >
+                                    <div class="flex items-start gap-3">
+                                        <div
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-rose-600 dark:bg-white/10 dark:text-rose-300"
+                                        >
+                                            <XCircle class="h-4 w-4" />
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <h3
+                                                class="text-sm font-semibold text-rose-900 dark:text-rose-200"
+                                            >
+                                                Booking rejected
+                                            </h3>
+
+                                            <p
+                                                v-if="booking.reviewed_by || booking.reviewed_at"
+                                                class="text-xs text-rose-800/80 dark:text-rose-300/70"
+                                            >
+                                                <template v-if="booking.reviewed_by">
+                                                    By {{ booking.reviewed_by }}
+                                                </template>
+                                                <template v-if="booking.reviewed_at">
+                                                    ·
+                                                    {{
+                                                        stringToDateTime(
+                                                            booking.reviewed_at,
+                                                        )
+                                                    }}
+                                                </template>
+                                            </p>
+
+                                            <p
+                                                class="mt-3 text-[11px] font-medium uppercase tracking-wider text-rose-700/80 dark:text-rose-300/70"
+                                            >
+                                                Reason
+                                            </p>
+                                            <p
+                                                class="mt-1 whitespace-pre-line text-sm leading-6 text-rose-900 dark:text-rose-100"
+                                            >
+                                                {{
+                                                    booking.reason ||
+                                                    "The branch didn't give a reason."
+                                                }}
+                                            </p>
+
+                                            <p
+                                                v-if="
+                                                    (booking.payment as any)
+                                                        ?.payment_status ===
+                                                    'refunded'
+                                                "
+                                                class="mt-3 rounded-lg bg-white/70 px-3 py-2 text-xs text-rose-900 dark:bg-white/5 dark:text-rose-100"
+                                            >
+                                                Your payment of
+                                                <span class="font-semibold">{{
+                                                    formatMoney(
+                                                        (booking.payment as any)
+                                                            ?.booking_amount ??
+                                                            (booking.payment as any)
+                                                                ?.total_amount,
+                                                    )
+                                                }}</span>
+                                                has been refunded to the card or
+                                                GCash account you paid with.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1239,7 +1323,10 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <div
-                                    v-if="booking.reviewed_by"
+                                    v-if="
+                                        booking.reviewed_by &&
+                                        booking.status !== 'rejected'
+                                    "
                                     class="mt-5 flex flex-wrap items-baseline justify-between gap-2 border-t border-gray-100 pt-4 dark:border-white/10"
                                 >
                                     <p

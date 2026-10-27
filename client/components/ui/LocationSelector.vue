@@ -712,7 +712,7 @@ onUnmounted(() => {
         <div
             v-show="!manual && (activeMode === 'map' || selectedLocation)"
             ref="mapContainerEl"
-            class="w-full h-[400px] z-20 rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
+            class="relative z-0 isolate w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
         />
 
         <div v-show="!manual && activeMode === 'map'" class="flex gap-2">

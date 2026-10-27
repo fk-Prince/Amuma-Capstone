@@ -638,9 +638,22 @@
                         min="1"
                         step="0.01"
                         placeholder="0.00"
+                        :readonly="!rateEditing"
                         :error="errors?.monthly_rate"
                         required
-                    />
+                    >
+                        <template #suffix>
+                            <button
+                                type="button"
+                                class="mr-1.5 flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 dark:text-primary-300"
+                                @click="rateEditing = !rateEditing"
+                            >
+                                <Check v-if="rateEditing" class="h-3.5 w-3.5" />
+                                <Pencil v-else class="h-3.5 w-3.5" />
+                                {{ rateEditing ? "Done" : "Edit" }}
+                            </button>
+                        </template>
+                    </BaseInput>
 
                     <div>
                         <label
@@ -878,7 +891,14 @@ import {
     ref,
     watch,
 } from "vue";
-import { Check, Stethoscope, Clock, Infinity, Info } from "lucide-vue-next";
+import {
+    Check,
+    Stethoscope,
+    Clock,
+    Infinity,
+    Info,
+    Pencil,
+} from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
@@ -1058,6 +1078,8 @@ function setBilling(value: "hourly" | "monthly") {
 
     const monthly = value === "monthly";
 
+    rateEditing.value = false;
+
     emit("update:model", {
         ...props.model,
         billing: value,
@@ -1080,6 +1102,8 @@ function setBilling(value: "hourly" | "monthly") {
 }
 
 const monthlyRate = computed(() => Number(props.model.monthly_rate) || 0);
+
+const rateEditing = ref(false);
 
 const includedActivities = computed(() =>
     props.homecare?.adl_activities?.length

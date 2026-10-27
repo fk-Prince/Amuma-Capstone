@@ -121,7 +121,7 @@
                 </div>
 
                 <div
-                    class="sticky bottom-0 flex shrink-0 items-center justify-end gap-3 rounded-b-lg border-t border-[#E4EFED] bg-white px-6 py-4 dark:border-white/10 dark:bg-secondary"
+                    class="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 rounded-b-lg border-t border-[#E4EFED] bg-white px-6 py-4 dark:border-white/10 dark:bg-secondary"
                 >
                     <button
                         type="button"

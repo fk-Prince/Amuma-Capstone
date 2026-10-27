@@ -156,7 +156,7 @@
                                     <p
                                         class="text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-500"
                                     >
-                                        Price
+                                        Base Price
                                     </p>
                                     <p
                                         class="text-sm font-semibold text-secondary dark:text-white"
