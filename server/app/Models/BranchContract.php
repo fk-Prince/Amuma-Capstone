@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,6 +26,16 @@ class BranchContract extends Model
     public const BILLING_CYCLE_YEARLY = 'YEARLY';
     public const BILLING_CYCLE_HOURLY = 'HOURLY';
 
+    public const ADL_ACTIVITIES = [
+        'Bathing',
+        'Dressing',
+        'Grooming',
+        'Toileting',
+        'Transferring',
+        'Eating',
+        'Mobility',
+    ];
+
     protected $primaryKey = 'branch_contract_id';
 
     protected $fillable = [
@@ -35,12 +46,32 @@ class BranchContract extends Model
         'billing_cycle',
         'is_active',
         'description',
+        'activities',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($contract) {
+            if ($contract->accommodation_type === self::ACCOMMODATION_TYPE_ADL && empty($contract->activities)) {
+                $contract->activities = self::ADL_ACTIVITIES;
+            }
+        });
+    }
+
+    protected function activities(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value !== null
+                ? json_decode($value, true)
+                : ($this->accommodation_type === self::ACCOMMODATION_TYPE_ADL ? self::ADL_ACTIVITIES : null),
+            set: fn($value) => $value === null ? null : json_encode(array_values($value)),
+        );
+    }
 
     public function branch()
     {

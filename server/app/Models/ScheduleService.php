@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -19,12 +20,32 @@ class ScheduleService extends Model
         'service_id',
         'hours_booked',
         'status',
-        'type'
+        'type',
+        'activities',
     ];
 
     protected $casts = [
         'hours_booked' => 'decimal:2',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($scheduleService) {
+            if ($scheduleService->type === self::TYPE_ADL && empty($scheduleService->activities)) {
+                $scheduleService->activities = BranchContract::ADL_ACTIVITIES;
+            }
+        });
+    }
+
+    protected function activities(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value !== null
+                ? json_decode($value, true)
+                : ($this->type === self::TYPE_ADL ? BranchContract::ADL_ACTIVITIES : null),
+            set: fn($value) => $value === null ? null : json_encode(array_values($value)),
+        );
+    }
 
     public function schedule()
     {

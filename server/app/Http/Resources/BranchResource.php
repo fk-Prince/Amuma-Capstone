@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Bed;
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\BranchContract;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
 use App\Models\Subscription;
@@ -162,11 +163,13 @@ class BranchResource extends JsonResource
                 'adl_hourly_rate' => $this->activeContracts()
                     ->where('category', 'Homecare')
                     ->where('accommodation_type', 'ADL')
+                    ->where('billing_cycle', BranchContract::BILLING_CYCLE_HOURLY)
                     ->first()?->price,
                 'adl_min_hour' => $settings['minimum_adl_hours'] ?? 8,
                 'description' => $this->activeContracts()
                     ->where('category', 'Homecare')
                     ->where('accommodation_type', 'ADL')
+                    ->where('billing_cycle', BranchContract::BILLING_CYCLE_HOURLY)
                     ->first()?->description,
             ],
 

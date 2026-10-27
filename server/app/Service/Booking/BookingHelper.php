@@ -3,6 +3,7 @@
 namespace App\Service\Booking;
 
 use App\Models\Booking;
+use App\Models\BranchContract;
 use App\Repository\BranchContractRepository;
 use App\Repository\ServiceRepository;
 use App\Rules\NoEmoji;
@@ -54,6 +55,7 @@ class BookingHelper
         $contract = $this->branchContractRepository->findByField([
             ['branch_id', '=', $branchId],
             ['accommodation_type', '=', strtoupper($payload['booking_data']['homecare']['type'])],
+            ['billing_cycle', '=', BranchContract::BILLING_CYCLE_HOURLY],
             ['is_active', '=', true],
         ]);
 

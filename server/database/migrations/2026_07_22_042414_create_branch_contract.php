@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('billing_cycle', ['MONTHLY',  'YEARLY',   'HOURLY',])->index();
             $table->boolean('is_active')->default(true);
             $table->string('description', 1000)->nullable();
+            $table->jsonb('activities')->nullable();
             $table->timestamps();
         });
     }

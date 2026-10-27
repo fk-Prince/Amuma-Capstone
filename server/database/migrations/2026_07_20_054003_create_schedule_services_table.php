@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('hours_booked', 10, 2)
                 ->nullable()->index();
             $table->enum('type', ['Medical', 'ADL'])->index();
+            $table->jsonb('activities')->nullable();
             $table->timestamps();
         });
     }

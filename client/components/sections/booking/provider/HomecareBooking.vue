@@ -603,6 +603,16 @@
                         </span>
                     </div>
                 </div>
+
+                <div
+                    class="mt-3 flex items-start gap-2 rounded-xl bg-sky-50 px-4 py-3 text-xs leading-5 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
+                >
+                    <Info class="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>
+                        Need a permanent caregiver? Please visit the facility
+                        to arrange it in person.
+                    </p>
+                </div>
             </div>
 
             <div>
@@ -681,7 +691,7 @@ import {
     ref,
     watch,
 } from "vue";
-import { Check, Stethoscope, Clock, Infinity } from "lucide-vue-next";
+import { Check, Stethoscope, Clock, Infinity, Info } from "lucide-vue-next";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";

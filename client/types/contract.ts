@@ -64,8 +64,8 @@ export const homecarePlanSchema = z.object({
         message: "Accommodation type must be ADL",
     }),
     price: z.number().min(1, "Price must be greater than 0"),
-    billing_cycle: z.literal("HOURLY", {
-        message: "Billing cycle must be HOURLY",
+    billing_cycle: z.enum(["HOURLY", "MONTHLY"], {
+        message: "Billing cycle must be hourly or monthly",
     }),
     description: z.string()
         .max(1000, "Description must not exceed 1000 characters")

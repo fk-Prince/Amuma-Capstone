@@ -89,14 +89,35 @@
                             Billing Cycle
                         </label>
                         <div
+                            v-if="isEditMode"
                             class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3.5 py-2.5 text-sm text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
-                            {{ billingIntervals[0]?.label }}
+                            {{ billingCycleLabel }}
+                        </div>
+                        <div
+                            v-else
+                            class="inline-flex h-11 w-full items-center rounded-lg border border-slate-200 bg-slate-50 p-1 dark:bg-secondary dark:border-white/10"
+                        >
+                            <button
+                                v-for="interval in billingIntervals"
+                                :key="interval.value"
+                                type="button"
+                                class="flex-1 h-full rounded-md px-4 text-sm font-medium transition-colors"
+                                :class="
+                                    form.billing_cycle === interval.value
+                                        ? 'bg-white text-primary shadow-sm dark:bg-white/10'
+                                        : 'text-muted hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                "
+                                @click="update('billing_cycle', interval.value)"
+                            >
+                                {{ interval.label }}
+                            </button>
                         </div>
                         <p
-                            class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400"
+                            v-if="errors.billing_cycle"
+                            class="text-xs text-red-500 mt-2 ml-1"
                         >
-                            Homecare packages are billed hourly.
+                            {{ errors.billing_cycle }}
                         </p>
                     </div>
 
@@ -105,7 +126,7 @@
                         <BaseInput
                             :model-value="form.price"
                             @update:model-value="update('price', $event)"
-                            label="Hourly Rate"
+                            :label="isMonthly ? 'Base Price' : 'Hourly Rate'"
                             mode="number"
                             placeholder="0.00"
                             :error="errors.price"
@@ -114,7 +135,11 @@
                         <p
                             class="text-xs text-gray-500 mt-2 ml-1 dark:text-gray-400"
                         >
-                            Set the hourly rate charged for this service
+                            {{
+                                isMonthly
+                                    ? "Set the monthly base price charged for this service"
+                                    : "Set the hourly rate charged for this service"
+                            }}
                         </p>
                     </div>
 
@@ -338,10 +363,22 @@ const billingIntervals = [
         label: "Hourly",
         value: "HOURLY",
     },
+    {
+        label: "Monthly",
+        value: "MONTHLY",
+    },
 ];
 
 const uuid = computed(() => route.params.uuid as string);
 const isEditMode = computed(() => !!props.data?.branch_contract_id);
+
+const isMonthly = computed(() => form.billing_cycle === "MONTHLY");
+
+const billingCycleLabel = computed(
+    () =>
+        billingIntervals.find((interval) => interval.value === form.billing_cycle)
+            ?.label ?? form.billing_cycle,
+);
 
 const serviceTypeLabel = computed(() => {
     const match = serviceTypes.find(
