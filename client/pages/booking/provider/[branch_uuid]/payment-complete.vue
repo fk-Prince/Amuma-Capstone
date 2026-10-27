@@ -112,6 +112,17 @@
                     <div
                         class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
                     >
+                        <ReceiptText
+                            class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                        />
+                        <span>
+                            You can check and print your receipt in your
+                            booking.
+                        </span>
+                    </div>
+                    <div
+                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
+                    >
                         <ShieldCheck
                             class="h-4 w-4 shrink-0 mt-0.5 text-primary"
                         />
@@ -205,6 +216,7 @@ import {
     Wallet,
     ShieldCheck,
     LoaderCircle,
+    ReceiptText,
 } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import backdrop from "~/assets/logo/signinLogo2.png";
@@ -254,7 +266,8 @@ const description = computed(() => {
 });
 
 const showRedirectUi = ref(false);
-const secondsLeft = ref(5);
+const secondsLeft = ref(10);
+const bookingReference = ref<string | null>(null);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 function stopCountdown() {
@@ -271,7 +284,12 @@ function goHome() {
 
 function viewBookings() {
     stopCountdown();
-    router.push("/portal/bookings");
+    router.push({
+        path: "/portal/bookings",
+        query: bookingReference.value
+            ? { reference_id: bookingReference.value }
+            : {},
+    });
 }
 
 function tryAgain() {
@@ -291,6 +309,7 @@ async function confirmPayment() {
         const res = await paymentService.checkStatus(reference.value);
         confirmState.value =
             res.status === "submitted" ? "submitted" : "failed";
+        bookingReference.value = res.reference_id ?? null;
     } catch {
         confirmState.value = "failed";
     }

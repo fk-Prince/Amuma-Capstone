@@ -159,6 +159,14 @@ export const settingSchema = z.object({
             .min(1, "Minimum homecare hours must be at least 1."),
     ),
 
+    vat_rate: z.preprocess(
+        (value) => (value === "" || value == null ? 0 : value),
+        z.coerce
+            .number({ message: "VAT rate must be a number." })
+            .min(0, "VAT rate must be between 0 and 100.")
+            .max(100, "VAT rate must be between 0 and 100."),
+    ),
+
     // billing_due_date: z.preprocess(
     //     (value) => (value === "" ? undefined : value),
     //     z.coerce

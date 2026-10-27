@@ -31,6 +31,11 @@ class Branch extends Model
         'email'
     ];
 
+    public function vatRate(): float
+    {
+        return (float) data_get($this->settings, 'vat_rate', 0);
+    }
+
     public function hasFacilitySubscription()
     {
         return $this->hasPlanAccess(['B', 'C']);

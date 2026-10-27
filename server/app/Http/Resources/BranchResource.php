@@ -71,6 +71,7 @@ class BranchResource extends JsonResource
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'currency' => $settings['currency'] ?? 'PHP',
                 'tin' => $settings['tin'] ?? null,
+                'vat_rate' => (float) ($settings['vat_rate'] ?? 0),
             ],
 
             'location' => $this->location,

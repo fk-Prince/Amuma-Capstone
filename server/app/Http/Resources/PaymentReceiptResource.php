@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Utils\Vat;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,7 +23,10 @@ class PaymentReceiptResource extends JsonResource
                 'email'       => $this->branch?->email,
                 'tin'         => data_get($this->branch?->settings, 'tin'),
                 'permit_no'   => data_get($this->branch?->settings, 'bir_permit_no'),
+                'vat_registered' => ($this->branch?->vatRate() ?? 0) > 0,
             ],
+
+            'tax' => $this->taxSummary(),
 
             'payor' => [
                 'name' => $this->resolvePayorName(),
@@ -68,6 +72,25 @@ class PaymentReceiptResource extends JsonResource
                 'duration'      => $allocation->invoice?->adlDuration(),
                 'months_billed'     => $allocation->invoice?->adlMonthsBilled(),
             ]),
+        ];
+    }
+
+    protected function taxSummary(): array
+    {
+        $taxed = $this->allocations
+            ->filter(fn($allocation) => (float) $allocation->invoice?->vat_rate > 0 && (float) $allocation->amount > 0);
+
+        $vat = round($taxed->sum(fn($allocation) => Vat::portion(
+            (float) $allocation->amount,
+            (float) $allocation->invoice->vat_rate
+        )), 2);
+
+        $rates = $taxed->map(fn($allocation) => (float) $allocation->invoice->vat_rate)->unique();
+
+        return [
+            'vat_rate'      => $rates->count() === 1 ? $rates->first() : null,
+            'vatable_sales' => round((float) $taxed->sum('amount') - $vat, 2),
+            'vat_amount'    => $vat,
         ];
     }
 

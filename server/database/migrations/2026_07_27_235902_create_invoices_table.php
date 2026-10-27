@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id('invoice_id');
             $table->string('invoice_code')->unique();
             $table->decimal('total_amount', 10, 2);
+            $table->decimal('vat_rate', 5, 2)->default(0);
             $table->enum('status', ['unpaid', 'partially_paid', 'paid', 'void', 'written_off'])
                 ->default('unpaid');
             $table->foreignId('branch_id')

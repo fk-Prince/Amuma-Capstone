@@ -254,6 +254,14 @@
                                     )
                                 }}
                             </p>
+                            <p
+                                v-if="Number(invoice.vat_amount) > 0"
+                                class="mt-0.5 text-[12px] text-[#6B8A87] dark:text-gray-400"
+                            >
+                                Incl. VAT ({{ Number(invoice.vat_rate) }}%) ₱{{
+                                    formatMoney(invoice.vat_amount)
+                                }}
+                            </p>
                         </div>
 
                         <div

@@ -79,6 +79,18 @@
                         </span>
                     </div>
                     <div
+                        v-if="acknowledgement?.receipt_code"
+                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
+                    >
+                        <ReceiptText
+                            class="h-4 w-4 shrink-0 mt-0.5 text-primary"
+                        />
+                        <span>
+                            You can check and print your receipt in your
+                            booking.
+                        </span>
+                    </div>
+                    <div
                         class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
                     >
                         <ShieldCheck
@@ -152,7 +164,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { CheckCircle2, BellRing, Printer, ShieldCheck } from "lucide-vue-next";
+import {
+    CheckCircle2,
+    BellRing,
+    Printer,
+    ReceiptText,
+    ShieldCheck,
+} from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import backdrop from "~/assets/logo/signinLogo2.png";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
@@ -178,7 +196,7 @@ const category = computed<"homecare" | "facility">(() => {
     return bookingStore.category ?? "homecare";
 });
 
-const referenceId = computed(() => bookingStore.lastSubmittedId ?? "");
+const referenceId = ref(bookingStore.lastSubmittedId ?? "");
 
 const acknowledgement = ref<any>(null);
 const showAcknowledgement = ref(false);
@@ -186,7 +204,7 @@ const isLoadingAcknowledgement = ref(false);
 const isOpeningBookings = ref(false);
 
 const showCountdown = ref(true);
-const secondsLeft = ref(5);
+const secondsLeft = ref(10);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 function stopCountdown() {
@@ -256,7 +274,12 @@ async function viewBookings() {
     isOpeningBookings.value = true;
 
     try {
-        await router.push("/portal/bookings");
+        await router.push({
+            path: "/portal/bookings",
+            query: referenceId.value
+                ? { reference_id: referenceId.value }
+                : {},
+        });
     } finally {
         isOpeningBookings.value = false;
     }

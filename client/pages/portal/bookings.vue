@@ -880,6 +880,29 @@ onBeforeUnmount(() => {
 
                                     <div class="flex items-center gap-2">
                                         <button
+                                            v-if="booking.receipt_code"
+                                            type="button"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
+                                            :disabled="
+                                                loadingReceiptCode ===
+                                                booking.receipt_code
+                                            "
+                                            @click.stop="
+                                                openReceipt(
+                                                    booking.receipt_code,
+                                                )
+                                            "
+                                        >
+                                            <Printer class="h-3.5 w-3.5" />
+                                            {{
+                                                loadingReceiptCode ===
+                                                booking.receipt_code
+                                                    ? "Loading..."
+                                                    : "Print receipt"
+                                            }}
+                                        </button>
+
+                                        <button
                                             type="button"
                                             class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
                                             @click.stop="printing = booking"

@@ -37,7 +37,10 @@ class FacilityWebhook
 
         Cache::put(
             "xendit_payment_status_{$reference}",
-            ['status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed'],
+            [
+                'status' => $response->getStatusCode() < 300 ? 'submitted' : 'failed',
+                'reference_id' => $response->getData(true)['data']['reference_id'] ?? null,
+            ],
             now()->addDay()
         );
 

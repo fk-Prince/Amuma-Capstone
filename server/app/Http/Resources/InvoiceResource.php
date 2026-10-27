@@ -27,6 +27,8 @@ class InvoiceResource extends JsonResource
             ),
             'total'        => (float) $this->total_amount,
             'adjusted_total' => $this->adjusted_total,
+            'vat_rate'     => (float) $this->vat_rate,
+            'vat_amount'   => $this->vat_amount,
             'written_off_amount' => $this->status === Invoice::STATUS_WRITTEN_OFF
                 ? round(max(0, $this->adjusted_total - $this->net_paid_amount), 2)
                 : 0.0,

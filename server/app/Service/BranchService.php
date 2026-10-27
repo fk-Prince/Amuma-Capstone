@@ -252,7 +252,12 @@ class BranchService
             'opening',
             'closing',
             'currency',
+            'vat_rate',
         ]);
+
+        if (array_key_exists('vat_rate', $settingPayload)) {
+            $settingPayload['vat_rate'] = round(min(100, max(0, (float) $settingPayload['vat_rate'])), 2);
+        }
 
         foreach (
             ['enable_booking_pre_admission', 'enable_booking_complete_admission', 'requires_full_payment_on_admit', 'is_open']

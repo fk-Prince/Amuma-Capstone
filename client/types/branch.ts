@@ -58,6 +58,7 @@ export interface BranchSettings {
     is_open: boolean;
     status?: "OPEN" | "CLOSED";
     tin?: string | null;
+    vat_rate?: number;
 }
 
 export const getBranchImage = (image: File | string | null | undefined) => {
