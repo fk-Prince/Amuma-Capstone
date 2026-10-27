@@ -54,6 +54,11 @@
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <ViewModeToggle
+                            :model-value="viewMode"
+                            @update:model-value="setViewMode"
+                        />
+
                         <button
                             type="button"
                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
@@ -96,6 +101,7 @@
                 :current-page="currentPage"
                 :total-items="totalItems"
                 :page-size="PAGE_SIZE"
+                :view="viewMode"
                 @page-change="onPageChange"
             />
         </div>
@@ -117,6 +123,8 @@ import {
 import OverviewStatCard from "~/components/sections/app/Dashboard/overview/OverviewStatCard.vue";
 import SalesVatFilter from "~/components/sections/app/Report/SalesVatFilter.vue";
 import SalesVatTable from "~/components/sections/app/Report/SalesVatTable.vue";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
 import { reportService } from "~/api/report/ReportService";
 import { usePermissions } from "~/composables/usePermission";
 import { useToast } from "~/composables/useToast";
@@ -146,6 +154,7 @@ const uuid = route.params.uuid as string;
 const { error } = useToast();
 const { canExport } = usePermissions();
 const branchStore = useBranchStore();
+const { view: viewMode, setView: setViewMode } = useListView();
 
 const mode = ref<ReportPeriodMode>("quarter");
 const anchor = ref(new Date());

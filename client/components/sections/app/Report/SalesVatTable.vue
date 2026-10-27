@@ -17,6 +17,7 @@ const props = withDefaults(
         currentPage?: number;
         totalItems?: number;
         pageSize?: number;
+        view?: "table" | "card";
     }>(),
     {
         currentPage: 1,
@@ -85,6 +86,7 @@ const tableRows = computed(() =>
         :rows="tableRows"
         :pagination="pagination"
         :loading="loading"
+        :view="view"
         :searchable="false"
         empty-title="No sales in this period"
         empty-description="Invoices created in the selected period will be listed here."
