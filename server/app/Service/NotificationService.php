@@ -191,6 +191,36 @@ class NotificationService
         }
     }
 
+    public function notifyBookingClient(Booking $booking, string $message, ?User $actor = null): void
+    {
+        $client = $booking->user_id ? User::find($booking->user_id) : null;
+        $branch = $booking->branch;
+
+        if (!$client || !$branch) {
+            return;
+        }
+
+        $this->notificationRepository->create([
+            'branch_id' => $branch->branch_id,
+            'to_user_id' => $client->user_id,
+            'from_user_id' => $actor?->user_id ?? $client->user_id,
+            'message_type' => 'Booking',
+            'message' => $message,
+            'reference_id' => (string) $booking->reference_id,
+        ]);
+
+        if ($client->uuid) {
+            NotificationEvent::safe(new NotificationEvent(
+                $client->uuid,
+                $branch->uuid,
+                $message,
+                (string) $booking->reference_id,
+                'Booking',
+                $booking
+            ));
+        }
+    }
+
     public function notifyNewBooking(Branch $branch, User $user, object $booking): void
     {
         $this->sendNotification([

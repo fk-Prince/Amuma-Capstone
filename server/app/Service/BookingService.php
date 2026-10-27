@@ -545,6 +545,12 @@ class BookingService
         return true;
     }
 
+    private function refundedAmount(array $bookingData): float
+    {
+        $payment = $bookingData['payment'] ?? [];
+        return (float) ($payment['booking_amount'] ?? $payment['total_amount'] ?? 0);
+    }
+
     //USED
     public function expire(Booking $booking): bool
     {
@@ -556,6 +562,14 @@ class BookingService
                 'booking_data' => $bookingData,
                 'status' => Booking::STATUS_EXPIRED,
             ]);
+
+            $this->notificationService->notifyBookingClient(
+                $booking,
+                $refunded
+                    ? "Your booking {$booking->reference_id} expired before it was reviewed. Your payment of ₱"
+                    . number_format($this->refundedAmount($bookingData), 2) . ' has been refunded.'
+                    : "Your booking {$booking->reference_id} expired before it was reviewed."
+            );
 
             return $refunded;
         });
@@ -829,6 +843,13 @@ class BookingService
             $this->refundBookingPayment($booking, $data, true);
 
             $booking->update(['booking_data' => $data]);
+
+            $this->notificationService->notifyBookingClient(
+                $booking,
+                "Your payment of ₱" . number_format($this->refundedAmount($data), 2)
+                    . " for booking {$booking->reference_id} has been refunded.",
+                $payload['user'] ?? request()->user()
+            );
 
             return response()->json([
                 'message' => "Booking {$booking->reference_id} has been refunded.",
