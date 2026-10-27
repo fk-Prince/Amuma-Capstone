@@ -867,8 +867,8 @@ function applyPreset(entry: AssignmentEntry, preset: string) {
             entry.start_time === hours.start &&
             entry.end_time === hours.end
         ) {
-            entry.start_time = bookingWindow.value.start;
-            entry.end_time = bookingWindow.value.end;
+            entry.start_time = "";
+            entry.end_time = "";
         }
 
         return;
@@ -1064,8 +1064,8 @@ function restoreSavedAssignments(schedule: AuditRow) {
         return {
             employee_id: id,
             note,
-            start_time: match?.start_time || bookingWindow.value.start,
-            end_time: match?.end_time || bookingWindow.value.end,
+            start_time: match?.start_time || "",
+            end_time: match?.end_time || "",
         };
     });
 }
@@ -1133,8 +1133,8 @@ function toggleEmployee(employeeId: string) {
             {
                 employee_id: employeeId,
                 note: "",
-                start_time: bookingWindow.value.start,
-                end_time: bookingWindow.value.end,
+                start_time: "",
+                end_time: "",
             },
         ];
         return;

@@ -31,7 +31,7 @@
                     <img
                         v-if="selectedOption.icon"
                         :src="selectedOption.icon"
-                        class="h-5 w-5 object-cover"
+                        :class="selectedOption.iconClass ?? 'h-5 w-5 object-cover'"
                     />
 
                     <component
@@ -110,7 +110,7 @@
                     <img
                         v-if="item.icon"
                         :src="item.icon"
-                        class="h-5 w-5 object-cover"
+                        :class="item.iconClass ?? 'h-5 w-5 object-cover'"
                     />
 
                     <component
@@ -161,6 +161,7 @@ type Item = {
     label: string;
     value: any;
     icon?: string;
+    iconClass?: string;
     iconComponent?: Component;
 };
 const props = withDefaults(
@@ -370,7 +371,7 @@ onBeforeUnmount(() => {
                     <img
                         v-if="selectedOption.icon"
                         :src="selectedOption.icon"
-                        class="h-5 w-5 object-cover"
+                        :class="selectedOption.iconClass ?? 'h-5 w-5 object-cover'"
                     />
 
                     <component
@@ -455,7 +456,7 @@ onBeforeUnmount(() => {
                         <img
                             v-if="item.icon"
                             :src="item.icon"
-                            class="h-5 w-5 object-cover"
+                            :class="item.iconClass ?? 'h-5 w-5 object-cover'"
                         />
 
                         <component
@@ -507,6 +508,7 @@ type Item = {
     label: string;
     value: any;
     icon?: string;
+    iconClass?: string;
     iconComponent?: Component;
 };
 const props = withDefaults(

@@ -1,10 +1,12 @@
+import { FLAG_ICON_CLASS, PH_FLAG } from "~/utils/flags";
 
 export function Currency() {
     return [
         {
             label: "Philippine Peso",
             value: "PHP",
-            icon: "https://flagcdn.com/ph.svg",
+            icon: PH_FLAG,
+            iconClass: FLAG_ICON_CLASS,
         },
         // {
         //     label: "US Dollar",
