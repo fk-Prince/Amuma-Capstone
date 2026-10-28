@@ -4,13 +4,14 @@ namespace App\Repository;
 
 use App\Models\SupportTicket;
 use App\Models\SupportTicketReply;
+use Illuminate\Database\Eloquent\Builder;
 
 class SupportTicketRepository
 {
     private const SUMMARY_RELATIONS = [
         'branch:branch_id,uuid,name,agency_id',
         'branch.agencies:agency_id,name',
-        'user:user_id,email',
+        'user:user_id,uuid,email',
         'user.employee:employee_id,user_id,first_name,last_name',
         'user.client:client_id,user_id,first_name,last_name',
     ];
@@ -25,16 +26,14 @@ class SupportTicketRepository
         return $ticket->replies()->create($payload);
     }
 
-    public function paginate(array $filters, ?int $branchId, int $perPage)
+    public function paginate(array $filters, array $scope, int $perPage)
     {
-        return SupportTicket::query()
+        return $this->scoped(SupportTicket::query(), $scope)
             ->select([
                 'support_ticket_id',
                 'uuid',
                 'branch_id',
                 'user_id',
-                'contact_name',
-                'contact_email',
                 'category',
                 'subject',
                 'status',
@@ -42,7 +41,6 @@ class SupportTicketRepository
             ])
             ->with(self::SUMMARY_RELATIONS)
             ->withMax('replies as last_reply_at', 'created_at')
-            ->when($branchId, fn($query) => $query->where('branch_id', $branchId))
             ->when($filters['status'] ?? null, fn($query, $status) => $query->where('status', $status))
             ->when($filters['category'] ?? null, fn($query, $category) => $query->where('category', $category))
             ->when($filters['source'] ?? null, fn($query, $source) => $source === 'public'
@@ -55,8 +53,7 @@ class SupportTicketRepository
 
                 $query->where(function ($inner) use ($term, $code) {
                     $inner->where('subject', 'ilike', $term)
-                        ->orWhere('contact_name', 'ilike', $term)
-                        ->orWhere('contact_email', 'ilike', $term)
+                        ->orWhereHas('user', fn($user) => $user->where('email', 'ilike', $term))
                         ->orWhereHas('branch', fn($branch) => $branch->where('name', 'ilike', $term))
                         ->orWhereHas('branch.agencies', fn($agency) => $agency->where('name', 'ilike', $term))
                         ->when($code, fn($byCode) => $byCode->orWhere('support_ticket_id', $code));
@@ -67,20 +64,18 @@ class SupportTicketRepository
             ->paginate($perPage);
     }
 
-    public function statusCounts(?int $branchId)
+    public function statusCounts(array $scope)
     {
-        return SupportTicket::query()
-            ->when($branchId, fn($query) => $query->where('branch_id', $branchId))
+        return $this->scoped(SupportTicket::query(), $scope)
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
     }
 
-    public function findByUuid(string $uuid, ?int $branchId): ?SupportTicket
+    public function findByUuid(string $uuid, array $scope): ?SupportTicket
     {
-        return SupportTicket::query()
+        return $this->scoped(SupportTicket::query(), $scope)
             ->where('uuid', $uuid)
-            ->when($branchId, fn($query) => $query->where('branch_id', $branchId))
             ->with([
                 ...self::SUMMARY_RELATIONS,
                 'replies' => fn($query) => $query
@@ -101,6 +96,15 @@ class SupportTicketRepository
         $ticket->update($payload);
 
         return $ticket;
+    }
+
+    private function scoped(Builder $query, array $scope): Builder
+    {
+        return $query
+            ->when($scope['branch_id'] ?? null, fn($inner, $branchId) => $inner->where('branch_id', $branchId))
+            ->when($scope['user_id'] ?? null, fn($inner, $userId) => $inner
+                ->whereNull('branch_id')
+                ->where('user_id', $userId));
     }
 
     private function authorRelations(string $path): array

@@ -71,8 +71,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 });
 Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch']);
-Route::post('/support-tickets/public', [SupportTicketController::class, 'storePublic'])->middleware('throttle:5,1');
-
 if (config('app.sandbox')) {
     Route::post('/sandbox/provision', [SandboxController::class, 'provision'])->middleware('throttle:30,1');
     Route::post('/sandbox/lock', [SandboxController::class, 'lock'])->middleware('throttle:120,1');

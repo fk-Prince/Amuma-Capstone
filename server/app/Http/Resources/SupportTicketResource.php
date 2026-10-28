@@ -21,7 +21,7 @@ class SupportTicketResource extends JsonResource
                 ?? ($this->relationLoaded('replies') ? $this->replies->max('created_at') : null),
             'submitted_by' => [
                 'name' => $this->submitter_name,
-                'email' => $this->submitter_email,
+                'email' => $this->user?->email,
             ],
             'branch' => [
                 'uuid' => $this->branch?->uuid,
@@ -30,9 +30,7 @@ class SupportTicketResource extends JsonResource
             'agency' => [
                 'name' => $this->branch?->agencies?->name,
             ],
-            'replies' => $this->whenLoaded('replies', fn() => SupportTicketReplyResource::collection(
-                $this->replies->each(fn($reply) => $reply->setRelation('ticket', $this->resource))
-            )),
+            'replies' => SupportTicketReplyResource::collection($this->whenLoaded('replies')),
         ];
     }
 }

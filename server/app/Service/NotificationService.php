@@ -383,6 +383,34 @@ class NotificationService
         }
     }
 
+    public function notifyUser(
+        User $recipient,
+        string $messageType,
+        string $message,
+        ?User $actor = null,
+        ?string $referenceId = null,
+    ): void {
+        $this->notificationRepository->create([
+            'branch_id' => null,
+            'to_user_id' => $recipient->user_id,
+            'from_user_id' => $actor?->user_id ?? $recipient->user_id,
+            'message_type' => $messageType,
+            'message' => $message,
+            'reference_id' => $referenceId,
+        ]);
+
+        if ($recipient->uuid) {
+            NotificationEvent::safe(new NotificationEvent(
+                $recipient->uuid,
+                '',
+                $message,
+                $referenceId ?? '',
+                $messageType,
+                null,
+            ));
+        }
+    }
+
     public function notifyPlatformAdmins(
         ?Branch $branch,
         string $message,

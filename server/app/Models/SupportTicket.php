@@ -22,8 +22,6 @@ class SupportTicket extends Model
     protected $fillable = [
         'branch_id',
         'user_id',
-        'contact_name',
-        'contact_email',
         'category',
         'subject',
         'status',
@@ -57,14 +55,8 @@ class SupportTicket extends Model
     public function getSubmitterNameAttribute(): ?string
     {
         $profile = $this->user?->employee ?? $this->user?->client;
-        $name = trim(($profile?->first_name ?? '') . ' ' . ($profile?->last_name ?? ''));
 
-        return $name ?: $this->contact_name;
-    }
-
-    public function getSubmitterEmailAttribute(): ?string
-    {
-        return $this->user?->email ?? $this->contact_email;
+        return trim(($profile?->first_name ?? '') . ' ' . ($profile?->last_name ?? '')) ?: null;
     }
 
     public function getTicketCodeAttribute(): string

@@ -31,7 +31,7 @@ class SupportTicketController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'branch_uuid' => ['required', 'uuid'],
+            'branch_uuid' => ['nullable', 'uuid'],
             'category' => ['required', Rule::in(SupportTicket::CATEGORIES)],
             'subject' => ['required', 'string', 'max:150'],
             'message' => ['required', 'string', 'max:5000'],
@@ -39,22 +39,6 @@ class SupportTicketController extends Controller
         ]);
 
         return $this->supportTicketService->create($validated, $request->user());
-    }
-
-    public function storePublic(Request $request)
-    {
-        $user = auth('sanctum')->user();
-
-        $validated = $request->validate([
-            'name' => [$user ? 'nullable' : 'required', 'string', 'max:150'],
-            'email' => [$user ? 'nullable' : 'required', 'email', 'max:255'],
-            'category' => ['required', Rule::in(SupportTicket::CATEGORIES)],
-            'subject' => ['required', 'string', 'max:150'],
-            'message' => ['required', 'string', 'max:5000'],
-            'attachment' => self::ATTACHMENT_RULES,
-        ]);
-
-        return $this->supportTicketService->createPublic($validated, $user);
     }
 
     public function show(Request $request, string $uuid)

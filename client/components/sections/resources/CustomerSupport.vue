@@ -1,34 +1,43 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
+    ArrowLeft,
     CheckCircle2,
+    ChevronRight,
     ImagePlus,
-    LifeBuoy,
     LoaderCircle,
-    Mail,
+    RotateCcw,
     Send,
     X,
 } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
+import SupportThread from "~/components/sections/support/SupportThread.vue";
 import { supportService } from "~/api/support/SupportService";
-import { useAuthUser } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
 import {
+    SUPPORT_CATEGORY_LABELS,
     SUPPORT_CATEGORY_OPTIONS,
+    SUPPORT_STATUS_CLASSES,
+    SUPPORT_STATUS_LABELS,
     type SupportCategory,
+    type SupportReply,
+    type SupportStatus,
+    type SupportTicket,
 } from "~/types/support";
+import { stringToDateTime } from "~/utils/time";
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const PAGE_SIZE = 10;
 
-const authUser = useAuthUser();
-const { error } = useToast();
+const route = useRoute();
+const router = useRouter();
+const { success, error } = useToast();
 
-const signedIn = computed(() => !!authUser.value);
+const tab = ref<"new" | "tickets">("new");
 
 const form = reactive({
-    name: "",
-    email: "",
     category: "" as SupportCategory | "",
     subject: "",
     message: "",
@@ -38,7 +47,73 @@ const form = reactive({
 const errors = reactive<Record<string, string>>({});
 const fileInput = ref<HTMLInputElement | null>(null);
 const submitting = ref(false);
-const sent = ref<{ code: string; message: string } | null>(null);
+
+const tickets = ref<SupportTicket[]>([]);
+const loading = ref(false);
+const page = ref(1);
+const lastPage = ref(1);
+const total = ref(0);
+
+const active = ref<SupportTicket | null>(null);
+const threadLoading = ref(false);
+const sending = ref(false);
+const savingStatus = ref(false);
+const thread = ref<InstanceType<typeof SupportThread> | null>(null);
+
+const fetchTickets = async (nextPage = 1) => {
+    loading.value = true;
+
+    try {
+        const res: any = await supportService.list({
+            page: nextPage,
+            per_page: PAGE_SIZE,
+        });
+
+        const rows = (res.data ?? []) as SupportTicket[];
+        tickets.value = nextPage === 1 ? rows : [...tickets.value, ...rows];
+        page.value = res.meta?.current_page ?? nextPage;
+        lastPage.value = res.meta?.last_page ?? 1;
+        total.value = res.meta?.total ?? rows.length;
+    } catch (err: any) {
+        error(err?.message || "Unable to load your tickets.");
+    } finally {
+        loading.value = false;
+    }
+};
+
+const openTicket = async (uuid: string) => {
+    tab.value = "tickets";
+    active.value = tickets.value.find((ticket) => ticket.uuid === uuid) ?? null;
+    threadLoading.value = true;
+
+    try {
+        const res: any = await supportService.show(uuid);
+        active.value = res.data ?? null;
+    } catch (err: any) {
+        active.value = null;
+        error(err?.message || "Unable to open this ticket.");
+    } finally {
+        threadLoading.value = false;
+    }
+};
+
+const closeTicket = () => {
+    active.value = null;
+
+    if (route.query.ticket) {
+        router.replace({ query: { ...route.query, ticket: undefined } });
+    }
+};
+
+const patchTicket = (uuid: string, patch: Partial<SupportTicket>) => {
+    tickets.value = tickets.value.map((ticket) =>
+        ticket.uuid === uuid ? { ...ticket, ...patch } : ticket,
+    );
+
+    if (active.value?.uuid === uuid) {
+        active.value = { ...active.value, ...patch };
+    }
+};
 
 const pickFile = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -60,36 +135,38 @@ const pickFile = (event: Event) => {
     form.attachment = file;
 };
 
-const validate = () => {
-    errors.name =
-        signedIn.value || form.name.trim() ? "" : "Enter your name.";
-    errors.email =
-        signedIn.value || /^\S+@\S+\.\S+$/.test(form.email.trim())
-            ? ""
-            : "Enter a valid email so we can reply.";
+const submit = async () => {
     errors.category = form.category ? "" : "Choose what this is about.";
     errors.subject = form.subject.trim() ? "" : "Add a short subject.";
     errors.message = form.message.trim() ? "" : "Describe your concern.";
 
-    return !Object.values(errors).some(Boolean);
-};
-
-const submit = async () => {
-    if (!validate()) return;
+    if (errors.category || errors.subject || errors.message) return;
 
     submitting.value = true;
 
     try {
-        const res: any = await supportService.createPublic({
-            name: signedIn.value ? undefined : form.name.trim(),
-            email: signedIn.value ? undefined : form.email.trim(),
+        const res: any = await supportService.create({
             category: form.category as SupportCategory,
             subject: form.subject.trim(),
             message: form.message.trim(),
             attachment: form.attachment,
         });
 
-        sent.value = { code: res.data?.ticket_code, message: res.message };
+        const ticket = res.data as SupportTicket;
+
+        tickets.value = [ticket, ...tickets.value];
+        total.value += 1;
+        active.value = ticket;
+        tab.value = "tickets";
+
+        Object.assign(form, {
+            category: "",
+            subject: "",
+            message: "",
+            attachment: null,
+        });
+
+        success(res.message ?? "Your ticket has been sent.");
     } catch (err: any) {
         Object.entries(err?.errors ?? {}).forEach(([field, messages]) => {
             errors[field] = (messages as string[])[0] ?? "";
@@ -100,15 +177,65 @@ const submit = async () => {
     }
 };
 
-const startOver = () => {
-    Object.assign(form, {
-        category: "",
-        subject: "",
-        message: "",
-        attachment: null,
-    });
-    sent.value = null;
+const sendReply = async (payload: { message: string; attachment: File | null }) => {
+    const ticket = active.value;
+    if (!ticket) return;
+
+    sending.value = true;
+
+    try {
+        const res: any = await supportService.reply(ticket.uuid, payload);
+        const reply = res.data.reply as SupportReply;
+
+        patchTicket(ticket.uuid, {
+            status: res.data.status as SupportStatus,
+            last_reply_at: reply.created_at,
+            replies: [...(active.value?.replies ?? []), reply],
+        });
+
+        thread.value?.reset();
+    } catch (err: any) {
+        error(err?.message || "Unable to send your message.");
+    } finally {
+        sending.value = false;
+    }
 };
+
+const changeStatus = async (status: "open" | "resolved") => {
+    const ticket = active.value;
+    if (!ticket) return;
+
+    savingStatus.value = true;
+
+    try {
+        const res: any = await supportService.updateStatus(ticket.uuid, { status });
+        patchTicket(ticket.uuid, { status: res.data.status });
+        success(res.message);
+    } catch (err: any) {
+        error(err?.message || "Unable to update this ticket.");
+    } finally {
+        savingStatus.value = false;
+    }
+};
+
+watch(
+    () => route.query.ticket,
+    (uuid) => {
+        if (typeof uuid === "string" && uuid) openTicket(uuid);
+    },
+);
+
+onMounted(async () => {
+    await fetchTickets();
+
+    const uuid = route.query.ticket;
+
+    if (typeof uuid === "string" && uuid) {
+        openTicket(uuid);
+    } else if (tickets.value.length) {
+        tab.value = "tickets";
+    }
+});
 </script>
 
 <template>
@@ -140,100 +267,49 @@ const startOver = () => {
                     class="mt-4 text-sm leading-7 text-muted md:text-base dark:text-gray-400"
                 >
                     Questions about AMUMA, a booking, or a problem with the
-                    site? Send us a message and the AMUMA team will reply by
-                    email.
+                    site? Send us a message — the AMUMA team replies right here
+                    in your tickets.
                 </p>
             </div>
         </section>
 
         <section class="relative z-10 px-6 pb-20">
             <div
-                class="mx-auto max-w-2xl rounded-3xl border border-gray-200 bg-white p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:p-8 dark:border-white/10 dark:bg-secondary-800"
+                class="mx-auto flex max-w-2xl flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-secondary-800"
             >
-                <div v-if="sent" class="py-8 text-center">
-                    <div
-                        class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
+                <div
+                    v-if="!active"
+                    class="flex gap-1 border-b border-gray-100 p-2 dark:border-white/10"
+                >
+                    <button
+                        v-for="item in [
+                            { value: 'new', label: 'New message' },
+                            {
+                                value: 'tickets',
+                                label: total
+                                    ? `My tickets (${total})`
+                                    : 'My tickets',
+                            },
+                        ]"
+                        :key="item.value"
+                        type="button"
+                        class="flex-1 rounded-2xl px-4 py-2.5 text-sm font-semibold transition"
+                        :class="
+                            tab === item.value
+                                ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                                : 'text-muted hover:bg-light dark:text-gray-400 dark:hover:bg-white/5'
+                        "
+                        @click="tab = item.value as 'new' | 'tickets'"
                     >
-                        <CheckCircle2 class="h-7 w-7" />
-                    </div>
-
-                    <h2 class="text-xl font-bold text-secondary dark:text-white">
-                        Message sent
-                    </h2>
-
-                    <p
-                        class="mx-auto mt-2 max-w-md text-sm leading-6 text-muted dark:text-gray-400"
-                    >
-                        {{ sent.message }}
-                    </p>
-
-                    <p
-                        v-if="sent.code"
-                        class="mt-4 inline-flex rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary dark:bg-primary-500/10"
-                    >
-                        Ticket {{ sent.code }}
-                    </p>
-
-                    <div>
-                        <button
-                            type="button"
-                            class="mt-6 text-sm font-medium text-primary hover:underline"
-                            @click="startOver"
-                        >
-                            Send another message
-                        </button>
-                    </div>
+                        {{ item.label }}
+                    </button>
                 </div>
 
-                <form v-else class="space-y-4" @submit.prevent="submit">
-                    <div class="mb-2 flex items-center gap-3">
-                        <span
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
-                        >
-                            <LifeBuoy class="h-5 w-5" />
-                        </span>
-                        <div>
-                            <p
-                                class="text-sm font-semibold text-secondary dark:text-white"
-                            >
-                                Send a message
-                            </p>
-                            <p
-                                class="text-xs text-muted dark:text-gray-400"
-                            >
-                                We usually reply within 1–2 business days.
-                            </p>
-                        </div>
-                    </div>
-
-                    <p
-                        v-if="signedIn"
-                        class="flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-white/5 dark:text-gray-300"
-                    >
-                        <Mail class="h-4 w-4 text-primary" />
-                        We'll reply to {{ authUser?.email }}
-                    </p>
-
-                    <div v-else class="grid gap-4 sm:grid-cols-2">
-                        <BaseInput
-                            v-model="form.name"
-                            label="Your name"
-                            placeholder="Juan Dela Cruz"
-                            required
-                            :text-max="150"
-                            :error="errors.name"
-                            @update:model-value="errors.name = ''"
-                        />
-                        <BaseInput
-                            v-model="form.email"
-                            label="Email"
-                            placeholder="you@example.com"
-                            required
-                            :error="errors.email"
-                            @update:model-value="errors.email = ''"
-                        />
-                    </div>
-
+                <form
+                    v-if="!active && tab === 'new'"
+                    class="space-y-4 p-6 sm:p-8"
+                    @submit.prevent="submit"
+                >
                     <Combobox
                         v-model="form.category"
                         label="Topic"
@@ -323,6 +399,160 @@ const startOver = () => {
                         {{ submitting ? "Sending..." : "Send message" }}
                     </button>
                 </form>
+
+                <div
+                    v-else-if="!active"
+                    class="min-h-[320px] space-y-2 p-6 sm:p-8"
+                >
+                    <div v-if="loading && !tickets.length" class="space-y-3">
+                        <div
+                            v-for="n in 3"
+                            :key="n"
+                            class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                        />
+                    </div>
+
+                    <div
+                        v-else-if="!tickets.length"
+                        class="flex flex-col items-center justify-center py-16 text-center"
+                    >
+                        <p
+                            class="text-sm font-medium text-secondary dark:text-white"
+                        >
+                            No tickets yet
+                        </p>
+                        <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                            Messages you send to AMUMA Support will show up
+                            here.
+                        </p>
+                    </div>
+
+                    <template v-else>
+                        <button
+                            v-for="ticket in tickets"
+                            :key="ticket.uuid"
+                            type="button"
+                            class="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10 dark:hover:bg-white/5"
+                            @click="openTicket(ticket.uuid)"
+                        >
+                            <div class="min-w-0 flex-1">
+                                <p
+                                    class="truncate text-sm font-semibold text-secondary dark:text-white"
+                                >
+                                    {{ ticket.subject }}
+                                </p>
+                                <p
+                                    class="mt-0.5 truncate text-xs text-muted dark:text-gray-400"
+                                >
+                                    {{ ticket.ticket_code }} ·
+                                    {{
+                                        stringToDateTime(
+                                            ticket.last_reply_at ??
+                                                ticket.created_at,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <span
+                                class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                :class="SUPPORT_STATUS_CLASSES[ticket.status]"
+                            >
+                                {{ SUPPORT_STATUS_LABELS[ticket.status] }}
+                            </span>
+                            <ChevronRight
+                                class="h-4 w-4 shrink-0 text-slate-300 dark:text-gray-600"
+                            />
+                        </button>
+
+                        <button
+                            v-if="page < lastPage"
+                            type="button"
+                            :disabled="loading"
+                            class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-60 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                            @click="fetchTickets(page + 1)"
+                        >
+                            {{ loading ? "Loading..." : "Load more" }}
+                        </button>
+                    </template>
+                </div>
+
+                <div v-else class="flex h-[640px] max-h-[80vh] flex-col">
+                    <div
+                        class="flex shrink-0 items-center gap-3 border-b border-gray-100 px-6 py-4 dark:border-white/10"
+                    >
+                        <button
+                            type="button"
+                            aria-label="Back to my tickets"
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                            @click="closeTicket"
+                        >
+                            <ArrowLeft class="h-4 w-4" />
+                        </button>
+
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="truncate text-sm font-semibold text-secondary dark:text-white"
+                            >
+                                {{ active.subject }}
+                            </p>
+                            <p class="truncate text-xs text-muted dark:text-gray-400">
+                                {{ active.ticket_code }} ·
+                                {{ SUPPORT_CATEGORY_LABELS[active.category] }}
+                            </p>
+                        </div>
+
+                        <span
+                            class="shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            :class="SUPPORT_STATUS_CLASSES[active.status]"
+                        >
+                            {{ SUPPORT_STATUS_LABELS[active.status] }}
+                        </span>
+                    </div>
+
+                    <SupportThread
+                        ref="thread"
+                        :ticket="active"
+                        :loading="threadLoading"
+                        :sending="sending"
+                        viewer="requester"
+                        @reply="sendReply"
+                    />
+
+                    <div
+                        v-if="!threadLoading"
+                        class="flex shrink-0 justify-end border-t border-gray-100 bg-slate-50/60 px-6 py-3 dark:border-white/10 dark:bg-white/5"
+                    >
+                        <button
+                            v-if="active.status !== 'resolved'"
+                            type="button"
+                            :disabled="savingStatus"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:opacity-60 dark:text-emerald-400 dark:hover:bg-emerald-500/10"
+                            @click="changeStatus('resolved')"
+                        >
+                            <LoaderCircle
+                                v-if="savingStatus"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            <CheckCircle2 v-else class="h-4 w-4" />
+                            My issue is resolved
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            :disabled="savingStatus"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 disabled:opacity-60 dark:text-gray-300 dark:hover:bg-white/10"
+                            @click="changeStatus('open')"
+                        >
+                            <LoaderCircle
+                                v-if="savingStatus"
+                                class="h-4 w-4 animate-spin"
+                            />
+                            <RotateCcw v-else class="h-4 w-4" />
+                            Reopen ticket
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     </div>

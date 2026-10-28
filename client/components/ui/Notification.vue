@@ -384,9 +384,21 @@ const openNotification = async (notif: Notification) => {
             return;
         }
 
-        if (route.path.startsWith("/app/branches")) {
+        if (notif.branch?.uuid) {
+            if (!route.path.startsWith(`/app/branches/${notif.branch.uuid}`)) {
+                await router.push(
+                    `/app/branches/${notif.branch.uuid}/manage-subscription`,
+                );
+            }
+
             openSupport(notif.reference_id);
+            return;
         }
+
+        await router.push({
+            path: "/resources/support",
+            query: { ticket: notif.reference_id },
+        });
         return;
     }
 

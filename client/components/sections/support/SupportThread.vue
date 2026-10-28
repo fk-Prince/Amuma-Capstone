@@ -8,7 +8,7 @@ const props = defineProps<{
     ticket: SupportTicket | null;
     loading: boolean;
     sending: boolean;
-    viewer: "branch" | "support";
+    viewer: "requester" | "support";
 }>();
 
 const emit = defineEmits<{

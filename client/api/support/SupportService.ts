@@ -25,24 +25,13 @@ class SupportService extends BaseService {
     }
 
     async create(payload: {
-        branch_uuid: string;
+        branch_uuid?: string;
         category: SupportCategory;
         subject: string;
         message: string;
         attachment?: File | null;
     }): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
-    }
-
-    async createPublic(payload: {
-        name?: string;
-        email?: string;
-        category: SupportCategory;
-        subject: string;
-        message: string;
-        attachment?: File | null;
-    }): Promise<any> {
-        return await this.request(`${this.resource}/public`, 'POST', payload);
     }
 
     async reply(uuid: string, payload: { branch_uuid?: string; message: string; attachment?: File | null }): Promise<any> {

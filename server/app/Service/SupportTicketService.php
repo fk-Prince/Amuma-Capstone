@@ -8,8 +8,6 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\SupportTicketReplyResource;
 use App\Http\Resources\SupportTicketResource;
-use App\Mail\SupportReplyMailer;
-use App\Models\Branch;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Repository\SupportTicketRepository;
@@ -18,7 +16,6 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class SupportTicketService
@@ -32,15 +29,15 @@ class SupportTicketService
 
     public function list(array $payload, User $user)
     {
-        $branch = $this->resolveScope($payload, $user);
+        $scope = $this->resolveScope($payload, $user);
 
         $tickets = $this->supportTicketRepository->paginate(
             $payload,
-            $branch?->branch_id,
+            $scope,
             (int) ($payload['per_page'] ?? 15),
         );
 
-        $counts = $this->supportTicketRepository->statusCounts($branch?->branch_id);
+        $counts = $this->supportTicketRepository->statusCounts($scope);
 
         return SupportTicketResource::collection($tickets)->additional([
             'status_counts' => collect(SupportTicket::STATUSES)
@@ -50,12 +47,18 @@ class SupportTicketService
 
     public function create(array $payload, User $user)
     {
-        $branch = $this->resolveScope($payload, $user);
+        $scope = $this->resolveScope($payload, $user);
+
+        if (!empty($scope['support'])) {
+            throw new Exception('Platform admins cannot open support tickets.', 403);
+        }
+
+        $branch = $scope['branch'] ?? null;
         $attachment = $this->storeAttachment($payload['attachment'] ?? null);
 
         $ticket = DB::transaction(function () use ($payload, $user, $branch, $attachment) {
             $ticket = $this->supportTicketRepository->create([
-                'branch_id' => $branch->branch_id,
+                'branch_id' => $branch?->branch_id,
                 'user_id' => $user->user_id,
                 'category' => $payload['category'],
                 'subject' => Str::ucfirst(trim($payload['subject'])),
@@ -71,55 +74,17 @@ class SupportTicketService
             return $ticket;
         });
 
-        $ticket = $this->supportTicketRepository->findByUuid($ticket->uuid, $branch->branch_id);
+        $ticket = $this->supportTicketRepository->findByUuid($ticket->uuid, $scope);
 
         $this->notifySupport(
             $ticket,
             $user,
-            "New support ticket {$ticket->ticket_code} from {$branch->name}: {$ticket->subject}",
+            "New support ticket {$ticket->ticket_code} from {$this->requesterName($ticket)}: {$ticket->subject}",
         );
 
         return response()->json([
             'message' => 'Your ticket has been sent. AMUMA Support will reply here.',
             'data' => new SupportTicketResource($ticket),
-        ], 201);
-    }
-
-    public function createPublic(array $payload, ?User $user)
-    {
-        $attachment = $this->storeAttachment($payload['attachment'] ?? null);
-
-        $ticket = DB::transaction(function () use ($payload, $user, $attachment) {
-            $ticket = $this->supportTicketRepository->create([
-                'branch_id' => null,
-                'user_id' => $user?->user_id,
-                'contact_name' => $user ? null : Str::title(trim($payload['name'])),
-                'contact_email' => $user ? null : strtolower(trim($payload['email'])),
-                'category' => $payload['category'],
-                'subject' => Str::ucfirst(trim($payload['subject'])),
-                'status' => SupportTicket::STATUS_OPEN,
-            ]);
-
-            $this->supportTicketRepository->createReply($ticket, [
-                'user_id' => $user?->user_id,
-                'message' => trim($payload['message']),
-                'attachment' => $attachment,
-            ]);
-
-            return $ticket;
-        });
-
-        $ticket = $this->supportTicketRepository->findByUuid($ticket->uuid, null);
-
-        $this->notifySupport(
-            $ticket,
-            $user,
-            "New support request {$ticket->ticket_code} from {$ticket->submitter_name}: {$ticket->subject}",
-        );
-
-        return response()->json([
-            'message' => "Your message has been sent. AMUMA Support will reply to {$ticket->submitter_email}.",
-            'data' => ['ticket_code' => $ticket->ticket_code],
         ], 201);
     }
 
@@ -134,9 +99,9 @@ class SupportTicketService
 
     public function reply(string $uuid, array $payload, User $user)
     {
-        [$branch, $ticket] = $this->resolveTicket($uuid, $payload, $user);
+        [$scope, $ticket] = $this->resolveTicket($uuid, $payload, $user);
 
-        $fromSupport = $branch === null;
+        $fromSupport = !empty($scope['support']);
         $attachment = $this->storeAttachment($payload['attachment'] ?? null);
 
         $reply = DB::transaction(function () use ($ticket, $user, $payload, $attachment, $fromSupport) {
@@ -155,20 +120,17 @@ class SupportTicketService
 
         $this->supportTicketRepository->loadReplyAuthor($reply);
 
-        if ($fromSupport) {
-            $this->notifyBranch(
+        $fromSupport
+            ? $this->notifyRequester(
                 $ticket,
                 $user,
                 "AMUMA Support replied to your ticket {$ticket->ticket_code}: {$ticket->subject}",
-            );
-            $this->emailSubmitter($ticket, $reply->message);
-        } else {
-            $this->notifySupport(
+            )
+            : $this->notifySupport(
                 $ticket,
                 $user,
-                "{$ticket->branch?->name} replied to support ticket {$ticket->ticket_code}: {$ticket->subject}",
+                "{$this->requesterName($ticket)} replied to support ticket {$ticket->ticket_code}: {$ticket->subject}",
             );
-        }
 
         return response()->json([
             'message' => 'Reply sent.',
@@ -181,7 +143,7 @@ class SupportTicketService
 
     public function updateStatus(string $uuid, array $payload, User $user)
     {
-        [$branch, $ticket] = $this->resolveTicket($uuid, $payload, $user);
+        [$scope, $ticket] = $this->resolveTicket($uuid, $payload, $user);
 
         $resolving = $payload['status'] === SupportTicket::STATUS_RESOLVED;
 
@@ -195,8 +157,8 @@ class SupportTicketService
             ? "Support ticket {$ticket->ticket_code} was marked as resolved."
             : "Support ticket {$ticket->ticket_code} was reopened.";
 
-        $branch === null
-            ? $this->notifyBranch($ticket, $user, $message)
+        !empty($scope['support'])
+            ? $this->notifyRequester($ticket, $user, $message)
             : $this->notifySupport($ticket, $user, $message);
 
         return response()->json([
@@ -205,31 +167,38 @@ class SupportTicketService
         ]);
     }
 
-    private function resolveScope(array $payload, User $user): ?Branch
+    private function resolveScope(array $payload, User $user): array
     {
-        if (empty($payload['branch_uuid'])) {
-            AuthGuard::requireSystemOwner($user);
+        if (!empty($payload['branch_uuid'])) {
+            $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+            AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::ManageSubscription, PermissionAction::Read);
 
-            return null;
+            return ['branch' => $branch, 'branch_id' => $branch->branch_id];
         }
 
-        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
-        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::ManageSubscription, PermissionAction::Read);
+        if ($user->isSystemOwner) {
+            return ['support' => true];
+        }
 
-        return $branch;
+        return ['user_id' => $user->user_id];
     }
 
     private function resolveTicket(string $uuid, array $payload, User $user): array
     {
-        $branch = $this->resolveScope($payload, $user);
+        $scope = $this->resolveScope($payload, $user);
 
-        $ticket = $this->supportTicketRepository->findByUuid($uuid, $branch?->branch_id);
+        $ticket = $this->supportTicketRepository->findByUuid($uuid, $scope);
 
         if (!$ticket) {
             throw new Exception('Support ticket not found.', 404);
         }
 
-        return [$branch, $ticket];
+        return [$scope, $ticket];
+    }
+
+    private function requesterName(SupportTicket $ticket): string
+    {
+        return $ticket->branch?->name ?? $ticket->submitter_name ?? $ticket->user?->email ?? 'a user';
     }
 
     private function storeAttachment(mixed $file): ?string
@@ -237,7 +206,7 @@ class SupportTicketService
         return $file instanceof UploadedFile ? SupabaseService::store($file)['url'] : null;
     }
 
-    private function notifySupport(SupportTicket $ticket, ?User $actor, string $message): void
+    private function notifySupport(SupportTicket $ticket, User $actor, string $message): void
     {
         try {
             $this->notificationService->notifyPlatformAdmins(
@@ -255,53 +224,29 @@ class SupportTicketService
         }
     }
 
-    private function notifyBranch(SupportTicket $ticket, User $actor, string $message): void
+    private function notifyRequester(SupportTicket $ticket, User $actor, string $message): void
     {
-        if ($ticket->isPublic()) {
-            return;
-        }
-
         try {
-            $this->notificationService->notifyModuleStaff(
-                $ticket->branch,
-                ModuleEnum::ManageSubscription,
-                self::MESSAGE_TYPE,
-                $message,
-                $actor,
-                null,
-                (string) $ticket->uuid,
-            );
+            $ticket->isPublic()
+                ? $this->notificationService->notifyUser(
+                    $ticket->user,
+                    self::MESSAGE_TYPE,
+                    $message,
+                    $actor,
+                    (string) $ticket->uuid,
+                )
+                : $this->notificationService->notifyModuleStaff(
+                    $ticket->branch,
+                    ModuleEnum::ManageSubscription,
+                    self::MESSAGE_TYPE,
+                    $message,
+                    $actor,
+                    null,
+                    (string) $ticket->uuid,
+                );
         } catch (\Throwable $e) {
-            Log::error('Support ticket branch notification failed: ' . $e->getMessage(), [
+            Log::error('Support ticket notification failed: ' . $e->getMessage(), [
                 'ticket_uuid' => $ticket->uuid,
-            ]);
-        }
-    }
-
-    private function emailSubmitter(SupportTicket $ticket, string $reply): void
-    {
-        $email = $ticket->submitter_email;
-
-        if (!$email) {
-            return;
-        }
-
-        $footnote = $ticket->isPublic()
-            ? "Need more help? Send another message from Resources > Customer Support on the AMUMA website and mention {$ticket->ticket_code}."
-            : 'You can reply to this ticket from Customer Support in your AMUMA dashboard.';
-
-        try {
-            Mail::to($email)->send(new SupportReplyMailer(
-                $ticket->submitter_name ?: 'there',
-                $ticket->ticket_code,
-                $ticket->subject,
-                $reply,
-                $footnote,
-            ));
-        } catch (\Throwable $e) {
-            Log::error('Support reply email failed: ' . $e->getMessage(), [
-                'ticket_uuid' => $ticket->uuid,
-                'email' => $email,
             ]);
         }
     }

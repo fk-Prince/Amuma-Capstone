@@ -8,9 +8,10 @@ import {
     type SupportCategory,
 } from "~/types/support";
 
-defineProps<{
+const props = defineProps<{
     submitting: boolean;
     serverErrors?: Record<string, string[]>;
+    initialCategory?: SupportCategory | null;
 }>();
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ const emit = defineEmits<{
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 
 const form = reactive({
-    category: "" as SupportCategory | "",
+    category: (props.initialCategory ?? "") as SupportCategory | "",
     subject: "",
     message: "",
     attachment: null as File | null,

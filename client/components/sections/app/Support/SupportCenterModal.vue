@@ -3,12 +3,18 @@ import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
     ArrowLeft,
+    Bug,
     CheckCircle2,
     ChevronRight,
+    Clock,
+    CreditCard,
     LifeBuoy,
     LoaderCircle,
+    MessageCircle,
     Plus,
     RotateCcw,
+    ShieldCheck,
+    UserCog,
     X,
 } from "lucide-vue-next";
 import SupportThread from "~/components/sections/support/SupportThread.vue";
@@ -35,7 +41,44 @@ const { success, error } = useToast();
 
 const branchUuid = computed(() => route.params.uuid as string | undefined);
 
+const CATEGORY_TOPICS: Record<
+    SupportCategory,
+    { icon: typeof LifeBuoy; hint: string; tint: string }
+> = {
+    billing: {
+        icon: CreditCard,
+        hint: "Payments, renewals and plans",
+        tint: "bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300",
+    },
+    verification: {
+        icon: ShieldCheck,
+        hint: "Branch or agency review",
+        tint: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300",
+    },
+    technical: {
+        icon: Bug,
+        hint: "Something isn't working",
+        tint: "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300",
+    },
+    account: {
+        icon: UserCog,
+        hint: "Logins, staff and access",
+        tint: "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300",
+    },
+    other: {
+        icon: MessageCircle,
+        hint: "Anything else",
+        tint: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
+    },
+};
+
 const view = ref<"list" | "new" | "thread">("list");
+const startCategory = ref<SupportCategory | null>(null);
+
+const startTicket = (category: SupportCategory | null = null) => {
+    startCategory.value = category;
+    view.value = "new";
+};
 const tickets = ref<SupportTicket[]>([]);
 const loading = ref(false);
 const page = ref(1);
@@ -225,7 +268,12 @@ const title = computed(() => {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Customer support"
-                    class="flex h-[85vh] max-h-[720px] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                    class="flex w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-secondary"
+                    :class="
+                        view === 'list'
+                            ? 'max-h-[85vh]'
+                            : 'h-[85vh] max-h-[720px]'
+                    "
                 >
                     <div
                         class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4 dark:border-white/10"
@@ -271,6 +319,15 @@ const title = computed(() => {
                         </div>
 
                         <div class="flex shrink-0 items-center gap-2">
+                            <button
+                                v-if="view === 'list' && tickets.length"
+                                type="button"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-primary/30 transition hover:opacity-90"
+                                @click="startTicket()"
+                            >
+                                <Plus class="h-3.5 w-3.5" />
+                                New ticket
+                            </button>
                             <span
                                 v-if="view === 'thread' && active"
                                 class="rounded-full px-3 py-1 text-xs font-medium"
@@ -291,15 +348,6 @@ const title = computed(() => {
 
                     <template v-if="view === 'list'">
                         <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                            <button
-                                type="button"
-                                class="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition hover:opacity-90"
-                                @click="view = 'new'"
-                            >
-                                <Plus class="h-4 w-4" />
-                                New ticket
-                            </button>
-
                             <div
                                 v-if="loading && !tickets.length"
                                 class="space-y-3"
@@ -307,35 +355,86 @@ const title = computed(() => {
                                 <div
                                     v-for="n in 3"
                                     :key="n"
-                                    class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                                    class="h-[68px] animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
                                 />
                             </div>
 
-                            <div
-                                v-else-if="!tickets.length"
-                                class="flex flex-col items-center justify-center py-12 text-center"
-                            >
+                            <div v-else-if="!tickets.length">
                                 <p
-                                    class="text-sm font-medium text-slate-600 dark:text-gray-300"
+                                    class="text-sm font-semibold text-slate-800 dark:text-white"
                                 >
-                                    No tickets yet
+                                    What do you need help with?
                                 </p>
                                 <p
-                                    class="mt-1 max-w-xs text-xs text-slate-400 dark:text-gray-500"
+                                    class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
                                 >
-                                    Send a ticket and the AMUMA team will reply
-                                    here and by email.
+                                    Pick a topic to start a ticket.
                                 </p>
+
+                                <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                    <button
+                                        v-for="(topic, category) in CATEGORY_TOPICS"
+                                        :key="category"
+                                        type="button"
+                                        class="group flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10 dark:hover:bg-white/5"
+                                        :class="
+                                            category === 'other'
+                                                ? 'sm:col-span-2'
+                                                : ''
+                                        "
+                                        @click="startTicket(category)"
+                                    >
+                                        <span
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                            :class="topic.tint"
+                                        >
+                                            <component
+                                                :is="topic.icon"
+                                                class="h-5 w-5"
+                                            />
+                                        </span>
+                                        <span class="min-w-0 flex-1">
+                                            <span
+                                                class="block truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                            >
+                                                {{ SUPPORT_CATEGORY_LABELS[category] }}
+                                            </span>
+                                            <span
+                                                class="block truncate text-xs text-slate-400 dark:text-gray-500"
+                                            >
+                                                {{ topic.hint }}
+                                            </span>
+                                        </span>
+                                        <ChevronRight
+                                            class="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-600"
+                                        />
+                                    </button>
+                                </div>
                             </div>
 
                             <div v-else class="space-y-2">
+                                <p
+                                    class="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                                >
+                                    Your tickets
+                                </p>
+
                                 <button
                                     v-for="ticket in tickets"
                                     :key="ticket.uuid"
                                     type="button"
-                                    class="flex w-full items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10 dark:hover:bg-white/5"
+                                    class="group flex w-full items-center gap-3 rounded-xl border border-slate-200 p-3 text-left transition hover:border-primary/40 hover:bg-primary/5 dark:border-white/10 dark:hover:bg-white/5"
                                     @click="openTicket(ticket.uuid)"
                                 >
+                                    <span
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                        :class="CATEGORY_TOPICS[ticket.category].tint"
+                                    >
+                                        <component
+                                            :is="CATEGORY_TOPICS[ticket.category].icon"
+                                            class="h-5 w-5"
+                                        />
+                                    </span>
                                     <div class="min-w-0 flex-1">
                                         <p
                                             class="truncate text-sm font-semibold text-slate-800 dark:text-white"
@@ -379,10 +478,19 @@ const title = computed(() => {
                                 </button>
                             </div>
                         </div>
+
+                        <div
+                            class="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-3 text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                        >
+                            <Clock class="h-3.5 w-3.5 shrink-0 text-primary" />
+                            We usually reply within 1–2 business days. You'll
+                            get a notification when we answer.
+                        </div>
                     </template>
 
                     <SupportTicketForm
                         v-else-if="view === 'new'"
+                        :initial-category="startCategory"
                         :submitting="submitting"
                         :server-errors="formErrors"
                         @submit="createTicket"
@@ -395,7 +503,7 @@ const title = computed(() => {
                             :ticket="active"
                             :loading="threadLoading"
                             :sending="sending"
-                            viewer="branch"
+                            viewer="requester"
                             @reply="sendReply"
                         />
 

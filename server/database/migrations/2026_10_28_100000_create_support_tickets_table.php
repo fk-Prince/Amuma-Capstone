@@ -18,9 +18,7 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
-            $table->string('contact_name')->nullable();
-            $table->string('contact_email')->nullable();
+            $table->foreignId('user_id')->constrained('users', 'user_id');
 
             $table->enum('category', ['billing', 'verification', 'technical', 'account', 'other']);
             $table->string('subject');
@@ -38,7 +36,7 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
 
-            $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
+            $table->foreignId('user_id')->constrained('users', 'user_id');
             $table->text('message');
             $table->string('attachment')->nullable();
             $table->timestamps();

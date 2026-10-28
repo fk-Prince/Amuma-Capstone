@@ -23,15 +23,6 @@ class AuthGuard
         return $user;
     }
 
-    public static function requireSystemOwner(?User $user): User
-    {
-        if (!$user?->isSystemOwner) {
-            throw new Exception('Insufficient permissions', 403);
-        }
-
-        return $user;
-    }
-
     public static function requireModule(?User $user,  string|bool $branchId = false, ModuleEnum|array $module, PermissionAction $action)
     {
         $user = self::requireUser($user);
