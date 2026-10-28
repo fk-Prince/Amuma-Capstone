@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Utils\Vat;
 use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionPayment extends Model
@@ -37,6 +38,11 @@ class SubscriptionPayment extends Model
         return $this->belongsTo(Subscription::class, 'subscription_id', 'subscription_id');
     }
 
+    public function vatAmount(): float
+    {
+        return Vat::portion((float) $this->price, (float) $this->vat_rate);
+    }
+
     public function historyRow(): array
     {
         return [
@@ -47,6 +53,9 @@ class SubscriptionPayment extends Model
             'payment_reference_id' => $this->payment_reference_id,
             'masked_card_number' => $this->masked_card_number,
             'price' => (float) $this->price,
+            'vat_rate' => (float) $this->vat_rate,
+            'vat_amount' => $this->vatAmount(),
+            'subtotal' => round((float) $this->price - $this->vatAmount(), 2),
             'status' => $this->status,
             'type' => $this->type,
             'branch_name' => $this->branch_id ? $this->branch?->name : null,
@@ -65,6 +74,7 @@ class SubscriptionPayment extends Model
         'payment_reference_id',
         'masked_card_number',
         'price',
+        'vat_rate',
         'status',
         'type',
         'payment_method',

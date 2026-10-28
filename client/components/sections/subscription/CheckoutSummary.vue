@@ -78,18 +78,7 @@
             </div>
 
             <div class="space-y-3">
-                <SummaryRow
-                    label="Plan"
-                    :value="
-                        checkout.selectedPlan?.plan_code === 'C'
-                            ? 'Hybrid Plan'
-                            : checkout.selectedPlan?.plan_code === 'A'
-                              ? 'Homecare Services'
-                              : checkout.selectedPlan?.plan_code === 'B'
-                                ? 'Inhouse Facility'
-                                : '—'
-                    "
-                />
+                <SummaryRow label="Plan" :value="planName || '—'" />
 
                 <SummaryRow
                     label="Plan Type"
@@ -120,14 +109,6 @@
                     :value="formatCurrency(0)"
                 />
 
-                <SummaryRow
-                    :label="props.withTrial ? 'Yearly price after the trial' : 'Amount'"
-                    :value="
-                        props.totalAmount != null
-                            ? formatCurrency(props.totalAmount)
-                            : '—'
-                    "
-                />
             </div>
 
             <div
@@ -398,7 +379,6 @@ import { planTypeLabel } from "~/utils/planType";
 import { ShieldCheck } from "lucide-vue-next";
 
 const props = defineProps<{
-    totalAmount?: number | null;
     withTrial?: boolean;
     disabled?: boolean;
 }>();
@@ -408,6 +388,16 @@ const emit = defineEmits<{
 }>();
 
 const checkout = useSubscriptionCheckout();
+
+const PLAN_NAMES: Record<string, string> = {
+    A: "Homecare Services",
+    B: "Inhouse Facility",
+    C: "Hybrid Plan",
+};
+
+const planName = computed(
+    () => PLAN_NAMES[checkout.selectedPlan?.plan_code ?? ""] ?? "",
+);
 
 const branchImagePreview = computed(() =>
     checkout.branch.image instanceof File

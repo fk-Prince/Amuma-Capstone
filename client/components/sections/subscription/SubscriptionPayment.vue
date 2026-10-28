@@ -4,7 +4,6 @@
     >
         <div class="w-full">
             <CheckoutSummary
-                :total-amount="loadingTotal ? null : total"
                 :with-trial="withTrial"
                 :disabled="busy || processing"
                 @back="emit('back')"
@@ -33,6 +32,15 @@
                 your plan any time, whenever you're ready.
             </p>
 
+            <VatBreakdown
+                :subtotal="subtotal"
+                title="Order summary"
+                :heading="planName"
+                item-label="12-month period (after trial)"
+                total-label="Total after trial"
+                class="mt-5"
+            />
+
             <button
                 type="button"
                 :disabled="processing"
@@ -44,7 +52,15 @@
             </button>
         </div>
 
-        <div v-else>
+        <div v-else class="space-y-5">
+            <VatBreakdown
+                v-if="!loadingTotal"
+                :subtotal="subtotal"
+                title="Order summary"
+                :heading="planName"
+                item-label="12-month period"
+            />
+
             <PaymentForm
                 v-model:card="card"
                 :total-amount="total"
@@ -59,10 +75,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { Gift, LoaderCircle } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
@@ -79,6 +96,16 @@ const emit = defineEmits<{
 const checkout = useSubscriptionCheckout();
 const { success, error } = useToast();
 
+const PLAN_NAMES: Record<string, string> = {
+    A: "Homecare Services",
+    B: "Inhouse Facility",
+    C: "Hybrid Plan",
+};
+
+const planName = computed(
+    () => PLAN_NAMES[checkout.selectedPlan?.plan_code ?? ""] ?? "",
+);
+
 const card = ref<CardDetails>({
     number: "4000000000001000",
     expMonth: "04",
@@ -93,6 +120,7 @@ const processing = ref(false);
 const xenditProcessing = ref(false);
 const loadingTotal = ref(true);
 const total = ref(0);
+const subtotal = ref(0);
 const withTrial = ref(true);
 
 watch([processing, xenditProcessing], ([p, x]) => {
@@ -239,6 +267,7 @@ onMounted(async () => {
         const res =
             await subscriptionService.retrieveSubscriptionDetail(payload);
         total.value = Number(res.total_amount);
+        subtotal.value = Number(res.subtotal ?? res.total_amount);
         withTrial.value = res.mode === "test";
     } catch (err: any) {
         error(err.message ?? "Failed to load subscription total.");

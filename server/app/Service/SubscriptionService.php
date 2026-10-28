@@ -34,6 +34,7 @@ use App\Repository\ModuleRepository;
 use App\Service\External\SupabaseService;
 use App\Service\External\XenditService;
 use App\Utils\MoneyWords;
+use App\Utils\Vat;
 use App\Service\Geo\NominatimService;
 use App\Service\Sandbox\SandboxClient;
 use Exception;
@@ -142,8 +143,13 @@ class SubscriptionService
         AuthGuard::requireUser($user);
         set_time_limit(self::PAYMENT_TIME_LIMIT);
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
-        $renewal = $this->createRenewal($user, $payload);
+        $renewal = $this->withVat($this->createRenewal($user, $payload));
         return $paymentMethod->subscriptionInvoice($payload, $renewal);
+    }
+
+    private function withVat(array $detail): array
+    {
+        return [...$detail, ...Vat::exclusive((float) $detail['total_amount'])];
     }
 
 
@@ -414,6 +420,7 @@ class SubscriptionService
                 'payment_reference_id' => $payload['external_id'] ?? null,
                 'masked_card_number' => $payload['masked_card_number'] ?? null,
                 'price' => $meta['total_amount'],
+                'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
                 'status' => SubscriptionPayment::STATUS_PAID,
                 'type' => match ($action) {
                     self::ACTION_RESUBSCRIBE,
@@ -735,7 +742,7 @@ class SubscriptionService
             $agencyDocument = SupabaseService::store($payload['agency_document']);
         }
 
-        return [
+        return $this->withVat([
             'user' => $user,
             'plan' => $plan,
             'branch' => [
@@ -768,7 +775,7 @@ class SubscriptionService
             'type' => 'subscription',
             'status' => true,
             'payment_type' => $payload['payment_type'] ?? null,
-        ];
+        ]);
     }
 
     public function newSubscriber(array $payload)
@@ -922,6 +929,7 @@ class SubscriptionService
                         'payment_reference_id' => $reference_id,
                         'masked_card_number' => $masked_card_number,
                         'price' => $totalAmount,
+                        'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
                         'status' => SubscriptionPayment::STATUS_PAID,
                         'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
                         'payment_method' => $meta['payment_method'] ?? null,
@@ -1229,7 +1237,7 @@ class SubscriptionService
             throw new Exception(__('Additional branches are not available on this plan.'), 422);
         }
 
-        return [
+        return $this->withVat([
             'user' => $user,
             'plan' => $subscription->plans,
             'branch' => $this->branchDetails($payload),
@@ -1242,7 +1250,7 @@ class SubscriptionService
             'endDate' => $subscription->end_date->toDateString(),
             'status' => true,
             'payment_type' => 'SUBSCRIPTION',
-        ];
+        ]);
     }
 
     public function settlePayment(array $result)
@@ -1295,6 +1303,7 @@ class SubscriptionService
                     'payment_reference_id' => $payload['external_id'] ?? null,
                     'masked_card_number' => $payload['masked_card_number'] ?? null,
                     'price' => $meta['total_amount'],
+                    'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
                     'status' => SubscriptionPayment::STATUS_PAID,
                     'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
                     'payment_method' => $meta['payment_method'] ?? null,
@@ -1491,6 +1500,7 @@ class SubscriptionService
             'payment_reference_id' => $payload['external_id'] ?? null,
             'masked_card_number' => $payload['masked_card_number'] ?? null,
             'price' => $meta['total_amount'],
+            'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
             'status' => SubscriptionPayment::STATUS_PAID,
             'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
             'payment_method' => $meta['payment_method'] ?? null,
@@ -1551,6 +1561,7 @@ class SubscriptionService
             'payment_reference_id' => $reference,
             'masked_card_number' => $maskedCard,
             'price' => (float) $meta['total_amount'],
+            'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
             'status' => SubscriptionPayment::STATUS_PAID,
             'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
             'payment_method' => $meta['payment_method'] ?? null,
@@ -2022,6 +2033,9 @@ class SubscriptionService
             'plan' => $payment->plan?->name,
             'plan_type' => $payment->plan?->type,
             'type' => $payment->type,
+            'subtotal' => round((float) $payment->price - $payment->vatAmount(), 2),
+            'vat_rate' => (float) $payment->vat_rate,
+            'vat_amount' => $payment->vatAmount(),
         ];
 
         $invoice = XenditService::invoice($payment->xendit_invoice_id);

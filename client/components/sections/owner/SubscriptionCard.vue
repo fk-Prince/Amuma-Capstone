@@ -458,6 +458,13 @@
                     </span>
 
                     <span
+                        v-if="displayPayment.vat_amount"
+                        class="text-muted dark:text-gray-400"
+                    >
+                        incl. {{ formatCurrency(displayPayment.vat_amount) }} taxes
+                    </span>
+
+                    <span
                         class="rounded-full px-2 py-0.5 text-[10px] font-medium capitalize"
                         :class="
                             displayPayment.status === 'paid'

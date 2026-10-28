@@ -245,8 +245,8 @@
                                     subscription and expires with it on
                                     {{ formatDate(additionalOption.end_date) }}.
                                     You pay
-                                    ₱{{ formatAmount(additionalOption.amount) }},
-                                    prorated for the time left. It renews with
+                                    ₱{{ formatAmount(total) }}, prorated for
+                                    the time left. It renews with
                                     the subscription at
                                     ₱{{
                                         formatAmount(
@@ -289,6 +289,33 @@
                                         </span>
                                     </div>
 
+                                    <div class="flex justify-between">
+                                        <span
+                                            class="text-muted dark:text-gray-400"
+                                        >
+                                            Subtotal (prorated)
+                                        </span>
+                                        <span
+                                            class="font-medium text-secondary dark:text-white"
+                                        >
+                                            ₱{{ formatAmount(total) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex justify-between">
+                                        <span
+                                            class="text-muted dark:text-gray-400"
+                                            :title="`VAT: ${VAT_RATE}%`"
+                                        >
+                                            Taxes
+                                        </span>
+                                        <span
+                                            class="font-medium text-secondary dark:text-white"
+                                        >
+                                            ₱{{ formatAmount(withVat(total).vat) }}
+                                        </span>
+                                    </div>
+
                                     <div
                                         class="flex justify-between border-t border-slate-100 pt-1.5 dark:border-white/10"
                                     >
@@ -298,11 +325,7 @@
                                             You pay today
                                         </span>
                                         <span class="font-bold text-primary">
-                                            ₱{{
-                                                formatAmount(
-                                                    additionalOption.amount,
-                                                )
-                                            }}
+                                            ₱{{ formatAmount(amountDue) }}
                                         </span>
                                     </div>
                                 </div>
@@ -312,7 +335,7 @@
                                 v-if="additionalOption"
                                 compact
                                 v-model:card="card"
-                                :total-amount="total"
+                                :total-amount="amountDue"
                                 :processing="processing"
                                 :onCardPay="payCard"
                                 :onGCashPay="payGCash"
@@ -379,12 +402,21 @@
                                     </button>
                                 </div>
 
+                                <VatBreakdown
+                                    v-if="selectedPlan"
+                                    :subtotal="total"
+                                    title="Order summary"
+                                    :heading="selectedPlan?.name"
+                                    item-label="12-month period"
+                                    class="mt-6"
+                                />
+
                                 <PaymentForm
                                     v-if="selectedPlan"
                                     compact
                                     v-model:card="card"
                                     class="mt-6"
-                                    :total-amount="total"
+                                    :total-amount="amountDue"
                                     :processing="processing"
                                     :onCardPay="payCard"
                                     :onGCashPay="payGCash"
@@ -505,6 +537,8 @@ import BranchForm from "~/components/forms/BranchForm.vue";
 import { agencySchema } from "~/schema/agency-schema";
 import type { Agency } from "~/types/agency";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import VatBreakdown from "~/components/billing/VatBreakdown.vue";
+import { VAT_RATE, withVat } from "~/utils/vat";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import { planService } from "~/api/plan/PlanService";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
@@ -751,6 +785,8 @@ const total = computed(() =>
         ? Number(additionalOption.value?.amount) || 0
         : priceOf(selectedPlan.value),
 );
+
+const amountDue = computed(() => withVat(total.value).total);
 
 const formatDate = (date?: string | null) => {
     if (!date) return "—";

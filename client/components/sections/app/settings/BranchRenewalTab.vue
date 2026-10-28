@@ -792,6 +792,12 @@
                                 >
                                     ₱{{ formatMoney(renewTotal) }}
                                 </span>
+                                <span
+                                    v-if="renewVat.vat"
+                                    class="text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    includes ₱{{ formatMoney(renewVat.vat) }} taxes
+                                </span>
                             </p>
 
                             <p
@@ -980,6 +986,13 @@
                                     class="whitespace-nowrap px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-white"
                                 >
                                     ₱{{ formatMoney(payment.price) }}
+
+                                    <p
+                                        v-if="payment.vat_amount"
+                                        class="mt-0.5 text-[11px] font-normal text-slate-500 dark:text-gray-400"
+                                    >
+                                        incl. ₱{{ formatMoney(payment.vat_amount) }} taxes
+                                    </p>
                                 </td>
                                 <td
                                     class="whitespace-nowrap px-4 py-2.5 text-xs text-slate-500 dark:text-gray-400"
@@ -1055,6 +1068,18 @@
                     </div>
 
                     <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                        <VatBreakdown
+                            :subtotal="renewSubtotal"
+                            title="Order summary"
+                            :heading="chargedPlan?.name"
+                            :item-label="
+                                isUpgrading
+                                    ? `Upgrade · ${upgradeMonths} ${upgradeMonths === 1 ? 'month' : 'months'} left`
+                                    : '12-month period'
+                            "
+                            class="mb-5"
+                        />
+
                         <PaymentForm
                             v-model:card="card"
                             :total-amount="renewTotal"
@@ -1090,6 +1115,8 @@ import {
 } from "lucide-vue-next";
 
 import PaymentForm from "~/components/forms/PaymentForm.vue";
+import VatBreakdown from "~/components/billing/VatBreakdown.vue";
+import { withVat } from "~/utils/vat";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import {
     paymentAccount,
@@ -1347,11 +1374,15 @@ const monthlyDifference = (plan: any) =>
 const upgradeCost = (plan: any) =>
     Math.round(monthlyDifference(plan) * upgradeMonths.value * 100) / 100;
 
-const renewTotal = computed(() =>
+const renewSubtotal = computed(() =>
     isUpgrading.value
         ? upgradeCost(chargedPlan.value)
         : planTotal(chargedPlan.value),
 );
+
+const renewVat = computed(() => withVat(renewSubtotal.value));
+
+const renewTotal = computed(() => renewVat.value.total);
 
 const canSubmitRenewal = computed(() =>
     isCancelled.value || awaitingPayment.value

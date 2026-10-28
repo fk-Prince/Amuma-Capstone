@@ -48,6 +48,7 @@ class CardPayment implements IPaymentMethod
                         'agency'           => $subscription['agency'],
                         'payment_method'   => $subscription['method'],
                         'total_amount'     => $subscription['total_amount'],
+                        'vat_rate'         => $subscription['vat_rate'] ?? null,
                         'endDate'          => $subscription['endDate'],
                         'mode'             => $subscription['mode'] ?? null,
                         'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
