@@ -200,6 +200,33 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->cancelTest($request->all());
     }
 
+    public function updateCard(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
+
+        $data = $request->validate([
+            'token_id' => ['required', 'string'],
+            'authentication_id' => ['required', 'string'],
+            'masked_card_number' => ['nullable', 'string', 'max:30'],
+            'card_brand' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        return $this->subscriptionService->updateCard([...$data, 'branch_id' => $branch->branch_id]);
+    }
+
+    public function setAutoRenew(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id,  ModuleEnum::ManageSubscription,  PermissionAction::Update);
+
+        $data = $request->validate([
+            'auto_renew' => ['required', 'boolean'],
+        ]);
+
+        return $this->subscriptionService->setAutoRenew([...$data, 'branch_id' => $branch->branch_id]);
+    }
+
     public function endTest(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

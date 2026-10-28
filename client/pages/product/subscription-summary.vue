@@ -33,8 +33,9 @@
                     request's status within 1-2 business days.
                     <template v-if="withTrial">
                         Your 2-week free trial starts once your branch is
-                        approved. Nothing is charged until then. After that,
-                        pay for your plan any time, whenever you're ready.
+                        approved. Nothing is charged today. Your card is
+                        charged when the trial ends, unless you cancel before
+                        then.
                     </template>
                     <template v-else>
                         Your paid year starts once your branch is approved.

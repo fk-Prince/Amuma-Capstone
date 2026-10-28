@@ -283,6 +283,14 @@
                             today, and everything you recorded during the trial
                             is still here.
                         </template>
+                        <template v-else-if="awaitingPayment && savedCard">
+                            Your free trial runs until
+                            {{ formatDate(pendingPlan?.starts_at) }}, and nothing
+                            has been charged. Your card is charged
+                            automatically that day, so your branch keeps
+                            running. Want your paid year to start sooner? Pay
+                            now instead.
+                        </template>
                         <template v-else-if="awaitingPayment">
                             Your free trial runs until
                             {{ formatDate(pendingPlan?.starts_at) }}, and nothing
@@ -304,6 +312,15 @@
                             over when the current period ends. You can renew
                             again once it does.
                         </template>
+                        <template v-else-if="savedCard?.auto_renew">
+                            Auto-renew is on. Your card is charged on
+                            {{ formatDate(savedCard.charges_on) }} and this
+                            subscription runs another year. We remind you 3
+                            days before.
+                            <template v-if="canRenew">
+                                You can also renew now yourself.
+                            </template>
+                        </template>
                         <template v-else-if="canRenew">
                             Renewal is open. The new year is added after
                             the current end date, so
@@ -317,6 +334,97 @@
                             </template>
                         </template>
                     </p>
+                </div>
+
+                <div
+                    v-if="savedCard"
+                    class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                >
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div
+                            class="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200 dark:bg-secondary dark:ring-white/10"
+                        >
+                            <img
+                                v-if="savedCard.brand === 'VISA'"
+                                :src="visaIcon"
+                                alt="Visa"
+                                class="h-3.5 w-auto object-contain"
+                            />
+                            <CreditCard
+                                v-else
+                                class="h-4 w-4 text-slate-500 dark:text-gray-400"
+                            />
+                        </div>
+
+                        <div class="min-w-0">
+                            <p
+                                class="text-sm font-semibold text-slate-800 dark:text-white"
+                            >
+                                {{ cardBrandLabel(savedCard.brand) }} ••••
+                                {{ savedCard.last4 }}
+                            </p>
+                            <p
+                                class="text-xs text-slate-500 dark:text-gray-400"
+                            >
+                                <template v-if="savedCard.is_trial">
+                                    ₱{{ formatMoney(savedCard.amount) }} charged
+                                    on {{ formatDate(savedCard.charges_on) }}<template
+                                        v-if="savedCard.auto_renew"
+                                    >, then yearly</template>
+                                </template>
+                                <template v-else-if="savedCard.auto_renew">
+                                    Renews on
+                                    {{ formatDate(savedCard.charges_on) }} ·
+                                    ₱{{ formatMoney(savedCard.amount) }}
+                                </template>
+                                <template v-else>
+                                    Auto-renew is off
+                                </template>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex shrink-0 items-center gap-3"
+                        :title="noPermissionTitle"
+                    >
+                        <button
+                            type="button"
+                            role="switch"
+                            :aria-checked="savedCard.auto_renew"
+                            :disabled="!canUpdateSubscription || togglingAutoRenew"
+                            class="flex items-center gap-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+                            @click="toggleAutoRenew"
+                        >
+                            <span
+                                class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition"
+                                :class="
+                                    savedCard.auto_renew
+                                        ? 'bg-primary'
+                                        : 'bg-slate-300 dark:bg-white/20'
+                                "
+                            >
+                                <span
+                                    class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+                                    :class="
+                                        savedCard.auto_renew
+                                            ? 'left-[18px]'
+                                            : 'left-0.5'
+                                    "
+                                />
+                            </span>
+                            Auto-renew
+                        </button>
+
+                        <button
+                            type="button"
+                            :disabled="!canUpdateSubscription"
+                            class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
+                            @click="showCardModal = true"
+                        >
+                            Replace
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Only worth showing when the renewal reaches beyond the
@@ -423,7 +531,9 @@
                         </p>
                         <button
                             type="button"
-                            class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
+                            :disabled="!canUpdateSubscription"
+                            :title="noPermissionTitle"
+                            class="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
                             @click="confirmCancelPending = true"
                         >
                             Cancel change
@@ -446,7 +556,9 @@
 
                         <button
                             type="button"
-                            class="rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 dark:bg-secondary"
+                            :disabled="!canUpdateSubscription"
+                            :title="noPermissionTitle"
+                            class="rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary"
                             @click="confirmEnd = true"
                         >
                             End trial now
@@ -494,7 +606,9 @@
                         <p class="text-xs text-rose-700 dark:text-rose-300">
                             <template v-if="awaitingPayment">
                                 Not what you need? Cancel your free trial. You
-                                haven't been charged anything.
+                                haven't been charged anything<template
+                                    v-if="savedCard"
+                                >, and your card won't be</template>.
                             </template>
                             <template v-else>
                                 Not what you need? Cancel before
@@ -505,7 +619,9 @@
 
                         <button
                             type="button"
-                            class="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 dark:border-rose-500/40 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
+                            :disabled="!canUpdateSubscription"
+                            :title="noPermissionTitle"
+                            class="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/40 dark:bg-secondary dark:text-rose-300 dark:hover:bg-rose-500/10"
                             @click="confirmCancel = true"
                         >
                             Cancel subscription
@@ -826,7 +942,8 @@
                             <button
                                 v-if="!trialEnded"
                                 type="button"
-                                :disabled="!canSubmitRenewal"
+                                :disabled="!canSubmitRenewal || !canUpdateSubscription"
+                                :title="noPermissionTitle"
                                 class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-primary/30 bg-white px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary"
                                 @click="openPay(false)"
                             >
@@ -835,7 +952,8 @@
 
                             <button
                                 type="button"
-                                :disabled="!canSubmitRenewal"
+                                :disabled="!canSubmitRenewal || !canUpdateSubscription"
+                                :title="noPermissionTitle"
                                 class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="openPay(true)"
                             >
@@ -846,7 +964,8 @@
                         <button
                             v-else
                             type="button"
-                            :disabled="!canSubmitRenewal"
+                            :disabled="!canSubmitRenewal || !canUpdateSubscription"
+                            :title="noPermissionTitle"
                             class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             @click="openRenew"
                         >
@@ -1020,6 +1139,16 @@
             @close="showAllPayments = false"
         />
 
+        <SavedCardModal
+            v-if="savedCard"
+            :open="showCardModal"
+            :branch-uuid="props.uuid"
+            :amount="Number(savedCard.amount) || 0"
+            :charges-on="savedCard.is_trial || savedCard.auto_renew ? savedCard.charges_on : null"
+            @close="showCardModal = false"
+            @saved="onCardSaved"
+        />
+
         <Teleport to="body">
             <div
                 v-if="showRenew"
@@ -1027,7 +1156,7 @@
                 @click.self="closeRenew"
             >
                 <div
-                    class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                    class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                     role="dialog"
                     aria-modal="true"
                     aria-label="Renew subscription"
@@ -1067,7 +1196,9 @@
                         </button>
                     </div>
 
-                    <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                    <div
+                        class="grid min-h-0 flex-1 gap-5 overflow-y-auto px-6 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] md:items-start"
+                    >
                         <VatBreakdown
                             :subtotal="renewSubtotal"
                             title="Order summary"
@@ -1077,7 +1208,6 @@
                                     ? `Upgrade · ${upgradeMonths} ${upgradeMonths === 1 ? 'month' : 'months'} left`
                                     : '12-month period'
                             "
-                            class="mb-5"
                         />
 
                         <PaymentForm
@@ -1091,7 +1221,18 @@
                             :submit-label="paymentCopy.submitLabel"
                             gcash-processing-label="Waiting for GCash payment..."
                             terms-context="subscription"
-                        />
+                            compact
+                        >
+                            <template
+                                v-if="!savedCard?.auto_renew"
+                                #card-options
+                            >
+                                <AutoRenewCheckbox
+                                    v-model="autoRenew"
+                                    :disabled="!canUpdateSubscription"
+                                />
+                            </template>
+                        </PaymentForm>
                     </div>
                 </div>
             </div>
@@ -1106,6 +1247,7 @@ import {
     CheckCircle2,
     CircleX,
     Clock,
+    CreditCard,
     FlaskConical,
     PlayCircle,
     Info,
@@ -1118,6 +1260,11 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { withVat } from "~/utils/vat";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
+import SavedCardModal from "~/components/sections/app/settings/SavedCardModal.vue";
+import AutoRenewCheckbox from "~/components/billing/AutoRenewCheckbox.vue";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
+import visaIcon from "@/assets/icons/visa.png";
 import {
     paymentAccount,
     paymentTypeLabel,
@@ -1280,6 +1427,61 @@ const awaitingPayment = computed(() => Boolean(renewal.value?.awaiting_payment))
 const canPayTrial = computed(() => Boolean(renewal.value?.can_pay));
 const trialEnded = computed(() => Boolean(renewal.value?.trial_ended));
 const payStartNow = ref(false);
+const savedCard = computed(() => renewal.value?.card ?? null);
+const showCardModal = ref(false);
+
+const CARD_BRANDS: Record<string, string> = {
+    VISA: "Visa",
+    MASTERCARD: "Mastercard",
+    AMEX: "Amex",
+    JCB: "JCB",
+};
+
+const cardBrandLabel = (brand?: string | null) =>
+    CARD_BRANDS[brand ?? ""] ?? "Card";
+
+const onCardSaved = (card: any) => {
+    if (!card) return;
+
+    subscription.value = {
+        ...subscription.value,
+        renewal: { ...subscription.value?.renewal, card },
+    };
+};
+
+const { canUpdate } = usePermissions();
+const canUpdateSubscription = computed(() => canUpdate(Modules.ManageSubscription));
+const noPermissionTitle = computed(() =>
+    canUpdateSubscription.value
+        ? undefined
+        : "You need permission to update the subscription.",
+);
+
+const autoRenew = ref(false);
+const togglingAutoRenew = ref(false);
+
+const toggleAutoRenew = async () => {
+    if (!savedCard.value || togglingAutoRenew.value || !canUpdateSubscription.value) {
+        return;
+    }
+
+    togglingAutoRenew.value = true;
+
+    try {
+        const result = await subscriptionService.setAutoRenew({
+            branch_uuid: props.uuid,
+            auto_renew: !savedCard.value.auto_renew,
+        });
+
+        onCardSaved(result?.card);
+        success(result?.message ?? "Auto-renew updated.");
+    } catch (err: any) {
+        error(err?.message ?? "Could not update auto-renew.");
+    } finally {
+        togglingAutoRenew.value = false;
+    }
+};
+
 const canRenew = computed(() => Boolean(renewal.value?.can_renew));
 const canUpgrade = computed(() => Boolean(renewal.value?.can_upgrade));
 const upgradeMonths = computed(() => Number(renewal.value?.upgrade_months) || 0);
@@ -1577,6 +1779,8 @@ const fetchSubscription = async (silent = false) => {
 };
 
 const openRenew = () => {
+    if (!canUpdateSubscription.value) return;
+
     if (!canSubmitRenewal.value) {
         error(`Renewal opens on ${formatDate(renewalOpensAt.value)}.`);
         return;
@@ -1606,23 +1810,26 @@ const payCard = async () => {
     processing.value = true;
 
     try {
+        const saveCard = autoRenew.value && canUpdateSubscription.value;
+
         await cardPayment({
             card: card.value,
             amount: renewTotal.value,
+            reusable: saveCard,
 
             onClose: () => {
                 processing.value = false;
             },
 
-            createPayment: ({ token_id, authentication_id }) =>
+            createPayment: (saved) =>
                 subscriptionService.renew({
                     branch_uuid: props.uuid,
                     payment_method: "CREDIT-CARD",
                     plan_code: chargedPlan.value?.plan_code,
                     plan_type: chargedPlan.value?.type,
                     start_now: payStartNow.value,
-                    token_id,
-                    authentication_id,
+                    auto_renew: saveCard,
+                    ...saved,
                 }),
 
             onSuccess: async (result: any) => {
@@ -1729,7 +1936,7 @@ const payGCash = async () => {
 };
 
 const cancelPendingPlan = async () => {
-    if (cancellingPending.value) return;
+    if (cancellingPending.value || !canUpdateSubscription.value) return;
 
     cancellingPending.value = true;
 
@@ -1754,7 +1961,7 @@ const cancelPendingPlan = async () => {
 };
 
 const cancelTest = async () => {
-    if (cancelling.value) return;
+    if (cancelling.value || !canUpdateSubscription.value) return;
 
     const reason = cancelReason.value.trim();
 
@@ -1793,7 +2000,7 @@ const cancelTest = async () => {
 };
 
 const endTest = async () => {
-    if (ending.value) return;
+    if (ending.value || !canUpdateSubscription.value) return;
 
     ending.value = true;
 
@@ -1848,6 +2055,8 @@ onMounted(async () => {
     }
 
     // Arrived from the "end trial" link in the header notice.
-    if (props.endTrial && canCancel.value) confirmEnd.value = true;
+    if (props.endTrial && canCancel.value && canUpdateSubscription.value) {
+        confirmEnd.value = true;
+    }
 });
 </script>

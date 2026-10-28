@@ -124,6 +124,10 @@ class SubscriptionService
         AuthGuard::requireUser($user);
         $this->ensureNoSubscription($payload['agency_id'] ?? null);
 
+        if (empty($payload['token_id']) || empty($payload['authentication_id'])) {
+            throw new Exception(__('Add a card to start your free trial.'), 422);
+        }
+
         $detail = $this->createSubscription($user, $payload);
 
         if (($detail['mode'] ?? null) !== Subscription::MODE_TEST) {
@@ -135,6 +139,10 @@ class SubscriptionService
             'external_id' => null,
             'xendit_invoice_id' => null,
             'masked_card_number' => null,
+            'card' => [
+                ...$this->cardDetails($payload),
+                'auto_renew' => filter_var($payload['auto_renew'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            ],
         ]);
     }
 
@@ -150,6 +158,79 @@ class SubscriptionService
     private function withVat(array $detail): array
     {
         return [...$detail, ...Vat::exclusive((float) $detail['total_amount'])];
+    }
+
+    private function cardDetails(array $payload): array
+    {
+        return [
+            'card_token_id' => $payload['token_id'],
+            'masked_card_number' => $payload['masked_card_number'] ?? null,
+            'card_brand' => $payload['card_brand'] ?? null,
+        ];
+    }
+
+    public function savedCardChargeDetail(Subscription $subscription, ?User $owner): array
+    {
+        $payload = [
+            'branch_id' => $subscription->branchLinks()->value('branch_id'),
+            'payment_method' => 'CREDIT-CARD',
+            'start_now' => true,
+        ];
+
+        return $this->withVat($subscription->awaitingTrialPayment()
+            ? $this->createTrialPayment($owner, $subscription, $payload)
+            : $this->createRenewal($owner, $payload));
+    }
+
+    private function findCardSubscription(int $branchId): Subscription
+    {
+        $subscription = $this->subscriptionRepository->findLatestForBranch($branchId);
+
+        if (!$subscription) {
+            throw new Exception(__('This branch has no subscription.'), 404);
+        }
+
+        if (
+            !in_array($subscription->status, [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE], true)
+            || $subscription->isLockedForPayment()
+        ) {
+            throw new Exception(__('Pay for your plan first to save a card on this subscription.'), 422);
+        }
+
+        return $subscription;
+    }
+
+    public function updateCard(array $payload)
+    {
+        $subscription = $this->findCardSubscription($payload['branch_id']);
+
+        $subscription->update($this->cardDetails($payload));
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Card saved.'),
+            'card' => $subscription->savedCard(),
+        ], 200);
+    }
+
+    public function setAutoRenew(array $payload)
+    {
+        $subscription = $this->findCardSubscription($payload['branch_id']);
+        $enabled = filter_var($payload['auto_renew'], FILTER_VALIDATE_BOOLEAN);
+
+        if ($enabled && !$subscription->card_token_id) {
+            throw new Exception(__('Save a card first to turn on auto-renew.'), 422);
+        }
+
+        $subscription->update(['auto_renew' => $enabled]);
+
+        return response()->json([
+            'status' => true,
+            'message' => $enabled
+                ? __('Auto-renew is on. Your card is charged when your subscription ends.')
+                : __('Auto-renew is off. Renew your subscription yourself before it ends.'),
+            'card' => $subscription->savedCard(),
+        ], 200);
     }
 
 
@@ -410,7 +491,16 @@ class SubscriptionService
                     ],
             };
 
-            $subscription->update($changes);
+            $paysTrial = in_array($action, [self::ACTION_ACTIVATE, self::ACTION_PREPAY], true);
+
+            $subscription->update([
+                ...$changes,
+                ...match (true) {
+                    !empty($payload['card']) => $payload['card'],
+                    $paysTrial && !$subscription->auto_renew => Subscription::NO_CARD,
+                    default => [],
+                },
+            ]);
 
             $payment = $subscription->payments()->create([
                 'subscription_id' => $subscription->subscription_id,
@@ -624,6 +714,8 @@ class SubscriptionService
             }
 
             $subscription->update([
+                ...Subscription::NO_CARD,
+                'auto_renew' => false,
                 'status' => Subscription::STATUS_CANCELLED,
                 'cancel_reason' => $reason,
                 'end_date' => Carbon::now(),
@@ -784,10 +876,12 @@ class SubscriptionService
         $reference_id = $payload['external_id'] ?? null;
         $xendit_invoice_id = $payload['xendit_invoice_id'] ?? null;
         $masked_card_number = $payload['masked_card_number'] ?? null;
+        $card = $payload['card'] ?? [];
         try {
 
             return DB::transaction(function () use (
                 $meta,
+                $card,
                 $reference_id,
                 $xendit_invoice_id,
                 $masked_card_number
@@ -908,6 +1002,7 @@ class SubscriptionService
                         $plan['plan_id'],
                         ($meta['mode'] ?? Subscription::MODE_TEST) === Subscription::MODE_TEST
                     ),
+                    ...$card,
                     'agency_id' => $agencyData->agency_id ?? null,
                 ]);
 

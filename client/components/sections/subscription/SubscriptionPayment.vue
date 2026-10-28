@@ -28,8 +28,9 @@
 
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
                 No payment today. An admin reviews your subscription and branch
-                first, and your 2-week trial starts once they're approved. After that, pay for
-                your plan any time, whenever you're ready.
+                first, and your 2-week trial starts once they're approved. Your
+                card is charged only when the trial ends, unless you cancel
+                before then.
             </p>
 
             <VatBreakdown
@@ -45,11 +46,26 @@
                 type="button"
                 :disabled="processing"
                 class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
-                @click="startTrial"
+                @click="showCardModal = true"
             >
-                <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
-                {{ processing ? "Starting your trial…" : "Start free trial" }}
+                <CreditCard class="h-4 w-4" />
+                Start free trial
             </button>
+
+            <p
+                class="mt-2 text-center text-xs text-slate-500 dark:text-gray-400"
+            >
+                ₱0.00 due today · card required
+            </p>
+
+            <TrialCardModal
+                v-model:card="card"
+                :open="showCardModal"
+                :amount="total"
+                :processing="processing || xenditProcessing"
+                @close="showCardModal = false"
+                @submit="startTrial"
+            />
         </div>
 
         <div v-else class="space-y-5">
@@ -76,8 +92,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { Gift, LoaderCircle } from "lucide-vue-next";
+import { CreditCard, Gift } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
+import TrialCardModal from "~/components/sections/subscription/TrialCardModal.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
@@ -122,6 +139,7 @@ const loadingTotal = ref(true);
 const total = ref(0);
 const subtotal = ref(0);
 const withTrial = ref(true);
+const showCardModal = ref(false);
 
 watch([processing, xenditProcessing], ([p, x]) => {
     busy.value = p || x;
@@ -151,11 +169,10 @@ const payCard = async () => {
                 xenditProcessing.value = value;
             },
 
-            createPayment: ({ token_id, authentication_id }) =>
+            createPayment: (saved) =>
                 subscriptionService.createSubscription({
                     ...payload,
-                    token_id,
-                    authentication_id,
+                    ...saved,
                     payment_method: "CREDIT-CARD",
                     payment_type: "SUBSCRIPTION",
                 }),
@@ -186,7 +203,9 @@ const payCard = async () => {
 };
 
 const startTrial = async () => {
-    if (processing.value) return;
+    if (processing.value || loadingTotal.value || xenditProcessing.value) {
+        return;
+    }
 
     processing.value = true;
 
@@ -194,24 +213,46 @@ const startTrial = async () => {
         const payload = checkout.subscriptionPayload;
         if (!payload) throw new Error("Subscription details are missing.");
 
-        const result = await subscriptionService.startTrial({
-            ...payload,
-            payment_method: null,
-            payment_type: "SUBSCRIPTION",
-        });
+        await cardPayment({
+            card: card.value,
+            amount: total.value,
+            reusable: true,
 
-        success("Free trial started", result.message);
+            onClose: () => {
+                xenditProcessing.value = false;
+                processing.value = false;
+            },
 
-        await fetchAuthUser();
+            on3DSProcessingChange: (value: any) => {
+                xenditProcessing.value = value;
+            },
 
-        await navigateTo({
-            path: "/product/subscription-summary",
-            query: {
-                status: "true",
-                trial: "1",
+            createPayment: (saved) =>
+                subscriptionService.startTrial({
+                    ...payload,
+                    ...saved,
+                    payment_method: null,
+                    payment_type: "SUBSCRIPTION",
+                }),
+
+            onSuccess: async (result) => {
+                xenditProcessing.value = false;
+
+                success("Free trial started", result.message);
+
+                await fetchAuthUser();
+
+                await navigateTo({
+                    path: "/product/subscription-summary",
+                    query: {
+                        status: "true",
+                        trial: "1",
+                    },
+                });
             },
         });
     } catch (err: any) {
+        xenditProcessing.value = false;
         error(err?.message ?? "Could not start your free trial.");
     } finally {
         processing.value = false;

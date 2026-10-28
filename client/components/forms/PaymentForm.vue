@@ -637,6 +637,8 @@ watch(isCash, (active) => {
                     </span>
                 </div>
 
+                <slot name="card-options" />
+
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"

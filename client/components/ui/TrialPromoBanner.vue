@@ -18,11 +18,11 @@
 
                 <div>
                     <p class="text-base font-extrabold tracking-tight sm:text-lg">
-                        Try it free for 2 weeks. Pay later.
+                        Try it free for 2 weeks.
                     </p>
                     <p class="text-xs text-white/85 sm:text-sm">
-                        No payment needed to start. Pay any time, whenever
-                        you're ready.
+                        Add a card to start. Nothing is charged until your
+                        trial ends.
                     </p>
                 </div>
             </div>
@@ -44,5 +44,5 @@
 <script setup lang="ts">
 import { Check, Sparkles } from "lucide-vue-next";
 
-const perks = ["No card required", "Full features", "Cancel anytime"];
+const perks = ["₱0 due today", "Full features", "Cancel anytime"];
 </script>

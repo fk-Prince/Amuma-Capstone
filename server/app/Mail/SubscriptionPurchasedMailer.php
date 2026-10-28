@@ -29,7 +29,7 @@ class SubscriptionPurchasedMailer extends Mailable
         $isTrial = $this->amount <= 0;
         $badge = $isTrial ? 'Free trial' : 'Payment received';
         $intro = $isTrial
-            ? "we've received your free trial request for <strong style='color:#0f172a;'>{$this->branchName}</strong>. Nothing is charged until you choose to pay for your plan."
+            ? "we've received your free trial request for <strong style='color:#0f172a;'>{$this->branchName}</strong>. Nothing is charged today. Your card is charged for your plan when the 2-week trial ends, unless you cancel before then."
             : "we've received your payment for <strong style='color:#0f172a;'>{$this->branchName}</strong>.";
         $amountLabel = $isTrial ? 'Due today' : 'Amount paid';
 

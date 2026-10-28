@@ -121,9 +121,10 @@
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Nothing to pay today.</span>
                     Your 2-week free trial starts once an admin approves your
-                    subscription and branch. After that, pay for your plan any time, whenever
-                    you're ready. If it isn't paid by the time the trial ends,
-                    your branch is locked until it is.
+                    subscription and branch. Your card is charged for your
+                    plan when the trial ends, unless you cancel before then.
+                    If the charge fails, your branch is locked until the plan
+                    is paid.
                 </p>
             </div>
         </section>

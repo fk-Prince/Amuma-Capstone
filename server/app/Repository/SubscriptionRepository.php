@@ -45,6 +45,33 @@ class SubscriptionRepository
             ->get();
     }
 
+    public function findDueForCardCharge()
+    {
+        return Subscription::query()
+            ->with(['plans', 'agency', 'branchLinks.branch'])
+            ->whereNotNull('card_token_id')
+            ->where(fn($query) => $query
+                ->where(fn($trial) => $trial
+                    ->where('mode', Subscription::MODE_TEST)
+                    ->whereIn('status', [Subscription::STATUS_ACTIVE, Subscription::STATUS_EXPIRED])
+                    ->whereDate('pending_plan_starts_at', '<=', Carbon::today())
+                    ->whereDoesntHave('payments', fn($payments) => $payments->where('status', SubscriptionPayment::STATUS_PAID)))
+                ->orWhere(fn($renewal) => $renewal
+                    ->where('mode', Subscription::MODE_LIVE)
+                    ->where('status', Subscription::STATUS_ACTIVE)
+                    ->where('auto_renew', true)
+                    ->whereNull('pending_plan_id')
+                    ->whereDate('end_date', '<=', Carbon::today())))
+            ->get();
+    }
+
+    public function releaseCard(int $subscriptionId): bool
+    {
+        return Subscription::whereKey($subscriptionId)
+            ->whereNotNull('card_token_id')
+            ->update([...Subscription::NO_CARD, 'auto_renew' => false]) > 0;
+    }
+
     public function agencyHasUsedTrial(?int $agencyId): bool
     {
         if (!$agencyId) {

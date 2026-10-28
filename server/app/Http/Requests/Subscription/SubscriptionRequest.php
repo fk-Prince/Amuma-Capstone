@@ -24,6 +24,9 @@ class SubscriptionRequest extends FormRequest
         return [
             'token_id' => ['nullable', 'string'],
             'authentication_id' => ['nullable', 'string'],
+            'masked_card_number' => ['nullable', 'string', 'max:30'],
+            'card_brand' => ['nullable', 'string', 'max:30'],
+            'auto_renew' => ['nullable', 'boolean'],
 
             'plan_code' => ['required', 'string'],
             'plan_type' => ['required', Rule::in(Plan::TYPES)],

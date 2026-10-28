@@ -40,21 +40,7 @@ class CardPayment implements IPaymentMethod
                     'amount'            => $subscription['total_amount'],
                     'payer_email'       => $user->email,
                     'payment_methods'   => ['CREDIT-CARD'],
-                    'metadata'          => [
-                        'type'             => $subscription['type'],
-                        'plan'             => $subscription['plan'],
-                        'user'             => $subscription['user'],
-                        'branch'           => $subscription['branch'],
-                        'agency'           => $subscription['agency'],
-                        'payment_method'   => $subscription['method'],
-                        'total_amount'     => $subscription['total_amount'],
-                        'vat_rate'         => $subscription['vat_rate'] ?? null,
-                        'endDate'          => $subscription['endDate'],
-                        'mode'             => $subscription['mode'] ?? null,
-                        'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
-                        'action'           => $subscription['action'] ?? null,
-                        'plan_starts_at'   => $subscription['plan_starts_at'] ?? null,
-                    ],
+                    'metadata'          => $this->subscriptionMetadata($subscription),
                 ]);
 
             if ($response->failed()) {
@@ -76,6 +62,7 @@ class CardPayment implements IPaymentMethod
                 'external_id'       => $charge['external_id'] ?? null,
                 'xendit_invoice_id' => $charge['id'] ?? null,
                 'masked_card_number' => $charge['masked_card_number'] ?? null,
+                'card'              => $this->cardToSave($payload, $charge),
             ];
 
             return $this->subscriptionService->settlePayment($result);
@@ -88,6 +75,74 @@ class CardPayment implements IPaymentMethod
         }
     }
 
+
+    public function chargeSavedCard(string $tokenId, array $subscription, ?string $email): ?array
+    {
+        $response = Http::withOptions([
+            'verify' => false
+        ])->withBasicAuth($this->secretKey, '')
+            ->post('https://api.xendit.co/credit_card_charges', [
+                'token_id'    => $tokenId,
+                'capture'     => true,
+                'descriptor'  => 'subscription',
+                'currency'    => 'PHP',
+                'external_id' => (string) Str::uuid(),
+                'amount'      => $subscription['total_amount'],
+                'payer_email' => $email,
+                'metadata'    => $this->subscriptionMetadata($subscription),
+            ]);
+
+        if ($response->failed() || $response->json('status') !== 'CAPTURED') {
+            Log::warning('Xendit saved card charge failed', [
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            return null;
+        }
+
+        $charge = $response->json();
+
+        return [
+            'metadata'          => $charge['metadata'] ?? [],
+            'external_id'       => $charge['external_id'] ?? null,
+            'xendit_invoice_id' => $charge['id'] ?? null,
+            'masked_card_number' => $charge['masked_card_number'] ?? null,
+        ];
+    }
+
+    private function cardToSave(array $payload, array $charge): ?array
+    {
+        if (!filter_var($payload['auto_renew'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return null;
+        }
+
+        return [
+            'card_token_id'      => $payload['token_id'],
+            'masked_card_number' => $payload['masked_card_number'] ?? $charge['masked_card_number'] ?? null,
+            'card_brand'         => $payload['card_brand'] ?? $charge['card_brand'] ?? null,
+            'auto_renew'         => true,
+        ];
+    }
+
+    private function subscriptionMetadata(array $subscription): array
+    {
+        return [
+            'type'             => $subscription['type'],
+            'plan'             => $subscription['plan'],
+            'user'             => $subscription['user'],
+            'branch'           => $subscription['branch'],
+            'agency'           => $subscription['agency'],
+            'payment_method'   => $subscription['method'],
+            'total_amount'     => $subscription['total_amount'],
+            'vat_rate'         => $subscription['vat_rate'] ?? null,
+            'endDate'          => $subscription['endDate'],
+            'mode'             => $subscription['mode'] ?? null,
+            'subscription_uuid' => $subscription['subscription_uuid'] ?? null,
+            'action'           => $subscription['action'] ?? null,
+            'plan_starts_at'   => $subscription['plan_starts_at'] ?? null,
+        ];
+    }
 
     public function bookingBilling(array $payload)
     {
