@@ -127,7 +127,7 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
     },
     "/app/owner/support": {
         title: "Customer Support",
-        subtitle: "Answer support tickets sent by agencies and branches.",
+        subtitle: "Answer questions and issues sent by AMUMA users.",
     },
     "/profile": {
         title: "My Profile",
