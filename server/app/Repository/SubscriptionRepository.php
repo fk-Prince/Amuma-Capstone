@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 class SubscriptionRepository
 {
+    private const NET_PRICE_SQL = 'price * 100 / (100 + vat_rate)';
+
     public function paymentsByUser(mixed $userId)
     {
         return SubscriptionPayment::with(['plan:plan_id,name,type', 'branch:branch_id,name'])
@@ -261,6 +263,7 @@ class SubscriptionRepository
             Subscription::STATUS_ACTIVE,
             Subscription::STATUS_REJECTED,
             Subscription::STATUS_EXPIRED,
+            Subscription::STATUS_CANCELLED,
         ];
 
         $byStatus = collect($statuses)->mapWithKeys(
@@ -307,9 +310,11 @@ class SubscriptionRepository
             ->get();
 
 
-        $revenue = SubscriptionPayment::query()
+        $revenueTotals = SubscriptionPayment::query()
             ->where('status', 'paid')
-            ->sum('price');
+            ->selectRaw('COALESCE(SUM(' . self::NET_PRICE_SQL . '), 0) as revenue')
+            ->selectRaw('COALESCE(SUM(price), 0) - COALESCE(SUM(' . self::NET_PRICE_SQL . '), 0) as vat')
+            ->first();
 
         $paidPaymentsCount = SubscriptionPayment::query()
             ->where('status', 'paid')
@@ -320,7 +325,7 @@ class SubscriptionRepository
                 ->where('status', 'paid')
                 ->whereYear('created_at', $revenueYear)
                 ->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month")
-                ->selectRaw('SUM(price) as total')
+                ->selectRaw('SUM(' . self::NET_PRICE_SQL . ') as total')
                 ->groupBy('month')
                 ->pluck('total', 'month');
 
@@ -337,7 +342,7 @@ class SubscriptionRepository
                 ->where('status', 'paid')
                 ->where('created_at', '>=', Carbon::now()->subMonths($revenueMonths - 1)->startOfMonth())
                 ->selectRaw("TO_CHAR(created_at, 'YYYY-MM') as month")
-                ->selectRaw('SUM(price) as total')
+                ->selectRaw('SUM(' . self::NET_PRICE_SQL . ') as total')
                 ->groupBy('month')
                 ->pluck('total', 'month');
 
@@ -389,7 +394,8 @@ class SubscriptionRepository
                     'rejected' => (int) ($agencyTotals->rejected ?? 0),
                 ],
                 'plan_breakdown' => $planBreakdown,
-                'revenue_total' => (float) $revenue,
+                'revenue_total' => round((float) $revenueTotals->revenue, 2),
+                'vat_total' => round((float) $revenueTotals->vat, 2),
                 'paid_payments_count' => $paidPaymentsCount,
                 'revenue_by_month' => $revenueByMonth,
                 'available_revenue_years' => $availableYears,

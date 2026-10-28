@@ -126,6 +126,13 @@
                                 >
                                     —
                                 </p>
+
+                                <p
+                                    v-if="stats.vat"
+                                    class="mt-0.5 text-[11px] tabular-nums text-slate-500 dark:text-gray-400"
+                                >
+                                    + {{ formatCurrency(stats.vat) }} VAT collected
+                                </p>
                             </div>
                             <div
                                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-700 text-white shadow-md shadow-accent-500/30"
@@ -1359,6 +1366,7 @@ interface DashboardOverview {
     branches: VerificationBucket;
     agencies: VerificationBucket;
     revenue_total: number;
+    vat_total: number;
     paid_payments_count: number;
     revenue_by_month: RevenueByMonth[];
 }
@@ -1394,6 +1402,7 @@ const overview = ref<DashboardOverview>({
     branches: emptyBucket(),
     agencies: emptyBucket(),
     revenue_total: 0,
+    vat_total: 0,
     paid_payments_count: 0,
     revenue_by_month: [],
 });
@@ -1442,6 +1451,7 @@ const fetchAll = async () => {
             branches: normalizeBucket(data.branches),
             agencies: normalizeBucket(data.agencies),
             revenue_total: Number(data.revenue_total) || 0,
+            vat_total: Number(data.vat_total) || 0,
             paid_payments_count: Number(data.paid_payments_count) || 0,
             revenue_by_month: Array.isArray(data.revenue_by_month)
                 ? data.revenue_by_month
@@ -1465,6 +1475,7 @@ const fetchAll = async () => {
             branches: emptyBucket(),
             agencies: emptyBucket(),
             revenue_total: 0,
+            vat_total: 0,
             paid_payments_count: 0,
             revenue_by_month: [],
         };
@@ -1484,6 +1495,7 @@ const stats = computed(() => ({
     active: Number(overview.value.by_status.active) || 0,
     rejected: Number(overview.value.by_status.rejected) || 0,
     expired: Number(overview.value.by_status.expired) || 0,
+    cancelled: Number(overview.value.by_status.cancelled) || 0,
 
     agenciesTotal: overview.value.agencies.total,
     agenciesVerified: overview.value.agencies.verified,
@@ -1496,6 +1508,7 @@ const stats = computed(() => ({
     branchesVerifiedThisMonth: overview.value.branches.verified_this_month,
 
     revenue: overview.value.revenue_total,
+    vat: overview.value.vat_total,
     paidPayments: overview.value.paid_payments_count,
 }));
 
@@ -1625,6 +1638,13 @@ const statusSegments = computed(() => {
             count: stats.value.expired,
             pct: Math.round((stats.value.expired / total) * 100),
             color: "#f87171",
+        },
+        {
+            key: "cancelled",
+            label: "Cancelled",
+            count: stats.value.cancelled,
+            pct: Math.round((stats.value.cancelled / total) * 100),
+            color: "#8b5cf6",
         },
     ];
 });
