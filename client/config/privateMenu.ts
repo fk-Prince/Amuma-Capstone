@@ -38,6 +38,6 @@ export const privateMenu: MenuItem[] = [
         label: "Customer Support",
         to: "/app/owner/support",
         icon: LifeBuoy,
-        group: "Management",
+        group: "Support",
     },
 ];

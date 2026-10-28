@@ -12,7 +12,7 @@
                 class="absolute inset-0 bg-gradient-to-b from-[#EEF3FB]/85 via-[#EEF3FB]/80 to-[#EEF3FB] dark:from-secondary/85 dark:via-secondary/80 dark:to-secondary"
             />
 
-            <div class="relative z-10 mx-auto max-w-[100rem] px-6">
+            <div class="relative z-10 mx-auto w-[88%] max-w-[1600px] px-4 sm:px-10">
                 <NuxtLink
                     to="/"
                     class="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-600 dark:text-white/80 dark:hover:text-white"
@@ -46,7 +46,7 @@
             />
 
             <div
-                class="relative z-10 mx-auto flex h-full max-w-[100rem] flex-col px-6 py-8"
+                class="relative z-10 mx-auto flex h-full w-[88%] max-w-[1600px] flex-col px-4 py-8 sm:px-10"
             >
                 <div
                     v-if="!loading"
