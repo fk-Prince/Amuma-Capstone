@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\BranchSubscription;
-use App\Utils\MaskUtil;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -99,9 +98,7 @@ class SubscriptionResource extends JsonResource
                     'id_front' => $this->branch?->agencies?->id_front,
                     'id_back' => $this->branch?->agencies?->id_back,
                     'document' => $this->branch?->agencies?->document,
-                    'registered_by' => MaskUtil::email(
-                        $this->branch?->agencies?->registrant?->email
-                    ),
+                    'registered_by' => $this->branch?->agencies?->registrant?->email,
                 ],
             ],
 

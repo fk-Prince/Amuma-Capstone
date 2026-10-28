@@ -38,6 +38,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SandboxController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VitalController;
 use App\Http\Controllers\XenditController;
@@ -70,6 +71,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 });
 Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch']);
+Route::post('/support-tickets/public', [SupportTicketController::class, 'storePublic'])->middleware('throttle:5,1');
 
 if (config('app.sandbox')) {
     Route::post('/sandbox/provision', [SandboxController::class, 'provision'])->middleware('throttle:30,1');
@@ -102,6 +104,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/inquiries', [InquiryController::class, 'index']);
     Route::patch('/inquiries/{uuid}/status', [InquiryController::class, 'updateStatus']);
     Route::post('/inquiries/{uuid}/reply', [InquiryController::class, 'reply']);
+
+    // CUSTOMER SUPPORT
+    Route::get('/support-tickets', [SupportTicketController::class, 'index']);
+    Route::post('/support-tickets', [SupportTicketController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/support-tickets/{uuid}', [SupportTicketController::class, 'show'])->whereUuid('uuid');
+    Route::post('/support-tickets/{uuid}/replies', [SupportTicketController::class, 'reply'])->whereUuid('uuid');
+    Route::patch('/support-tickets/{uuid}/status', [SupportTicketController::class, 'updateStatus'])->whereUuid('uuid');
 
     // AUDIT LOGS
     Route::get('/audit-logs', [AuditLogController::class, 'index']);

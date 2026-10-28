@@ -6,9 +6,7 @@ use App\Models\Invoice;
 
 class OutstandingBalance
 {
-    // A discharge ends the patient's stay, so the screen has to account for
-    // everything still owed on the account, not only the invoice the refund is
-    // worked out on.
+
     public static function forInvoices(
         mixed $invoices,
         ?Invoice $dischargeInvoice = null,
@@ -31,9 +29,6 @@ class OutstandingBalance
                 && $invoice->invoiceServices->isNotEmpty()
         );
 
-        // A schedule with no service attached is Activities of Daily Living.
-        // Both are service work and are totalled together; the ADL share is
-        // kept alongside for anyone who needs it broken out.
         $medical = $scheduled->filter(
             fn($invoice) => $invoice->invoiceServices->contains(
                 fn($line) => $line->scheduleService?->service_id !== null
@@ -52,8 +47,6 @@ class OutstandingBalance
             fn($invoice) => in_array($invoice->invoice_id, $medicalIds, true)
         );
 
-        // The diagnosis cases billed on the period being discharged are left
-        // out of the balance, as are those on periods that have not started.
         $skippedPeriodIds = array_filter([...$futurePeriodIds, $currentPeriodId]);
 
         $due = fn($invoice) => round(
@@ -63,8 +56,8 @@ class OutstandingBalance
                     ->whereIn('admission_period_id', $futurePeriodIds)
                     ->sum('price')
                     - $invoice->diagnosisLines
-                        ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $skippedPeriodIds, true))
-                        ->sum('billed_amount')
+                    ->filter(fn($line) => in_array($line->admissionPeriod?->admission_period_id, $skippedPeriodIds, true))
+                    ->sum('billed_amount')
             ),
             2
         );

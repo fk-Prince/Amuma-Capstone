@@ -4,9 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-// One charge for diagnosis cases: the admission period and invoice it is on,
-// and what it comes to.
-// The diagnoses it is for are the admission_diagnosis rows under it.
+
 class AdmissionChargeDiagnosis extends Model
 {
     protected $table = 'admission_charge_diagnosis';

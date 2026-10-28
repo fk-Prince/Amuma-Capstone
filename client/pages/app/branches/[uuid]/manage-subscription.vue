@@ -193,14 +193,24 @@
                         </div>
                     </div>
 
-                    <ActionButton
-                        variant="primary"
-                        extra-class="!rounded-xl !px-5 !py-2.5 shrink-0"
-                        @click="showRenewal = true"
-                    >
-                        <Eye class="h-4 w-4" />
-                        <span>View Subscription</span>
-                    </ActionButton>
+                    <div class="flex shrink-0 flex-wrap items-center gap-3">
+                        <ActionButton
+                            extra-class="!rounded-xl !px-5 !py-2.5"
+                            @click="openSupport()"
+                        >
+                            <LifeBuoy class="h-4 w-4" />
+                            <span>Customer Support</span>
+                        </ActionButton>
+
+                        <ActionButton
+                            variant="primary"
+                            extra-class="!rounded-xl !px-5 !py-2.5"
+                            @click="showRenewal = true"
+                        >
+                            <Eye class="h-4 w-4" />
+                            <span>View Subscription</span>
+                        </ActionButton>
+                    </div>
                 </div>
 
                 <div
@@ -386,7 +396,8 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { CircleCheck, CircleX, Clock, LayoutGrid, Eye } from "lucide-vue-next";
+import { CircleCheck, CircleX, Clock, LayoutGrid, Eye, LifeBuoy } from "lucide-vue-next";
+import { useSupportCenter } from "~/composables/useSupportCenter";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
 import { useBranchStore } from "~/stores/branch";
@@ -413,6 +424,7 @@ const route = useRoute();
 const { error } = useToast();
 const { canCreate, canUpdate } = usePermissions();
 const { isSandbox } = useSandbox();
+const { openSupport } = useSupportCenter();
 
 const canResubmit = computed(() => canUpdate(Modules.ManageSubscription));
 const canAddBranch = computed(() => canCreate(Modules.ManageSubscription));

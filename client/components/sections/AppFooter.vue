@@ -147,5 +147,6 @@ const learnLinks = [
     { label: "For families", to: "/families" },
     { label: "How booking works", to: "/how-booking-works" },
     { label: "FAQ", to: "/faq" },
+    { label: "Customer Support", to: "/resources/support" },
 ];
 </script>

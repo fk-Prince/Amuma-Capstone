@@ -216,9 +216,11 @@ import { useRoute, useRouter } from "vue-router";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import { useToast } from "~/composables/useToast";
 import { remScale } from "~/utils/rem";
+import { useSupportCenter } from "~/composables/useSupportCenter";
 const { info } = useToast();
 const route = useRoute();
 const router = useRouter();
+const { openSupport } = useSupportCenter();
 
 const failedImages = reactive(new Set<string | number>());
 const user = useAuthUser();
@@ -368,6 +370,23 @@ const openNotification = async (notif: Notification) => {
 
     if (notif.message_type === "Schedule") {
         await openSchedule(notif);
+        return;
+    }
+
+    if (notif.message_type === "Support" && notif.reference_id) {
+        open.value = false;
+
+        if (route.path.startsWith("/app/owner")) {
+            await router.push({
+                path: "/app/owner/support",
+                query: { ticket: notif.reference_id },
+            });
+            return;
+        }
+
+        if (route.path.startsWith("/app/branches")) {
+            openSupport(notif.reference_id);
+        }
         return;
     }
 

@@ -12,6 +12,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Module;
 use App\Models\Patient;
+use App\Models\PlatformAdmin;
 use App\Models\User;
 use App\Repository\EmployeeRepository;
 use App\Repository\NotificationRepository;
@@ -368,11 +369,44 @@ class NotificationService
                 'from_user_id' => $actor?->user_id ?? $employee->user_id,
                 'message_type' => $messageType,
                 'message' => $message,
+                'reference_id' => $referenceId,
             ]);
 
             NotificationEvent::safe(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $branch->uuid,
+                $message,
+                $referenceId ?? '',
+                $messageType,
+                $reference,
+            ));
+        }
+    }
+
+    public function notifyPlatformAdmins(
+        ?Branch $branch,
+        string $message,
+        string $messageType,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null,
+    ): void {
+        $admins = User::whereIn('user_id', PlatformAdmin::pluck('user_id'))
+            ->get(['user_id', 'uuid']);
+
+        foreach ($admins as $admin) {
+            $this->notificationRepository->create([
+                'branch_id' => $branch?->branch_id,
+                'to_user_id' => $admin->user_id,
+                'from_user_id' => $actor?->user_id ?? $admin->user_id,
+                'message_type' => $messageType,
+                'message' => $message,
+                'reference_id' => $referenceId,
+            ]);
+
+            NotificationEvent::safe(new NotificationEvent(
+                $admin->uuid,
+                (string) $branch?->uuid,
                 $message,
                 $referenceId ?? '',
                 $messageType,
