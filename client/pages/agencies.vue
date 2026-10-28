@@ -391,7 +391,7 @@ const comparison = [
         <CtaSection
             title="Ready to run your agency on AMUMA?"
             text="Create your agency account, set up your branch, and choose the plan that fits how you care."
-            :primary="{ label: 'Create agency account', to: '/product' }"
+            :primary="{ label: 'Subscribe now!', to: '/product' }"
             :secondary="null"
         />
     </div>
