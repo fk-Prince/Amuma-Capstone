@@ -81,6 +81,18 @@
 
                 <div class="mt-8 flex flex-col gap-3">
                     <BaseButton
+                        v-if="receiptCode"
+                        variant="secondary"
+                        class="w-full rounded-xl py-3"
+                        :loading="openingReceipt"
+                        :disabled="openingReceipt"
+                        @click="printReceipt"
+                    >
+                        <ReceiptText v-if="!openingReceipt" class="h-4 w-4" />
+                        Print receipt
+                    </BaseButton>
+
+                    <BaseButton
                         variant="primary"
                         class="w-full rounded-xl py-3"
                         @click="goBack"
@@ -91,6 +103,12 @@
                 </div>
             </div>
         </div>
+
+        <PaymentReceipt
+            v-if="receipt"
+            :receipt="receipt"
+            @close="receipt = null"
+        />
     </div>
 </template>
 
@@ -101,11 +119,15 @@ import {
     ArrowLeft,
     CheckCircle2,
     LoaderCircle,
+    ReceiptText,
     XCircle,
 } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import backdrop from "~/assets/logo/signinLogo2.png";
+import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { paymentService } from "~/api/payment/PaymentService";
+import { useToast } from "~/composables/useToast";
+import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 
 definePageMeta({ layout: false });
 useHead({ title: "Payment" });
@@ -148,8 +170,36 @@ const description = computed(() => {
         return "Your payment went through and is still being recorded. Your balance will update shortly.";
     }
 
-    return "Your payment was received and applied to the balance. Your receipt is on the balance page.";
+    return "Your payment was received and applied to the balance.";
 });
+
+const receiptCode = ref<string | null>(null);
+const receipt = ref<PaymentReceiptData | null>(null);
+const openingReceipt = ref(false);
+const { error: showError } = useToast();
+
+async function openReceipt() {
+    if (!receiptCode.value || openingReceipt.value) return;
+
+    openingReceipt.value = true;
+
+    try {
+        const res: any = await paymentService.receipt({
+            payment_code: receiptCode.value,
+        });
+        receipt.value = res?.data ?? res ?? null;
+    } finally {
+        openingReceipt.value = false;
+    }
+}
+
+async function printReceipt() {
+    try {
+        await openReceipt();
+    } catch (err: any) {
+        showError(err?.message || "Unable to load your receipt.");
+    }
+}
 
 async function confirmPayment() {
     if (!reference.value) {
@@ -163,6 +213,7 @@ async function confirmPayment() {
 
             if (res.status === "submitted") {
                 confirmState.value = "submitted";
+                receiptCode.value = res.receipt_code ?? null;
                 return;
             }
 
@@ -197,5 +248,9 @@ onMounted(async () => {
     if (!paid.value) return;
 
     await confirmPayment();
+
+    try {
+        await openReceipt();
+    } catch {}
 });
 </script>

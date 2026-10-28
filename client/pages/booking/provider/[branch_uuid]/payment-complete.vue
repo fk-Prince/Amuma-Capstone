@@ -307,7 +307,7 @@ const description = computed(() => {
 });
 
 const showRedirectUi = ref(false);
-const secondsLeft = ref(10);
+const secondsLeft = ref(5);
 const bookingReference = ref<string | null>(null);
 const countingDown = ref(false);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
@@ -364,13 +364,20 @@ function tryAgain() {
 async function confirmPayment() {
     if (!reference.value) {
         confirmState.value = "submitted";
+        bookingReference.value = (route.query.booking as string) ?? null;
         return;
     }
 
     confirmState.value = "checking";
 
     try {
-        const res = await paymentService.checkStatus(reference.value);
+        let res = await paymentService.checkStatus(reference.value);
+
+        for (let attempt = 0; res.status === "pending" && attempt < 5; attempt++) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            res = await paymentService.checkStatus(reference.value);
+        }
+
         confirmState.value =
             res.status === "submitted" ? "submitted" : "failed";
         bookingReference.value = res.reference_id ?? null;

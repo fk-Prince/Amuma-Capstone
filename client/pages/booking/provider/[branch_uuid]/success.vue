@@ -248,7 +248,7 @@ const showAcknowledgement = ref(false);
 const isOpeningBookings = ref(false);
 
 const showCountdown = ref(false);
-const secondsLeft = ref(10);
+const secondsLeft = ref(5);
 let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
 function stopCountdown() {
