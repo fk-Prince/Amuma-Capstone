@@ -438,7 +438,7 @@ watch(() => route.path, closeMenu);
                                 >
                                     <div
                                         role="menu"
-                                        class="flex w-[300px] flex-col gap-1 rounded-2xl border border-muted-light bg-white p-2 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-secondary"
+                                        class="grid w-[680px] max-w-[calc(100vw-2rem)] grid-cols-2 gap-1 rounded-2xl border border-muted-light bg-white p-2 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-secondary"
                                     >
                                         <NuxtLink
                                             v-for="c in i.children"
