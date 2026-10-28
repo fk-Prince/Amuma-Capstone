@@ -46,7 +46,7 @@ const baseSchema = z.object({
 
     prefered_time: z
         .string()
-        .min(1, "Preferred time is required"),
+        .min(1, "Visit time is required"),
 
     address: z
         .string()

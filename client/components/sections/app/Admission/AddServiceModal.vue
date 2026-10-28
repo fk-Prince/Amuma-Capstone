@@ -66,7 +66,7 @@
                             <Combobox
                                 :model-value="form.preferred_time"
                                 :placeholder="displayTime"
-                                label="Preferred Time"
+                                label="Visit Time"
                                 :items="availableTimeSlots"
                                 required
                                 @update:model-value="
@@ -354,7 +354,7 @@
                                         <p
                                             class="text-[11px] text-muted dark:text-gray-400"
                                         >
-                                            Time
+                                            Visit Time
                                         </p>
                                         <p
                                             class="truncate text-sm font-medium text-slate-800 dark:text-white"
@@ -589,7 +589,7 @@ const canSchedule = computed(
 const missingRequirementLabel = computed(() => {
     const missing: string[] = [];
     if (!form.date) missing.push("a date");
-    if (!form.preferred_time) missing.push("a time");
+    if (!form.preferred_time) missing.push("a visit time");
     if (!selectedService.value) missing.push("a service");
     if (!missing.length) return "";
     return `Select ${missing.join(", ")} to continue.`;

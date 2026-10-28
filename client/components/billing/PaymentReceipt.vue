@@ -114,9 +114,9 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div
-            class="receipt-overlay fixed inset-0 z-[90] overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="receipt-overlay fixed inset-0 z-[90] flex overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
         >
-            <div class="mx-auto my-4 w-full max-w-[1000px]">
+            <div class="m-auto w-full max-w-[1000px]">
                 <div
                     class="receipt-actions mb-3 flex items-center justify-between gap-3"
                 >
@@ -546,6 +546,7 @@ onBeforeUnmount(() => {
     }
 
     body.receipt-printing .receipt-overlay {
+        display: block !important;
         position: static !important;
         overflow: visible !important;
         background: #ffffff !important;
