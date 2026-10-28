@@ -49,14 +49,14 @@ class SupportTicketRepository
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $search = trim($search);
                 $term = '%' . $search . '%';
-                $code = preg_match('/^SUP-?0*(\d+)$/i', $search, $match) ? (int) $match[1] : null;
+                $number = preg_match('/^(?:TICKET-?)?#?(\d+)$/i', $search, $match) ? (int) $match[1] : null;
 
-                $query->where(function ($inner) use ($term, $code) {
+                $query->where(function ($inner) use ($term, $number) {
                     $inner->where('subject', 'ilike', $term)
                         ->orWhereHas('user', fn($user) => $user->where('email', 'ilike', $term))
                         ->orWhereHas('branch', fn($branch) => $branch->where('name', 'ilike', $term))
                         ->orWhereHas('branch.agencies', fn($agency) => $agency->where('name', 'ilike', $term))
-                        ->when($code, fn($byCode) => $byCode->orWhere('support_ticket_id', $code));
+                        ->when($number, fn($byNumber) => $byNumber->orWhere('support_ticket_id', $number));
                 });
             })
             ->orderByDesc('last_reply_at')

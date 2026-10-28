@@ -89,7 +89,7 @@ const rows = computed(() =>
         :view="view"
         :searchable="false"
         empty-title="No support tickets"
-        empty-description="Tickets sent by agencies and branches will show up here."
+        empty-description="Tickets sent by branches and users will show up here."
         :row-key="(row) => row.id"
         :on-row-click="(row) => emit('select', row.raw)"
         @page-change="emit('page-change', $event)"

@@ -61,6 +61,6 @@ class SupportTicket extends Model
 
     public function getTicketCodeAttribute(): string
     {
-        return 'SUP-' . str_pad((string) $this->support_ticket_id, 5, '0', STR_PAD_LEFT);
+        return 'TICKET-' . str_pad((string) $this->support_ticket_id, 6, '0', STR_PAD_LEFT);
     }
 }

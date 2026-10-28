@@ -15,6 +15,11 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import SupportThread from "~/components/sections/support/SupportThread.vue";
 import { supportService } from "~/api/support/SupportService";
+import {
+    applySupportUpdate,
+    useSupportTicketLive,
+    type SupportTicketUpdate,
+} from "~/composables/useSupportTicketLive";
 import { useToast } from "~/composables/useToast";
 import {
     SUPPORT_CATEGORY_LABELS,
@@ -105,15 +110,23 @@ const closeTicket = () => {
     }
 };
 
-const patchTicket = (uuid: string, patch: Partial<SupportTicket>) => {
+const applyUpdate = (update: SupportTicketUpdate) => {
     tickets.value = tickets.value.map((ticket) =>
-        ticket.uuid === uuid ? { ...ticket, ...patch } : ticket,
+        ticket.uuid === update.uuid
+            ? {
+                  ...ticket,
+                  status: update.status,
+                  last_reply_at: update.reply?.created_at ?? ticket.last_reply_at,
+              }
+            : ticket,
     );
 
-    if (active.value?.uuid === uuid) {
-        active.value = { ...active.value, ...patch };
+    if (active.value?.uuid === update.uuid) {
+        active.value = applySupportUpdate(active.value, update);
     }
 };
+
+useSupportTicketLive(() => active.value?.uuid, applyUpdate);
 
 const pickFile = (event: Event) => {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -185,12 +198,10 @@ const sendReply = async (payload: { message: string; attachment: File | null }) 
 
     try {
         const res: any = await supportService.reply(ticket.uuid, payload);
-        const reply = res.data.reply as SupportReply;
-
-        patchTicket(ticket.uuid, {
+        applyUpdate({
+            uuid: ticket.uuid,
             status: res.data.status as SupportStatus,
-            last_reply_at: reply.created_at,
-            replies: [...(active.value?.replies ?? []), reply],
+            reply: res.data.reply as SupportReply,
         });
 
         thread.value?.reset();
@@ -209,7 +220,7 @@ const changeStatus = async (status: "open" | "resolved") => {
 
     try {
         const res: any = await supportService.updateStatus(ticket.uuid, { status });
-        patchTicket(ticket.uuid, { status: res.data.status });
+        applyUpdate({ uuid: ticket.uuid, status: res.data.status });
         success(res.message);
     } catch (err: any) {
         error(err?.message || "Unable to update this ticket.");
@@ -275,7 +286,7 @@ onMounted(async () => {
 
         <section class="relative z-10 px-6 pb-20">
             <div
-                class="mx-auto flex max-w-2xl flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-secondary-800"
+                class="mx-auto flex max-w-4xl flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-secondary-800"
             >
                 <div
                     v-if="!active"

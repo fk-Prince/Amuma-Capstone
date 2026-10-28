@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
+use App\Events\SupportTicketUpdated;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\SupportTicketReplyResource;
@@ -79,7 +80,7 @@ class SupportTicketService
         $this->notifySupport(
             $ticket,
             $user,
-            "New support ticket {$ticket->ticket_code} from {$this->requesterName($ticket)}: {$ticket->subject}",
+            "New support ticket from {$this->requesterName($ticket)}: {$ticket->subject}",
         );
 
         return response()->json([
@@ -120,23 +121,27 @@ class SupportTicketService
 
         $this->supportTicketRepository->loadReplyAuthor($reply);
 
+        $replyData = (new SupportTicketReplyResource($reply))->resolve();
+
+        SupportTicketUpdated::safe(new SupportTicketUpdated($ticket->uuid, $ticket->status, $replyData));
+
         $fromSupport
             ? $this->notifyRequester(
                 $ticket,
                 $user,
-                "AMUMA Support replied to your ticket {$ticket->ticket_code}: {$ticket->subject}",
+                "AMUMA Support replied to your ticket: {$ticket->subject}",
             )
             : $this->notifySupport(
                 $ticket,
                 $user,
-                "{$this->requesterName($ticket)} replied to support ticket {$ticket->ticket_code}: {$ticket->subject}",
+                "{$this->requesterName($ticket)} replied to a support ticket: {$ticket->subject}",
             );
 
         return response()->json([
             'message' => 'Reply sent.',
             'data' => [
                 'status' => $ticket->status,
-                'reply' => new SupportTicketReplyResource($reply),
+                'reply' => $replyData,
             ],
         ]);
     }
@@ -153,9 +158,11 @@ class SupportTicketService
 
         $this->supportTicketRepository->update($ticket, ['status' => $payload['status']]);
 
+        SupportTicketUpdated::safe(new SupportTicketUpdated($ticket->uuid, $ticket->status));
+
         $message = $resolving
-            ? "Support ticket {$ticket->ticket_code} was marked as resolved."
-            : "Support ticket {$ticket->ticket_code} was reopened.";
+            ? "Support ticket \"{$ticket->subject}\" was marked as resolved."
+            : "Support ticket \"{$ticket->subject}\" was reopened.";
 
         !empty($scope['support'])
             ? $this->notifyRequester($ticket, $user, $message)

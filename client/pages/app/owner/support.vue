@@ -1,5 +1,5 @@
 <template>
-    <div class="flex min-h-full flex-col">
+    <div class="flex flex-1 flex-col">
         <div
             class="flex flex-1 min-h-0 flex-col overflow-visible rounded-lg border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
         >
@@ -11,7 +11,7 @@
                         v-model="search"
                         mode="text"
                         :is-search="true"
-                        placeholder="Ticket no., subject, agency or branch"
+                        placeholder="Ticket #, subject, agency or branch"
                         input-class="px-4 py-2.5 rounded-lg w-full"
                     />
                 </div>
@@ -20,6 +20,7 @@
                     <Combobox
                         v-model="statusFilter"
                         class="sm:w-48"
+                        input-class="px-4 py-2.5 text-sm"
                         placeholder="Status"
                         :items="statusOptions"
                     />
@@ -27,6 +28,7 @@
                     <Combobox
                         v-model="sourceFilter"
                         class="sm:w-48"
+                        input-class="px-4 py-2.5 text-sm"
                         placeholder="Source"
                         :items="sourceOptions"
                     />
@@ -90,6 +92,11 @@ import SupportTicketList from "~/components/sections/owner/SupportTicketList.vue
 import SupportTicketModal from "~/components/sections/owner/SupportTicketModal.vue";
 import { supportService } from "~/api/support/SupportService";
 import { useListView } from "~/composables/useListView";
+import {
+    applySupportUpdate,
+    useSupportTicketLive,
+    type SupportTicketUpdate,
+} from "~/composables/useSupportTicketLive";
 import { useToast } from "~/composables/useToast";
 import {
     SUPPORT_STATUS_LABELS,
@@ -127,13 +134,19 @@ const statusCounts = reactive<Record<SupportStatus, number>>({
 
 const sourceFilter = ref<"all" | "branch" | "public">("all");
 
+const withCount = (label: string, count: number) =>
+    count ? `${label} (${count})` : label;
+
 const statusOptions = computed(() => [
     {
-        label: `All statuses (${statusCounts.open + statusCounts.answered + statusCounts.resolved})`,
+        label: withCount(
+            "All statuses",
+            statusCounts.open + statusCounts.answered + statusCounts.resolved,
+        ),
         value: "all",
     },
     ...(Object.keys(SUPPORT_STATUS_LABELS) as SupportStatus[]).map((value) => ({
-        label: `${SUPPORT_STATUS_LABELS[value]} (${statusCounts[value]})`,
+        label: withCount(SUPPORT_STATUS_LABELS[value], statusCounts[value]),
         value,
     })),
 ]);
@@ -229,6 +242,16 @@ const applyStatus = (uuid: string, status: SupportStatus, lastReplyAt?: string) 
     }
 };
 
+const applyLiveUpdate = (update: SupportTicketUpdate) => {
+    applyStatus(update.uuid, update.status, update.reply?.created_at);
+
+    if (selected.value?.uuid === update.uuid) {
+        selected.value = applySupportUpdate(selected.value, update);
+    }
+};
+
+useSupportTicketLive(() => selected.value?.uuid, applyLiveUpdate);
+
 const sendReply = async (payload: { message: string; attachment: File | null }) => {
     const ticket = selected.value;
     if (!ticket) return;
@@ -237,16 +260,12 @@ const sendReply = async (payload: { message: string; attachment: File | null }) 
 
     try {
         const res: any = await supportService.reply(ticket.uuid, payload);
-        const reply = res.data.reply as SupportReply;
 
-        if (selected.value?.uuid === ticket.uuid) {
-            selected.value = {
-                ...selected.value,
-                replies: [...(selected.value.replies ?? []), reply],
-            };
-        }
-
-        applyStatus(ticket.uuid, res.data.status, reply.created_at);
+        applyLiveUpdate({
+            uuid: ticket.uuid,
+            status: res.data.status,
+            reply: res.data.reply as SupportReply,
+        });
         modal.value?.reset();
     } catch (err: any) {
         error(err?.message || "Unable to send the reply.");
