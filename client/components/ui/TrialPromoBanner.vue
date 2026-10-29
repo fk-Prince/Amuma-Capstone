@@ -21,8 +21,8 @@
                         Try it free for 2 weeks.
                     </p>
                     <p class="text-xs text-white/85 sm:text-sm">
-                        Add a card to start. Nothing is charged until your
-                        trial ends.
+                        Explore every feature and set up your branch before
+                        your plan starts.
                     </p>
                 </div>
             </div>
@@ -44,5 +44,5 @@
 <script setup lang="ts">
 import { Check, Sparkles } from "lucide-vue-next";
 
-const perks = ["₱0 due today", "Full features", "Cancel anytime"];
+const perks = ["No charge until it ends", "Full features", "Cancel anytime"];
 </script>
