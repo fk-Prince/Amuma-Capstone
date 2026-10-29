@@ -70,7 +70,6 @@
                 </div>
 
                 <span
-                    v-if="props.withTrial"
                     class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold dark:bg-emerald-500/10 dark:text-emerald-400"
                 >
                     2 weeks free trial
@@ -86,33 +85,14 @@
                 />
 
                 <SummaryRow
-                    v-if="props.withTrial"
                     label="Free Trial"
                     value="2 weeks, starts once your branch is approved"
                 />
 
-                <SummaryRow
-                    v-else
-                    label="Paid Year"
-                    value="Starts once your branch is approved"
-                />
-
-                <SummaryRow
-                    v-if="!props.withTrial"
-                    label="Payment Method"
-                    :value="checkout.payment_method || '—'"
-                />
-
-                <SummaryRow
-                    v-if="props.withTrial"
-                    label="Due today"
-                    :value="formatCurrency(0)"
-                />
-
+                <SummaryRow label="Due today" :value="formatCurrency(0)" />
             </div>
 
             <div
-                v-if="props.withTrial"
                 class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10"
             >
                 <ShieldCheck
@@ -379,8 +359,7 @@ import { formatCurrency } from "~/utils/currency";
 import { planTypeLabel } from "~/utils/planType";
 import { ShieldCheck } from "lucide-vue-next";
 
-const props = defineProps<{
-    withTrial?: boolean;
+defineProps<{
     disabled?: boolean;
 }>();
 

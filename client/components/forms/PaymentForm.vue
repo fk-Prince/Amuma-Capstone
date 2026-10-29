@@ -294,6 +294,16 @@ const isCashSufficient = computed(() =>
         : cashReceivedAmount.value >= props.totalAmount,
 );
 
+const cashChangeLabel = computed(() =>
+    isCashSufficient.value ? "Change due" : "Amount short",
+);
+
+const cashChangeAmount = computed(() =>
+    isCashSufficient.value
+        ? changeDue.value
+        : props.totalAmount - cashReceivedAmount.value,
+);
+
 const handleCashPay = () => {
     if (props.processing || termsBlocked.value) return;
 
@@ -812,6 +822,22 @@ watch(isCash, (active) => {
                 :style="panelStyle"
             >
                 <div
+                    v-if="compact"
+                    class="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                >
+                    <Banknote
+                        class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300"
+                    />
+
+                    <p
+                        class="text-xs leading-4 text-slate-600 dark:text-gray-300"
+                    >
+                        {{ cashDescription }}
+                    </p>
+                </div>
+
+                <div
+                    v-else
                     class="rounded-2xl border border-emerald-100 dark:border-emerald-500/20 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-500/10 dark:to-secondary p-5"
                 >
                     <div class="flex items-start gap-4">
@@ -838,6 +864,46 @@ watch(isCash, (active) => {
                 </div>
 
                 <div
+                    v-if="compact"
+                    class="space-y-1 rounded-xl bg-slate-50 px-4 py-2 dark:bg-white/5"
+                >
+                    <div class="flex items-center justify-between">
+                        <span
+                            class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                        >
+                            Total to pay
+                        </span>
+
+                        <span
+                            class="text-lg font-bold tabular-nums text-primary"
+                        >
+                            {{ currency }}{{ formatMoney(totalAmount) }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="cashReceivedAmount > 0"
+                        class="flex items-center justify-between text-xs"
+                    >
+                        <span class="text-slate-500 dark:text-gray-400">
+                            {{ cashChangeLabel }}
+                        </span>
+
+                        <span
+                            class="font-bold tabular-nums"
+                            :class="
+                                isCashSufficient
+                                    ? 'text-emerald-600'
+                                    : 'text-red-500'
+                            "
+                        >
+                            {{ currency }}{{ formatMoney(cashChangeAmount) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div
+                    v-else
                     class="rounded-xl border border-slate-200 bg-white divide-y divide-slate-100 dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between px-4 py-3.5">
@@ -857,9 +923,7 @@ watch(isCash, (active) => {
                         class="flex items-center justify-between px-4 py-3.5"
                     >
                         <span class="text-sm text-slate-500 dark:text-gray-400">
-                            {{
-                                isCashSufficient ? "Change due" : "Amount short"
-                            }}
+                            {{ cashChangeLabel }}
                         </span>
 
                         <span
@@ -870,14 +934,7 @@ watch(isCash, (active) => {
                                     : 'text-red-500'
                             "
                         >
-                            {{ currency
-                            }}{{
-                                formatMoney(
-                                    isCashSufficient
-                                        ? changeDue
-                                        : totalAmount - cashReceivedAmount,
-                                )
-                            }}
+                            {{ currency }}{{ formatMoney(cashChangeAmount) }}
                         </span>
                     </div>
                 </div>
@@ -885,6 +942,7 @@ watch(isCash, (active) => {
                 <LabelInput
                     label="Cash received"
                     :placeholder="`${currency}0.00`"
+                    :input-class="fieldClass"
                     :error="cashError"
                     :model-value="cashReceivedInput"
                     @update:model-value="handleCashAmountInput"
@@ -916,7 +974,8 @@ watch(isCash, (active) => {
                     :disabled="
                         processing || !cashReceivedAmount || termsBlocked
                     "
-                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="compact ? 'py-2.5' : 'py-3.5'"
                 >
                     <LoaderCircle
                         v-if="processing"

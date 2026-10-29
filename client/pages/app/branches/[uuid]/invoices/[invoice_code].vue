@@ -879,6 +879,7 @@
                             cash-processing-label="Confirming payment..."
                             cash-description="Enter the cash amount received from the patient to settle this invoice."
                             @cash-pay="handleCashPay"
+                            compact
                         />
                     </div>
                 </div>

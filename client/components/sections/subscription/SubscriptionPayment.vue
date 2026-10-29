@@ -4,14 +4,13 @@
     >
         <div class="w-full">
             <CheckoutSummary
-                :with-trial="withTrial"
                 :disabled="busy || processing"
                 @back="emit('back')"
             />
         </div>
 
         <div
-            v-if="withTrial && !loadingTotal"
+            v-if="!loadingTotal"
             class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
         >
             <div
@@ -67,26 +66,6 @@
                 @submit="startTrial"
             />
         </div>
-
-        <div v-else class="space-y-5">
-            <VatBreakdown
-                v-if="!loadingTotal"
-                :subtotal="subtotal"
-                title="Order summary"
-                :heading="planName"
-                item-label="12-month period"
-            />
-
-            <PaymentForm
-                v-model:card="card"
-                :total-amount="total"
-                :processing="processing || loadingTotal"
-                :onCardPay="payCard"
-                :onGCashPay="payGCash"
-                :enableGCash="true"
-                terms-context="subscription"
-            />
-        </div>
     </div>
 </template>
 
@@ -95,10 +74,9 @@ import { computed, onMounted, ref, watch } from "vue";
 import { CreditCard, Gift } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import TrialCardModal from "~/components/sections/subscription/TrialCardModal.vue";
-import PaymentForm from "~/components/forms/PaymentForm.vue";
 import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
-import { cardPayment, gcashPayment } from "~/composables/usePayment";
+import { cardPayment } from "~/composables/usePayment";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
@@ -138,69 +116,11 @@ const xenditProcessing = ref(false);
 const loadingTotal = ref(true);
 const total = ref(0);
 const subtotal = ref(0);
-const withTrial = ref(true);
 const showCardModal = ref(false);
 
 watch([processing, xenditProcessing], ([p, x]) => {
     busy.value = p || x;
 });
-
-const payCard = async () => {
-    if (processing.value || loadingTotal.value || xenditProcessing.value) {
-        return;
-    }
-
-    processing.value = true;
-
-    try {
-        const payload = checkout.subscriptionPayload;
-        if (!payload) throw new Error("Subscription details are missing.");
-
-        await cardPayment({
-            card: card.value,
-            amount: total.value,
-
-            onClose: () => {
-                xenditProcessing.value = false;
-                processing.value = false;
-            },
-
-            on3DSProcessingChange: (value: any) => {
-                xenditProcessing.value = value;
-            },
-
-            createPayment: (saved) =>
-                subscriptionService.createSubscription({
-                    ...payload,
-                    ...saved,
-                    payment_method: "CREDIT-CARD",
-                    payment_type: "SUBSCRIPTION",
-                }),
-
-            onSuccess: async (result) => {
-                xenditProcessing.value = false;
-
-                success("Subscription Request Submitted", result.message);
-
-                await fetchAuthUser();
-
-                await navigateTo({
-                    path: "/product/subscription-summary?status=success",
-                    query: {
-                        status: result.status,
-                        trial: withTrial.value ? "1" : "0",
-                        ref: result.payment_reference_id,
-                    },
-                });
-            },
-        });
-    } catch (err: any) {
-        xenditProcessing.value = false;
-        error(err.message);
-    } finally {
-        processing.value = false;
-    }
-};
 
 const startTrial = async () => {
     if (processing.value || loadingTotal.value || xenditProcessing.value) {
@@ -259,47 +179,6 @@ const startTrial = async () => {
     }
 };
 
-const payGCash = async () => {
-    if (processing.value || loadingTotal.value) return;
-
-    processing.value = true;
-
-    try {
-        const payload = checkout.subscriptionPayload;
-        if (!payload) throw new Error("Subscription details are missing.");
-
-        await gcashPayment({
-            createPayment: () =>
-                subscriptionService.createSubscription({
-                    ...payload,
-                    payment_method: "GCASH",
-                    payment_type: "SUBSCRIPTION",
-                }),
-
-            onClose: () => {
-                processing.value = false;
-            },
-
-            finishWhenRecorded: true,
-
-            onSuccess: async (invoice) => {
-                await navigateTo({
-                    path: "/product/subscription-summary",
-                    query: {
-                        status: "true",
-                        trial: withTrial.value ? "1" : "0",
-                        ref: invoice?.external_id,
-                    },
-                });
-            },
-        });
-    } catch (err: any) {
-        error(err?.message ?? "GCash payment failed.");
-    } finally {
-        processing.value = false;
-    }
-};
-
 onMounted(async () => {
     try {
         const payload = checkout.subscriptionPayload;
@@ -309,7 +188,6 @@ onMounted(async () => {
             await subscriptionService.retrieveSubscriptionDetail(payload);
         total.value = Number(res.total_amount);
         subtotal.value = Number(res.subtotal ?? res.total_amount);
-        withTrial.value = res.mode === "test";
     } catch (err: any) {
         error(err.message ?? "Failed to load subscription total.");
     } finally {

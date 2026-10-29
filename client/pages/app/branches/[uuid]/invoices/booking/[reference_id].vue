@@ -349,6 +349,7 @@
                         cash-description="Enter the cash amount received."
                         @cash-pay="handleCashPay"
                         :allow-short-cash="false"
+                        compact
                     />
                 </div>
             </div>
