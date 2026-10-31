@@ -4,7 +4,7 @@
         <SubscriptionSkeleton v-if="loading" />
 
         <div v-else class="flex h-full min-h-0 items-start gap-3 sm:gap-8">
-            <aside class="hidden max-h-full shrink-0 self-start overflow-y-auto sm:block sm:w-60">
+            <aside class="hidden max-h-full shrink-0 self-start overflow-y-auto lg:block lg:w-60">
                 <ol class="flex flex-col">
                     <li
                         v-for="(step, index) in STEPS"
@@ -53,7 +53,7 @@
             </aside>
 
             <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col rounded-2xl">
-                <nav class="shrink-0 pb-2 sm:hidden" aria-label="Subscription progress">
+                <nav class="shrink-0 pb-2 lg:hidden" aria-label="Subscription progress">
                     <div class="flex items-center justify-between gap-3">
                         <p
                             class="text-[11px] font-bold uppercase tracking-wider text-primary"

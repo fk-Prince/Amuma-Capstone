@@ -24,7 +24,7 @@
                 >
                     <div
                         v-if="branchStore.showModal"
-                        class="w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
+                        class="my-auto w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-[0_0_40px_rgba(10,40,87,0.15)] ring-1 ring-primary-100/60 dark:bg-secondary dark:ring-primary-500/20"
                         role="dialog"
                         aria-modal="true"
                         :aria-label="

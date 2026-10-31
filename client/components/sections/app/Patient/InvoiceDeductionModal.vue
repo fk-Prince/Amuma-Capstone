@@ -9,7 +9,7 @@
     >
         <div
             v-if="open"
-            class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            class="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
         >
             <div
                 class="fixed inset-0 bg-black/40 backdrop-blur-sm"
@@ -17,7 +17,7 @@
             />
 
             <div
-                class="relative z-50 flex w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                class="my-auto relative z-50 flex w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
             >
                 <div
                     class="flex items-start justify-between border-b border-slate-100 px-6 py-5 dark:border-white/10"

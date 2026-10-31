@@ -8,11 +8,11 @@
         >
             <div
                 v-if="open"
-                class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/50 p-4"
+                class="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/50 p-4 overflow-y-auto"
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
+                    class="my-auto w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-secondary"
                 >
                     <div
                         class="flex items-start justify-between gap-4 border-b border-[#E4EFED] px-5 py-4 dark:border-white/10"

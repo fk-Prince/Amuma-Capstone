@@ -251,7 +251,7 @@ const emptyStateSubtitle = computed(() =>
                             class="absolute inset-0 bg-white/50 z-20 pointer-events-none"
                         />
 
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full min-w-[56rem] text-left border-collapse">
                             <thead class="sticky top-0 z-10">
                                 <tr
                                     class="border-b border-[#E4EFED] bg-[#F7FAF9] dark:border-white/10 dark:bg-white/5"

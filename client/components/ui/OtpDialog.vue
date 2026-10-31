@@ -180,9 +180,9 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div
-            class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4 dark:bg-white/10"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 backdrop-blur-sm px-4 dark:bg-white/10 overflow-y-auto"
         >
-            <div class="w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
+            <div class="my-auto w-full max-w-md rounded-2xl bg-white dark:bg-secondary p-8 shadow-2xl">
                 <div class="text-center">
                     <div
                         class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10 text-primary"

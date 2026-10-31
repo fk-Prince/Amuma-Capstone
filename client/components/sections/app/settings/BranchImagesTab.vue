@@ -139,10 +139,10 @@
         <Teleport to="body">
             <div
                 v-if="openModal"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
             >
                 <div
-                    class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-[#E4EFED] dark:bg-secondary dark:border-white/10"
+                    class="my-auto w-full max-w-lg rounded-2xl bg-white shadow-xl border border-[#E4EFED] dark:bg-secondary dark:border-white/10"
                 >
                     <div class="flex items-center justify-between p-5 border-b dark:border-white/10">
                         <div>

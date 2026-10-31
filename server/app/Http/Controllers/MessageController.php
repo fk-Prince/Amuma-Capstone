@@ -18,7 +18,7 @@ class MessageController extends Controller
     {
         $user = AuthGuard::requireUser($request->user());
 
-        return $this->messageService->clientConversations($user->client);
+        return $this->messageService->clientConversations($user->client, $user);
     }
 
     public function clientContacts(Request $request)
@@ -147,11 +147,60 @@ class MessageController extends Controller
             'conversation_id' => ['nullable', 'integer'],
             'patient_id' => ['nullable', 'integer'],
             'body' => ['nullable', 'required_without:attachment', 'string', 'max:5000'],
-            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf', 'max:10240'],
+            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf,webm,ogg,oga,m4a,mp3,wav,aac', 'max:10240'],
+            'reply_to_message_id' => ['nullable', 'integer'],
+            'duration' => ['nullable', 'integer', 'min:0', 'max:3600'],
         ]);
 
         $validated['attachment'] = $request->file('attachment');
 
         return $this->messageService->send($user, $validated, $request->boolean('as_staff'));
+    }
+
+    public function react(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'message_id' => ['required', 'integer'],
+            'emoji' => ['required', 'string', 'max:16'],
+        ]);
+
+        return $this->messageService->react($user, $validated, $request->boolean('as_staff'));
+    }
+
+    public function forward(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'message_id' => ['required', 'integer'],
+            'conversation_ids' => ['required', 'array', 'min:1', 'max:5'],
+            'conversation_ids.*' => ['integer'],
+        ]);
+
+        return $this->messageService->forward($user, $validated, $request->boolean('as_staff'));
+    }
+
+    public function delivered(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'conversation_id' => ['required', 'integer'],
+        ]);
+
+        return $this->messageService->delivered($user, $validated, $request->boolean('as_staff'));
+    }
+
+    public function read(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+
+        $validated = $request->validate([
+            'conversation_id' => ['required', 'integer'],
+        ]);
+
+        return $this->messageService->read($user, $validated, $request->boolean('as_staff'));
     }
 }

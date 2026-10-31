@@ -312,6 +312,13 @@ function bindChannel() {
 
         if (mine) return;
 
+        messageService
+            .markDelivered({
+                conversation_id: payload.conversation_id,
+                as_staff: !props.portal,
+            })
+            .catch(() => {});
+
         row.unread_count += 1;
 
         notifyNewMessage(

@@ -41,14 +41,14 @@ const emit = defineEmits<{
         >
             <div
                 v-if="open"
-                class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 p-4"
+                class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 p-4 overflow-y-auto"
                 @click.self="!props.loading && emit('cancel')"
             >
                 <div
                     role="alertdialog"
                     aria-modal="true"
                     :aria-label="title"
-                    class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                    class="my-auto w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                         {{ title }}

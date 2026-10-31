@@ -4,7 +4,7 @@
         class="grid min-h-full gap-5 items-start grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 lg:col-span-1 bg-white rounded-lg border border-gray-100 shadow-sm p-5 dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <div
@@ -205,7 +205,7 @@
         class="grid gap-5 items-stretch grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
         <div
-            class="bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
+            class="md:col-span-2 lg:col-span-1 bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >
             <div class="flex items-center justify-between mb-4">
                 <p class="text-sm font-semibold text-gray-800 dark:text-white">
