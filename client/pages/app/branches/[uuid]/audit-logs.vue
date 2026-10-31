@@ -23,6 +23,11 @@
                     />
 
                     <div class="flex shrink-0 items-center gap-2 sm:ml-auto">
+                        <ViewModeToggle
+                            :model-value="viewMode"
+                            @update:model-value="setViewMode"
+                        />
+
                         <button
                             type="button"
                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#E4EFED] text-slate-500 transition hover:bg-slate-50 hover:text-primary disabled:opacity-60 dark:border-white/10 dark:text-gray-400 dark:hover:bg-white/5"
@@ -45,6 +50,7 @@
                 :current-page="currentPage"
                 :total-items="totalItems"
                 :page-size="PAGE_SIZE"
+                :view="viewMode"
                 @select="openLog"
                 @page-change="onPageChange"
             />
@@ -70,6 +76,8 @@ import AuditLogDetailModal from "~/components/sections/app/AuditLog/AuditLogDeta
 import { auditLogService } from "~/api/audit-log/AuditLogService";
 import type { AuditLog, AuditLogDetail } from "~/types/audit-log";
 import { useToast } from "~/composables/useToast";
+import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
+import { useListView } from "~/composables/useListView";
 
 definePageMeta({
     layout: "dashboard",
@@ -84,6 +92,7 @@ const route = useRoute();
 const uuid = route.params.uuid as string;
 
 const { error } = useToast();
+const { view: viewMode, setView: setViewMode } = useListView();
 
 const logs = ref<AuditLog[]>([]);
 const loading = ref(false);

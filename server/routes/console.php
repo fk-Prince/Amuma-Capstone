@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('bookings:reject-expired')->everyMinute();
 Schedule::command('schedules:mark-missed')->everyMinute();
+Schedule::command('subscriptions:charge-saved-cards')->dailyAt('00:01')->withoutOverlapping();
 Schedule::command('subscriptions:apply-pending-plans')->dailyAt('00:05');
 Schedule::command('subscriptions:mark-expired')->dailyAt('01:00');
 Schedule::command('sandbox:sync-locks')->everyTenMinutes();

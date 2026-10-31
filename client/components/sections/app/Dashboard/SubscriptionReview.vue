@@ -232,6 +232,16 @@
                     We'll email you once the review is complete
                 </div>
             </template>
+
+            <button
+                v-if="canContactSupport"
+                type="button"
+                class="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:underline"
+                @click="openSupport()"
+            >
+                <LifeBuoy class="h-4 w-4" />
+                Need help? Contact Customer Support
+            </button>
         </div>
 
         <ResubmitBranchModal
@@ -249,8 +259,9 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { RotateCw } from "lucide-vue-next";
+import { LifeBuoy, RotateCw } from "lucide-vue-next";
 import { useBranchStore } from "@/stores/branch";
+import { useSupportCenter } from "~/composables/useSupportCenter";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { usePermissions } from "~/composables/usePermission";
@@ -258,8 +269,10 @@ import { Modules } from "~/types/module";
 
 const branchStore = useBranchStore();
 
-const { canUpdate } = usePermissions();
+const { canUpdate, hasModule } = usePermissions();
 const canReapply = computed(() => canUpdate(Modules.ManageSubscription));
+const canContactSupport = computed(() => hasModule(Modules.ManageSubscription));
+const { openSupport } = useSupportCenter();
 
 const branch = computed(() => branchStore.activeBranch);
 

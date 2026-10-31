@@ -3,6 +3,9 @@ import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { X, Check, LoaderCircle, Stethoscope } from "lucide-vue-next";
 import { categoryService } from "~/api/category/CategoryService";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import { useVatInfo } from "~/composables/useVatInfo";
+
+const vatInfo = useVatInfo();
 import Combobox from "~/components/ui/Combobox.vue";
 import { useRoute } from "vue-router";
 import type { Service } from "~/types/service";
@@ -334,6 +337,7 @@ watch(
                                         step="0.01"
                                         min="0"
                                         label="Price"
+                                        :info="vatInfo"
                                         placeholder="e.g. 500"
                                         :error="errors?.price"
                                         @update:modelValue="clearError('price')"
@@ -461,7 +465,9 @@ watch(
                                     >
                                         Performed by
                                     </p>
-                                    <div class="flex flex-wrap items-center gap-x-8 gap-y-2">
+                                    <div
+                                        class="flex flex-wrap items-center gap-x-8 gap-y-2"
+                                    >
                                         <label
                                             v-for="option in staffRoleOptions"
                                             :key="option.value"
@@ -476,7 +482,12 @@ watch(
                                                 type="checkbox"
                                                 class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-white/5"
                                                 :checked="option.checked"
-                                                @change="onStaffRoleChange(option.value, $event)"
+                                                @change="
+                                                    onStaffRoleChange(
+                                                        option.value,
+                                                        $event,
+                                                    )
+                                                "
                                             />
                                             <span class="font-medium">{{
                                                 option.label

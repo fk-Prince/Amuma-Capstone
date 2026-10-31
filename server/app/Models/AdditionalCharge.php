@@ -35,9 +35,7 @@ class AdditionalCharge extends Model
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
-    // A charge belongs to the patient. Where an admission is still wanted, it
-    // is the one the patient had when the charge was added.
-    public function getPatientAdmissionAttribute(): ?PatientAdmission
+    public function getPatientAdmissionAttribute()
     {
         return PatientAdmission::where('patient_id', $this->patient_id)
             ->where('admitted_at', '<=', $this->created_at ?? now())

@@ -137,7 +137,7 @@
                             :value="formatDate(booking.service?.date)"
                         />
                         <Field
-                            label="Preferred Time"
+                            label="Visit Time"
                             :value="booking.service?.preferred_time"
                         />
                         <Field
@@ -349,6 +349,7 @@
                         cash-description="Enter the cash amount received."
                         @cash-pay="handleCashPay"
                         :allow-short-cash="false"
+                        compact
                     />
                 </div>
             </div>

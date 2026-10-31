@@ -67,6 +67,14 @@ class StaffHomecareBookingRequest extends FormRequest
             'activities.*.distinct' => 'Each activity can only be added once.',
             'activities.*.max' => 'Activity must be 60 characters or fewer.',
             'note.max' => 'Location instructions must be 500 characters or fewer.',
+            'prefered_time.required' => 'Visit time is required.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'prefered_time' => 'visit time',
         ];
     }
 }

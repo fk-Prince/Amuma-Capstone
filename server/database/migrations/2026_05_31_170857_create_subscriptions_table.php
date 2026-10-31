@@ -25,6 +25,10 @@ return new class extends Migration
                 ->constrained('plans', 'plan_id');
             $table->date('pending_plan_starts_at')->nullable();
             $table->text('cancel_reason')->nullable();
+            $table->string('card_token_id')->nullable();
+            $table->string('masked_card_number')->nullable();
+            $table->string('card_brand', 30)->nullable();
+            $table->boolean('auto_renew')->default(false);
             $table->timestamps();
             $table->index('pending_plan_starts_at');
         });

@@ -338,6 +338,7 @@
                                     class="flex flex-wrap items-center gap-x-6 gap-y-2"
                                 >
                                     <label
+                                        v-if="SHOW_ONE_TIME"
                                         class="flex cursor-pointer items-center gap-2"
                                     >
                                         <input
@@ -899,6 +900,8 @@ const authUser = useAuthUser();
 const branchStore = useBranchStore();
 
 const NEW_DIAGNOSIS = "__new__";
+
+const SHOW_ONE_TIME = false;
 
 const loading = ref(false);
 const loadError = ref("");

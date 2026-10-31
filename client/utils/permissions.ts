@@ -80,6 +80,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
     ],
     [Modules.Inquiries]: [PermissionAction.Read, PermissionAction.Update],
     [Modules.AuditLogs]: [PermissionAction.Read],
+    [Modules.Reports]: [PermissionAction.Read, PermissionAction.Export],
 };
 
 export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
@@ -111,6 +112,8 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
         "Read questions sent by families from the branch's provider page and track which ones have been answered.",
     [Modules.AuditLogs]:
         "Review who did what in the branch: sign-ins, bookings and billing changes, with the values before and after.",
+    [Modules.Reports]:
+        "See the branch's sales and VAT for a month, quarter or date range, ready for tax filing.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -236,6 +239,12 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
         [PermissionAction.Read]:
             "See the branch's activity trail: who acted, what they did, when, and what changed.",
     },
+    [Modules.Reports]: {
+        [PermissionAction.Read]:
+            "View the Sales & VAT report: gross sales, vatable sales and output VAT per invoice.",
+        [PermissionAction.Export]:
+            "Download the Sales & VAT report as an Excel file for the accountant.",
+    },
 };
 
 export const ROLE_DEFAULT_PERMISSIONS: Record<
@@ -261,6 +270,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         [Modules.BranchSettings]: MODULE_ACTIONS[Modules.BranchSettings],
         [Modules.Inquiries]: [PermissionAction.Read],
         [Modules.AuditLogs]: MODULE_ACTIONS[Modules.AuditLogs],
+        [Modules.Reports]: [PermissionAction.Read],
     },
     admission: {
         [Modules.Bookings]: MODULE_ACTIONS[Modules.Bookings],

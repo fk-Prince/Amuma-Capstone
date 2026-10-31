@@ -1553,6 +1553,7 @@
                                     cash-processing-label="Confirming payment..."
                                     cash-description="Enter the cash amount received at the counter."
                                     @cash-pay="handleCashPay"
+                                    compact
                                 />
                             </div>
                         </div>

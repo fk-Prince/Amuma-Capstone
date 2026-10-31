@@ -70,7 +70,6 @@
                 </div>
 
                 <span
-                    v-if="props.withTrial"
                     class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-semibold dark:bg-emerald-500/10 dark:text-emerald-400"
                 >
                     2 weeks free trial
@@ -78,18 +77,7 @@
             </div>
 
             <div class="space-y-3">
-                <SummaryRow
-                    label="Plan"
-                    :value="
-                        checkout.selectedPlan?.plan_code === 'C'
-                            ? 'Hybrid Plan'
-                            : checkout.selectedPlan?.plan_code === 'A'
-                              ? 'Homecare Services'
-                              : checkout.selectedPlan?.plan_code === 'B'
-                                ? 'Inhouse Facility'
-                                : '—'
-                    "
-                />
+                <SummaryRow label="Plan" :value="planName || '—'" />
 
                 <SummaryRow
                     label="Plan Type"
@@ -97,41 +85,14 @@
                 />
 
                 <SummaryRow
-                    v-if="props.withTrial"
                     label="Free Trial"
                     value="2 weeks, starts once your branch is approved"
                 />
 
-                <SummaryRow
-                    v-else
-                    label="Paid Year"
-                    value="Starts once your branch is approved"
-                />
-
-                <SummaryRow
-                    v-if="!props.withTrial"
-                    label="Payment Method"
-                    :value="checkout.payment_method || '—'"
-                />
-
-                <SummaryRow
-                    v-if="props.withTrial"
-                    label="Due today"
-                    :value="formatCurrency(0)"
-                />
-
-                <SummaryRow
-                    :label="props.withTrial ? 'Yearly price after the trial' : 'Amount'"
-                    :value="
-                        props.totalAmount != null
-                            ? formatCurrency(props.totalAmount)
-                            : '—'
-                    "
-                />
+                <SummaryRow label="Due today" :value="formatCurrency(0)" />
             </div>
 
             <div
-                v-if="props.withTrial"
                 class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-500/10"
             >
                 <ShieldCheck
@@ -140,9 +101,10 @@
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Nothing to pay today.</span>
                     Your 2-week free trial starts once an admin approves your
-                    subscription and branch. After that, pay for your plan any time, whenever
-                    you're ready. If it isn't paid by the time the trial ends,
-                    your branch is locked until it is.
+                    subscription and branch. Your card is charged for your
+                    plan when the trial ends, unless you cancel before then.
+                    If the charge fails, your branch is locked until the plan
+                    is paid.
                 </p>
             </div>
         </section>
@@ -397,9 +359,7 @@ import { formatCurrency } from "~/utils/currency";
 import { planTypeLabel } from "~/utils/planType";
 import { ShieldCheck } from "lucide-vue-next";
 
-const props = defineProps<{
-    totalAmount?: number | null;
-    withTrial?: boolean;
+defineProps<{
     disabled?: boolean;
 }>();
 
@@ -408,6 +368,16 @@ const emit = defineEmits<{
 }>();
 
 const checkout = useSubscriptionCheckout();
+
+const PLAN_NAMES: Record<string, string> = {
+    A: "Homecare Services",
+    B: "Inhouse Facility",
+    C: "Hybrid Plan",
+};
+
+const planName = computed(
+    () => PLAN_NAMES[checkout.selectedPlan?.plan_code ?? ""] ?? "",
+);
 
 const branchImagePreview = computed(() =>
     checkout.branch.image instanceof File

@@ -4,15 +4,13 @@
     >
         <div class="w-full">
             <CheckoutSummary
-                :total-amount="loadingTotal ? null : total"
-                :with-trial="withTrial"
                 :disabled="busy || processing"
                 @back="emit('back')"
             />
         </div>
 
         <div
-            v-if="withTrial && !loadingTotal"
+            v-if="!loadingTotal"
             class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
         >
             <div
@@ -29,42 +27,56 @@
 
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
                 No payment today. An admin reviews your subscription and branch
-                first, and your 2-week trial starts once they're approved. After that, pay for
-                your plan any time, whenever you're ready.
+                first, and your 2-week trial starts once they're approved. Your
+                card is charged only when the trial ends, unless you cancel
+                before then.
             </p>
+
+            <VatBreakdown
+                :subtotal="subtotal"
+                title="Order summary"
+                :heading="planName"
+                item-label="12-month period (after trial)"
+                total-label="Total after trial"
+                class="mt-5"
+            />
 
             <button
                 type="button"
                 :disabled="processing"
                 class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60"
-                @click="startTrial"
+                @click="showCardModal = true"
             >
-                <LoaderCircle v-if="processing" class="h-4 w-4 animate-spin" />
-                {{ processing ? "Starting your trial…" : "Start free trial" }}
+                <CreditCard class="h-4 w-4" />
+                Start free trial
             </button>
-        </div>
 
-        <div v-else>
-            <PaymentForm
+            <p
+                class="mt-2 text-center text-xs text-slate-500 dark:text-gray-400"
+            >
+                ₱0.00 due today · card required
+            </p>
+
+            <TrialCardModal
                 v-model:card="card"
-                :total-amount="total"
-                :processing="processing || loadingTotal"
-                :onCardPay="payCard"
-                :onGCashPay="payGCash"
-                :enableGCash="true"
-                terms-context="subscription"
+                :open="showCardModal"
+                :amount="total"
+                :processing="processing || xenditProcessing"
+                @close="showCardModal = false"
+                @submit="startTrial"
             />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-import { Gift, LoaderCircle } from "lucide-vue-next";
+import { computed, onMounted, ref, watch } from "vue";
+import { CreditCard, Gift } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
-import PaymentForm from "~/components/forms/PaymentForm.vue";
+import TrialCardModal from "~/components/sections/subscription/TrialCardModal.vue";
+import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
-import { cardPayment, gcashPayment } from "~/composables/usePayment";
+import { cardPayment } from "~/composables/usePayment";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser } from "~/composables/useAuthUser";
@@ -78,6 +90,16 @@ const emit = defineEmits<{
 
 const checkout = useSubscriptionCheckout();
 const { success, error } = useToast();
+
+const PLAN_NAMES: Record<string, string> = {
+    A: "Homecare Services",
+    B: "Inhouse Facility",
+    C: "Hybrid Plan",
+};
+
+const planName = computed(
+    () => PLAN_NAMES[checkout.selectedPlan?.plan_code ?? ""] ?? "",
+);
 
 const card = ref<CardDetails>({
     number: "4000000000001000",
@@ -93,13 +115,14 @@ const processing = ref(false);
 const xenditProcessing = ref(false);
 const loadingTotal = ref(true);
 const total = ref(0);
-const withTrial = ref(true);
+const subtotal = ref(0);
+const showCardModal = ref(false);
 
 watch([processing, xenditProcessing], ([p, x]) => {
     busy.value = p || x;
 });
 
-const payCard = async () => {
+const startTrial = async () => {
     if (processing.value || loadingTotal.value || xenditProcessing.value) {
         return;
     }
@@ -113,6 +136,7 @@ const payCard = async () => {
         await cardPayment({
             card: card.value,
             amount: total.value,
+            reusable: true,
 
             onClose: () => {
                 xenditProcessing.value = false;
@@ -123,109 +147,33 @@ const payCard = async () => {
                 xenditProcessing.value = value;
             },
 
-            createPayment: ({ token_id, authentication_id }) =>
-                subscriptionService.createSubscription({
+            createPayment: (saved) =>
+                subscriptionService.startTrial({
                     ...payload,
-                    token_id,
-                    authentication_id,
-                    payment_method: "CREDIT-CARD",
+                    ...saved,
+                    payment_method: null,
                     payment_type: "SUBSCRIPTION",
                 }),
 
             onSuccess: async (result) => {
                 xenditProcessing.value = false;
 
-                success("Subscription Request Submitted", result.message);
+                success("Free trial started", result.message);
 
                 await fetchAuthUser();
 
                 await navigateTo({
-                    path: "/product/subscription-summary?status=success",
+                    path: "/product/subscription-summary",
                     query: {
-                        status: result.status,
-                        trial: withTrial.value ? "1" : "0",
-                        ref: result.payment_reference_id,
+                        status: "true",
+                        trial: "1",
                     },
                 });
             },
         });
     } catch (err: any) {
         xenditProcessing.value = false;
-        error(err.message);
-    } finally {
-        processing.value = false;
-    }
-};
-
-const startTrial = async () => {
-    if (processing.value) return;
-
-    processing.value = true;
-
-    try {
-        const payload = checkout.subscriptionPayload;
-        if (!payload) throw new Error("Subscription details are missing.");
-
-        const result = await subscriptionService.startTrial({
-            ...payload,
-            payment_method: null,
-            payment_type: "SUBSCRIPTION",
-        });
-
-        success("Free trial started", result.message);
-
-        await fetchAuthUser();
-
-        await navigateTo({
-            path: "/product/subscription-summary",
-            query: {
-                status: "true",
-                trial: "1",
-            },
-        });
-    } catch (err: any) {
         error(err?.message ?? "Could not start your free trial.");
-    } finally {
-        processing.value = false;
-    }
-};
-
-const payGCash = async () => {
-    if (processing.value || loadingTotal.value) return;
-
-    processing.value = true;
-
-    try {
-        const payload = checkout.subscriptionPayload;
-        if (!payload) throw new Error("Subscription details are missing.");
-
-        await gcashPayment({
-            createPayment: () =>
-                subscriptionService.createSubscription({
-                    ...payload,
-                    payment_method: "GCASH",
-                    payment_type: "SUBSCRIPTION",
-                }),
-
-            onClose: () => {
-                processing.value = false;
-            },
-
-            finishWhenRecorded: true,
-
-            onSuccess: async (invoice) => {
-                await navigateTo({
-                    path: "/product/subscription-summary",
-                    query: {
-                        status: "true",
-                        trial: withTrial.value ? "1" : "0",
-                        ref: invoice?.external_id,
-                    },
-                });
-            },
-        });
-    } catch (err: any) {
-        error(err?.message ?? "GCash payment failed.");
     } finally {
         processing.value = false;
     }
@@ -239,7 +187,7 @@ onMounted(async () => {
         const res =
             await subscriptionService.retrieveSubscriptionDetail(payload);
         total.value = Number(res.total_amount);
-        withTrial.value = res.mode === "test";
+        subtotal.value = Number(res.subtotal ?? res.total_amount);
     } catch (err: any) {
         error(err.message ?? "Failed to load subscription total.");
     } finally {

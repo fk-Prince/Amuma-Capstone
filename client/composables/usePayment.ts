@@ -5,9 +5,12 @@ import type { CardDetails } from "~/types/payment";
 type CardPaymentOptions = {
     card: CardDetails;
     amount: number;
+    reusable?: boolean;
     createPayment: (data: {
         token_id: string;
         authentication_id: string;
+        masked_card_number: string;
+        card_brand: string | null;
     }) => Promise<any>;
     onSuccess?: (result: any) => Promise<void>;
     onClose?: () => void;
@@ -19,8 +22,6 @@ type GCashPaymentOptions = {
     closeModal?: Ref<(() => void) | null>;
     onSuccess?: (result: any) => Promise<void>;
     onClose?: () => void;
-    // Don't wait for the gateway's own "redirecting in a few seconds" screen:
-    // as soon as the server has recorded the payment, close the window.
     finishWhenRecorded?: boolean;
 };
 
@@ -165,9 +166,27 @@ type GCashPaymentOptions = {
 //     });
 // }
 
+const maskCardNumber = (number: string) => {
+    const digits = number.replace(/\D/g, "");
+
+    return `${digits.slice(0, 6)}${"X".repeat(Math.max(digits.length - 10, 0))}${digits.slice(-4)}`;
+};
+
+const detectCardBrand = (number: string) => {
+    const digits = number.replace(/\D/g, "");
+
+    if (/^4/.test(digits)) return "VISA";
+    if (/^(5[1-5]|2[2-7])/.test(digits)) return "MASTERCARD";
+    if (/^3[47]/.test(digits)) return "AMEX";
+    if (/^35/.test(digits)) return "JCB";
+
+    return null;
+};
+
 export async function cardPayment({
     card,
     amount,
+    reusable = false,
     createPayment,
     onSuccess,
     onClose,
@@ -217,8 +236,8 @@ export async function cardPayment({
         window.Xendit.card.createToken(
             {
                 ...cardData,
-                is_multiple_use: false,
-                should_authenticate: true,
+                is_multiple_use: reusable,
+                should_authenticate: !reusable,
             },
 
             (err: any, token: any) => {
@@ -247,6 +266,12 @@ export async function cardPayment({
                             return await createPayment({
                                 token_id: token.id,
                                 authentication_id: auth.id,
+                                masked_card_number:
+                                    token.masked_card_number ??
+                                    maskCardNumber(cardData.card_number),
+                                card_brand:
+                                    token.card_info?.brand ??
+                                    detectCardBrand(cardData.card_number),
                             });
                         };
 

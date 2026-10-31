@@ -12,6 +12,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Module;
 use App\Models\Patient;
+use App\Models\PlatformAdmin;
 use App\Models\User;
 use App\Repository\EmployeeRepository;
 use App\Repository\NotificationRepository;
@@ -191,6 +192,36 @@ class NotificationService
         }
     }
 
+    public function notifyBookingClient(Booking $booking, string $message, ?User $actor = null): void
+    {
+        $client = $booking->user_id ? User::find($booking->user_id) : null;
+        $branch = $booking->branch;
+
+        if (!$client || !$branch) {
+            return;
+        }
+
+        $this->notificationRepository->create([
+            'branch_id' => $branch->branch_id,
+            'to_user_id' => $client->user_id,
+            'from_user_id' => $actor?->user_id ?? $client->user_id,
+            'message_type' => 'Booking',
+            'message' => $message,
+            'reference_id' => (string) $booking->reference_id,
+        ]);
+
+        if ($client->uuid) {
+            NotificationEvent::safe(new NotificationEvent(
+                $client->uuid,
+                $branch->uuid,
+                $message,
+                (string) $booking->reference_id,
+                'Booking',
+                $booking
+            ));
+        }
+    }
+
     public function notifyNewBooking(Branch $branch, User $user, object $booking): void
     {
         $this->sendNotification([
@@ -338,11 +369,72 @@ class NotificationService
                 'from_user_id' => $actor?->user_id ?? $employee->user_id,
                 'message_type' => $messageType,
                 'message' => $message,
+                'reference_id' => $referenceId,
             ]);
 
             NotificationEvent::safe(new NotificationEvent(
                 $employee->users->uuid,
                 (string) $branch->uuid,
+                $message,
+                $referenceId ?? '',
+                $messageType,
+                $reference,
+            ));
+        }
+    }
+
+    public function notifyUser(
+        User $recipient,
+        string $messageType,
+        string $message,
+        ?User $actor = null,
+        ?string $referenceId = null,
+    ): void {
+        $this->notificationRepository->create([
+            'branch_id' => null,
+            'to_user_id' => $recipient->user_id,
+            'from_user_id' => $actor?->user_id ?? $recipient->user_id,
+            'message_type' => $messageType,
+            'message' => $message,
+            'reference_id' => $referenceId,
+        ]);
+
+        if ($recipient->uuid) {
+            NotificationEvent::safe(new NotificationEvent(
+                $recipient->uuid,
+                '',
+                $message,
+                $referenceId ?? '',
+                $messageType,
+                null,
+            ));
+        }
+    }
+
+    public function notifyPlatformAdmins(
+        ?Branch $branch,
+        string $message,
+        string $messageType,
+        ?User $actor = null,
+        mixed $reference = null,
+        ?string $referenceId = null,
+    ): void {
+        $admins = User::whereIn('user_id', PlatformAdmin::pluck('user_id'))
+            ->get(['user_id', 'uuid']);
+
+        foreach ($admins as $admin) {
+            $this->notificationRepository->create([
+                'branch_id' => $branch?->branch_id,
+                'to_user_id' => $admin->user_id,
+                'from_user_id' => $actor?->user_id ?? $admin->user_id,
+                'message_type' => $messageType,
+                'message' => $message,
+                'reference_id' => $referenceId,
+            ]);
+
+            NotificationEvent::safe(new NotificationEvent(
+                $admin->uuid,
+                (string) $branch?->uuid,
                 $message,
                 $referenceId ?? '',
                 $messageType,

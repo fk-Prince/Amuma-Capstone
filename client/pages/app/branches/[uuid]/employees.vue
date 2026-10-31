@@ -32,6 +32,7 @@
                     :total-pages="totalPages"
                     :total-items="totalEmployee"
                     :page-size="PAGE_SIZE"
+                    :view="viewMode"
                     @select="updateEmployee"
                     @page-change="handlePageChange"
                 />
@@ -59,6 +60,7 @@ import EmployeeSearch from "~/components/sections/app/Employee/EmployeeSearch.vu
 import EmployeeList from "~/components/sections/app/Employee/EmployeeList.vue";
 import type { Employee } from "~/types/employee";
 import { employeeService } from "~/api/employee/EmployeeService";
+import { useListView } from "~/composables/useListView";
 
 definePageMeta({
     layout: "dashboard",
@@ -67,6 +69,7 @@ definePageMeta({
 
 const route = useRoute();
 const uuid = route.params.uuid as string;
+const { view: viewMode } = useListView();
 
 const employees = ref<Employee[]>([]);
 const loading = ref(false);

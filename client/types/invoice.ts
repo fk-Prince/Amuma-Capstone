@@ -351,6 +351,8 @@ export interface InvoiceDetail {
     schedule_code?: string | null;
     total: number;
     adjusted_total?: number;
+    vat_rate?: number;
+    vat_amount?: number;
     written_off_amount?: number;
     write_off_reason?: string | null;
     amount_paid: number;

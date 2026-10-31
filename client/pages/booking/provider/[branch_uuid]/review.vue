@@ -387,10 +387,14 @@ async function handleCardPay() {
                     category: bookingStore.category,
                     total: bookingAmount.value,
                 }),
-            onSuccess: async () => {
+            onSuccess: async (result) => {
+                const booking = result?.data?.reference_id;
+
                 await navigateTo({
                     path: `/booking/provider/${uuid}/payment-complete`,
-                    query: { status: "success" },
+                    query: booking
+                        ? { status: "success", booking }
+                        : { status: "success" },
                 });
             },
         });
@@ -417,10 +421,12 @@ async function handleGCashPay() {
                     category: bookingStore.category,
                     total: bookingAmount.value,
                 }),
-            onSuccess: async () => {
+            onSuccess: async (result) => {
                 await navigateTo({
                     path: `/booking/provider/${uuid}/payment-complete`,
-                    query: { status: "success" },
+                    query: result?.external_id
+                        ? { status: "success", ref: result.external_id }
+                        : { status: "success" },
                 });
             },
             onClose: () => {

@@ -37,7 +37,10 @@ class PortalBalanceWebhook
                 'payment_reference' => $payload['id'] ?? $reference,
             ]);
 
-            $status = ['status' => 'submitted'];
+            $status = [
+                'status' => 'submitted',
+                'receipt_code' => $result['receipt']?->payment_code,
+            ];
         } catch (Throwable $e) {
             report($e);
 

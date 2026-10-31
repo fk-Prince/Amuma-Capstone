@@ -468,7 +468,7 @@
                             <Combobox
                                 :model-value="form.preferred_time"
                                 :placeholder="displayTime"
-                                label="Preferred Time"
+                                label="Visit Time"
                                 :items="availableTimeSlots"
                                 :error="errors.preferred_time"
                                 required
@@ -1919,7 +1919,7 @@ function validate() {
     }
 
     if (!form.value.preferred_time) {
-        errors.value.preferred_time = "Please select a preferred time.";
+        errors.value.preferred_time = "Please select a visit time.";
     }
 
     for (const service of props.schedule?.services ?? []) {

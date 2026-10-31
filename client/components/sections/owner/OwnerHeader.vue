@@ -125,6 +125,10 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
         title: "Plans",
         subtitle: "Manage the subscription plans agencies can choose from.",
     },
+    "/app/owner/support": {
+        title: "Customer Support",
+        subtitle: "Answer questions and issues sent by AMUMA users.",
+    },
     "/profile": {
         title: "My Profile",
         subtitle:

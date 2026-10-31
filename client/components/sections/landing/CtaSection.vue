@@ -13,7 +13,7 @@ withDefaults(
     {
         title: "Start your business with AMUMA today.",
         text: "Create your business profile, manage your branches, and reach more customers—all in one place.",
-        primary: () => ({ label: "Create agency account", to: "/product" }),
+        primary: () => ({ label: "Subscribe now!", to: "/product" }),
         secondary: () => ({ label: "Learn more", to: "/agencies" }),
     },
 );

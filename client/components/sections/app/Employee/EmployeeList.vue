@@ -30,6 +30,7 @@ const props = withDefaults(
         totalPages?: number;
         totalItems?: number;
         pageSize?: number;
+        view?: "table" | "card";
     }>(),
     {
         currentPage: 1,
@@ -131,6 +132,7 @@ const formatStatus = (status: string | null | undefined) => {
             :rows="rows"
             :pagination="pagination"
             :loading="loading"
+            :view="view"
             :searchable="false"
             empty-title="No employees found"
             empty-description="Try adjusting your search or filters, or add a new employee."

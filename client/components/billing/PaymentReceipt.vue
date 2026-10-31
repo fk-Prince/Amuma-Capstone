@@ -38,6 +38,18 @@ const tableRows = computed(() =>
 
 const isOnline = computed(() => props.receipt.channel === "portal");
 
+const hasVat = computed(
+    () =>
+        Number(props.receipt.tax?.vat_amount) > 0 ||
+        Number(props.receipt.tax?.vat_exempt_sales) > 0,
+);
+
+const vatLabel = computed(() => {
+    const rate = props.receipt.tax?.vat_rate;
+
+    return rate ? `VAT (${Number(rate)}%)` : "VAT";
+});
+
 const isCredit = computed(() => props.receipt.payment.method === "CREDIT");
 
 const hasChange = computed(() => Number(props.receipt.payment.change_due) > 0);
@@ -102,9 +114,9 @@ onBeforeUnmount(() => {
 <template>
     <Teleport to="body">
         <div
-            class="receipt-overlay fixed inset-0 z-[90] overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="receipt-overlay fixed inset-0 z-[90] flex overflow-y-auto bg-gray-950/50 p-4 backdrop-blur-sm"
         >
-            <div class="mx-auto my-4 w-full max-w-[1000px]">
+            <div class="m-auto w-full max-w-[1000px]">
                 <div
                     class="receipt-actions mb-3 flex items-center justify-between gap-3"
                 >
@@ -402,6 +414,51 @@ onBeforeUnmount(() => {
                             <div
                                 class="flex w-[280px] shrink-0 flex-col justify-end border-l border-black"
                             >
+                                <template v-if="hasVat">
+                                    <div
+                                        class="flex justify-between border-b border-black px-2 py-1"
+                                    >
+                                        <span class="uppercase">
+                                            Vatable Sales
+                                        </span>
+
+                                        <span class="font-mono font-bold">
+                                            {{
+                                                peso(receipt.tax?.vatable_sales)
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex justify-between border-b border-black px-2 py-1"
+                                    >
+                                        <span class="uppercase">
+                                            VAT-Exempt Sales
+                                        </span>
+
+                                        <span class="font-mono font-bold">
+                                            {{
+                                                peso(
+                                                    receipt.tax
+                                                        ?.vat_exempt_sales,
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex justify-between border-b border-black px-2 py-1"
+                                    >
+                                        <span class="uppercase">
+                                            {{ vatLabel }}
+                                        </span>
+
+                                        <span class="font-mono font-bold">
+                                            {{ peso(receipt.tax?.vat_amount) }}
+                                        </span>
+                                    </div>
+                                </template>
+
                                 <div
                                     class="flex justify-between bg-black/[0.04] px-2 py-1.5"
                                 >
@@ -489,6 +546,7 @@ onBeforeUnmount(() => {
     }
 
     body.receipt-printing .receipt-overlay {
+        display: block !important;
         position: static !important;
         overflow: visible !important;
         background: #ffffff !important;

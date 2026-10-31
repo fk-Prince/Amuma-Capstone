@@ -21,6 +21,10 @@
             @continue="dismissApproved"
         />
 
+        <ClientOnly>
+            <SupportCenterModal />
+        </ClientOnly>
+
         <div
             class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden print:hidden"
             aria-hidden="true"
@@ -88,6 +92,7 @@ import SandboxNotice from "~/components/sections/SandboxNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";
 import ApprovedSplash from "~/components/ui/ApprovedSplash.vue";
+import SupportCenterModal from "~/components/sections/app/Support/SupportCenterModal.vue";
 import { useApprovalSplash } from "~/composables/useApprovalSplash";
 import { useRouteAccess } from "~/composables/useRouteAccess";
 

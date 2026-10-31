@@ -265,7 +265,7 @@
                             "
                         >
                             <Field
-                                label="Schedule Date / Preferred Time"
+                                label="Schedule Date / Visit Time"
                                 :value="
                                     [
                                         formatDate(booking.homecare?.date),

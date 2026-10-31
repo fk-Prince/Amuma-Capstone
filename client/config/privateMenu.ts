@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-vue-next';
-import { LayoutDashboard, ShieldCheck, Building2, BookOpen } from 'lucide-vue-next';
+import { LayoutDashboard, ShieldCheck, Building2, BookOpen, LifeBuoy } from 'lucide-vue-next';
 
 export interface MenuItem {
     label: string;
@@ -33,5 +33,11 @@ export const privateMenu: MenuItem[] = [
         to: "/app/owner/plans",
         icon: BookOpen,
         group: "Management",
+    },
+    {
+        label: "Customer Support",
+        to: "/app/owner/support",
+        icon: LifeBuoy,
+        group: "Support",
     },
 ];

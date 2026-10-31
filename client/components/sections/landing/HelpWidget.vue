@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { Building2, CalendarCheck, MessageCircleQuestion, Search, X } from "lucide-vue-next";
+import { Building2, CalendarCheck, LifeBuoy, MessageCircleQuestion, Search, X } from "lucide-vue-next";
 
 const route = useRoute();
 const open = ref(false);
@@ -31,6 +31,12 @@ const links = [
         label: "Read the FAQ",
         hint: "Quick answers",
         to: "/faq",
+    },
+    {
+        icon: LifeBuoy,
+        label: "Contact Customer Support",
+        hint: "Message the AMUMA team",
+        to: "/resources/support",
     },
 ];
 

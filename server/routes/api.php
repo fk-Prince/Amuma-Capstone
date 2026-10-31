@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdditionalChargeController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BedController;
 use App\Http\Controllers\BookingController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SandboxController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VitalController;
 use App\Http\Controllers\XenditController;
@@ -69,7 +71,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 });
 Route::get('/branches/fetchBranch/{id}', [BranchController::class, 'fetchBranch']);
-
 if (config('app.sandbox')) {
     Route::post('/sandbox/provision', [SandboxController::class, 'provision'])->middleware('throttle:30,1');
     Route::post('/sandbox/lock', [SandboxController::class, 'lock'])->middleware('throttle:120,1');
@@ -102,9 +103,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/inquiries/{uuid}/status', [InquiryController::class, 'updateStatus']);
     Route::post('/inquiries/{uuid}/reply', [InquiryController::class, 'reply']);
 
+    // CUSTOMER SUPPORT
+    Route::get('/support-tickets', [SupportTicketController::class, 'index']);
+    Route::post('/support-tickets', [SupportTicketController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/support-tickets/{uuid}', [SupportTicketController::class, 'show'])->whereUuid('uuid');
+    Route::post('/support-tickets/{uuid}/replies', [SupportTicketController::class, 'reply'])->whereUuid('uuid');
+    Route::patch('/support-tickets/{uuid}/status', [SupportTicketController::class, 'updateStatus'])->whereUuid('uuid');
+
     // AUDIT LOGS
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
     Route::get('/audit-logs/{uuid}', [AuditLogController::class, 'show']);
+
+    // REPORTS
+    Route::get('/reports/sales-vat', [ReportController::class, 'salesVat']);
+    Route::get('/reports/sales-vat/summary', [ReportController::class, 'salesVatSummary']);
+    Route::get('/reports/sales-vat/export', [ReportController::class, 'salesVatExport']);
 
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
@@ -179,6 +192,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/subscriptions-apply-upgrade', [SubscriptionController::class, 'applyUpgrade']);
         Route::post('/subscriptions-cancel-test', [SubscriptionController::class, 'cancelTest']);
         Route::post('/subscriptions-end-test', [SubscriptionController::class, 'endTest']);
+        Route::post('/subscriptions-card', [SubscriptionController::class, 'updateCard']);
+        Route::post('/subscriptions-auto-renew', [SubscriptionController::class, 'setAutoRenew']);
         Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
     });
 

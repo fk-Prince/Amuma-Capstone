@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Service\AuditService;
+use App\Utils\Vat;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,7 @@ class Subscription extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'pending_plan_starts_at' => 'date',
+        'auto_renew' => 'boolean',
     ];
 
     public function uniqueIds()
@@ -54,6 +56,23 @@ class Subscription extends Model
         'start_date',
         'end_date',
         'cancel_reason',
+        'card_token_id',
+        'masked_card_number',
+        'card_brand',
+        'auto_renew',
+    ];
+
+    protected $hidden = ['card_token_id'];
+
+    public function auditExclude(): array
+    {
+        return ['updated_at', 'card_token_id'];
+    }
+
+    public const NO_CARD = [
+        'card_token_id' => null,
+        'masked_card_number' => null,
+        'card_brand' => null,
     ];
 
     public function plans()
@@ -416,6 +435,49 @@ class Subscription extends Model
             'trial_ended' => $this->trialHasEnded(),
             'upgrade_months' => $this->upgradeMonths(),
             'opens_at' => $this->renewalOpensAt()->toDateString(),
+            'card' => $this->savedCard(),
+        ];
+    }
+
+    public function cardLast4(): ?string
+    {
+        return $this->masked_card_number ? substr($this->masked_card_number, -4) : null;
+    }
+
+    public function nextCardCharge(): ?array
+    {
+        if ($this->awaitingTrialPayment()) {
+            return [$this->pending_plan_starts_at, $this->plans];
+        }
+
+        if (!$this->auto_renew) {
+            return null;
+        }
+
+        return $this->pending_plan_id && $this->pending_plan_starts_at
+            ? [self::termEnd($this->pending_plan_starts_at), $this->pendingPlan]
+            : [$this->end_date, $this->plans];
+    }
+
+    public function savedCard(): ?array
+    {
+        if (
+            !$this->card_token_id
+            || !in_array($this->status, [self::STATUS_PENDING, self::STATUS_ACTIVE], true)
+            || $this->isLockedForPayment()
+        ) {
+            return null;
+        }
+
+        [$chargesOn, $plan] = $this->nextCardCharge() ?? [null, null];
+
+        return [
+            'brand' => $this->card_brand,
+            'last4' => $this->cardLast4(),
+            'auto_renew' => (bool) $this->auto_renew,
+            'is_trial' => $this->awaitingTrialPayment(),
+            'charges_on' => $chargesOn?->toDateString(),
+            'amount' => $plan ? Vat::exclusive($this->renewalAmount($plan))['total_amount'] : null,
         ];
     }
 }

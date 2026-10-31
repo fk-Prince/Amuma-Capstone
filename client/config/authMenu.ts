@@ -119,13 +119,13 @@ export const authMenuList: MenuItems[] = [
         plan: ["A", "B", "C"],
         group: "Business",
     },
-    // {
-    //     label: "Reports",
-    //     icon: ClipboardMinus,
-    //     to: "/app/branches/[uuid]/reports",
-    //     modules: ["Reports"],
-    //     group: "Business",
-    // },
+    {
+        label: "Financial Reports",
+        icon: ClipboardMinus,
+        to: "/app/branches/[uuid]/reports",
+        modules: ["Reports"],
+        group: "Business",
+    },
     {
         label: "Branch Settings",
         icon: Settings,

@@ -73,6 +73,7 @@
                         <BaseInput
                             v-model="form.price"
                             label="Base Price"
+                            :info="vatInfo"
                             mode="number"
                             step="0.01"
                             min="0.01"
@@ -201,6 +202,9 @@
 import { reactive, ref, watch } from "vue";
 import { LoaderCircle, Pencil, Plus, X } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
+import { useVatInfo } from "~/composables/useVatInfo";
+
+const vatInfo = useVatInfo();
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import { useToast } from "~/composables/useToast";
 import { formatCurrency } from "~/utils/currency";

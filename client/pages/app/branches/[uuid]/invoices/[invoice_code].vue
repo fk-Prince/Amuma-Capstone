@@ -254,6 +254,14 @@
                                     )
                                 }}
                             </p>
+                            <p
+                                v-if="Number(invoice.vat_amount) > 0"
+                                class="mt-0.5 text-[12px] text-[#6B8A87] dark:text-gray-400"
+                            >
+                                Incl. VAT ({{ Number(invoice.vat_rate) }}%) ₱{{
+                                    formatMoney(invoice.vat_amount)
+                                }}
+                            </p>
                         </div>
 
                         <div
@@ -871,6 +879,7 @@
                             cash-processing-label="Confirming payment..."
                             cash-description="Enter the cash amount received from the patient to settle this invoice."
                             @cash-pay="handleCashPay"
+                            compact
                         />
                     </div>
                 </div>

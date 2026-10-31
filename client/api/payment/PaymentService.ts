@@ -34,6 +34,8 @@ class PaymentService extends BaseService {
     async checkStatus(reference: string): Promise<{
         status: "pending" | "submitted" | "failed" | "unknown";
         message?: string | null;
+        reference_id?: string | null;
+        receipt_code?: string | null;
     }> {
         return await this.request(
             `${this.getBackendApi}/api/auth/payments/status/${reference}`,

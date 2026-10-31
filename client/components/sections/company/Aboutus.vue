@@ -33,7 +33,7 @@
             </div>
         </section>
 
-        <section class="mx-auto w-full max-w-[100rem] px-6 py-16">
+        <section class="mx-auto w-[88%] max-w-[1600px] px-4 py-16 sm:px-10">
             <div class="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
                 <div>
                     <p
@@ -101,7 +101,7 @@
             </div>
         </section>
 
-        <section class="mx-auto w-full max-w-[100rem] px-6 py-16">
+        <section class="mx-auto w-[88%] max-w-[1600px] px-4 py-16 sm:px-10">
             <div class="mb-14 text-center">
                 <p
                     class="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-primary"

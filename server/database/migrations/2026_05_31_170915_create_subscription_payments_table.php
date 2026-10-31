@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->foreignId('user_id')->nullable()->constrained('users', 'user_id');
             $table->decimal('price', 10, 2);
+            $table->decimal('vat_rate', 5, 2)->default(12);
             $table->enum('status', ['paid', 'refunded'])->default('paid');
             $table->foreignId('plan_id')->constrained('plans', 'plan_id')->nullable();
             $table->foreignId('branch_id')->nullable()->constrained('branches', 'branch_id');

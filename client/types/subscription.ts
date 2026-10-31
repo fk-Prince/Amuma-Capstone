@@ -10,6 +10,9 @@ export interface SubscriptionPaymentRecord {
     plan_type?: string | null;
     masked_card_number: string | null;
     price: number;
+    subtotal?: number | null;
+    vat_rate?: number | null;
+    vat_amount?: number | null;
     status: "paid" | "refunded";
     type: "subscription" | "renewal" | "upgrade" | "additional_branch";
     branch_name?: string | null;

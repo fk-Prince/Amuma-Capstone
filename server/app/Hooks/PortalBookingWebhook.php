@@ -36,7 +36,7 @@ class PortalBookingWebhook
                 'masked_card_number' => null,
             ]);
 
-            $status = ['status' => 'submitted'];
+            $status = ['status' => 'submitted', 'reference_id' => $cached['payload']['reference_id']];
         } catch (Throwable $e) {
             report($e);
 

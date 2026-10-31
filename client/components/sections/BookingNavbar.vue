@@ -8,6 +8,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
 import DynamicSidebar from "./DynamicSidebar.vue";
+import NavDropdownPanel from "./NavDropdownPanel.vue";
 import { ChevronDown } from "lucide-vue-next";
 import Notification from "../ui/Notification.vue";
 import { navList as publicNavList } from "~/config/publicMenu";
@@ -69,21 +70,6 @@ onUnmounted(() => {
     document.removeEventListener("pointerdown", onDocumentPointerDown);
     document.removeEventListener("keydown", onKeydown);
 });
-
-const dropdownLinkClass = (to: string) =>
-    route.path === to
-        ? "bg-primary/10 dark:bg-primary/15"
-        : "hover:bg-primary/5 dark:hover:bg-white/5";
-
-const dropdownIconClass = (to: string) =>
-    route.path === to
-        ? "bg-primary text-white"
-        : "bg-primary-50 text-primary group-hover/item:bg-primary group-hover/item:text-white dark:bg-white/10 dark:text-primary-300";
-
-const dropdownTitleClass = (to: string) =>
-    route.path === to
-        ? "text-primary dark:text-primary-300"
-        : "text-secondary dark:text-white";
 
 const variant = computed(() => route.meta.navVariant ?? 1);
 
@@ -401,21 +387,59 @@ watch(() => route.path, closeMenu);
                         :style="pillStyle"
                     />
 
-                    <NuxtLink
-                        v-for="(i, index) in navList"
-                        :key="i.to"
-                        :ref="(el) => setNavRef(el, index)"
-                        :to="i.to"
-                        class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-5"
-                        :class="itemLinkClass(i)"
-                    >
-                        {{ i.label }}
-                        <span
-                            v-if="!isItemActive(i)"
-                            class="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
-                            :class="indicatorColor"
-                        />
-                    </NuxtLink>
+                    <template v-for="(i, index) in navList" :key="i.to">
+                        <div
+                            v-if="i.children?.length"
+                            :ref="(el) => setNavRef(el, index)"
+                            data-nav-dropdown
+                            class="relative z-10 py-2 px-5"
+                            @mouseenter="openMenu = i.to"
+                            @mouseleave="closeMenu"
+                        >
+                            <button
+                                type="button"
+                                class="group relative flex items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors duration-300"
+                                :class="itemLinkClass(i)"
+                                aria-haspopup="menu"
+                                :aria-expanded="openMenu === i.to"
+                                @click="openMenu = i.to"
+                            >
+                                {{ i.label }}
+
+                                <ChevronDown
+                                    class="h-3.5 w-3.5 transition-transform duration-200"
+                                    :class="openMenu === i.to ? 'rotate-180' : ''"
+                                />
+
+                                <span
+                                    v-if="!isItemActive(i)"
+                                    class="pointer-events-none absolute inset-x-0 -bottom-2 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
+                                    :class="indicatorColor"
+                                />
+                            </button>
+
+                            <NavDropdownPanel
+                                :open="openMenu === i.to"
+                                :items="i.children"
+                                @select="closeMenu"
+                            />
+                        </div>
+
+                        <NuxtLink
+                            v-else
+                            :ref="(el) => setNavRef(el, index)"
+                            :to="i.to"
+                            class="group relative z-10 whitespace-nowrap py-2 text-sm font-medium transition-colors duration-300 px-5"
+                            :class="itemLinkClass(i)"
+                        >
+                            {{ i.label }}
+                            <span
+                                v-if="!isItemActive(i)"
+                                class="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] origin-center scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
+                                :class="indicatorColor"
+                            />
+                        </NuxtLink>
+                    </template>
                 </div>
 
                 <div class="ml-auto flex items-center gap-6">
@@ -581,62 +605,11 @@ watch(() => route.path, closeMenu);
                                 />
                             </button>
 
-                            <Transition
-                                enter-active-class="transition duration-150 ease-out"
-                                enter-from-class="opacity-0 -translate-y-1"
-                                enter-to-class="opacity-100 translate-y-0"
-                                leave-active-class="transition duration-100 ease-in"
-                                leave-from-class="opacity-100 translate-y-0"
-                                leave-to-class="opacity-0 -translate-y-1"
-                            >
-                                <div
-                                    v-if="openMenu === i.to"
-                                    class="absolute left-1/2 top-full -translate-x-1/2 pt-3"
-                                >
-                                    <div
-                                        role="menu"
-                                        class="flex w-[300px] flex-col gap-1 rounded-2xl border border-muted-light bg-white p-2 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.25)] dark:border-white/10 dark:bg-secondary"
-                                    >
-                                        <NuxtLink
-                                            v-for="c in i.children"
-                                            :key="c.to"
-                                            :to="c.to"
-                                            role="menuitem"
-                                            class="group/item flex items-start gap-3 rounded-xl p-3 transition-colors duration-200"
-                                            :class="dropdownLinkClass(c.to)"
-                                            @click="closeMenu"
-                                        >
-                                            <span
-                                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200"
-                                                :class="dropdownIconClass(c.to)"
-                                            >
-                                                <component
-                                                    :is="c.icon"
-                                                    v-if="c.icon"
-                                                    class="h-4 w-4"
-                                                />
-                                            </span>
-
-                                            <span class="flex min-w-0 flex-col">
-                                                <span
-                                                    class="text-sm font-semibold"
-                                                    :class="
-                                                        dropdownTitleClass(c.to)
-                                                    "
-                                                >
-                                                    {{ c.label }}
-                                                </span>
-                                                <span
-                                                    v-if="c.description"
-                                                    class="mt-0.5 text-xs leading-5 text-muted dark:text-gray-400"
-                                                >
-                                                    {{ c.description }}
-                                                </span>
-                                            </span>
-                                        </NuxtLink>
-                                    </div>
-                                </div>
-                            </Transition>
+                            <NavDropdownPanel
+                                :open="openMenu === i.to"
+                                :items="i.children"
+                                @select="closeMenu"
+                            />
                         </div>
 
                         <NuxtLink

@@ -68,6 +68,14 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-end-test', 'POST', payload);
     }
 
+    async updateCard(payload: any): Promise<any> {
+        return await this.request(this.resource + '-card', 'POST', payload);
+    }
+
+    async setAutoRenew(payload: { branch_uuid: string; auto_renew: boolean }): Promise<any> {
+        return await this.request(this.resource + '-auto-renew', 'POST', payload);
+    }
+
 
     async list(payload: any): Promise<any> {
         return await this.request(this.resource, 'GET', payload);

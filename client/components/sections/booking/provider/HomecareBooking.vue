@@ -311,7 +311,7 @@
                                     @update:model-value="
                                         update('prefered_time', $event)
                                     "
-                                    label="Preferred Time"
+                                    label="Visit Time"
                                     :placeholder="displayTime"
                                     :error="errors?.prefered_time"
                                     required

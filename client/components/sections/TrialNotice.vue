@@ -28,7 +28,7 @@
                     >
                     This branch is read-only: you can still view everything,
                     but nothing can be added or changed.
-                    <template v-if="canManage">
+                    <template v-if="canUpdateSubscription">
                         To unlock it, subscribe in the Manage Subscription tab.
                     </template>
                     <template v-else>
@@ -92,7 +92,9 @@
             <button
                 v-if="canPay"
                 type="button"
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98]"
+                :disabled="!canUpdateSubscription"
+                :title="noPermissionTitle"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
                 @click="goToSubscription({})"
             >
                 Manage subscription
@@ -101,7 +103,9 @@
             <button
                 v-else-if="canStart"
                 type="button"
-                class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98]"
+                :disabled="!canUpdateSubscription"
+                :title="noPermissionTitle"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
                 @click="goToSubscription({ end_trial: '1' })"
             >
                 Start now
@@ -119,7 +123,7 @@ import { useSandbox } from "~/composables/useSandbox";
 import { Modules } from "~/types/module";
 
 const branchStore = useBranchStore();
-const { hasModule } = usePermissions();
+const { hasModule, canUpdate } = usePermissions();
 const { isSandbox, switchLink } = useSandbox();
 
 const branch = computed(() => branchStore.activeBranch);
@@ -137,6 +141,12 @@ const awaitingPayment = computed(
 const locked = computed(() => Boolean(branch.value?.subscription_locked));
 
 const canManage = computed(() => hasModule(Modules.ManageSubscription));
+const canUpdateSubscription = computed(() => canUpdate(Modules.ManageSubscription));
+const noPermissionTitle = computed(() =>
+    canUpdateSubscription.value
+        ? undefined
+        : "You need permission to update the subscription.",
+);
 
 const canPay = computed(
     () =>
@@ -172,7 +182,7 @@ const practiceLink = computed(() =>
 );
 
 function goToSubscription(query: Record<string, string>) {
-    if (!branch.value?.uuid) return;
+    if (!branch.value?.uuid || !canUpdateSubscription.value) return;
 
     navigateTo({
         path: `/app/branches/${branch.value.uuid}/manage-subscription`,

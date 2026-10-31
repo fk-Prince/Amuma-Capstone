@@ -486,7 +486,8 @@ class ScheduleService
                 $branch,
                 array_unique($assignedEmployeeIds),
                 $isFinalizing ? $assignedEmployeeIds : $previouslyAssignedIds,
-                $targetStart
+                $targetStart,
+                $isFinalizing ? [] : array_values(array_diff(array_unique($previouslyAssignedIds), $assignedEmployeeIds))
             );
 
             $when = $targetStart->format('M j, Y \a\t g:i A');
@@ -523,9 +524,10 @@ class ScheduleService
         object $branch,
         array $employeeIds,
         array $alreadyAssignedIds,
-        Carbon $scheduledAt
+        Carbon $scheduledAt,
+        array $removedIds = []
     ): void {
-        if (empty($employeeIds)) {
+        if (empty($employeeIds) && empty($removedIds)) {
             return;
         }
 
@@ -538,7 +540,7 @@ class ScheduleService
             . ' on ' . $scheduledAt->format('M j, Y \a\t g:i A');
 
         $employees = Employee::with('users')
-            ->whereIn('employee_id', $employeeIds)
+            ->whereIn('employee_id', array_merge($employeeIds, $removedIds))
             ->get();
 
         foreach ($employees as $employee) {
@@ -546,9 +548,13 @@ class ScheduleService
                 continue;
             }
 
-            $message = in_array((int) $employee->employee_id, $alreadyAssignedIds, true)
-                ? "Schedule{$details} has been updated."
-                : "You have been assigned to schedule{$details}.";
+            $employeeId = (int) $employee->employee_id;
+
+            $message = match (true) {
+                in_array($employeeId, $removedIds, true) => "You have been removed from schedule{$details}.",
+                in_array($employeeId, $alreadyAssignedIds, true) => "Schedule{$details} has been updated.",
+                default => "You have been assigned to schedule{$details}.",
+            };
 
             $this->notificationRepository->create([
                 'branch_id' => $branch->branch_id,
@@ -961,6 +967,9 @@ class ScheduleService
                 ->groupBy('schedule_services_id');
 
             $careTeamChanged = false;
+            $addedIds = [];
+            $updatedIds = [];
+            $removedIds = [];
 
             foreach ($assignmentsByService as $scheduleServicesId => $assignments) {
                 $scheduleService = $schedule->scheduleServices()
@@ -1045,6 +1054,7 @@ class ScheduleService
                     }
 
                     $currentAssigned->update(['is_active' => false]);
+                    $removedIds[] = (int) $currentAssigned->employee_id;
                     $careTeamChanged = true;
                 }
 
@@ -1072,12 +1082,17 @@ class ScheduleService
                                 'start_time' => $startTime,
                                 'end_time' => $endTime,
                             ]);
+
+                            if ($current?->wasChanged(['start_time', 'end_time'])) {
+                                $updatedIds[] = (int) $employeeId;
+                            }
                         }
 
                         continue;
                     }
 
                     $careTeamChanged = true;
+                    $addedIds[] = (int) $employeeId;
 
                     $existingRow = $scheduleService->assigned()
                         ->where('employee_id', $employeeId)
@@ -1102,6 +1117,22 @@ class ScheduleService
                         ]);
                     }
                 }
+            }
+
+            $removedIds = array_values(array_diff(array_unique($removedIds), $addedIds, $updatedIds));
+            $branch = Branch::find($branchId);
+            $actor = $payload['user'] ?? request()->user();
+
+            if ($branch && $actor) {
+                $this->notifyAssignedStaff(
+                    $actor,
+                    $schedule,
+                    $branch,
+                    array_values(array_unique(array_merge($addedIds, $updatedIds))),
+                    array_values(array_unique($updatedIds)),
+                    $targetStart,
+                    $removedIds
+                );
             }
 
             if ($careTeamChanged) {

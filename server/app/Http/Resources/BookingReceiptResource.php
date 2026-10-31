@@ -3,12 +3,10 @@
 namespace App\Http\Resources;
 
 use App\Utils\MoneyWords;
+use App\Utils\Vat;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-// The receipt for a booking's downpayment, built from its transaction. A
-// booking payment is taken before any invoice exists, so there is nothing to
-// allocate it to yet; the receipt shows what it was for.
 class BookingReceiptResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -24,6 +22,8 @@ class BookingReceiptResource extends JsonResource
         $tendered = round((float) ($this->payment?->cash_tendered ?? $amount), 2);
 
         $description = $this->description ?: 'Booking downpayment';
+
+        $vat = Vat::portion($amount, Vat::RATE);
 
         $patientName = trim(implode(' ', array_filter([
             $patient['first_name'] ?? null,
@@ -45,6 +45,13 @@ class BookingReceiptResource extends JsonResource
                 'email'       => $this->branch?->email,
                 'tin'         => data_get($this->branch?->settings, 'tin'),
                 'permit_no'   => data_get($this->branch?->settings, 'bir_permit_no'),
+            ],
+
+            'tax' => [
+                'vat_rate'      => Vat::RATE,
+                'vatable_sales' => round($amount - $vat, 2),
+                'vat_exempt_sales' => 0.0,
+                'vat_amount'    => $vat,
             ],
 
             'payor' => [

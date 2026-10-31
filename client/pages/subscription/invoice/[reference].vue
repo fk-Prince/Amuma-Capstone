@@ -151,6 +151,9 @@ interface PaymentReceipt {
     plan: string | null;
     type: string | null;
     plan_type: string | null;
+    subtotal?: number | null;
+    vat_rate?: number | null;
+    vat_amount?: number | null;
 }
 
 definePageMeta({ layout: false });
@@ -201,6 +204,7 @@ const rows = computed(() => {
                 .join(" · "),
         },
         { label: "Payment for", value: paymentTypeLabel(data.type) },
+        { label: "Amount", value: formatCurrency(data.amount) },
         { label: "Xendit ID", value: data.xendit_id },
         { label: "Reference", value: data.reference_id },
     ].filter((row) => !!row.value);

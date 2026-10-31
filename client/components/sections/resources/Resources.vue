@@ -29,7 +29,7 @@
                 class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white dark:to-secondary"
             />
 
-            <div class="relative z-10 mx-auto w-full max-w-[100rem] px-6">
+            <div class="relative z-10 mx-auto w-[88%] max-w-[1600px] px-4 sm:px-10">
                 <div
                     class="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary dark:bg-primary-500/10"
                 >
@@ -52,7 +52,7 @@
         </section>
 
         <main
-            class="relative z-0 mx-auto w-full max-w-[100rem] space-y-20 bg-white px-6 py-10 dark:bg-secondary"
+            class="relative z-0 mx-auto w-[88%] max-w-[1600px] space-y-20 bg-white px-4 py-10 sm:px-10 dark:bg-secondary"
         >
             <section>
                 <div class="mb-8 flex items-end justify-between gap-4">
@@ -467,7 +467,7 @@
                 </div>
 
                 <NuxtLink
-                    to="/company"
+                    to="/resources/support"
                     class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
                 >
                     Contact Support
@@ -706,7 +706,7 @@ const helpfulLinks = [
         title: "Contact Support",
         description: "Get help from our support team anytime.",
         cta: "Contact Now",
-        to: "/company",
+        to: "/resources/support",
         tint: "bg-accent-50 text-accent",
         accent: "text-accent",
     },
