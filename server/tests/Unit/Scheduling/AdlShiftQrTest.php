@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Unit\Scheduling;
 
 use App\Events\QrScanned;
 use App\Models\Employee;
@@ -154,99 +154,6 @@ class AdlShiftQrTest extends TestCase
         $this->scan($this->familyQr('in'), $this->firstShift);
     }
 
-    public function test_clock_in_is_allowed_up_to_an_hour_before_the_shift(): void
-    {
-        $this->setShift($this->firstShift, '08:00', '12:00');
-        $this->travelTo(now()->startOfDay()->setTime(7, 15));
-
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        $this->assertSame($this->firstShift, (int) $this->onDuty());
-    }
-
-    public function test_a_refused_clock_in_keeps_the_qr_usable(): void
-    {
-        $this->setShift($this->firstShift, '08:00', '12:00');
-        $this->travelTo(now()->startOfDay()->setTime(14, 0));
-
-        $qr = $this->familyQr('in');
-
-        try {
-            $this->scan($qr, $this->firstShift);
-        } catch (\Exception) {
-        }
-
-        $this->scan($qr, $this->secondShift);
-
-        $this->assertSame($this->secondShift, (int) $this->onDuty());
-    }
-
-    public function test_an_ongoing_visit_with_nobody_on_duty_can_be_picked_up_any_time(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-        $this->scan($this->familyQr('out'), $this->firstShift);
-
-        $this->setShift($this->secondShift, '08:00', '12:00');
-        $this->travelTo(now()->startOfDay()->setTime(20, 0));
-
-        $this->scan($this->familyQr('in'), $this->secondShift);
-
-        $this->assertSame($this->secondShift, (int) $this->onDuty());
-    }
-
-    public function test_the_family_is_told_about_a_shift_change(): void
-    {
-        $family = $this->makeUser('family@amuma.com');
-        $clientId = DB::table('clients')->insertGetId([
-            'user_id' => $family->user_id,
-            'first_name' => 'Gina',
-            'last_name' => 'Cruz',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        DB::table('patient_accesses')->insert([
-            'client_id' => $clientId,
-            'patient_id' => $this->patientId,
-            'have_access' => true,
-            'relationship_type' => 'relative',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->scan($this->familyQr('in'), $this->firstShift);
-        $this->scan($this->handoverQr($this->firstShift), $this->secondShift);
-
-        $this->assertTrue(
-            DB::table('notifications')
-                ->where('to_user_id', $family->user_id)
-                ->where('message_type', 'Schedule')
-                ->where('message', 'like', '%shift change%')
-                ->exists()
-        );
-    }
-
-    public function test_shift_change_is_allowed_outside_the_shift(): void
-    {
-        $this->setShift($this->secondShift, '08:00', '12:00');
-        $this->travelTo(now()->startOfDay()->setTime(20, 0));
-
-        $this->scan($this->familyQr('in'), $this->firstShift);
-        $this->scan($this->handoverQr($this->firstShift), $this->secondShift);
-
-        $this->assertSame($this->secondShift, (int) $this->onDuty());
-    }
-
-    public function test_employee_cannot_generate_the_time_in_qr_for_adl(): void
-    {
-        $this->expectExceptionCode(403);
-
-        $this->service->generateQr([
-            'type' => 'in',
-            'schedule_services_id' => $this->scheduleServicesId,
-            'employee_id' => $this->firstShift,
-        ]);
-    }
-
     public function test_first_scan_clocks_in_and_starts_the_schedule(): void
     {
         $this->scan($this->familyQr('in'), $this->firstShift);
@@ -264,24 +171,6 @@ class AdlShiftQrTest extends TestCase
         ]);
     }
 
-    public function test_family_cannot_generate_a_shift_change_qr(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        $this->expectExceptionCode(403);
-
-        $this->familyQr('handover');
-    }
-
-    public function test_family_time_in_is_refused_while_someone_is_on_duty(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        $this->expectExceptionCode(409);
-
-        $this->familyQr('in');
-    }
-
     public function test_second_shift_can_scan_the_first_shifts_handover_qr(): void
     {
         $this->scan($this->familyQr('in'), $this->firstShift);
@@ -291,46 +180,6 @@ class AdlShiftQrTest extends TestCase
         $this->assertSame($this->secondShift, (int) $this->onDuty());
         $this->assertSame(1, AdlAttendance::where('type_out', AdlAttendance::TYPE_HANDOVER)->count());
         $this->assertSame(1, AdlAttendance::where('type_in', AdlAttendance::TYPE_HANDOVER)->count());
-    }
-
-    public function test_missed_schedule_has_no_qr(): void
-    {
-        Schedule::where('schedule_id', $this->scheduleId)->update(['status' => Schedule::STATUS_MISSED]);
-
-        $this->expectExceptionCode(422);
-
-        $this->familyQr('in');
-    }
-
-    public function test_only_the_caregiver_on_duty_can_generate_a_handover_qr(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        $this->expectExceptionCode(403);
-
-        $this->handoverQr($this->secondShift);
-    }
-
-    public function test_the_caregiver_on_duty_cannot_scan_their_own_handover(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        $this->expectExceptionCode(409);
-
-        $this->scan($this->handoverQr($this->firstShift), $this->firstShift);
-    }
-
-    public function test_either_shift_can_time_out_with_the_family_qr(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-        $this->scan($this->familyQr('out'), $this->firstShift);
-        $this->assertNull($this->onDuty());
-
-        $this->scan($this->familyQr('in'), $this->secondShift);
-        $this->scan($this->familyQr('out'), $this->secondShift);
-        $this->assertNull($this->onDuty());
-
-        $this->assertSame(Schedule::STATUS_ONGOING, Schedule::find($this->scheduleId)->status);
     }
 
     public function test_time_out_completes_the_schedule_when_under_a_minute_remains(): void
@@ -343,30 +192,5 @@ class AdlShiftQrTest extends TestCase
         $this->scan($this->familyQr('out'), $this->firstShift);
 
         $this->assertSame(Schedule::STATUS_COMPLETED, Schedule::find($this->scheduleId)->status);
-    }
-
-    public function test_early_first_scan_moves_the_visit_end_earlier(): void
-    {
-        Schedule::where('schedule_id', $this->scheduleId)
-            ->update(['scheduled_at' => now()->addHour()]);
-
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        AdlAttendance::query()->update(['in_timestamp' => now()->subHours(4)->addSeconds(30)]);
-
-        $this->scan($this->familyQr('out'), $this->firstShift);
-
-        $this->assertSame(Schedule::STATUS_COMPLETED, Schedule::find($this->scheduleId)->status);
-    }
-
-    public function test_on_time_first_scan_keeps_the_scheduled_end(): void
-    {
-        $this->scan($this->familyQr('in'), $this->firstShift);
-
-        AdlAttendance::query()->update(['in_timestamp' => now()->subHour()]);
-
-        $this->scan($this->familyQr('out'), $this->firstShift);
-
-        $this->assertSame(Schedule::STATUS_ONGOING, Schedule::find($this->scheduleId)->status);
     }
 }

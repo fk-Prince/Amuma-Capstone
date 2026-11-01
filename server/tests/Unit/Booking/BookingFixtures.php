@@ -136,37 +136,6 @@ trait BookingFixtures
         ]);
     }
 
-    protected function giveHomecareSubscription(): void
-    {
-        $planId = DB::table('plans')->insertGetId([
-            'description' => 'Homecare and facility',
-            'name' => 'Complete',
-            'price' => 1000,
-            'plan_code' => 'C',
-            'type' => 'sme',
-        ]);
-
-        $subscriptionId = DB::table('subscriptions')->insertGetId([
-            'uuid' => (string) Str::uuid(),
-            'plan_id' => $planId,
-            'agency_id' => $this->branch->agency_id,
-            'status' => 'active',
-            'start_date' => now()->subMonth()->toDateString(),
-            'end_date' => now()->addMonth()->toDateString(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('branch_subscription')->insert([
-            'uuid' => (string) Str::uuid(),
-            'subscription_id' => $subscriptionId,
-            'branch_id' => $this->branch->branch_id,
-            'status' => 'approved',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
     protected function makeUser(?string $email = null): User
     {
         $this->userCount++;
@@ -250,15 +219,6 @@ trait BookingFixtures
             'services' => $this->services,
             'time_span' => '',
         ], $overrides);
-    }
-
-    protected function adlVisit(array $overrides = []): array
-    {
-        return $this->medicalVisit(array_merge([
-            'type' => Booking::TYPE_ADL,
-            'services' => [],
-            'time_span' => 4,
-        ], $overrides));
     }
 
     protected function completeAdmission(array $overrides = []): array

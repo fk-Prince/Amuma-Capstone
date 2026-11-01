@@ -196,21 +196,6 @@ trait SubscriptionFixtures
         }
     }
 
-    protected function branchManager(): User
-    {
-        $user = $this->makeUser('Leo', 'Cruz');
-        $employee = Employee::create([
-            'user_id' => $user->user_id,
-            'employee_code' => 'EMP-0002',
-            'first_name' => 'Leo',
-            'last_name' => 'Cruz',
-        ]);
-
-        $this->assign($employee, $this->branch, RoleEnum::BranchManager->value, RoleEnum::BranchManager->permissions());
-
-        return $user;
-    }
-
     protected function branchFields(array $overrides = []): array
     {
         return array_merge([

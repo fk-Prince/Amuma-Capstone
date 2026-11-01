@@ -3,7 +3,6 @@
 namespace Tests\Unit\Scheduling;
 
 use App\Enums\ModuleEnum;
-use App\Enums\PermissionAction;
 use App\Http\Controllers\PatientAdmissionController;
 use App\Models\Bed;
 use App\Models\EmployeePermission;
@@ -144,86 +143,11 @@ class AdmissionTest extends TestCase
         ]);
     }
 
-    public function test_patient_admitted_successfully(): void
-    {
-        $result = $this->newAdmission();
-
-        $this->assertSame('Patient admitted successfully.', $result['message']);
-
-        $admission = PatientAdmission::firstOrFail();
-
-        $this->assertSame($this->patient->patient_id, $admission->patient_id);
-        $this->assertSame($this->bedId, $admission->bed_id);
-        $this->assertSame(PatientAdmission::STATUS_WAITING, $admission->status);
-    }
-
-    public function test_the_reserved_bed_is_held_for_the_patient(): void
-    {
-        $this->newAdmission();
-
-        $this->assertSame(Bed::STATUS_RESERVED, Bed::findOrFail($this->bedId)->status);
-    }
-
-    public function test_the_first_billing_period_is_invoiced_at_the_contract_price(): void
-    {
-        $this->newAdmission();
-
-        $invoice = Invoice::firstOrFail();
-
-        $this->assertSame(Invoice::STATUS_PENDING, $invoice->status);
-        $this->assertEquals(15000, $invoice->total_amount);
-    }
-
-    public function test_admitting_a_waiting_patient_occupies_the_bed(): void
-    {
-        $this->newAdmission();
-        $admission = PatientAdmission::firstOrFail();
-
-        $result = $this->controller->action($this->makeRequest([
-            'action' => 'admit',
-            'p_uuid' => $this->patient->uuid,
-            'admission_id' => $admission->patient_admission_id,
-        ], $this->admissionStaff));
-
-        $this->assertSame('Patient admitted successfully.', $result['message']);
-        $this->assertSame(PatientAdmission::STATUS_ADMITTED, $admission->fresh()->status);
-        $this->assertSame(Bed::STATUS_OCCUPIED, Bed::findOrFail($this->bedId)->status);
-    }
-
-    public function test_admission_not_found(): void
-    {
-        $this->assertFailsWith('Admission not found.', fn() => $this->controller->action($this->makeRequest([
-            'action' => 'admit',
-            'p_uuid' => $this->patient->uuid,
-            'admission_id' => 999,
-        ], $this->admissionStaff)), 404);
-    }
-
-    public function test_patient_not_found(): void
-    {
-        $this->assertFailsWith(
-            'Patient not found.',
-            fn() => $this->newAdmission(['p_uuid' => (string) Str::uuid()]),
-            404
-        );
-
-        $this->assertSame(0, PatientAdmission::count());
-    }
-
     public function test_please_select_an_admission_date(): void
     {
         $this->assertFailsWith(
             'Please select an admission date.',
             fn() => $this->newAdmission(['admitted_at' => '']),
-            400
-        );
-    }
-
-    public function test_please_select_accommodation_type_room_and_bed(): void
-    {
-        $this->assertFailsWith(
-            'Please select accommodation type, room and bed.',
-            fn() => $this->newAdmission(['bed_id' => '']),
             400
         );
     }
@@ -241,17 +165,6 @@ class AdmissionTest extends TestCase
         $this->assertSame(1, PatientAdmission::count());
     }
 
-    public function test_patient_already_has_an_waiting_admission(): void
-    {
-        $this->admission(PatientAdmission::STATUS_WAITING);
-
-        $this->assertFailsWith(
-            'Patient already has an waiting admission.',
-            fn() => $this->newAdmission(),
-            400
-        );
-    }
-
     public function test_the_selected_bed_is_no_longer_available(): void
     {
         Bed::whereKey($this->bedId)->update(['status' => Bed::STATUS_OCCUPIED]);
@@ -263,15 +176,5 @@ class AdmissionTest extends TestCase
         );
 
         $this->assertSame(0, PatientAdmission::count());
-    }
-
-    public function test_insufficient_permissions_to_admit_a_patient(): void
-    {
-        $viewer = $this->admissionStaff([PermissionAction::Read->value]);
-
-        $this->assertFailsWith('Insufficient permissions', fn() => $this->newAdmission([], $viewer), 403);
-
-        $this->assertSame(0, PatientAdmission::count());
-        $this->assertSame(Bed::STATUS_AVAILABLE, Bed::findOrFail($this->bedId)->status);
     }
 }

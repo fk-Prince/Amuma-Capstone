@@ -28,6 +28,9 @@ client/certs/dev-key.pem
 
 .claude
 .claude/
+.docs
+.docs/
+
 
     # "artisan:1": "cd server && php artisan serve --host=0.0.0.0 --port=8001",
     #     "artisan:2": "cd server && php artisan serve --host=0.0.0.0 --port=8002",

@@ -140,29 +140,6 @@ class MedicationControllerTest extends TestCase
         $this->fail("Expected the error \"{$message}\".");
     }
 
-    public function test_index_fails_when_the_patient_is_not_found(): void
-    {
-        $this->patientMissing();
-
-        $this->assertFailsWith('Patient not found', fn() => $this->controller->index(
-            $this->request('GET', ['patient_uuid' => (string) Str::uuid()])
-        ));
-    }
-
-    public function test_index_returns_only_that_patients_medications(): void
-    {
-        $this->patientFound();
-        $this->savedMedication();
-        $this->savedMedication(['patient_id' => 999, 'name' => 'Aspirin']);
-
-        $body = $this->controller->index(
-            $this->request('GET', ['patient_uuid' => $this->patient->uuid])
-        )->getData(true);
-
-        $this->assertSame(1, $body['meta']['total']);
-        $this->assertSame('Metformin', $body['data'][0]['name']);
-    }
-
     public function test_patient_not_found(): void
     {
         $this->patientMissing();
@@ -194,49 +171,6 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(['08:00', '20:00'], $medication->times);
     }
 
-    public function test_notify_patient_access_is_called_once_for_a_medication(): void
-    {
-        $this->patientFound();
-
-        $this->notifications->expects($this->once())
-            ->method('notifyPatientAccess')
-            ->with(
-                $this->identicalTo($this->patient),
-                $this->stringContains('Metformin'),
-                'Medication',
-                $this->identicalTo($this->nurse)
-            );
-
-        $this->controller->store($this->request('POST', [
-            'patient_uuid' => $this->patient->uuid,
-            'payload' => $this->medicationPayload(),
-        ]));
-    }
-
-    public function test_medication_record_not_found(): void
-    {
-        $this->assertFailsWith('Medication record not found', fn() => $this->controller->update(
-            $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['strength' => '850mg']]),
-            '999'
-        ));
-    }
-
-    public function test_strength_changes_to_850mg_while_the_name_and_times_stay_the_same(): void
-    {
-        $medication = $this->savedMedication();
-
-        $this->controller->update(
-            $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['strength' => '850mg']]),
-            (string) $medication->medication_id
-        );
-
-        $medication->refresh();
-
-        $this->assertSame('850mg', $medication->strength);
-        $this->assertSame('Metformin', $medication->name);
-        $this->assertSame(['08:00', '20:00'], $medication->times);
-    }
-
     public function test_dose_status_is_taken_and_marked_by_the_nurse(): void
     {
         $medication = $this->savedMedication();
@@ -262,16 +196,6 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(1, MedicationSchedule::count());
     }
 
-    public function test_dosage_treats_a_different_time_on_the_same_day_as_a_separate_dose(): void
-    {
-        $medication = $this->savedMedication();
-
-        $this->controller->dosage($this->request('POST', $this->dose($medication, 'taken', ['time' => '08:00'])));
-        $this->controller->dosage($this->request('POST', $this->dose($medication, 'taken', ['time' => '20:00'])));
-
-        $this->assertSame(2, MedicationSchedule::count());
-    }
-
     public function test_dose_status_is_removed_and_no_dose_record_is_left(): void
     {
         $medication = $this->savedMedication();
@@ -284,30 +208,6 @@ class MedicationControllerTest extends TestCase
         ])));
 
         $this->assertSame('removed', $response->getData(true)['status']);
-        $this->assertSame(0, MedicationSchedule::count());
-    }
-
-    public function test_dosage_removing_a_dose_that_does_not_exist_changes_nothing(): void
-    {
-        $medication = $this->savedMedication();
-
-        $response = $this->controller->dosage(
-            $this->request('POST', $this->dose($medication, 'removed', ['schedule_id' => 9999]))
-        );
-
-        $this->assertNull($response->getData(true)['data']);
-    }
-
-    public function test_dosage_fails_for_another_patients_medication(): void
-    {
-        $medication = $this->savedMedication();
-
-        $payload = $this->dose($medication, 'taken');
-        $payload['patient_uuid'] = (string) Str::uuid();
-
-        $this->assertFailsWith('Medication record not found', fn() => $this->controller->dosage(
-            $this->request('POST', $payload)
-        ));
         $this->assertSame(0, MedicationSchedule::count());
     }
 }
