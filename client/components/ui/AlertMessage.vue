@@ -40,16 +40,16 @@ const icons = {
 
 <template>
     <div
-        class="flex items-start gap-2.5 rounded-xl border px-4 py-3 dark:border-white/10"
+        class="flex items-start gap-3 rounded-xl border py-3.5 pl-3 pr-4 dark:border-white/10"
         :class="styles[type].wrapper"
         role="alert"
     >
         <component
             :is="icons[type]"
-            class="h-5 w-5 shrink-0 mt-0.5"
+            class="h-5 w-5 shrink-0"
             :class="styles[type].icon"
         />
-        <p class="text-sm leading-relaxed" :class="styles[type].text">
+        <p class="text-sm leading-5" :class="styles[type].text">
             {{ message }}
         </p>
     </div>

@@ -93,8 +93,15 @@ async function handleSignIn() {
 
     alert.value.show = false;
 
-    if (!signinData.value.email || !signinData.value.password) {
-        showAlert(alert, "error", "Invalid credentials", 0);
+    if (!signinData.value.email.trim()) {
+        errors.value.email = "Enter your email.";
+    }
+
+    if (!signinData.value.password) {
+        errors.value.password = "Enter your password.";
+    }
+
+    if (errors.value.email || errors.value.password) {
         return;
     }
 
@@ -123,7 +130,7 @@ async function handleSignIn() {
         showAlert(
             alert,
             "error",
-            err?.message || "Invalid email or password.",
+            err?.message || "Incorrect email or password.",
             0,
         );
     } finally {

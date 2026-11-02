@@ -42,7 +42,7 @@ class AuthService
                 description: "Failed login for {$identifier}: account not found."
             );
 
-            throw new Exception(__('Incorrect credentials'), 404);
+            throw new Exception(__('Incorrect email or password.'), 404);
         }
 
         if (empty($user->password)) {
@@ -63,7 +63,7 @@ class AuthService
                 $user
             );
 
-            throw new Exception(__('Incorrect credentials'), 401);
+            throw new Exception(__('Incorrect email or password.'), 401);
         }
 
         Auth::login($user);

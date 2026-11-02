@@ -28,7 +28,11 @@ export const useSandbox = () => {
             return "";
         }
 
-        return `${switchUrl.value}/app/branches/${branch.uuid}/dashboard`;
+        const dashboard = `/app/branches/${branch.uuid}/dashboard`;
+
+        return sandboxUrl.value
+            ? `${sandboxUrl.value}/auth/signin?redirect=${encodeURIComponent(dashboard)}`
+            : `${liveUrl.value}${dashboard}`;
     });
 
     return { isSandbox, sandboxUrl, liveUrl, switchUrl, switchLink };
