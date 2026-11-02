@@ -327,8 +327,11 @@
                                         </div>
 
                                         <div class="flex justify-between">
-                                            <span class="text-muted dark:text-gray-400">
+                                            <span class="flex items-center gap-1.5 text-muted dark:text-gray-400">
                                                 Subtotal (prorated)
+                                                <InfoTooltip
+                                                    :text="proratedHelp(additionalOption?.additional_branch_price ?? 0, additionalOption?.months ?? 0)"
+                                                />
                                             </span>
                                             <span class="font-medium text-secondary dark:text-white">
                                                 ₱{{ formatMoney(additionalOption?.amount ?? 0) }}
@@ -417,21 +420,67 @@
                         <!-- Step 4 — review -->
                         <div
                             v-else-if="currentStep === 4"
-                            class="mx-auto w-full max-w-2xl space-y-4"
+                            class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
                         >
-                            <div
-                                class="mx-auto mb-5 w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-secondary"
+                            <div class="min-w-0 space-y-5">
+                                <ResubmitReview :agency="null" :branch="form.branch" />
+
+                                <section
+                                    class="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
+                                >
+                                    <div>
+                                        <h3
+                                            class="text-base font-semibold text-slate-900 dark:text-white"
+                                        >
+                                            Configuration
+                                        </h3>
+                                        <p
+                                            class="text-sm text-slate-500 dark:text-gray-400"
+                                        >
+                                            Operating hours and regional
+                                            settings.
+                                        </p>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <SummaryRow
+                                            label="Operating hours"
+                                            :value="`${form.settings.opening} – ${form.settings.closing}`"
+                                        />
+                                        <SummaryRow
+                                            label="Time zone"
+                                            :value="form.settings.time_zone"
+                                        />
+                                        <SummaryRow
+                                            label="Currency"
+                                            :value="form.settings.currency"
+                                        />
+                                    </div>
+                                </section>
+                            </div>
+
+                            <aside
+                                class="order-first space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-0 lg:order-none dark:border-white/10 dark:bg-secondary"
                             >
+                                <div>
+                                    <h3
+                                        class="text-base font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Order Details
+                                    </h3>
+                                    <p
+                                        class="text-sm text-slate-500 dark:text-gray-400"
+                                    >
+                                        Your plan and what this branch costs.
+                                    </p>
+                                </div>
+
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
                                     >
                                         <component
-                                            :is="
-                                                planIcon(
-                                                    effectivePlan?.plan_code,
-                                                )
-                                            "
+                                            :is="planIcon(effectivePlan?.plan_code)"
                                             class="h-5 w-5"
                                         />
                                     </div>
@@ -442,57 +491,91 @@
                                         >
                                             {{ effectivePlan?.name }}
                                         </p>
-
                                         <p
                                             class="mt-0.5 text-xs text-muted dark:text-gray-400"
                                         >
-                                            {{
-                                                planTypeLabel(effectivePlanType)
-                                            }}
-                                            ·
-                                            {{
-                                                branchLimitText(
-                                                    effectivePlanType,
-                                                )
-                                            }}
+                                            {{ planTypeLabel(effectivePlanType) }}
                                         </p>
+                                    </div>
+                                </div>
+
+                                <p
+                                    v-if="effectivePlan?.description"
+                                    class="text-xs leading-relaxed text-muted dark:text-gray-400"
+                                >
+                                    {{ effectivePlan?.description }}
+                                </p>
+
+                                <div
+                                    v-if="usesExistingCapacity"
+                                    class="flex items-center justify-between gap-3 border-t border-slate-100 pt-4 dark:border-white/10"
+                                >
+                                    <span
+                                        class="text-sm text-slate-600 dark:text-gray-400"
+                                    >
+                                        Included in your subscription
+                                    </span>
+                                    <span
+                                        class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+                                    >
+                                        No extra charge
+                                    </span>
+                                </div>
+
+                                <div
+                                    v-else-if="loadingTotal"
+                                    class="h-24 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                                />
+
+                                <div
+                                    v-else
+                                    class="space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-white/10"
+                                >
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span
+                                            class="flex items-center gap-1.5 text-slate-600 dark:text-gray-400"
+                                        >
+                                            {{
+                                                usesAdditional
+                                                    ? `Prorated · ${additionalOption?.months ?? 0} of 12 months`
+                                                    : purchaseWithTrial
+                                                      ? "12-month period (after trial)"
+                                                      : "12-month period"
+                                            }}
+                                            <InfoTooltip
+                                                v-if="usesAdditional"
+                                                :text="proratedHelp(additionalOption?.additional_branch_price ?? 0, additionalOption?.months ?? 0)"
+                                            />
+                                        </span>
+                                        <span
+                                            class="font-semibold text-slate-900 dark:text-white"
+                                        >
+                                            ₱{{ formatMoney(total) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-slate-600 dark:text-gray-400">
+                                            Taxes (VAT {{ VAT_RATE }}%)
+                                        </span>
+                                        <span
+                                            class="font-semibold text-slate-900 dark:text-white"
+                                        >
+                                            ₱{{ formatMoney(withVat(total).vat) }}
+                                        </span>
                                     </div>
 
                                     <div
-                                        v-if="usesExistingCapacity"
-                                        class="shrink-0 text-right"
+                                        class="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-white/10"
                                     >
-                                        <p
-                                            class="text-sm font-bold text-emerald-600 dark:text-emerald-400"
+                                        <span
+                                            class="text-base font-semibold text-slate-900 dark:text-white"
                                         >
-                                            Included
-                                        </p>
-
-                                        <p
-                                            class="text-[11px] text-muted dark:text-gray-400"
-                                        >
-                                            no extra charge
-                                        </p>
-                                    </div>
-
-                                    <div v-else class="shrink-0 text-right">
-                                        <p
-                                            class="text-lg font-bold text-primary"
-                                        >
-                                            <span
-                                                v-if="loadingTotal"
-                                                class="inline-block h-5 w-20 animate-pulse rounded bg-slate-200 dark:bg-white/10 align-middle"
-                                            />
-                                            <template v-else>
-                                                ₱{{ formatMoney(total) }}
-                                            </template>
-                                        </p>
-
-                                        <p
-                                            class="text-[11px] text-muted dark:text-gray-400"
-                                        >
-                                            {{ usesAdditional ? "prorated" : "/ year" }}
-                                        </p>
+                                            {{ purchaseWithTrial ? "Total after trial" : "Total" }}
+                                        </span>
+                                        <span class="text-lg font-bold text-primary">
+                                            ₱{{ formatMoney(amountDue) }}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -502,7 +585,7 @@
                                         !usesAdditional &&
                                         !loadingTotal
                                     "
-                                    class="mt-3 rounded-lg px-3 py-2 text-xs leading-5"
+                                    class="rounded-lg px-3 py-2 text-xs leading-5"
                                     :class="
                                         purchaseWithTrial
                                             ? 'bg-emerald-50/70 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
@@ -523,101 +606,14 @@
                                         as the branch is approved.
                                     </template>
                                 </p>
-
-                                <p
-                                    v-if="effectivePlan?.description"
-                                    class="mt-3 border-t border-slate-100 pt-3 text-xs leading-relaxed text-muted dark:border-white/10 dark:text-gray-400"
-                                >
-                                    {{ effectivePlan?.description }}
-                                </p>
-                            </div>
-
-                            <section
-                                class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div
-                                    class="mb-3 flex items-center justify-between"
-                                >
-                                    <h3
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Branch details
-                                    </h3>
-                                    <button
-                                        type="button"
-                                        class="text-xs font-semibold text-primary hover:underline"
-                                        @click="currentStep = 2"
-                                    >
-                                        Edit
-                                    </button>
-                                </div>
-
-                                <SummaryRow
-                                    label="Branch name"
-                                    :value="form.branch.name"
-                                />
-                                <SummaryRow
-                                    label="Email"
-                                    :value="form.branch.email"
-                                />
-                                <SummaryRow
-                                    label="Contact number"
-                                    :value="form.branch.contact_number"
-                                />
-                                <SummaryRow
-                                    label="Address"
-                                    :value="branchAddress"
-                                />
-                                <SummaryRow
-                                    label="TIN"
-                                    :value="form.branch.tin"
-                                />
-                                <SummaryRow
-                                    label="Description"
-                                    expandable
-                                    :value="form.branch.description"
-                                />
-                            </section>
-
-                            <section
-                                class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div
-                                    class="mb-3 flex items-center justify-between"
-                                >
-                                    <h3
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Configuration
-                                    </h3>
-                                    <button
-                                        type="button"
-                                        class="text-xs font-semibold text-primary hover:underline"
-                                        @click="currentStep = 3"
-                                    >
-                                        Edit
-                                    </button>
-                                </div>
-
-                                <SummaryRow
-                                    label="Operating hours"
-                                    :value="`${form.settings.opening} – ${form.settings.closing}`"
-                                />
-                                <SummaryRow
-                                    label="Time zone"
-                                    :value="form.settings.time_zone"
-                                />
-                                <SummaryRow
-                                    label="Currency"
-                                    :value="form.settings.currency"
-                                />
-                            </section>
+                            </aside>
                         </div>
 
                         <!-- Step 5 — payment or confirm -->
                         <div
                             v-else-if="currentStep === 5"
-                            class="mx-auto w-full max-w-2xl"
+                            class="mx-auto w-full"
+                            :class="usesExistingCapacity ? 'max-w-2xl' : 'max-w-5xl'"
                         >
                             <div
                                 v-if="usesExistingCapacity"
@@ -657,24 +653,14 @@
                                 </button>
                             </div>
 
-                            <template v-else>
-                                <VatBreakdown
-                                    :subtotal="total"
-                                    title="Order summary"
-                                    :heading="usesAdditional ? `${additionalOption?.plan_name ?? 'Subscription'} · additional branch` : effectivePlan?.name"
-                                    :item-label="
-                                        usesAdditional
-                                            ? `Prorated · ${additionalOption?.months ?? 0} of 12 months`
-                                            : purchaseWithTrial
-                                              ? '12-month period (after trial)'
-                                              : '12-month period'
-                                    "
-                                    class="mb-5"
-                                />
-
+                            <div
+                                v-else
+                                class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
+                            >
                                 <PaymentForm
                                     compact
                                     v-model:card="card"
+                                    class="min-w-0"
                                     :total-amount="amountDue"
                                     :processing="processing || loadingTotal"
                                     :onCardPay="payCard"
@@ -685,7 +671,21 @@
                                     submit-label="Confirm & add branch"
                                     terms-context="subscription"
                                 />
-                            </template>
+
+                                <VatBreakdown
+                                    :subtotal="total"
+                                    title="Order Details"
+                                    :heading="usesAdditional ? `${additionalOption?.plan_name ?? 'Subscription'} · additional branch` : effectivePlan?.name"
+                                    :item-label="
+                                        usesAdditional
+                                            ? `Prorated · ${additionalOption?.months ?? 0} of 12 months`
+                                            : purchaseWithTrial
+                                              ? '12-month period (after trial)'
+                                              : '12-month period'
+                                    "
+                                    class="order-first lg:order-none lg:sticky lg:top-0"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -772,10 +772,12 @@ import type { Branch, BranchSettings } from "~/types/branch";
 import type { CardDetails } from "~/types/payment";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import SummaryRow from "~/components/ui/SummaryRow.vue";
+import InfoTooltip from "~/components/ui/InfoTooltip.vue";
+import ResubmitReview from "~/components/sections/app/branches/ResubmitReview.vue";
+import { proratedHelp } from "~/utils/prorated";
 import { planIcon } from "~/utils/planIcon";
 import {
     DEFAULT_PLAN_TYPE,
-    branchLimitText,
     findPlan,
     planPrice,
     plansOfType,
@@ -990,19 +992,6 @@ const loadingTotal = ref(false);
 const total = ref(0);
 const amountDue = computed(() => withVat(total.value).total);
 const purchaseWithTrial = ref(false);
-
-const branchAddress = computed(
-    () =>
-        form.branch.location.full_address ||
-        [
-            form.branch.location.street,
-            form.branch.location.city,
-            form.branch.location.province,
-            form.branch.location.country,
-        ]
-            .filter(Boolean)
-            .join(", "),
-);
 
 const onOff = (value?: boolean | null) => (value ? "On" : "Off");
 

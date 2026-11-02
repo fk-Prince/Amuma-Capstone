@@ -1552,18 +1552,21 @@ class SubscriptionService
 
         $payload['resubmit_branch_uuid'] = $branch->uuid;
 
+        if (empty($payload['subscription_uuid'])) {
+            throw new Exception(
+                __('A resubmitted branch can only be added as an additional branch on your subscription.'),
+                422
+            );
+        }
+
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
 
-        if (!empty($payload['subscription_uuid'])) {
-            $detail = $this->createAdditionalBranch($user, $payload);
-            $detail['branch'] = [
-                ...$detail['branch'],
-                'tin' => $payload['branch_tin'] ?? null,
-                'resubmit_uuid' => $branch->uuid,
-            ];
-        } else {
-            $detail = $this->createSubscription($user, $payload);
-        }
+        $detail = $this->createAdditionalBranch($user, $payload);
+        $detail['branch'] = [
+            ...$detail['branch'],
+            'tin' => $payload['branch_tin'] ?? null,
+            'resubmit_uuid' => $branch->uuid,
+        ];
 
         return $paymentMethod->subscriptionInvoice($payload, $detail);
     }

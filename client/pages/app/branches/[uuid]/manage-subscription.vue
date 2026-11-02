@@ -366,17 +366,9 @@
 
         <ConfirmDialog
             :open="!!purchasePrompt"
-            :title="
-                purchaseIsAdditional
-                    ? 'Pay for an additional branch?'
-                    : 'New subscription required'
-            "
-            :message="`${purchasePrompt?.purchaseReason ?? ''} To resubmit ${purchasePrompt?.branch.name ?? 'this branch'}, you need to ${purchaseIsAdditional ? 'pay for an additional branch' : 'buy a new subscription'}.`"
-            :description="
-                purchaseIsAdditional
-                    ? 'First update the branch details, then complete the payment. Once paid, the branch is sent back for review.'
-                    : 'First update the branch details, then choose a plan and pay. Once paid, the branch is sent back for review.'
-            "
+            title="Pay for an additional branch?"
+            :message="`${purchasePrompt?.purchaseReason ?? ''} To resubmit ${purchasePrompt?.branch.name ?? 'this branch'}, you need to pay for an additional branch.`"
+            description="First update the branch details, then complete the payment. Once paid, the branch is sent back for review."
             confirm-label="Continue"
             @confirm="confirmPurchasePrompt"
             @cancel="purchasePrompt = null"
@@ -421,7 +413,7 @@ definePageMeta({
 useHead({ title: "Manage Subscription" });
 
 const route = useRoute();
-const { error } = useToast();
+const { error, warning } = useToast();
 const { canCreate, canUpdate } = usePermissions();
 const { isSandbox } = useSandbox();
 const { openSupport } = useSupportCenter();
@@ -470,6 +462,18 @@ function onResubmitBranch(branch: Branch) {
     };
 
     if (target.purchaseReason) {
+        if (!purchaseIsAdditional.value) {
+            warning(
+                "Can't resubmit this branch yet",
+                isTesting.value
+                    ? "There's no free slot left on your plan. You can resubmit it once your free trial ends and your plan is paid."
+                    : branch.subscription_status === "expired"
+                      ? "Your subscription has expired. Renew it first, then resubmit this branch as an additional branch."
+                      : "Your subscription ends this month, so it can't take an additional branch. Renew it first, then resubmit this branch.",
+            );
+            return;
+        }
+
         purchasePrompt.value = target;
         return;
     }
