@@ -150,8 +150,21 @@ class AdlShiftQrTest extends TestCase
         $this->travelTo(now()->startOfDay()->setTime(14, 0));
 
         $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('You can only clock in during your shift (AM Shift, 8:00 AM – 12:00 PM), or up to 1 hour before it starts.');
 
         $this->scan($this->familyQr('in'), $this->firstShift);
+    }
+
+    public function test_employee_cannot_generate_the_time_in_qr_for_adl(): void
+    {
+        $this->expectExceptionCode(403);
+        $this->expectExceptionMessage('Only the family can generate the time-in and time-out QR for this visit.');
+
+        $this->service->generateQr([
+            'type' => 'in',
+            'schedule_services_id' => $this->scheduleServicesId,
+            'employee_id' => $this->firstShift,
+        ]);
     }
 
     public function test_first_scan_clocks_in_and_starts_the_schedule(): void
@@ -180,6 +193,26 @@ class AdlShiftQrTest extends TestCase
         $this->assertSame($this->secondShift, (int) $this->onDuty());
         $this->assertSame(1, AdlAttendance::where('type_out', AdlAttendance::TYPE_HANDOVER)->count());
         $this->assertSame(1, AdlAttendance::where('type_in', AdlAttendance::TYPE_HANDOVER)->count());
+    }
+
+    public function test_missed_schedule_has_no_qr(): void
+    {
+        Schedule::where('schedule_id', $this->scheduleId)->update(['status' => Schedule::STATUS_MISSED]);
+
+        $this->expectExceptionCode(422);
+        $this->expectExceptionMessage('QR codes are not available for this ADL schedule.');
+
+        $this->familyQr('in');
+    }
+
+    public function test_the_caregiver_on_duty_cannot_scan_their_own_handover(): void
+    {
+        $this->scan($this->familyQr('in'), $this->firstShift);
+
+        $this->expectExceptionCode(409);
+        $this->expectExceptionMessage("You're already on duty. The next shift needs to scan this code.");
+
+        $this->scan($this->handoverQr($this->firstShift), $this->firstShift);
     }
 
     public function test_time_out_completes_the_schedule_when_under_a_minute_remains(): void

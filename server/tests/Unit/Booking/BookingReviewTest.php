@@ -4,6 +4,7 @@ namespace Tests\Unit\Booking;
 
 use App\Enums\PermissionAction;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\InvoiceController;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\Patient;
@@ -128,6 +129,11 @@ class BookingReviewTest extends TestCase
         ], $user));
     }
 
+    private function counter(array $data)
+    {
+        return $this->app->make(InvoiceController::class)->action($this->makeRequest(['type' => 'booking_pay'] + $data));
+    }
+
     public function test_booking_has_been_approved_successfully(): void
     {
         $booking = $this->paidHomecare();
@@ -198,6 +204,53 @@ class BookingReviewTest extends TestCase
 
         $this->assertFailsWith('Insufficient permissions', fn() => $this->approve($booking, [], $viewer), 403);
         $this->assertSame(Booking::STATUS_PENDING, $booking->fresh()->status);
+    }
+
+    private function walkIn(array $overrides = [])
+    {
+        return $this->controller->action($this->makeRequest(array_merge([
+            'action' => 'staff_homecare',
+            'patient' => $this->patientData(),
+            'guardian' => ['email' => 'mark.reyes@gmail.com', 'first_name' => 'Mark', 'last_name' => 'Reyes'] + $this->guardianData(),
+            'type' => Booking::TYPE_ADL,
+            'date' => $this->visitDate(),
+            'prefered_time' => '09:00',
+            'time_span' => 4,
+            'address' => 'Matina, Davao City',
+            'price' => 1200,
+            'rate' => 300,
+        ], $overrides)));
+    }
+
+    public function test_the_guardian_email_field_is_required(): void
+    {
+        $this->giveHomecareSubscription();
+
+        $this->assertFailsWith('The guardian.email field is required.', fn() => $this->walkIn([
+            'guardian' => ['email' => null] + $this->guardianData(),
+        ]));
+    }
+
+    public function test_cash_1_centavo_short_is_invalid(): void
+    {
+        $this->giveHomecareSubscription();
+        $this->walkIn();
+        $booking = Booking::firstOrFail();
+
+        $this->assertFailsWith(
+            'The cash received must cover the amount due.',
+            fn() => $this->counter(['reference_id' => $booking->reference_id, 'cash' => 599.99]),
+            422
+        );
+    }
+
+    public function test_the_guardian_email_field_must_be_a_valid_email_address(): void
+    {
+        $this->giveHomecareSubscription();
+
+        $this->assertFailsWith('The guardian.email field must be a valid email address.', fn() => $this->walkIn([
+            'guardian' => ['email' => 'mark.reyes'] + $this->guardianData(),
+        ]));
     }
 
     public function test_booking_has_expired(): void

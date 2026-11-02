@@ -666,6 +666,14 @@
                                             </span>
                                         </div>
 
+                                        <LastScheduleNote
+                                            v-if="
+                                                employee.last_schedule &&
+                                                isAvailable(employee)
+                                            "
+                                            :schedule="employee.last_schedule"
+                                        />
+
                                         <p
                                             v-if="employee.conflict_schedules?.length"
                                             class="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-300"
@@ -911,6 +919,7 @@
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { hasScheduleAssignees } from "~/utils/schedule-status";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
+import LastScheduleNote from "~/components/sections/app/Patient/LastScheduleNote.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
@@ -1350,6 +1359,17 @@ function isPickDisabled(employee: Employee) {
         !isActiveServiceAdl.value &&
         !isAssistant(employee, activeService.value) &&
         !employee.is_assigned
+    );
+}
+
+function isAvailable(employee: Employee) {
+    return (
+        !employee.is_busy &&
+        !hasRoleMismatch(employee) &&
+        !isAssignmentTypeMismatch(employee) &&
+        (employee.is_assigned ||
+            isActiveServiceAdl.value ||
+            isAssistant(employee, activeService.value))
     );
 }
 

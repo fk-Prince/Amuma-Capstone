@@ -60,24 +60,7 @@ class EmployeeScheduleResource extends JsonResource
                             return null;
                         }
 
-                        $isMedical = $scheduleService->service_id !== null;
-
-                        if ($isMedical) {
-                            $category = 'medical';
-                            $durationMinutes = null;
-
-                            $maxDuration = $scheduleService->service?->maximum_duration;
-
-                            if ($maxDuration) {
-                                [$hours, $minutes, $seconds] = array_pad(explode(':', $maxDuration), 3, 0);
-                                $durationMinutes = ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
-                            }
-                        } else {
-                            $category = 'adl';
-                            $durationMinutes = $scheduleService->duration !== null
-                                ? ((float) $scheduleService->duration) * 60
-                                : null;
-                        }
+                        [$category, $durationMinutes] = $this->categoryAndDuration($scheduleService);
 
                         $estimatedEnd = null;
                         $remainingMinutes = $durationMinutes;
@@ -106,6 +89,48 @@ class EmployeeScheduleResource extends JsonResource
                     ->filter()
                     ->values();
             }),
+            'last_schedule' => $this->whenLoaded('lastAssignment', function ($assignment) {
+                $scheduleService = $assignment->scheduleService;
+                $schedule = $scheduleService?->schedule;
+
+                if (!$schedule) {
+                    return null;
+                }
+
+                [$category, $durationMinutes] = $this->categoryAndDuration($scheduleService);
+
+                return [
+                    'schedule_code' => $schedule->schedule_code,
+                    'scheduled_at' => $schedule->scheduled_at,
+                    'status' => $schedule->status,
+                    'category' => $category,
+                    'service_name' => $scheduleService->service?->service_name,
+                    'duration_minutes' => $durationMinutes,
+                    'ends_at' => $durationMinutes !== null
+                        ? Carbon::parse($schedule->scheduled_at)->addMinutes($durationMinutes)->toISOString()
+                        : null,
+                ];
+            }),
         ];
+    }
+
+    private function categoryAndDuration($scheduleService): array
+    {
+        if ($scheduleService->service_id === null) {
+            return [
+                'adl',
+                $scheduleService->duration !== null ? ((float) $scheduleService->duration) * 60 : null,
+            ];
+        }
+
+        $maxDuration = $scheduleService->service?->maximum_duration;
+
+        if (!$maxDuration) {
+            return ['medical', null];
+        }
+
+        [$hours, $minutes, $seconds] = array_pad(explode(':', $maxDuration), 3, 0);
+
+        return ['medical', ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60)];
     }
 }

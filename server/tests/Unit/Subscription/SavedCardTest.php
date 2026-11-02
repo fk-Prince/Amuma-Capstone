@@ -75,4 +75,15 @@ class SavedCardTest extends TestCase
             $this->ownerAlert()
         );
     }
+
+    public function test_save_a_card_first_to_turn_on_auto_renew(): void
+    {
+        $this->subscribed('A');
+
+        $this->assertFailsWith(
+            'Save a card first to turn on auto-renew.',
+            fn() => $this->controller->setAutoRenew($this->request(['auto_renew' => true])),
+            422
+        );
+    }
 }

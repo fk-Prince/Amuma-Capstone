@@ -547,6 +547,14 @@
                                                     {{ employee.email }}
                                                 </span>
                                             </div>
+
+                                            <LastScheduleNote
+                                                v-if="
+                                                    employee.last_schedule &&
+                                                    isAvailable(employee)
+                                                "
+                                                :schedule="employee.last_schedule"
+                                            />
                                         </div>
 
                                         <div
@@ -770,6 +778,7 @@
 <script setup lang="ts">
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
+import LastScheduleNote from "~/components/sections/app/Patient/LastScheduleNote.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
@@ -929,6 +938,14 @@ function assignmentTypeLabel(employee: Employee): string {
     return employee.assignment_type === "facility"
         ? "Facility only"
         : "Homecare only";
+}
+
+function isAvailable(employee: Employee): boolean {
+    return (
+        !employee.is_busy &&
+        isCaregiver(employee) &&
+        !isAssignmentTypeMismatch(employee)
+    );
 }
 
 /** The caregivers currently assigned to this ADL booking, each with a note. */

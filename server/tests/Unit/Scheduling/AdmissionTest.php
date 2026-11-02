@@ -152,6 +152,15 @@ class AdmissionTest extends TestCase
         );
     }
 
+    public function test_please_select_accommodation_type_room_and_bed(): void
+    {
+        $this->assertFailsWith(
+            'Please select accommodation type, room and bed.',
+            fn() => $this->newAdmission(['bed_id' => '']),
+            400
+        );
+    }
+
     public function test_patient_already_has_an_active_admission(): void
     {
         $this->admission(PatientAdmission::STATUS_ADMITTED);

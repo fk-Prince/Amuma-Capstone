@@ -4,6 +4,7 @@ namespace Tests\Unit\Billing;
 
 use App\Http\Controllers\InvoiceController;
 use App\Models\Invoice;
+use App\Models\InvoiceAdjustment;
 use App\Models\Payment;
 use App\Models\Transaction;
 use Tests\Concerns\UsesTempDatabase;
@@ -70,6 +71,18 @@ class InvoiceControllerTest extends TestCase
 
         $this->assertFailsWith('Enter a cash amount greater than 0.', fn() => $this->pay(['cash' => 0]), 422);
         $this->assertSame(0, Payment::count());
+    }
+
+    public function test_a_reason_is_required_to_adjust_an_invoice(): void
+    {
+        $invoice = $this->invoice(1000);
+
+        $this->assertFailsWith('A reason is required to adjust an invoice.', fn() => $this->act('adjust', [
+            'invoice_code' => $invoice->invoice_code,
+            'amount' => -200,
+            'reason' => '  ',
+        ]), 422);
+        $this->assertSame(0, InvoiceAdjustment::count());
     }
 
     public function test_a_paid_invoice_can_no_longer_be_voided_issue_a_refund_or_credit_instead(): void

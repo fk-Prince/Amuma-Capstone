@@ -9,6 +9,7 @@ use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Service\SubscriptionService;
+use Illuminate\Support\Facades\Http;
 use Tests\Concerns\UsesTempDatabase;
 use Tests\TestCase;
 
@@ -79,6 +80,12 @@ class SubscribeTest extends TestCase
         $this->assertSame(0, Subscription::count());
     }
 
+    public function test_the_branch_name_field_is_required(): void
+    {
+        $this->validateDetails(['branch_name' => ''])
+            ->assertJsonValidationErrors(['branch_name' => 'The branch name field is required.']);
+    }
+
     public function test_the_branch_email_has_already_been_taken(): void
     {
         $this->subscribe();
@@ -94,5 +101,19 @@ class SubscribeTest extends TestCase
                 'branch_settings.tin' => 'The TIN must be a valid TIN, e.g. 004-512-873-000 or 004-512-873-00000.',
             ]);
         }
+    }
+
+    public function test_invalid_plan_type(): void
+    {
+        $this->assertFailsWith('Invalid plan type.', fn() => $this->subscribe(['plan_type' => 'monthly']), 422);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_plan_not_found(): void
+    {
+        $this->assertFailsWith('Plan not found.', fn() => $this->subscribe(['plan_code' => 'Z']), 404);
+
+        Http::assertNothingSent();
     }
 }

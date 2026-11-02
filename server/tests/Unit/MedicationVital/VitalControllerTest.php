@@ -125,4 +125,12 @@ class VitalControllerTest extends TestCase
         $this->assertSame('08:30', $vital->recorded_time);
         $this->assertSame('Resting', $vital->notes);
     }
+
+    public function test_vital_record_not_found(): void
+    {
+        $this->assertFailsWith('Vital record not found', fn() => $this->controller->update(
+            $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['heartRate' => 90]]),
+            '999'
+        ));
+    }
 }

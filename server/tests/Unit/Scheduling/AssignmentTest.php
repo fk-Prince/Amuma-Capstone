@@ -104,4 +104,30 @@ class AssignmentTest extends TestCase
 
         $this->assertSame(0, ScheduleAssigned::count());
     }
+
+    public function test_the_end_time_must_be_later_than_the_start_time(): void
+    {
+        $caregiver = $this->employee('caregiver');
+        $schedule = $this->schedule();
+        $service = $this->adlService($schedule);
+
+        $this->assertFailsWith(
+            'The end time must be later than the start time.',
+            fn() => $this->assignTo($schedule, [$this->row($service, $caregiver, ['start_time' => '14:00', 'end_time' => '10:00'])]),
+            422
+        );
+    }
+
+    public function test_pick_both_a_start_time_and_an_end_time(): void
+    {
+        $caregiver = $this->employee('caregiver');
+        $schedule = $this->schedule();
+        $service = $this->adlService($schedule);
+
+        $this->assertFailsWith(
+            'Pick both a start time and an end time.',
+            fn() => $this->assignTo($schedule, [$this->row($service, $caregiver, ['start_time' => '09:00'])]),
+            422
+        );
+    }
 }

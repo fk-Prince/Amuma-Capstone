@@ -73,6 +73,19 @@ class FacilityBookingTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_this_booking_does_not_take_a_payment(): void
+    {
+        $this->assertFailsWith(
+            'This booking does not take a payment.',
+            fn() => $this->controller->store($this->makeRequest(
+                ['action' => 'complete-admission', 'payment_method' => 'CARD']
+                    + $this->bookingRequest(Booking::CATEGORY_FACILITY, ['facility' => ['type' => Booking::TYPE_PREADMISSION]]),
+                $this->relative
+            )),
+            422
+        );
+    }
+
     public function test_diagnosis_must_be_from_the_past_3_months(): void
     {
         $this->assertFailsWith('Diagnosis must be from the past 3 months.', fn() => $this->preAdmission([
@@ -80,6 +93,13 @@ class FacilityBookingTest extends TestCase
         ]));
 
         $this->assertSame(0, Booking::count());
+    }
+
+    public function test_diagnosis_date_cannot_be_in_the_future(): void
+    {
+        $this->assertFailsWith('Diagnosis date cannot be in the future.', fn() => $this->preAdmission([
+            'diagnoses' => [['diagnosis' => 'Hypertension', 'diagnosis_date' => now()->addDay()->toDateString()]],
+        ]));
     }
 
     public function test_primary_diagnosis_is_required(): void

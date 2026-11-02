@@ -171,6 +171,14 @@ class MedicationControllerTest extends TestCase
         $this->assertSame(['08:00', '20:00'], $medication->times);
     }
 
+    public function test_medication_record_not_found(): void
+    {
+        $this->assertFailsWith('Medication record not found', fn() => $this->controller->update(
+            $this->request('PUT', ['patient_uuid' => $this->patient->uuid, 'payload' => ['strength' => '850mg']]),
+            '999'
+        ));
+    }
+
     public function test_dose_status_is_taken_and_marked_by_the_nurse(): void
     {
         $medication = $this->savedMedication();
@@ -208,6 +216,19 @@ class MedicationControllerTest extends TestCase
         ])));
 
         $this->assertSame('removed', $response->getData(true)['status']);
+        $this->assertSame(0, MedicationSchedule::count());
+    }
+
+    public function test_dosage_fails_for_another_patients_medication(): void
+    {
+        $medication = $this->savedMedication();
+
+        $payload = $this->dose($medication, 'taken');
+        $payload['patient_uuid'] = (string) Str::uuid();
+
+        $this->assertFailsWith('Medication record not found', fn() => $this->controller->dosage(
+            $this->request('POST', $payload)
+        ));
         $this->assertSame(0, MedicationSchedule::count());
     }
 }

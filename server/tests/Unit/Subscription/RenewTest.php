@@ -66,4 +66,11 @@ class RenewTest extends TestCase
         $this->assertSame($this->plan('C')->plan_id, $subscription->fresh()->plan_id);
         $this->assertEquals(4480, SubscriptionPayment::where('type', SubscriptionPayment::TYPE_UPGRADE)->firstOrFail()->price);
     }
+
+    public function test_this_plan_can_only_be_upgraded_to_hybrid(): void
+    {
+        $this->subscribed('A');
+
+        $this->assertFailsWith('This plan can only be upgraded to Hybrid.', fn() => $this->renew(['plan_code' => 'B']), 422);
+    }
 }

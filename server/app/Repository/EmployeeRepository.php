@@ -8,6 +8,7 @@ use App\Enums\RoleEnum;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Schedule;
+use App\Models\ScheduleAssigned;
 use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
@@ -202,7 +203,7 @@ class EmployeeRepository
                 });
         };
 
-        return Employee::with([
+        $employees = Employee::with([
             'locations',
             'employeeBranch' => function ($query) use ($branchId, $allowedRoles, $activeScheduleAssignments) {
                 $query->where('branch_id', $branchId)
@@ -236,6 +237,43 @@ class EmployeeRepository
                     });
             }])
             ->get();
+
+        $lastAssignments = $this->lastAssignmentsBefore(
+            $employees->pluck('employee_id')->all(),
+            $branchId,
+            $scheduleId,
+            $targetStart,
+        );
+
+        return $employees->each(fn($employee) => $employee->setRelation(
+            'lastAssignment',
+            $lastAssignments->get($employee->employee_id),
+        ));
+    }
+
+    private function lastAssignmentsBefore(array $employeeIds, string $branchId, string $scheduleId, Carbon $before)
+    {
+        if (!$employeeIds) {
+            return collect();
+        }
+
+        return ScheduleAssigned::query()
+            ->select('schedule_assigned.*')
+            ->distinct(['schedule_assigned.employee_id'])
+            ->join('schedule_services', 'schedule_services.schedule_services_id', '=', 'schedule_assigned.schedule_services_id')
+            ->join('schedules', 'schedules.schedule_id', '=', 'schedule_services.schedule_id')
+            ->join('patients', 'patients.patient_id', '=', 'schedules.patient_id')
+            ->whereIn('schedule_assigned.employee_id', $employeeIds)
+            ->where('schedule_assigned.is_active', true)
+            ->where('patients.branch_id', $branchId)
+            ->where('schedules.schedule_id', '!=', $scheduleId)
+            ->whereNotIn('schedules.status', [Schedule::STATUS_CANCELLED, Schedule::STATUS_MISSED])
+            ->where('schedules.scheduled_at', '<=', $before)
+            ->orderBy('schedule_assigned.employee_id')
+            ->orderByDesc('schedules.scheduled_at')
+            ->with(['scheduleService.service', 'scheduleService.schedule'])
+            ->get()
+            ->keyBy('employee_id');
     }
 
 

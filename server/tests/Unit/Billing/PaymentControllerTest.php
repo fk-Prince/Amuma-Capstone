@@ -56,6 +56,21 @@ class PaymentControllerTest extends TestCase
         ]);
     }
 
+    public function test_only_100_in_credit_is_available_on_this_account(): void
+    {
+        $this->creditOnAccount(100);
+        $this->invoice(500);
+
+        $this->assertFailsWith('Only 100.00 in credit is available on this account.', fn() => $this->pay(['credit_amount' => 300]), 422);
+    }
+
+    public function test_store_requires_an_amount(): void
+    {
+        $this->invoice(500);
+
+        $this->assertFailsWith('Enter an amount greater than 0.', fn() => $this->pay(['amount' => 0]), 422);
+    }
+
     public function test_payment_recorded_successfully(): void
     {
         $this->gatewayAccepts();

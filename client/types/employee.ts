@@ -50,6 +50,17 @@ export interface Employee {
         remaining_minutes: number | null;
         estimated_end: string | null;
     }[];
+    last_schedule?: LastSchedule | null;
+}
+
+export interface LastSchedule {
+    schedule_code: string;
+    scheduled_at: string;
+    status: string;
+    category: "medical" | "adl";
+    service_name: string | null;
+    duration_minutes: number | null;
+    ends_at: string | null;
 }
 
 export interface EmployeeService {

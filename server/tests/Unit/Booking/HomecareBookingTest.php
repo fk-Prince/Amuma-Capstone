@@ -85,6 +85,18 @@ class HomecareBookingTest extends TestCase
         $this->assertSame(0, Booking::count());
     }
 
+    public function test_the_booking_amount_could_not_be_determined(): void
+    {
+        $this->assertFailsWith(
+            'The booking amount could not be determined.',
+            fn() => $this->pay($this->medicalVisit(['services' => []])),
+            422
+        );
+
+        $this->assertSame(0, Booking::count());
+        Http::assertNothingSent();
+    }
+
     public function test_homecare_must_be_booked_at_least_1_hour_ahead(): void
     {
         $soon = now()->addMinutes(30);
