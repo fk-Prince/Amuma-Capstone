@@ -26,22 +26,22 @@
                     class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                    {{ agencyRejected ? "Application rejected" : "Request rejected" }}
+                    Review complete · Not approved
                 </span>
 
                 <h2 class="text-xl font-bold text-secondary dark:text-white">
                     {{
                         agencyRejected
-                            ? "Your Agency Application Was Rejected"
-                            : "This Branch Request Was Rejected"
+                            ? "Your Application Needs Changes"
+                            : "This Branch Needs Changes"
                     }}
                 </h2>
 
                 <p class="mt-2 text-sm leading-6 text-muted-DEFAULT">
                     {{
                         agencyRejected
-                            ? "Your agency and this branch could not be approved onto the platform."
-                            : "This branch could not be approved onto the platform."
+                            ? "We reviewed your agency and branch details and couldn't approve them yet. Fix what's listed below, then reapply."
+                            : "We reviewed this branch's details and couldn't approve it yet. Fix what's listed below, then resubmit it."
                     }}
                 </p>
 
@@ -67,7 +67,7 @@
                             v-if="agencyRejected"
                             class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            Rejected
+                            Not approved
                         </span>
                     </div>
                     <div
@@ -87,7 +87,27 @@
                         <span
                             class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
                         >
-                            Rejected
+                            Not approved
+                        </span>
+                    </div>
+                    <div
+                        v-if="agencyRejected && rejectedPlanLabel"
+                        class="flex items-center justify-between gap-3 px-4 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p
+                                class="text-xs font-medium uppercase tracking-wide text-muted-DEFAULT"
+                            >
+                                Plan
+                            </p>
+                            <p class="mt-0.5 text-sm font-semibold text-secondary dark:text-white">
+                                {{ rejectedPlanLabel }}
+                            </p>
+                        </div>
+                        <span
+                            class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                        >
+                            Kept
                         </span>
                     </div>
                 </div>
@@ -98,10 +118,13 @@
                     <p
                         class="text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-300"
                     >
-                        Reason
+                        What needs fixing
                     </p>
-                    <p class="mt-1 text-sm text-rose-800 dark:text-rose-200">
-                        {{ rejectionReason || "No reason was provided." }}
+                    <p class="mt-1 text-sm leading-6 text-rose-800 dark:text-rose-200">
+                        {{
+                            rejectionReason ||
+                            "No reason was given. Contact Customer Support to find out what to change."
+                        }}
                     </p>
                 </div>
 
@@ -117,11 +140,19 @@
                         <RotateCw class="h-4 w-4" />
                         Fix details & reapply
                     </ActionButton>
+
+                    <p class="mt-3 text-xs leading-5 text-muted-DEFAULT">
+                        We'll review it again within 1–2 business days and
+                        email you the result.
+                        <template v-if="rejectedPlanIsTrial">
+                            Your free trial starts only once you're approved.
+                        </template>
+                    </p>
                 </template>
 
                 <p v-else class="mt-4 text-xs leading-5 text-muted-DEFAULT">
-                    You can resubmit this branch from Manage Subscription in any of
-                    your verified branches.
+                    To resubmit this branch, open Manage Subscription from any
+                    of your approved branches.
                 </p>
             </template>
 
@@ -251,6 +282,7 @@
             :rejection-reason="rejectionReason"
             :requires-purchase="false"
             :agency="branch.agency"
+            show-plan
             @close="showReapply = false"
             @resubmitted="onReapplied"
         />
@@ -322,6 +354,7 @@ const onReapplied = (result) => {
             rejection_reason: null,
             resubmit_requires_payment: false,
             resubmit_subscription_status: null,
+            resubmit_plan: null,
             location: {
                 ...updated.location,
                 address: updated.location?.full_address,
@@ -350,4 +383,16 @@ const isTrial = computed(
         Boolean(branch.value?.subscription_awaiting_payment),
 );
 const rejectionReason = computed(() => branch.value?.rejection_reason ?? null);
+
+const rejectedPlanIsTrial = computed(
+    () => branch.value?.subscription_mode !== "live",
+);
+
+const rejectedPlanLabel = computed(() => {
+    const name = branch.value?.resubmit_plan?.name ?? planLabel.value;
+
+    if (!name) return null;
+
+    return rejectedPlanIsTrial.value ? `${name} · 2-week free trial` : name;
+});
 </script>

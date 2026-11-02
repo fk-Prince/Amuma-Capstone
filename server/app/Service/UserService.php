@@ -17,6 +17,7 @@ use App\Repository\SubscriptionRepository;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
+use App\Utils\Vat;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +139,9 @@ class UserService
                     'resubmit_subscription_status' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
                         ? $branch->subscriptionLink->subscription?->status
                         : null,
+                    'resubmit_plan' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED
+                        ? $this->resubmitPlanSummary($branch->subscriptionLink->subscription)
+                        : null,
                     'description' => $branch?->description,
                     'contact_number' => $branch?->contact_number,
                     'role_name' => $employeeBranch?->role_name,
@@ -204,6 +208,27 @@ class UserService
                 'agencies' => $agencies,
             ],
         ], 200);
+    }
+
+    private function resubmitPlanSummary(?Subscription $subscription): ?array
+    {
+        $plan = $subscription?->plans;
+
+        if (!$plan) {
+            return null;
+        }
+
+        return [
+            'name' => $plan->name,
+            'type' => $plan->type,
+            'amount' => Vat::exclusive($subscription->renewalAmount($plan))['total_amount'],
+            'trial_weeks' => Subscription::TRIAL_WEEKS,
+            'card' => $subscription->card_token_id ? [
+                'brand' => $subscription->card_brand,
+                'last4' => $subscription->cardLast4(),
+                'auto_renew' => (bool) $subscription->auto_renew,
+            ] : null,
+        ];
     }
 
     private function registrantSummary(?User $registrant): ?array

@@ -32,7 +32,20 @@ export interface Branch {
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;
     resubmit_subscription_status?: "active" | "expired" | "pending" | "rejected" | null;
+    resubmit_plan?: ResubmitPlan | null;
     document?: File | string;
+}
+
+export interface ResubmitPlan {
+    name: string;
+    type: "sme" | "enterprise";
+    amount: number;
+    trial_weeks: number;
+    card: {
+        brand: string | null;
+        last4: string | null;
+        auto_renew: boolean;
+    } | null;
 }
 
 export interface BranchImage {

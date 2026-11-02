@@ -130,43 +130,20 @@
 
                         <div
                             v-if="step === 'review'"
-                            class="mx-auto w-full max-w-2xl space-y-4"
+                            :class="
+                                resubmitPlan
+                                    ? 'grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]'
+                                    : 'mx-auto w-full max-w-3xl'
+                            "
                         >
-                            <section
-                                v-for="group in reviewGroups"
-                                :key="group.title"
-                                class="rounded-xl border border-slate-200 dark:border-white/10"
-                            >
-                                <h3
-                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
-                                >
-                                    {{ group.title }}
-                                </h3>
-
-                                <dl
-                                    class="divide-y divide-slate-100 dark:divide-white/10"
-                                >
-                                    <div
-                                        v-for="row in group.rows"
-                                        :key="row.label"
-                                        class="flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:gap-4"
-                                    >
-                                        <dt
-                                            class="w-40 shrink-0 text-xs text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{ row.label }}
-                                        </dt>
-                                        <dd
-                                            class="min-w-0 break-words text-sm font-medium text-secondary dark:text-white"
-                                        >
-                                            {{ row.value }}
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </section>
+                        <div class="min-w-0 space-y-4">
+                            <ResubmitReview
+                                :agency="agencyForm"
+                                :branch="form"
+                            />
 
                             <div
-                                v-if="isTrial"
+                                v-if="isTrial && !resubmitPlan"
                                 class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                             >
                                 <p class="font-semibold">
@@ -178,6 +155,149 @@
                                     your branch. Nothing is charged now.
                                 </p>
                             </div>
+                        </div>
+
+                        <aside v-if="resubmitPlan" class="space-y-4">
+                            <section
+                                class="rounded-xl border border-slate-200 dark:border-white/10"
+                            >
+                                <h3
+                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                >
+                                    Plan
+                                </h3>
+
+                                <div class="space-y-3 px-4 py-3.5">
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
+                                        <div class="min-w-0">
+                                            <p
+                                                class="text-base font-semibold text-secondary dark:text-white"
+                                            >
+                                                {{ resubmitPlan.name }}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{ planTypeLabel(resubmitPlan.type) }}
+                                                ·
+                                                {{ branchLimitText(resubmitPlan.type) }}
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            v-if="isTrial"
+                                            class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                        >
+                                            {{ resubmitPlan.trial_weeks }}-week
+                                            free trial
+                                        </span>
+                                    </div>
+
+                                    <div
+                                        class="flex items-baseline justify-between border-t border-slate-100 pt-3 dark:border-white/10"
+                                    >
+                                        <span
+                                            class="text-xs text-slate-500 dark:text-gray-400"
+                                        >
+                                            {{
+                                                isTrial
+                                                    ? "After the trial"
+                                                    : "Yearly price"
+                                            }}
+                                        </span>
+                                        <span
+                                            class="text-base font-bold text-primary"
+                                        >
+                                            ₱{{ formatAmount(resubmitPlan.amount) }}
+                                            <span
+                                                class="text-xs font-medium text-slate-400 dark:text-gray-500"
+                                            >
+                                                / year
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        v-if="isTrial"
+                                        class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
+                                    >
+                                        Your trial starts once an admin
+                                        approves your branch. Nothing is
+                                        charged now.
+                                    </p>
+                                </div>
+                            </section>
+
+                            <section
+                                class="rounded-xl border border-slate-200 dark:border-white/10"
+                            >
+                                <h3
+                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                >
+                                    Saved card
+                                </h3>
+
+                                <div
+                                    v-if="resubmitPlan.card"
+                                    class="flex items-center gap-3 px-4 py-3.5"
+                                >
+                                    <div
+                                        class="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200 dark:bg-secondary dark:ring-white/10"
+                                    >
+                                        <img
+                                            v-if="resubmitPlan.card.brand === 'VISA'"
+                                            :src="visaIcon"
+                                            alt="Visa"
+                                            class="h-3.5 w-auto object-contain"
+                                        />
+                                        <CreditCard
+                                            v-else
+                                            class="h-4 w-4 text-slate-500 dark:text-gray-400"
+                                        />
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <p
+                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        >
+                                            {{ cardBrandLabel(resubmitPlan.card.brand) }}
+                                            ••••
+                                            {{ resubmitPlan.card.last4 }}
+                                        </p>
+                                        <p
+                                            class="text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                        >
+                                            <template v-if="isTrial">
+                                                Charged ₱{{
+                                                    formatAmount(resubmitPlan.amount)
+                                                }}
+                                                when the trial ends<template
+                                                    v-if="resubmitPlan.card.auto_renew"
+                                                    >, then yearly</template
+                                                >.
+                                            </template>
+                                            <template
+                                                v-else-if="resubmitPlan.card.auto_renew"
+                                            >
+                                                Auto-renew is on.
+                                            </template>
+                                            <template v-else>
+                                                Auto-renew is off.
+                                            </template>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p
+                                    v-else
+                                    class="px-4 py-3.5 text-xs text-slate-500 dark:text-gray-400"
+                                >
+                                    No card saved.
+                                </p>
+                            </section>
+                        </aside>
                         </div>
 
                         <div
@@ -540,6 +660,7 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import VatBreakdown from "~/components/billing/VatBreakdown.vue";
 import { VAT_RATE, withVat } from "~/utils/vat";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import ResubmitReview from "~/components/sections/app/branches/ResubmitReview.vue";
 import { planService } from "~/api/plan/PlanService";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { cardPayment, gcashPayment } from "~/composables/usePayment";
@@ -547,7 +668,9 @@ import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
 import { formatAmount } from "~/utils/currency";
 import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
+import visaIcon from "@/assets/icons/visa.png";
 import {
+    branchLimitText,
     DEFAULT_PLAN_TYPE,
     planPrice,
     plansOfType,
@@ -575,6 +698,7 @@ const props = defineProps<{
     requiresPurchase?: boolean;
     purchaseReason?: string | null;
     agency?: Agency | null;
+    showPlan?: boolean;
     capacity?: {
         additional_options?: AdditionalOption[];
     } | null;
@@ -973,60 +1097,23 @@ const send = async () => {
 
 const planName = computed(() => props.branch.plan?.[0]?.name ?? null);
 
+const resubmitPlan = computed(() =>
+    props.showPlan ? (props.branch.resubmit_plan ?? null) : null,
+);
+
+const CARD_BRANDS: Record<string, string> = {
+    VISA: "Visa",
+    MASTERCARD: "Mastercard",
+    AMEX: "Amex",
+    JCB: "JCB",
+};
+
+const cardBrandLabel = (brand?: string | null) =>
+    CARD_BRANDS[brand ?? ""] ?? "Card";
+
 const isTrial = computed(
     () => !!props.agency && props.branch.subscription_mode !== "live",
 );
-
-const addressOf = (location?: {
-    full_address?: string | null;
-    street?: string | null;
-    city?: string | null;
-    province?: string | null;
-}) =>
-    location?.full_address ||
-    [location?.street, location?.city, location?.province]
-        .filter(Boolean)
-        .join(", ") ||
-    "—";
-
-const reviewGroups = computed(() => {
-    const groups: { title: string; rows: { label: string; value: string }[] }[] =
-        [];
-    const agency = agencyForm.value;
-    const branch = form.value;
-
-    if (agency) {
-        groups.push({
-            title: "Agency",
-            rows: [
-                { label: "Name", value: agency.name || "—" },
-                { label: "Email", value: agency.email || "—" },
-                { label: "Address", value: addressOf(agency.location) },
-                ...(agency.id_front instanceof File ||
-                agency.id_back instanceof File ||
-                agency.document instanceof File
-                    ? [{ label: "Documents", value: "New files attached" }]
-                    : []),
-            ],
-        });
-    }
-
-    groups.push({
-        title: "Branch",
-        rows: [
-            { label: "Name", value: branch.name || "—" },
-            { label: "Email", value: branch.email || "—" },
-            { label: "Contact number", value: branch.contact_number || "—" },
-            { label: "TIN", value: branch.tin || "—" },
-            { label: "Address", value: addressOf(branch.location) },
-            ...(branch.document instanceof File
-                ? [{ label: "Document", value: "New file attached" }]
-                : []),
-        ],
-    });
-
-    return groups;
-});
 
 const slotPrompt = ref<string | null>(null);
 
