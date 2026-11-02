@@ -389,9 +389,10 @@ class NotificationService
         string $message,
         ?User $actor = null,
         ?string $referenceId = null,
+        ?Branch $branch = null,
     ): void {
         $this->notificationRepository->create([
-            'branch_id' => null,
+            'branch_id' => $branch?->branch_id,
             'to_user_id' => $recipient->user_id,
             'from_user_id' => $actor?->user_id ?? $recipient->user_id,
             'message_type' => $messageType,
@@ -402,7 +403,7 @@ class NotificationService
         if ($recipient->uuid) {
             NotificationEvent::safe(new NotificationEvent(
                 $recipient->uuid,
-                '',
+                (string) ($branch?->uuid ?? ''),
                 $message,
                 $referenceId ?? '',
                 $messageType,

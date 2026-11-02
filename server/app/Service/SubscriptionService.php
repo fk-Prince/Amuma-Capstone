@@ -474,6 +474,7 @@ class SubscriptionService
                     'end_date' => $meta['endDate'],
                     'pending_plan_id' => null,
                     'pending_plan_starts_at' => null,
+                    'cancel_reason' => null,
                 ],
                 self::ACTION_UPGRADE => $subscription->isTest()
                     ? ['plan_id' => $paidPlanId, 'pending_plan_id' => $paidPlanId]

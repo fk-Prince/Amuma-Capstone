@@ -478,7 +478,10 @@
             </div>
 
             <div
-                v-if="props.subscription.subscription?.cancel_reason"
+                v-if="
+                    props.subscription.subscription?.status === 'cancelled' &&
+                    props.subscription.subscription?.cancel_reason
+                "
                 class="border-t border-slate-100 px-5 py-2.5 text-[11px] dark:border-white/10"
             >
                 <p

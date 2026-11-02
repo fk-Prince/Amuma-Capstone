@@ -102,9 +102,8 @@ class SupportTicketRepository
     {
         return $query
             ->when($scope['branch_id'] ?? null, fn($inner, $branchId) => $inner->where('branch_id', $branchId))
-            ->when($scope['user_id'] ?? null, fn($inner, $userId) => $inner
-                ->whereNull('branch_id')
-                ->where('user_id', $userId));
+            ->when($scope['public'] ?? false, fn($inner) => $inner->whereNull('branch_id'))
+            ->when($scope['user_id'] ?? null, fn($inner, $userId) => $inner->where('user_id', $userId));
     }
 
     private function authorRelations(string $path): array

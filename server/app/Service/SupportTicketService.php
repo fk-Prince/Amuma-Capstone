@@ -180,14 +180,18 @@ class SupportTicketService
             $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
             AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::ManageSubscription, PermissionAction::Read);
 
-            return ['branch' => $branch, 'branch_id' => $branch->branch_id];
+            return [
+                'branch' => $branch,
+                'branch_id' => $branch->branch_id,
+                'user_id' => $user->user_id,
+            ];
         }
 
         if ($user->isSystemOwner) {
             return ['support' => true];
         }
 
-        return ['user_id' => $user->user_id];
+        return ['user_id' => $user->user_id, 'public' => true];
     }
 
     private function resolveTicket(string $uuid, array $payload, User $user): array
@@ -234,23 +238,14 @@ class SupportTicketService
     private function notifyRequester(SupportTicket $ticket, User $actor, string $message): void
     {
         try {
-            $ticket->isPublic()
-                ? $this->notificationService->notifyUser(
-                    $ticket->user,
-                    self::MESSAGE_TYPE,
-                    $message,
-                    $actor,
-                    (string) $ticket->uuid,
-                )
-                : $this->notificationService->notifyModuleStaff(
-                    $ticket->branch,
-                    ModuleEnum::ManageSubscription,
-                    self::MESSAGE_TYPE,
-                    $message,
-                    $actor,
-                    null,
-                    (string) $ticket->uuid,
-                );
+            $this->notificationService->notifyUser(
+                $ticket->user,
+                self::MESSAGE_TYPE,
+                $message,
+                $actor,
+                (string) $ticket->uuid,
+                $ticket->isPublic() ? null : $ticket->branch,
+            );
         } catch (\Throwable $e) {
             Log::error('Support ticket notification failed: ' . $e->getMessage(), [
                 'ticket_uuid' => $ticket->uuid,

@@ -420,7 +420,7 @@
                         <!-- Step 4 — review -->
                         <div
                             v-else-if="currentStep === 4"
-                            class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
+                            class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-2"
                         >
                             <div class="min-w-0 space-y-5">
                                 <ResubmitReview :agency="null" :branch="form.branch" />
@@ -655,7 +655,7 @@
 
                             <div
                                 v-else
-                                class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"
+                                class="grid items-start gap-5 lg:grid-cols-2"
                             >
                                 <PaymentForm
                                     compact
@@ -1282,7 +1282,10 @@ const loadTotal = async () => {
 };
 
 const onCreated = async (result: any) => {
-    success(result?.message ?? "Branch added successfully.");
+    success(
+        "Request successful",
+        result?.message ?? "Branch sent for review.",
+    );
     emit("created", {
         ...result,
         used_existing_capacity:
