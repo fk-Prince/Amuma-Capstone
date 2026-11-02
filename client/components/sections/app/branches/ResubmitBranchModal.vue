@@ -130,219 +130,262 @@
                                     : 'mx-auto w-full max-w-3xl'
                             "
                         >
-                        <div class="min-w-0 space-y-4">
-                            <ResubmitReview
-                                :agency="agencyForm"
-                                :branch="form"
-                            />
+                            <div class="min-w-0 space-y-4">
+                                <ResubmitReview
+                                    :agency="agencyForm"
+                                    :branch="form"
+                                />
 
-                            <div
-                                v-if="isTrial && !resubmitPlan"
-                                class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
-                            >
-                                <p class="font-semibold">
-                                    {{ planName ? `${planName} · ` : "" }}2-week
-                                    free trial
-                                </p>
-                                <p class="mt-0.5 text-xs">
-                                    Your trial starts once an admin approves
-                                    your branch. Nothing is charged now.
-                                </p>
-                            </div>
-                        </div>
-
-                        <aside v-if="resubmitPlan" class="space-y-4">
-                            <section
-                                class="rounded-xl border border-slate-200 dark:border-white/10"
-                            >
-                                <h3
-                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                <div
+                                    v-if="isTrial && !resubmitPlan"
+                                    class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                                 >
-                                    Plan
-                                </h3>
+                                    <p class="font-semibold">
+                                        {{
+                                            planName ? `${planName} · ` : ""
+                                        }}2-week free trial
+                                    </p>
+                                    <p class="mt-0.5 text-xs">
+                                        Your trial starts once an admin approves
+                                        your branch. Nothing is charged now.
+                                    </p>
+                                </div>
+                            </div>
 
-                                <div class="space-y-3 px-4 py-3.5">
-                                    <div
-                                        class="flex items-start justify-between gap-3"
+                            <aside v-if="resubmitPlan" class="space-y-4">
+                                <section
+                                    class="rounded-xl border border-slate-200 dark:border-white/10"
+                                >
+                                    <h3
+                                        class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="text-base font-semibold text-secondary dark:text-white"
-                                            >
-                                                {{ resubmitPlan.name }}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
-                                            >
-                                                {{ planTypeLabel(resubmitPlan.type) }}
-                                                ·
-                                                {{ branchLimitText(resubmitPlan.type) }}
-                                            </p>
-                                        </div>
+                                        Plan
+                                    </h3>
 
-                                        <span
-                                            v-if="isTrial"
-                                            class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                    <div class="space-y-3 px-4 py-3.5">
+                                        <div
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            {{ resubmitPlan.trial_weeks }}-week
-                                            free trial
-                                        </span>
-                                    </div>
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="text-base font-semibold text-secondary dark:text-white"
+                                                >
+                                                    {{ resubmitPlan.name }}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-xs text-slate-500 dark:text-gray-400"
+                                                >
+                                                    {{
+                                                        planTypeLabel(
+                                                            resubmitPlan.type,
+                                                        )
+                                                    }}
+                                                    ·
+                                                    {{
+                                                        branchLimitText(
+                                                            resubmitPlan.type,
+                                                        )
+                                                    }}
+                                                </p>
+                                            </div>
 
-                                    <div
-                                        class="space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
-                                    >
-                                        <div class="flex justify-between gap-3">
                                             <span
-                                                class="text-slate-500 dark:text-gray-400"
+                                                v-if="isTrial"
+                                                class="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
                                             >
                                                 {{
-                                                    isTrial
-                                                        ? "12-month period (after trial)"
-                                                        : "12-month period"
-                                                }}
-                                            </span>
-                                            <span
-                                                class="font-medium text-secondary dark:text-white"
-                                            >
-                                                ₱{{ formatAmount(resubmitPlan.subtotal) }}
-                                            </span>
-                                        </div>
-
-                                        <div class="flex justify-between gap-3">
-                                            <span
-                                                class="text-slate-500 dark:text-gray-400"
-                                            >
-                                                Taxes (VAT
-                                                {{ resubmitPlan.vat_rate }}%)
-                                            </span>
-                                            <span
-                                                class="font-medium text-secondary dark:text-white"
-                                            >
-                                                ₱{{ formatAmount(resubmitPlan.vat_amount) }}
+                                                    resubmitPlan.trial_weeks
+                                                }}-week free trial
                                             </span>
                                         </div>
 
                                         <div
-                                            class="flex items-baseline justify-between gap-3 border-t border-slate-100 pt-2 dark:border-white/10"
+                                            class="space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
                                         >
-                                            <span
+                                            <div
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    {{
+                                                        isTrial
+                                                            ? "12-month period (after trial)"
+                                                            : "12-month period"
+                                                    }}
+                                                </span>
+                                                <span
+                                                    class="font-medium text-secondary dark:text-white"
+                                                >
+                                                    ₱{{
+                                                        formatAmount(
+                                                            resubmitPlan.subtotal,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Taxes (VAT
+                                                    {{
+                                                        resubmitPlan.vat_rate
+                                                    }}%)
+                                                </span>
+                                                <span
+                                                    class="font-medium text-secondary dark:text-white"
+                                                >
+                                                    ₱{{
+                                                        formatAmount(
+                                                            resubmitPlan.vat_amount,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                class="flex items-baseline justify-between gap-3 border-t border-slate-100 pt-2 dark:border-white/10"
+                                            >
+                                                <span
+                                                    class="text-sm font-semibold text-secondary dark:text-white"
+                                                >
+                                                    {{
+                                                        isTrial
+                                                            ? "Total after trial"
+                                                            : "Total"
+                                                    }}
+                                                </span>
+                                                <span
+                                                    class="text-base font-bold text-primary"
+                                                >
+                                                    ₱{{
+                                                        formatAmount(
+                                                            resubmitPlan.amount,
+                                                        )
+                                                    }}
+                                                    <span
+                                                        class="text-xs font-medium text-slate-400 dark:text-gray-500"
+                                                    >
+                                                        / year
+                                                    </span>
+                                                </span>
+                                            </div>
+
+                                            <div
+                                                v-if="isTrial"
+                                                class="flex justify-between gap-3"
+                                            >
+                                                <span
+                                                    class="text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Due today
+                                                </span>
+                                                <span
+                                                    class="font-semibold text-emerald-600 dark:text-emerald-400"
+                                                >
+                                                    ₱0.00
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <p
+                                            v-if="isTrial"
+                                            class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
+                                        >
+                                            Your trial starts once an admin
+                                            approves your branch. Nothing is
+                                            charged now.
+                                        </p>
+                                    </div>
+                                </section>
+
+                                <section
+                                    class="rounded-xl border border-slate-200 dark:border-white/10"
+                                >
+                                    <h3
+                                        class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                    >
+                                        Saved card
+                                    </h3>
+
+                                    <div
+                                        v-if="resubmitPlan.card"
+                                        class="flex items-center gap-3 px-4 py-3.5"
+                                    >
+                                        <div
+                                            class="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200 dark:bg-secondary dark:ring-white/10"
+                                        >
+                                            <img
+                                                v-if="
+                                                    resubmitPlan.card.brand ===
+                                                    'VISA'
+                                                "
+                                                :src="visaIcon"
+                                                alt="Visa"
+                                                class="h-3.5 w-auto object-contain"
+                                            />
+                                            <CreditCard
+                                                v-else
+                                                class="h-4 w-4 text-slate-500 dark:text-gray-400"
+                                            />
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <p
                                                 class="text-sm font-semibold text-secondary dark:text-white"
                                             >
                                                 {{
-                                                    isTrial
-                                                        ? "Total after trial"
-                                                        : "Total"
+                                                    cardBrandLabel(
+                                                        resubmitPlan.card.brand,
+                                                    )
                                                 }}
-                                            </span>
-                                            <span
-                                                class="text-base font-bold text-primary"
+                                                ••••
+                                                {{ resubmitPlan.card.last4 }}
+                                            </p>
+                                            <p
+                                                class="text-xs leading-5 text-slate-500 dark:text-gray-400"
                                             >
-                                                ₱{{ formatAmount(resubmitPlan.amount) }}
-                                                <span
-                                                    class="text-xs font-medium text-slate-400 dark:text-gray-500"
+                                                <template v-if="isTrial">
+                                                    Charged ₱{{
+                                                        formatAmount(
+                                                            resubmitPlan.amount,
+                                                        )
+                                                    }}
+                                                    when the trial ends<template
+                                                        v-if="
+                                                            resubmitPlan.card
+                                                                .auto_renew
+                                                        "
+                                                        >, then yearly</template
+                                                    >.
+                                                </template>
+                                                <template
+                                                    v-else-if="
+                                                        resubmitPlan.card
+                                                            .auto_renew
+                                                    "
                                                 >
-                                                    / year
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div
-                                            v-if="isTrial"
-                                            class="flex justify-between gap-3"
-                                        >
-                                            <span
-                                                class="text-slate-500 dark:text-gray-400"
-                                            >
-                                                Due today
-                                            </span>
-                                            <span
-                                                class="font-semibold text-emerald-600 dark:text-emerald-400"
-                                            >
-                                                ₱0.00
-                                            </span>
+                                                    Auto-renew is on.
+                                                </template>
+                                                <template v-else>
+                                                    Auto-renew is off.
+                                                </template>
+                                            </p>
                                         </div>
                                     </div>
 
                                     <p
-                                        v-if="isTrial"
-                                        class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
+                                        v-else
+                                        class="px-4 py-3.5 text-xs text-slate-500 dark:text-gray-400"
                                     >
-                                        Your trial starts once an admin
-                                        approves your branch. Nothing is
-                                        charged now.
+                                        No card saved.
                                     </p>
-                                </div>
-                            </section>
-
-                            <section
-                                class="rounded-xl border border-slate-200 dark:border-white/10"
-                            >
-                                <h3
-                                    class="border-b border-slate-100 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:border-white/10 dark:text-gray-500"
-                                >
-                                    Saved card
-                                </h3>
-
-                                <div
-                                    v-if="resubmitPlan.card"
-                                    class="flex items-center gap-3 px-4 py-3.5"
-                                >
-                                    <div
-                                        class="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200 dark:bg-secondary dark:ring-white/10"
-                                    >
-                                        <img
-                                            v-if="resubmitPlan.card.brand === 'VISA'"
-                                            :src="visaIcon"
-                                            alt="Visa"
-                                            class="h-3.5 w-auto object-contain"
-                                        />
-                                        <CreditCard
-                                            v-else
-                                            class="h-4 w-4 text-slate-500 dark:text-gray-400"
-                                        />
-                                    </div>
-
-                                    <div class="min-w-0">
-                                        <p
-                                            class="text-sm font-semibold text-secondary dark:text-white"
-                                        >
-                                            {{ cardBrandLabel(resubmitPlan.card.brand) }}
-                                            ••••
-                                            {{ resubmitPlan.card.last4 }}
-                                        </p>
-                                        <p
-                                            class="text-xs leading-5 text-slate-500 dark:text-gray-400"
-                                        >
-                                            <template v-if="isTrial">
-                                                Charged ₱{{
-                                                    formatAmount(resubmitPlan.amount)
-                                                }}
-                                                when the trial ends<template
-                                                    v-if="resubmitPlan.card.auto_renew"
-                                                    >, then yearly</template
-                                                >.
-                                            </template>
-                                            <template
-                                                v-else-if="resubmitPlan.card.auto_renew"
-                                            >
-                                                Auto-renew is on.
-                                            </template>
-                                            <template v-else>
-                                                Auto-renew is off.
-                                            </template>
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p
-                                    v-else
-                                    class="px-4 py-3.5 text-xs text-slate-500 dark:text-gray-400"
-                                >
-                                    No card saved.
-                                </p>
-                            </section>
-                        </aside>
+                                </section>
+                            </aside>
                         </div>
 
                         <div
@@ -350,64 +393,74 @@
                             class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-2"
                         >
                             <div class="min-w-0 space-y-4">
-                            <template v-if="additionalOptions.length > 1">
-                                <button
-                                    v-for="option in additionalOptions"
-                                    :key="option.uuid"
-                                    type="button"
-                                    class="flex w-full items-start gap-4 rounded-xl border p-5 text-left transition dark:border-white/10"
-                                    :class="
-                                        selectedSubscriptionUuid === option.uuid
-                                            ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
-                                            : 'border-slate-200 hover:border-primary hover:bg-primary-50/40 dark:hover:border-primary-500/40'
-                                    "
-                                    @click="selectedSubscriptionUuid = option.uuid"
-                                >
-                                    <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                <template v-if="additionalOptions.length > 1">
+                                    <button
+                                        v-for="option in additionalOptions"
+                                        :key="option.uuid"
+                                        type="button"
+                                        class="flex w-full items-start gap-4 rounded-xl border p-5 text-left transition dark:border-white/10"
+                                        :class="
+                                            selectedSubscriptionUuid ===
+                                            option.uuid
+                                                ? 'border-primary bg-primary-50/60 ring-1 ring-primary/20 dark:bg-primary-500/10'
+                                                : 'border-slate-200 hover:border-primary hover:bg-primary-50/40 dark:hover:border-primary-500/40'
+                                        "
+                                        @click="
+                                            selectedSubscriptionUuid =
+                                                option.uuid
+                                        "
                                     >
-                                        <Building2 class="h-5 w-5" />
-                                    </div>
-
-                                    <div class="min-w-0 flex-1">
-                                        <p
-                                            class="text-sm font-semibold text-secondary dark:text-white"
+                                        <div
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
                                         >
-                                            Add an additional branch to my
-                                            {{ option.plan_name }}
-                                            {{ planTypeLabel(option.plan_type) }}
-                                            subscription
-                                        </p>
-                                        <p
-                                            class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                            <Building2 class="h-5 w-5" />
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <p
+                                                class="text-sm font-semibold text-secondary dark:text-white"
+                                            >
+                                                Add an additional branch to my
+                                                {{ option.plan_name }}
+                                                {{
+                                                    planTypeLabel(
+                                                        option.plan_type,
+                                                    )
+                                                }}
+                                                subscription
+                                            </p>
+                                            <p
+                                                class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                            >
+                                                Runs until
+                                                {{
+                                                    formatDate(option.end_date)
+                                                }}.
+                                            </p>
+                                        </div>
+
+                                        <span
+                                            class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
                                         >
-                                            Runs until
-                                            {{ formatDate(option.end_date) }}.
-                                        </p>
-                                    </div>
+                                            ₱{{ formatAmount(option.amount) }}
+                                        </span>
+                                    </button>
+                                </template>
 
-                                    <span
-                                        class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
-                                    >
-                                        ₱{{ formatAmount(option.amount) }}
-                                    </span>
-                                </button>
-                            </template>
-
-                            <PaymentForm
-                                v-if="additionalOption"
-                                compact
-                                v-model:card="card"
-                                :total-amount="amountDue"
-                                :processing="processing"
-                                :onCardPay="payCard"
-                                :onGCashPay="payGCash"
-                                :enableGCash="true"
-                                title="Additional branch payment"
-                                description="Pay for the additional branch to send it back for review."
-                                submit-label="Pay & resubmit"
-                                terms-context="subscription"
-                            />
+                                <PaymentForm
+                                    v-if="additionalOption"
+                                    compact
+                                    v-model:card="card"
+                                    :total-amount="amountDue"
+                                    :processing="processing"
+                                    :onCardPay="payCard"
+                                    :onGCashPay="payGCash"
+                                    :enableGCash="true"
+                                    title="Additional branch payment"
+                                    description="Pay for the additional branch to send it back for review."
+                                    submit-label="Pay & resubmit"
+                                    terms-context="subscription"
+                                />
                             </div>
 
                             <div
@@ -428,14 +481,12 @@
                                 <p
                                     class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
                                 >
-                                    This branch joins your existing
-                                    subscription and expires with it on
+                                    This branch joins your existing subscription
+                                    and expires with it on
                                     {{ formatDate(additionalOption.end_date) }}.
-                                    You pay
-                                    ₱{{ formatAmount(total) }}, prorated for
-                                    the time left. It renews with
-                                    the subscription at
-                                    ₱{{
+                                    You pay ₱{{ formatAmount(total) }}, prorated
+                                    for the time left. It renews with the
+                                    subscription at ₱{{
                                         formatAmount(
                                             additionalOption.additional_branch_price,
                                         )
@@ -482,7 +533,12 @@
                                         >
                                             Subtotal (prorated)
                                             <InfoTooltip
-                                                :text="proratedHelp(additionalOption.additional_branch_price, additionalOption.months)"
+                                                :text="
+                                                    proratedHelp(
+                                                        additionalOption.additional_branch_price,
+                                                        additionalOption.months,
+                                                    )
+                                                "
                                             />
                                         </span>
                                         <span
@@ -502,7 +558,9 @@
                                         <span
                                             class="font-medium text-secondary dark:text-white"
                                         >
-                                            ₱{{ formatAmount(withVat(total).vat) }}
+                                            ₱{{
+                                                formatAmount(withVat(total).vat)
+                                            }}
                                         </span>
                                     </div>
 
@@ -521,7 +579,6 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                     <div
@@ -1066,7 +1123,8 @@ const isTrial = computed(
 const slotPrompt = ref<string | null>(null);
 
 const switchToPurchase = () => {
-    purchaseNotice.value = "There's no free branch slot left on your subscription.";
+    purchaseNotice.value =
+        "There's no free branch slot left on your subscription.";
     purchaseMode.value = true;
     slotPrompt.value = null;
     step.value = "payment";
@@ -1100,7 +1158,7 @@ const payCard = async () => {
     try {
         await cardPayment({
             card: card.value,
-            amount: total.value,
+            amount: amountDue.value,
             onClose: () => {
                 processing.value = false;
             },
