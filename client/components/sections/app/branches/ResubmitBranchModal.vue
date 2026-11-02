@@ -196,27 +196,78 @@
                                     </div>
 
                                     <div
-                                        class="flex items-baseline justify-between border-t border-slate-100 pt-3 dark:border-white/10"
+                                        class="space-y-1.5 border-t border-slate-100 pt-3 text-xs dark:border-white/10"
                                     >
-                                        <span
-                                            class="text-xs text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{
-                                                isTrial
-                                                    ? "After the trial"
-                                                    : "Yearly price"
-                                            }}
-                                        </span>
-                                        <span
-                                            class="text-base font-bold text-primary"
-                                        >
-                                            ₱{{ formatAmount(resubmitPlan.amount) }}
+                                        <div class="flex justify-between gap-3">
                                             <span
-                                                class="text-xs font-medium text-slate-400 dark:text-gray-500"
+                                                class="text-slate-500 dark:text-gray-400"
                                             >
-                                                / year
+                                                {{
+                                                    isTrial
+                                                        ? "12-month period (after trial)"
+                                                        : "12-month period"
+                                                }}
                                             </span>
-                                        </span>
+                                            <span
+                                                class="font-medium text-secondary dark:text-white"
+                                            >
+                                                ₱{{ formatAmount(resubmitPlan.subtotal) }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex justify-between gap-3">
+                                            <span
+                                                class="text-slate-500 dark:text-gray-400"
+                                            >
+                                                Taxes (VAT
+                                                {{ resubmitPlan.vat_rate }}%)
+                                            </span>
+                                            <span
+                                                class="font-medium text-secondary dark:text-white"
+                                            >
+                                                ₱{{ formatAmount(resubmitPlan.vat_amount) }}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            class="flex items-baseline justify-between gap-3 border-t border-slate-100 pt-2 dark:border-white/10"
+                                        >
+                                            <span
+                                                class="text-sm font-semibold text-secondary dark:text-white"
+                                            >
+                                                {{
+                                                    isTrial
+                                                        ? "Total after trial"
+                                                        : "Total"
+                                                }}
+                                            </span>
+                                            <span
+                                                class="text-base font-bold text-primary"
+                                            >
+                                                ₱{{ formatAmount(resubmitPlan.amount) }}
+                                                <span
+                                                    class="text-xs font-medium text-slate-400 dark:text-gray-500"
+                                                >
+                                                    / year
+                                                </span>
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            v-if="isTrial"
+                                            class="flex justify-between gap-3"
+                                        >
+                                            <span
+                                                class="text-slate-500 dark:text-gray-400"
+                                            >
+                                                Due today
+                                            </span>
+                                            <span
+                                                class="font-semibold text-emerald-600 dark:text-emerald-400"
+                                            >
+                                                ₱0.00
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <p
@@ -479,9 +530,11 @@
                             </div>
 
                             <template v-else>
-                                <div class="mb-4 flex justify-center">
-                                    <PlanTypeToggle v-model="planType" />
-                                </div>
+                                <p
+                                    class="mb-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                                >
+                                    Plan · {{ planTypeLabel(planType) }}
+                                </p>
 
                                 <div
                                     class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3"
@@ -667,7 +720,6 @@ import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import { branchSchema } from "~/schema/branch-schema";
 import { formatAmount } from "~/utils/currency";
-import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import visaIcon from "@/assets/icons/visa.png";
 import {
     branchLimitText,
@@ -870,18 +922,16 @@ const card = ref<CardDetails>({
     email: "prince.sestoso@gmail.com",
 });
 
-const planType = ref<PlanType>(DEFAULT_PLAN_TYPE);
+const planType = computed<PlanType>(
+    () =>
+        props.branch.plan?.[0]?.type ??
+        props.branch.resubmit_plan?.type ??
+        DEFAULT_PLAN_TYPE,
+);
 
 const priceOf = (plan: any) => planPrice(plan);
 
 const typedPlans = computed(() => plansOfType(plans.value, planType.value));
-
-watch(planType, () => {
-    selectedPlan.value =
-        typedPlans.value.find((plan) => plan.plan_code === selectedPlan.value?.plan_code) ??
-        typedPlans.value[0] ??
-        null;
-});
 
 const additionalOptions = computed<AdditionalOption[]>(
     () => props.capacity?.additional_options ?? [],
@@ -1040,7 +1090,12 @@ const loadPlans = async () => {
 
     try {
         plans.value = (await planService.list()) ?? [];
-        selectedPlan.value = typedPlans.value[0] ?? null;
+        selectedPlan.value =
+            typedPlans.value.find(
+                (plan) => plan.plan_code === props.branch.plan?.[0]?.plan_code,
+            ) ??
+            typedPlans.value[0] ??
+            null;
     } catch (err: any) {
         formError.value = err?.message ?? "Failed to load plans.";
     } finally {
@@ -1102,7 +1157,7 @@ const resubmitPlan = computed(() =>
 );
 
 const CARD_BRANDS: Record<string, string> = {
-    VISA: "Visa",
+    VISA: "VISA",
     MASTERCARD: "Mastercard",
     AMEX: "Amex",
     JCB: "JCB",

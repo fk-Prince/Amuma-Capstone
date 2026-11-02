@@ -179,6 +179,7 @@ class UserService
                             return [
                                 'plan_code' => $plan?->plan_code,
                                 'name' => $plan?->name,
+                                'type' => $plan?->type,
                             ];
                         })->values()
                         : [],
@@ -218,10 +219,15 @@ class UserService
             return null;
         }
 
+        $price = Vat::exclusive($subscription->renewalAmount($plan));
+
         return [
             'name' => $plan->name,
             'type' => $plan->type,
-            'amount' => Vat::exclusive($subscription->renewalAmount($plan))['total_amount'],
+            'subtotal' => $price['subtotal'],
+            'vat_rate' => $price['vat_rate'],
+            'vat_amount' => $price['vat_amount'],
+            'amount' => $price['total_amount'],
             'trial_weeks' => Subscription::TRIAL_WEEKS,
             'card' => $subscription->card_token_id ? [
                 'brand' => $subscription->card_brand,

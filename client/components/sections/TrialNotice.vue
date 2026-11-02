@@ -55,8 +55,10 @@
                         >This branch is on its free trial until
                         {{ trialEndsOn }}.</span
                     >
-                    Nothing has been charged. Pay for your plan before then to
-                    keep your branch running.
+                    Until then it isn't shown in the booking section, so
+                    families can't find or book it yet. Nothing has been
+                    charged. Pay for your plan to get listed and keep your
+                    branch running.
                 </template>
 
                 <template v-else>

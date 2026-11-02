@@ -39,6 +39,9 @@ export interface Branch {
 export interface ResubmitPlan {
     name: string;
     type: "sme" | "enterprise";
+    subtotal: number;
+    vat_rate: number;
+    vat_amount: number;
     amount: number;
     trial_weeks: number;
     card: {
@@ -141,6 +144,7 @@ interface BranchSubscription {
 interface BranchPlan {
     plan_code: "A" | "B" | "C";
     name: string;
+    type?: "sme" | "enterprise" | null;
     status: string;
 }
 

@@ -169,27 +169,13 @@
                             </p>
                         </div>
 
-                        <div>
+                        <div v-if="!isCancelled">
                             <p
                                 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                             >
-                                {{
-                                    isCancelled
-                                        ? "Refunded"
-                                        : isExpired
-                                          ? "Overdue by"
-                                          : "Time left"
-                                }}
+                                {{ isExpired ? "Overdue by" : "Time left" }}
                             </p>
                             <p
-                                v-if="isCancelled"
-                                class="mt-0.5 text-sm font-semibold"
-                                :class="statusTone.text"
-                            >
-                                ₱{{ formatMoney(refundedAmount) }}
-                            </p>
-                            <p
-                                v-else
                                 class="mt-0.5 text-sm font-semibold"
                                 :class="statusTone.text"
                             >
@@ -266,10 +252,10 @@
                     >
                         <template v-if="isCancelled">
                             You cancelled this subscription on
-                            {{ formatDate(subscription.end_date) }} and your
-                            payment was refunded. Want to keep using AMUMA?
-                            Pick any plan type and plan and subscribe now — your
-                            paid year starts today, with no free trial.
+                            {{ formatDate(subscription.end_date) }}. Nothing was
+                            charged. Want to keep using AMUMA? Pick a plan and
+                            subscribe now. Your paid year starts today, with no
+                            free trial.
                         </template>
                         <template v-else-if="awaitingPayment && !canPayTrial">
                             Your free trial request is waiting for an admin to
@@ -692,17 +678,8 @@
                     <p
                         class="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
-                        Plan
-                        <template v-if="!isCancelled">
-                            · {{ planTypeLabel(planType) }}
-                        </template>
+                        Plan · {{ planTypeLabel(planType) }}
                     </p>
-
-                    <PlanTypeToggle
-                        v-if="isCancelled"
-                        v-model="planType"
-                        class="mb-3"
-                    />
 
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                         <button
@@ -1280,7 +1257,6 @@ import { useBranchStore } from "~/stores/branch";
 import { useSubscriptionVersion } from "~/composables/useSubscriptionVersion";
 import { useSandbox } from "~/composables/useSandbox";
 import type { CardDetails } from "~/types/payment";
-import PlanTypeToggle from "~/components/ui/PlanTypeToggle.vue";
 import {
     DEFAULT_PLAN_TYPE,
     findPlan,
@@ -1416,12 +1392,6 @@ const refundAmount = computed(() =>
         .reduce((sum: number, payment: any) => sum + Number(payment.price || 0), 0),
 );
 
-const refundedAmount = computed(() =>
-    payments.value
-        .filter((payment: any) => payment.status === "refunded")
-        .reduce((sum: number, payment: any) => sum + Number(payment.price || 0), 0),
-);
-
 const renewal = computed(() => subscription.value?.renewal ?? null);
 const awaitingPayment = computed(() => Boolean(renewal.value?.awaiting_payment));
 const canPayTrial = computed(() => Boolean(renewal.value?.can_pay));
@@ -1431,7 +1401,7 @@ const savedCard = computed(() => renewal.value?.card ?? null);
 const showCardModal = ref(false);
 
 const CARD_BRANDS: Record<string, string> = {
-    VISA: "Visa",
+    VISA: "VISA",
     MASTERCARD: "Mastercard",
     AMEX: "Amex",
     JCB: "JCB",
@@ -1521,15 +1491,22 @@ const selectablePlans = computed(() => {
     ].filter(Boolean);
 });
 
-const showPlanPicker = computed(() => selectablePlans.value.length > 0);
+const showPlanPicker = computed(
+    () =>
+        selectablePlans.value.length > 0 &&
+        (awaitingPayment.value || isCancelled.value || canUpgrade.value),
+);
 
 const chosenPlanCode = ref<string | null>(null);
 
 watch(
-    [() => currentPlan.value?.plan_code, canRenew, canUpgrade],
+    [() => currentPlan.value?.plan_code, canRenew, canUpgrade, showPlanPicker],
     ([code]) =>
         (chosenPlanCode.value =
-            !isCancelled.value && !canRenew.value && canUpgrade.value
+            showPlanPicker.value &&
+            !isCancelled.value &&
+            !canRenew.value &&
+            canUpgrade.value
                 ? HYBRID_PLAN_CODE
                 : (code ?? null)),
     { immediate: true },
