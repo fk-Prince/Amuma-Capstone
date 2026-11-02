@@ -384,6 +384,10 @@ class ScheduleService
                 if (!$isFinalizing) {
                     $this->assertStaffing($scheduleService->type, $rowEmployeeIds, $branch->branch_id, $this->performedBy($scheduleService));
 
+                    $this->assertStayInCaregiver($schedule, $scheduleService->type, $rowEmployeeIds);
+
+                    $this->assertNoShiftOverlap($scheduleService->type, collect($rows));
+
                     $activeIds = $scheduleService->assigned()
                         ->where('is_active', true)
                         ->pluck('employee_id')
@@ -427,7 +431,7 @@ class ScheduleService
                         true
                     );
 
-                    [$startTime, $endTime] = $this->assignmentTimes($assignment, $scheduleService->type);
+                    [$startTime, $endTime] = $this->assignmentTimes($assignment, $scheduleService->type, !$isFinalizing);
                     [$windowStart, $windowEnd] = $this->assignmentWindow($targetStart, $targetEnd, $startTime, $endTime);
 
                     $conflictCodes = $isFinalizing ? [] : $this->scheduleRepository->activeConflictCodes(
@@ -880,7 +884,7 @@ class ScheduleService
         );
     }
 
-    private function assignmentTimes(array $row, ?string $serviceType): array
+    private function assignmentTimes(array $row, ?string $serviceType, bool $required = true): array
     {
         if ($serviceType !== ScheduleServiceModel::TYPE_ADL) {
             return [null, null];
@@ -889,12 +893,14 @@ class ScheduleService
         $start = trim((string) ($row['start_time'] ?? ''));
         $end = trim((string) ($row['end_time'] ?? ''));
 
-        if ($start === '' && $end === '') {
+        if (!$required && $start === '' && $end === '') {
             return [null, null];
         }
 
         if ($start === '' || $end === '') {
-            throw new Exception('Pick both a start time and an end time.', 422);
+            $name = Employee::find($row['employee_id'] ?? null)?->full_name ?? 'each caregiver';
+
+            throw new Exception("Pick a shift start and end time for {$name}.", 422);
         }
 
         try {
@@ -928,6 +934,52 @@ class ScheduleService
         }
 
         return [$windowStart, $windowEnd];
+    }
+
+    private function assertStayInCaregiver(Schedule $schedule, ?string $serviceType, Collection $employeeIds): void
+    {
+        if ($serviceType !== ScheduleServiceModel::TYPE_ADL || !$schedule->is_stay_in) {
+            return;
+        }
+
+        if ($employeeIds->count() > 1) {
+            throw new Exception('A stay-in booking can only have one caregiver.', 422);
+        }
+    }
+
+    private function assertNoShiftOverlap(?string $serviceType, Collection $rows): void
+    {
+        if ($serviceType !== ScheduleServiceModel::TYPE_ADL) {
+            return;
+        }
+
+        $shifts = $rows
+            ->filter(fn($row) => !empty($row['employee_id']))
+            ->unique(fn($row) => (int) $row['employee_id'])
+            ->map(function ($row) use ($serviceType) {
+                [$start, $end] = $this->assignmentTimes($row, $serviceType);
+
+                return [
+                    'employee_id' => (int) $row['employee_id'],
+                    'start' => $start,
+                    'end' => $end,
+                ];
+            })
+            ->values();
+
+        foreach ($shifts as $index => $mine) {
+            foreach ($shifts->slice($index + 1) as $theirs) {
+                if ($mine['start'] < $theirs['end'] && $theirs['start'] < $mine['end']) {
+                    $first = Employee::find($mine['employee_id'])?->full_name ?? "Employee #{$mine['employee_id']}";
+                    $second = Employee::find($theirs['employee_id'])?->full_name ?? "Employee #{$theirs['employee_id']}";
+
+                    throw new Exception(
+                        "{$first}'s shift collides with {$second}'s shift. Only one caregiver can be on a shift, so change their hours before assigning.",
+                        422
+                    );
+                }
+            }
+        }
     }
 
     public function assignEmployee(array $payload)
@@ -1009,6 +1061,10 @@ class ScheduleService
                     ->map(fn($id) => (int) $id);
 
                 $this->assertStaffing($scheduleService->type, $desiredEmployeeIds, $branchId, $this->performedBy($scheduleService));
+
+                $this->assertStayInCaregiver($schedule, $scheduleService->type, $desiredEmployeeIds);
+
+                $this->assertNoShiftOverlap($scheduleService->type, $assignments);
 
                 $this->assertAssignmentType(
                     $schedule,

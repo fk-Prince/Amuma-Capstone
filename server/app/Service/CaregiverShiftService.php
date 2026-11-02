@@ -170,6 +170,8 @@ class CaregiverShiftService
                 throw new Exception('This caregiver is already assigned to this resident.', 422);
             }
 
+            $this->assertNoOverlap($admission->patient_admission_id, $payload['start_time'], $payload['end_time']);
+
             $shift = $this->shifts->create([
                 'caregiver_id' => $caregiverId,
                 'admission_id' => $admission->patient_admission_id,
@@ -205,6 +207,17 @@ class CaregiverShiftService
                 if ($this->shifts->hasActiveAssignment($shift->admission_id, $shift->caregiver_id, $shift->caregiver_shift_id)) {
                     throw new Exception('This caregiver is already assigned to this resident.', 422);
                 }
+            }
+
+            $deactivating = array_key_exists('is_active', $payload) && !$payload['is_active'];
+
+            if ($reactivating || ($shift->is_active && !$deactivating)) {
+                $this->assertNoOverlap(
+                    $shift->admission_id,
+                    $payload['start_time'] ?? (string) $shift->start_time,
+                    $payload['end_time'] ?? (string) $shift->end_time,
+                    $shift->caregiver_shift_id,
+                );
             }
 
             $shift->update(array_filter([
@@ -303,6 +316,35 @@ class CaregiverShiftService
         }
 
         return $total;
+    }
+
+    private function assertNoOverlap(int $admissionId, string $startTime, string $endTime, ?int $exceptShiftId = null): void
+    {
+        $mine = $this->spans($startTime, $endTime);
+
+        foreach ($this->shifts->activeShiftsForAdmission($admissionId, $exceptShiftId) as $other) {
+            foreach ($this->spans((string) $other->start_time, (string) $other->end_time) as [$otherStart, $otherEnd]) {
+                foreach ($mine as [$start, $end]) {
+                    if ($start < $otherEnd && $otherStart < $end) {
+                        $name = $other->caregiver?->full_name ?? 'another caregiver';
+                        $range = substr((string) $other->start_time, 0, 5) . ' – ' . substr((string) $other->end_time, 0, 5);
+
+                        throw new Exception(
+                            "This shift collides with {$name}'s shift ({$range}). Only one caregiver can be on a shift, so change the hours before assigning.",
+                            422
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    private function spans(string $startTime, string $endTime): array
+    {
+        $start = $this->minutes($startTime);
+        $end = $this->minutes($endTime);
+
+        return $end > $start ? [[$start, $end]] : [[$start, 1440], [0, $end]];
     }
 
     private function minutes(string $time): int

@@ -142,12 +142,15 @@
                                         :disabled="
                                             busyId ===
                                                 shift.caregiver_shift_id ||
-                                            isAssigned(shift.caregiver_id)
+                                            isAssigned(shift.caregiver_id) ||
+                                            !!collisionFor(shift)
                                         "
                                         :title="
                                             isAssigned(shift.caregiver_id)
                                                 ? 'Already assigned to this resident.'
-                                                : undefined
+                                                : collisionFor(shift)
+                                                  ? `Collides with ${collisionFor(shift)!.caregiver_name}'s shift.`
+                                                  : undefined
                                         "
                                         class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary/40 hover:text-primary disabled:opacity-50 dark:border-white/10 dark:text-gray-300"
                                         @click="setActive(shift, true)"
@@ -347,6 +350,21 @@
                             </div>
 
                             <p
+                                v-if="formCollision"
+                                class="flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                            >
+                                <TriangleAlert
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                />
+                                This shift collides with
+                                {{ formCollision.caregiver_name }}'s shift
+                                ({{ formatTime(formCollision.start_time) }} –
+                                {{ formatTime(formCollision.end_time) }}). Only
+                                one caregiver can be on a shift. Change the
+                                hours before assigning.
+                            </p>
+
+                            <p
                                 v-if="formError"
                                 class="text-xs font-medium text-rose-600 dark:text-rose-300"
                             >
@@ -356,7 +374,7 @@
                             <div class="flex justify-end">
                                 <button
                                     type="submit"
-                                    :disabled="saving"
+                                    :disabled="saving || !!formCollision"
                                     class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <Loader2
@@ -511,6 +529,42 @@ const dutyNote = computed(() => {
     return `${caregiver.full_name} would be on duty about ${hours} hours a day. That is over the limit of ${dutyLimit.value} hours. You can still continue.`;
 });
 
+function spans(start: string, end: string): [number, number][] {
+    const from = toMinutes(start);
+    const to = toMinutes(end);
+
+    return to > from ? [[from, to]] : [[from, 1440], [0, to]];
+}
+
+function overlaps(
+    a: { start_time: string; end_time: string },
+    b: { start_time: string; end_time: string },
+) {
+    return spans(a.start_time, a.end_time).some(([aStart, aEnd]) =>
+        spans(b.start_time, b.end_time).some(
+            ([bStart, bEnd]) => aStart < bEnd && bStart < aEnd,
+        ),
+    );
+}
+
+function collisionFor(window: { start_time: string; end_time: string }) {
+    return (
+        activeShifts.value.find((shift) => overlaps(window, shift)) ?? null
+    );
+}
+
+const formCollision = computed(() => {
+    if (
+        !form.value.start_time ||
+        !form.value.end_time ||
+        form.value.start_time === form.value.end_time
+    ) {
+        return null;
+    }
+
+    return collisionFor(form.value);
+});
+
 function isAssigned(id: number) {
     return activeShifts.value.some((shift) => shift.caregiver_id === id);
 }
@@ -640,6 +694,11 @@ async function submit() {
 
     if (form.value.start_time === form.value.end_time) {
         formError.value = "The end time must be different from the start time.";
+        return;
+    }
+
+    if (formCollision.value) {
+        formError.value = `This shift collides with ${formCollision.value.caregiver_name}'s shift. Only one caregiver can be on a shift.`;
         return;
     }
 

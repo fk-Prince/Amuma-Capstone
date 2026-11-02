@@ -1925,18 +1925,41 @@ function validate() {
     for (const service of props.schedule?.services ?? []) {
         if (service.type !== "ADL") continue;
 
-        for (const entry of entriesFor(service.schedule_services_id)) {
+        const entries = entriesFor(service.schedule_services_id);
+
+        if (props.schedule?.is_stay_in && entries.length > 1) {
+            toastError("A stay-in booking can only have one caregiver.");
+            return false;
+        }
+
+        for (const entry of entries) {
             const employee = employeeById(entry.employee_id);
             const name = employee ? employeeLabel(employee) : "the caregiver";
 
-            if (!!entry.start_time !== !!entry.end_time) {
-                toastError(`Pick both a start and an end time for ${name}.`);
+            if (!entry.start_time || !entry.end_time) {
+                toastError(`Pick a shift start and end time for ${name}.`);
                 return false;
             }
 
-            if (entry.start_time && entry.end_time <= entry.start_time) {
+            if (entry.end_time <= entry.start_time) {
                 toastError(
                     `The end time for ${name} must be later than the start time.`,
+                );
+                return false;
+            }
+
+            const overlap = entries.find(
+                (other) =>
+                    other.employee_id !== entry.employee_id &&
+                    other.start_time.slice(0, 5) < entry.end_time.slice(0, 5) &&
+                    entry.start_time.slice(0, 5) < other.end_time.slice(0, 5),
+            );
+
+            if (overlap) {
+                const other = employeeById(overlap.employee_id);
+
+                toastError(
+                    `${name}'s shift collides with ${other ? employeeLabel(other) : "another caregiver"}'s shift. Only one caregiver can be on a shift.`,
                 );
                 return false;
             }

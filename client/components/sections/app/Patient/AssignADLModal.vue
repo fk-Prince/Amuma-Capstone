@@ -119,6 +119,14 @@
                             </span>
                         </div>
 
+                        <p
+                            v-if="schedule?.is_stay_in"
+                            class="flex items-start gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs text-primary dark:bg-primary-500/10 dark:text-primary-300"
+                        >
+                            <Home class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            Stay-in booking. Only one caregiver can be assigned.
+                        </p>
+
                         <div v-if="assignments.length" class="space-y-3">
                             <div
                                 v-for="(entry, entryIndex) in assignments"
@@ -247,6 +255,7 @@
                                             class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                         >
                                             Start time
+                                            <span class="text-rose-500">*</span>
                                         </span>
                                         <input
                                             v-model="entry.start_time"
@@ -260,6 +269,7 @@
                                             class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                         >
                                             End time
+                                            <span class="text-rose-500">*</span>
                                         </span>
                                         <input
                                             v-model="entry.end_time"
@@ -286,18 +296,26 @@
                                 </p>
 
                                 <p
+                                    v-if="!hasShift(entry)"
+                                    class="mt-2 text-[11px] text-rose-500 dark:text-rose-300"
+                                >
+                                    Pick a shift for this caregiver. Only one
+                                    caregiver can be on a shift.
+                                </p>
+
+                                <p
                                     v-for="overlap in shiftOverlaps(entry)"
                                     :key="overlap.employee_id"
-                                    class="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                                    class="mt-3 flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
                                 >
                                     <TriangleAlert
                                         class="mt-0.5 h-3.5 w-3.5 shrink-0"
                                     />
                                     This shift collides with
                                     {{ nameFor(overlap.employee_id) }}'s shift
-                                    ({{ formatShift(overlap) }}). Only one of
-                                    them can attend during the overlapping
-                                    hours.
+                                    ({{ formatShift(overlap) }}). Only one
+                                    caregiver can be on a shift. Change the
+                                    hours before assigning.
                                 </p>
 
                                 <div class="mt-3">
@@ -446,7 +464,7 @@
                                             : 'border-slate-200 hover:border-primary/40 dark:border-white/10',
                                         !isCaregiver(employee) ||
                                         isAssignmentTypeMismatch(employee) ||
-                                        (employee.is_busy &&
+                                        ((employee.is_busy || isStayInFull) &&
                                             !isSelected(employee.employee_id))
                                             ? 'opacity-60'
                                             : '',
@@ -764,7 +782,7 @@
                     <button
                         type="button"
                         class="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                        :disabled="isSaving"
+                        :disabled="isSaving || hasShiftCollision"
                         @click="confirm"
                     >
                         {{ isSaving ? "Assigning..." : "Assign" }}
@@ -847,17 +865,29 @@ function shiftRange(entry: AssignmentEntry) {
     };
 }
 
-function shiftOverlaps(entry: AssignmentEntry): AssignmentEntry[] {
-    const mine = shiftRange(entry);
-
-    return assignments.value.filter((other) => {
-        if (other.employee_id === entry.employee_id) return false;
-
-        const theirs = shiftRange(other);
-
-        return mine.start < theirs.end && theirs.start < mine.end;
-    });
+function hasShift(entry: AssignmentEntry) {
+    return !!entry.start_time && !!entry.end_time;
 }
+
+function shiftOverlaps(entry: AssignmentEntry): AssignmentEntry[] {
+    if (!hasShift(entry)) return [];
+
+    return assignments.value.filter(
+        (other) =>
+            other.employee_id !== entry.employee_id &&
+            hasShift(other) &&
+            entry.start_time < other.end_time &&
+            other.start_time < entry.end_time,
+    );
+}
+
+const isStayInFull = computed(
+    () => !!props.schedule?.is_stay_in && assignments.value.length >= 1,
+);
+
+const hasShiftCollision = computed(() =>
+    assignments.value.some((entry) => shiftOverlaps(entry).length > 0),
+);
 
 function formatShift(entry: AssignmentEntry) {
     const { start, end } = shiftRange(entry);
@@ -1173,6 +1203,13 @@ function handleEmployeeClick(employee: Employee) {
         return;
     }
 
+    if (isStayInFull.value) {
+        toastError(
+            `A stay-in booking can only have one caregiver. Remove ${nameFor(assignments.value[0]!.employee_id)} first to pick someone else.`,
+        );
+        return;
+    }
+
     if (employee.is_busy) {
         toastError(
             `${fullName(employee.first_name, "", employee.last_name)} has a schedule conflict and can't be assigned to this booking.`,
@@ -1202,16 +1239,30 @@ function confirm() {
 
     const scheduleServiceId = props.schedule.schedule_services_id ?? null;
 
+    if (props.schedule.is_stay_in && assignments.value.length > 1) {
+        toastError("A stay-in booking can only have one caregiver.");
+        return;
+    }
+
     for (const entry of assignments.value) {
         const name = nameFor(entry.employee_id);
 
-        if (!!entry.start_time !== !!entry.end_time) {
-            toastError(`Pick both a start and an end time for ${name}.`);
+        if (!hasShift(entry)) {
+            toastError(`Pick a shift start and end time for ${name}.`);
             return;
         }
 
         if (entry.start_time && entry.end_time <= entry.start_time) {
             toastError(`The end time for ${name} must be later than the start time.`);
+            return;
+        }
+
+        const overlap = shiftOverlaps(entry)[0];
+
+        if (overlap) {
+            toastError(
+                `${name}'s shift collides with ${nameFor(overlap.employee_id)}'s shift. Only one caregiver can be on a shift.`,
+            );
             return;
         }
     }

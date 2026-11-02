@@ -184,6 +184,15 @@ class CaregiverShiftRepository
             ->exists();
     }
 
+    public function activeShiftsForAdmission(int $admissionId, ?int $exceptShiftId = null)
+    {
+        return CaregiverShift::with('caregiver')
+            ->where('admission_id', $admissionId)
+            ->where('is_active', true)
+            ->when($exceptShiftId, fn($query) => $query->where('caregiver_shift_id', '!=', $exceptShiftId))
+            ->get();
+    }
+
     public function activeCountForAdmission(int $admissionId): int
     {
         return CaregiverShift::where('admission_id', $admissionId)
