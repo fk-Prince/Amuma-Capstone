@@ -173,41 +173,6 @@
                 <div
                     class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5 dark:border-white/10"
                 >
-                    <div v-if="!isShifts">
-                        <p
-                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
-                        >
-                            <CalendarDays class="h-3.5 w-3.5" />
-                            Date range
-                        </p>
-
-                        <div
-                            class="flex flex-col gap-2 sm:flex-row sm:items-center"
-                        >
-                            <DatePickerField
-                                :model-value="filters.date_from"
-                                class-name="w-full min-w-0 sm:w-44"
-                                placeholder="From"
-                                :default-to-today="false"
-                                @update:model-value="setDate('date_from', $event)"
-                            />
-
-                            <span
-                                class="shrink-0 text-xs text-muted sm:px-1 dark:text-gray-400"
-                            >
-                                to
-                            </span>
-
-                            <DatePickerField
-                                :model-value="filters.date_to"
-                                class-name="w-full min-w-0 sm:w-44"
-                                placeholder="To"
-                                :default-to-today="false"
-                                @update:model-value="setDate('date_to', $event)"
-                            />
-                        </div>
-                    </div>
-
                     <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         <div v-if="!isShifts">
                             <p
@@ -311,7 +276,6 @@ import {
     PanelRightClose,
     PanelRightOpen,
 } from "lucide-vue-next";
-import DatePickerField from "~/components/ui/DatePickerField.vue";
 
 export type ScheduleView = "calendar" | "timeline" | "cards" | "list";
 export type ScheduleTypeFilter = "medical" | "homecare";
@@ -372,31 +336,73 @@ function toStr(value: unknown): string {
     return typeof value === "string" ? value : "";
 }
 
+const isoDate = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+function isCalendarView(type: string[], view: ScheduleView) {
+    if (type.includes("shifts")) return false;
+    if (type.includes("adl") || type.includes("employees")) return view !== "list";
+    return view !== "timeline" && view !== "cards";
+}
+
+function defaultRange(type: string[], view: ScheduleView) {
+    if (!isCalendarView(type, view)) return { from: yesterday, to: "" };
+
+    const now = new Date();
+    return {
+        from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+        to: isoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+    };
+}
+
 function filtersFromQuery(): ScheduleFilters {
+    const type = toArray(route.query.type).length
+        ? toArray(route.query.type)
+        : [DEFAULT_TYPE];
+
+    const view =
+        (["cards", "timeline", "list"] as const).find(
+            (v) => v === toStr(route.query.view),
+        ) ?? "calendar";
+
+    const range = defaultRange(type, view);
+    const hasDates = !!toStr(route.query.date_from);
+
     return {
         search: toStr(route.query.search),
-
-        date_from: toStr(route.query.date_from) || yesterday,
-
-        date_to: toStr(route.query.date_to),
-
+        date_from: hasDates ? toStr(route.query.date_from) : range.from,
+        date_to: hasDates ? toStr(route.query.date_to) : range.to,
         statuses: toArray(route.query.statuses),
-
-        type: toArray(route.query.type).length
-            ? toArray(route.query.type)
-            : [DEFAULT_TYPE],
-
+        type,
         assignment: toStr(route.query.assignment) || "all",
-
-        view: (["cards", "timeline", "list"] as const).find(
-            (v) => v === toStr(route.query.view),
-        ) ?? "calendar",
+        view,
     };
 }
 
 const filters = reactive<ScheduleFilters>(filtersFromQuery());
 
+function resetDates() {
+    const range = defaultRange(filters.type, filters.view);
+    filters.date_from = range.from;
+    filters.date_to = range.to;
+}
+
+function isWholeMonth(from: string, to: string) {
+    if (!from || !to || !from.endsWith("-01")) return false;
+    const start = new Date(`${from}T00:00:00`);
+    return to === isoDate(new Date(start.getFullYear(), start.getMonth() + 1, 0));
+}
+
 onMounted(() => {
+    if (
+        isCalendarView(filters.type, filters.view) &&
+        !isWholeMonth(filters.date_from, filters.date_to)
+    ) {
+        resetDates();
+        syncQuery();
+        return;
+    }
+
     const needsDefaultQuery = !route.query.date_from || !route.query.type;
 
     if (!route.query.type) {
@@ -464,10 +470,6 @@ const typeOptions = computed(() => [
 const isShifts = computed(() => filters.type.includes("shifts"));
 const isEmployees = computed(() => filters.type.includes("employees"));
 
-const isDefaultDateRange = computed(
-    () => filters.date_from === yesterday && !filters.date_to,
-);
-
 const isDefaultType = computed(
     () => filters.type.length === 1 && filters.type[0] === DEFAULT_TYPE,
 );
@@ -479,27 +481,10 @@ const activeFilterCount = computed(() => {
     if (!isDefaultType.value) count++;
     if (filters.assignment !== "all") count++;
 
-    if (!isShifts.value) {
-        if (!isDefaultDateRange.value) count++;
-
-        count += filters.statuses.length;
-    }
+    if (!isShifts.value) count += filters.statuses.length;
 
     return count;
 });
-
-const shortDate = (value: string) => {
-    if (!value) return "";
-
-    const parsed = new Date(value);
-
-    if (Number.isNaN(parsed.getTime())) return value;
-
-    return parsed.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-    });
-};
 
 const summaryChips = computed(() => {
     const chips: { key: string; label: string; icon: unknown }[] = [];
@@ -513,14 +498,6 @@ const summaryChips = computed(() => {
     });
 
     if (isShifts.value) return chips;
-
-    chips.push({
-        key: "period",
-        icon: CalendarDays,
-        label: filters.date_to
-            ? `${shortDate(filters.date_from)} – ${shortDate(filters.date_to)}`
-            : `From ${shortDate(filters.date_from)}`,
-    });
 
     if (filters.statuses.length) {
         chips.push({
@@ -540,7 +517,9 @@ const summaryChips = computed(() => {
 });
 
 const setView = (value: ScheduleView) => {
+    const wasCalendar = isCalendarView(filters.type, filters.view);
     filters.view = value;
+    if (wasCalendar !== isCalendarView(filters.type, value)) resetDates();
     emitChange(true);
 };
 
@@ -569,12 +548,9 @@ const toggleStatus = (value: string) => {
 };
 
 const toggleType = (value: string) => {
+    const wasCalendar = isCalendarView(filters.type, filters.view);
     filters.type = [value];
-    emitChange(true);
-};
-
-const setDate = (key: "date_from" | "date_to", value: string) => {
-    filters[key] = value;
+    if (wasCalendar !== isCalendarView(filters.type, filters.view)) resetDates();
     emitChange(true);
 };
 
@@ -595,11 +571,10 @@ const clearSearch = () => {
 
 const resetFilters = () => {
     filters.search = "";
-    filters.date_from = yesterday;
-    filters.date_to = "";
     filters.statuses = [];
     filters.type = [DEFAULT_TYPE];
     filters.assignment = "all";
+    resetDates();
     emitChange(true);
 };
 

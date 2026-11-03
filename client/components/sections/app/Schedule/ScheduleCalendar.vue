@@ -35,6 +35,7 @@
             <div
                 class="flex flex-wrap items-center gap-1.5 text-xs font-semibold sm:ml-auto"
             >
+                <slot name="actions" />
                 <span
                     class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-white/10 dark:text-gray-300"
                 >
@@ -891,22 +892,17 @@ watch(
 function defaultSelection() {
     const { from, to } = monthBounds.value;
     const t = todayIso.value;
-    if (t >= from && t <= to) return t;
-    return cells.value.find((c) => c.inMonth && c.items.length)?.iso ?? from;
+    return t >= from && t <= to ? t : from;
 }
 
 const selectedDate = ref(defaultSelection());
 const dayPanel = ref<HTMLElement | null>(null);
 
-// Once visits arrive, land on the first day that has some (unless it's today's month).
 watch(
     () => props.schedules,
     () => {
         const current = cells.value.find((c) => c.iso === selectedDate.value);
         if (!current?.inMonth) selectedDate.value = defaultSelection();
-        else if (!current.items.length && selectedDate.value !== todayIso.value) {
-            selectedDate.value = defaultSelection();
-        }
     },
 );
 

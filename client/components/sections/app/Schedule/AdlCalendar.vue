@@ -10,6 +10,7 @@
             @whole-month="showWholeMonth"
         >
             <template #chips>
+                <slot name="actions" />
                 <span
                     class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-white/10 dark:text-gray-300"
                 >

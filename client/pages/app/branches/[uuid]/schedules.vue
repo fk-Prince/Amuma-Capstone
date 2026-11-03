@@ -14,7 +14,7 @@
                     class="flex-1 min-h-0 overflow-y-auto w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
                 >
                     <ScanQrButton
-                        v-if="scheduleType === 'medical'"
+                        v-if="scheduleType === 'medical' && !calendarMode"
                         class="mx-4 mt-4"
                         @scanned="loadSchedules()"
                     />
@@ -144,7 +144,11 @@
                                 @view-details="viewSchedule"
                                 @assign="handleAssign"
                                 @change-range="onCalendarRange"
-                            />
+                            >
+                                <template #actions>
+                                    <ScanQrButton @scanned="loadSchedules()" />
+                                </template>
+                            </ScheduleCalendar>
 
                             <ScheduleMedicalCards
                                 v-else-if="medicalView === 'cards'"
@@ -176,7 +180,11 @@
                             @view-details="viewSchedule"
                             @assign="handleAssign"
                             @change-range="onCalendarRange"
-                        />
+                        >
+                            <template #actions>
+                                <ScanQrButton @scanned="loadSchedules()" />
+                            </template>
+                        </AdlCalendar>
 
                         <HomecareADL
                             v-else
@@ -318,10 +326,9 @@ import { X } from "lucide-vue-next";
 
 const { canAssign } = usePermissions();
 
-const OVERVIEW_WIDTH = 1280;
 const DESKTOP_WIDTH = 1024;
 
-const showOverview = ref(true);
+const showOverview = ref(false);
 const isDesktop = ref(true);
 
 function syncViewport() {
@@ -332,7 +339,6 @@ function syncViewport() {
 
 onMounted(() => {
     isDesktop.value = window.innerWidth >= DESKTOP_WIDTH;
-    showOverview.value = window.innerWidth >= OVERVIEW_WIDTH;
     window.addEventListener("resize", syncViewport);
 });
 

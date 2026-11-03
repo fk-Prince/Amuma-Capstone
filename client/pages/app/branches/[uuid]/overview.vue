@@ -307,19 +307,13 @@
                                 />
                             </label>
 
-                            <select
+                            <Combobox
                                 v-model="sortBy"
-                                aria-label="Sort branches"
-                                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary dark:border-white/10 dark:bg-secondary dark:text-white"
-                            >
-                                <option
-                                    v-for="option in SORT_OPTIONS"
-                                    :key="option.value"
-                                    :value="option.value"
-                                >
-                                    {{ option.label }}
-                                </option>
-                            </select>
+                                :items="SORT_OPTIONS"
+                                placeholder="Sort"
+                                input-class="px-3 py-2 text-sm"
+                                class="w-full sm:w-60"
+                            />
                         </div>
                     </div>
 
