@@ -1,4 +1,4 @@
-export type AdlAttendanceType = "scanned" | "force" | "handover";
+export type AdlAttendanceType = "scanned" | "force" | "handover" | "marked";
 
 export interface AdlAttendanceAssignment {
     attendance_id: number;
@@ -23,6 +23,7 @@ export interface ScheduleAssignee {
 
     online: AdlAttendanceAssignment[];
     is_active: boolean
+    can_scan?: boolean;
     employee_role: string | null;
 }
 
@@ -38,7 +39,6 @@ export interface ScheduleServiceItem {
     duration_minutes: number;
     end_service: string;
     type: string | null;
-    can_scan?: boolean;
     assignees?: ScheduleAssignee[];
     previous_assignees?: PreviousAssignee[];
 }

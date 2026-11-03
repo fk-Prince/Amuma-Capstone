@@ -288,8 +288,6 @@ class ScheduleResource extends JsonResource
 
                         'activities' => $scheduleService->activities,
 
-                        'can_scan' => (bool) $scheduleService->can_scan,
-
                         'assignees' => $scheduleService->relationLoaded('assigned')
                             ? $scheduleService->assigned->where('is_active', true)->values()->map(function ($assignment) {
 
@@ -299,6 +297,7 @@ class ScheduleResource extends JsonResource
                                     'employee_id' => $assignment->employee_id,
                                     'employee_uuid' => $employee?->users?->uuid,
                                     'is_active' => $assignment->is_active,
+                                    'can_scan' => $assignment->can_scan !== false,
                                     'full_name' => $employee->fullName ?? '',
                                     'employee_role' => $employee?->employeeBranch
                                         ?->firstWhere('branch_id', $this->patient->branch_id)

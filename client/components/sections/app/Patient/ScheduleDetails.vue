@@ -63,6 +63,38 @@
                 <ScheduleConflictNotice :lines="conflictLines" />
 
                 <div
+                    v-if="showAttendanceTab"
+                    class="flex shrink-0 px-6 pt-4"
+                >
+                    <div
+                        class="inline-flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-white/5"
+                    >
+                        <button
+                            v-for="tab in DETAIL_TABS"
+                            :key="tab.value"
+                            type="button"
+                            class="rounded-lg px-4 py-1.5 text-sm font-medium transition"
+                            :class="
+                                activeTab === tab.value
+                                    ? 'bg-white text-primary shadow-sm dark:bg-secondary dark:text-primary-300'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            "
+                            @click="activeTab = tab.value"
+                        >
+                            {{ tab.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    v-if="showAttendanceTab && activeTab === 'attendance'"
+                    class="min-h-0 flex-1 overflow-y-auto p-6"
+                >
+                    <MedicalAttendance :schedule="schedule" />
+                </div>
+
+                <div
+                    v-show="!showAttendanceTab || activeTab === 'details'"
                     class="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 xl:space-y-0"
                     :class="bodyGridClass"
                 >
@@ -1340,6 +1372,7 @@ import DatePickerField from "~/components/ui/DatePickerField.vue";
 import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue";
 import ScheduleComplete from "~/components/sections/app/Patient/ScheduleComplete.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
+import MedicalAttendance from "~/components/sections/app/Schedule/MedicalAttendance.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
@@ -1456,10 +1489,28 @@ const branchStore = useBranchStore();
 const branchUuid = computed(() => route.params.uuid as string);
 const scheduleNotes = ref<EmployeeNote[]>([]);
 
+const DETAIL_TABS = [
+    { value: "details", label: "Schedule Details" },
+    { value: "attendance", label: "Attendance" },
+] as const;
+
+const activeTab = ref<"details" | "attendance">("details");
+
+const showAttendanceTab = computed(
+    () =>
+        !isEditing.value &&
+        props.schedule?.category !== "Facility" &&
+        (props.schedule?.services ?? []).some(
+            (service) =>
+                service.type === "Medical",
+        ),
+);
+
 watch(
     () => [props.open, props.schedule?.schedule_code] as const,
     async ([isOpen, code]) => {
         scheduleNotes.value = [];
+        activeTab.value = "details";
 
         if (!isOpen || !code) return;
 

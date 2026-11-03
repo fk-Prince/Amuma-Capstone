@@ -72,7 +72,6 @@ enum RoleEnum: string
                 ModuleEnum::Medications->value => ModuleEnum::Medications->actionColumns(),
                 ModuleEnum::Schedules->value => [
                     PermissionAction::Read->value,
-                    PermissionAction::Update->value,
                 ],
             ],
         };

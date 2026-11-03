@@ -1018,16 +1018,6 @@ class ScheduleService
             $assignmentsByService = collect($payload['assignments'] ?? [])
                 ->groupBy('schedule_services_id');
 
-            foreach ($payload['scan_services'] ?? [] as $row) {
-                $scheduleService = $schedule->scheduleServices
-                    ->firstWhere('schedule_services_id', (int) ($row['schedule_services_id'] ?? 0));
-
-                $scheduleService?->update([
-                    'can_scan' => $scheduleService->type === ScheduleServiceModel::TYPE_ADL
-                        || filter_var($row['can_scan'] ?? true, FILTER_VALIDATE_BOOLEAN),
-                ]);
-            }
-
             $careTeamChanged = false;
             $addedIds = [];
             $updatedIds = [];
@@ -1090,6 +1080,13 @@ class ScheduleService
                         (int) $row['employee_id'] => $this->assignmentTimes($row, $scheduleService->type),
                     ]);
 
+                $scanByEmployee = $assignments
+                    ->filter(fn($row) => !empty($row['employee_id']) && array_key_exists('can_scan', $row))
+                    ->mapWithKeys(fn($row) => [
+                        (int) $row['employee_id'] => $scheduleService->type === ScheduleServiceModel::TYPE_ADL
+                            || filter_var($row['can_scan'], FILTER_VALIDATE_BOOLEAN),
+                    ]);
+
                 foreach ($desiredEmployeeIds as $employeeId) {
                     if ($currentlyActiveIds->contains($employeeId)) {
                         continue;
@@ -1143,6 +1140,10 @@ class ScheduleService
                             $current?->update(['note' => $note]);
                         }
 
+                        if ($scanByEmployee->has($employeeId)) {
+                            $current?->update(['can_scan' => $scanByEmployee->get($employeeId)]);
+                        }
+
                         if ($timesByEmployee->has($employeeId)) {
                             $current?->update([
                                 'start_time' => $startTime,
@@ -1172,11 +1173,13 @@ class ScheduleService
                             ], fn($value, $key) => $key !== 'note' || $hasNote, ARRAY_FILTER_USE_BOTH),
                             'start_time' => $startTime,
                             'end_time' => $endTime,
+                            'can_scan' => $scanByEmployee->get($employeeId, true),
                         ]);
                     } else {
                         $scheduleService->assigned()->create([
                             'employee_id' => $employeeId,
                             'is_active' => true,
+                            'can_scan' => $scanByEmployee->get($employeeId, true),
                             'note' => $note,
                             'start_time' => $startTime,
                             'end_time' => $endTime,

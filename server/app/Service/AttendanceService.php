@@ -156,10 +156,12 @@ class AttendanceService
         }
 
         $scannable = $mine->filter(fn($schedule) => $schedule->scheduleServices
-            ->contains(fn($scheduleService) => $scheduleService->can_scan && $isAssigned($scheduleService)));
+            ->contains(fn($scheduleService) => $scheduleService->assigned->contains(
+                fn($assigned) => (int) $assigned->employee_id === $employeeId && $assigned->can_scan !== false
+            )));
 
         if ($scannable->isEmpty()) {
-            throw new Exception('QR check-in is turned off for this visit.', 422);
+            throw new Exception("You can't scan the QR for {$patient->display_name}'s visit. Ask the branch to turn on QR for you.", 403);
         }
 
         $schedule = $scannable
@@ -171,7 +173,7 @@ class AttendanceService
 
         $schedule->setRelation('patient', $patient);
 
-        return [$schedule, $schedule->scheduleServices->where('can_scan', true)->values()];
+        return [$schedule, $schedule->scheduleServices->values()];
     }
 
     private function visitAttendance(Collection $services): Collection

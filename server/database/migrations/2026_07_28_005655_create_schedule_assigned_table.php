@@ -17,6 +17,7 @@ return new class extends Migration
                 ->constrained('employees', 'employee_id')
                 ->cascadeOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->boolean('can_scan')->default(true);
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
             $table->string('note', 255)->nullable();

@@ -19,7 +19,12 @@ class ScheduleAssigned extends Model
         'note',
         'start_time',
         'end_time',
-        'is_active'
+        'is_active',
+        'can_scan',
+    ];
+
+    protected $casts = [
+        'can_scan' => 'boolean',
     ];
 
     public function auditBranchId(): ?int

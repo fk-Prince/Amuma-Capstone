@@ -26,12 +26,10 @@ class ScheduleService extends Model
         'type',
         'billing_cycle',
         'activities',
-        'can_scan',
     ];
 
     protected $casts = [
         'duration' => 'decimal:2',
-        'can_scan' => 'boolean',
     ];
 
     public function isMonthly(): bool
