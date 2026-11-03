@@ -5,6 +5,7 @@ import { ImageUp } from "lucide-vue-next";
 import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
 import PatientCheckInModal from "~/components/sections/app/Schedule/PatientCheckInModal.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import type { PatientVisit } from "~/types/schedule";
 
 const emit = defineEmits<{
@@ -60,21 +61,36 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
         return;
     }
 
+    await verify(parsed.token, type);
+}
+
+const unpaidScan = ref<{ token: string; type: "in" | "out" | "handover"; message: string } | null>(null);
+
+async function verify(token: string, type: "in" | "out" | "handover", confirmUnpaid = false) {
     paused.value = true;
     verifying.value = true;
     error.value = null;
 
     try {
         await attendanceService.verifyQr({
-            token: parsed.token,
+            token,
             type,
+            ...(confirmUnpaid && { confirm_unpaid: true }),
         });
 
+        unpaidScan.value = null;
         success(SCAN_SUCCESS[type]);
 
         emit("scanned");
         emit("close");
     } catch (err: any) {
+        if (err?.status === 428) {
+            unpaidScan.value = { token, type, message: err.message };
+            return;
+        }
+
+        unpaidScan.value = null;
+
         const message =
             err?.response?.data?.message ??
             err?.message ??
@@ -88,6 +104,15 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
     } finally {
         verifying.value = false;
     }
+}
+
+function confirmUnpaidScan() {
+    if (unpaidScan.value) verify(unpaidScan.value.token, unpaidScan.value.type, true);
+}
+
+function cancelUnpaidScan() {
+    unpaidScan.value = null;
+    paused.value = false;
 }
 
 const patientUuid = ref<string | null>(null);
@@ -239,6 +264,16 @@ function onError(err: Error) {
             >
                 ✕
             </button>
+
+            <ConfirmDialog
+                :open="!!unpaidScan"
+                title="Not fully paid"
+                :message="unpaidScan?.message ?? ''"
+                confirm-label="Time out"
+                :loading="verifying"
+                @confirm="confirmUnpaidScan"
+                @cancel="cancelUnpaidScan"
+            />
 
             <PatientCheckInModal
                 v-if="patientVisit && patientUuid"

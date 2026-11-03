@@ -18,7 +18,7 @@ class AttendanceService extends BaseService {
     async generateQr(payload: {}): Promise<any> {
         return await this.request(this.resource + '/qr', 'GET', payload);
     }
-    async verifyQr(payload: { token: string; type: string }) {
+    async verifyQr(payload: { token: string; type: string; confirm_unpaid?: boolean }) {
         await this.request('/api/qr/verify', 'POST', payload);
     }
 
@@ -38,7 +38,11 @@ class AttendanceService extends BaseService {
         return await this.request(this.getBackendApi + '/api/qr/patient/confirm', 'POST', payload);
     }
 
-    async timeOutPatientVisit(payload: { patient_uuid: string; schedule_id: number }): Promise<any> {
+    async timeOutPatientVisit(payload: {
+        patient_uuid: string;
+        schedule_id: number;
+        confirm_unpaid?: boolean;
+    }): Promise<any> {
         return await this.request(this.getBackendApi + '/api/qr/patient/time-out', 'POST', payload);
     }
 

@@ -24,6 +24,8 @@ class AttendanceService
 
     public const QR_TTL_MINUTES = 5;
 
+    public const UNPAID_COMPLETION_MESSAGE = "This service hasn't been fully paid yet. Do you still want to time out?";
+
     public function __construct(
         private ScheduleRepository $scheduleRepository,
         private NotificationService $notificationService,
@@ -105,6 +107,8 @@ class AttendanceService
         if ($this->visitAttendance($services)->isEmpty()) {
             throw new Exception('This visit has not been checked in yet.', 409);
         }
+
+        $this->guardUnpaidCompletion($schedule, $payload);
 
         DB::transaction(function () use ($schedule, $services) {
             $this->attendanceRepository->closeOpen(
@@ -584,6 +588,12 @@ class AttendanceService
 
             $this->guardClockOutEmployee($session->assigned, $payload['employee_id']);
 
+            $dueSchedule = $this->adlScheduleDueToComplete($session->assigned->schedule_services_id);
+
+            if ($dueSchedule) {
+                $this->guardUnpaidCompletion($dueSchedule, $payload);
+            }
+
             Cache::forget($cacheKey);
 
             $session->update([
@@ -767,13 +777,28 @@ class AttendanceService
         }
     }
 
+    private function guardUnpaidCompletion(Schedule $schedule, array $payload): void
+    {
+        if (!empty($payload['confirm_unpaid']) || !$this->scheduleRepository->hasUnpaidBalance($schedule)) {
+            return;
+        }
+
+        throw new Exception(self::UNPAID_COMPLETION_MESSAGE, 428);
+    }
+
     private function completeAdlScheduleIfDue(int $scheduleServicesId): void
+    {
+        $this->adlScheduleDueToComplete($scheduleServicesId)
+            ?->update(['status' => Schedule::STATUS_COMPLETED]);
+    }
+
+    private function adlScheduleDueToComplete(int $scheduleServicesId): ?Schedule
     {
         $scheduleService = ScheduleService::with('schedule.scheduleServices.service')->find($scheduleServicesId);
         $schedule = $scheduleService?->schedule;
 
         if ($scheduleService?->type !== ScheduleService::TYPE_ADL || !$schedule?->scheduled_at) {
-            return;
+            return null;
         }
 
         $scheduledAt = Carbon::parse($schedule->scheduled_at);
@@ -790,9 +815,7 @@ class AttendanceService
         $end = $start->copy()
             ->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule));
 
-        if (now()->diffInSeconds($end, false) < 60) {
-            $schedule->update(['status' => Schedule::STATUS_COMPLETED]);
-        }
+        return now()->diffInSeconds($end, false) < 60 ? $schedule : null;
     }
 
     private function startAdlSchedule(int $scheduleServicesId): void

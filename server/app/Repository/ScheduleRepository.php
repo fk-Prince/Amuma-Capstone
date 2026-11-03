@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
+use App\Models\Invoice;
 use App\Models\PatientAdmission;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
@@ -78,6 +79,19 @@ class ScheduleRepository
         Carbon $targetEnd
     ): bool {
         return $this->activeConflictCodes($employeeId, $branchId, $excludeScheduleId, $targetStart, $targetEnd) !== [];
+    }
+
+    public function hasUnpaidBalance(Schedule $schedule): bool
+    {
+        $statuses = Invoice::query()
+            ->whereHas(
+                'invoiceServices.scheduleService',
+                fn($query) => $query->where('schedule_id', $schedule->schedule_id)
+            )
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->pluck('status');
+
+        return $statuses->contains(fn($status) => $status !== Invoice::STATUS_PAID);
     }
 
     public function calculateScheduleDurationMinutes(Schedule $schedule): float

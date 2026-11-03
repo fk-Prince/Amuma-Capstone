@@ -87,6 +87,7 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'token' => ['required', 'string'],
             'type' => ['required', 'string'],
+            'confirm_unpaid' => ['sometimes', 'boolean'],
         ]);
 
         $validated['employee_id'] = $user->employee->employee_id;
@@ -133,6 +134,7 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'patient_uuid' => ['required', 'uuid'],
             'schedule_id' => ['required', 'integer'],
+            'confirm_unpaid' => ['sometimes', 'boolean'],
         ]);
 
         $validated['employee_id'] = $user->employee->employee_id;

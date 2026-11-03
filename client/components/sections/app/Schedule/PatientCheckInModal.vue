@@ -10,6 +10,7 @@ import {
     X,
 } from "lucide-vue-next";
 import ActionButton from "~/components/ui/ActionButton.vue";
+import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
@@ -95,8 +96,9 @@ async function confirm() {
 }
 
 const timingOut = ref(false);
+const unpaidMessage = ref("");
 
-async function timeOut() {
+async function timeOut(confirmUnpaid = false) {
     if (timingOut.value) return;
 
     timingOut.value = true;
@@ -105,13 +107,21 @@ async function timeOut() {
         await attendanceService.timeOutPatientVisit({
             patient_uuid: props.patientUuid,
             schedule_id: props.visit.schedule_id,
+            ...(confirmUnpaid && { confirm_unpaid: true }),
         });
 
+        unpaidMessage.value = "";
         success(`${props.visit.schedule_code} timed out and completed.`);
 
         emit("confirmed");
         emit("close");
     } catch (err: any) {
+        if (err?.status === 428) {
+            unpaidMessage.value = err.message;
+            return;
+        }
+
+        unpaidMessage.value = "";
         toastError(
             err?.response?.data?.message ??
                 err?.message ??
@@ -328,7 +338,7 @@ async function timeOut() {
                             v-if="alreadyCheckedIn"
                             variant="primary"
                             :disabled="saving || timingOut"
-                            @click="timeOut"
+                            @click="timeOut()"
                         >
                             <span class="inline-flex items-center gap-2">
                                 <Loader2
@@ -360,5 +370,15 @@ async function timeOut() {
                 </div>
             </div>
         </div>
+
+        <ConfirmDialog
+            :open="!!unpaidMessage"
+            title="Not fully paid"
+            :message="unpaidMessage"
+            confirm-label="Time out"
+            :loading="timingOut"
+            @confirm="timeOut(true)"
+            @cancel="unpaidMessage = ''"
+        />
     </Teleport>
 </template>
