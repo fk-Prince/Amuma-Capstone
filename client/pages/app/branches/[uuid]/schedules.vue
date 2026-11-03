@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen-header bg-light font-sans dark:bg-surface">
+    <div class="dashboard-fit min-h-screen-header bg-light font-sans dark:bg-surface">
         <div
-            class="grid grid-cols-1 gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
+            class="dashboard-fit-fill grid grid-cols-1 grid-rows-[minmax(0,1fr)] gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
             :class="showOverview && isDesktop ? 'lg:grid-cols-[1fr_400px]' : ''"
         >
             <div class="flex min-w-0 min-h-0 flex-col">
@@ -11,8 +11,16 @@
                 />
 
                 <div
-                    class="flex-1 w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
+                    class="flex-1 min-h-0 overflow-y-auto w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
                 >
+                    <!-- Day / week switcher (the calendar has its own month arrows) -->
+                    <ScheduleDateBar
+                        v-if="showDateBar"
+                        :date-from="route.query.date_from as string"
+                        :date-to="route.query.date_to as string"
+                        @change-range="onDateRange"
+                    />
+
                     <FacilityShiftBoard
                         v-if="scheduleType === 'shifts'"
                         v-model:board="shiftBoard"
@@ -37,7 +45,7 @@
                         "
                     />
 
-                    <div v-else-if="pending" class="p-4 space-y-3">
+                    <div v-else-if="pending && !calendarMode" class="p-4 space-y-3">
                         <div
                             v-for="n in 6"
                             :key="n"
@@ -66,7 +74,7 @@
                     </div>
 
                     <div
-                        v-else-if="!filteredScheduleData.length"
+                        v-else-if="!filteredScheduleData.length && !calendarMode"
                         class="flex flex-col items-center justify-center gap-3 px-6 py-24 text-center"
                     >
                         <div
@@ -107,8 +115,19 @@
 
                     <template v-else>
                         <template v-if="scheduleType === 'medical'">
+                            <ScheduleCalendar
+                                v-if="medicalView === 'calendar'"
+                                :schedules="filteredScheduleData"
+                                :loading="pending || loadingMore"
+                                :date="route.query.date_from as string"
+                                :range-end="route.query.date_to as string"
+                                @view-details="viewSchedule"
+                                @assign="handleAssign"
+                                @change-range="onCalendarRange"
+                            />
+
                             <ScheduleMedicalCards
-                                v-if="medicalView === 'cards'"
+                                v-else-if="medicalView === 'cards'"
                                 :schedules="filteredScheduleData"
                                 :loading="pending"
                                 :date="route.query.date_from as string"
@@ -144,7 +163,8 @@
                             scheduleType !== 'shifts' &&
                             scheduleType !== 'employees' &&
                             hasMore &&
-                            !pending
+                            !pending &&
+                            !calendarMode
                         "
                         class="flex justify-center mt-4"
                     >
@@ -243,10 +263,12 @@
 import ScheduleFilter from "~/components/sections/app/Schedule/ScheduleFilter.vue";
 import ScheduleOverview from "~/components/sections/app/Schedule/ScheduleOverview.vue";
 import { usePatient } from "~/composables/usePatient";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import type { EmployeeScheduleRow, ScheduleItem } from "~/types/schedule";
 import ScheduleMedical from "~/components/sections/app/Schedule/ScheduleMedical.vue";
 import ScheduleMedicalCards from "~/components/sections/app/Schedule/ScheduleMedicalCards.vue";
+import ScheduleCalendar from "~/components/sections/app/Schedule/ScheduleCalendar.vue";
+import ScheduleDateBar from "~/components/sections/app/Schedule/ScheduleDateBar.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import { useToast } from "~/composables/useToast";
@@ -285,6 +307,7 @@ onUnmounted(() => {
 });
 
 const route = useRoute();
+const router = useRouter();
 const uuid = computed(() => route.params.uuid as string);
 const { success, error } = useToast();
 const {
@@ -325,9 +348,37 @@ const scheduleType = computed<
 const shiftBoard = ref<ShiftBoard | null>(null);
 const employeeBoard = ref<EmployeeScheduleRow[]>([]);
 
+// Calendar is the default; timeline and cards are still one click away.
 const medicalView = computed(() =>
-    route.query.view === "cards" ? "cards" : "timeline",
+    route.query.view === "cards"
+        ? "cards"
+        : route.query.view === "timeline"
+          ? "timeline"
+          : "calendar",
 );
+
+const calendarMode = computed(
+    () => scheduleType.value === "medical" && medicalView.value === "calendar",
+);
+
+// Month arrows on the calendar move the date filter to that month.
+function onCalendarRange(range: { from: string; to: string }) {
+    router.replace({
+        query: { ...route.query, date_from: range.from, date_to: range.to },
+    });
+}
+
+// Shift caregiver boards aren't filtered by date, so no switcher there.
+const showDateBar = computed(() => !calendarMode.value && scheduleType.value !== "shifts");
+
+function onDateRange(range: { from: string; to: string }) {
+    const { date_to, ...rest } = route.query;
+    router.replace({
+        query: range.to
+            ? { ...rest, date_from: range.from, date_to: range.to }
+            : { ...rest, date_from: range.from },
+    });
+}
 
 function isHomecareSchedule(schedule: ScheduleItem) {
     const type = ((schedule as any).type ?? "").toLowerCase();
@@ -563,7 +614,8 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
     const listParams = {
         ...restQuery,
         branch_uuid: route.params.uuid as string,
-        per_page: perPage,
+        // The calendar shows a whole month at once, so it asks for bigger pages.
+        per_page: calendarMode.value ? 100 : perPage,
         page: page.value,
         ...(assignment === "mine" && { assigned_only: 1 }),
     };
@@ -596,17 +648,25 @@ async function loadMore() {
     await loadSchedules({ append: true });
 }
 
+// ...and pulls in the rest of the pages by itself (no "Load More" there).
+async function loadRestForCalendar() {
+    for (let i = 0; i < 10 && calendarMode.value && hasMore.value; i++) {
+        await loadMore();
+    }
+}
+
 watch(
     () => {
         const { view, search, ...rest } = route.query;
         return JSON.stringify(
             scheduleType.value === "shifts" || scheduleType.value === "employees"
                 ? rest
-                : { ...rest, search },
+                : { ...rest, search, calendar: calendarMode.value },
         );
     },
-    () => {
-        loadSchedules({ append: false });
+    async () => {
+        await loadSchedules({ append: false });
+        await loadRestForCalendar();
     },
     { immediate: true },
 );

@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header bg-[#EEF3FB] dark:bg-surface overflow-visible flex flex-col"
+        class="dashboard-fit min-h-screen-header bg-[#EEF3FB] dark:bg-surface overflow-visible flex flex-col"
     >
         <StaffHomecareBookingForm
             :open="homecareBookingOpen"
@@ -11,7 +11,7 @@
 
         <div
             v-if="!homecareBookingOpen"
-            class="grid grid-cols-1 gap-4 items-stretch w-full flex-1 min-h-0"
+            class="grid grid-cols-1 gap-4 items-stretch w-full flex-1 min-h-0 md:grid-rows-[minmax(0,1fr)_auto]"
             :class="asideVisible ? 'lg:grid-cols-[minmax(0,1fr)_400px]' : ''"
         >
             <div class="w-full min-w-0 min-h-0 flex flex-col order-1">
@@ -23,7 +23,7 @@
                             class="flex flex-col gap-3 px-6 py-4 border-b border-[#E4EFED] shrink-0 dark:border-white/10"
                         >
                             <div
-                                class="flex flex-col gap-3 sm:flex-row sm:items-center"
+                                class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
                             >
                                 <BookingFilter
                                     :search="searchQuery"

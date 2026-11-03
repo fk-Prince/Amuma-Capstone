@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Volume2, VolumeX } from "lucide-vue-next";
+import { BellRing, Volume2, VolumeX } from "lucide-vue-next";
 import {
     playMessageSound,
     playNotificationSound,
@@ -25,20 +25,29 @@ const rangeClass =
 
 <template>
     <section
-        class="grid gap-6 bg-white p-6 lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
+        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
     >
-        <div>
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                Sounds
-            </h2>
-            <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                Play a short sound when something new arrives. Set the volume to
-                0 to turn it off. This is saved on this device.
-            </p>
-        </div>
+        <header
+            class="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 dark:border-white/10"
+        >
+            <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300"
+            >
+                <BellRing class="h-[18px] w-[18px]" />
+            </span>
+            <div class="min-w-0">
+                <h2 class="text-sm font-bold text-secondary sm:text-base dark:text-white">
+                    Sounds
+                </h2>
+                <p class="text-xs leading-5 text-slate-500 sm:text-sm dark:text-gray-400">
+                    Play a short sound when something new arrives. Set the volume to
+                    0 to turn it off. This is saved on this device.
+                </p>
+            </div>
+        </header>
 
         <div
-            class="w-full max-w-lg divide-y divide-slate-100 dark:divide-white/10"
+            class="w-full max-w-xl divide-y divide-slate-100 p-4 sm:p-6 dark:divide-white/10"
         >
             <div class="pb-4">
                 <label

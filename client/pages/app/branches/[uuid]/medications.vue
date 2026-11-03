@@ -7,7 +7,12 @@ import {
     onMounted,
     onBeforeUnmount,
 } from "vue";
-import { ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-vue-next";
+import {
+    ChevronLeft,
+    ChevronRight,
+    ArrowUpRight,
+    TriangleAlert,
+} from "lucide-vue-next";
 import { useDebounceFn } from "@vueuse/core";
 import MedicationTable from "~/components/sections/app/Patient/MedicationTable.vue";
 import VitalSignsTable from "~/components/sections/app/Patient/VitalSignsTable.vue";
@@ -107,6 +112,18 @@ const hasFilters = computed(
 const { resolveIndex, syncQuery } = usePatientQuerySelection();
 
 const patient = computed(() => patients.value[selectedIndex.value] ?? null);
+
+// Allergies shown on the eMAR for medication safety (display only).
+const patientAllergies = computed<string[]>(() => {
+    const raw: unknown = patient.value?.allergies;
+    const list = Array.isArray(raw)
+        ? raw
+        : typeof raw === "string"
+          ? raw.split(",")
+          : [];
+
+    return list.map((item) => String(item).trim()).filter(Boolean);
+});
 
 const patientsScrollRef = ref<HTMLElement | null>(null);
 const canScrollLeft = ref(false);
@@ -369,9 +386,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="min-h-screen-header rounded-lg bg-slate-100 dark:bg-surface">
+    <div class="dashboard-fit min-h-screen-header rounded-lg bg-slate-100 dark:bg-surface">
         <div
-            class="flex min-h-[calc(100dvh-var(--header-h)-1rem)] w-full flex-col gap-4"
+            class="dashboard-fit-fill flex min-h-[calc(100dvh-var(--header-h)-1rem)] w-full flex-col gap-4"
         >
             <div
                 class="overflow-hidden rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
@@ -524,7 +541,7 @@ onBeforeUnmount(() => {
 
             <div
                 v-if="patient"
-                class="min-w-0 flex-1 overflow-hidden rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
+                class="min-w-0 min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-lg border border-[#E4EFED] bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="flex flex-wrap items-center justify-between gap-3 border-b border-[#E4EFED] px-3 py-4 sm:px-5 dark:border-white/10"
@@ -558,6 +575,35 @@ onBeforeUnmount(() => {
                         <ArrowUpRight class="h-3.5 w-3.5" />
                     </button>
                 </div>
+
+                <div
+                    v-if="patientAllergies.length"
+                    role="note"
+                    aria-label="Patient allergies"
+                    class="flex flex-wrap items-center gap-2 border-b border-rose-100 bg-rose-50 px-3 py-2.5 sm:px-5 dark:border-rose-500/20 dark:bg-rose-500/10"
+                >
+                    <span
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-300"
+                    >
+                        <TriangleAlert class="h-4 w-4 shrink-0" />
+                        Allergies
+                    </span>
+
+                    <span
+                        v-for="allergy in patientAllergies"
+                        :key="allergy"
+                        class="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-rose-600 ring-1 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/30"
+                    >
+                        {{ allergy }}
+                    </span>
+                </div>
+
+                <p
+                    v-else
+                    class="border-b border-[#E4EFED] px-3 py-2 text-xs text-gray-400 sm:px-5 dark:border-white/10 dark:text-gray-500"
+                >
+                    No allergies recorded for this patient.
+                </p>
 
                 <div class="min-w-0 space-y-4 px-3 sm:px-5">
                     <div class="py-3 md:hidden">

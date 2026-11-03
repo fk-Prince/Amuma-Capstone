@@ -18,9 +18,13 @@
 
         <div class="flex-1 flex flex-col min-w-0 h-full gap-3">
             <OwnerHeader @open="isOpen = true" />
+            <SetupStepBanner context="owner" />
+            <ClientOnly>
+                <SetupNextHint context="owner" />
+            </ClientOnly>
 
             <main
-                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
+                class="scrollbar-none flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
             >
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden"
@@ -51,9 +55,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import OwnerHeader from "~/components/sections/owner/OwnerHeader.vue";
+import SetupStepBanner from "~/components/sections/SetupStepBanner.vue";
+import SetupNextHint from "~/components/sections/SetupNextHint.vue";
 import OwnerSidebar from "~/components/sections/owner/OwnerSidebar.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { useAuthReady } from "~/composables/useAuthUser";
+import { useTrackSetupVisits } from "~/composables/useSetupGuide";
+
+// The setup guide ticks off steps once their page has been opened.
+useTrackSetupVisits();
 
 const isOpen = ref(false);
 const authReady = useAuthReady();

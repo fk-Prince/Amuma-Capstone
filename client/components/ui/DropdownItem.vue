@@ -60,6 +60,8 @@ import {
     Users,
     CreditCard,
     Settings,
+    LifeBuoy,
+    Headphones,
 } from "lucide-vue-next";
 
 const props = defineProps<{
@@ -79,6 +81,8 @@ const ICON_MAP: Record<string, any> = {
     "Family Portal": Users,
     "Subscription Management": CreditCard,
     Settings: Settings,
+    "Help Center": LifeBuoy,
+    "Support Tickets": Headphones,
 };
 
 const resolvedIcon = computed(

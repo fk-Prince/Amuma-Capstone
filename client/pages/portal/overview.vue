@@ -204,6 +204,7 @@
         v-else
         class="grid gap-5 items-stretch grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     >
+
         <div
             class="md:col-span-2 lg:col-span-1 bg-white rounded-lg border border-gray-100 shadow-sm p-5 relative overflow-hidden dark:bg-secondary dark:border-white/10"
         >

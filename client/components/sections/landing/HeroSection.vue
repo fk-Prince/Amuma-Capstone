@@ -1,14 +1,55 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { Star } from "lucide-vue-next";
+import { onMounted, ref } from "vue";
+import { Sparkles, Star, UserRound } from "lucide-vue-next";
 import { heroImage } from "~/composables/useHeroImages";
+import { reviewService } from "~/api/review/ReviewService";
 
-const reviewers = [
-    { initials: "BS", tone: "bg-rose-400" },
-    { initials: "AW", tone: "bg-primary" },
-    { initials: "AM", tone: "bg-teal-500" },
-    { initials: "JR", tone: "bg-violet-400" },
-];
+// Live rating from published AMUMA app reviews; hidden until there is at least one.
+const TONES = ["bg-rose-400", "bg-primary", "bg-teal-500", "bg-violet-400"];
+
+const reviewSummary = ref<{
+    average: number;
+    total: number;
+    people: { key: string | number; initials: string; tone: string }[];
+} | null>(null);
+
+function initialsOf(user: any) {
+    return (
+        [user?.first_name, user?.last_name]
+            .filter(Boolean)
+            .map((part: string) => String(part).charAt(0))
+            .join("")
+            .toUpperCase() || "A"
+    );
+}
+
+// Set once the reviews request has finished, so the invite doesn't flash first.
+const reviewsChecked = ref(false);
+
+onMounted(async () => {
+    try {
+        const res = await reviewService.list({ per_page: 4 });
+        const total = Number(res?.paginator?.total ?? 0);
+
+        if (!total) return;
+
+        reviewSummary.value = {
+            average: Number(res?.average_rating ?? 0),
+            total,
+            people: (res?.paginator?.data ?? [])
+                .slice(0, 4)
+                .map((review: any, i: number) => ({
+                    key: review.review_id ?? i,
+                    initials: initialsOf(review.user),
+                    tone: TONES[i % TONES.length] ?? "bg-primary",
+                })),
+        };
+    } catch {
+        reviewSummary.value = null;
+    } finally {
+        reviewsChecked.value = true;
+    }
+});
 
 
 const lightImg = heroImage("agency", "light");
@@ -25,7 +66,7 @@ const badges = [
         icon: '<rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />',
     },
     {
-        label: "HIPAA Compliant",
+        label: "Role-based Access",
         icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />',
     },
     {
@@ -50,7 +91,7 @@ const badges = [
         <div
             class="mx-auto flex w-[94%] max-w-[1600px] items-center gap-12 px-10 max-sm:px-4 max-lg:flex-col"
         >
-            <div class="max-w-[680px] flex-[0_0_50%]">
+            <div class="relative z-10 max-w-[680px] flex-[0_0_50%]">
                 <div
                     class="relative h-[10px] w-[10px] animate-pulse rounded-full bg-primary shadow-[0_0_25px_rgba(49,130,237,0.8)]"
                 >
@@ -74,7 +115,7 @@ const badges = [
                 </h1>
 
                 <p
-                    class="max-w-[640px] text-[0.95rem] leading-8 text-muted motion-safe:animate-fadeInUp dark:text-gray-400"
+                    class="max-w-[640px] text-[0.95rem] leading-8 text-muted motion-safe:animate-fadeInUp xl:max-w-[28rem] dark:text-gray-400"
                     style="animation-delay: 120ms"
                 >
                     Streamline home-care bookings, facility management, and
@@ -88,7 +129,7 @@ const badges = [
                 ></span>
 
                 <div
-                    class="mb-6 flex flex-wrap gap-3 motion-safe:animate-fadeInUp"
+                    class="mb-8 flex flex-wrap gap-3 motion-safe:animate-fadeInUp"
                     style="animation-delay: 240ms"
                 >
                     <NuxtLink
@@ -112,8 +153,9 @@ const badges = [
 
                     <NuxtLink
                         to="/agencies"
-                        class="rounded-xl border border-primary px-7 py-3.5 text-[0.95rem] font-bold text-primary transition hover:bg-primary hover:text-white"
+                        class="flex items-center gap-2 rounded-xl border border-primary px-7 py-3.5 text-[0.95rem] font-bold text-primary transition hover:bg-primary hover:text-white"
                     >
+                        <Sparkles class="h-4 w-4 shrink-0" />
                         Scale Your Agency Today
                     </NuxtLink>
                 </div>
@@ -147,6 +189,7 @@ const badges = [
                 </div>
 
                 <a
+                    v-if="reviewSummary"
                     href="#testimonials"
                     class="group flex w-fit items-center gap-4 motion-safe:animate-fadeInUp"
                     style="animation-delay: 360ms"
@@ -154,8 +197,8 @@ const badges = [
                 >
                     <div class="flex items-center">
                         <span
-                            v-for="(person, i) in reviewers"
-                            :key="person.initials"
+                            v-for="(person, i) in reviewSummary.people"
+                            :key="person.key"
                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-0.5 dark:border-secondary"
                             :class="[person.tone, i > 0 ? '-ml-3' : '']"
                             :style="{ transitionDelay: `${i * 40}ms` }"
@@ -164,9 +207,10 @@ const badges = [
                         </span>
 
                         <span
+                            v-if="reviewSummary.total > reviewSummary.people.length"
                             class="-ml-3 flex h-10 min-w-10 items-center justify-center rounded-full border-2 border-white bg-slate-100 px-1.5 text-[11px] font-bold text-muted-dark shadow-sm ring-1 ring-black/5 dark:border-secondary dark:bg-secondary-800 dark:text-gray-300"
                         >
-                            +124
+                            +{{ reviewSummary.total - reviewSummary.people.length }}
                         </span>
                     </div>
 
@@ -177,18 +221,23 @@ const badges = [
                             <span
                                 class="text-xl font-black leading-none text-secondary dark:text-white"
                             >
-                                4.9
+                                {{ reviewSummary.average.toFixed(1) }}
                             </span>
 
                             <div
                                 class="flex gap-0.5"
                                 role="img"
-                                aria-label="Rated 4.9 out of 5 stars"
+                                :aria-label="`Rated ${reviewSummary.average.toFixed(1)} out of 5 stars`"
                             >
                                 <Star
                                     v-for="n in 5"
                                     :key="n"
-                                    class="h-4 w-4 fill-amber-400 text-amber-400"
+                                    class="h-4 w-4"
+                                    :class="
+                                        n <= Math.round(reviewSummary.average)
+                                            ? 'fill-amber-400 text-amber-400'
+                                            : 'fill-transparent text-gray-300 dark:text-gray-600'
+                                    "
                                 />
                             </div>
                         </div>
@@ -196,16 +245,60 @@ const badges = [
                         <p
                             class="mt-1 text-xs text-muted-dark dark:text-gray-300"
                         >
-                            from 128+ reviews
+                            from {{ reviewSummary.total }}
+                            {{ reviewSummary.total === 1 ? "review" : "reviews" }}
                             <span class="text-muted dark:text-gray-500">·</span>
                             <span
                                 class="text-muted transition-colors group-hover:text-primary dark:text-gray-400"
                             >
-                                Loved by caregivers and agencies
+                                See what our users say
                             </span>
                         </p>
                     </div>
                 </a>
+
+                <!-- No published reviews yet: same look, inviting the first one -->
+                <NuxtLink
+                    v-else-if="reviewsChecked"
+                    to="/company/reviews"
+                    class="group flex w-fit items-center gap-4 motion-safe:animate-fadeInUp"
+                    style="animation-delay: 360ms"
+                >
+                    <div class="flex items-center">
+                        <span
+                            v-for="(tone, i) in TONES"
+                            :key="tone"
+                            class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white text-white shadow-sm ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-0.5 dark:border-secondary"
+                            :class="[tone, i > 0 ? '-ml-3' : '']"
+                            :style="{ transitionDelay: `${i * 40}ms` }"
+                        >
+                            <UserRound class="h-4 w-4" />
+                        </span>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-0.5" aria-hidden="true">
+                                <Star
+                                    v-for="n in 5"
+                                    :key="n"
+                                    class="h-4 w-4 fill-amber-400/30 text-amber-400"
+                                />
+                            </div>
+                        </div>
+
+                        <p
+                            class="mt-1 text-xs text-muted-dark dark:text-gray-300"
+                        >
+                            Using AMUMA?
+                            <span
+                                class="font-semibold text-primary transition-colors group-hover:underline dark:text-primary-300"
+                            >
+                                Be the first to leave a review
+                            </span>
+                        </p>
+                    </div>
+                </NuxtLink>
             </div>
 
             <div

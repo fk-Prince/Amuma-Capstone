@@ -215,6 +215,7 @@ import ThemeModeSwitcher from "./ThemeModeSwitcher.vue";
 import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
+import { useSupportCenter } from "~/composables/useSupportCenter";
 import AuthTransitionScreen from "./AuthTransitionScreen.vue";
 import { authService } from "~/api/auth/AuthService.js";
 import {
@@ -279,9 +280,24 @@ const roleClass = computed(
 const loggingOut = ref(false);
 const navigating = ref(false);
 
+const { openSupport } = useSupportCenter();
+
 async function onMenuItem(item: any, close: () => void) {
     if (item.to) {
         close();
+        return;
+    }
+
+    // Help Center: inside a branch dashboard it opens right there; elsewhere
+    // it's the Customer Support page. Both reach the AMUMA care team.
+    if (item.action === "support") {
+        close();
+
+        if (route.path.startsWith("/app/branches/")) {
+            openSupport();
+        } else {
+            await navigateTo("/resources/support");
+        }
         return;
     }
 

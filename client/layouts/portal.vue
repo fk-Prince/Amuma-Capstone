@@ -19,9 +19,13 @@
         <div class="flex-1 flex flex-col min-w-0 h-full gap-3">
             <PortalHeader @open="isOpen = true" />
             <SandboxNotice />
+            <SetupStepBanner context="portal" />
+            <ClientOnly>
+                <SetupNextHint context="portal" />
+            </ClientOnly>
 
             <main
-                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
+                class="scrollbar-none flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
             >
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden dark:hidden"
@@ -60,14 +64,20 @@ import { nextTick, ref, watch } from "vue";
 import PortalSidebar from "~/components/sections/PortalSidebar.vue";
 import PortalHeader from "~/components/sections/PortalHeader.vue";
 import SandboxNotice from "~/components/sections/SandboxNotice.vue";
+import SetupStepBanner from "~/components/sections/SetupStepBanner.vue";
+import SetupNextHint from "~/components/sections/SetupNextHint.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
 import { usePortalTour } from "~/composables/usePortalTour";
+import { useTrackSetupVisits } from "~/composables/useSetupGuide";
 
 const isOpen = ref(false);
 const authReady = useAuthReady();
 const user = useAuthUser();
 const tour = usePortalTour(isOpen);
+
+// The setup guide ticks off steps once their page has been opened.
+useTrackSetupVisits();
 let tourStarted = false;
 
 watch(

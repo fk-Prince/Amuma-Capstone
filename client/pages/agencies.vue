@@ -5,6 +5,7 @@ import PageHero from "~/components/sections/marketing/PageHero.vue";
 import PricingSection from "~/components/sections/landing/PricingSection.vue";
 import FaqSection from "~/components/sections/landing/FaqSection.vue";
 import CtaSection from "~/components/sections/landing/CtaSection.vue";
+import AgencySubscribeFlow from "~/components/sections/marketing/AgencySubscribeFlow.vue";
 import Reveal from "~/components/ui/Reveal.vue";
 import { heroImage } from "~/composables/useHeroImages";
 import scheduleImg from "~/assets/images/Rectangle_12.png";
@@ -381,6 +382,8 @@ const comparison = [
                 </div>
             </div>
         </section>
+
+        <AgencySubscribeFlow />
 
         <div id="plans" class="scroll-mt-32">
             <PricingSection />

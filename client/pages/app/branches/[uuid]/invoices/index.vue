@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex min-h-screen-header flex-1 flex-col gap-2 bg-slate-100 dark:bg-surface"
+        class="dashboard-fit flex min-h-screen-header flex-1 flex-col gap-2 bg-slate-100 dark:bg-surface"
     >
         <InvoiceOverview
             :overview="overview"

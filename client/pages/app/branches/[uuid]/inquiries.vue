@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen-header bg-[#EEF3FB] dark:bg-surface flex flex-col"
+        class="dashboard-fit min-h-screen-header bg-[#EEF3FB] dark:bg-surface flex flex-col"
     >
         <div
             class="rounded-lg bg-white shadow-sm border border-[#E4EFED] overflow-visible flex flex-col flex-1 min-h-0 dark:bg-secondary dark:border-white/10"

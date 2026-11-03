@@ -30,7 +30,7 @@ type Row = ConversationSummary & { kind: "family" | "staff" };
 // with branch staff instead of the Family / Staff tabs.
 const props = defineProps<{ portal?: boolean }>();
 
-const MAX_ROWS = 5;
+const MAX_ROWS = 20;
 const DROPDOWN_MARGIN = 16;
 const DROPDOWN_MAX_WIDTH = 380;
 
@@ -482,7 +482,9 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="max-h-[360px] overflow-y-auto p-2">
+                <div
+                    class="max-h-[min(360px,calc(100dvh-14rem))] overflow-y-auto overscroll-contain p-2"
+                >
                     <div v-if="loading && !rows.length" class="space-y-2 p-1">
                         <div
                             v-for="n in 3"

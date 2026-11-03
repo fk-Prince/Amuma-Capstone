@@ -17,6 +17,7 @@ import {
     HeartPulse,
     Printer,
     BedDouble,
+    Plus,
 } from "lucide-vue-next";
 import Pagination from "~/components/ui/Pagination.vue";
 import PatientDetails from "~/components/sections/app/Booking/PatientDetails.vue";
@@ -257,7 +258,7 @@ function summaryGridClass(booking: PortalBooking) {
     const cards =
         2 + (assignedRoom(booking) ? 1 : 0) + (showValidUntil(booking) ? 1 : 0);
 
-    if (cards >= 4) return "sm:grid-cols-4";
+    if (cards >= 4) return "sm:grid-cols-2 lg:grid-cols-4";
     if (cards === 3) return "sm:grid-cols-3";
 
     return "sm:grid-cols-2";
@@ -464,30 +465,58 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="min-h-full space-y-6 p-4 pb-16">
-        <div
-            v-if="meta"
-            class="inline-flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-white/10 dark:bg-secondary"
+        <!-- Summary: how many bookings, and a way to start a new one -->
+        <section
+            class="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:p-5 dark:border-white/10 dark:bg-secondary"
         >
-            <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+            <div class="flex min-w-0 flex-1 items-center gap-4">
+                <span
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+                >
+                    <ClipboardList class="h-5 w-5" />
+                </span>
+
+                <div class="min-w-0">
+                    <p
+                        class="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                    >
+                        Total bookings
+                    </p>
+
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                        <span
+                            v-if="meta"
+                            class="text-2xl font-bold leading-tight text-gray-900 dark:text-white"
+                        >
+                            {{ meta.total }}
+                        </span>
+                        <span
+                            v-else
+                            class="my-1 inline-block h-6 w-10 animate-pulse rounded-md bg-gray-100 dark:bg-white/10"
+                        />
+
+                        <span
+                            v-if="meta && meta.total"
+                            class="text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            Showing
+                            {{ (meta.current_page - 1) * meta.per_page + 1 }}–{{
+                                Math.min(meta.current_page * meta.per_page, meta.total)
+                            }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start a new booking: same search families use from the home page -->
+            <NuxtLink
+                to="/booking/search"
+                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/25 transition hover:bg-primary-600"
             >
-                <ClipboardList class="h-5 w-5" />
-            </span>
-
-            <span>
-                <span
-                    class="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
-                >
-                    Total bookings
-                </span>
-
-                <span
-                    class="block text-lg font-semibold text-gray-900 dark:text-white"
-                >
-                    {{ meta.total }}
-                </span>
-            </span>
-        </div>
+                <Plus class="h-4 w-4" />
+                Add booking
+            </NuxtLink>
+        </section>
 
         <div v-if="isLoading" class="space-y-4">
             <div
@@ -608,6 +637,14 @@ onBeforeUnmount(() => {
                         Your booking requests will appear here once you submit a
                         service request.
                     </p>
+
+                    <NuxtLink
+                        to="/booking/search"
+                        class="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600"
+                    >
+                        <Plus class="h-4 w-4" />
+                        Add booking
+                    </NuxtLink>
                 </div>
             </div>
 
@@ -674,6 +711,29 @@ onBeforeUnmount(() => {
                                                 {{
                                                     statusConfig(booking.status)
                                                         .label
+                                                }}
+                                            </span>
+
+                                            <span
+                                                class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset sm:hidden"
+                                                :class="
+                                                    categoryStyle(
+                                                        booking.category,
+                                                    )
+                                                "
+                                            >
+                                                <component
+                                                    :is="
+                                                        categoryIcon(
+                                                            booking.category,
+                                                        )
+                                                    "
+                                                    class="h-3 w-3"
+                                                />
+                                                {{
+                                                    categoryLabel(
+                                                        booking.category,
+                                                    )
                                                 }}
                                             </span>
 
@@ -758,21 +818,21 @@ onBeforeUnmount(() => {
                             </p>
 
                             <div
-                                class="mt-5 grid grid-cols-2 gap-3"
+                                class="mt-5 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-100 bg-gray-100 dark:border-white/10 dark:bg-white/10"
                                 :class="summaryGridClass(booking)"
                             >
                                 <div
-                                    class="rounded-xl bg-gray-50/80 px-3.5 py-3 dark:bg-white/5"
+                                    class="flex min-w-0 items-center justify-between gap-4 bg-gray-50 px-4 py-3 sm:block sm:py-3.5 dark:bg-secondary dark:bg-[linear-gradient(rgb(255_255_255/0.04),rgb(255_255_255/0.04))]"
                                 >
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                        class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
                                         <ClipboardList class="h-3.5 w-3.5" />
                                         Type
                                     </div>
 
                                     <p
-                                        class="mt-1.5 truncate text-sm font-semibold text-gray-800 dark:text-white"
+                                        class="min-w-0 text-right text-sm font-semibold leading-snug text-gray-800 sm:mt-1.5 sm:text-left dark:text-white"
                                     >
                                         {{ typeLabel(booking) }}
                                     </p>
@@ -780,17 +840,17 @@ onBeforeUnmount(() => {
 
                                 <div
                                     v-if="assignedRoom(booking)"
-                                    class="rounded-xl bg-primary-50 px-3.5 py-3 ring-1 ring-inset ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/25"
+                                    class="flex min-w-0 items-center justify-between gap-4 bg-primary-50 px-4 py-3 sm:block sm:py-3.5 dark:bg-secondary dark:bg-[linear-gradient(rgb(var(--primary-500)/0.12),rgb(var(--primary-500)/0.12))]"
                                 >
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-primary-600 dark:text-primary-300"
+                                        class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-primary-600 dark:text-primary-300"
                                     >
                                         <BedDouble class="h-3.5 w-3.5" />
                                         Room / Bed · Plan
                                     </div>
 
                                     <p
-                                        class="mt-1.5 truncate text-sm font-semibold text-gray-900 dark:text-white"
+                                        class="min-w-0 text-right text-sm font-semibold leading-snug text-gray-900 sm:mt-1.5 sm:text-left dark:text-white"
                                     >
                                         {{ assignedRoom(booking)?.roomBed }}
                                         <span
@@ -802,17 +862,17 @@ onBeforeUnmount(() => {
                                 </div>
 
                                 <div
-                                    class="rounded-xl bg-gray-50/80 px-3.5 py-3 dark:bg-white/5"
+                                    class="flex min-w-0 items-center justify-between gap-4 bg-gray-50 px-4 py-3 sm:block sm:py-3.5 dark:bg-secondary dark:bg-[linear-gradient(rgb(255_255_255/0.04),rgb(255_255_255/0.04))]"
                                 >
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                        class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
                                         <CalendarDays class="h-3.5 w-3.5" />
                                         {{ serviceDateLabel(booking) }}
                                     </div>
 
                                     <p
-                                        class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
+                                        class="min-w-0 text-right text-sm font-semibold leading-snug text-gray-800 sm:mt-1.5 sm:text-left dark:text-white"
                                     >
                                         {{ formatServiceDateTime(booking) }}
                                     </p>
@@ -820,17 +880,17 @@ onBeforeUnmount(() => {
 
                                 <div
                                     v-if="showValidUntil(booking)"
-                                    class="rounded-xl bg-gray-50/80 px-3.5 py-3 dark:bg-white/5"
+                                    class="flex min-w-0 items-center justify-between gap-4 bg-gray-50 px-4 py-3 sm:block sm:py-3.5 dark:bg-secondary dark:bg-[linear-gradient(rgb(255_255_255/0.04),rgb(255_255_255/0.04))]"
                                 >
                                     <div
-                                        class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                                        class="flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
                                         <Clock3 class="h-3.5 w-3.5" />
                                         Valid Until
                                     </div>
 
                                     <p
-                                        class="mt-1.5 text-sm font-semibold text-gray-800 dark:text-white"
+                                        class="min-w-0 text-right text-sm font-semibold leading-snug text-gray-800 sm:mt-1.5 sm:text-left dark:text-white"
                                     >
                                         {{
                                             formatDateTime(booking.valid_until)

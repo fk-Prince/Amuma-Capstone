@@ -40,7 +40,7 @@
                 v-if="canAddImage"
                 type="button"
                 @click="openModal = true"
-                class="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-600 transition"
+                class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary-600"
             >
                 <Plus class="w-4 h-4" />
                 Add Image
@@ -130,7 +130,7 @@
                 type="button"
                 :disabled="loading"
                 @click="loadMore"
-                class="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 transition disabled:opacity-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
             >
                 {{ loading ? "Loading..." : "Load More" }}
             </button>
@@ -274,7 +274,7 @@
                             <button
                                 type="button"
                                 @click="closeModal"
-                                class="rounded-xl border border-gray-200 px-4 py-3 text-sm hover:bg-gray-50 transition dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5"
+                                class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                             >
                                 Cancel
                             </button>
@@ -282,8 +282,10 @@
                             <button
                                 type="submit"
                                 :disabled="submitting"
-                                class="rounded-xl bg-primary text-white px-4 py-3 text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                             >
+                                <LoaderCircle v-if="submitting" class="h-3.5 w-3.5 animate-spin" />
+                                <Check v-else class="h-4 w-4" />
                                 {{ submitting ? "Uploading..." : "Add Image" }}
                             </button>
                         </div>
@@ -302,7 +304,7 @@ import { branchSettingService } from "~/api/branch-setting/BranchSettingService"
 import type { BranchImageRetrieve } from "~/types/branch-utils";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import Combobox from "~/components/ui/Combobox.vue";
-import { Globe, ImageIcon, Lock, Plus } from "lucide-vue-next";
+import { Check, Globe, ImageIcon, Lock, LoaderCircle, Plus } from "lucide-vue-next";
 import { useToast } from "~/composables/useToast";
 interface ImageForm {
     type: string;

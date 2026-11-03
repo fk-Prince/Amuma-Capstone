@@ -1,5 +1,5 @@
 <template>
-    <footer class="bg-[#0f1623] text-white">
+    <footer class="border-t border-gray-200 bg-white text-secondary dark:border-transparent dark:bg-[#0f1623] dark:text-white">
         <div :class="[container, 'py-16']">
             <div class="grid grid-cols-1 gap-x-12 gap-y-10 md:grid-cols-4">
                 <div class="flex flex-col gap-4">
@@ -10,7 +10,7 @@
                             class="h-8 w-auto object-contain object-left"
                         />
                     </div>
-                    <p class="max-w-[240px] text-sm leading-6 text-gray-400">
+                    <p class="max-w-[240px] text-sm leading-6 text-gray-600 dark:text-gray-400">
                         Modern caregiving management for the digital age.
                     </p>
                 </div>
@@ -102,9 +102,9 @@
             </div>
         </div>
 
-        <div class="border-t border-white/10">
+        <div class="border-t border-gray-200 dark:border-white/10">
             <div :class="[container, 'py-6']">
-                <p class="text-sm leading-6 text-gray-500">
+                <p class="text-sm leading-6 text-gray-600 dark:text-gray-500">
                     © {{ currentYear }} AMUMA. All rights reserved.
                 </p>
             </div>
@@ -136,9 +136,9 @@ const container = computed(() => {
 });
 
 const headingClass =
-    "flex h-8 items-center text-xs font-semibold uppercase tracking-widest text-white";
+    "flex h-8 items-center text-xs font-semibold uppercase tracking-widest text-secondary dark:text-white";
 const linkClass =
-    "w-fit text-sm leading-6 text-gray-400 transition-colors hover:text-white";
+    "w-fit text-sm leading-6 text-gray-600 transition-colors hover:text-primary dark:text-gray-400 dark:hover:text-white";
 
 const learnLinks = [
     { label: "About us", to: "/company" },

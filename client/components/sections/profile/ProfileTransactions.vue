@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { Receipt } from "lucide-vue-next";
 import { userService } from "~/api/user/UserService";
 import { formatCurrency } from "~/utils/currency";
 import { stringToDateTime } from "~/utils/time";
@@ -59,16 +60,27 @@ onMounted(load);
 
 <template>
     <section
-        class="bg-white p-6 shadow-sm dark:border-white/10 dark:bg-secondary"
+        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
     >
-        <div class="mb-5">
-            <h2 class="text-sm font-semibold text-slate-900 dark:text-white">
-                Transactions
-            </h2>
-            <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                All payments, withdrawals and other transactions on this account.
-            </p>
-        </div>
+        <header
+            class="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-6 dark:border-white/10"
+        >
+            <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300"
+            >
+                <Receipt class="h-[18px] w-[18px]" />
+            </span>
+            <div class="min-w-0">
+                <h2 class="text-sm font-bold text-secondary sm:text-base dark:text-white">
+                    Transactions
+                </h2>
+                <p class="text-xs leading-5 text-slate-500 sm:text-sm dark:text-gray-400">
+                    All payments, withdrawals and other transactions on this account.
+                </p>
+            </div>
+        </header>
+
+        <div class="p-4 sm:p-6">
 
         <div v-if="loading" class="space-y-3">
             <div
@@ -165,6 +177,7 @@ onMounted(load);
                     </tr>
                 </tbody>
             </table>
+        </div>
         </div>
     </section>
 </template>

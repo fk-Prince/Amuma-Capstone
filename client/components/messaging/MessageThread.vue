@@ -1845,9 +1845,11 @@ onBeforeUnmount(unsubscribe);
                     <Paperclip class="h-[18px] w-[18px]" />
                 </button>
 
+                <!-- Chat keeps emojis and any characters (not a form field) -->
                 <textarea
                     ref="textarea"
                     v-model="draft"
+                    data-allow-emoji
                     rows="1"
                     :disabled="disabled"
                     placeholder="Write a message..."
