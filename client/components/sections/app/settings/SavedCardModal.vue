@@ -9,7 +9,7 @@
                 class="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Replace card"
+                :aria-label="isNew ? 'Set up card' : 'Replace card'"
             >
                 <div
                     class="flex shrink-0 items-center justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
@@ -25,7 +25,7 @@
                             <h2
                                 class="text-lg font-semibold text-gray-900 dark:text-white"
                             >
-                                Replace card
+                                {{ isNew ? "Set up card" : "Replace card" }}
                             </h2>
                             <p
                                 class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
@@ -57,7 +57,7 @@
                         :processing="processing"
                         :onCardPay="save"
                         :enableGCash="false"
-                        title="New card"
+                        :title="isNew ? 'Card for auto-renew' : 'New card'"
                         description="We verify your card now. Nothing is charged today."
                         :amount-label="chargesOn ? 'Next charge' : undefined"
                         submit-label="Save card"
@@ -84,6 +84,7 @@ const props = defineProps<{
     branchUuid: string;
     amount: number;
     chargesOn?: string | null;
+    isNew?: boolean;
 }>();
 
 const emit = defineEmits<{

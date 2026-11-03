@@ -414,6 +414,64 @@
                 </div>
 
                 <div
+                    v-if="canAddCard"
+                    class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 dark:border-white/15 dark:bg-white/5"
+                >
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div
+                            class="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-white ring-1 ring-slate-200 dark:bg-secondary dark:ring-white/10"
+                        >
+                            <CreditCard
+                                class="h-4 w-4 text-slate-500 dark:text-gray-400"
+                            />
+                        </div>
+
+                        <div class="min-w-0">
+                            <p
+                                class="text-sm font-semibold text-slate-800 dark:text-white"
+                            >
+                                No card saved
+                            </p>
+                            <p class="text-xs text-slate-500 dark:text-gray-400">
+                                Add a card to turn on auto-renew.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex shrink-0 items-center gap-3"
+                        :title="noPermissionTitle"
+                    >
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked="false"
+                            :disabled="!canUpdateSubscription"
+                            class="flex items-center gap-2 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
+                            @click="openCardForAutoRenew"
+                        >
+                            <span
+                                class="relative inline-flex h-5 w-9 shrink-0 rounded-full bg-slate-300 transition dark:bg-white/20"
+                            >
+                                <span
+                                    class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+                                />
+                            </span>
+                            Auto-renew
+                        </button>
+
+                        <button
+                            type="button"
+                            :disabled="!canUpdateSubscription"
+                            class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/10"
+                            @click="openCardForAutoRenew"
+                        >
+                            Add card
+                        </button>
+                    </div>
+                </div>
+
+                <div
                     v-if="yearlyCharge && !isCancelled"
                     class="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm dark:border-white/10 dark:bg-white/5"
                 >
@@ -1173,12 +1231,20 @@
         />
 
         <SavedCardModal
-            v-if="savedCard"
+            v-if="savedCard || canAddCard"
             :open="showCardModal"
             :branch-uuid="props.uuid"
-            :amount="Number(savedCard.amount) || 0"
-            :charges-on="savedCard.is_trial || savedCard.auto_renew ? savedCard.charges_on : null"
-            @close="showCardModal = false"
+            :is-new="!savedCard"
+            :amount="Number(savedCard?.amount ?? yearlyCharge?.total) || 0"
+            :charges-on="
+                savedCard && (savedCard.is_trial || savedCard.auto_renew)
+                    ? savedCard.charges_on
+                    : null
+            "
+            @close="
+                showCardModal = false;
+                turnOnAfterCardSaved = false;
+            "
             @saved="onCardSaved"
         />
 
@@ -1466,6 +1532,25 @@ const CARD_BRANDS: Record<string, string> = {
 const cardBrandLabel = (brand?: string | null) =>
     CARD_BRANDS[brand ?? ""] ?? "Card";
 
+const turnOnAfterCardSaved = ref(false);
+
+const canAddCard = computed(
+    () =>
+        !savedCard.value &&
+        !isSandbox.value &&
+        ["pending", "active"].includes(
+            subscription.value?.subscription?.status ?? "",
+        ) &&
+        !(awaitingPayment.value && trialEnded.value),
+);
+
+const openCardForAutoRenew = () => {
+    if (!canUpdateSubscription.value) return;
+
+    turnOnAfterCardSaved.value = true;
+    showCardModal.value = true;
+};
+
 const onCardSaved = (card: any) => {
     if (!card) return;
 
@@ -1473,6 +1558,11 @@ const onCardSaved = (card: any) => {
         ...subscription.value,
         renewal: { ...subscription.value?.renewal, card },
     };
+
+    if (turnOnAfterCardSaved.value && !card.auto_renew) {
+        turnOnAfterCardSaved.value = false;
+        toggleAutoRenew();
+    }
 };
 
 const { canUpdate } = usePermissions();
