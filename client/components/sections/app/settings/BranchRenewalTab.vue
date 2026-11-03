@@ -413,6 +413,62 @@
                     </div>
                 </div>
 
+                <div
+                    v-if="yearlyCharge && !isCancelled"
+                    class="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-sm dark:border-white/10 dark:bg-white/5"
+                >
+                    <p
+                        class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-gray-400"
+                    >
+                        What you're charged every year
+                    </p>
+
+                    <div class="mt-3 space-y-1.5">
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-600 dark:text-gray-400">
+                                {{ yearlyCharge.planName }} plan
+                            </span>
+                            <span class="font-medium text-slate-800 dark:text-white">
+                                ₱{{ formatMoney(yearlyCharge.base) }}
+                            </span>
+                        </div>
+
+                        <div
+                            v-if="yearlyCharge.additionalCount"
+                            class="flex justify-between gap-3"
+                        >
+                            <span class="text-slate-600 dark:text-gray-400">
+                                {{ yearlyCharge.additionalCount }} additional
+                                {{ yearlyCharge.additionalCount === 1 ? "branch" : "branches" }}
+                                × ₱{{ formatMoney(yearlyCharge.additionalPrice) }}
+                            </span>
+                            <span class="font-medium text-slate-800 dark:text-white">
+                                ₱{{ formatMoney(yearlyCharge.additionalTotal) }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between gap-3">
+                            <span class="text-slate-600 dark:text-gray-400">
+                                Taxes (VAT {{ yearlyCharge.vatRate }}%)
+                            </span>
+                            <span class="font-medium text-slate-800 dark:text-white">
+                                ₱{{ formatMoney(yearlyCharge.vat) }}
+                            </span>
+                        </div>
+
+                        <div
+                            class="flex justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/10"
+                        >
+                            <span class="font-semibold text-slate-900 dark:text-white">
+                                Total per year
+                            </span>
+                            <span class="font-bold text-primary">
+                                ₱{{ formatMoney(yearlyCharge.total) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Only worth showing when the renewal reaches beyond the
                      branch whose settings page this already is. -->
                 <div
@@ -1542,6 +1598,31 @@ const showUpgradeMath = ref(false);
 const additionalBranches = computed(
     () => Number(subscription.value?.plan?.additional_branches) || 0,
 );
+
+const yearlyCharge = computed(() => {
+    const plan = pendingPlan.value
+        ? (findPlan(plans.value, pendingPlan.value.plan_code, pendingPlan.value.type) ??
+          currentPlan.value)
+        : currentPlan.value;
+
+    if (!plan) return null;
+
+    const base = planPrice(plan);
+    const additionalPrice = Number(plan.additional_branch_price) || 0;
+    const additionalTotal = additionalBranches.value * additionalPrice;
+    const breakdown = withVat(base + additionalTotal);
+
+    return {
+        planName: plan.name,
+        base,
+        additionalCount: additionalBranches.value,
+        additionalPrice,
+        additionalTotal,
+        vatRate: breakdown.rate,
+        vat: breakdown.vat,
+        total: breakdown.total,
+    };
+});
 
 const planTotal = (plan: any) =>
     planPrice(plan) +

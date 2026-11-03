@@ -420,7 +420,7 @@
                         <!-- Step 4 — review -->
                         <div
                             v-else-if="currentStep === 4"
-                            class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-2"
+                            class="mx-auto grid w-full max-w-5xl items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
                         >
                             <div class="min-w-0 space-y-5">
                                 <ResubmitReview :agency="null" :branch="form.branch" />
@@ -655,7 +655,7 @@
 
                             <div
                                 v-else
-                                class="grid items-start gap-5 lg:grid-cols-2"
+                                class="grid items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
                             >
                                 <PaymentForm
                                     compact
