@@ -236,6 +236,31 @@
                     </div>
 
                     <div
+                        v-if="canShowQr(schedule)"
+                        class="grid grid-cols-2 gap-2.5 border-t border-gray-100 p-3 dark:border-white/10"
+                    >
+                        <button
+                            type="button"
+                            :disabled="hasStarted(schedule) || generatingFor === schedule.schedule_id"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-transparent disabled:text-gray-400 dark:text-primary-300 dark:disabled:border-white/10 dark:disabled:text-gray-500"
+                            @click="openQr('in', schedule)"
+                        >
+                            <QrCode class="h-3.5 w-3.5" />
+                            Time-In QR
+                        </button>
+
+                        <button
+                            type="button"
+                            :disabled="!hasStarted(schedule) || generatingFor === schedule.schedule_id"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 py-2 text-xs font-semibold text-gray-600 transition hover:border-primary-600 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-400 dark:hover:text-primary-300"
+                            @click="openQr('out', schedule)"
+                        >
+                            <QrCode class="h-3.5 w-3.5" />
+                            Time-Out QR
+                        </button>
+                    </div>
+
+                    <div
                         v-if="isReviewable(schedule)"
                         class="border-t border-gray-100 p-3 dark:border-white/10"
                     >
@@ -255,6 +280,17 @@
                 </article>
             </section>
         </div>
+
+        <QrCodeModal
+            :show="showQrModal"
+            :token="qrToken"
+            :mode="qrMode"
+            :caregivers="qrCaregivers"
+            :checked-in="qrCheckedIn"
+            description="Show this code to the care team to scan."
+            @close="closeQr"
+            @scanned="onQrScanned"
+        />
     </div>
 </template>
 
@@ -266,11 +302,14 @@ import {
     UserRound,
     CalendarClock,
     Clock,
+    QrCode,
 } from "lucide-vue-next";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
+import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import { assignmentSummary, formatDurationShort } from "~/utils/time";
 
 const props = withDefaults(
@@ -283,6 +322,10 @@ const props = withDefaults(
         loading: false,
     },
 );
+
+const emit = defineEmits<{
+    refresh: [];
+}>();
 
 const {
     formatDate,
@@ -463,6 +506,78 @@ async function requestScheduleReview(schedule: ScheduleItem) {
     } finally {
         sendingReview.value = null;
     }
+}
+
+const generatingFor = ref<number | null>(null);
+const showQrModal = ref(false);
+const qrToken = ref<string | null>(null);
+const qrMode = ref<"clock-in" | "clock-out">("clock-in");
+const qrCaregivers = ref<{ employee_id: number; name: string }[]>([]);
+const qrCheckedIn = ref<{
+    employee_id: number;
+    name: string;
+    in_timestamp: string | null;
+} | null>(null);
+
+const medicalServiceOf = (schedule: ScheduleItem) =>
+    (schedule.services ?? []).find((service) => service.type === "Medical") ??
+    schedule.services?.[0];
+
+function hasStarted(schedule: ScheduleItem) {
+    return (schedule.services ?? []).some((service) =>
+        (service.assignees ?? []).some((assignee) =>
+            (assignee.online ?? []).some((row) => row.in_timestamp),
+        ),
+    );
+}
+
+function canShowQr(schedule: ScheduleItem) {
+    return (
+        schedule.category !== "Facility" &&
+        getScheduleDate(schedule) === today() &&
+        ["pending", "ongoing"].includes((schedule.status ?? "").toLowerCase()) &&
+        !!medicalServiceOf(schedule)
+    );
+}
+
+async function openQr(type: "in" | "out", schedule: ScheduleItem) {
+    const service = medicalServiceOf(schedule);
+    if (!service) return;
+
+    generatingFor.value = schedule.schedule_id;
+    qrToken.value = null;
+    qrMode.value = type === "in" ? "clock-in" : "clock-out";
+    showQrModal.value = true;
+
+    try {
+        const res = await attendanceService.generateQr({
+            type,
+            schedule_services_id: service.schedule_services_id,
+            as_family: true,
+        });
+
+        qrToken.value = res?.token ?? res?.data?.token ?? null;
+        qrCaregivers.value = res?.caregivers ?? [];
+        qrCheckedIn.value = res?.checked_in ?? null;
+    } catch (err: any) {
+        showQrModal.value = false;
+        error(err?.message ?? "Unable to create the QR code.");
+
+        if (err?.status === 409) emit("refresh");
+    } finally {
+        generatingFor.value = null;
+    }
+}
+
+function closeQr() {
+    showQrModal.value = false;
+    qrToken.value = null;
+}
+
+function onQrScanned() {
+    success(qrMode.value === "clock-in" ? "Visit started." : "Visit completed.");
+    closeQr();
+    emit("refresh");
 }
 
 function formatTimestamp(value?: string | null) {

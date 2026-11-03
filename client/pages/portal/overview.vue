@@ -736,16 +736,7 @@
                 class="mt-auto border-t border-gray-100 pt-4 dark:border-white/10"
             >
                 <p
-                    v-if="isMedicalVisit"
-                    class="text-[11px] text-gray-400 dark:text-gray-500"
-                >
-                    This is a one-time medical service visit, so there is no
-                    time-in or time-out. Your care team records the visit for
-                    you.
-                </p>
-
-                <p
-                    v-else-if="!canTimeIn"
+                    v-if="!canTimeIn"
                     class="text-[11px] text-gray-400 dark:text-gray-500"
                 >
                     {{

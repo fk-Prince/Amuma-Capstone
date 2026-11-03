@@ -711,6 +711,7 @@ onMounted(initialLoad);
                             v-else
                             :logs="scheduleLogs"
                             :loading="logsLoading"
+                            @refresh="loadScheduleLogs"
                         />
 
                         <Pagination

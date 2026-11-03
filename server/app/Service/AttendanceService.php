@@ -335,6 +335,13 @@ class AttendanceService
         $byEmployee = !empty($payload['employee_id']);
         $scheduleService = ScheduleService::with('schedule')->find($scheduleServicesId);
 
+        if ($scheduleService?->type === ScheduleService::TYPE_MEDICAL) {
+            return [
+                'type' => $payload['type'],
+                'token' => $this->generateMedicalVisitToken($scheduleService, $payload['type'], $byEmployee),
+            ];
+        }
+
         if ($scheduleService?->type === ScheduleService::TYPE_ADL) {
             if (!in_array(
                 strtolower((string) $scheduleService->schedule?->status),
@@ -359,6 +366,84 @@ class AttendanceService
             'handover' => ['type' => 'handover', 'token' => $this->generateHandoverToken($payload)],
             default => throw new Exception('Invalid QR type.', 422),
         };
+    }
+
+    private function generateMedicalVisitToken(ScheduleService $scheduleService, string $type, bool $byEmployee): string
+    {
+        $schedule = $scheduleService->schedule;
+
+        if (!in_array($type, ['in', 'out'], true)) {
+            throw new Exception('Invalid QR type.', 422);
+        }
+
+        if ($byEmployee) {
+            throw new Exception('Only the family can generate the time-in and time-out QR for this visit.', 403);
+        }
+
+        if (!$schedule || $schedule->isOnsite()) {
+            throw new Exception("Facility schedules don't need attendance.", 422);
+        }
+
+        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
+            throw new Exception('QR codes are not available for this visit.', 422);
+        }
+
+        $this->guardHasActiveAssignment($scheduleService->schedule_services_id);
+
+        $started = $this->medicalVisitStarted($schedule);
+
+        if ($type === 'in' && $started) {
+            throw new Exception('This visit has already started. Use the Time-Out QR when the visit ends.', 409);
+        }
+
+        if ($type === 'out' && !$started) {
+            throw new Exception("The care team hasn't timed in yet.", 409);
+        }
+
+        $token = Str::random(64);
+
+        Cache::put(
+            $this->qrCacheKey($type, $token),
+            ['medical_schedule_id' => $schedule->schedule_id],
+            now()->addMinutes(self::QR_TTL_MINUTES)
+        );
+
+        return $token;
+    }
+
+    private function medicalVisitStarted(Schedule $schedule): bool
+    {
+        return Attendance::whereHas(
+            'assigned.scheduleService',
+            fn($query) => $query->where('schedule_id', $schedule->schedule_id)
+        )
+            ->whereNotNull('in_timestamp')
+            ->exists();
+    }
+
+    private function verifyMedicalVisitToken(string $type, array $data, string $cacheKey, array $payload): array
+    {
+        $schedule = Schedule::with('patient')->find($data['medical_schedule_id']);
+
+        if (!$schedule?->patient) {
+            throw new Exception('This QR code is invalid or has expired.', 410);
+        }
+
+        $visit = [
+            'patient_uuid' => $schedule->patient->uuid,
+            'schedule_id' => $schedule->schedule_id,
+            'employee_id' => (int) $payload['employee_id'],
+        ];
+
+        $result = $type === 'in'
+            ? $this->confirmPatientVisit($visit, null)
+            : $this->timeOutPatientVisit($visit + ['confirm_unpaid' => !empty($payload['confirm_unpaid'])], null);
+
+        Cache::forget($cacheKey);
+
+        broadcast(new QrScanned($payload['token'], $type));
+
+        return $result;
     }
 
     public function generateHandoverToken(array $payload): string
@@ -526,6 +611,10 @@ class AttendanceService
             throw new Exception('This QR code is invalid or has expired.', 410);
         }
 
+        if (isset($data['medical_schedule_id'])) {
+            return $this->verifyMedicalVisitToken('in', $data, $cacheKey, $payload);
+        }
+
         $assigned = ScheduleAssigned::where('schedule_services_id', $data['schedule_services_id'])
             ->where('employee_id', $payload['employee_id'])
             ->where('is_active', true)
@@ -575,6 +664,10 @@ class AttendanceService
 
         if (!$data) {
             throw new Exception('This QR code is invalid or has expired.', 410);
+        }
+
+        if (isset($data['medical_schedule_id'])) {
+            return $this->verifyMedicalVisitToken('out', $data, $cacheKey, $payload);
         }
 
         return DB::transaction(function () use ($payload, $data, $cacheKey) {
