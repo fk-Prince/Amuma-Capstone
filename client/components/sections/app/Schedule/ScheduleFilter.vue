@@ -48,11 +48,7 @@
 
                 <div class="flex shrink-0 items-center gap-1.5 pl-1 sm:gap-2 sm:pl-2">
                     <div
-                        v-if="
-                            !filters.type.includes('adl') &&
-                            !isShifts &&
-                            !isEmployees
-                        "
+                        v-if="!isShifts"
                         class="flex items-center gap-1 rounded-xl bg-muted-light p-1 dark:bg-white/10"
                     >
                         <button
@@ -61,10 +57,10 @@
                             type="button"
                             :aria-label="option.label"
                             :title="option.label"
-                            :aria-pressed="filters.view === option.value"
+                            :aria-pressed="activeView === option.value"
                             class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8"
                             :class="
-                                filters.view === option.value
+                                activeView === option.value
                                     ? 'bg-white text-primary-600 shadow-sm dark:bg-secondary dark:text-primary-300'
                                     : 'text-muted hover:text-secondary dark:text-gray-400 dark:hover:text-white'
                             "
@@ -310,13 +306,14 @@ import {
     X,
     LayoutGrid,
     GanttChart,
+    List,
     SlidersHorizontal,
     PanelRightClose,
     PanelRightOpen,
 } from "lucide-vue-next";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 
-export type ScheduleView = "calendar" | "timeline" | "cards";
+export type ScheduleView = "calendar" | "timeline" | "cards" | "list";
 export type ScheduleTypeFilter = "medical" | "homecare";
 
 export interface ScheduleFilters {
@@ -391,12 +388,9 @@ function filtersFromQuery(): ScheduleFilters {
 
         assignment: toStr(route.query.assignment) || "all",
 
-        view:
-            toStr(route.query.view) === "cards"
-                ? "cards"
-                : toStr(route.query.view) === "timeline"
-                  ? "timeline"
-                  : "calendar",
+        view: (["cards", "timeline", "list"] as const).find(
+            (v) => v === toStr(route.query.view),
+        ) ?? "calendar",
     };
 }
 
@@ -421,15 +415,26 @@ watch(
     },
 );
 
-const viewOptions: {
-    label: string;
-    value: ScheduleView;
-    icon: unknown;
-}[] = [
-    { label: "Calendar view", value: "calendar", icon: CalendarDays },
-    { label: "Timeline view", value: "timeline", icon: GanttChart },
-    { label: "Card view", value: "cards", icon: LayoutGrid },
-];
+const viewOptions = computed<
+    { label: string; value: ScheduleView; icon: unknown }[]
+>(() =>
+    filters.type.includes("adl") || isEmployees.value
+        ? [
+              { label: "Calendar view", value: "calendar", icon: CalendarDays },
+              { label: "List view", value: "list", icon: List },
+          ]
+        : [
+              { label: "Calendar view", value: "calendar", icon: CalendarDays },
+              { label: "Timeline view", value: "timeline", icon: GanttChart },
+              { label: "Card view", value: "cards", icon: LayoutGrid },
+          ],
+);
+
+const activeView = computed(() =>
+    viewOptions.value.some((option) => option.value === filters.view)
+        ? filters.view
+        : "calendar",
+);
 
 const statusOptions = [
     { label: "All", value: "" },

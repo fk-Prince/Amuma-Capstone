@@ -27,6 +27,8 @@ class EmployeeAssignedScheduleResource extends JsonResource
                     'resident_name' => $shift->admission?->patient?->display_name ?? '',
                     'room_no' => $shift->admission?->bed?->room?->room_no,
                     'bed_no' => $shift->admission?->bed?->bed_no,
+                    'admitted_at' => $shift->admission?->admitted_at?->toISOString(),
+                    'discharged_at' => $shift->admission?->discharged_at?->toISOString(),
                 ])
                 ->values(),
             'schedules' => $this->scheduleAssignments
@@ -64,6 +66,7 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'duration_minutes' => $minutes,
             'start_time' => $window ? substr($window->start_time, 0, 5) : null,
             'end_time' => $window ? substr($window->end_time, 0, 5) : null,
+            'note' => ($window ?? $assignments->first())->note,
         ];
     }
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-4 p-3 sm:p-5">
+    <div ref="root" class="flex flex-col gap-4 p-3 sm:p-5">
         <!-- Month bar -->
         <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
             <div class="flex items-center gap-1.5">
@@ -90,6 +90,13 @@
             </button>
         </div>
 
+        <div
+            :class="
+                wide
+                    ? 'grid grid-cols-[minmax(0,1fr)_22rem] items-start gap-4'
+                    : 'flex flex-col gap-4'
+            "
+        >
         <!-- Month grid -->
         <div
             class="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10"
@@ -312,7 +319,12 @@
                         />
 
                         <div
-                            class="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-x-3 gap-y-2 py-3 pl-4 pr-3 sm:pl-5 lg:grid-cols-[6rem_minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-x-5 lg:pr-5"
+                            class="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-x-3 gap-y-2 py-3 pl-4 pr-3 sm:pl-5"
+                            :class="
+                                wide
+                                    ? ''
+                                    : 'lg:grid-cols-[6rem_minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-x-5 lg:pr-5'
+                            "
                         >
                             <div class="leading-tight">
                                 <p class="text-sm font-bold tabular-nums text-slate-800 dark:text-white">
@@ -372,7 +384,12 @@
                             </div>
 
                             <div
-                                class="col-span-2 min-w-0 rounded-xl bg-slate-50 px-3 py-2 lg:col-span-1 lg:bg-transparent lg:p-0 dark:bg-white/5 lg:dark:bg-transparent"
+                                class="col-span-2 min-w-0 rounded-xl bg-slate-50 px-3 py-2 dark:bg-white/5"
+                                :class="
+                                    wide
+                                        ? ''
+                                        : 'lg:col-span-1 lg:bg-transparent lg:p-0 lg:dark:bg-transparent'
+                                "
                             >
                                 <p
                                     v-if="serviceNames(schedule).length"
@@ -386,7 +403,8 @@
                             </div>
 
                             <div
-                                class="col-span-2 flex gap-2 lg:col-span-1 lg:justify-end"
+                                class="col-span-2 flex gap-2"
+                                :class="wide ? '' : 'lg:col-span-1 lg:justify-end'"
                                 @click.stop
                             >
                                 <button
@@ -432,6 +450,7 @@
                 </li>
             </ol>
         </section>
+        </div>
 
         <!-- Hover card: every detail of a visit -->
         <Teleport to="body">
@@ -611,6 +630,7 @@
 
 <script lang="ts" setup>
 import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useElementSize } from "@vueuse/core";
 import {
     CalendarClock,
     ChevronLeft,
@@ -654,6 +674,10 @@ const emit = defineEmits<{
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MAX_CHIPS = 3;
+
+const root = ref<HTMLElement | null>(null);
+const { width: rootWidth } = useElementSize(root);
+const wide = computed(() => rootWidth.value >= 1100);
 
 const { canAssign, canUpdate } = usePermissions();
 const canAssignSchedule = computed(() => canAssign(Modules.Schedules));
@@ -894,7 +918,9 @@ function selectDay(iso: string) {
     selectedDate.value = iso;
 
     // The day's full list sits below the grid; bring it into view.
-    nextTick(() => dayPanel.value?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    if (!wide.value) {
+        nextTick(() => dayPanel.value?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    }
 }
 
 const selectedItems = computed(() => sortByTime(schedulesForDay(selectedDate.value)));

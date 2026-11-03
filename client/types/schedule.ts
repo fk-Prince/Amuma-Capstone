@@ -221,6 +221,7 @@ export interface EmployeeScheduleEntry {
     duration_minutes: number;
     start_time: string | null;
     end_time: string | null;
+    note?: string | null;
 }
 
 export interface EmployeeShiftEntry {
@@ -231,6 +232,8 @@ export interface EmployeeShiftEntry {
     resident_name: string;
     room_no: string | null;
     bed_no: string | null;
+    admitted_at?: string | null;
+    discharged_at?: string | null;
 }
 
 export interface EmployeeScheduleRow {

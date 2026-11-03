@@ -40,6 +40,20 @@
                         "
                     />
 
+                    <EmployeeCalendar
+                        v-else-if="scheduleType === 'employees' && listOrCalendar === 'calendar'"
+                        :employees="employeeBoard"
+                        :loading="pending"
+                        :date="route.query.date_from as string"
+                        :range-end="route.query.date_to as string"
+                        :search="
+                            typeof route.query.search === 'string'
+                                ? route.query.search
+                                : ''
+                        "
+                        @change-range="onCalendarRange"
+                    />
+
                     <EmployeeScheduleBoard
                         v-else-if="scheduleType === 'employees'"
                         :employees="employeeBoard"
@@ -152,6 +166,17 @@
                                 @assign="handleAssign"
                             />
                         </template>
+
+                        <AdlCalendar
+                            v-else-if="listOrCalendar === 'calendar'"
+                            :schedules="filteredScheduleData"
+                            :loading="pending || loadingMore"
+                            :date="route.query.date_from as string"
+                            :range-end="route.query.date_to as string"
+                            @view-details="viewSchedule"
+                            @assign="handleAssign"
+                            @change-range="onCalendarRange"
+                        />
 
                         <HomecareADL
                             v-else
@@ -284,6 +309,8 @@ import { scheduleService } from "~/api/schedule/ScheduleService";
 import { caregiverShiftService } from "~/api/caregiver-shift/CaregiverShiftService";
 import FacilityShiftBoard from "~/components/sections/app/Schedule/FacilityShiftBoard.vue";
 import EmployeeScheduleBoard from "~/components/sections/app/Schedule/EmployeeScheduleBoard.vue";
+import EmployeeCalendar from "~/components/sections/app/Schedule/EmployeeCalendar.vue";
+import AdlCalendar from "~/components/sections/app/Schedule/AdlCalendar.vue";
 import type { ShiftBoard } from "~/types/caregiver-shift";
 import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
@@ -364,8 +391,14 @@ const medicalView = computed(() =>
           : "calendar",
 );
 
+const listOrCalendar = computed(() =>
+    route.query.view === "list" ? "list" : "calendar",
+);
+
 const calendarMode = computed(
-    () => scheduleType.value === "medical" && medicalView.value === "calendar",
+    () =>
+        (scheduleType.value === "medical" && medicalView.value === "calendar") ||
+        (scheduleType.value === "homecare" && listOrCalendar.value === "calendar"),
 );
 
 // Month arrows on the calendar move the date filter to that month.
@@ -376,7 +409,12 @@ function onCalendarRange(range: { from: string; to: string }) {
 }
 
 // Shift caregiver boards aren't filtered by date, so no switcher there.
-const showDateBar = computed(() => !calendarMode.value && scheduleType.value !== "shifts");
+const showDateBar = computed(
+    () =>
+        !calendarMode.value &&
+        scheduleType.value !== "shifts" &&
+        !(scheduleType.value === "employees" && listOrCalendar.value === "calendar"),
+);
 
 function onDateRange(range: { from: string; to: string }) {
     const { date_to, ...rest } = route.query;

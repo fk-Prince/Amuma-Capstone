@@ -90,7 +90,8 @@
                     v-if="showAttendanceTab && activeTab === 'attendance'"
                     class="min-h-0 flex-1 overflow-y-auto p-6"
                 >
-                    <MedicalAttendance :schedule="schedule" :branch-uuid="branchUuid" />
+                    <AdlAttendance v-if="isAdlSchedule" :schedule="schedule" />
+                    <MedicalAttendance v-else :schedule="schedule" :branch-uuid="branchUuid" />
                 </div>
 
                 <div
@@ -1391,6 +1392,7 @@ import ScheduleCancel from "~/components/sections/app/Patient/ScheduleCancel.vue
 import ScheduleComplete from "~/components/sections/app/Patient/ScheduleComplete.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import MedicalAttendance from "~/components/sections/app/Schedule/MedicalAttendance.vue";
+import AdlAttendance from "~/components/sections/app/Schedule/AdlAttendance.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
@@ -1514,13 +1516,16 @@ const DETAIL_TABS = [
 
 const activeTab = ref<"details" | "attendance">("details");
 
+const isAdlSchedule = computed(() =>
+    (props.schedule?.services ?? []).some((service) => service.type === "ADL"),
+);
+
 const showAttendanceTab = computed(
     () =>
         !isEditing.value &&
         props.schedule?.category !== "Facility" &&
         (props.schedule?.services ?? []).some(
-            (service) =>
-                service.type === "Medical",
+            (service) => service.type === "Medical" || service.type === "ADL",
         ),
 );
 

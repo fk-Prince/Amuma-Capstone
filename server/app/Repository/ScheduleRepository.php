@@ -362,7 +362,7 @@ class ScheduleRepository
                             ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
                     )
                     ->with([
-                        'admission:patient_admission_id,patient_id,bed_id',
+                        'admission:patient_admission_id,patient_id,bed_id,admitted_at,discharged_at',
                         'admission.patient:patient_id,first_name,last_name,suffix',
                         'admission.bed:bed_id,room_id,bed_no',
                         'admission.bed.room:room_id,room_no',
