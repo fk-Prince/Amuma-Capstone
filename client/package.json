@@ -43,5 +43,12 @@
         "@types/leaflet": "^1.9.21",
         "@types/node": "^26.2.0",
         "@types/pusher-js": "^5.1.0"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@parcel/watcher",
+            "esbuild",
+            "vue-demi"
+        ]
     }
 }
