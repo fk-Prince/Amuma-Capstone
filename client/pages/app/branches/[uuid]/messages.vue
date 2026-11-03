@@ -60,13 +60,18 @@
                         </button>
                     </div>
 
-                    <BaseInput
-                        v-if="tab === 'families'"
-                        v-model="query"
-                        placeholder="Search family or resident..."
-                        is-search
-                        class="mt-3"
-                    />
+                    <div v-if="tab === 'families'" class="relative mt-3">
+                        <Search
+                            class="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
+                        />
+
+                        <input
+                            v-model="query"
+                            type="text"
+                            placeholder="Search family or resident..."
+                            class="h-11 w-full rounded-full bg-slate-100 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-primary/30 dark:bg-white/10 dark:text-gray-100 dark:focus:bg-white/5"
+                        />
+                    </div>
                 </div>
 
                 <div
@@ -157,7 +162,7 @@
                 <button
                     type="button"
                     aria-label="New Message"
-                    class="group/fab absolute bottom-4 right-20 z-10 flex h-12 items-center overflow-hidden rounded-full bg-primary px-[14px] text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:bg-primary-600 hover:px-5 hover:shadow-xl active:scale-95 lg:right-4"
+                    class="group/fab absolute bottom-4 z-10 flex h-12 items-center overflow-hidden rounded-full bg-primary px-[14px] text-white shadow-lg shadow-primary/30 transition-all duration-300 hover:bg-primary-600 hover:px-5 hover:shadow-xl active:scale-95 lg:right-4" :class="activeId && !mobileThreadOpen ? 'right-20' : 'right-4'"
                     @click="openComposer"
                 >
                     <PenSquare class="h-5 w-5 shrink-0" />
@@ -196,6 +201,9 @@
                     patients-label="Family of"
                     :channel="threadChannel"
                     :conversation-id="activeId"
+                    :branch-uuid="uuid"
+                    :conversation-type="activeConversation?.type ?? null"
+                    :conversation-client-uuid="activeConversation?.client_uuid ?? null"
                     :loading="loadingThread"
                     :sending="sending"
                     :disabled="!activeId"
@@ -212,7 +220,7 @@
             v-if="activeId && !mobileThreadOpen"
             type="button"
             aria-label="Open conversation"
-            class="fixed bottom-4 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition hover:bg-primary-600 active:scale-95 lg:hidden"
+            class="fixed bottom-28 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition hover:bg-primary-600 active:scale-95 lg:hidden"
             @click="mobileThreadOpen = true"
         >
             <MessageCircle class="h-6 w-6" />
@@ -491,7 +499,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { MessageCircle, PenSquare, Users, Stethoscope } from "lucide-vue-next";
+import {
+    MessageCircle,
+    PenSquare,
+    Search,
+    Users,
+    Stethoscope,
+} from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
 import MessageThread from "~/components/messaging/MessageThread.vue";
@@ -764,7 +778,12 @@ async function openThread(conversationId: number) {
     }
 }
 
-async function sendMessage({ body, attachment }: OutgoingMessage) {
+async function sendMessage({
+    body,
+    attachment,
+    duration,
+    reply_to_message_id,
+}: OutgoingMessage) {
     if (!activeId.value) return;
 
     sending.value = true;
@@ -774,6 +793,8 @@ async function sendMessage({ body, attachment }: OutgoingMessage) {
             conversation_id: activeId.value,
             body,
             attachment,
+            duration,
+            reply_to_message_id,
             as_staff: true,
         });
 

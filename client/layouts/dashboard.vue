@@ -62,11 +62,15 @@
                 <DashboardHeader @open="isOpen = true" />
                 <SandboxNotice class="mt-3" />
                 <TrialNotice class="mt-3" />
+                <SetupStepBanner context="branch" class="mt-3" />
+                <ClientOnly>
+                    <SetupNextHint context="branch" />
+                </ClientOnly>
             </div>
 
             <main
                 id="dashboard-scroll"
-                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative -mt-1 pt-1"
+                class="scrollbar-none flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative -mt-1 pt-1"
             >
                 <div class="relative min-h-full flex flex-col">
                     <template v-if="mounted">
@@ -88,6 +92,8 @@
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 import TrialNotice from "~/components/sections/TrialNotice.vue";
+import SetupStepBanner from "~/components/sections/SetupStepBanner.vue";
+import SetupNextHint from "~/components/sections/SetupNextHint.vue";
 import SandboxNotice from "~/components/sections/SandboxNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";
@@ -99,6 +105,8 @@ import { useRouteAccess } from "~/composables/useRouteAccess";
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useBranchStore } from "~/stores/branch";
+import { useAgencyBranches } from "~/composables/useAgencyBranches";
+import { useTrackSetupVisits } from "~/composables/useSetupGuide";
 import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
 
 import { authMenuList } from "~/config/authMenu";
@@ -119,6 +127,10 @@ const access = useRouteAccess();
 const mounted = ref(false);
 
 const branchStore = useBranchStore();
+const { canSeeExecutiveOverview } = useAgencyBranches();
+
+// The setup guide ticks off steps once their page has been opened.
+useTrackSetupVisits();
 
 const homeLink = computed(() => {
     const uuid = branchStore.routeUuid;
@@ -186,6 +198,7 @@ const menus = computed(() => {
     //         branch?.plan?.map((p) => p.plan_code) ?? [];
     return authMenuList
         .filter((item) => {
+            if (item.agencyOverview) return canSeeExecutiveOverview.value;
             if (!item.modules) return true;
             return item.modules.some((m) => modules.includes(m));
 

@@ -1,6 +1,12 @@
 <template>
-    <div class="min-h-screen-header bg-slate-50 dark:bg-surface rounded-lg">
-        <div class="w-full mx-auto p-3 sm:p-4">
+    <div
+        class="min-h-screen-header bg-slate-50 dark:bg-surface rounded-lg"
+        :class="viewMode !== 'form' ? 'dashboard-fit' : ''"
+    >
+        <div
+            class="w-full mx-auto p-3 sm:p-4"
+            :class="viewMode !== 'form' ? 'dashboard-fit-fill flex flex-col' : ''"
+        >
             <PlanLockNotice
                 v-if="facilityLocked"
                 class="mb-6"
@@ -9,7 +15,7 @@
             />
 
             <div
-                class="relative mb-6 grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto dark:border-white/10 dark:bg-secondary"
+                class="relative mb-6 grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm sm:inline-grid sm:w-auto sm:self-start dark:border-white/10 dark:bg-secondary"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
@@ -67,7 +73,7 @@
 
             <div
                 v-if="viewMode === 'table'"
-                class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
+                class="dashboard-fit-fill min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
             >
                 <DataTable
                     :columns="admissionColumns"
@@ -126,7 +132,7 @@
 
             <div
                 v-if="viewMode === 'bookings'"
-                class="min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
+                class="dashboard-fit-fill min-h-[24rem] lg:h-[calc(100dvh-var(--header-h)-8rem)]"
             >
                 <DataTable
                     :columns="bookingColumns"

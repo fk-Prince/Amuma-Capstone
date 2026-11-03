@@ -213,6 +213,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/thread', [MessageController::class, 'thread']);
     Route::get('/messages/details', [MessageController::class, 'details']);
     Route::post('/messages/pin', [MessageController::class, 'pin']);
+    Route::post('/messages/react', [MessageController::class, 'react']);
+    Route::post('/messages/forward', [MessageController::class, 'forward']);
+    Route::post('/messages/delivered', [MessageController::class, 'delivered']);
+    Route::post('/messages/read', [MessageController::class, 'read']);
     Route::post('/messages', [MessageController::class, 'send']);
 
     Route::get('/users/branches',  [UserController::class, 'getUserBranch']);

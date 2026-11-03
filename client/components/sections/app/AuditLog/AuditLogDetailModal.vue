@@ -154,7 +154,7 @@ const actor = computed(
 
                         <div
                             v-else-if="changes.length"
-                            class="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10"
+                            class="overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10"
                         >
                             <table class="w-full text-sm">
                                 <thead>

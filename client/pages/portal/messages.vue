@@ -123,7 +123,12 @@ async function openThread(conversationId: number) {
     }
 }
 
-async function sendMessage({ body, attachment }: OutgoingMessage) {
+async function sendMessage({
+    body,
+    attachment,
+    duration,
+    reply_to_message_id,
+}: OutgoingMessage) {
     const row = activeRow.value;
 
     if (!row) return;
@@ -135,6 +140,8 @@ async function sendMessage({ body, attachment }: OutgoingMessage) {
             conversation_id: row.conversation_id,
             body,
             attachment,
+            duration,
+            reply_to_message_id,
         });
 
         if (res?.message) {

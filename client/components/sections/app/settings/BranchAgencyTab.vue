@@ -8,16 +8,6 @@
             />
         </ClientOnly>
 
-        <div class="flex justify-end">
-            <button
-                type="button"
-                :disabled="saving"
-                @click="handleSave"
-                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-50"
-            >
-                {{ saving ? "Saving..." : "Save Changes" }}
-            </button>
-        </div>
     </div>
 
     <div
@@ -29,7 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRaw } from "vue";
+import { computed, ref, watch, toRaw } from "vue";
+import { formSnapshot } from "~/utils/formSnapshot";
 import { agencyService } from "~/api/agency/AgencyService";
 import AgencyForm from "~/components/forms/AgencyForm.vue";
 import type { Agency } from "~/types/agency";
@@ -55,11 +46,36 @@ const errors = defineModel<Record<string, string>>("errors", {
 
 const localValue = ref<Agency | null>(null);
 
+// Only the fields this form saves, so Save can stay off until one changes.
+const editable = (value: Agency | null | undefined) =>
+    value
+        ? formSnapshot({
+              name: value.name,
+              description: value.description,
+              email: value.email,
+              image: value.image,
+              location: value.location
+                  ? {
+                        street: value.location.street,
+                        city: value.location.city,
+                        province: value.location.province,
+                        country: value.location.country,
+                        longitude: value.location.longitude,
+                        latitude: value.location.latitude,
+                    }
+                  : null,
+          })
+        : "";
+
+const savedSnapshot = ref("");
+const dirty = computed(() => Boolean(localValue.value) && editable(localValue.value) !== savedSnapshot.value);
+
 watch(
     agency,
     (value) => {
         if (value) {
             localValue.value = structuredClone(toRaw(value));
+            savedSnapshot.value = editable(localValue.value);
         }
     },
     {
@@ -145,4 +161,14 @@ const handleSave = async (): Promise<boolean> => {
         saving.value = false;
     }
 };
+// Puts back what was last saved.
+function reset() {
+    if (!agency.value) return;
+    localValue.value = structuredClone(toRaw(agency.value));
+    savedSnapshot.value = editable(localValue.value);
+    errors.value = {};
+}
+
+// The Save button lives in the Branch Settings header (like My Profile).
+defineExpose({ save: handleSave, saving, dirty, reset });
 </script>

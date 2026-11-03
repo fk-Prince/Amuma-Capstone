@@ -10,14 +10,14 @@
         >
             <div
                 v-if="open"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm overflow-y-auto"
                 @click.self="!saving && emit('close')"
             >
                 <div
                     role="dialog"
                     aria-modal="true"
                     aria-label="Add care note"
-                    class="w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                    class="my-auto w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <div
                         class="flex items-center justify-between gap-4 border-b border-gray-100 px-6 py-4 dark:border-white/10"

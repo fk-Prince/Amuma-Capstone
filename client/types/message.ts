@@ -36,7 +36,27 @@ export interface ConversationSummary {
 export interface ChatAttachment {
     url: string;
     name: string | null;
-    type: "image" | "pdf";
+    type: "image" | "pdf" | "audio";
+    /** Voice messages: length in seconds. */
+    duration?: number | null;
+}
+
+export type MessageStatus = "sent" | "delivered" | "seen";
+
+export interface MessageReaction {
+    user_id: number;
+    emoji: string;
+}
+
+/** The quoted message shown above a reply. */
+export interface ReplyPreview {
+    message_id: number;
+    sender_user_id?: number;
+    sender_type?: MessageSender;
+    is_mine?: boolean;
+    body: string | null;
+    preview: string | null;
+    attachment_type: "image" | "pdf" | "audio" | null;
 }
 
 export interface ChatMessage {
@@ -49,6 +69,10 @@ export interface ChatMessage {
     preview?: string | null;
     created_at: string | null;
     read_at: string | null;
+    delivered_at?: string | null;
+    is_forwarded?: boolean;
+    reply_to?: ReplyPreview | null;
+    reactions?: MessageReaction[];
     is_pinned?: boolean;
     pinned_at?: string | null;
 }
@@ -56,6 +80,9 @@ export interface ChatMessage {
 export interface OutgoingMessage {
     body: string;
     attachment: File | null;
+    /** Voice messages: length in seconds. */
+    duration?: number | null;
+    reply_to_message_id?: number | null;
 }
 
 export interface MessageRecipient {
@@ -123,7 +150,7 @@ export interface DetailsMedia {
     message_id: number;
     url: string;
     name: string | null;
-    type: "image" | "pdf";
+    type: "image" | "pdf" | "audio";
     is_mine: boolean;
     created_at: string | null;
 }

@@ -36,11 +36,11 @@ function peso(amount: number) {
     <Transition name="modal">
         <div
             v-if="open"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 p-4 backdrop-blur-sm overflow-y-auto"
             @click.self="emit('close')"
         >
             <div
-                class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
+                class="my-auto w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-secondary"
             >
                 <div
                     class="bg-gradient-to-br from-emerald-500 to-emerald-600 px-6 py-5 text-white"

@@ -23,9 +23,18 @@ return new class extends Migration
 
             $table->enum('sender_type', ['client', 'staff']);
 
+            $table->foreignId('reply_to_message_id')
+                ->nullable()
+                ->constrained('messages', 'message_id')
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
+
             $table->text('body')->nullable();
-            $table->string('attachment_url')->nullable();
+            $table->text('attachment_url')->nullable();
             $table->string('attachment_name')->nullable();
+            $table->unsignedInteger('attachment_duration')->nullable();
+            $table->boolean('is_forwarded')->default(false);
+            $table->timestamp('delivered_at')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->timestamp('pinned_at')->nullable();
 

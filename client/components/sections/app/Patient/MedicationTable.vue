@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
     Check,
     ChevronLeft,
@@ -135,9 +135,40 @@ function getDays(med: Medication): DayColumn[] {
 }
 
 function isToday(dateStr: string) {
-    const today = new Date().toISOString().split("T")[0];
+    // Local date (toISOString is UTC, which is a day behind before 8 AM in PH).
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     return dateStr === today;
 }
+
+// Keep today's column in view on long medication grids.
+const marRoot = ref<HTMLElement | null>(null);
+
+function scrollToToday() {
+    marRoot.value
+        ?.querySelectorAll<HTMLElement>("[data-mar-today]")
+        .forEach((cell) => {
+            const box = cell.closest<HTMLElement>(".overflow-x-auto");
+            if (!box) return;
+            const offset =
+                cell.getBoundingClientRect().left -
+                box.getBoundingClientRect().left;
+            box.scrollLeft += offset - (box.clientWidth - cell.offsetWidth) / 2;
+        });
+}
+
+onMounted(scrollToToday);
+watch(
+    () => [visibleMedications.value, scheduleKind.value],
+    () => nextTick(scrollToToday),
+);
+
+// Medications of the selected kind that are on file but fall in other months.
+const otherMonthsCount = computed(
+    () =>
+        props.medications.filter((med) => med.kind === scheduleKind.value)
+            .length,
+);
 
 function formatDosage(amount: string, unit: string) {
     const label = DOSAGE_UNIT_LABELS[unit] ?? unit;
@@ -427,7 +458,7 @@ const emit = defineEmits<{
         </div>
     </div>
 
-    <div v-else class="space-y-4">
+    <div v-else ref="marRoot" class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex flex-wrap items-center gap-3">
                 <div
@@ -626,7 +657,7 @@ const emit = defineEmits<{
                             class="flex border-b border-gray-100 bg-gray-50/80 dark:border-white/10 dark:bg-white/5"
                         >
                             <div
-                                class="sticky left-0 z-10 w-24 shrink-0 border-r border-gray-100 bg-gray-50/80 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:border-white/10 dark:bg-white/5 dark:text-gray-500"
+                                class="sticky left-0 z-10 w-24 shrink-0 border-r border-gray-100 bg-gray-50 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:border-white/10 dark:bg-secondary dark:bg-[linear-gradient(rgb(255_255_255/0.05),rgb(255_255_255/0.05))] dark:text-gray-500"
                             >
                                 Time
                             </div>
@@ -641,11 +672,23 @@ const emit = defineEmits<{
                                             ? 'bg-emerald-50 dark:bg-emerald-500/10'
                                             : ''
                                     "
+                                    :data-mar-today="
+                                        isToday(day.fullDate) ? '' : undefined
+                                    "
                                 >
                                     <span
-                                        class="text-[10px] font-medium text-gray-400 dark:text-gray-500"
+                                        class="text-[10px] font-medium"
+                                        :class="
+                                            isToday(day.fullDate)
+                                                ? 'font-semibold text-emerald-600 dark:text-emerald-300'
+                                                : 'text-gray-400 dark:text-gray-500'
+                                        "
                                     >
-                                        {{ day.label }}
+                                        {{
+                                            isToday(day.fullDate)
+                                                ? "Today"
+                                                : day.label
+                                        }}
                                     </span>
 
                                     <span
@@ -676,7 +719,7 @@ const emit = defineEmits<{
                                 class="sticky left-0 z-10 flex w-24 shrink-0 items-center gap-1.5 border-r border-gray-100 px-3 py-2.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
                                 :class="
                                     rowIndex % 2
-                                        ? 'bg-gray-50 dark:bg-white/5'
+                                        ? 'bg-gray-50 dark:bg-secondary dark:bg-[linear-gradient(rgb(255_255_255/0.05),rgb(255_255_255/0.05))]'
                                         : 'bg-white dark:bg-secondary'
                                 "
                             >
@@ -802,10 +845,23 @@ const emit = defineEmits<{
 
         <div
             v-if="!visibleMedications.length"
-            class="rounded-2xl border border-dashed border-gray-200 bg-white py-14 text-center text-sm text-gray-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500"
+            class="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-14 text-center text-sm text-gray-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500"
         >
-            No {{ scheduleKind.toLowerCase() }} medications created in
-            {{ currentMonthLabel }}.
+            <p>
+                No {{ scheduleKind.toLowerCase() }} medications added in
+                {{ currentMonthLabel }}.
+            </p>
+
+            <p
+                v-if="otherMonthsCount"
+                class="mt-1 text-xs text-gray-400 dark:text-gray-500"
+            >
+                {{ otherMonthsCount }}
+                {{ scheduleKind.toLowerCase() }}
+                {{ otherMonthsCount === 1 ? "medication is" : "medications are" }}
+                on file from other months. Use the arrows above to view
+                {{ otherMonthsCount === 1 ? "it" : "them" }}.
+            </p>
         </div>
 
         <ConfirmDialog

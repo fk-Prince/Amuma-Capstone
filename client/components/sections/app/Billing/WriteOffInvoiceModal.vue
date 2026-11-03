@@ -2,11 +2,11 @@
     <Teleport to="body">
         <div
             v-if="invoice"
-            class="fixed inset-0 z-[80] flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
+            class="fixed inset-0 z-[80] flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10 overflow-y-auto"
             @click.self="emit('close')"
         >
             <div
-                class="w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
+                class="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
             >
                 <p
                     class="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-600 dark:text-amber-300"

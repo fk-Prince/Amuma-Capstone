@@ -349,16 +349,6 @@
             </div>
         </div>
 
-        <div class="flex justify-end pt-6">
-            <button
-                type="button"
-                @click="save"
-                :disabled="saving"
-                class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                {{ saving ? "Saving..." : "Save Settings" }}
-            </button>
-        </div>
     </div>
 </template>
 
@@ -374,6 +364,7 @@ import { settingSchema, type OperationSetting } from "~/schema/branch-schema";
 import { branchSettingService } from "~/api/branch-setting/BranchSettingService";
 import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
+import { formSnapshot } from "~/utils/formSnapshot";
 
 const { success, error } = useToast();
 const route = useRoute();
@@ -407,6 +398,15 @@ const setting = reactive<OperationSetting>({
             : (activeBranch.value?.settings?.closing ?? ""),
     currency: activeBranch.value?.settings?.currency ?? "",
 });
+
+// What was last saved, so Save can stay off until something changes.
+const savedSnapshot = ref(formSnapshot(setting));
+const savedValues = ref(JSON.parse(JSON.stringify(setting)) as OperationSetting);
+const dirty = computed(() => formSnapshot(setting) !== savedSnapshot.value);
+
+function reset() {
+    Object.assign(setting, JSON.parse(JSON.stringify(savedValues.value)));
+}
 
 const vatRate = computed(() => activeBranch.value?.settings?.vat_rate ?? 12);
 
@@ -449,6 +449,9 @@ async function save() {
 
         await branchStore.refreshBranch();
 
+        savedSnapshot.value = formSnapshot(setting);
+        savedValues.value = JSON.parse(JSON.stringify(setting));
+
         success(res.message ?? res);
     } catch (err: any) {
         error(err.message);
@@ -457,4 +460,6 @@ async function save() {
         saving.value = false;
     }
 }
+// The Save button lives in the Branch Settings header (like My Profile).
+defineExpose({ save, saving, dirty, reset });
 </script>

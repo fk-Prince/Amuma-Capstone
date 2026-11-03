@@ -2,798 +2,740 @@
     <div
         :class="
             embedded
-                ? 'w-full bg-white rounded-lg dark:bg-surface'
-                : 'min-h-screen bg-white pt-[124px] rounded-lg dark:bg-surface'
+                ? 'w-full font-sans'
+                : 'min-h-screen bg-light pt-[124px] font-sans dark:bg-surface'
         "
     >
         <div
             :class="
                 embedded
-                    ? 'w-full px-6 pb-16'
-                    : 'mx-auto max-w-[100rem] px-6 pb-16'
+                    ? 'w-full space-y-4 pb-16'
+                    : 'mx-auto max-w-[100rem] space-y-4 px-4 pb-16 sm:px-6'
             "
         >
-            <div
-                class="flex flex-col gap-4 py-6 sm:flex-row sm:items-center"
-                :class="headerHasTitle ? 'sm:justify-end' : 'sm:justify-between'"
+            <!-- Header: title, save actions and the tabs -->
+            <header
+                class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-secondary"
             >
-                <div v-if="!headerHasTitle">
-                    <h1
-                        class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white"
-                    >
-                        My Profile
-                    </h1>
-
-                    <p class="mt-1 text-sm text-muted dark:text-gray-400">
-                        Manage your personal details and account settings.
-                    </p>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <button
-                        type="button"
-                        :disabled="saving || !isDirty"
-                        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                        @click="reset"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        :disabled="saving || !isDirty"
-                        class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-secondary dark:hover:bg-gray-200"
-                        @click="save"
-                    >
-                        <LoaderCircle
-                            v-if="saving"
-                            class="h-3.5 w-3.5 animate-spin"
-                        />
-                        {{ saving ? "Saving..." : "Save changes" }}
-                    </button>
-                </div>
-            </div>
-
-            <div class="lg:flex lg:items-start lg:gap-6">
-                <div class="mt-5 min-w-0 flex-1 lg:mt-0">
-                    <div v-if="loading" class="space-y-10 py-10">
-                        <div
-                            class="flex flex-wrap gap-1 border-b mb-2 border-slate-200 pb-0 dark:border-white/10"
+                <div
+                    class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-6"
+                    :class="headerHasTitle ? 'sm:justify-end' : 'sm:justify-between'"
+                >
+                    <div v-if="!headerHasTitle" class="flex min-w-0 items-center gap-3">
+                        <span
+                            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300"
                         >
-                            <button
-                                v-for="tab in tabs"
-                                :key="tab.value"
-                                type="button"
-                                class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
-                                :class="
-                                    activeTab === tab.value
-                                        ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
-                                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-                                "
-                                @click="activeTab = tab.value"
+                            <UserRound class="h-5 w-5" />
+                        </span>
+
+                        <div class="min-w-0">
+                            <h1
+                                class="text-lg font-bold tracking-tight text-secondary sm:text-xl dark:text-white"
                             >
-                                {{ tab.label }}
-                            </button>
-                        </div>
-                        <div
-                            v-for="n in 3"
-                            :key="n"
-                            class="grid gap-6 lg:grid-cols-[240px_1fr]"
-                        >
-                            <div
-                                class="h-10 animate-pulse rounded bg-slate-100 dark:bg-white/10"
-                            />
-                            <div
-                                class="h-24 animate-pulse rounded bg-slate-100 dark:bg-white/10"
-                            />
+                                My Profile
+                            </h1>
+
+                            <p class="text-sm text-muted dark:text-gray-400">
+                                Manage your personal details and account settings.
+                            </p>
                         </div>
                     </div>
 
-                    <template v-else>
-                        <div
-                            class="flex flex-wrap gap-1 border-b mb-2 border-slate-200 pb-0 dark:border-white/10"
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span
+                            v-if="isDirty && !saving"
+                            class="mr-1 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-300"
                         >
-                            <button
-                                v-for="tab in tabs"
-                                :key="tab.value"
-                                type="button"
-                                class="rounded-t-lg border px-4 py-2 text-sm font-medium transition"
-                                :class="
-                                    activeTab === tab.value
-                                        ? 'border-slate-200 border-b-white bg-white text-slate-900 dark:border-white/10 dark:border-b-secondary dark:bg-secondary dark:text-white'
-                                        : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
-                                "
-                                @click="activeTab = tab.value"
-                            >
-                                {{ tab.label }}
-                            </button>
-                        </div>
-                        <div v-show="activeTab === 'profile'" class="space-y-5">
-                            <section
-                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Profile photo
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        This photo appears on your profile and
-                                        anywhere you're shown across AMUMA.
-                                    </p>
-                                </div>
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            Unsaved changes
+                        </span>
 
-                                <div class="flex flex-wrap items-center gap-4">
-                                    <img
-                                        :src="avatarPreview || fallbackAvatar"
-                                        alt="Profile photo"
-                                        class="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200 dark:ring-white/10"
-                                    />
-
-                                    <button
-                                        type="button"
-                                        class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                                        @click="avatarInput?.click()"
-                                    >
-                                        Change photo
-                                    </button>
-
-                                    <button
-                                        v-if="avatarPreview"
-                                        type="button"
-                                        class="text-sm font-medium text-slate-500 transition hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200"
-                                        @click="removeAvatar"
-                                    >
-                                        Remove
-                                    </button>
-
-                                    <input
-                                        ref="avatarInput"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        @change="handleAvatar"
-                                    />
-
-                                    <p
-                                        v-if="errors.avatar"
-                                        class="w-full text-xs text-red-600"
-                                    >
-                                        {{ errors.avatar }}
-                                    </p>
-                                </div>
-                            </section>
-
-                            <!-- Personal info -->
-                            <section
-                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Personal info
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        Your name and contact details.
-                                    </p>
-                                </div>
-
-                                <div class="grid gap-5 sm:grid-cols-6">
-                                    <BaseInput
-                                        v-model="form.first_name"
-                                        label="First name"
-                                        class-name="sm:col-span-2"
-                                        :error="errors.first_name"
-                                        @update:modelValue="
-                                            clearError('first_name')
-                                        "
-                                    />
-
-                                    <BaseInput
-                                        v-model="form.middle_name"
-                                        label="Middle name"
-                                        class-name="sm:col-span-2"
-                                        :error="errors.middle_name"
-                                        @update:modelValue="
-                                            clearError('middle_name')
-                                        "
-                                    />
-
-                                    <BaseInput
-                                        v-model="form.last_name"
-                                        label="Last name"
-                                        class-name="sm:col-span-2"
-                                        :error="errors.last_name"
-                                        @update:modelValue="
-                                            clearError('last_name')
-                                        "
-                                    />
-
-                                    <BaseInput
-                                        v-model="form.email"
-                                        label="Email"
-                                        mode="email"
-                                        class-name="sm:col-span-6"
-                                        :error="errors.email"
-                                        readonly
-                                        @update:modelValue="clearError('email')"
-                                    />
-
-                                    <PhoneInput
-                                        v-model="form.phone_number"
-                                        label="Contact number"
-                                        class-name="sm:col-span-3"
-                                        :error="errors.phone_number"
-                                        @update:modelValue="
-                                            clearError('phone_number')
-                                        "
-                                    />
-
-                                    <DatePickerField
-                                        v-if="roles.is_employee"
-                                        v-model="form.birth_date"
-                                        label="Birth date"
-                                        class-name="sm:col-span-3"
-                                        placeholder="Select birth date"
-                                        :max="today"
-                                        :default-to-today="false"
-                                        :error="errors.birth_date"
-                                        @update:modelValue="
-                                            clearError('birth_date')
-                                        "
-                                    />
-
-                                    <BaseInput
-                                        v-if="roles.is_client"
-                                        v-model="form.occupation"
-                                        label="Occupation"
-                                        class-name="sm:col-span-3"
-                                        :error="errors.occupation"
-                                        @update:modelValue="
-                                            clearError('occupation')
-                                        "
-                                    />
-                                </div>
-                            </section>
-
-                            <!-- Address -->
-                            <section
-                                v-if="canEditLocation"
-                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Address
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        Where you're based.
-                                    </p>
-
-                                    <button
-                                        type="button"
-                                        class="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:text-primary-700"
-                                        @click="useMap = !useMap"
-                                    >
-                                        <MapPin class="h-3.5 w-3.5" />
-                                        {{
-                                            useMap
-                                                ? "Enter manually"
-                                                : "Pick on map"
-                                        }}
-                                    </button>
-                                </div>
-
-                                <div>
-                                    <ClientOnly v-if="useMap">
-                                        <LocationSelector
-                                            :initial-lat="
-                                                form.latitude || undefined
-                                            "
-                                            :initial-lng="
-                                                form.longitude || undefined
-                                            "
-                                            :initial-street="
-                                                form.street || undefined
-                                            "
-                                            :initial-city="
-                                                form.city || undefined
-                                            "
-                                            :initial-province="
-                                                form.province || undefined
-                                            "
-                                            :initial-country="
-                                                form.country || undefined
-                                            "
-                                            @location-selected="handleLocation"
-                                        />
-
-                                        <template #fallback>
-                                            <div
-                                                class="flex h-64 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-400 dark:bg-white/5 dark:text-gray-500"
-                                            >
-                                                Loading map...
-                                            </div>
-                                        </template>
-                                    </ClientOnly>
-
-                                    <div
-                                        v-else
-                                        class="grid gap-5 sm:grid-cols-6"
-                                    >
-                                        <BaseInput
-                                            v-model="form.street"
-                                            label="Street"
-                                            class-name="sm:col-span-6"
-                                            :error="errors.street"
-                                            @update:modelValue="
-                                                clearError('street')
-                                            "
-                                        />
-
-                                        <BaseInput
-                                            v-model="form.city"
-                                            label="City"
-                                            class-name="sm:col-span-3"
-                                            :error="errors.city"
-                                            @update:modelValue="
-                                                clearError('city')
-                                            "
-                                        />
-
-                                        <BaseInput
-                                            v-model="form.province"
-                                            label="Province"
-                                            class-name="sm:col-span-3"
-                                            :error="errors.province"
-                                            @update:modelValue="
-                                                clearError('province')
-                                            "
-                                        />
-
-                                        <BaseInput
-                                            v-model="form.country"
-                                            label="Country"
-                                            class-name="sm:col-span-3"
-                                            :error="errors.country"
-                                            @update:modelValue="
-                                                clearError('country')
-                                            "
-                                        />
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section
-                                v-if="meta.provider === 'local'"
-                                class="grid gap-6 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Password
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        {{
-                                            meta.has_password
-                                                ? "Set a new password for your account."
-                                                : "Add a password so you can sign in without Google."
-                                        }}
-                                    </p>
-                                </div>
-
-                                <div class="space-y-4">
-                                    <div class="grid gap-5 sm:grid-cols-2">
-                                        <BaseInput
-                                            v-if="meta.has_password"
-                                            v-model="form.current_password"
-                                            label="Current password"
-                                            mode="password"
-                                            :error="errors.current_password"
-                                            @update:modelValue="
-                                                clearError('current_password')
-                                            "
-                                        />
-
-                                        <div>
-                                            <BaseInput
-                                                v-model="form.password"
-                                                label="New password"
-                                                mode="password"
-                                                :error="errors.password"
-                                                @update:modelValue="
-                                                    clearError('password')
-                                                "
-                                            />
-
-                                            <p
-                                                v-if="!errors.password"
-                                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
-                                            >
-                                                Minimum 8 characters
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <BaseInput
-                                        v-if="form.password"
-                                        v-model="form.password_confirmation"
-                                        label="Confirm new password"
-                                        mode="password"
-                                        class="sm:max-w-[calc(50%-0.625rem)]"
-                                        :error="errors.password_confirmation"
-                                        @update:modelValue="
-                                            clearError('password_confirmation')
-                                        "
-                                    />
-
-                                    <button
-                                        type="button"
-                                        :disabled="saving || !form.password"
-                                        class="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-                                        @click="save"
-                                    >
-                                        Update password
-                                    </button>
-                                </div>
-                            </section>
-
-                            <section
-                                class="grid gap-6 border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Account
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        Details here are read-only.
-                                    </p>
-                                </div>
-
-                                <dl
-                                    class="divide-y divide-slate-100 dark:divide-white/10"
-                                >
-                                    <div
-                                        class="flex items-center justify-between gap-4 py-2.5"
-                                    >
-                                        <dt
-                                            class="text-sm text-slate-500 dark:text-gray-400"
-                                        >
-                                            Sign-in method
-                                        </dt>
-                                        <dd
-                                            class="truncate text-sm font-medium text-slate-800 dark:text-white"
-                                        >
-                                            {{ signInMethods }}
-                                        </dd>
-                                    </div>
-
-                                    <div
-                                        v-for="row in accountRows"
-                                        :key="row.label"
-                                        class="flex items-center justify-between gap-4 py-2.5"
-                                    >
-                                        <dt
-                                            class="text-sm text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{ row.label }}
-                                        </dt>
-                                        <dd
-                                            class="truncate text-sm font-medium text-slate-800 dark:text-white"
-                                        >
-                                            {{ row.value }}
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </section>
-                        </div>
-
-                        <div
-                            v-show="activeTab === 'notifications'"
-                            class="space-y-5"
+                        <button
+                            type="button"
+                            :disabled="saving || !isDirty"
+                            class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                            @click="reset"
                         >
-                            <div
-                                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div
-                                    class="rounded-2xl border border-slate-200 flex w-fit items-center gap-1 bg-white p-1 dark:border-white/10 dark:bg-secondary"
-                                >
-                                    <button
-                                        v-for="nTab in notificationFilters"
-                                        :key="nTab.value"
-                                        type="button"
-                                        class="inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition"
-                                        :class="
-                                            notificationFilter === nTab.value
-                                                ? 'bg-primary text-white shadow-sm'
-                                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-200'
-                                        "
-                                        @click="
-                                            setNotificationFilter(nTab.value)
-                                        "
-                                    >
-                                        {{ nTab.label }}
+                            Cancel
+                        </button>
 
-                                        <span
-                                            v-if="
-                                                nTab.value === 'unread' &&
-                                                unreadCount
-                                            "
-                                            class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-                                            :class="
-                                                notificationFilter ===
-                                                nTab.value
-                                                    ? 'bg-white/20 text-white'
-                                                    : 'bg-rose-500 text-white'
-                                            "
-                                        >
-                                            {{ unreadCount }}
-                                        </span>
-                                    </button>
-                                </div>
+                        <button
+                            type="button"
+                            :disabled="saving || !isDirty"
+                            class="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                            @click="save"
+                        >
+                            <LoaderCircle
+                                v-if="saving"
+                                class="h-3.5 w-3.5 animate-spin"
+                            />
+                            <Check v-else class="h-4 w-4" />
+                            {{ saving ? "Saving..." : "Save changes" }}
+                        </button>
+                    </div>
+                </div>
+
+                <nav
+                    class="profile-tabs flex gap-1 overflow-x-auto border-t border-slate-100 px-2 sm:px-4 dark:border-white/10"
+                    aria-label="Profile sections"
+                >
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.value"
+                        type="button"
+                        class="relative inline-flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-semibold transition sm:px-4"
+                        :class="
+                            activeTab === tab.value
+                                ? 'text-primary dark:text-primary-300'
+                                : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+                        "
+                        :aria-current="activeTab === tab.value ? 'page' : undefined"
+                        @click="activeTab = tab.value"
+                    >
+                        <component :is="tab.icon" class="h-4 w-4" />
+                        {{ tab.label }}
+                        <span
+                            v-if="tab.value === 'notifications' && unreadCount"
+                            class="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
+                        >
+                            {{ unreadCount }}
+                        </span>
+                        <span
+                            v-if="activeTab === tab.value"
+                            class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary"
+                        />
+                    </button>
+                </nav>
+            </header>
+
+            <!-- Loading -->
+            <div
+                v-if="loading"
+                class="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]"
+            >
+                <div
+                    class="h-80 animate-pulse rounded-2xl bg-white shadow-sm dark:bg-secondary"
+                />
+                <div class="space-y-4">
+                    <div
+                        v-for="n in 3"
+                        :key="n"
+                        class="h-40 animate-pulse rounded-2xl bg-white shadow-sm dark:bg-secondary"
+                    />
+                </div>
+            </div>
+
+            <template v-else>
+                <!-- GENERAL -->
+                <div
+                    v-show="activeTab === 'profile'"
+                    class="grid items-start gap-4 xl:grid-cols-[320px_minmax(0,1fr)]"
+                >
+                    <!-- Who you are -->
+                    <aside
+                        class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm xl:sticky xl:top-4 dark:border-white/10 dark:bg-secondary"
+                    >
+                        <div
+                            class="h-20 bg-gradient-to-r from-primary-100 via-primary-50 to-accent-50 dark:from-primary-500/20 dark:via-primary-500/10 dark:to-accent-500/10"
+                        />
+
+                        <div class="-mt-12 px-5 pb-5 text-center">
+                            <div class="relative mx-auto h-24 w-24">
+                                <img
+                                    :src="avatarPreview || fallbackAvatar"
+                                    alt="Profile photo"
+                                    class="h-24 w-24 rounded-full object-cover ring-4 ring-white dark:ring-secondary"
+                                />
 
                                 <button
                                     type="button"
-                                    :disabled="!unreadCount || markingAllRead"
-                                    class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
-                                    @click="markAllNotificationsRead"
+                                    aria-label="Change photo"
+                                    class="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md ring-2 ring-white transition hover:bg-primary-600 dark:ring-secondary"
+                                    @click="avatarInput?.click()"
                                 >
-                                    <LoaderCircle
-                                        v-if="markingAllRead"
-                                        class="h-3.5 w-3.5 animate-spin"
-                                    />
-                                    <CheckCheck v-else class="h-4 w-4" />
-                                    Mark all as read
+                                    <Camera class="h-4 w-4" />
                                 </button>
                             </div>
 
-                            <section
-                                class="bg-white p-4 shadow-sm dark:border-white/10 dark:bg-secondary sm:p-6"
+                            <p
+                                class="mt-3 truncate text-base font-bold text-secondary dark:text-white"
                             >
-                                <div
-                                    v-if="notificationsLoading"
-                                    class="space-y-3"
+                                {{ displayName }}
+                            </p>
+                            <p class="truncate text-sm text-slate-500 dark:text-gray-400">
+                                {{ form.email || "—" }}
+                            </p>
+
+                            <div
+                                v-if="roleBadges.length"
+                                class="mt-3 flex flex-wrap justify-center gap-1.5"
+                            >
+                                <span
+                                    v-for="badge in roleBadges"
+                                    :key="badge"
+                                    class="rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary dark:bg-primary-500/15 dark:text-primary-300"
                                 >
-                                    <div
-                                        v-for="n in 4"
-                                        :key="n"
-                                        class="h-[86px] animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                                    {{ badge }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4 flex justify-center gap-2">
+                                <button
+                                    type="button"
+                                    class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    @click="avatarInput?.click()"
+                                >
+                                    Change photo
+                                </button>
+
+                                <button
+                                    v-if="avatarPreview"
+                                    type="button"
+                                    class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
+                                    @click="removeAvatar"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+
+                            <input
+                                ref="avatarInput"
+                                type="file"
+                                accept="image/*"
+                                class="hidden"
+                                @change="handleAvatar"
+                            />
+
+                            <p
+                                v-if="errors.avatar"
+                                class="mt-2 text-xs text-red-600"
+                            >
+                                {{ errors.avatar }}
+                            </p>
+                        </div>
+
+                        <!-- Account (read-only) -->
+                        <dl
+                            class="divide-y divide-slate-100 border-t border-slate-100 px-5 dark:divide-white/10 dark:border-white/10"
+                        >
+                            <div class="flex items-center justify-between gap-4 py-3">
+                                <dt class="text-xs text-slate-500 dark:text-gray-400">
+                                    Sign-in method
+                                </dt>
+                                <dd
+                                    class="truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    {{ signInMethods }}
+                                </dd>
+                            </div>
+
+                            <div
+                                v-for="row in accountRows"
+                                :key="row.label"
+                                class="flex items-center justify-between gap-4 py-3"
+                            >
+                                <dt class="text-xs text-slate-500 dark:text-gray-400">
+                                    {{ row.label }}
+                                </dt>
+                                <dd
+                                    class="truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                >
+                                    {{ row.value }}
+                                </dd>
+                            </div>
+                        </dl>
+                    </aside>
+
+                    <div class="min-w-0 space-y-4">
+                        <!-- Personal info -->
+                        <ProfileSection
+                            :icon="IdCard"
+                            title="Personal info"
+                            description="Your name and contact details."
+                        >
+                            <div class="grid gap-5 sm:grid-cols-6">
+                                <BaseInput
+                                    v-model="form.first_name"
+                                    label="First name"
+                                    class-name="sm:col-span-2"
+                                    :error="errors.first_name"
+                                    @update:modelValue="clearError('first_name')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.middle_name"
+                                    label="Middle name"
+                                    class-name="sm:col-span-2"
+                                    :error="errors.middle_name"
+                                    @update:modelValue="clearError('middle_name')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.last_name"
+                                    label="Last name"
+                                    class-name="sm:col-span-2"
+                                    :error="errors.last_name"
+                                    @update:modelValue="clearError('last_name')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.email"
+                                    label="Email"
+                                    mode="email"
+                                    class-name="sm:col-span-6"
+                                    :error="errors.email"
+                                    readonly
+                                    @update:modelValue="clearError('email')"
+                                />
+
+                                <PhoneInput
+                                    v-model="form.phone_number"
+                                    label="Contact number"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.phone_number"
+                                    @update:modelValue="clearError('phone_number')"
+                                />
+
+                                <DatePickerField
+                                    v-if="roles.is_employee"
+                                    v-model="form.birth_date"
+                                    label="Birth date"
+                                    class-name="sm:col-span-3"
+                                    placeholder="Select birth date"
+                                    :max="today"
+                                    :default-to-today="false"
+                                    :error="errors.birth_date"
+                                    @update:modelValue="clearError('birth_date')"
+                                />
+
+                                <BaseInput
+                                    v-if="roles.is_client"
+                                    v-model="form.occupation"
+                                    label="Occupation"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.occupation"
+                                    @update:modelValue="clearError('occupation')"
+                                />
+                            </div>
+                        </ProfileSection>
+
+                        <!-- Address -->
+                        <ProfileSection
+                            v-if="canEditLocation"
+                            :icon="MapPin"
+                            title="Address"
+                            description="Where you're based."
+                        >
+                            <template #actions>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    @click="useMap = !useMap"
+                                >
+                                    <component
+                                        :is="useMap ? PencilLine : MapIcon"
+                                        class="h-3.5 w-3.5"
                                     />
+                                    {{ useMap ? "Enter manually" : "Pick on map" }}
+                                </button>
+                            </template>
+
+                            <ClientOnly v-if="useMap">
+                                <LocationSelector
+                                    :initial-lat="form.latitude || undefined"
+                                    :initial-lng="form.longitude || undefined"
+                                    :initial-street="form.street || undefined"
+                                    :initial-city="form.city || undefined"
+                                    :initial-province="form.province || undefined"
+                                    :initial-country="form.country || undefined"
+                                    @location-selected="handleLocation"
+                                />
+
+                                <template #fallback>
+                                    <div
+                                        class="flex h-64 items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                                    >
+                                        Loading map...
+                                    </div>
+                                </template>
+                            </ClientOnly>
+
+                            <div v-else class="grid gap-5 sm:grid-cols-6">
+                                <BaseInput
+                                    v-model="form.street"
+                                    label="Street"
+                                    class-name="sm:col-span-6"
+                                    :error="errors.street"
+                                    @update:modelValue="clearError('street')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.city"
+                                    label="City"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.city"
+                                    @update:modelValue="clearError('city')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.province"
+                                    label="Province"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.province"
+                                    @update:modelValue="clearError('province')"
+                                />
+
+                                <BaseInput
+                                    v-model="form.country"
+                                    label="Country"
+                                    class-name="sm:col-span-3"
+                                    :error="errors.country"
+                                    @update:modelValue="clearError('country')"
+                                />
+                            </div>
+                        </ProfileSection>
+
+                        <!-- Password -->
+                        <ProfileSection
+                            v-if="meta.provider === 'local'"
+                            :icon="KeyRound"
+                            title="Password"
+                            :description="
+                                meta.has_password
+                                    ? 'Set a new password for your account.'
+                                    : 'Add a password so you can sign in without Google.'
+                            "
+                        >
+                            <div class="space-y-4">
+                                <div class="grid gap-5 sm:grid-cols-2">
+                                    <BaseInput
+                                        v-if="meta.has_password"
+                                        v-model="form.current_password"
+                                        label="Current password"
+                                        mode="password"
+                                        :error="errors.current_password"
+                                        @update:modelValue="clearError('current_password')"
+                                    />
+
+                                    <div>
+                                        <BaseInput
+                                            v-model="form.password"
+                                            label="New password"
+                                            mode="password"
+                                            :error="errors.password"
+                                            @update:modelValue="clearError('password')"
+                                        />
+
+                                        <p
+                                            v-if="!errors.password"
+                                            class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
+                                        >
+                                            Minimum 8 characters
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div
-                                    v-else-if="!notifications.length"
-                                    class="flex flex-col items-center justify-center py-20 text-center"
+                                <BaseInput
+                                    v-if="form.password"
+                                    v-model="form.password_confirmation"
+                                    label="Confirm new password"
+                                    mode="password"
+                                    class="sm:max-w-[calc(50%-0.625rem)]"
+                                    :error="errors.password_confirmation"
+                                    @update:modelValue="clearError('password_confirmation')"
+                                />
+
+                                <button
+                                    type="button"
+                                    :disabled="saving || !form.password"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    @click="save"
                                 >
-                                    <div
-                                        class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                                    <ShieldCheck class="h-4 w-4" />
+                                    Update password
+                                </button>
+                            </div>
+                        </ProfileSection>
+                    </div>
+                </div>
+
+                <!-- NOTIFICATIONS -->
+                <div v-show="activeTab === 'notifications'">
+                    <ProfileSection
+                        :icon="Bell"
+                        title="Notifications"
+                        :description="
+                            unreadCount
+                                ? `${unreadCount} unread`
+                                : 'You\'re all caught up.'
+                        "
+                        flush
+                    >
+                        <template #actions>
+                            <div
+                                class="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-white/10"
+                                role="group"
+                                aria-label="Show"
+                            >
+                                <button
+                                    v-for="nTab in notificationFilters"
+                                    :key="nTab.value"
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                                    :class="
+                                        notificationFilter === nTab.value
+                                            ? 'bg-white text-primary shadow-sm dark:bg-secondary dark:text-primary-300'
+                                            : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+                                    "
+                                    @click="setNotificationFilter(nTab.value)"
+                                >
+                                    {{ nTab.label }}
+
+                                    <span
+                                        v-if="nTab.value === 'unread' && unreadCount"
+                                        class="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white"
                                     >
-                                        <Bell class="h-6 w-6" />
+                                        {{ unreadCount }}
+                                    </span>
+                                </button>
+                            </div>
+
+                            <button
+                                type="button"
+                                :disabled="!unreadCount || markingAllRead"
+                                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-slate-200 disabled:hover:text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                @click="markAllNotificationsRead"
+                            >
+                                <LoaderCircle
+                                    v-if="markingAllRead"
+                                    class="h-3.5 w-3.5 animate-spin"
+                                />
+                                <CheckCheck v-else class="h-4 w-4" />
+                                Mark all as read
+                            </button>
+                        </template>
+
+                        <div v-if="notificationsLoading" class="space-y-3 p-4 sm:p-6">
+                            <div
+                                v-for="n in 4"
+                                :key="n"
+                                class="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
+                            />
+                        </div>
+
+                        <div
+                            v-else-if="!notifications.length"
+                            class="flex flex-col items-center justify-center px-6 py-20 text-center"
+                        >
+                            <div
+                                class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-white/5 dark:text-gray-500"
+                            >
+                                <Bell class="h-6 w-6" />
+                            </div>
+
+                            <p class="mt-3 text-sm font-semibold text-slate-800 dark:text-white">
+                                {{
+                                    notificationFilter === "unread"
+                                        ? "No unread notifications"
+                                        : "No notifications yet"
+                                }}
+                            </p>
+
+                            <p class="mt-1 max-w-sm text-sm text-slate-500 dark:text-gray-400">
+                                {{
+                                    notificationFilter === "unread"
+                                        ? "Everything here has been read."
+                                        : "Updates about bookings, schedules and billing will show up here."
+                                }}
+                            </p>
+                        </div>
+
+                        <ul
+                            v-else
+                            class="divide-y divide-slate-100 dark:divide-white/10"
+                        >
+                            <li
+                                v-for="item in notifications"
+                                :key="item.id"
+                                role="button"
+                                tabindex="0"
+                                class="group relative flex cursor-pointer items-start gap-3 px-4 py-3.5 outline-none transition hover:bg-slate-50 focus-visible:bg-slate-50 sm:gap-4 sm:px-6 dark:hover:bg-white/[0.03] dark:focus-visible:bg-white/[0.03]"
+                                :class="
+                                    item.unread
+                                        ? 'bg-primary-50/50 dark:bg-primary-500/[0.06]'
+                                        : ''
+                                "
+                                @click="openNotification(item)"
+                                @keydown.enter.prevent="openNotification(item)"
+                            >
+                                <span
+                                    v-if="item.unread"
+                                    class="absolute inset-y-0 left-0 w-1 bg-primary"
+                                    aria-hidden="true"
+                                />
+
+                                <img
+                                    v-if="
+                                        item.branch?.image &&
+                                        !failedNotificationImages.has(item.id)
+                                    "
+                                    :src="item.branch.image"
+                                    :alt="item.branch.name ?? 'Branch'"
+                                    class="mt-0.5 h-10 w-10 shrink-0 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-white/10"
+                                    @error="failedNotificationImages.add(item.id)"
+                                />
+
+                                <span
+                                    v-else
+                                    class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                    :class="
+                                        item.branch
+                                            ? 'bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300'
+                                            : notificationToneFor(item.message_type).wrapper
+                                    "
+                                >
+                                    <Building2 v-if="item.branch" class="h-4 w-4" />
+                                    <component
+                                        :is="notificationToneFor(item.message_type).icon"
+                                        v-else
+                                        class="h-4 w-4"
+                                    />
+                                </span>
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <p
+                                            class="text-sm text-slate-800 dark:text-white"
+                                            :class="item.unread ? 'font-bold' : 'font-semibold'"
+                                        >
+                                            {{ item.message_type }}
+                                        </p>
+
+                                        <span
+                                            v-if="item.branch?.name"
+                                            class="truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/5 dark:text-gray-400"
+                                        >
+                                            {{ item.branch.name }}
+                                        </span>
+
+                                        <span
+                                            class="ml-auto shrink-0 text-xs text-slate-400 dark:text-gray-500"
+                                        >
+                                            {{ notifcationFormatDate(item.created_at) }}
+                                        </span>
                                     </div>
 
                                     <p
-                                        class="mt-3 text-sm font-semibold text-slate-800 dark:text-white"
+                                        class="mt-0.5 text-sm leading-6 text-slate-600 dark:text-gray-300"
                                     >
-                                        {{
-                                            notificationFilter === "unread"
-                                                ? "No unread notifications"
-                                                : "No notifications yet"
-                                        }}
-                                    </p>
-
-                                    <p
-                                        class="mt-1 max-w-sm text-sm text-slate-500 dark:text-gray-400"
-                                    >
-                                        {{
-                                            notificationFilter === "unread"
-                                                ? "Everything here has been read."
-                                                : "Updates about bookings, schedules and billing will show up here."
-                                        }}
+                                        {{ item.message }}
                                     </p>
                                 </div>
 
-                                <ul v-else class="space-y-2.5">
-                                    <li
-                                        v-for="item in notifications"
-                                        :key="item.id"
-                                        class="group relative flex cursor-pointer items-start gap-4 overflow-hidden rounded-xl border p-4 transition hover:-translate-y-px hover:border-primary-200 hover:shadow-md dark:hover:border-primary-500/40"
-                                        :class="
-                                            item.unread
-                                                ? ' bg-primary-50/40 border-primary dark:border-primary-500/25 dark:bg-primary-500/5'
-                                                : 'border-slate-200 dark:border-white/10'
-                                        "
-                                        @click="openNotification(item)"
-                                    >
-                                        <img
-                                            v-if="
-                                                item.branch?.image &&
-                                                !failedNotificationImages.has(
-                                                    item.id,
-                                                )
-                                            "
-                                            :src="item.branch.image"
-                                            :alt="item.branch.name ?? 'Branch'"
-                                            class="mt-0.5 h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-slate-200 dark:ring-white/10"
-                                            @error="
-                                                failedNotificationImages.add(
-                                                    item.id,
-                                                )
-                                            "
-                                        />
+                                <span
+                                    v-if="item.unread"
+                                    class="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary"
+                                    aria-label="Unread"
+                                />
+                                <ChevronRight
+                                    v-else
+                                    class="mt-2 h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-600"
+                                />
+                            </li>
+                        </ul>
 
+                        <div
+                            v-if="
+                                !notificationsLoading &&
+                                notificationsPage < notificationsLastPage
+                            "
+                            class="flex justify-center border-t border-slate-100 p-4 dark:border-white/10"
+                        >
+                            <button
+                                type="button"
+                                :disabled="notificationsLoadingMore"
+                                class="rounded-xl border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                @click="fetchNotifications(notificationsPage + 1)"
+                            >
+                                {{ notificationsLoadingMore ? "Loading..." : "Load more" }}
+                            </button>
+                        </div>
+                    </ProfileSection>
+                </div>
+
+                <ProfileTransactions v-if="activeTab === 'transactions'" />
+
+                <!-- APPEARANCE -->
+                <div v-show="activeTab === 'appearance'" class="space-y-4">
+                    <ProfileSection
+                        :icon="Palette"
+                        title="Theme"
+                        description="How AMUMA looks on this device."
+                    >
+                        <div class="grid max-w-xl grid-cols-2 gap-3">
+                            <button
+                                v-for="option in themeOptions"
+                                :key="option.label"
+                                type="button"
+                                class="group rounded-2xl border-2 p-2 text-left transition"
+                                :class="
+                                    isDark === option.dark
+                                        ? 'border-primary ring-4 ring-primary/10'
+                                        : 'border-slate-200 hover:border-primary-200 dark:border-white/10 dark:hover:border-primary-500/40'
+                                "
+                                :aria-pressed="isDark === option.dark"
+                                @click="setTheme(option.dark)"
+                            >
+                                <!-- Mini preview of the app -->
+                                <span
+                                    class="flex h-24 gap-1.5 overflow-hidden rounded-xl p-2"
+                                    :class="option.dark ? 'bg-[#0f172a]' : 'bg-[#EEF3FB]'"
+                                    aria-hidden="true"
+                                >
+                                    <span
+                                        class="w-5 rounded-lg"
+                                        :class="option.dark ? 'bg-[#1e293b]' : 'bg-white'"
+                                    />
+                                    <span class="flex flex-1 flex-col gap-1.5">
                                         <span
-                                            v-else
-                                            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                                            :class="
-                                                item.branch
-                                                    ? 'bg-slate-100 text-blue-500 ring-1 ring-slate-200 dark:bg-white/5 dark:text-blue-400 dark:ring-white/10'
-                                                    : notificationToneFor(
-                                                          item.message_type,
-                                                      ).wrapper
-                                            "
-                                        >
-                                            <Building2
-                                                v-if="item.branch"
-                                                class="h-4 w-4"
+                                            class="h-4 rounded-md"
+                                            :class="option.dark ? 'bg-[#1e293b]' : 'bg-white'"
+                                        />
+                                        <span class="flex flex-1 gap-1.5">
+                                            <span
+                                                class="flex-1 rounded-md"
+                                                :class="option.dark ? 'bg-[#1e293b]' : 'bg-white'"
                                             />
-                                            <component
-                                                :is="
-                                                    notificationToneFor(
-                                                        item.message_type,
-                                                    ).icon
-                                                "
-                                                v-else
-                                                class="h-4 w-4"
+                                            <span
+                                                class="flex-1 rounded-md"
+                                                :class="option.dark ? 'bg-[#1e293b]' : 'bg-white'"
                                             />
                                         </span>
+                                    </span>
+                                </span>
 
-                                        <div class="min-w-0 flex-1">
-                                            <div
-                                                class="flex flex-wrap items-center gap-2"
-                                            >
-                                                <p
-                                                    class="text-sm font-semibold text-slate-800 dark:text-white"
-                                                >
-                                                    {{ item.message_type }}
-                                                </p>
-
-                                                <span
-                                                    v-if="item.branch?.name"
-                                                    class="truncate rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-white/5 dark:text-gray-400"
-                                                >
-                                                    {{ item.branch.name }}
-                                                </span>
-                                            </div>
-
-                                            <p
-                                                class="mt-1 text-sm leading-6 text-slate-600 dark:text-gray-300"
-                                            >
-                                                {{ item.message }}
-                                            </p>
-
-                                            <p
-                                                class="mt-1.5 text-xs text-slate-400 dark:text-gray-500"
-                                            >
-                                                {{
-                                                    notifcationFormatDate(
-                                                        item.created_at,
-                                                    )
-                                                }}
-                                            </p>
-                                        </div>
-
-                                        <span
-                                            v-if="item.unread"
-                                            class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
-                                            aria-label="Unread"
-                                        />
-                                    </li>
-                                </ul>
-
-                                <div
-                                    v-if="
-                                        !notificationsLoading &&
-                                        notificationsPage <
-                                            notificationsLastPage
+                                <span
+                                    class="mt-2 flex items-center gap-2 px-1 pb-1 text-sm font-semibold"
+                                    :class="
+                                        isDark === option.dark
+                                            ? 'text-primary dark:text-primary-300'
+                                            : 'text-slate-600 dark:text-gray-300'
                                     "
-                                    class="flex justify-center pt-6"
                                 >
-                                    <button
-                                        type="button"
-                                        :disabled="notificationsLoadingMore"
-                                        class="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-secondary dark:text-gray-300 dark:hover:bg-white/10"
-                                        @click="
-                                            fetchNotifications(
-                                                notificationsPage + 1,
-                                            )
-                                        "
-                                    >
-                                        {{
-                                            notificationsLoadingMore
-                                                ? "Loading..."
-                                                : "Load more"
-                                        }}
-                                    </button>
-                                </div>
-                            </section>
+                                    <component :is="option.icon" class="h-4 w-4" />
+                                    {{ option.label }}
+                                    <Check
+                                        v-if="isDark === option.dark"
+                                        class="ml-auto h-4 w-4"
+                                    />
+                                </span>
+                            </button>
                         </div>
+                    </ProfileSection>
 
-                        <ProfileTransactions v-if="activeTab === 'transactions'" />
-
-                        <!-- APPEARANCE -->
-                        <div
-                            v-show="activeTab === 'appearance'"
-                            class="space-y-5"
-                        >
-                            <section
-                                class="grid gap-6 bg-white p-6 lg:grid-cols-[260px_1fr] dark:border-white/10 dark:bg-secondary"
-                            >
-                                <div>
-                                    <h2
-                                        class="text-sm font-semibold text-slate-900 dark:text-white"
-                                    >
-                                        Theme
-                                    </h2>
-                                    <p
-                                        class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400"
-                                    >
-                                        How AMUMA looks on this device.
-                                    </p>
-                                </div>
-
-                                <div
-                                    class="flex w-full max-w-sm items-center justify-between rounded-full bg-slate-100 p-1 dark:bg-white/5"
-                                >
-                                    <button
-                                        type="button"
-                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
-                                        :class="
-                                            !isDark
-                                                ? 'bg-white text-slate-800 shadow-sm dark:bg-secondary dark:text-white'
-                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
-                                        "
-                                        @click="setTheme(false)"
-                                    >
-                                        <Sun class="h-4 w-4" />
-                                        Light
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="flex-1 flex items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition-colors"
-                                        :class="
-                                            isDark
-                                                ? 'bg-secondary text-white shadow-sm'
-                                                : 'text-slate-400 hover:text-slate-600 dark:text-gray-500 dark:hover:text-gray-400'
-                                        "
-                                        @click="setTheme(true)"
-                                    >
-                                        <Moon class="h-4 w-4" />
-                                        Dark
-                                    </button>
-                                </div>
-                            </section>
-
-                            <SoundSettings />
-                        </div>
-                    </template>
+                    <SoundSettings />
                 </div>
-            </div>
+            </template>
         </div>
     </div>
 </template>
@@ -801,6 +743,7 @@
 <script setup lang="ts">
 import {
     computed,
+    defineAsyncComponent,
     onBeforeUnmount,
     onMounted,
     reactive,
@@ -812,13 +755,22 @@ import {
     Bell,
     Building2,
     CalendarClock,
+    Camera,
+    Check,
     CheckCheck,
+    ChevronRight,
     ClipboardList,
     CreditCard,
+    IdCard,
+    KeyRound,
     LoaderCircle,
+    Map as MapIcon,
     MapPin,
     MessageSquare,
     Moon,
+    Palette,
+    PencilLine,
+    ShieldCheck,
     Sun,
     UserRound,
 } from "lucide-vue-next";
@@ -827,14 +779,23 @@ import SoundSettings from "~/components/ui/SoundSettings.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
-import LocationSelector from "~/components/ui/LocationSelector.vue";
 import ProfileTransactions from "~/components/sections/profile/ProfileTransactions.vue";
+import ProfileSection from "~/components/sections/profile/ProfileSection.vue";
 import { userService } from "~/api/user/UserService";
 import { notificationService } from "~/api/notification/NotificationService";
 import { useToast } from "~/composables/useToast";
 import { fetchAuthUser, useAuthUser } from "~/composables/useAuthUser";
 import { notifcationFormatDate } from "~/utils/notification-time";
 import type { Notification } from "~/types/notification";
+import {
+    notificationAudience,
+    resolveNotificationTarget,
+} from "~/utils/notificationTarget";
+
+// Loaded only in the browser (the map library can't run on the server).
+const LocationSelector = defineAsyncComponent(
+    () => import("~/components/ui/LocationSelector.vue"),
+);
 
 definePageMeta({
     middleware: [
@@ -894,6 +855,11 @@ watch(activeTab, (value) => {
 });
 
 const isDark = useIsDark();
+
+const themeOptions = [
+    { label: "Light", dark: false, icon: Sun },
+    { label: "Dark", dark: true, icon: Moon },
+];
 
 const preferences = reactive([
     {
@@ -982,13 +948,16 @@ const trackedKeys = [
     "longitude",
 ] as const;
 
-const isDirty = computed(
-    () =>
+const isDirty = computed(() => {
+    if (loading.value || !Object.keys(original.value).length) return false;
+
+    return (
         Boolean(avatarFile.value) ||
         avatarCleared.value ||
         Boolean(form.password) ||
-        trackedKeys.some((key) => original.value[key] !== form[key]),
-);
+        trackedKeys.some((key) => original.value[key] !== form[key])
+    );
+});
 
 const memberSince = computed(() => {
     if (!meta.created_at) return "—";
@@ -1017,6 +986,19 @@ const signInMethods = computed(() => {
     }
 
     return methods.length ? methods.join(", ") : "—";
+});
+
+// Shown on the profile card beside the form.
+const displayName = computed(
+    () => [form.first_name, form.last_name].filter(Boolean).join(" ") || "Your name",
+);
+
+const roleBadges = computed(() => {
+    const list: string[] = [];
+    if (roles.is_system_owner) list.push("AMUMA admin");
+    if (roles.is_employee) list.push("Staff");
+    if (roles.is_client) list.push("Family account");
+    return list;
 });
 
 const accountRows = computed(() => [
@@ -1325,7 +1307,7 @@ const setNotificationFilter = (value: "all" | "unread") => {
     fetchNotifications(1);
 };
 
-const openNotification = async (item: Notification) => {
+const markNotificationRead = async (item: Notification) => {
     if (!item.unread) return;
 
     item.unread = false;
@@ -1338,6 +1320,25 @@ const openNotification = async (item: Notification) => {
         unreadCount.value += 1;
         error(err?.message ?? "Failed to mark as read.");
     }
+};
+
+// Marks it read, then opens the page it is about.
+const openNotification = async (item: Notification) => {
+    markNotificationRead(item);
+
+    const audience = notificationAudience(
+        item,
+        route.path,
+        String(route.query.from ?? ""),
+        authUser.value,
+    );
+    const target = await resolveNotificationTarget(
+        item,
+        audience,
+        typeof route.query.branch === "string" ? route.query.branch : null,
+    );
+
+    if (target) await router.push(target);
 };
 
 const markAllNotificationsRead = async () => {
@@ -1410,3 +1411,13 @@ onBeforeUnmount(() => {
     );
 });
 </script>
+
+<style scoped>
+/* Tabs scroll sideways on small screens without showing a bar. */
+.profile-tabs {
+    scrollbar-width: none;
+}
+.profile-tabs::-webkit-scrollbar {
+    display: none;
+}
+</style>

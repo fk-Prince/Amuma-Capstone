@@ -1,8 +1,11 @@
 <?php
 
+
 namespace App\Service;
 
+use App\Events\MessageReactionChanged;
 use App\Events\MessageSent;
+use App\Events\MessageStatusUpdated;
 use App\Models\Branch;
 use App\Models\CaregiverShift;
 use App\Models\Client;
@@ -10,6 +13,7 @@ use App\Models\Conversation;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Message;
+use App\Models\MessageReaction;
 use App\Models\PatientAccess;
 use App\Models\PatientAdmission;
 use App\Models\Schedule;
@@ -19,7 +23,12 @@ use App\Service\External\SupabaseService;
 use App\Utils\MaskUtil;
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Mail\Message as MailMessage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
+use Laravel\Reverb\Console\Components\Message as ComponentsMessage;
+use Nette\Schema\Message as SchemaMessage;
+use React\Dns\Model\Message as ModelMessage;
 
 class MessageService
 {
@@ -40,12 +49,16 @@ class MessageService
         'agency_owner',
     ];
 
-    public function clientConversations(Client $client)
+    public function clientConversations(Client $client, ?User $user = null)
     {
         $conversations = Conversation::where('client_id', $client->client_id)
             ->with(['branch.location', 'patient', 'latestMessage', 'employeeOne.users'])
             ->orderByDesc('last_message_at')
             ->get();
+
+        if ($user) {
+            $this->markDeliveredIn($conversations, $user);
+        }
 
         $hintsByBranch = $conversations
             ->groupBy('branch_id')
@@ -227,6 +240,8 @@ class MessageService
             ->with(['client.user', 'patient', 'latestMessage', 'employeeOne.users'])
             ->orderByDesc('last_message_at')
             ->get();
+
+        $this->markDeliveredIn($conversations, $user);
 
         $hints = $this->batchSummaryHints($conversations, $branchId);
 
@@ -552,6 +567,7 @@ class MessageService
         $this->markRead($conversation, $user);
 
         $messages = $conversation->messages()
+            ->with(['replyTo', 'reactions'])
             ->orderBy('message_id')
             ->get()
             ->map(fn($message) => $message->toChat($user->user_id))
@@ -584,7 +600,20 @@ class MessageService
 
             $audience = $this->authorize($user, $conversation, $asStaff);
 
+            $replyId = $payload['reply_to_message_id'] ?? null;
+
+            if ($replyId && !$conversation->messages()->whereKey($replyId)->exists()) {
+                throw new Exception('The message you replied to no longer exists.', 422);
+            }
+
+            $isVoice = $file && in_array(
+                strtolower($file->getClientOriginalExtension()),
+                Message::AUDIO_EXTENSIONS,
+                true
+            );
+
             $message = $conversation->messages()->create([
+                'reply_to_message_id' => $replyId ?: null,
                 'sender_user_id' => $user->user_id,
                 'sender_type' => $audience === 'staff'
                     ? Message::SENDER_STAFF
@@ -592,7 +621,12 @@ class MessageService
                 'body' => $body !== '' ? $body : null,
                 'attachment_url' => $file ? $this->uploadAttachment($file) : null,
                 'attachment_name' => $file?->getClientOriginalName(),
+                'attachment_duration' => $isVoice
+                    ? max(0, min((int) ($payload['duration'] ?? 0), 3600))
+                    : null,
             ]);
+
+            $message->load(['replyTo', 'reactions']);
 
             $conversation->update(['last_message_at' => now()]);
 
@@ -1027,10 +1061,280 @@ class MessageService
 
     private function markRead(Conversation $conversation, User $user): void
     {
-        $conversation->messages()
+        $unread = $conversation->messages()
             ->whereNull('read_at')
             ->where('sender_user_id', '!=', $user->user_id)
-            ->update(['read_at' => now()]);
+            ->pluck('message_id');
+
+        if ($unread->isEmpty()) {
+            return;
+        }
+
+        Message::whereIn('message_id', $unread)->update([
+            'read_at' => now(),
+            'delivered_at' => DB::raw('coalesce(delivered_at, now())'),
+        ]);
+
+        $this->broadcastStatus($conversation, 'read', (int) $unread->max(), $user);
+    }
+
+    /**
+     * Messages the other person sent have now reached this person's app.
+     */
+    private function markDeliveredIn(Collection $conversations, User $user): void
+    {
+        $ids = $conversations->pluck('conversation_id')->filter()->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $pending = Message::whereIn('conversation_id', $ids)
+            ->whereNull('delivered_at')
+            ->where('sender_user_id', '!=', $user->user_id)
+            ->get(['message_id', 'conversation_id']);
+
+        if ($pending->isEmpty()) {
+            return;
+        }
+
+        Message::whereIn('message_id', $pending->pluck('message_id'))
+            ->update(['delivered_at' => now()]);
+
+        $byConversation = $conversations->keyBy('conversation_id');
+
+        foreach ($pending->groupBy('conversation_id') as $conversationId => $group) {
+            $conversation = $byConversation->get($conversationId);
+
+            if ($conversation) {
+                $this->broadcastStatus($conversation, 'delivered', (int) $group->max('message_id'), $user);
+            }
+        }
+    }
+
+    private function broadcastStatus(Conversation $conversation, string $status, int $upTo, User $user): void
+    {
+        // Receipts are nice-to-have: a websocket hiccup must never break the request.
+        try {
+            broadcast(new MessageStatusUpdated(
+                $conversation->conversation_id,
+                $status,
+                $upTo,
+                now()->toIso8601String(),
+                $user->user_id,
+                $this->readerSide($conversation, $user),
+                $this->channelsFor($conversation),
+                $conversation->branch?->uuid
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    private function readerSide(Conversation $conversation, User $user): string
+    {
+        if ($conversation->isStaffThread()) {
+            return 'staff';
+        }
+
+        return $user->client && $user->client->client_id === $conversation->client_id
+            ? 'client'
+            : 'staff';
+    }
+
+    public function delivered(User $user, array $payload, bool $asStaff = false)
+    {
+        $conversation = Conversation::with('branch')->find($payload['conversation_id']);
+
+        if (!$conversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $this->authorize($user, $conversation, $asStaff);
+        $this->markDeliveredIn(collect([$conversation]), $user);
+
+        return ['ok' => true];
+    }
+
+    public function read(User $user, array $payload, bool $asStaff = false)
+    {
+        $conversation = Conversation::with('branch')->find($payload['conversation_id']);
+
+        if (!$conversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $this->authorize($user, $conversation, $asStaff);
+        $this->markRead($conversation, $user);
+
+        return ['ok' => true];
+    }
+
+    // ---- Reactions ----------------------------------------------------------
+
+    private const REACTIONS = [
+        '👍', '❤️', '😂', '😮', '😢', '🙏',
+        '👎', '🔥', '🎉', '👏', '😍', '😊', '😅', '🤔',
+        '😡', '💯', '✅', '🙌', '😭', '🥰', '💪', '👀',
+    ];
+
+    private function canonicalReaction(string $emoji): ?string
+    {
+        $strip = fn(string $value) => str_replace("\u{FE0F}", '', $value);
+
+        foreach (self::REACTIONS as $allowed) {
+            if ($strip($allowed) === $strip($emoji)) {
+                return $allowed;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Add, change or remove (same emoji again) the caller's reaction.
+     */
+    public function react(User $user, array $payload, bool $asStaff = false)
+    {
+        $message = Message::find($payload['message_id']);
+
+        if (!$message) {
+            throw new Exception('Message not found.', 404);
+        }
+
+        $conversation = Conversation::with('branch')->find($message->conversation_id);
+
+        if (!$conversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $this->authorize($user, $conversation, $asStaff);
+
+        $emoji = $this->canonicalReaction((string) $payload['emoji']);
+
+        if (!$emoji) {
+            throw new Exception('That reaction is not supported.', 422);
+        }
+
+        $existing = MessageReaction::where('message_id', $message->message_id)
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        if ($existing && $existing->emoji === $emoji) {
+            $existing->delete();
+        } elseif ($existing) {
+            $existing->update(['emoji' => $emoji]);
+        } else {
+            MessageReaction::create([
+                'message_id' => $message->message_id,
+                'user_id' => $user->user_id,
+                'emoji' => $emoji,
+            ]);
+        }
+
+        $reactions = $message->reactions()->get()
+            ->map(fn($reaction) => [
+                'user_id' => $reaction->user_id,
+                'emoji' => $reaction->emoji,
+            ])
+            ->values()
+            ->all();
+
+        try {
+            broadcast(new MessageReactionChanged(
+                $conversation->conversation_id,
+                $message->message_id,
+                $reactions,
+                $this->channelsFor($conversation),
+                $conversation->branch?->uuid
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return [
+            'message_id' => $message->message_id,
+            'reactions' => $reactions,
+        ];
+    }
+
+    // ---- Forwarding ---------------------------------------------------------
+
+    /**
+     * Forward a message to one or more of the caller's own conversations.
+     * A family's messages can't be forwarded into a *different* family's thread.
+     */
+    public function forward(User $user, array $payload, bool $asStaff = false)
+    {
+        $source = Message::find($payload['message_id']);
+
+        if (!$source) {
+            throw new Exception('Message not found.', 404);
+        }
+
+        $sourceConversation = Conversation::find($source->conversation_id);
+
+        if (!$sourceConversation) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $this->authorize($user, $sourceConversation, $asStaff);
+
+        $ids = collect($payload['conversation_ids'])->unique()->values();
+
+        $targets = Conversation::with('branch')->whereIn('conversation_id', $ids)->get();
+
+        if ($targets->count() !== $ids->count()) {
+            throw new Exception('Conversation not found.', 404);
+        }
+
+        $created = DB::transaction(function () use ($targets, $source, $sourceConversation, $user, $asStaff) {
+            return $targets->map(function (Conversation $target) use ($source, $sourceConversation, $user, $asStaff) {
+                $audience = $this->authorize($user, $target, $asStaff);
+
+                if (
+                    $sourceConversation->type === Conversation::TYPE_FAMILY
+                    && $target->type === Conversation::TYPE_FAMILY
+                    && $sourceConversation->client_id !== $target->client_id
+                ) {
+                    throw new Exception(
+                        'Messages from one family can\'t be forwarded to another family.',
+                        403
+                    );
+                }
+
+                $message = $target->messages()->create([
+                    'sender_user_id' => $user->user_id,
+                    'sender_type' => $audience === 'staff'
+                        ? Message::SENDER_STAFF
+                        : Message::SENDER_CLIENT,
+                    'body' => $source->body,
+                    'attachment_url' => $source->attachment_url,
+                    'attachment_name' => $source->attachment_name,
+                    'attachment_duration' => $source->attachment_duration,
+                    'is_forwarded' => true,
+                ]);
+
+                $target->update(['last_message_at' => now()]);
+
+                return [$target, $message->load(['replyTo', 'reactions'])];
+            });
+        });
+
+        foreach ($created as [$target, $message]) {
+            broadcast(new MessageSent(
+                $message,
+                $this->channelsFor($target),
+                $target->branch?->uuid
+            ));
+        }
+
+        return [
+            'forwarded' => $created->map(fn($pair) => [
+                'conversation_id' => $pair[0]->conversation_id,
+                'message' => $pair[1]->toChat($user->user_id),
+            ])->values()->all(),
+        ];
     }
 
 
@@ -1038,7 +1342,7 @@ class MessageService
     {
         $employeeId = $this->requireBranchStaff($user, (int) $payload['branch_id']);
 
-        return Conversation::where('branch_id', $payload['branch_id'])
+        $conversations = Conversation::where('branch_id', $payload['branch_id'])
             ->where('type', Conversation::TYPE_STAFF)
             ->where(function ($query) use ($employeeId) {
                 $query->where('employee_one_id', $employeeId)
@@ -1046,7 +1350,11 @@ class MessageService
             })
             ->with(['employeeOne.users', 'employeeTwo.users', 'latestMessage'])
             ->orderByDesc('last_message_at')
-            ->get()
+            ->get();
+
+        $this->markDeliveredIn($conversations, $user);
+
+        return $conversations
             ->map(fn($conversation) => $this->summary($conversation, 'staff', $user))
             ->all();
     }

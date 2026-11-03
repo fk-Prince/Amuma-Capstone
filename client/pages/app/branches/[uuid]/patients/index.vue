@@ -188,9 +188,9 @@ const emptyStateSubtitle = computed(() =>
 </script>
 
 <template>
-    <div class="min-h-screen-header bg-slate-100 dark:bg-surface rounded-lg">
+    <div class="dashboard-fit min-h-screen-header bg-slate-100 dark:bg-surface rounded-lg">
         <div
-            class="w-full min-h-[calc(100dvh-var(--header-h)-1rem)] lg:h-[calc(100dvh-var(--header-h)-1rem)] flex flex-col gap-4"
+            class="dashboard-fit-fill w-full min-h-[calc(100dvh-var(--header-h)-1rem)] lg:h-[calc(100dvh-var(--header-h)-1rem)] flex flex-col gap-4"
         >
             <div
                 class="bg-white rounded-lg shadow-sm border border-[#E4EFED] overflow-hidden flex-1 min-h-0 flex flex-col dark:border-white/10 dark:bg-secondary"
@@ -251,7 +251,7 @@ const emptyStateSubtitle = computed(() =>
                             class="absolute inset-0 bg-white/50 z-20 pointer-events-none"
                         />
 
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full min-w-[56rem] text-left border-collapse">
                             <thead class="sticky top-0 z-10">
                                 <tr
                                     class="border-b border-[#E4EFED] bg-[#F7FAF9] dark:border-white/10 dark:bg-white/5"

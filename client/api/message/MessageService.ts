@@ -79,9 +79,41 @@ class MessageService extends BaseService {
         patient_id?: number | null;
         body?: string;
         attachment?: File | null;
+        duration?: number | null;
+        reply_to_message_id?: number | null;
         as_staff?: boolean;
     }): Promise<any> {
         return await this.request(this.resource, 'POST', payload);
+    }
+
+    async react(payload: {
+        message_id: number;
+        emoji: string;
+        as_staff?: boolean;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/react`, 'POST', payload);
+    }
+
+    async forward(payload: {
+        message_id: number;
+        conversation_ids: number[];
+        as_staff?: boolean;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/forward`, 'POST', payload);
+    }
+
+    async markDelivered(payload: {
+        conversation_id: number;
+        as_staff?: boolean;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/delivered`, 'POST', payload);
+    }
+
+    async markRead(payload: {
+        conversation_id: number;
+        as_staff?: boolean;
+    }): Promise<any> {
+        return await this.request(`${this.resource}/read`, 'POST', payload);
     }
 
     private get resource(): string {

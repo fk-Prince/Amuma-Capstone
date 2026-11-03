@@ -111,10 +111,10 @@
             <transition name="fade-slide">
                 <div
                     v-if="locationOpen"
-                    class="fixed z-[70] w-[26rem] overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
+                    class="fixed z-[70] w-[26rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-lg dark:bg-secondary dark:border-white/10"
                     :style="{
                         top: menuPos.top + 'px',
-                        left: `min(${menuPos.left}px, calc(100vw - 27rem))`,
+                        left: `max(0.5rem, min(${menuPos.left}px, calc(100vw - 27rem)))`,
                     }"
                 >
                     <p
@@ -367,7 +367,7 @@ border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40 dark:bg-second
     >
         <div class="p-4 space-y-3">
             <div class="flex items-center gap-2">
-                <div class="flex-1">
+                <div class="min-w-0 flex-1">
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"

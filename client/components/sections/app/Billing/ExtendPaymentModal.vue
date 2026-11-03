@@ -2,11 +2,11 @@
     <Teleport to="body">
         <div
             v-if="open"
-            class="fixed inset-0 z-[70] flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10"
+            class="fixed inset-0 z-[70] flex items-center justify-center bg-secondary/50 p-4 backdrop-blur-sm no-print dark:bg-white/10 overflow-y-auto"
             @click.self="emit('close')"
         >
             <div
-                class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
+                class="my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
             >
                 <div
                     class="border-b border-primary-100 px-6 py-5 dark:border-primary-500/20"

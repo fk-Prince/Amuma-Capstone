@@ -26,7 +26,7 @@
 
             <div
                 v-if="loading"
-                class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
             >
                 <div
                     v-for="i in 3"
@@ -76,7 +76,7 @@
             </div>
             <div
                 v-else
-                class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
             >
                 <PricingCard
                     v-for="plan in formattedPlans"

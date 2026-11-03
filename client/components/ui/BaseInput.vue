@@ -50,7 +50,8 @@
             <textarea
                 v-if="props.mode === 'textarea'"
                 v-model="value"
-                :maxlength="textMax"
+                :maxlength="effectiveMax"
+                :data-input-kind="kindAttr"
                 :placeholder="placeholder"
                 :rows="rows"
                 :disabled="disabled"
@@ -67,7 +68,10 @@
                 v-else
                 v-model="value"
                 :type="inputType"
-                :maxlength="inputType === 'number' ? undefined : textMax"
+                :maxlength="inputType === 'number' ? undefined : effectiveMax"
+                :data-input-kind="kindAttr"
+                :inputmode="inputMode"
+                :autocomplete="fieldKind === 'phone' ? 'tel-national' : undefined"
                 :min="min || undefined"
                 :max="max || undefined"
                 :step="step || undefined"
@@ -103,9 +107,26 @@
             </span>
         </div>
 
-        <p v-if="currentError" class="text-xs text-red-500 mt-0.5">
-            {{ currentError }}
-        </p>
+        <div
+            v-if="currentError || showCounter"
+            class="flex items-start justify-between gap-3"
+        >
+            <p v-if="currentError" class="text-xs text-red-500 mt-0.5">
+                {{ currentError }}
+            </p>
+            <!-- Long text: how much room is left -->
+            <span
+                v-if="showCounter"
+                class="ml-auto shrink-0 text-[11px] tabular-nums"
+                :class="
+                    length >= effectiveMax
+                        ? 'font-semibold text-amber-600 dark:text-amber-300'
+                        : 'text-slate-400 dark:text-gray-500'
+                "
+            >
+                {{ length }}/{{ effectiveMax }}
+            </span>
+        </div>
     </div>
 </template>
 
@@ -197,6 +218,12 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    // What the field holds, for typing rules: "name", "email", "phone",
+    // "text", or "raw" (no filtering). Worked out from mode/label if not given.
+    kind: {
+        type: String,
+        default: "",
+    },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -237,6 +264,11 @@ const value = computed({
 function blockSignKeys(event: KeyboardEvent) {
     const nonNegative = props.min !== "" && Number(props.min) >= 0;
 
+    // Scientific notation ("1e5") is never what anyone means here.
+    if (inputType.value === "number" && ["e", "E"].includes(event.key)) {
+        event.preventDefault();
+    }
+
     if (inputType.value === "number" && nonNegative && ["-", "+", "e", "E"].includes(event.key)) {
         event.preventDefault();
     }
@@ -245,6 +277,52 @@ function blockSignKeys(event: KeyboardEvent) {
         event.preventDefault();
     }
 }
+
+// Typing rules (see plugins/input-guard.client.ts): which kind of field this is.
+const PERSON_NAME = /^(first|middle|last|full|given|family)\s*name$|^name$|^surname$|^suffix$/i;
+const PHONE_LABEL = /(phone|mobile|contact\s*(number|no\.?))/i;
+
+const fieldKind = computed(() => {
+    if (props.kind) return props.kind;
+    if (props.mode === "password") return "raw";
+    if (props.mode === "email") return "email";
+    if (props.mode === "textarea") return "textarea";
+    if (["number", "date", "time", "datetime"].includes(props.mode)) return "raw";
+
+    const label = props.label.trim();
+    if (/e-?mail/i.test(label)) return "email";
+    if (PERSON_NAME.test(label)) return "name";
+    if (PHONE_LABEL.test(label)) return "phone";
+    return "text";
+});
+
+const kindAttr = computed(() => (props.isSearch ? "text" : fieldKind.value));
+
+// Sensible length limits per kind (never above what the form allows).
+const effectiveMax = computed(() => {
+    switch (fieldKind.value) {
+        case "name":
+            return Math.min(props.textMax, 50);
+        case "email":
+            return Math.min(props.textMax, 100);
+        case "phone":
+            // Room for a pasted "+63 917 123 4567"; only 10 digits are kept.
+            return 16;
+        default:
+            return props.textMax;
+    }
+});
+
+const inputMode = computed(() => {
+    if (fieldKind.value === "phone") return "numeric";
+    if (fieldKind.value === "email") return "email";
+    return undefined;
+});
+
+const length = computed(() => String(props.modelValue ?? "").length);
+const showCounter = computed(
+    () => props.mode === "textarea" && !props.readonly && !props.disabled,
+);
 
 const slots = useSlots();
 

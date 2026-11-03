@@ -15,16 +15,6 @@
             />
         </ClientOnly>
 
-        <div class="flex justify-end">
-            <button
-                type="button"
-                :disabled="saving"
-                @click="handleSave"
-                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-50"
-            >
-                {{ saving ? "Saving..." : "Save Changes" }}
-            </button>
-        </div>
     </div>
 
     <div
@@ -36,7 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, toRaw } from "vue";
+import { computed, ref, watch, toRaw } from "vue";
+import { formSnapshot } from "~/utils/formSnapshot";
 import BranchForm from "~/components/forms/BranchForm.vue";
 import BranchCoverCard from "~/components/sections/app/settings/BranchCoverCard.vue";
 import { branchService } from "~/api/branch/BranchService";
@@ -58,13 +49,43 @@ const errors = defineModel<Record<string, string>>("errors", {
 
 const localValue = ref<Branch | null>(null);
 
+// Only the fields this form saves, so Save can stay off until one changes.
+const editable = (value: Branch | null | undefined) =>
+    value
+        ? formSnapshot({
+              name: value.name,
+              description: value.description,
+              contact_number: value.contact_number,
+              image: value.image,
+              email: value.email,
+              location: value.location
+                  ? {
+                        street: value.location.street,
+                        city: value.location.city,
+                        province: value.location.province,
+                        country: value.location.country,
+                        longitude: value.location.longitude,
+                        latitude: value.location.latitude,
+                    }
+                  : null,
+          })
+        : "";
+
+const savedSnapshot = ref("");
+const dirty = computed(() => Boolean(localValue.value) && editable(localValue.value) !== savedSnapshot.value);
+
+function copyFrom(value: Branch) {
+    const copy = structuredClone(toRaw(value));
+    copy.tin = copy.settings?.tin ?? "";
+    localValue.value = copy;
+    savedSnapshot.value = editable(copy);
+}
+
 watch(
     branch,
     (value) => {
         if (value) {
-            const copy = structuredClone(toRaw(value));
-            copy.tin = copy.settings?.tin ?? "";
-            localValue.value = copy;
+            copyFrom(value);
         }
     },
     {
@@ -161,4 +182,13 @@ const handleSave = async (): Promise<boolean> => {
         saving.value = false;
     }
 };
+// Puts back what was last saved.
+function reset() {
+    if (!branch.value) return;
+    copyFrom(branch.value);
+    errors.value = {};
+}
+
+// The Save button lives in the Branch Settings header (like My Profile).
+defineExpose({ save: handleSave, saving, dirty, reset });
 </script>

@@ -3,7 +3,7 @@
         class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary-600 to-emerald-500 p-[1.5px] shadow-lg shadow-primary/20"
     >
         <div
-            class="relative flex flex-col items-center gap-3 rounded-[15px] bg-gradient-to-r from-primary to-emerald-500 px-5 py-4 text-white sm:flex-row sm:justify-between sm:px-6"
+            class="relative flex flex-col items-center gap-3 rounded-[15px] bg-gradient-to-r from-primary to-emerald-500 px-5 py-4 text-white sm:flex-row sm:flex-wrap sm:justify-between sm:px-6"
         >
             <div
                 class="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl"

@@ -11,7 +11,7 @@
                     @click="expanded = !expanded"
                 >
                     <span
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:bg-primary-500/15"
+                        class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100 sm:flex dark:bg-primary-500/10 dark:text-primary-300 dark:group-hover:bg-primary-500/15"
                     >
                         <SlidersHorizontal class="h-5 w-5" />
                     </span>
@@ -19,7 +19,7 @@
                     <span class="min-w-0">
                         <span class="flex items-center gap-2">
                             <span
-                                class="font-semibold tracking-tight text-secondary dark:text-white"
+                                class="whitespace-nowrap font-semibold tracking-tight text-secondary dark:text-white"
                             >
                                 Filter Schedule
                             </span>
@@ -46,7 +46,7 @@
                     </span>
                 </button>
 
-                <div class="flex shrink-0 items-center gap-2 pl-2">
+                <div class="flex shrink-0 items-center gap-1.5 pl-1 sm:gap-2 sm:pl-2">
                     <div
                         v-if="
                             !filters.type.includes('adl') &&
@@ -62,7 +62,7 @@
                             :aria-label="option.label"
                             :title="option.label"
                             :aria-pressed="filters.view === option.value"
-                            class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+                            class="flex h-7 w-7 items-center justify-center rounded-lg transition-colors sm:h-8 sm:w-8"
                             :class="
                                 filters.view === option.value
                                     ? 'bg-white text-primary-600 shadow-sm dark:bg-secondary dark:text-primary-300'
@@ -316,7 +316,7 @@ import {
 } from "lucide-vue-next";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 
-export type ScheduleView = "timeline" | "cards";
+export type ScheduleView = "calendar" | "timeline" | "cards";
 export type ScheduleTypeFilter = "medical" | "homecare";
 
 export interface ScheduleFilters {
@@ -391,7 +391,12 @@ function filtersFromQuery(): ScheduleFilters {
 
         assignment: toStr(route.query.assignment) || "all",
 
-        view: toStr(route.query.view) === "cards" ? "cards" : "timeline",
+        view:
+            toStr(route.query.view) === "cards"
+                ? "cards"
+                : toStr(route.query.view) === "timeline"
+                  ? "timeline"
+                  : "calendar",
     };
 }
 
@@ -421,6 +426,7 @@ const viewOptions: {
     value: ScheduleView;
     icon: unknown;
 }[] = [
+    { label: "Calendar view", value: "calendar", icon: CalendarDays },
     { label: "Timeline view", value: "timeline", icon: GanttChart },
     { label: "Card view", value: "cards", icon: LayoutGrid },
 ];
@@ -616,7 +622,7 @@ function syncQuery() {
         "assignment",
         filters.assignment === "all" ? "" : filters.assignment,
     );
-    setOrDelete("view", filters.view === "timeline" ? "" : filters.view);
+    setOrDelete("view", filters.view === "calendar" ? "" : filters.view);
 
     router.replace({ query });
 

@@ -84,7 +84,7 @@
                 </div>
 
                 <div
-                    class="max-h-[400px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/10"
+                    class="max-h-[min(400px,calc(100dvh-11rem))] overflow-y-auto overscroll-contain divide-y divide-gray-100 dark:divide-white/10"
                 >
                     <div
                         v-if="isLoading && !notifications.length"
@@ -123,7 +123,10 @@
                     <div
                         v-for="notif in notifications"
                         :key="notif.id"
+                        role="button"
+                        tabindex="0"
                         @click="openNotification(notif)"
+                        @keydown.enter.prevent="openNotification(notif)"
                         class="flex gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                         :class="{
                             'bg-blue-50 hover:bg-blue-50/80 dark:bg-primary-500/10 dark:hover:bg-primary-500/15':
@@ -161,7 +164,7 @@
                                 {{ notif.message_type }}
                             </p>
                             <p
-                                class="text-xs text-gray-500 dark:text-gray-400 truncate"
+                                class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 break-words"
                             >
                                 {{ notif.message }}
                             </p>
@@ -209,7 +212,10 @@ import { onClickOutside } from "@vueuse/core";
 import { Bell, Building2, Volume2, VolumeX } from "lucide-vue-next";
 import { playNotificationSound, useSoundPrefs } from "~/composables/useSounds";
 import { notificationService } from "~/api/notification/NotificationService";
-import { scheduleService } from "~/api/schedule/ScheduleService";
+import {
+    notificationAudience,
+    resolveNotificationTarget,
+} from "~/utils/notificationTarget";
 import type { Notification } from "~/types/notification";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useRoute, useRouter } from "vue-router";
@@ -336,81 +342,22 @@ const markRead = async (id: number) => {
     }
 };
 
-const openSchedule = async (notif: Notification) => {
-    const branchUuid = notif.branch?.uuid;
-    const code = notif.reference_id;
-
-    if (!branchUuid || !code || !route.path.startsWith("/app/branches")) return;
-
-    try {
-        const res: any = await scheduleService.action({
-            type: "locate",
-            branch_uuid: branchUuid,
-            schedule_code: code,
-        });
-        const found = res?.data;
-
-        open.value = false;
-
-        await router.push({
-            path: `/app/branches/${branchUuid}/schedules`,
-            query: {
-                type: found?.type ?? "medical",
-                ...(found?.date && { date_from: found.date, date_to: found.date }),
-                search: code,
-            },
-        });
-    } catch {
-        return;
-    }
-};
-
+// Opens the page the notification is about (bookings, schedules, portal, ...).
 const openNotification = async (notif: Notification) => {
     markRead(notif.id);
 
-    if (notif.message_type === "Schedule") {
-        await openSchedule(notif);
-        return;
-    }
+    const audience = notificationAudience(notif, route.path, null, user.value);
+    const target = await resolveNotificationTarget(
+        notif,
+        audience,
+        currentBranchUuid(),
+    );
 
-    if (notif.message_type === "Support" && notif.reference_id) {
-        open.value = false;
-
-        if (route.path.startsWith("/app/owner")) {
-            await router.push({
-                path: "/app/owner/support",
-                query: { ticket: notif.reference_id },
-            });
-            return;
-        }
-
-        if (notif.branch?.uuid) {
-            if (!route.path.startsWith(`/app/branches/${notif.branch.uuid}`)) {
-                await router.push(
-                    `/app/branches/${notif.branch.uuid}/manage-subscription`,
-                );
-            }
-
-            openSupport(notif.reference_id);
-            return;
-        }
-
-        await router.push({
-            path: "/resources/support",
-            query: { ticket: notif.reference_id },
-        });
-        return;
-    }
-
-    if (notif.message_type !== "Booking" || !notif.reference_id) return;
-    if (!notif.branch?.uuid || !route.path.startsWith("/app/branches")) return;
+    if (!target) return;
 
     open.value = false;
 
-    await router.push({
-        path: `/app/branches/${notif.branch.uuid}/bookings`,
-        query: { reference_id: notif.reference_id },
-    });
+    await router.push(target);
 };
 
 const markAllRead = async () => {
@@ -437,7 +384,7 @@ const loadNotifications = async (branchUuid?: string) => {
 
     try {
         const res = await notificationService.list({
-            per_page: 4,
+            per_page: 15,
             branch_uuid: branchUuid || undefined,
         });
         notifications.value = Array.isArray(res?.data) ? res.data : [];
@@ -450,7 +397,7 @@ const loadNotifications = async (branchUuid?: string) => {
 };
 
 const announce = (notification: Notification) => {
-    notifications.value = [notification, ...notifications.value].slice(0, 4);
+    notifications.value = [notification, ...notifications.value].slice(0, 15);
 
     info("New Notification", notification.message);
 };

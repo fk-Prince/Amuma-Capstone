@@ -30,15 +30,15 @@
                     class="bg-white border rounded-b-lg border-muted-light shadow-[0_1px_2px_rgba(15,22,35,0.04)] overflow-hidden dark:bg-secondary dark:border-white/10"
                 >
                     <div
-                        class="flex items-center justify-between gap-4 px-5 pt-5 pb-0 border-b border-muted-light bg-gradient-to-b from-light/60 to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
+                        class="flex items-center justify-between gap-4 px-3 sm:px-5 pt-3 sm:pt-5 pb-0 border-b border-muted-light bg-gradient-to-b from-light/60 to-white dark:from-white/5 dark:to-secondary dark:border-white/10"
                     >
                         <div
-                            class="relative flex items-center p-1 bg-light rounded-2xl dark:bg-white/5"
+                            class="relative flex w-full sm:w-auto items-center p-1 bg-light rounded-2xl dark:bg-white/5"
                         >
                             <span
-                                class="absolute top-1 bottom-1 w-[180px] rounded-xl bg-white shadow-[0_1px_3px_rgba(15,22,35,0.12)] transition-transform duration-300 ease-out dark:bg-white/15"
+                                class="absolute top-1 bottom-1 w-[calc(50%-0.25rem)] sm:w-[180px] rounded-xl bg-white shadow-[0_1px_3px_rgba(15,22,35,0.12)] transition-transform duration-300 ease-out dark:bg-white/15"
                                 :style="{
-                                    transform: `translateX(${activeIndex * 180}px)`,
+                                    transform: `translateX(${activeIndex * 100}%)`,
                                 }"
                             />
 
@@ -47,7 +47,7 @@
                                 :key="tab.value"
                                 type="button"
                                 @click="activeTab = tab.value"
-                                class="relative z-10 flex w-[180px] items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-200"
+                                class="relative z-10 flex flex-1 min-w-0 sm:flex-none sm:w-[180px] items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-colors duration-200"
                                 :class="
                                     activeTab === tab.value
                                         ? 'text-secondary dark:text-white'
@@ -77,7 +77,7 @@
                                 transform: `translateX(-${activeIndex * 50}%)`,
                             }"
                         >
-                            <div class="w-1/2 shrink-0 p-6">
+                            <div class="w-1/2 shrink-0 p-3 sm:p-6">
                                 <HomecarePlan
                                     :caregivers="overview.caregivers"
                                     :scheduled_visits="
@@ -90,7 +90,7 @@
                                 />
                             </div>
 
-                            <div class="w-1/2 shrink-0 p-6">
+                            <div class="w-1/2 shrink-0 p-3 sm:p-6">
                                 <FacilityPlan
                                     :total_active_plans="
                                         overview.total_active_plans

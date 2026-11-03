@@ -1,8 +1,8 @@
 <template>
     <div
-        class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1"
+        class="flex min-w-0 flex-[1_1_46rem] flex-col gap-3 items-stretch sm:flex-row sm:flex-wrap sm:items-center"
     >
-        <div class="relative w-full min-w-0 sm:flex-1 sm:max-w-sm">
+        <div class="relative w-full min-w-0 sm:min-w-[13rem] sm:flex-1 sm:max-w-sm">
             <BaseInput
                 mode="text"
                 :is-search="true"

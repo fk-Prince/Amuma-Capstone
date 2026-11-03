@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex min-h-screen-header flex-1 flex-col gap-2 bg-slate-100 dark:bg-surface"
+        class="dashboard-fit flex min-h-screen-header flex-1 flex-col gap-2 bg-slate-100 dark:bg-surface"
     >
         <InvoiceOverview
             :overview="overview"
@@ -16,13 +16,13 @@
                     class="flex flex-col gap-4 border-b border-slate-200 p-4 shrink-0 lg:flex-row lg:items-center lg:justify-between dark:border-white/10"
                 >
                     <div
-                        class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-white/10"
+                        class="inline-flex max-w-full self-start overflow-x-auto scrollbar-none rounded-xl bg-slate-100 p-1 dark:bg-white/10 lg:self-auto"
                     >
                         <button
                             v-for="tab in tabs"
                             :key="tab.key"
                             type="button"
-                            class="rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                            class="shrink-0 whitespace-nowrap rounded-lg px-3 sm:px-4 py-2 text-sm font-medium transition-colors"
                             :class="
                                 activeTab === tab.key
                                     ? 'bg-white text-primary shadow-sm dark:bg-secondary'
@@ -34,7 +34,7 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center gap-2 lg:justify-end">
+                    <div class="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
                         <ViewModeToggle
                             :model-value="viewMode"
                             @update:model-value="setViewMode"
@@ -48,7 +48,7 @@
                             :search-bar="false"
                         />
 
-                        <div class="flex-1 lg:w-80">
+                        <div class="min-w-0 flex-1 basis-40 lg:basis-auto lg:w-80">
                             <BaseInput
                                 v-model="query"
                                 :placeholder="searchPlaceholder"
@@ -443,11 +443,11 @@
         <Teleport to="body">
             <div
                 v-if="payTarget"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 overflow-y-auto"
                 @click.self="!paying && closePayModal()"
             >
                 <div
-                    class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                    class="my-auto w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <h3
                         class="text-base font-semibold text-gray-900 dark:text-white"
@@ -544,11 +544,11 @@
         <Teleport to="body">
             <div
                 v-if="voidTarget"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 p-4 overflow-y-auto"
                 @click.self="!voidingInvoice && closeVoidModal()"
             >
                 <div
-                    class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+                    class="my-auto w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                 >
                     <h3
                         class="text-base font-semibold text-gray-900 dark:text-white"

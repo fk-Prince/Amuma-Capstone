@@ -1,6 +1,7 @@
 <template>
     <BaseInput
         v-model="value"
+        kind="phone"
         :label="label"
         :error="error"
         :placeholder="placeholder"
@@ -41,14 +42,26 @@ const emit = defineEmits<{
 }>();
 
 // The dial code is shown beside the field, so anything the user pastes that
-// repeats it — +63, 63, or the local trunk 0 — is stripped back out.
+// repeats it — +63, 63, or the local trunk 0 — is stripped back out, and only
+// the 10 digits after +63 are kept (the 11-digit 09XX… form, without the 0).
 function national(input: string) {
     const cleaned = input.replace(/[^\d+\s-]/g, "");
 
-    return cleaned
+    const local = cleaned
         .replace(/^\+?63[\s-]?/, "")
         .replace(/^0(?=9)/, "")
         .trimStart();
+
+    let digits = 0;
+    let out = "";
+    for (const char of local) {
+        if (/\d/.test(char)) {
+            if (digits === 10) break;
+            digits++;
+        }
+        out += char;
+    }
+    return out;
 }
 
 const value = computed({

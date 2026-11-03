@@ -15,7 +15,8 @@ import {
     MessageSquare,
     MessageCircleQuestion,
     ScrollText,
-    Pill
+    Pill,
+    ChartColumnBig
 } from 'lucide-vue-next';
 
 export interface MenuItems {
@@ -26,6 +27,8 @@ export interface MenuItems {
     icon?: any;
     plan?: string[];
     group?: string;
+    /** Only for agency owners whose agency has more than one branch. */
+    agencyOverview?: boolean;
 }
 
 export const authMenuList: MenuItems[] = [
@@ -146,6 +149,14 @@ export const authMenuList: MenuItems[] = [
         to: "/app/branches/[uuid]/audit-logs",
         modules: ["Audit Logs"],
         group: "Business",
+    },
+    {
+        // Listed last so phones keep their usual bottom bar; the sidebar shows it under Overview.
+        label: "Executive Overview",
+        icon: ChartColumnBig,
+        to: "/app/branches/[uuid]/overview",
+        group: "Overview",
+        agencyOverview: true,
     },
 ];
 

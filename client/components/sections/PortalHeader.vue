@@ -46,6 +46,11 @@
             <div
                 class="flex items-center gap-2 sm:gap-6 lg:gap-8 shrink-0 max-lg:[&>div>button]:h-10 max-lg:[&>div>button]:w-10 max-lg:[&>div>button]:rounded-full max-lg:[&>div>button]:bg-gray-100/80 dark:max-lg:[&>div>button]:bg-white/10 max-lg:[&>div>button]:ring-1 max-lg:[&>div>button]:ring-black/5 dark:max-lg:[&>div>button]:ring-white/10 max-lg:[&>button]:h-10 max-lg:[&>button]:w-10 max-lg:[&>button]:rounded-full max-lg:[&>button]:bg-gray-100/80 dark:max-lg:[&>button]:bg-white/10 max-lg:[&>button]:ring-1 max-lg:[&>button]:ring-black/5 dark:max-lg:[&>button]:ring-white/10"
             >
+                <!-- First-time setup checklist (hidden once it's done) -->
+                <ClientOnly>
+                    <SetupGuide context="portal" />
+                </ClientOnly>
+
                 <MessageBell portal />
 
                 <Notification />
@@ -95,6 +100,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { Calendar, Clock } from "lucide-vue-next";
 import NavbarProfileDropdown from "~/components/ui/NavbarProfileDropdown.vue";
+import SetupGuide from "~/components/sections/app/Dashboard/SetupGuide.vue";
 import Notification from "~/components/ui/Notification.vue";
 import ThemeToggle from "~/components/ui/ThemeToggle.vue";
 import { useAuthUser } from "~/composables/useAuthUser";

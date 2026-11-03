@@ -191,10 +191,10 @@
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-secondary dark:text-white">
-                        Trusted by thousands
+                        Verified care providers
                     </p>
                     <p class="text-xs text-muted dark:text-gray-400">
-                        Families count on us for better care.
+                        Only verified agencies and branches are listed.
                     </p>
                 </div>
             </div>
@@ -325,9 +325,9 @@ const trustItems = [
 ];
 
 const stats = [
-    { icon: Heart, value: "500+", label: "Families Served" },
-    { icon: Users, value: "50+", label: "Caregivers" },
-    { icon: ShieldCheck, value: "99.9%", label: "Satisfaction Rate" },
+    { icon: ShieldCheck, value: "Verified", label: "Agencies & branches" },
+    { icon: Heart, value: "3", label: "Care models" },
+    { icon: CalendarCheck, value: "Online", label: "Booking & payments" },
 ];
 
 const avatarInitials = ["M", "J", "A"];

@@ -188,18 +188,14 @@ async function logout() {
 </script>
 
 <style scoped>
+/* Still scrolls (wheel, trackpad, touch); the bar itself is hidden. */
 .sidebar-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 .sidebar-scroll::-webkit-scrollbar {
-    width: 5px;
-}
-.sidebar-scroll::-webkit-scrollbar-track {
-    background: transparent;
-}
-.sidebar-scroll::-webkit-scrollbar-thumb {
-    background-color: rgba(148, 163, 184, 0.6);
-    border-radius: 999px;
+    display: none;
+    width: 0;
+    height: 0;
 }
 </style>

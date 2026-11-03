@@ -310,15 +310,15 @@ init();
 
         <template v-else>
             <div
-                class="border-b bg-white px-8 dark:border-white/10 dark:bg-secondary"
+                class="border-b bg-white px-4 sm:px-8 dark:border-white/10 dark:bg-secondary"
             >
-                <div class="flex gap-10">
+                <div class="flex gap-6 sm:gap-10 overflow-x-auto scrollbar-none">
                     <button
                         v-for="(tab, index) in tabs"
                         :key="tab.value"
                         type="button"
                         @click="activeTab = tab.value"
-                        class="group relative flex items-center gap-3 py-4 text-sm font-medium transition"
+                        class="group relative flex shrink-0 items-center gap-3 py-4 text-sm font-medium whitespace-nowrap transition"
                     >
                         <span
                             class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors dark:border-white/10"

@@ -25,19 +25,13 @@
                 >
                     <img
                         v-if="
-                            branchStore.activeBranch?.image &&
-                            !brokenImages.has(
-                                branchStore.activeBranch?.uuid ?? '',
-                            )
+                            headerImage &&
+                            !brokenImages.has(headerImageKey)
                         "
-                        :src="getBranchImage(branchStore.activeBranch.image)"
-                        :alt="branchStore.activeBranch.name"
+                        :src="getBranchImage(headerImage)"
+                        :alt="headerTitle"
                         class="h-full w-full object-cover"
-                        @error="
-                            brokenImages.add(
-                                branchStore.activeBranch?.uuid ?? '',
-                            )
-                        "
+                        @error="brokenImages.add(headerImageKey)"
                     />
                     <Building2
                         v-else
@@ -49,9 +43,17 @@
                     <h1
                         class="flex items-center gap-1.5 truncate text-[15px] sm:text-2xl lg:text-[26px] font-bold text-gray-900 dark:text-white leading-tight"
                     >
-                        {{
-                            branchStore.activeBranch?.name || "Select a branch"
-                        }}
+                        <span
+                            v-if="isExecutiveView"
+                            class="min-w-0 truncate sm:line-clamp-2 sm:whitespace-normal 2xl:line-clamp-1"
+                            >{{ agency?.name
+                            }}<span class="hidden sm:inline">
+                                - Executive Overview</span
+                            ></span
+                        >
+                        <span v-else class="min-w-0 truncate">{{
+                            headerTitle
+                        }}</span>
 
                         <ChevronDown
                             v-if="
@@ -65,10 +67,16 @@
                     <p
                         class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate dark:text-gray-400"
                     >
-                        {{
-                            branchStore.activeBranch?.location?.address ||
-                            "No branch selected"
-                        }}
+                        <template v-if="isExecutiveView">
+                            <span class="sm:hidden">Executive Overview · </span
+                            >All {{ overviewBranches.length }} branches combined
+                        </template>
+                        <template v-else>
+                            {{
+                                branchStore.activeBranch?.location?.address ||
+                                "No branch selected"
+                            }}
+                        </template>
                     </p>
 
                     <div
@@ -107,6 +115,11 @@
                 </div>
 
                 <template v-else>
+                    <!-- First-time setup checklist (hidden once it's done) -->
+                    <ClientOnly>
+                        <SetupGuide context="branch" />
+                    </ClientOnly>
+
                     <MessageBell
                         v-if="branchStore.activeBranch?.status === 'verified'"
                     />
@@ -158,6 +171,7 @@ import { useDashboardIntro } from "~/composables/useDashboardIntro";
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import Notification from "../ui/Notification.vue";
 import MessageBell from "../ui/MessageBell.vue";
+import SetupGuide from "~/components/sections/app/Dashboard/SetupGuide.vue";
 import NavbarProfileDropdown from "../ui/NavbarProfileDropdown.vue";
 import ThemeToggle from "../ui/ThemeToggle.vue";
 import BranchSelectModal from "./BranchSelectModal.vue";
@@ -170,6 +184,8 @@ import {
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
+import { useRoute } from "vue-router";
+import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { getBranchImage } from "~/types/branch.js";
 
 const intro = useDashboardIntro();
@@ -179,6 +195,34 @@ const user = useAuthUser();
 defineEmits<{ open: [] }>();
 
 const branchStore = useBranchStore();
+const route = useRoute();
+const { agency, overviewBranches, canSeeExecutiveOverview } =
+    useAgencyBranches();
+
+// On the Executive Overview the header speaks for the whole agency.
+const isExecutiveView = computed(
+    () =>
+        canSeeExecutiveOverview.value &&
+        /^\/app\/branches\/[^/]+\/overview\/?$/.test(route.path),
+);
+
+const headerTitle = computed(() =>
+    isExecutiveView.value
+        ? `${agency.value?.name} - Executive Overview`
+        : branchStore.activeBranch?.name || "Select a branch",
+);
+
+const headerImage = computed(() =>
+    isExecutiveView.value
+        ? (agency.value?.image ?? null)
+        : (branchStore.activeBranch?.image ?? null),
+);
+
+const headerImageKey = computed(() =>
+    isExecutiveView.value
+        ? `agency-${agency.value?.agency_id ?? ""}`
+        : (branchStore.activeBranch?.uuid ?? ""),
+);
 
 
 const brokenImages = reactive(new Set<string>());
