@@ -78,13 +78,13 @@
         <!-- The loaded dates don't cover this whole month -->
         <div
             v-if="partialMonth"
-            class="flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
+            class="flex flex-wrap items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200"
         >
             <Info class="h-3.5 w-3.5 shrink-0" />
             <span class="min-w-0 flex-1">{{ partialMonth }}</span>
             <button
                 type="button"
-                class="rounded-md bg-white px-2 py-1 font-semibold text-amber-700 shadow-sm transition hover:bg-amber-100 dark:bg-white/10 dark:text-amber-200"
+                class="rounded-md bg-white px-2 py-1 font-semibold text-primary shadow-sm transition hover:bg-primary-100 dark:bg-white/10 dark:text-primary-200"
                 @click="showWholeMonth"
             >
                 Show all of {{ monthName }}

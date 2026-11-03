@@ -173,6 +173,41 @@
                 <div
                     class="space-y-5 border-t border-muted-light/70 p-4 sm:p-5 dark:border-white/10"
                 >
+                    <div v-if="!isShifts">
+                        <p
+                            class="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-400"
+                        >
+                            <CalendarDays class="h-3.5 w-3.5" />
+                            Date range
+                        </p>
+
+                        <div
+                            class="flex flex-col gap-2 sm:flex-row sm:items-center"
+                        >
+                            <DatePickerField
+                                :model-value="filters.date_from"
+                                class-name="w-full min-w-0 sm:w-44"
+                                placeholder="From"
+                                :default-to-today="false"
+                                @update:model-value="setDate('date_from', $event)"
+                            />
+
+                            <span
+                                class="shrink-0 text-xs text-muted sm:px-1 dark:text-gray-400"
+                            >
+                                to
+                            </span>
+
+                            <DatePickerField
+                                :model-value="filters.date_to"
+                                class-name="w-full min-w-0 sm:w-44"
+                                placeholder="To"
+                                :default-to-today="false"
+                                @update:model-value="setDate('date_to', $event)"
+                            />
+                        </div>
+                    </div>
+
                     <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                         <div v-if="!isShifts">
                             <p
@@ -276,6 +311,7 @@ import {
     PanelRightClose,
     PanelRightOpen,
 } from "lucide-vue-next";
+import DatePickerField from "~/components/ui/DatePickerField.vue";
 
 export type ScheduleView = "calendar" | "timeline" | "cards" | "list";
 export type ScheduleTypeFilter = "medical" | "homecare";
@@ -469,6 +505,12 @@ const typeOptions = computed(() => [
 
 const isShifts = computed(() => filters.type.includes("shifts"));
 const isEmployees = computed(() => filters.type.includes("employees"));
+const isCalendar = computed(() => isCalendarView(filters.type, filters.view));
+
+const isDefaultDates = computed(() => {
+    if (isCalendar.value) return isWholeMonth(filters.date_from, filters.date_to);
+    return filters.date_from === yesterday && !filters.date_to;
+});
 
 const isDefaultType = computed(
     () => filters.type.length === 1 && filters.type[0] === DEFAULT_TYPE,
@@ -481,10 +523,27 @@ const activeFilterCount = computed(() => {
     if (!isDefaultType.value) count++;
     if (filters.assignment !== "all") count++;
 
-    if (!isShifts.value) count += filters.statuses.length;
+    if (!isShifts.value) {
+        if (!isDefaultDates.value) count++;
+
+        count += filters.statuses.length;
+    }
 
     return count;
 });
+
+const shortDate = (value: string) => {
+    if (!value) return "";
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) return value;
+
+    return parsed.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+    });
+};
 
 const summaryChips = computed(() => {
     const chips: { key: string; label: string; icon: unknown }[] = [];
@@ -498,6 +557,14 @@ const summaryChips = computed(() => {
     });
 
     if (isShifts.value) return chips;
+
+    chips.push({
+        key: "period",
+        icon: CalendarDays,
+        label: filters.date_to
+            ? `${shortDate(filters.date_from)} – ${shortDate(filters.date_to)}`
+            : `From ${shortDate(filters.date_from)}`,
+    });
 
     if (filters.statuses.length) {
         chips.push({
@@ -544,6 +611,11 @@ const toggleStatus = (value: string) => {
         filters.statuses.splice(index, 1);
     }
 
+    emitChange(true);
+};
+
+const setDate = (key: "date_from" | "date_to", value: string) => {
+    filters[key] = value;
     emitChange(true);
 };
 

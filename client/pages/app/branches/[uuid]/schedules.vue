@@ -19,7 +19,6 @@
                         @scanned="loadSchedules()"
                     />
 
-                    <!-- Day / week switcher (the calendar has its own month arrows) -->
                     <ScheduleDateBar
                         v-if="showDateBar"
                         :date-from="route.query.date_from as string"
@@ -414,7 +413,6 @@ function onCalendarRange(range: { from: string; to: string }) {
     });
 }
 
-// Shift caregiver boards aren't filtered by date, so no switcher there.
 const showDateBar = computed(
     () =>
         !calendarMode.value &&

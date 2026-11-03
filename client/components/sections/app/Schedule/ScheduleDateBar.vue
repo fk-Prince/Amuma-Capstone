@@ -44,50 +44,16 @@
                 {{ subtitle }}
             </p>
         </div>
-
-        <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-            <DatePickerField
-                :model-value="anchor"
-                class-name="min-w-0 flex-1 sm:w-44 sm:flex-none"
-                placeholder="Pick a date"
-                :default-to-today="false"
-                @update:model-value="pick"
-            />
-
-            <div
-                class="flex rounded-lg bg-slate-100 p-0.5 dark:bg-white/10"
-                role="group"
-                aria-label="How many days to show"
-            >
-                <button
-                    v-for="option in modes"
-                    :key="option.value"
-                    type="button"
-                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition"
-                    :class="
-                        mode === option.value
-                            ? 'bg-white text-primary shadow-sm dark:bg-secondary dark:text-primary-300'
-                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white'
-                    "
-                    :aria-pressed="mode === option.value"
-                    @click="setMode(option.value)"
-                >
-                    {{ option.label }}
-                </button>
-            </div>
-        </div>
     </div>
 </template>
 
 <script lang="ts" setup>
 import { computed } from "vue";
 import { ChevronLeft, ChevronRight } from "lucide-vue-next";
-import DatePickerField from "~/components/ui/DatePickerField.vue";
 
 /**
- * Quick date switcher above the timeline and card views: step a day or a
- * week at a time, jump to today or any date, or go back to everything
- * coming up. It only changes the same From/To dates the filter uses.
+ * Quick date switcher above the timeline and card views: step through the
+ * dates set in the filter, or jump to today.
  */
 const props = defineProps<{
     dateFrom?: string;
@@ -99,12 +65,6 @@ const emit = defineEmits<{
 }>();
 
 type Mode = "day" | "week" | "upcoming" | "range";
-
-const modes: { label: string; value: Exclude<Mode, "range"> }[] = [
-    { label: "Day", value: "day" },
-    { label: "Week", value: "week" },
-    { label: "All upcoming", value: "upcoming" },
-];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -170,17 +130,6 @@ function step(direction: 1 | -1) {
 
 function goToday() {
     emitRange(mode.value === "week" ? weekOf(today()) : { from: today(), to: today() });
-}
-
-function setMode(next: Exclude<Mode, "range">) {
-    if (next === "upcoming") emitRange({ from: yesterday(), to: "" });
-    else if (next === "week") emitRange(weekOf(anchor.value));
-    else emitRange({ from: anchor.value, to: anchor.value });
-}
-
-function pick(value: string) {
-    if (!value) return;
-    emitRange(mode.value === "week" ? weekOf(value) : { from: value, to: value });
 }
 
 const format = (value: string, options: Intl.DateTimeFormatOptions) =>
