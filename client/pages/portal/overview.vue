@@ -1157,7 +1157,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
-import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import {
@@ -1808,7 +1808,7 @@ async function generateAttendanceQr(direction: "in" | "out") {
     qrToken.value = null;
 
     try {
-        const res = await adlAttendanceService.generateQr({
+        const res = await attendanceService.generateQr({
             type: direction,
             schedule_services_id: scheduleServicesId,
         });

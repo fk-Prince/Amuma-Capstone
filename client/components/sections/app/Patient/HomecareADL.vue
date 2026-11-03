@@ -17,13 +17,10 @@
             </div>
 
             <div class="flex flex-wrap justify-end gap-2">
-                <ActionButton
+                <ScanQrButton
                     v-if="variant === 1 || variant === 2"
-                    variant="primary"
-                    @click="showScanner = true"
-                >
-                    Scan QR
-                </ActionButton>
+                    @scanned="emit('refresh')"
+                />
 
                 <div v-if="variant === 1" class="relative w-full sm:w-64">
                     <input
@@ -936,6 +933,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import ScanQrButton from "~/components/ui/ScanQrButton.vue";
 import {
     TriangleAlert,
     ChevronDown,
@@ -949,7 +947,7 @@ import {
 } from "lucide-vue-next";
 import type { ScheduleItem, AuditRow } from "~/types/schedule";
 import ActionButton from "~/components/ui/ActionButton.vue";
-import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import { formatDuration, formatDurationShort, formatTime } from "~/utils/time";
@@ -1132,7 +1130,7 @@ async function generateQr(type: "in" | "out" | "handover", schedule: AuditRow) {
     showQrModal.value = true;
 
     try {
-        const res = await adlAttendanceService.generateQr({
+        const res = await attendanceService.generateQr({
             type,
             branch_uuid: route.params.uuid,
             schedule_services_id: schedule.schedule_services_id,
@@ -1419,7 +1417,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
 
             const online_logs = (service.assignees ?? []).flatMap((assignee) =>
                 (assignee.online ?? []).map((scan) => ({
-                    adl_attendance_id: scan.adl_attendance_id,
+                    attendance_id: scan.attendance_id,
                     type_in: scan.type_in ?? "scanned",
                     type_out: scan.type_out ?? null,
                     in_timestamp: scan.in_timestamp ?? null,

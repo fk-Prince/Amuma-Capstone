@@ -445,8 +445,8 @@ class PatientAccessResource extends JsonResource
 
         $assigned = $scheduleService->assigned->first();
 
-        $adlAttendance = $assigned->relationLoaded('adlAttendances')
-            ? $assigned->adlAttendances->first()
+        $adlAttendance = $assigned->relationLoaded('attendances')
+            ? $assigned->attendances->first()
             : null;
 
         return [
@@ -462,7 +462,7 @@ class PatientAccessResource extends JsonResource
             ] : null,
 
             'adl_attendance' => $adlAttendance ? [
-                'adl_attendance_id' => $adlAttendance->adl_attendance_id,
+                'attendance_id' => $adlAttendance->attendance_id,
                 'type_in' => $adlAttendance->type_in,
                 'type_out' => $adlAttendance->type_out,
                 'in_timestamp' => $adlAttendance->in_timestamp?->format('Y-m-d H:i:s'),

@@ -1,7 +1,7 @@
 export type AdlAttendanceType = "scanned" | "force" | "handover";
 
 export interface AdlAttendanceAssignment {
-    adl_attendance_id: number;
+    attendance_id: number;
     type_in: AdlAttendanceType;
     type_out: AdlAttendanceType | null;
     in_timestamp: string | null;
@@ -38,6 +38,7 @@ export interface ScheduleServiceItem {
     duration_minutes: number;
     end_service: string;
     type: string | null;
+    can_scan?: boolean;
     assignees?: ScheduleAssignee[];
     previous_assignees?: PreviousAssignee[];
 }
@@ -194,7 +195,7 @@ export interface AuditRow {
     }[];
 
     online_logs: {
-        adl_attendance_id: number;
+        attendance_id: number;
         type_in: AdlAttendanceType;
         type_out: AdlAttendanceType | null;
         employee_id?: number | null;
@@ -239,4 +240,27 @@ export interface EmployeeScheduleRow {
     role_name: string | null;
     shifts: EmployeeShiftEntry[];
     schedules: EmployeeScheduleEntry[];
+}
+
+export interface PatientVisitStaff {
+    employee_id: number;
+    name: string;
+    role: string | null;
+    avatar: string | null;
+    note: string | null;
+    is_me: boolean;
+    attended: boolean;
+    attended_at: string | null;
+    attendance_note: string | null;
+}
+
+export interface PatientVisit {
+    schedule_id: number;
+    schedule_code: string;
+    status: string;
+    scheduled_at: string | null;
+    patient: { name: string; avatar: string | null };
+    services: string[];
+    checked_in_at: string | null;
+    staff: PatientVisitStaff[];
 }

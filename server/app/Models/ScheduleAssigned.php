@@ -68,9 +68,9 @@ class ScheduleAssigned extends Model
         return $this->belongsTo(ScheduleService::class, 'schedule_services_id', 'schedule_services_id');
     }
 
-    public function adlAttendances()
+    public function attendances()
     {
-        return $this->hasMany(AdlAttendance::class, 'schedule_assigned_id', 'schedule_assigned_id');
+        return $this->hasMany(Attendance::class, 'schedule_assigned_id', 'schedule_assigned_id');
     }
 
     public function employee()

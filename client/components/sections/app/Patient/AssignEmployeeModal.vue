@@ -159,6 +159,31 @@
                                     />
                                 </div>
 
+                                <div class="flex shrink-0 items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+                                    :class="[
+                                        canScan(service)
+                                            ? 'border-primary/30 bg-primary/10 text-primary'
+                                            : 'border-slate-200 bg-white text-slate-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500',
+                                        service.type === 'ADL'
+                                            ? 'cursor-default'
+                                            : 'hover:border-primary/50',
+                                    ]"
+                                    :title="
+                                        service.type === 'ADL'
+                                            ? 'ADL visits always use QR check-in'
+                                            : canScan(service)
+                                              ? 'Assigned staff check in by scanning the patient QR. Click to turn off.'
+                                              : 'QR check-in is off. Click to turn on.'
+                                    "
+                                    @click.stop="toggleScan(service)"
+                                >
+                                    <QrCode class="h-3.5 w-3.5" />
+                                    {{ canScan(service) ? "QR on" : "QR off" }}
+                                </button>
+
                                 <span
                                     class="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                     :class="
@@ -188,6 +213,7 @@
                                             : "Needs Assign"
                                     }}
                                 </span>
+                                </div>
                             </div>
 
                             <div
@@ -224,6 +250,14 @@
                                         </div>
 
                                         <div class="flex items-center gap-2">
+                                            <span
+                                                v-if="canScan(service)"
+                                                class="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary"
+                                                title="Can scan the patient QR"
+                                            >
+                                                <QrCode class="h-3.5 w-3.5" />
+                                            </span>
+
                                             <span
                                                 class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                             >
@@ -942,6 +976,7 @@ import {
     Search,
     Phone,
     Mail,
+    QrCode,
 } from "lucide-vue-next";
 
 interface AssignmentEntry {
@@ -969,6 +1004,10 @@ const emit = defineEmits<{
                 schedule_services_id: number;
                 note: string | null;
             }[];
+            scan_services: {
+                schedule_services_id: number;
+                can_scan: boolean;
+            }[];
         },
     ): void;
 }>();
@@ -992,7 +1031,24 @@ const { error: toastError } = useToast();
 
 /** schedule_services_id → the people assigned to it, each with its own note. */
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
+const scanServices = ref<Record<number, boolean>>({});
 const activeService = ref<number | null>(null);
+
+function canScan(service: ScheduleServiceItem) {
+    return (
+        service.type === "ADL" ||
+        (scanServices.value[service.schedule_services_id] ?? true)
+    );
+}
+
+function toggleScan(service: ScheduleServiceItem) {
+    if (service.type === "ADL") return;
+
+    scanServices.value = {
+        ...scanServices.value,
+        [service.schedule_services_id]: !canScan(service),
+    };
+}
 const employeeSearch = ref("");
 const expandedConflicts = ref<Set<string | number>>(new Set());
 
@@ -1477,6 +1533,7 @@ function requestToggle(serviceId: number | null, employee: Employee) {
 
 function resetAssignmentsFromSchedule(schedule?: ScheduleItem | null) {
     assignments.value = {};
+    scanServices.value = {};
     employeeSearch.value = "";
     previousOnly.value = false;
 
@@ -1488,6 +1545,9 @@ function resetAssignmentsFromSchedule(schedule?: ScheduleItem | null) {
     activeService.value = schedule.services?.[0]?.schedule_services_id ?? null;
 
     schedule.services?.forEach((service) => {
+        scanServices.value[service.schedule_services_id] =
+            service.can_scan ?? true;
+
         assignments.value[service.schedule_services_id] = (
             service.assignees ?? []
         )
@@ -1522,6 +1582,10 @@ function confirm() {
     emit("confirm", {
         schedule_id: props.schedule.schedule_id,
         assignments: formatted,
+        scan_services: (props.schedule.services ?? []).map((service) => ({
+            schedule_services_id: service.schedule_services_id,
+            can_scan: canScan(service),
+        })),
     });
 }
 

@@ -13,6 +13,12 @@
                 <div
                     class="flex-1 w-full mx-auto rounded-b-lg bg-white dark:bg-secondary"
                 >
+                    <ScanQrButton
+                        v-if="scheduleType === 'medical'"
+                        class="mx-4 mt-4"
+                        @scanned="loadSchedules()"
+                    />
+
                     <FacilityShiftBoard
                         v-if="scheduleType === 'shifts'"
                         v-model:board="shiftBoard"
@@ -247,6 +253,7 @@ import { useRoute } from "vue-router";
 import type { EmployeeScheduleRow, ScheduleItem } from "~/types/schedule";
 import ScheduleMedical from "~/components/sections/app/Schedule/ScheduleMedical.vue";
 import ScheduleMedicalCards from "~/components/sections/app/Schedule/ScheduleMedicalCards.vue";
+import ScanQrButton from "~/components/ui/ScanQrButton.vue";
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.vue";
 import { useToast } from "~/composables/useToast";

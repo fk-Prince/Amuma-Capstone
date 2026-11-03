@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Http\Resources\CaregiverShiftResource;
-use App\Models\AdlAttendance;
+use App\Models\Attendance;
 use App\Models\PatientAdmission;
 use App\Models\User;
 use App\Repository\CaregiverShiftRepository;
@@ -109,7 +109,7 @@ class CaregiverShiftService
                 }
 
                 $onDutyAssignmentId = $service->type === 'ADL'
-                    ? AdlAttendance::whereHas(
+                    ? Attendance::whereHas(
                         'assigned',
                         fn($assigned) => $assigned->where('schedule_services_id', $service->schedule_services_id)
                     )

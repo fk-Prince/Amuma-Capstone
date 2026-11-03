@@ -4,11 +4,11 @@ namespace Tests\Unit\Scheduling;
 
 use App\Events\QrScanned;
 use App\Models\Employee;
-use App\Models\AdlAttendance;
+use App\Models\Attendance;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
 use App\Models\User;
-use App\Service\AdlAttendanceService;
+use App\Service\AttendanceService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -19,7 +19,7 @@ class AdlShiftQrTest extends TestCase
 {
     use UsesTempDatabase;
 
-    private AdlAttendanceService $service;
+    private AttendanceService $service;
     private int $scheduleId;
     private int $scheduleServicesId;
     private int $firstShift;
@@ -32,7 +32,7 @@ class AdlShiftQrTest extends TestCase
 
         Event::fake([QrScanned::class]);
 
-        $this->service = app(AdlAttendanceService::class);
+        $this->service = app(AttendanceService::class);
 
         $owner = $this->makeUser('owner@amuma.com');
 
@@ -132,7 +132,7 @@ class AdlShiftQrTest extends TestCase
 
     private function onDuty(): ?int
     {
-        return AdlAttendance::whereNull('out_timestamp')
+        return Attendance::whereNull('out_timestamp')
             ->with('assigned')
             ->get()
             ->first()?->assigned?->employee_id;
@@ -191,8 +191,8 @@ class AdlShiftQrTest extends TestCase
         $this->scan($this->handoverQr($this->firstShift), $this->secondShift);
 
         $this->assertSame($this->secondShift, (int) $this->onDuty());
-        $this->assertSame(1, AdlAttendance::where('type_out', AdlAttendance::TYPE_HANDOVER)->count());
-        $this->assertSame(1, AdlAttendance::where('type_in', AdlAttendance::TYPE_HANDOVER)->count());
+        $this->assertSame(1, Attendance::where('type_out', Attendance::TYPE_HANDOVER)->count());
+        $this->assertSame(1, Attendance::where('type_in', Attendance::TYPE_HANDOVER)->count());
     }
 
     public function test_missed_schedule_has_no_qr(): void

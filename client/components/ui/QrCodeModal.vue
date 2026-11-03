@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import QrcodeVue from "qrcode.vue";
 import { computed, onUnmounted, ref, watch } from "vue";
-import { ArrowLeftRight, Download, LogIn, LogOut, ScanLine, X } from "lucide-vue-next";
+import { ArrowLeftRight, Download, LogIn, LogOut, QrCode, ScanLine, X } from "lucide-vue-next";
 import ActionButton from "./ActionButton.vue";
-import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
 
-type QrMode = "check-in" | "clock-in" | "clock-out" | "handover" | "custom";
+type QrMode =
+    | "check-in"
+    | "clock-in"
+    | "clock-out"
+    | "handover"
+    | "patient"
+    | "custom";
 
 interface QrCaregiver {
     employee_id: number;
@@ -72,6 +78,13 @@ const modePresets: Record<
         description:
             "The next caregiver scans this to take over. The caregiver on duty is clocked out at the same time.",
         icon: ArrowLeftRight,
+        accent: "primary",
+    },
+    patient: {
+        title: "Patient QR Code",
+        description:
+            "Assigned staff scan this to check in to the patient's medical visit.",
+        icon: QrCode,
         accent: "primary",
     },
     custom: {
@@ -157,7 +170,7 @@ function bindChannel(token: string) {
 watch(
     () => [props.show, props.token] as const,
     ([show, token]) => {
-        if (show && token) {
+        if (show && token && props.mode !== "patient") {
             bindChannel(token as string);
         } else {
             unbindChannel();
@@ -264,12 +277,12 @@ async function demoVerify(employeeId?: number) {
         };
 
         if (employeeId) {
-            await adlAttendanceService.demoVerifyQr({
+            await attendanceService.demoVerifyQr({
                 ...payload,
                 employee_id: employeeId,
             });
         } else {
-            await adlAttendanceService.verifyQr(payload);
+            await attendanceService.verifyQr(payload);
         }
 
         success(
@@ -385,6 +398,15 @@ onUnmounted(() => {
                     </div>
 
                     <p
+                        v-if="mode === 'patient'"
+                        class="mt-5 text-center text-xs text-gray-400"
+                    >
+                        Print this on the patient's wristband or card. It only
+                        works for staff assigned to the patient's visit today.
+                    </p>
+
+                    <p
+                        v-else
                         class="mt-5 text-center text-xs text-gray-400"
                     >
                         This code expires once scanned or after five minutes.
@@ -474,7 +496,7 @@ onUnmounted(() => {
                         -->
 
                         <ActionButton
-                            v-if="qrValue && !pickingCaregiver"
+                            v-if="mode === 'patient' && qrValue"
                             variant="outline"
                             @click="saveQr"
                         >

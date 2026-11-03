@@ -5,15 +5,15 @@ namespace App\Http\Controllers;
 use App\Guard\AuthGuard;
 use App\Models\Client;
 use App\Models\ScheduleService;
-use App\Service\AdlAttendanceService;
+use App\Service\AttendanceService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class AdlAttendanceController extends Controller
+class AttendanceController extends Controller
 {
 
-    public function __construct(private AdlAttendanceService $adlAttendanceService) {}
+    public function __construct(private AttendanceService $attendanceService) {}
 
 
     public function generateQr(Request $request)
@@ -35,9 +35,9 @@ class AdlAttendanceController extends Controller
         }
 
         return response()->json([
-            ...$this->adlAttendanceService->generateQr($request->all()),
-            'expires_in' => AdlAttendanceService::QR_TTL_MINUTES * 60,
-            ...$this->adlAttendanceService->qrContext((int) $request->input('schedule_services_id')),
+            ...$this->attendanceService->generateQr($request->all()),
+            'expires_in' => AttendanceService::QR_TTL_MINUTES * 60,
+            ...$this->attendanceService->qrContext((int) $request->input('schedule_services_id')),
         ]);
     }
 
@@ -51,7 +51,7 @@ class AdlAttendanceController extends Controller
             'employee_id' => ['required', 'integer'],
         ]);
 
-        return $this->adlAttendanceService->verifyQr($validated);
+        return $this->attendanceService->verifyQr($validated);
     }
 
     private function authorizeClientSchedule(Client $client, int $scheduleServicesId): void
@@ -88,6 +88,67 @@ class AdlAttendanceController extends Controller
 
         $validated['employee_id'] = $user->employee->employee_id;
 
-        return $this->adlAttendanceService->verifyQr($validated);
+        return $this->attendanceService->verifyQr($validated);
+    }
+
+    public function lookupPatientVisit(Request $request)
+    {
+        $user = $this->requireStaff($request);
+
+        $validated = $request->validate([
+            'patient_uuid' => ['required', 'uuid'],
+        ]);
+
+        $validated['employee_id'] = $user->employee->employee_id;
+
+        return response()->json($this->attendanceService->lookupPatientVisit($validated));
+    }
+
+    public function confirmPatientVisit(Request $request)
+    {
+        $user = $this->requireStaff($request);
+
+        $validated = $request->validate([
+            'patient_uuid' => ['required', 'uuid'],
+            'schedule_id' => ['required', 'integer'],
+            'employee_ids' => ['array'],
+            'employee_ids.*' => ['integer'],
+        ]);
+
+        $validated['employee_id'] = $user->employee->employee_id;
+
+        return response()->json([
+            'message' => 'Attendance confirmed.',
+            'data' => $this->attendanceService->confirmPatientVisit($validated, $user),
+        ]);
+    }
+
+    public function timeOutPatientVisit(Request $request)
+    {
+        $user = $this->requireStaff($request);
+
+        $validated = $request->validate([
+            'patient_uuid' => ['required', 'uuid'],
+            'schedule_id' => ['required', 'integer'],
+        ]);
+
+        $validated['employee_id'] = $user->employee->employee_id;
+
+        return response()->json([
+            'message' => 'Visit timed out and completed.',
+            'data' => $this->attendanceService->timeOutPatientVisit($validated, $user),
+        ]);
+    }
+
+    private function requireStaff(Request $request)
+    {
+        $user = AuthGuard::requireUser($request->user());
+        $user->load('employee');
+
+        if (!$user->employee) {
+            throw new Exception('Only staff can scan patient QR codes.', 403);
+        }
+
+        return $user;
     }
 }

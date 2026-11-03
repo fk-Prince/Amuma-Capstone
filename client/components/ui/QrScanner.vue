@@ -2,8 +2,10 @@
 import { ref } from "vue";
 import { QrcodeCapture, QrcodeStream } from "vue-qrcode-reader";
 import { ImageUp } from "lucide-vue-next";
-import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
+import PatientCheckInModal from "~/components/sections/app/Schedule/PatientCheckInModal.vue";
+import type { PatientVisit } from "~/types/schedule";
 
 const emit = defineEmits<{
     close: [];
@@ -46,6 +48,11 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
         return;
     }
 
+    if (parsed.type === "patient" && parsed.token) {
+        await openPatientVisit(parsed.token);
+        return;
+    }
+
     const type = toApiType(parsed.type);
 
     if (!parsed.token || !type) {
@@ -58,7 +65,7 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
     error.value = null;
 
     try {
-        await adlAttendanceService.verifyQr({
+        await attendanceService.verifyQr({
             token: parsed.token,
             type,
         });
@@ -81,6 +88,44 @@ async function onDetect(detectedCodes: { rawValue: string }[]) {
     } finally {
         verifying.value = false;
     }
+}
+
+const patientUuid = ref<string | null>(null);
+const patientVisit = ref<PatientVisit | null>(null);
+
+async function openPatientVisit(uuid: string) {
+    paused.value = true;
+    verifying.value = true;
+    error.value = null;
+
+    try {
+        patientVisit.value = await attendanceService.lookupPatientVisit({
+            patient_uuid: uuid,
+        });
+        patientUuid.value = uuid;
+    } catch (err: any) {
+        error.value =
+            err?.response?.data?.message ??
+            err?.message ??
+            "Unable to open this patient's visit.";
+
+        setTimeout(() => {
+            paused.value = false;
+        }, 1500);
+    } finally {
+        verifying.value = false;
+    }
+}
+
+function closePatientVisit() {
+    patientVisit.value = null;
+    patientUuid.value = null;
+    paused.value = false;
+}
+
+function onPatientVisitConfirmed() {
+    emit("scanned");
+    emit("close");
 }
 
 function chooseImage() {
@@ -177,6 +222,7 @@ function onError(err: Error) {
             />
 
             <button
+                v-if="false"
                 type="button"
                 :disabled="verifying"
                 class="absolute bottom-24 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/90 px-5 py-2.5 text-sm font-medium text-gray-800 shadow disabled:opacity-50 dark:bg-secondary/95 dark:text-white"
@@ -193,6 +239,14 @@ function onError(err: Error) {
             >
                 ✕
             </button>
+
+            <PatientCheckInModal
+                v-if="patientVisit && patientUuid"
+                :visit="patientVisit"
+                :patient-uuid="patientUuid"
+                @close="closePatientVisit"
+                @confirmed="onPatientVisitConfirmed"
+            />
 
             <p
                 v-if="error"

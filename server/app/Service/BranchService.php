@@ -7,7 +7,7 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Models\Booking;
-use App\Models\AdlAttendance;
+use App\Models\Attendance;
 use App\Models\CaregiverShift;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
@@ -491,7 +491,7 @@ class BranchService
                         continue;
                     }
 
-                    $onDutyAssignmentId = AdlAttendance::whereHas(
+                    $onDutyAssignmentId = Attendance::whereHas(
                         'assigned',
                         fn($assigned) => $assigned->where('schedule_services_id', $service->schedule_services_id)
                     )

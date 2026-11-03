@@ -20,7 +20,7 @@ use App\Models\InvoiceServices;
 use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\NotificationRepository;
-use App\Repository\AdlAttendanceRepository;
+use App\Repository\AttendanceRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -37,7 +37,7 @@ class ScheduleService
         private InvoiceRepository $invoiceRepository,
         private NotificationRepository $notificationRepository,
         private NotificationService $notificationService,
-        private AdlAttendanceRepository $adlAttendanceRepository,
+        private AttendanceRepository $attendanceRepository,
         private InvoiceService $invoiceService
     ) {}
 
@@ -475,7 +475,7 @@ class ScheduleService
             }
 
             if ($isFinalizing) {
-                $this->adlAttendanceRepository->forceClockOutSchedule($schedule->schedule_id);
+                $this->attendanceRepository->forceClockOutSchedule($schedule->schedule_id);
             }
 
             $settled = $newStatus === Schedule::STATUS_CANCELLED
@@ -512,7 +512,7 @@ class ScheduleService
                 },
                 'voided_invoices' => $voidedInvoices,
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned.adlAttendances',
+                    'scheduleServices.assigned.attendances',
                     'scheduleServices.service',
                     'patient',
                     'location',
@@ -1018,6 +1018,16 @@ class ScheduleService
             $assignmentsByService = collect($payload['assignments'] ?? [])
                 ->groupBy('schedule_services_id');
 
+            foreach ($payload['scan_services'] ?? [] as $row) {
+                $scheduleService = $schedule->scheduleServices
+                    ->firstWhere('schedule_services_id', (int) ($row['schedule_services_id'] ?? 0));
+
+                $scheduleService?->update([
+                    'can_scan' => $scheduleService->type === ScheduleServiceModel::TYPE_ADL
+                        || filter_var($row['can_scan'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                ]);
+            }
+
             $careTeamChanged = false;
             $addedIds = [];
             $updatedIds = [];
@@ -1202,7 +1212,7 @@ class ScheduleService
             return response()->json([
                 'message' => 'Schedule services have been updated successfully.',
                 'data' => new ScheduleResource($schedule->fresh([
-                    'scheduleServices.assigned.adlAttendances',
+                    'scheduleServices.assigned.attendances',
                     'scheduleServices.service',
                     'patient',
                     'location',

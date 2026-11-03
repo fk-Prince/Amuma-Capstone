@@ -106,8 +106,8 @@
 //                                         : null,
 //                                     'avatar' => $employee?->avatar,
 //                                     'role' => $assignment->role,
-//                                     'online' => $assignment->relationLoaded('adlAttendances')
-//                                         ? $assignment->adlAttendances->map(function ($online) {
+//                                     'online' => $assignment->relationLoaded('attendances')
+//                                         ? $assignment->attendances->map(function ($online) {
 //                                             return [
 //                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),
 //                                                 'out_timestamp' => $online->out_timestamp?->toISOString(),
@@ -288,6 +288,8 @@ class ScheduleResource extends JsonResource
 
                         'activities' => $scheduleService->activities,
 
+                        'can_scan' => (bool) $scheduleService->can_scan,
+
                         'assignees' => $scheduleService->relationLoaded('assigned')
                             ? $scheduleService->assigned->where('is_active', true)->values()->map(function ($assignment) {
 
@@ -309,12 +311,12 @@ class ScheduleResource extends JsonResource
                                     'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
                                     'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
 
-                                    'online' => $assignment->relationLoaded('adlAttendances')
-                                        ? $assignment->adlAttendances
+                                    'online' => $assignment->relationLoaded('attendances')
+                                        ? $assignment->attendances
                                         ->filter(fn($online) => $online->in_timestamp !== null)
                                         ->map(function ($online) {
                                             return [
-                                                'adl_attendance_id' => $online->adl_attendance_id,
+                                                'attendance_id' => $online->attendance_id,
                                                 'type_in' => $online->type_in,
                                                 'type_out' => $online->type_out,
                                                 'in_timestamp' => $online->in_timestamp?->toISOString(),

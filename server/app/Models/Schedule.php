@@ -115,7 +115,7 @@ class Schedule extends Model
 
     public function firstScanAt(): ?Carbon
     {
-        $at = AdlAttendance::whereHas(
+        $at = Attendance::whereHas(
             'assigned.scheduleService',
             fn($query) => $query->where('schedule_id', $this->schedule_id)
         )->min('in_timestamp');

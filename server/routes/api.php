@@ -19,7 +19,7 @@ use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\NominatimController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\AdlAttendanceController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PatientAccessController;
@@ -92,8 +92,11 @@ Route::prefix('branches')->group(function () {
 });
 
 
-Route::middleware('auth:sanctum')->post('/qr/verify', [AdlAttendanceController::class, 'verifyQr']);
-Route::middleware('auth:sanctum')->post('/qr/demo-verify', [AdlAttendanceController::class, 'demoVerifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/verify', [AttendanceController::class, 'verifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/demo-verify', [AttendanceController::class, 'demoVerifyQr']);
+Route::middleware('auth:sanctum')->post('/qr/patient/lookup', [AttendanceController::class, 'lookupPatientVisit']);
+Route::middleware('auth:sanctum')->post('/qr/patient/confirm', [AttendanceController::class, 'confirmPatientVisit']);
+Route::middleware('auth:sanctum')->post('/qr/patient/time-out', [AttendanceController::class, 'timeOutPatientVisit']);
 
 // PRIVATE - CUSTOM
 Route::middleware('auth:sanctum')->group(function () {
@@ -123,7 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);
 
     //SCHEDULES
-    Route::get('/adl-attendances/qr', [AdlAttendanceController::class, 'generateQr']);
+    Route::get('/attendances/qr', [AttendanceController::class, 'generateQr']);
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 
     // MEDICATION DOSAGE TRACKING
@@ -254,7 +257,7 @@ Route::middleware('auth:sanctum')->group(function () {
         'admissions' => PatientAdmissionController::class,
         'invoices' => InvoiceController::class,
         'settings' => BranchSettingController::class,
-        'adl-attendances' => AdlAttendanceController::class,
+        'attendances' => AttendanceController::class,
     ]);
 
     //VALIDATE INPUTS

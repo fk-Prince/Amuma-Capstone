@@ -13,7 +13,7 @@ import {
 } from "lucide-vue-next";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import QrScanner from "~/components/ui/QrScanner.vue";
-import { adlAttendanceService } from "~/api/adl-attendance/AdlAttendanceService";
+import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
 
 interface DutyBlock {
@@ -64,7 +64,7 @@ async function openHandoverQr(scheduleServicesId?: number | null) {
     showHandoverQr.value = true;
 
     try {
-        const res: any = await adlAttendanceService.generateQr({
+        const res: any = await attendanceService.generateQr({
             type: "handover",
             branch_uuid: route.params.uuid,
             schedule_services_id: scheduleServicesId,
@@ -597,12 +597,25 @@ const typeIcon = (type: string) =>
                     </p>
                 </div>
 
-                <span
-                    class="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-                    :class="stateClass(block.state)"
-                >
-                    {{ stateLabel(block.state) }}
-                </span>
+                <div class="flex shrink-0 items-center gap-2">
+                    <button
+                        v-if="block.type === 'medical' && block.state !== 'done'"
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-white transition hover:opacity-90"
+                        title="Scan the patient QR to time in or time out"
+                        @click="showScanner = true"
+                    >
+                        <ScanLine class="h-3.5 w-3.5" />
+                        Scan QR
+                    </button>
+
+                    <span
+                        class="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
+                        :class="stateClass(block.state)"
+                    >
+                        {{ stateLabel(block.state) }}
+                    </span>
+                </div>
             </li>
         </ul>
 

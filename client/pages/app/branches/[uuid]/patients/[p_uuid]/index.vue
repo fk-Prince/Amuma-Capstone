@@ -18,6 +18,7 @@ import ScheduleDetails from "~/components/sections/app/Patient/ScheduleDetails.v
 import HomecareADL from "~/components/sections/app/Patient/HomecareADL.vue";
 import PatientPrintModal from "~/components/sections/app/Patient/PatientPrintModal.vue";
 import SchedulePatient from "~/components/sections/app/Patient/SchedulePatient.vue";
+import ScanQrButton from "~/components/ui/ScanQrButton.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import Pagination from "~/components/ui/Pagination.vue";
@@ -998,6 +999,15 @@ onMounted(async () => {
                             </div>
 
                             <div class="mt-5">
+                                <ScanQrButton
+                                    v-if="
+                                        activeTab === 'Schedule' &&
+                                        scheduleType === 'medical'
+                                    "
+                                    class="mb-4"
+                                    @scanned="refreshSchedule"
+                                />
+
                                 <SchedulePatient
                                     v-if="
                                         activeTab === 'Schedule' &&

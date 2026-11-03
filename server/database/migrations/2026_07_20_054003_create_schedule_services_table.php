@@ -25,6 +25,7 @@ return new class extends Migration
             $table->enum('type', ['Medical', 'ADL'])->index();
             $table->enum('billing_cycle', ['hourly', 'monthly'])->nullable();
             $table->jsonb('activities')->nullable();
+            $table->boolean('can_scan')->default(true);
             $table->timestamps();
         });
     }
