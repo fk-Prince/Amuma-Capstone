@@ -1298,15 +1298,33 @@
                     </template>
 
                     <template v-else>
-                        <button
-                            v-if="canExport(Modules.Schedules)"
-                            type="button"
-                            class="mr-auto inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
-                            @click="handlePrint"
-                        >
-                            <Printer class="h-4 w-4" />
-                            Print
-                        </button>
+                        <div class="mr-auto flex items-center gap-2">
+                            <button
+                                v-if="canExport(Modules.Schedules)"
+                                type="button"
+                                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"
+                                @click="handlePrint"
+                            >
+                                <Printer class="h-4 w-4" />
+                                Print
+                            </button>
+
+                            <span
+                                v-if="schedule.payment_status"
+                                class="rounded-full px-3 py-1 text-xs font-semibold"
+                                :class="
+                                    schedule.payment_status === 'paid'
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                                        : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                                "
+                            >
+                                {{
+                                    schedule.payment_status === "paid"
+                                        ? "Paid"
+                                        : "Partially paid"
+                                }}
+                            </span>
+                        </div>
 
                         <button
                             class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-400 dark:hover:bg-white/5"

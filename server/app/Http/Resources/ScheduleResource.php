@@ -159,6 +159,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -193,6 +194,7 @@ class ScheduleResource extends JsonResource
             'category' => $this->category,
             'note' => $this->note,
             'is_stay_in' => (bool) $this->is_stay_in,
+            'payment_status' => $this->paymentStatus(),
 
             'scheduled_at' => $this->scheduled_at?->toISOString(),
             'scheduled_date' => $this->scheduled_at?->format('Y-m-d'),
@@ -380,5 +382,31 @@ class ScheduleResource extends JsonResource
 
         return ((int) $hours * 60)
             + (int) $minutes;
+    }
+
+    private function paymentStatus(): ?string
+    {
+        $invoices = $this->scheduleServices
+            ->flatMap(fn($scheduleService) => $scheduleService->invoiceServices->loadMissing('invoice'))
+            ->map(fn($line) => $line->invoice)
+            ->filter()
+            ->unique('invoice_id')
+            ->reject(fn($invoice) => in_array($invoice->status, [
+                Invoice::STATUS_VOID,
+                Invoice::STATUS_WRITTEN_OFF,
+            ], true));
+
+        if ($invoices->isEmpty()) {
+            return null;
+        }
+
+        if ($invoices->every(fn($invoice) => $invoice->status === Invoice::STATUS_PAID)) {
+            return 'paid';
+        }
+
+        return $invoices->contains(fn($invoice) => in_array($invoice->status, [
+            Invoice::STATUS_PAID,
+            Invoice::STATUS_PARTIAL,
+        ], true)) ? 'partially_paid' : null;
     }
 }

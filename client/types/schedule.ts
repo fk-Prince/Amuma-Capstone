@@ -101,6 +101,7 @@ export interface ScheduleItem {
     category: string | null;
     note: string | null;
     is_stay_in?: boolean;
+    payment_status?: "paid" | "partially_paid" | null;
 
     scheduled_date: string | null;
     scheduled_at?: string | null;
