@@ -47,6 +47,34 @@ class AttendanceRepository
             ->get();
     }
 
+    public function medicalVisit(int $scheduleId): ?Schedule
+    {
+        return Schedule::with([
+            'patient',
+            'scheduleServices' => fn($query) => $query->where('type', ScheduleService::TYPE_MEDICAL),
+            'scheduleServices.service',
+            'scheduleServices.assigned' => fn($query) => $query->where('is_active', true),
+            'scheduleServices.assigned.attendances',
+        ])->find($scheduleId);
+    }
+
+    public function recordPresent(ScheduleAssigned $assigned, $inAt, $outAt, ?string $notes): Attendance
+    {
+        return Attendance::create([
+            'schedule_assigned_id' => $assigned->schedule_assigned_id,
+            'type_in' => Attendance::TYPE_MARKED,
+            'type_out' => Attendance::TYPE_FORCE,
+            'in_timestamp' => $inAt,
+            'out_timestamp' => $outAt,
+            'notes' => $notes,
+        ]);
+    }
+
+    public function clearAttendance(ScheduleAssigned $assigned): int
+    {
+        return Attendance::where('schedule_assigned_id', $assigned->schedule_assigned_id)->delete();
+    }
+
     public function markPresent(ScheduleAssigned $assigned, string $type, ?string $notes): Attendance
     {
         return Attendance::create([

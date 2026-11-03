@@ -127,6 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //SCHEDULES
     Route::get('/attendances/qr', [AttendanceController::class, 'generateQr']);
+    Route::post('/attendances/visit', [AttendanceController::class, 'updateVisitAttendance']);
     Route::post('/schedules/action',  [ScheduleController::class, 'action']);
 
     // MEDICATION DOSAGE TRACKING

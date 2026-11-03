@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ModuleEnum;
+use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
+use App\Guard\BranchGuard;
 use App\Models\Client;
 use App\Models\ScheduleService;
 use App\Service\AttendanceService;
@@ -137,6 +140,25 @@ class AttendanceController extends Controller
         return response()->json([
             'message' => 'Visit timed out and completed.',
             'data' => $this->attendanceService->timeOutPatientVisit($validated, $user),
+        ]);
+    }
+
+    public function updateVisitAttendance(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Schedules, PermissionAction::Update);
+
+        $validated = $request->validate([
+            'schedule_id' => ['required', 'integer'],
+            'employee_ids' => ['array'],
+            'employee_ids.*' => ['integer'],
+        ]);
+
+        $validated['branch_id'] = $branch->branch_id;
+
+        return response()->json([
+            'message' => 'Attendance updated.',
+            'data' => $this->attendanceService->updateVisitAttendance($validated, $request->user()),
         ]);
     }
 

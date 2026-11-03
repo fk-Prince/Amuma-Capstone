@@ -42,6 +42,14 @@ class AttendanceService extends BaseService {
         return await this.request(this.getBackendApi + '/api/qr/patient/time-out', 'POST', payload);
     }
 
+    async updateVisitAttendance(payload: {
+        branch_uuid: string;
+        schedule_id: number;
+        employee_ids: number[];
+    }): Promise<any> {
+        return await this.request(this.resource + '/visit', 'POST', payload);
+    }
+
     private get resource(): string {
         const backend = this.getBackendApi;
         return `${backend}/api/attendances`;

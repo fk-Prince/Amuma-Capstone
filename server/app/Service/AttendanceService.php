@@ -126,6 +126,76 @@ class AttendanceService
         ];
     }
 
+    public function updateVisitAttendance(array $payload, User $actor): array
+    {
+        $schedule = $this->attendanceRepository->medicalVisit((int) $payload['schedule_id']);
+
+        if (!$schedule || (int) $schedule->patient?->branch_id !== (int) $payload['branch_id']) {
+            throw new Exception('Schedule not found.', 404);
+        }
+
+        if ($schedule->isOnsite()) {
+            throw new Exception("Facility schedules don't need attendance.", 422);
+        }
+
+        if (strtolower((string) $schedule->status) !== Schedule::STATUS_COMPLETED) {
+            throw new Exception('Attendance can only be updated after the visit is completed.', 422);
+        }
+
+        $services = $schedule->scheduleServices;
+
+        if ($services->isEmpty()) {
+            throw new Exception('This schedule has no medical service.', 422);
+        }
+
+        $present = collect($payload['employee_ids'] ?? [])->map(fn($id) => (int) $id)->unique();
+        $rows = $this->visitAttendance($services);
+        $timeIn = $rows->min('in_timestamp') ?? Carbon::parse($schedule->scheduled_at);
+        $timeOut = $rows->max('out_timestamp')
+            ?? $timeIn->copy()->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule));
+
+        $actor->loadMissing('employee');
+        $editor = $actor->employee?->full_name ?? 'the branch';
+
+        DB::transaction(function () use ($services, $present, $timeIn, $timeOut, $editor) {
+            foreach ($services as $scheduleService) {
+                foreach ($scheduleService->assigned as $assigned) {
+                    $attended = $assigned->attendances->contains(fn($row) => $row->in_timestamp !== null);
+
+                    if (!$present->contains((int) $assigned->employee_id)) {
+                        if ($attended) {
+                            $this->attendanceRepository->clearAttendance($assigned);
+                        }
+                        continue;
+                    }
+
+                    if (!$attended) {
+                        $this->attendanceRepository->recordPresent($assigned, $timeIn, $timeOut, "Marked present by {$editor}");
+                    }
+                }
+            }
+        });
+
+        return $this->attendanceRepository->medicalVisit($schedule->schedule_id)->scheduleServices
+            ->flatMap(fn($scheduleService) => $scheduleService->assigned->map(fn($assigned) => [
+                'schedule_services_id' => $assigned->schedule_services_id,
+                'employee_id' => $assigned->employee_id,
+                'online' => $assigned->attendances
+                    ->filter(fn($row) => $row->in_timestamp !== null)
+                    ->map(fn($row) => [
+                        'attendance_id' => $row->attendance_id,
+                        'type_in' => $row->type_in,
+                        'type_out' => $row->type_out,
+                        'in_timestamp' => $row->in_timestamp?->toISOString(),
+                        'out_timestamp' => $row->out_timestamp?->toISOString(),
+                        'notes' => $row->notes,
+                    ])
+                    ->values(),
+            ]))
+            ->values()
+            ->all();
+    }
+
     private function resolvePatientVisit(string $patientUuid, int $employeeId): array
     {
         $patient = $this->attendanceRepository->findPatientByUuid($patientUuid);
