@@ -3,7 +3,6 @@ import { computed, toValue, watch, type Component, type MaybeRefOrGetter } from 
 import {
     BedDouble,
     BookOpen,
-    Building2,
     CalendarCheck2,
     ClipboardList,
     CreditCard,
@@ -16,7 +15,6 @@ import {
     QrCode,
     Receipt,
     Settings,
-    ShieldCheck,
     UserCog,
     UserRound,
     Users,
@@ -32,7 +30,7 @@ import { branchService } from "~/api/branch/BranchService";
 import { serviceService } from "~/api/service/ServiceService";
 
 
-export type SetupContext = "branch" | "portal" | "owner";
+export type SetupContext = "branch" | "portal";
 
 export interface SetupStepsOptions {
     context: MaybeRefOrGetter<SetupContext>;
@@ -85,9 +83,6 @@ const TIPS: Record<string, string> = {
     "portal:medications": "Check the latest doses and vital signs.",
     "portal:messages": "Send a message to the branch staff.",
     balance: "See what you owe and pay online.",
-    verification: "Open a pending agency, check its documents, then approve or decline.",
-    plans: "Review the plan prices and what each one includes.",
-    subscriptions: "See trials, renewals and payments across agencies.",
 };
 
 export function useSetupSteps(options: SetupStepsOptions) {
@@ -136,7 +131,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const profileLink = computed(() => {
         if (props.context === "portal") return "/profile?tab=profile&from=portal";
-        if (props.context === "owner") return "/profile?tab=profile&from=owner";
         return `/profile?tab=profile&from=dashboard&branch=${props.branchUuid ?? ""}`;
     });
 
@@ -269,6 +263,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
             ],
             caregiver: [
                 visitStep("schedules", `${p}/schedules`, "See your visits", "Your home visits and shifts, with QR check-in.", QrCode),
+                visitStep("medications", `${p}/medications`, "Record medications (eMAR)", "Mark doses as given and check allergies.", Pill),
                 visitStep("patients", `${p}/patients`, "Get to know your patients", "Their care needs, notes and activities of daily living.", Users),
             ],
             cashier: [
@@ -295,25 +290,11 @@ export function useSetupSteps(options: SetupStepsOptions) {
         ];
     }
 
-    function ownerSteps(): SetupStep[] {
-        return [
-            profileStep.value,
-            visitStep("verification", "/app/owner/verification", "Review agencies waiting for approval", "Check documents and approve or decline new subscriptions.", ShieldCheck),
-            visitStep("plans", "/app/owner/plans", "Check the subscription plans", "Prices and features agencies can choose from.", Building2),
-            visitStep("subscriptions", "/app/owner/subscriptions", "Track subscriptions", "Trials, renewals and payments across all agencies.", CreditCard),
-        ];
-    }
-
     const steps = computed<SetupStep[]>(() => {
         // Only first-time users get the guide.
         if (!enabled.value) return [];
 
-        const list =
-            props.context === "portal"
-                ? portalSteps()
-                : props.context === "owner"
-                  ? ownerSteps()
-                  : branchSteps();
+        const list = props.context === "portal" ? portalSteps() : branchSteps();
 
         const withTips = list.map((step) => ({
             ...step,
@@ -356,7 +337,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const heading = computed(() => {
         if (props.context === "portal") return `Welcome, ${firstName.value}! Here's how to get started`;
-        if (props.context === "owner") return `Welcome, ${firstName.value}! Your admin checklist`;
         if (role.value === "agency_owner") return `Welcome, ${firstName.value}! Let's get your branch ready`;
         if (role.value === "branch_manager") return `Welcome, ${firstName.value}! Finish setting up this branch`;
         return `Welcome, ${firstName.value}! Here's where to start`;

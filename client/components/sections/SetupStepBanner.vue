@@ -137,7 +137,6 @@ const following = computed(() => {
 
 const guideLink = computed(() => {
     if (props.context === "portal") return "/portal/overview";
-    if (props.context === "owner") return "/app/owner/dashboard";
     return `/app/branches/${branchUuid.value}/dashboard`;
 });
 
