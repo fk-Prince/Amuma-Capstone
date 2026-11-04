@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Repository\InvoiceRepository;
 use App\Repository\NotificationRepository;
 use App\Repository\AttendanceRepository;
+use App\Repository\LocationRepository;
 use App\Repository\PatientRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -38,7 +39,8 @@ class ScheduleService
         private NotificationRepository $notificationRepository,
         private NotificationService $notificationService,
         private AttendanceRepository $attendanceRepository,
-        private InvoiceService $invoiceService
+        private InvoiceService $invoiceService,
+        private LocationRepository $locationRepository
     ) {}
 
     public function createSchedule(array $payload)
@@ -765,6 +767,60 @@ class ScheduleService
                     ? 'adl'
                     : 'medical',
                 'date' => $schedule->scheduled_at?->toDateString(),
+            ],
+        ]);
+    }
+
+    public function updateLocation(array $payload)
+    {
+        $schedule = $this->scheduleRepository->findInBranch(
+            (int) ($payload['schedule_id'] ?? 0),
+            (int) $payload['branch_id']
+        );
+
+        if (!$schedule) {
+            throw new Exception('Schedule not found.', 404);
+        }
+
+        if ($schedule->isOnsite()) {
+            throw new Exception('Facility schedules use the room and bed, not a service location.', 422);
+        }
+
+        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
+            throw new Exception("The location can't be changed after the visit has ended.", 422);
+        }
+
+        $street = trim((string) ($payload['street'] ?? ''));
+        $city = trim((string) ($payload['city'] ?? ''));
+
+        if ($street === '' || $city === '') {
+            throw new Exception('Pick a location that has a street and a city.', 422);
+        }
+
+        $coordinate = fn($value) => is_numeric($value) ? (float) $value : null;
+
+        $location = DB::transaction(function () use ($schedule, $payload, $street, $city, $coordinate) {
+            $location = $this->locationRepository->create([
+                'street' => $street,
+                'city' => $city,
+                'province' => trim((string) ($payload['province'] ?? '')) ?: null,
+                'country' => trim((string) ($payload['country'] ?? '')) ?: 'Philippines',
+                'full_address' => trim((string) ($payload['full_address'] ?? '')) ?: null,
+                'latitude' => $coordinate($payload['latitude'] ?? null),
+                'longitude' => $coordinate($payload['longitude'] ?? null),
+            ]);
+
+            $this->scheduleRepository->setLocation($schedule, $location->location_id);
+
+            return $location;
+        });
+
+        return response()->json([
+            'message' => 'Location updated.',
+            'data' => [
+                'address' => $location->full_address,
+                'latitude' => $location->latitude !== null ? (float) $location->latitude : null,
+                'longitude' => $location->longitude !== null ? (float) $location->longitude : null,
             ],
         ]);
     }

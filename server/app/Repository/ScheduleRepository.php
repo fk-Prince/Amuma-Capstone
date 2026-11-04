@@ -81,6 +81,18 @@ class ScheduleRepository
         return $this->activeConflictCodes($employeeId, $branchId, $excludeScheduleId, $targetStart, $targetEnd) !== [];
     }
 
+    public function findInBranch(int $scheduleId, int $branchId): ?Schedule
+    {
+        return Schedule::where('schedule_id', $scheduleId)
+            ->whereHas('patient', fn($query) => $query->where('branch_id', $branchId))
+            ->first();
+    }
+
+    public function setLocation(Schedule $schedule, int $locationId): void
+    {
+        $schedule->update(['location_id' => $locationId]);
+    }
+
     public function hasUnpaidBalance(Schedule $schedule): bool
     {
         $statuses = Invoice::query()

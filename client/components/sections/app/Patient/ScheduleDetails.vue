@@ -397,6 +397,19 @@
                     </div>
 
                     <div
+                        v-else-if="editingLocation"
+                        class="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-secondary"
+                        :class="leftColClass"
+                    >
+                        <ScheduleLocationEditor
+                            :schedule="schedule"
+                            :branch-uuid="branchUuid"
+                            @cancel="editingLocation = false"
+                            @saved="onLocationSaved"
+                        />
+                    </div>
+
+                    <div
                         v-else
                         class="space-y-4 rounded-xl border border-sky-100 bg-sky-50 p-4 dark:border-sky-500/20 dark:bg-sky-500/10"
                         :class="leftColClass"
@@ -420,16 +433,28 @@
                                 </svg>
                             </div>
 
-                            <div class="min-w-0">
-                                <p
-                                    class="text-xs font-medium uppercase tracking-wide text-sky-600 dark:text-sky-300"
-                                >
-                                    {{
-                                        schedule.is_onsite
-                                            ? "Location"
-                                            : "Homecare Address"
-                                    }}
-                                </p>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-sky-600 dark:text-sky-300"
+                                    >
+                                        {{
+                                            schedule.is_onsite
+                                                ? "Location"
+                                                : "Homecare Address"
+                                        }}
+                                    </p>
+
+                                    <button
+                                        v-if="canEditLocation"
+                                        type="button"
+                                        class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-sky-200 bg-white px-2.5 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 dark:border-sky-500/30 dark:bg-white/5 dark:text-sky-300 dark:hover:bg-sky-500/10"
+                                        @click="editingLocation = true"
+                                    >
+                                        <Pencil class="h-3.5 w-3.5" />
+                                        Edit location
+                                    </button>
+                                </div>
 
                                 <p
                                     class="mt-1 text-sm font-semibold text-slate-800 dark:text-white"
@@ -1397,6 +1422,7 @@ import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
+import ScheduleLocationEditor from "~/components/sections/app/Schedule/ScheduleLocationEditor.vue";
 import {
     getLocalDateStr,
     generateAvailableAmPmTimes,
@@ -1439,6 +1465,7 @@ import {
     Home,
     LoaderCircle,
     Mail,
+    Pencil,
     Phone,
     Printer,
     TriangleAlert,
@@ -1676,6 +1703,34 @@ const errors = ref<Record<string, string>>({});
 
 const isFacilitySchedule = computed(
     () => props.schedule?.category?.toLowerCase() === "facility",
+);
+
+const editingLocation = ref(false);
+
+const canEditLocation = computed(
+    () =>
+        !!props.schedule &&
+        !props.schedule.is_onsite &&
+        !isFacilitySchedule.value &&
+        ["pending", "ongoing"].includes((props.schedule.status ?? "").toLowerCase()) &&
+        canUpdate(Modules.Schedules),
+);
+
+function onLocationSaved(location: { address: string; latitude: number | null; longitude: number | null }) {
+    if (props.schedule) {
+        props.schedule.address = location.address;
+        props.schedule.latitude = location.latitude;
+        props.schedule.longitude = location.longitude;
+    }
+
+    editingLocation.value = false;
+}
+
+watch(
+    () => [props.open, props.schedule?.schedule_id],
+    () => {
+        editingLocation.value = false;
+    },
 );
 
 const isScheduleLocked = computed(() =>
