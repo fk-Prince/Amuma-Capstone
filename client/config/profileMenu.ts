@@ -58,12 +58,6 @@ export const profileMenuDropDownList: ProfileMenuItem[] = [
         types: ["isSystemOwner"],
     },
     {
-        icon: "Help Center",
-        label: "Help Center",
-        action: "support",
-        types: ["isEmployee", "isClient"],
-    },
-    {
         icon: "Support Tickets",
         label: "Support Tickets",
         to: "/app/owner/support",
