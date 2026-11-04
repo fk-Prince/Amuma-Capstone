@@ -142,6 +142,8 @@
                         <div
                             v-for="service in schedule.services"
                             :key="service.schedule_services_id"
+                        >
+                        <div
                             class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <div class="flex min-w-0 items-center gap-3">
@@ -193,10 +195,20 @@
                                                 · {{ service.assignees[0]?.employee_role }}
                                             </span>
 
-                                            <span v-if="service.assignees.length > 1">
+                                            <button
+                                                v-if="service.assignees.length > 1"
+                                                type="button"
+                                                class="inline-flex items-center gap-0.5 font-medium text-primary-600 hover:underline dark:text-primary-300"
+                                                :aria-expanded="isExpanded(service)"
+                                                @click="toggleStaff(service)"
+                                            >
                                                 +{{ service.assignees.length - 1 }}
                                                 more
-                                            </span>
+                                                <ChevronDown
+                                                    class="h-3 w-3 transition-transform"
+                                                    :class="isExpanded(service) ? 'rotate-180' : ''"
+                                                />
+                                            </button>
                                         </template>
 
                                         <span v-else class="text-amber-600 dark:text-amber-300">
@@ -232,6 +244,48 @@
                                     {{ formatTimestamp(latestVisit(service)?.in_timestamp) }}
                                 </span>
                             </div>
+                        </div>
+
+                        <ul
+                            v-if="isExpanded(service)"
+                            class="mx-4 mb-4 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-100 dark:divide-white/10 dark:border-white/10"
+                        >
+                            <li
+                                v-for="assignee in service.assignees"
+                                :key="assignee.employee_id"
+                                class="flex items-center gap-3 px-3 py-2.5"
+                            >
+                                <img
+                                    v-if="assignee.avatar"
+                                    :src="assignee.avatar"
+                                    :alt="assignee.full_name"
+                                    class="h-8 w-8 shrink-0 rounded-full object-cover"
+                                />
+                                <span
+                                    v-else
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+                                >
+                                    {{ initials(assignee.full_name) }}
+                                </span>
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-gray-800 dark:text-white">
+                                        {{ assignee.full_name }}
+                                    </p>
+                                    <p class="truncate text-xs capitalize text-gray-400 dark:text-gray-500">
+                                        {{ assignee.employee_role ?? "Staff" }}
+                                        <template v-if="assignee.note">· {{ assignee.note }}</template>
+                                    </p>
+                                </div>
+
+                                <span
+                                    class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                                    :class="staffState(assignee).class"
+                                >
+                                    {{ staffState(assignee).label }}
+                                </span>
+                            </li>
+                        </ul>
                         </div>
                     </div>
 
@@ -303,8 +357,9 @@ import {
     CalendarClock,
     Clock,
     QrCode,
+    ChevronDown,
 } from "lucide-vue-next";
-import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
+import type { ScheduleAssignee, ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
@@ -402,6 +457,42 @@ function latestVisit(service: ScheduleServiceItem) {
             ? visit
             : latest;
     }, visits[0]);
+}
+
+const expandedStaff = ref<Set<number>>(new Set());
+
+const isExpanded = (service: ScheduleServiceItem) =>
+    expandedStaff.value.has(service.schedule_services_id);
+
+function toggleStaff(service: ScheduleServiceItem) {
+    const next = new Set(expandedStaff.value);
+    if (!next.delete(service.schedule_services_id)) next.add(service.schedule_services_id);
+    expandedStaff.value = next;
+}
+
+function staffState(assignee: ScheduleAssignee) {
+    const rows = (assignee.online ?? []).filter((row) => row.in_timestamp);
+    const open = rows.find((row) => !row.out_timestamp);
+    const last = rows[rows.length - 1];
+
+    if (open) {
+        return {
+            label: `Present since ${formatTimestamp(open.in_timestamp)}`,
+            class: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
+        };
+    }
+
+    if (last) {
+        return {
+            label: `Attended ${formatTimestamp(last.in_timestamp)}`,
+            class: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+        };
+    }
+
+    return {
+        label: "Not checked in",
+        class: "bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400",
+    };
 }
 
 function initials(name?: string | null) {
