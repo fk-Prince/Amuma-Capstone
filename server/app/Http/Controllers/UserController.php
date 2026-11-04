@@ -28,20 +28,11 @@ class UserController extends Controller
 
     public function completeOnboarding(Request $request, string $area)
     {
-        return $this->userService->completeOnboarding($request->user(), $area);
-    }
-
-    public function updateSetupGuide(Request $request, string $area)
-    {
         $payload = $request->validate([
-            'visit' => ['nullable', 'string', 'max:255'],
-            'scope' => ['nullable', 'string', 'max:100'],
-            'finished' => ['nullable', 'boolean'],
-            'tour' => ['nullable', 'date_format:Y-m-d'],
-            'skipped' => ['nullable', 'boolean'],
+            'step' => ['nullable', 'string', 'max:255', 'regex:/^(main|setup->skipped|setup->(finished|tour|visits)->[A-Za-z0-9_:\/\-]+)$/'],
         ]);
 
-        return $this->userService->updateSetupGuide($request->user(), $area, $payload);
+        return $this->userService->completeOnboarding($request->user(), $area, $payload['step'] ?? 'main');
     }
 
     public function profile(Request $request)

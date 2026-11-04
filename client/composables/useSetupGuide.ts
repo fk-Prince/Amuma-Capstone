@@ -10,12 +10,10 @@ export type SetupArea = "portal" | "dashboard";
 export const setupAreaOf = (scope: string): SetupArea =>
     scope === "portal" ? "portal" : "dashboard";
 
-type SetupChange = {
-    visit?: string;
-    scope?: string;
-    finished?: boolean;
-    tour?: string;
-    skipped?: boolean;
+const nowStamp = () => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${todayKey()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 };
 
 function useSetupState() {
@@ -24,34 +22,33 @@ function useSetupState() {
     const setupOf = (area: SetupArea): SetupOnboarding =>
         user.value?.onboarding?.[area]?.setup ?? {};
 
-    const patch = (area: SetupArea, apply: (setup: SetupOnboarding) => SetupOnboarding) => {
+    const complete = async (area: SetupArea, path: string[], showNow = true) => {
         if (!user.value) return;
 
-        const onboarding = user.value.onboarding ?? {};
-        const current = onboarding[area] ?? {};
+        if (showNow) {
+            const onboarding = user.value.onboarding ?? {};
+            const current = onboarding[area] ?? {};
+            const setup: any = { ...(current.setup ?? {}) };
 
-        user.value = {
-            ...user.value,
-            onboarding: {
-                ...onboarding,
-                [area]: { ...current, setup: apply({ ...(current.setup ?? {}) }) },
-            },
-        };
+            if (path.length === 1) setup[path[0]!] = nowStamp();
+            else setup[path[0]!] = { ...setup[path[0]!], [path[1]!]: nowStamp() };
+
+            user.value = { ...user.value, onboarding: { ...onboarding, [area]: { ...current, setup } } };
+        }
+
+        try {
+            await userService.completeOnboarding(area, ["setup", ...path].join("->"));
+        } catch { }
     };
 
-    const send = (area: SetupArea, change: SetupChange) => {
-        if (!user.value) return;
-        userService.updateSetupGuide(area, change).catch(() => {});
-    };
-
-    return { setupOf, patch, send };
+    return { setupOf, complete };
 }
 
 export function useSetupVisits(area: MaybeRefOrGetter<SetupArea> = "dashboard") {
-    const { setupOf, patch, send } = useSetupState();
+    const { setupOf, complete } = useSetupState();
     const freshVisit = useState<string>("setup_fresh_visit", () => "");
 
-    const visits = computed(() => setupOf(toValue(area)).visits ?? []);
+    const visits = computed(() => Object.keys(setupOf(toValue(area)).visits ?? {}));
 
     const markVisited = (path: string) => {
         if (import.meta.server) return;
@@ -63,10 +60,7 @@ export function useSetupVisits(area: MaybeRefOrGetter<SetupArea> = "dashboard") 
         }
 
         freshVisit.value = clean;
-
-        const target = toValue(area);
-        patch(target, (setup) => ({ ...setup, visits: [...(setup.visits ?? []), clean].slice(-200) }));
-        send(target, { visit: clean });
+        complete(toValue(area), ["visits", clean]);
     };
 
     const hasVisited = (path: string) =>
@@ -92,23 +86,26 @@ export function useSetupBranchUuid() {
     });
 }
 
+const isMenuPage = (path: string) => {
+    const depth = path.split("/").filter(Boolean).length;
+    return path.startsWith("/app/branches/") ? depth <= 4 : depth <= 3;
+};
+
 export function useTrackSetupVisits(area: SetupArea) {
     const route = useRoute();
     const user = useAuthUser();
     const { markVisited } = useSetupVisits(area);
-    const { isNewAccount, isSkipped } = useFirstTimeUser();
+    const { isSkipped } = useFirstTimeUser();
 
     watch(
         () => [route.path, user.value?.uuid],
         () => {
-            if (!user.value || !isNewAccount.value || isSkipped(area)) return;
+            if (!user.value || isSkipped(area) || !isMenuPage(route.path)) return;
             markVisited(route.path);
         },
         { immediate: true },
     );
 }
-
-const NEW_ACCOUNT_DAYS = 14;
 
 export const todayKey = () => {
     const d = new Date();
@@ -117,45 +114,25 @@ export const todayKey = () => {
 
 export function useFirstTimeUser() {
     const user = useAuthUser();
-    const { setupOf, patch, send } = useSetupState();
-
-    const isNewAccount = computed(() => {
-        const created = (user.value as { created_at?: string } | null)?.created_at;
-        if (!created) return false;
-
-        const time = new Date(created).getTime();
-        if (Number.isNaN(time)) return false;
-
-        return Date.now() - time < NEW_ACCOUNT_DAYS * 86_400_000;
-    });
+    const { setupOf, complete } = useSetupState();
 
     const isSkipped = (area: SetupArea) => !!setupOf(area).skipped;
 
     const isFinished = (scope: string) => !!setupOf(setupAreaOf(scope)).finished?.[scope];
 
     const showFor = (scope: string) =>
-        isNewAccount.value && !isSkipped(setupAreaOf(scope)) && !isFinished(scope);
+        !!user.value && !isSkipped(setupAreaOf(scope)) && !isFinished(scope);
 
-    const skip = (scope: string) => {
-        const area = setupAreaOf(scope);
-        patch(area, (setup) => ({ ...setup, skipped: new Date().toISOString() }));
-        send(area, { skipped: true });
-    };
+    const skip = (scope: string) => complete(setupAreaOf(scope), ["skipped"]);
 
-    // Saved for next time only, so the "Setup complete" tip still shows now.
     const markFinished = (scope: string) => {
-        if (!isFinished(scope)) send(setupAreaOf(scope), { scope, finished: true });
+        if (!isFinished(scope)) complete(setupAreaOf(scope), ["finished", scope], false);
     };
 
     const tourSeenToday = (scope: string) =>
-        setupOf(setupAreaOf(scope)).tour?.[scope] === todayKey();
+        setupOf(setupAreaOf(scope)).tour?.[scope]?.slice(0, 10) === todayKey();
 
-    const markTourSeen = (scope: string) => {
-        const area = setupAreaOf(scope);
-        const today = todayKey();
-        patch(area, (setup) => ({ ...setup, tour: { ...setup.tour, [scope]: today } }));
-        send(area, { scope, tour: today });
-    };
+    const markTourSeen = (scope: string) => complete(setupAreaOf(scope), ["tour", scope]);
 
-    return { isNewAccount, isSkipped, showFor, skip, markFinished, tourSeenToday, markTourSeen };
+    return { isSkipped, showFor, skip, markFinished, tourSeenToday, markTourSeen };
 }

@@ -28,7 +28,7 @@ export interface SignupRequest {
 }
 
 export interface SetupOnboarding {
-    visits?: string[],
+    visits?: Record<string, string>,
     finished?: Record<string, string>,
     tour?: Record<string, string>,
     skipped?: string,

@@ -5,7 +5,10 @@
             ref="launcherEl"
             type="button"
             class="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/10"
-            :class="{ 'bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300': open }"
+            :class="{
+                'bg-primary-50 text-primary dark:bg-primary-500/15 dark:text-primary-300':
+                    open,
+            }"
             :aria-expanded="open"
             aria-controls="setup-guide-panel"
             :aria-label="`Setup guide, ${doneCount} of ${steps.length} done`"
@@ -13,7 +16,11 @@
             data-tour="setup-launcher"
             @click="toggle"
         >
-            <svg class="pointer-events-none absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <svg
+                class="pointer-events-none absolute inset-0 h-full w-full -rotate-90"
+                viewBox="0 0 36 36"
+                aria-hidden="true"
+            >
                 <circle
                     cx="18"
                     cy="18"
@@ -63,13 +70,19 @@
                     aria-label="Setup guide"
                     data-tour="setup-guide"
                 >
-                    <header class="border-b border-slate-100 p-4 dark:border-white/10">
+                    <header
+                        class="border-b border-slate-100 p-4 dark:border-white/10"
+                    >
                         <div class="flex items-start gap-3">
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-bold text-secondary dark:text-white">
+                                <p
+                                    class="text-sm font-bold text-secondary dark:text-white"
+                                >
                                     {{ heading }}
                                 </p>
-                                <p class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400">
+                                <p
+                                    class="mt-0.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                >
                                     {{ subheading }}
                                 </p>
                             </div>
@@ -84,13 +97,19 @@
                         </div>
 
                         <div class="mt-3">
-                            <div class="mb-1 flex items-center justify-between text-[11px] font-semibold">
+                            <div
+                                class="mb-1 flex items-center justify-between text-[11px] font-semibold"
+                            >
                                 <span class="text-slate-500 dark:text-gray-400">
                                     {{ doneCount }} of {{ steps.length }} done
                                 </span>
-                                <span class="text-primary dark:text-primary-300">{{ percent }}%</span>
+                                <span class="text-primary dark:text-primary-300"
+                                    >{{ percent }}%</span
+                                >
                             </div>
-                            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+                            <div
+                                class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10"
+                            >
                                 <div
                                     class="h-full rounded-full bg-primary transition-[width] duration-700"
                                     :style="{ width: `${percent}%` }"
@@ -134,7 +153,11 @@
                                               : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
                                     "
                                 >
-                                    <Check v-if="step.done" class="h-3.5 w-3.5" :stroke-width="3" />
+                                    <Check
+                                        v-if="step.done"
+                                        class="h-3.5 w-3.5"
+                                        :stroke-width="3"
+                                    />
                                     <template v-else>{{ index + 1 }}</template>
                                 </span>
 
@@ -159,7 +182,9 @@
                                             Next
                                         </span>
                                         <span
-                                            v-else-if="step.optional && !step.done"
+                                            v-else-if="
+                                                step.optional && !step.done
+                                            "
                                             class="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-slate-400"
                                         >
                                             Optional
@@ -204,7 +229,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+    computed,
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
@@ -213,7 +245,10 @@ import { ArrowRight, Check, ListChecks, X } from "lucide-vue-next";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { useSetupSteps, type SetupContext } from "~/composables/useSetupSteps";
-import { useFirstTimeUser, useSetupBranchUuid } from "~/composables/useSetupGuide";
+import {
+    useFirstTimeUser,
+    useSetupBranchUuid,
+} from "~/composables/useSetupGuide";
 
 /**
  * First-time checklist on the dashboard. Right after signing in it also walks
@@ -274,7 +309,10 @@ function measure() {
 const panelStyle = computed(() => {
     const width = Math.min(368, window.innerWidth - 24);
     const top = anchor.value?.top ?? 88;
-    const right = Math.min(anchor.value?.right ?? 12, window.innerWidth - width - 12);
+    const right = Math.min(
+        anchor.value?.right ?? 12,
+        window.innerWidth - width - 12,
+    );
     return { top: `${top}px`, right: `${right}px`, width: `${width}px` };
 });
 
@@ -284,9 +322,11 @@ function toggle() {
 }
 
 function onDocumentClick(event: MouseEvent) {
-    if (!open.value || document.body.classList.contains("driver-active")) return;
+    if (!open.value || document.body.classList.contains("driver-active"))
+        return;
     const target = event.target as Node;
-    if (launcherEl.value?.contains(target) || panelEl.value?.contains(target)) return;
+    if (launcherEl.value?.contains(target) || panelEl.value?.contains(target))
+        return;
     open.value = false;
 }
 
@@ -305,25 +345,40 @@ const RING = 2 * Math.PI * 16;
 
 // Connecting line between two steps: done → done is green, done → the next
 // step fades from green to blue, anything after is still grey.
-function lineClass(step: { done: boolean; key: string }, following?: { done: boolean; key: string }) {
-    if (step.done && following?.done) return "bg-emerald-400 dark:bg-emerald-500/70";
-    if (step.done) return "bg-gradient-to-b from-emerald-400 to-primary dark:from-emerald-500/70";
+function lineClass(
+    step: { done: boolean; key: string },
+    following?: { done: boolean; key: string },
+) {
+    if (step.done && following?.done)
+        return "bg-emerald-400 dark:bg-emerald-500/70";
+    if (step.done)
+        return "bg-gradient-to-b from-emerald-400 to-primary dark:from-emerald-500/70";
     return "bg-slate-200 dark:bg-white/10";
 }
 
-const nextStep = computed(() => steps.value.find((step) => step.key === nextKey.value) ?? null);
+const nextStep = computed(
+    () => steps.value.find((step) => step.key === nextKey.value) ?? null,
+);
 
 const { tourSeenToday, markTourSeen } = useFirstTimeUser();
 
-// The menu link for a page that is actually on screen (sidebar on desktop,
-// bottom bar on phones), outside the guide itself.
 function menuLinkFor(to: string): HTMLElement | null {
-    const links = Array.from(document.querySelectorAll<HTMLElement>(`a[href="${to}"]`));
+    const links = Array.from(
+        document.querySelectorAll<HTMLElement>(`a[href="${to}"]`),
+    );
 
     return (
         links.find((el) => {
-            if (el.closest('[data-tour="setup-guide"], [data-setup-hint]')) return false;
-            if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false;
+            if (el.closest('[data-tour="setup-guide"], [data-setup-hint]'))
+                return false;
+            if (
+                el.checkVisibility &&
+                !el.checkVisibility({
+                    visibilityProperty: true,
+                    opacityProperty: true,
+                })
+            )
+                return false;
             const box = el.getBoundingClientRect();
             const onScreen =
                 box.width > 0 &&
@@ -334,7 +389,10 @@ function menuLinkFor(to: string): HTMLElement | null {
                 box.bottom <= window.innerHeight;
             if (!onScreen) return false;
 
-            const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+            const hit = document.elementFromPoint(
+                box.left + box.width / 2,
+                box.top + box.height / 2,
+            );
             return !hit || el.contains(hit);
         }) ?? null
     );
@@ -359,10 +417,12 @@ function whenBranchPickerClosed() {
 // Points at the guide, then the next step, then where it lives in the menu.
 async function startTour() {
     const next = steps.value.find((step) => step.key === nextKey.value);
-    if (!next || allDone.value || !user.value?.uuid || tourSeenToday(scope())) return;
+    if (!next || allDone.value || !user.value?.uuid || tourSeenToday(scope()))
+        return;
 
     // The family portal has its own first-visit tour; let that one go first.
-    if (props.context === "portal" && !user.value?.onboarding?.portal?.main) return;
+    if (props.context === "portal" && !user.value?.onboarding?.portal?.main)
+        return;
 
     await whenBranchPickerClosed();
 
@@ -425,9 +485,9 @@ async function startTour() {
         prevBtnText: "Back",
         doneBtnText: "Let's go",
         popoverClass: "amuma-tour",
-        stagePadding: 6,
-        stageRadius: 16,
-        allowClose: true,
+        stagePadding: 4,
+        stageRadius: 12,
+        overlayClickBehavior: () => {},
     });
 
     tour.drive();

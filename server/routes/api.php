@@ -223,8 +223,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile',  [UserController::class, 'profile']);
     Route::post('/profile',  [UserController::class, 'updateProfile']);
     Route::get('/profile/transactions',  [UserController::class, 'transactions']);
-    Route::post('/onboarding/{area}',  [UserController::class, 'completeOnboarding'])->whereIn('area', ['portal']);
-    Route::post('/onboarding/{area}/setup',  [UserController::class, 'updateSetupGuide'])->whereIn('area', ['portal', 'dashboard']);
+    Route::post('/onboarding/{area}',  [UserController::class, 'completeOnboarding'])->whereIn('area', ['portal', 'dashboard']);
 });
 
 Route::get('/reviews/public',  [ReviewController::class, 'publicReviews']);
