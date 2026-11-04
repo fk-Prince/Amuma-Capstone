@@ -63,7 +63,7 @@ class AttendanceRepository
         return Attendance::create([
             'schedule_assigned_id' => $assigned->schedule_assigned_id,
             'type_in' => Attendance::TYPE_MARKED,
-            'type_out' => Attendance::TYPE_FORCE,
+            'type_out' => $outAt ? Attendance::TYPE_FORCE : null,
             'in_timestamp' => $inAt,
             'out_timestamp' => $outAt,
             'notes' => $notes,

@@ -148,7 +148,7 @@ function stateOf(entry: (typeof staff.value)[number]) {
 
 const canEdit = computed(
     () =>
-        status.value === "completed" &&
+        ["ongoing", "completed"].includes(status.value) &&
         staff.value.length > 0 &&
         canUpdate(Modules.Schedules),
 );
@@ -253,8 +253,11 @@ async function save() {
 
         <template v-if="editing">
             <p class="mt-3 text-xs text-slate-500 dark:text-gray-400">
-                Tick the staff who showed up for this visit. Staff you add are
-                recorded for the visit's time in and time out.
+                {{
+                    status === "ongoing"
+                        ? "Tick the staff who are at this visit. Staff you add are recorded from the visit's time in."
+                        : "Tick the staff who showed up for this visit. Staff you add are recorded for the visit's time in and time out."
+                }}
             </p>
 
             <ul
@@ -333,7 +336,7 @@ async function save() {
                 <button
                     type="button"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
-                    :disabled="saving || !changed"
+                    :disabled="saving || !changed || (status === 'ongoing' && !selected.size)"
                     @click="save"
                 >
                     <Loader2 v-if="saving" class="h-4 w-4 animate-spin" />

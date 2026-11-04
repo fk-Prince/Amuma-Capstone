@@ -146,8 +146,10 @@ class AttendanceService
             throw new Exception("Facility schedules don't need attendance.", 422);
         }
 
-        if (strtolower((string) $schedule->status) !== Schedule::STATUS_COMPLETED) {
-            throw new Exception('Attendance can only be updated after the visit is completed.', 422);
+        $status = strtolower((string) $schedule->status);
+
+        if (!in_array($status, [Schedule::STATUS_ONGOING, Schedule::STATUS_COMPLETED], true)) {
+            throw new Exception('Attendance can only be updated once the visit has started.', 422);
         }
 
         $services = $schedule->scheduleServices;
@@ -157,10 +159,17 @@ class AttendanceService
         }
 
         $present = collect($payload['employee_ids'] ?? [])->map(fn($id) => (int) $id)->unique();
+
+        if ($status === Schedule::STATUS_ONGOING && $present->isEmpty()) {
+            throw new Exception('Keep at least one staff member present while the visit is ongoing.', 422);
+        }
+
         $rows = $this->visitAttendance($services);
         $timeIn = $rows->min('in_timestamp') ?? Carbon::parse($schedule->scheduled_at);
-        $timeOut = $rows->max('out_timestamp')
-            ?? $timeIn->copy()->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule));
+        $timeOut = $status === Schedule::STATUS_ONGOING
+            ? null
+            : ($rows->max('out_timestamp')
+                ?? $timeIn->copy()->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule)));
 
         $actor->loadMissing('employee');
         $editor = $actor->employee?->full_name ?? 'the branch';
