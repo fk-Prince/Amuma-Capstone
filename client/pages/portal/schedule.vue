@@ -82,6 +82,8 @@ const lovedOne = computed<LovedOne | null>(
     () => lovedOnes.value[selectedIndex.value] ?? null,
 );
 
+const qrEnabled = computed(() => lovedOne.value?.location_type !== "facility");
+
 const monthLabel = computed(() =>
     new Date(`${monthFilter.value}-01T00:00:00`).toLocaleDateString("en-US", {
         month: "long",
@@ -711,6 +713,7 @@ onMounted(initialLoad);
                             v-else
                             :logs="scheduleLogs"
                             :loading="logsLoading"
+                            :qr-enabled="qrEnabled"
                             @refresh="loadScheduleLogs"
                         />
 
@@ -727,7 +730,7 @@ onMounted(initialLoad);
                 </div>
 
                 <div
-                    v-if="activeScheduleType === 'adl'"
+                    v-if="qrEnabled"
                     class="border-t border-blue-100 bg-blue-50/50 px-5 py-4 sm:px-7 dark:border-blue-500/20 dark:bg-blue-500/10"
                 >
                     <div class="flex gap-3">
@@ -738,16 +741,18 @@ onMounted(initialLoad);
                         </div>
 
                         <div>
-                            <p class="text-xs font-semibold text-blue-900">
+                            <p class="text-xs font-semibold text-blue-900 dark:text-blue-200">
                                 Attendance is tracked via QR check-in
                             </p>
 
                             <p
                                 class="mt-1 text-[11px] leading-relaxed text-blue-700/80 dark:text-blue-300"
                             >
-                                Caregivers scan a QR code when they arrive and
-                                leave. The check-in and check-out times shown in
-                                the schedule reflect the latest recorded visit.
+                                Nurses and caregivers scan your QR code when
+                                they arrive and leave, for both medical
+                                services and ADL visits. The check-in and
+                                check-out times shown in the schedule reflect
+                                the latest recorded visit.
                             </p>
                         </div>
                     </div>

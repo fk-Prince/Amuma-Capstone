@@ -316,10 +316,12 @@ const props = withDefaults(
     defineProps<{
         logs?: ScheduleItem[];
         loading?: boolean;
+        qrEnabled?: boolean;
     }>(),
     {
         logs: () => [],
         loading: false,
+        qrEnabled: true,
     },
 );
 
@@ -533,6 +535,8 @@ function hasStarted(schedule: ScheduleItem) {
 
 function canShowQr(schedule: ScheduleItem) {
     return (
+        props.qrEnabled &&
+        !schedule.patient?.is_admitted &&
         schedule.category !== "Facility" &&
         getScheduleDate(schedule) === today() &&
         ["pending", "ongoing"].includes((schedule.status ?? "").toLowerCase()) &&
@@ -575,7 +579,7 @@ function closeQr() {
 }
 
 function onQrScanned() {
-    success(qrMode.value === "clock-in" ? "Visit started." : "Visit completed.");
+    success("The care team scanned your code.");
     closeQr();
     emit("refresh");
 }

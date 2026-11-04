@@ -72,13 +72,19 @@ async function verify(token: string, type: "in" | "out" | "handover", confirmUnp
     error.value = null;
 
     try {
-        await attendanceService.verifyQr({
+        const res = await attendanceService.verifyQr({
             token,
             type,
             ...(confirmUnpaid && { confirm_unpaid: true }),
         });
 
         unpaidScan.value = null;
+
+        if (res?.medical_visit && res?.patient_uuid) {
+            patientVisit.value = res.medical_visit;
+            patientUuid.value = res.patient_uuid;
+            return;
+        }
         success(SCAN_SUCCESS[type]);
 
         emit("scanned");

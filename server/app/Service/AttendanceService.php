@@ -57,6 +57,10 @@ class AttendanceService
         $scanner = Employee::find($scannerId);
         $wasCheckedIn = $this->visitAttendance($services)->isNotEmpty();
 
+        if ($wasCheckedIn) {
+            throw new Exception('This visit is already checked in. Change who attended from Schedule Details.', 409);
+        }
+
         DB::transaction(function () use ($schedule, $services, $present, $scannerId, $scanner) {
             foreach ($services as $scheduleService) {
                 foreach ($scheduleService->assigned as $assigned) {
@@ -384,6 +388,10 @@ class AttendanceService
             throw new Exception("Facility schedules don't need attendance.", 422);
         }
 
+        if ($schedule->patient?->currentAdmission()->where('status', 'admitted')->exists()) {
+            throw new Exception("Admitted patients don't use QR time-in or time-out.", 422);
+        }
+
         if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
             throw new Exception('QR codes are not available for this visit.', 422);
         }
@@ -429,21 +437,23 @@ class AttendanceService
             throw new Exception('This QR code is invalid or has expired.', 410);
         }
 
-        $visit = [
+        $visit = $this->lookupPatientVisit([
             'patient_uuid' => $schedule->patient->uuid,
-            'schedule_id' => $schedule->schedule_id,
             'employee_id' => (int) $payload['employee_id'],
-        ];
+        ]);
 
-        $result = $type === 'in'
-            ? $this->confirmPatientVisit($visit, null)
-            : $this->timeOutPatientVisit($visit + ['confirm_unpaid' => !empty($payload['confirm_unpaid'])], null);
+        if ((int) $visit['schedule_id'] !== (int) $schedule->schedule_id) {
+            throw new Exception('This QR code is for a different visit.', 409);
+        }
 
         Cache::forget($cacheKey);
 
         broadcast(new QrScanned($payload['token'], $type));
 
-        return $result;
+        return [
+            'patient_uuid' => $schedule->patient->uuid,
+            'medical_visit' => $visit,
+        ];
     }
 
     public function generateHandoverToken(array $payload): string

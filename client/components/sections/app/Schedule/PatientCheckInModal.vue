@@ -51,7 +51,7 @@ watch(
 const alreadyCheckedIn = computed(() => Boolean(props.visit.checked_in_at));
 
 function toggle(staff: VisitStaff) {
-    if (staff.is_me) return;
+    if (staff.is_me || alreadyCheckedIn.value) return;
 
     const next = new Set(selected.value);
 
@@ -76,11 +76,7 @@ async function confirm() {
             employee_ids: [...selected.value],
         });
 
-        success(
-            alreadyCheckedIn.value
-                ? "Attendance updated."
-                : `${props.visit.schedule_code} checked in.`,
-        );
+        success(`${props.visit.schedule_code} checked in.`);
 
         emit("confirmed");
         emit("close");
@@ -200,8 +196,7 @@ async function timeOut(confirmUnpaid = false) {
                         class="rounded-xl border border-accent-100 bg-accent-50/60 px-3 py-2.5 text-xs text-accent-700 dark:border-accent-500/20 dark:bg-accent-500/10 dark:text-accent-300"
                     >
                         Checked in at {{ formatTime(visit.checked_in_at) }}.
-                        Time out to complete the visit, or update who attended
-                        below.
+                        Time out to complete the visit.
                     </p>
 
                     <div>
@@ -222,8 +217,10 @@ async function timeOut(confirmUnpaid = false) {
                                     :class="[
                                         selected.has(staff.employee_id)
                                             ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
-                                            : 'border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5',
-                                        staff.is_me ? 'cursor-default' : '',
+                                            : alreadyCheckedIn
+                                              ? 'border-slate-200 dark:border-white/10'
+                                              : 'border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5',
+                                        staff.is_me || alreadyCheckedIn ? 'cursor-default' : '',
                                     ]"
                                     @click="toggle(staff)"
                                 >
@@ -311,27 +308,11 @@ async function timeOut(confirmUnpaid = false) {
 
                     <div class="flex gap-2">
                         <ActionButton
-                            v-if="!alreadyCheckedIn"
                             variant="outline"
-                            :disabled="saving"
+                            :disabled="saving || timingOut"
                             @click="emit('close')"
                         >
                             Cancel
-                        </ActionButton>
-
-                        <ActionButton
-                            v-else
-                            variant="outline"
-                            :disabled="saving || timingOut"
-                            @click="confirm"
-                        >
-                            <span class="inline-flex items-center gap-2">
-                                <Loader2
-                                    v-if="saving"
-                                    class="h-4 w-4 animate-spin"
-                                />
-                                Update attendance
-                            </span>
                         </ActionButton>
 
                         <ActionButton

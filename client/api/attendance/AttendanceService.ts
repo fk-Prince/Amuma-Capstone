@@ -18,8 +18,8 @@ class AttendanceService extends BaseService {
     async generateQr(payload: {}): Promise<any> {
         return await this.request(this.resource + '/qr', 'GET', payload);
     }
-    async verifyQr(payload: { token: string; type: string; confirm_unpaid?: boolean }) {
-        await this.request('/api/qr/verify', 'POST', payload);
+    async verifyQr(payload: { token: string; type: string; confirm_unpaid?: boolean }): Promise<any> {
+        return await this.request('/api/qr/verify', 'POST', payload);
     }
 
     async demoVerifyQr(payload: { token: string; type: string; employee_id: number }) {
