@@ -27,7 +27,7 @@ import { useBranchStore } from "~/stores/branch";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { routeAccess } from "~/composables/useRouteAccess";
-import { useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
+import { setupAreaOf, useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
 import { branchService } from "~/api/branch/BranchService";
 import { serviceService } from "~/api/service/ServiceService";
 
@@ -105,12 +105,12 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const branchStore = useBranchStore();
     const { hasFacilityPlan } = useBranchPlan();
     const { canSeeExecutiveOverview } = useAgencyBranches();
-    const { load: loadVisits, hasVisited } = useSetupVisits();
-    const { showFor, skip, markFinished } = useFirstTimeUser();
-
     // Branches are set up one by one; the portal and admin area each have one guide.
     const scope = () =>
         props.context === "branch" ? `branch:${props.branchUuid ?? ""}` : props.context;
+
+    const { hasVisited } = useSetupVisits(() => setupAreaOf(scope()));
+    const { showFor, skip, markFinished } = useFirstTimeUser();
     const enabled = computed(() => showFor(scope()));
 
     // Shared per branch, so the dashboard guide and the page tips agree.
@@ -134,11 +134,17 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const base = computed(() => `/app/branches/${props.branchUuid}`);
 
+    const profileLink = computed(() => {
+        if (props.context === "portal") return "/profile?tab=profile&from=portal";
+        if (props.context === "owner") return "/profile?tab=profile&from=owner";
+        return `/profile?tab=profile&from=dashboard&branch=${props.branchUuid ?? ""}`;
+    });
+
     const profileStep = computed<SetupStep>(() => ({
         key: "profile",
         title: "Complete your profile",
         description: "Add your phone number and photo so others know who they're talking to.",
-        to: "/profile",
+        to: profileLink.value,
         icon: UserRound,
         done: !!user.value?.phone_number || hasVisited("/profile"),
         byVisit: true,
@@ -398,8 +404,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
         subheading,
         role,
         loadFacts,
-        loadVisits,
         enabled,
-        skip,
+        skip: () => skip(scope()),
     };
 }

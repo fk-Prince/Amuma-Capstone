@@ -116,8 +116,7 @@ import {
     UserRound,
     X,
 } from "lucide-vue-next";
-import { authService } from "~/api/auth/AuthService";
-import { resetAuth } from "~/composables/useAuthUser";
+import { useSignOut } from "~/composables/useSandbox";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import SidebarNavGroup from "~/components/ui/SidebarNavGroup.vue";
 import MobileBottomNav from "~/components/ui/MobileBottomNav.vue";
@@ -196,17 +195,11 @@ function isActive(to: string) {
 
 const loadingLogout = ref(false);
 
+const signOut = useSignOut();
+
 async function logout() {
     loadingLogout.value = true;
-
-    try {
-        await authService.logout();
-    } catch (err) {
-        console.error(err);
-    } finally {
-        resetAuth();
-        window.location.href = "/auth/signin";
-    }
+    await signOut();
 }
 </script>
 

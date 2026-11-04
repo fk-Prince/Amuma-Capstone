@@ -93,7 +93,7 @@ const route = useRoute();
 // Branch pages carry it in the address; shared pages (My Profile) in ?branch=.
 const branchUuid = useSetupBranchUuid();
 
-const { steps, allDone, loadFacts, loadVisits } = useSetupSteps({
+const { steps, allDone, loadFacts } = useSetupSteps({
     context: () => props.context,
     branchUuid: () => branchUuid.value,
 });
@@ -106,7 +106,7 @@ const wasIncomplete = ref(false);
 const path = computed(() => route.path.replace(/\/+$/, ""));
 
 const current = computed(() => {
-    const step = steps.value.find((s) => s.to === path.value);
+    const step = steps.value.find((s) => s.to.split("?")[0] === path.value);
     if (!step) return null;
     if (allDone.value) return wasIncomplete.value ? step : null;
 
@@ -155,7 +155,6 @@ watch(
 );
 
 onMounted(() => {
-    loadVisits();
     loadFacts(false).catch(() => {});
 });
 

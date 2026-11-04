@@ -1,5 +1,7 @@
 import { computed } from "vue";
 import { useBranchStore } from "~/stores/branch";
+import { authService } from "~/api/auth/AuthService";
+import { clearStoredAuth } from "~/composables/useAuthUser";
 
 const trimSlash = (url: unknown) => String(url || "").replace(/\/$/, "");
 
@@ -31,9 +33,31 @@ export const useSandbox = () => {
         const dashboard = `/app/branches/${branch.uuid}/dashboard`;
 
         return sandboxUrl.value
-            ? `${sandboxUrl.value}/auth/signin?redirect=${encodeURIComponent(dashboard)}`
+            ? signOutUrl(sandboxUrl.value, `/auth/signin?redirect=${encodeURIComponent(dashboard)}`)
             : `${liveUrl.value}${dashboard}`;
     });
 
     return { isSandbox, sandboxUrl, liveUrl, switchUrl, switchLink };
+};
+
+export const signOutUrl = (base: string, next: string) =>
+    `${base}/auth/signout?next=${encodeURIComponent(next)}`;
+
+export const useSignOut = () => {
+    const { switchUrl } = useSandbox();
+
+    return async () => {
+        try {
+            await authService.logout();
+        } catch (err) {
+            console.error(err);
+        }
+
+        clearStoredAuth();
+
+        const signin = `${window.location.origin}/auth/signin`;
+        window.location.href = switchUrl.value
+            ? signOutUrl(switchUrl.value, signin)
+            : "/auth/signin";
+    };
 };

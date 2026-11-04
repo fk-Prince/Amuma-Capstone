@@ -27,9 +27,21 @@ export interface SignupRequest {
     password: String,
 }
 
+export interface SetupOnboarding {
+    visits?: string[],
+    finished?: Record<string, string>,
+    tour?: Record<string, string>,
+    skipped?: string,
+}
+
+export interface OnboardingArea {
+    main?: string,
+    setup?: SetupOnboarding,
+}
+
 export interface Onboarding {
-    portal?: Record<string, string>,
-    dashboard?: Record<string, string>,
+    portal?: OnboardingArea,
+    dashboard?: OnboardingArea,
 }
 
 export interface User {

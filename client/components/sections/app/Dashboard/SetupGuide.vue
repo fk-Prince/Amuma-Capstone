@@ -213,7 +213,7 @@ import { ArrowRight, Check, ListChecks, X } from "lucide-vue-next";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { useSetupSteps, type SetupContext } from "~/composables/useSetupSteps";
-import { useSetupBranchUuid } from "~/composables/useSetupGuide";
+import { useFirstTimeUser, useSetupBranchUuid } from "~/composables/useSetupGuide";
 
 /**
  * First-time checklist on the dashboard. Right after signing in it also walks
@@ -244,7 +244,6 @@ const {
     subheading,
     role,
     loadFacts,
-    loadVisits,
     skip,
 } = useSetupSteps({
     context: () => props.context,
@@ -314,23 +313,7 @@ function lineClass(step: { done: boolean; key: string }, following?: { done: boo
 
 const nextStep = computed(() => steps.value.find((step) => step.key === nextKey.value) ?? null);
 
-const TOUR_KEY = () => `amuma_setup_tour:${user.value?.uuid}:${scope()}`;
-
-function tourSeenToday() {
-    try {
-        return localStorage.getItem(TOUR_KEY()) === new Date().toDateString();
-    } catch {
-        return true;
-    }
-}
-
-function markTourSeen() {
-    try {
-        localStorage.setItem(TOUR_KEY(), new Date().toDateString());
-    } catch {
-        // Then it may show again; harmless.
-    }
-}
+const { tourSeenToday, markTourSeen } = useFirstTimeUser();
 
 // The menu link for a page that is actually on screen (sidebar on desktop,
 // bottom bar on phones), outside the guide itself.
@@ -376,14 +359,14 @@ function whenBranchPickerClosed() {
 // Points at the guide, then the next step, then where it lives in the menu.
 async function startTour() {
     const next = steps.value.find((step) => step.key === nextKey.value);
-    if (!next || allDone.value || !user.value?.uuid || tourSeenToday()) return;
+    if (!next || allDone.value || !user.value?.uuid || tourSeenToday(scope())) return;
 
     // The family portal has its own first-visit tour; let that one go first.
     if (props.context === "portal" && !user.value?.onboarding?.portal?.main) return;
 
     await whenBranchPickerClosed();
 
-    markTourSeen();
+    markTourSeen(scope());
     measure();
     open.value = true;
     await nextTick();
@@ -461,7 +444,6 @@ onMounted(async () => {
     document.addEventListener("keydown", onKeydown);
     window.addEventListener("resize", onResize);
 
-    loadVisits();
     await loadFacts().catch(() => {});
     ready.value = true;
 });

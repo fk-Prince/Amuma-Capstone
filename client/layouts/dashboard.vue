@@ -130,7 +130,7 @@ const branchStore = useBranchStore();
 const { canSeeExecutiveOverview } = useAgencyBranches();
 
 // The setup guide ticks off steps once their page has been opened.
-useTrackSetupVisits();
+useTrackSetupVisits("dashboard");
 
 const homeLink = computed(() => {
     const uuid = branchStore.routeUuid;

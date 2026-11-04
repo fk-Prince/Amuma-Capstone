@@ -82,7 +82,7 @@ const user = useAuthUser();
 // Branch pages carry it in the address; shared pages (My Profile) in ?branch=.
 const branchUuid = useSetupBranchUuid();
 
-const { steps, allDone, nextKey, loadFacts, loadVisits } = useSetupSteps({
+const { steps, allDone, nextKey, loadFacts } = useSetupSteps({
     context: () => props.context,
     branchUuid: () => branchUuid.value,
 });
@@ -92,7 +92,7 @@ const next = computed(() => {
     const step = steps.value.find((s) => s.key === nextKey.value) ?? null;
 
     // Already on that page: the tip bar there takes over.
-    if (!step || step.to === route.path.replace(/\/+$/, "")) return null;
+    if (!step || step.to.split("?")[0] === route.path.replace(/\/+$/, "")) return null;
     return step;
 });
 
@@ -226,7 +226,6 @@ const arrowStyle = computed(() => {
 let timer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
-    loadVisits();
     loadFacts(false).catch(() => {});
     readDismissed();
 

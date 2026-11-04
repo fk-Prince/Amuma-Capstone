@@ -13,7 +13,9 @@ const highlights = [
 </script>
 
 <template>
-    <div class="relative min-h-dvh w-full overflow-hidden bg-[#EEF3FB] dark:bg-slate-950">
+    <div
+        class="relative min-h-dvh w-full overflow-hidden bg-[#EEF3FB] dark:bg-slate-950"
+    >
         <div class="absolute inset-0 hidden md:block overflow-hidden">
             <img
                 :src="signinLogo"
@@ -21,7 +23,6 @@ const highlights = [
                 class="absolute inset-[-12px] h-[calc(100%+24px)] w-[calc(100%+24px)] scale-105 object-cover blur-[1px] dark:blur-[2px]"
             />
 
-            <!-- Light mode wash: dimmed evenly so the photo reads as a soft backdrop, not a busy image -->
             <div class="absolute inset-0 bg-[#EEF3FB]/70 dark:hidden"></div>
             <div
                 class="absolute inset-0 bg-gradient-to-r from-[#EEF3FB]/35 via-transparent to-[#EEF3FB]/90 dark:hidden"
@@ -53,7 +54,9 @@ const highlights = [
 
         <div class="relative z-10 flex min-h-dvh w-full flex-col">
             <!-- Minimal top bar: replaces the site header on auth pages -->
-            <div class="flex w-full items-center justify-between px-6 py-6 sm:px-10">
+            <div
+                class="flex w-full items-center justify-between px-6 py-6 sm:px-10"
+            >
                 <NuxtLink to="/" aria-label="AMUMA home">
                     <BrandLogo icon-class="h-10 w-10" />
                 </NuxtLink>
@@ -66,7 +69,9 @@ const highlights = [
                 <div
                     class="grid w-full grid-cols-1 items-center justify-items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] lg:justify-items-stretch lg:gap-16"
                 >
-                    <div class="hidden w-full max-w-[520px] flex-col gap-10 lg:flex">
+                    <div
+                        class="hidden w-full max-w-[520px] flex-col gap-10 lg:flex"
+                    >
                         <div class="space-y-4">
                             <p
                                 class="inline-block border-b-2 border-primary-400 pb-1.5 text-xs text-primary-600 dark:border-blue-500 dark:text-blue-300"
@@ -78,17 +83,24 @@ const highlights = [
                                 class="text-3xl font-extrabold leading-[1.15] tracking-tight text-secondary md:text-4xl xl:text-[2.75rem] dark:text-white dark:[text-shadow:0_2px_16px_rgba(0,0,0,0.45)]"
                             >
                                 We're here, whenever
-                                <span class="text-primary-600 dark:text-blue-400">you need us.</span>
+                                <span
+                                    class="text-primary-600 dark:text-blue-400"
+                                    >you need us.</span
+                                >
                             </h1>
 
-                            <p class="text-sm leading-relaxed text-muted dark:text-white/70">
-                                Sign in to your AMUMA account to continue accessing
-                                your AMUMA dashboard.
+                            <p
+                                class="text-sm leading-relaxed text-muted dark:text-white/70"
+                            >
+                                Sign in to your AMUMA account to continue
+                                accessing your AMUMA dashboard.
                             </p>
                         </div>
 
                         <div class="space-y-5">
-                            <div class="h-px w-full bg-secondary-100 dark:bg-white/20"></div>
+                            <div
+                                class="h-px w-full bg-secondary-100 dark:bg-white/20"
+                            ></div>
 
                             <div class="flex w-full flex-nowrap items-center">
                                 <div
@@ -121,32 +133,32 @@ const highlights = [
                     </div>
 
                     <div class="flex w-full max-w-[480px] flex-col lg:ml-auto">
-                    <div
-                        class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-muted-light bg-white px-5 py-8 shadow-sm sm:px-8 lg:ml-auto dark:border-white/10 dark:bg-secondary/95 dark:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] dark:backdrop-blur-xl"
-                    >
-                        <div class="mb-7 text-center">
-                            <h2
-                                class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white"
-                            >
-                                Welcome Back
-                            </h2>
-
-                            <p
-                                class="mt-1 text-sm text-slate-500 dark:text-gray-400"
-                            >
-                                Sign in to your
-                                <span
-                                    class="font-semibold text-blue-600 dark:text-blue-400"
+                        <div
+                            class="w-full max-w-[480px] shrink-0 rounded-[20px] border border-muted-light bg-white px-5 py-8 shadow-sm sm:px-8 lg:ml-auto dark:border-white/10 dark:bg-secondary/95 dark:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] dark:backdrop-blur-xl"
+                        >
+                            <div class="mb-7 text-center">
+                                <h2
+                                    class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white"
                                 >
-                                    AMUMA
-                                </span>
-                                account
-                            </p>
-                        </div>
+                                    Welcome Back
+                                </h2>
 
-                        <SigninForm />
+                                <p
+                                    class="mt-1 text-sm text-slate-500 dark:text-gray-400"
+                                >
+                                    Sign in to your
+                                    <span
+                                        class="font-semibold text-blue-600 dark:text-blue-400"
+                                    >
+                                        AMUMA
+                                    </span>
+                                    account
+                                </p>
+                            </div>
+
+                            <SigninForm />
+                        </div>
                     </div>
-                </div>
                 </div>
             </div>
         </div>

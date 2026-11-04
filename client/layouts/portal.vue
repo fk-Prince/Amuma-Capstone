@@ -77,7 +77,7 @@ const user = useAuthUser();
 const tour = usePortalTour(isOpen);
 
 // The setup guide ticks off steps once their page has been opened.
-useTrackSetupVisits();
+useTrackSetupVisits("portal");
 let tourStarted = false;
 
 watch(

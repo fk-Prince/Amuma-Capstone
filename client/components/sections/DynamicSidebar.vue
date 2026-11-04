@@ -447,8 +447,7 @@ import {
     defineComponent,
 } from "vue";
 import { useRoute } from "vue-router";
-import { authService } from "~/api/auth/AuthService";
-import { resetAuth } from "~/composables/useAuthUser";
+import { useSignOut } from "~/composables/useSandbox";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { ChevronLeft, ChevronRight, LogOut, X } from "lucide-vue-next";
 import { useBranchStore } from "~/stores/branch";
@@ -626,25 +625,10 @@ const UserSkeleton = defineComponent({
 });
 
 const loadingLogout = ref(false);
+const signOut = useSignOut();
 const logout = async () => {
     loadingLogout.value = true;
-
-    // The server call is best-effort — if it fails (expired session,
-    // network blip, stale CSRF token) the user must still be logged out
-    // locally and sent to sign-in, never left stranded on the page they
-    // clicked "Log out" from.
-    try {
-        await authService.logout();
-    } catch (err: any) {
-        console.error(err);
-    } finally {
-        resetAuth();
-        // A hard redirect (not navigateTo) — the SPA router briefly kept
-        // rendering the still-mounted dashboard layout mid-transition,
-        // flashing /app/branches before landing on sign-in. A full page
-        // load never runs that stale layout at all.
-        window.location.href = "/auth/signin";
-    }
+    await signOut();
 };
 </script>
 

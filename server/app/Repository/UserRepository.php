@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Models\Client;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -114,6 +115,16 @@ class UserRepository
         $user->forceFill(["onboarding->{$area}->{$tour}" => now()->toDateTimeString()])->save();
 
         return $user;
+    }
+
+    public function updateOnboarding(User $user, callable $change): User
+    {
+        return DB::transaction(function () use ($user, $change) {
+            $locked = User::whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+            $locked->forceFill(['onboarding' => $change($locked->onboarding ?? [])])->save();
+
+            return $locked;
+        });
     }
 
     public function update(string $user_id, array $payload)

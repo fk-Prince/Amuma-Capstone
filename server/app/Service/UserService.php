@@ -274,6 +274,46 @@ class UserService
         ]);
     }
 
+    public function updateSetupGuide(User $user, string $area, array $payload)
+    {
+        $user = $this->userRepository->updateOnboarding($user, function (array $onboarding) use ($area, $payload) {
+            $setup = $onboarding[$area]['setup'] ?? [];
+            $scope = $payload['scope'] ?? null;
+
+            if (filled($payload['visit'] ?? null)) {
+                $visits = $setup['visits'] ?? [];
+
+                if (!in_array($payload['visit'], $visits, true)) {
+                    $setup['visits'] = array_slice([...$visits, $payload['visit']], -200);
+                }
+            }
+
+            if (!empty($payload['skipped'])) {
+                $setup['skipped'] = now()->toDateTimeString();
+            }
+
+            if ($scope) {
+                if (!empty($payload['finished'])) {
+                    $setup['finished'][$scope] = now()->toDateTimeString();
+                }
+
+                if (filled($payload['tour'] ?? null)) {
+                    $setup['tour'][$scope] = $payload['tour'];
+                }
+            }
+
+            $onboarding[$area]['setup'] = $setup;
+
+            return $onboarding;
+        });
+
+        return response()->json([
+            'data' => [
+                'onboarding' => $user->onboarding,
+            ],
+        ]);
+    }
+
     public function profile(User $user)
     {
         $user->load([

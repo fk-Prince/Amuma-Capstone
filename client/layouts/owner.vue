@@ -63,7 +63,7 @@ import { useAuthReady } from "~/composables/useAuthUser";
 import { useTrackSetupVisits } from "~/composables/useSetupGuide";
 
 // The setup guide ticks off steps once their page has been opened.
-useTrackSetupVisits();
+useTrackSetupVisits("dashboard");
 
 const isOpen = ref(false);
 const authReady = useAuthReady();

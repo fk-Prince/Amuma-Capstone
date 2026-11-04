@@ -5,6 +5,11 @@ export const useAuthUser = () =>
     useState<User | null>("auth_user", () => null)
 export const useAuthReady = () => useState("auth_ready", () => false)
 
+export const clearStoredAuth = () => {
+    localStorage.removeItem("auth");
+    localStorage.removeItem("amuma_nav_intro_played");
+}
+
 export const resetAuth = () => {
     const user = useAuthUser()
     const ready = useAuthReady()
@@ -12,9 +17,7 @@ export const resetAuth = () => {
     user.value = null
     ready.value = false
 
-    localStorage.removeItem("auth");
-    // Next sign-in plays the bottom bar intro once more.
-    localStorage.removeItem("amuma_nav_intro_played");
+    clearStoredAuth();
 }
 
 export const fetchAuthUser = async () => {

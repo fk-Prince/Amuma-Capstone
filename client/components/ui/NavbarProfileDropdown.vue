@@ -216,7 +216,7 @@ import BaseDropdownMenu from "../ui/BaseDropdownMenu.vue";
 import DropdownItem from "../ui/DropdownItem.vue";
 import ChevronIcon from "../icons/dropdown.vue";
 import AuthTransitionScreen from "./AuthTransitionScreen.vue";
-import { authService } from "~/api/auth/AuthService.js";
+import { useSignOut } from "~/composables/useSandbox";
 import {
     handleMenuClick,
     profileMenuDropDownList,
@@ -354,18 +354,10 @@ const visibleMenuItems = computed(() =>
         })),
 );
 
+const signOut = useSignOut();
+
 const logout = async () => {
     loggingOut.value = true;
-
-    try {
-        await authService.logout();
-    } catch (err: any) {
-        console.error(err);
-    } finally {
-        // Clearing the user here unmounts this dropdown, and the transition
-        // screen with it, exposing the page until the reload paints.
-        localStorage.removeItem("auth");
-        window.location.href = "/auth/signin";
-    }
+    await signOut();
 };
 </script>

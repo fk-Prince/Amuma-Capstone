@@ -36,6 +36,10 @@ class UserService extends BaseService {
         return await this.request(`${this.getBackendApi}/api/onboarding/${area}`, 'POST', {});
     }
 
+    public async updateSetupGuide(area: string, payload: object): Promise<any> {
+        return await this.request(`${this.getBackendApi}/api/onboarding/${area}/setup`, 'POST', payload);
+    }
+
 
     private get resource(): string {
         const backend = this.getBackendApi;

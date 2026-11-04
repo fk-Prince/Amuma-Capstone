@@ -106,8 +106,7 @@ import { useRoute } from "vue-router";
 import { LogOut, UserRound, X } from "lucide-vue-next";
 import ThemedLogo from "~/components/ui/ThemedLogo.vue";
 import { privateMenu, type MenuItem } from "~/config/privateMenu";
-import { authService } from "~/api/auth/AuthService";
-import { resetAuth } from "~/composables/useAuthUser";
+import { useSignOut } from "~/composables/useSandbox";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import SidebarNavGroup from "~/components/ui/SidebarNavGroup.vue";
 import MobileBottomNav from "~/components/ui/MobileBottomNav.vue";
@@ -154,17 +153,11 @@ const groupedMenu = computed(() => {
 
 const loadingLogout = ref(false);
 
+const signOut = useSignOut();
+
 async function logout() {
     loadingLogout.value = true;
-
-    try {
-        await authService.logout();
-    } catch (err) {
-        console.error(err);
-    } finally {
-        resetAuth();
-        window.location.href = "/auth/signin";
-    }
+    await signOut();
 }
 </script>
 
