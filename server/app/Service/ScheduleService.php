@@ -1003,6 +1003,25 @@ class ScheduleService
         }
     }
 
+    private function assertMedicalScanner(?string $serviceType, Collection $employeeIds, Collection $scanByEmployee, Collection $currentlyActive): void
+    {
+        if ($serviceType !== ScheduleServiceModel::TYPE_MEDICAL || $employeeIds->isEmpty()) {
+            return;
+        }
+
+        $hasScanner = $employeeIds->contains(function ($employeeId) use ($scanByEmployee, $currentlyActive) {
+            if ($scanByEmployee->has($employeeId)) {
+                return $scanByEmployee->get($employeeId);
+            }
+
+            return $currentlyActive->firstWhere('employee_id', $employeeId)?->can_scan !== false;
+        });
+
+        if (!$hasScanner) {
+            throw new Exception('A medical service needs at least one staff with QR scan permission.', 422);
+        }
+    }
+
     private function assertNoShiftOverlap(?string $serviceType, Collection $rows): void
     {
         if ($serviceType !== ScheduleServiceModel::TYPE_ADL) {
@@ -1142,6 +1161,8 @@ class ScheduleService
                         (int) $row['employee_id'] => $scheduleService->type === ScheduleServiceModel::TYPE_ADL
                             || filter_var($row['can_scan'], FILTER_VALIDATE_BOOLEAN),
                     ]);
+
+                $this->assertMedicalScanner($scheduleService->type, $desiredEmployeeIds, $scanByEmployee, $currentlyActive);
 
                 foreach ($desiredEmployeeIds as $employeeId) {
                     if ($currentlyActiveIds->contains($employeeId)) {

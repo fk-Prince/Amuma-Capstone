@@ -408,6 +408,21 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <p
+                                    v-if="
+                                        missingScanner(
+                                            service.schedule_services_id,
+                                        )
+                                    "
+                                    class="flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                                >
+                                    <AlertCircle
+                                        class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                    />
+                                    At least one staff must have QR on so the
+                                    patient QR can be scanned for this service.
+                                </p>
                             </div>
 
                             <p
@@ -918,7 +933,11 @@
                         <button
                             type="button"
                             class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="isSaving || missingNurseLines.length > 0"
+                            :disabled="
+                                isSaving ||
+                                missingNurseLines.length > 0 ||
+                                hasMissingScanner
+                            "
                             @click="confirm"
                         >
                             <Loader2
@@ -1541,8 +1560,27 @@ watch(
     { immediate: true },
 );
 
+function missingScanner(serviceId: number) {
+    const entries = assignments.value[serviceId] ?? [];
+
+    return (
+        serviceTypeFor(serviceId) === "Medical" &&
+        entries.length > 0 &&
+        !entries.some((entry) => entry.can_scan)
+    );
+}
+
+const hasMissingScanner = computed(() =>
+    Object.keys(assignments.value).some((id) => missingScanner(Number(id))),
+);
+
 function confirm() {
     if (!props.schedule || props.isSaving) return;
+
+    if (hasMissingScanner.value) {
+        toastError("A medical service needs at least one staff with QR on.");
+        return;
+    }
 
     const formatted = Object.entries(assignments.value).flatMap(
         ([serviceId, entries]) =>
