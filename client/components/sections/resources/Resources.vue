@@ -261,26 +261,22 @@
                         </h2>
                     </div>
 
-                    <button
-                        type="button"
-                        class="group hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-primary sm:inline-flex"
+                    <span
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary dark:bg-primary-500/10"
                     >
-                        View all downloads
-
-                        <ArrowRight
-                            class="h-4 w-4 transition-transform group-hover:translate-x-1"
-                        />
-                    </button>
+                        <Clock class="h-3.5 w-3.5" />
+                        Coming soon
+                    </span>
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     <article
                         v-for="doc in downloads"
                         :key="doc.title"
-                        class="rounded-2xl border border-gray-200 bg-white p-5 dark:bg-secondary dark:border-white/10"
+                        class="rounded-2xl border border-dashed border-gray-200 bg-white p-5 dark:bg-secondary dark:border-white/10"
                     >
                         <div
-                            class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl"
+                            class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl opacity-60"
                             :class="doc.tint"
                         >
                             <FileText class="h-5 w-5" />
@@ -293,16 +289,16 @@
                         </h3>
 
                         <p class="mb-4 text-xs text-muted dark:text-gray-400">
-                            PDF Document · {{ doc.size }}
+                            PDF Document
                         </p>
 
                         <button
                             type="button"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-semibold text-secondary transition-colors hover:border-primary/30 hover:text-primary dark:border-white/10 dark:text-white"
+                            disabled
+                            class="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 py-2 text-xs font-semibold text-muted dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
                         >
-                            Download PDF
-
-                            <Download class="h-3.5 w-3.5" />
+                            <Clock class="h-3.5 w-3.5" />
+                            Coming soon
                         </button>
                     </article>
                 </div>
@@ -324,30 +320,26 @@
                         </h2>
                     </div>
 
-                    <button
-                        type="button"
-                        class="group hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-primary sm:inline-flex"
+                    <span
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary dark:bg-primary-500/10"
                     >
-                        View all videos
-
-                        <ArrowRight
-                            class="h-4 w-4 transition-transform group-hover:translate-x-1"
-                        />
-                    </button>
+                        <Clock class="h-3.5 w-3.5" />
+                        Coming soon
+                    </span>
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                     <article
                         v-for="video in videos"
                         :key="video.title"
-                        class="group overflow-hidden rounded-2xl border border-gray-200 bg-white dark:bg-secondary dark:border-white/10"
+                        class="overflow-hidden rounded-2xl border border-dashed border-gray-200 bg-white dark:bg-secondary dark:border-white/10"
                     >
                         <div
-                            class="relative flex h-32 items-center justify-center bg-gradient-to-br"
+                            class="relative flex h-32 items-center justify-center bg-gradient-to-br opacity-50 grayscale-[40%]"
                             :class="video.gradient"
                         >
                             <div
-                                class="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-primary shadow-sm transition-transform duration-200 group-hover:scale-110"
+                                class="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-muted shadow-sm"
                             >
                                 <Play
                                     class="ml-0.5 h-4.5 w-4.5"
@@ -358,7 +350,7 @@
                             <span
                                 class="absolute bottom-2 right-2 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] font-semibold text-white"
                             >
-                                {{ video.duration }}
+                                Coming soon
                             </span>
                         </div>
 
@@ -487,7 +479,6 @@ import {
     CheckCircle2,
     ChevronDown,
     FileText,
-    Download,
     Play,
     Clock,
     Phone,
@@ -620,26 +611,10 @@ const faqs = [
 ];
 
 const downloads = [
-    {
-        title: "Patient Admission Form",
-        size: "245 KB",
-        tint: "bg-primary-50 text-primary",
-    },
-    {
-        title: "Assessment Form Guide",
-        size: "1.2 MB",
-        tint: "bg-accent-50 text-accent",
-    },
-    {
-        title: "Family Portal Manual",
-        size: "1.5 MB",
-        tint: "bg-primary-50 text-primary",
-    },
-    {
-        title: "Homecare Service Brochure",
-        size: "3.4 MB",
-        tint: "bg-accent-50 text-accent",
-    },
+    { title: "Patient Admission Form", tint: "bg-primary-50 text-primary" },
+    { title: "Assessment Form Guide", tint: "bg-accent-50 text-accent" },
+    { title: "Family Portal Manual", tint: "bg-primary-50 text-primary" },
+    { title: "Homecare Service Brochure", tint: "bg-accent-50 text-accent" },
 ];
 
 const videos = [
@@ -647,27 +622,23 @@ const videos = [
         title: "Booking Homecare or Facility Care",
         description:
             "A walkthrough of search, provider selection, and submitting your request.",
-        duration: "6:24",
         gradient: "from-primary-500 to-primary-700",
     },
     {
         title: "Using the Family Portal",
         description:
             "Schedules, medications, messages, and balance in one place.",
-        duration: "6:35",
         gradient: "from-accent-500 to-accent-700",
     },
     {
         title: "Managing Patients & Admissions",
         description:
             "Admitting patients and managing records from the branch dashboard.",
-        duration: "4:38",
         gradient: "from-primary-500 to-primary-700",
     },
     {
         title: "Billing, Plans & Payments",
         description: "Choosing a plan and completing a secure checkout.",
-        duration: "5:22",
         gradient: "from-accent-500 to-accent-700",
     },
 ];
