@@ -892,6 +892,7 @@ const errors = ref<Record<string, string>>({});
 const roles = reactive({
     is_employee: false,
     is_client: false,
+    is_family: false,
     is_system_owner: false,
 });
 
@@ -997,7 +998,7 @@ const roleBadges = computed(() => {
     const list: string[] = [];
     if (roles.is_system_owner) list.push("AMUMA admin");
     if (roles.is_employee) list.push("Staff");
-    if (roles.is_client) list.push("Family account");
+    if (roles.is_family) list.push("Family account");
     return list;
 });
 
@@ -1038,6 +1039,7 @@ const applyProfile = (data: any) => {
 
     roles.is_employee = Boolean(data.roles?.is_employee);
     roles.is_client = Boolean(data.roles?.is_client);
+    roles.is_family = Boolean(data.roles?.is_family);
     roles.is_system_owner = Boolean(data.roles?.is_system_owner);
 
     meta.provider = data.provider ?? "local";

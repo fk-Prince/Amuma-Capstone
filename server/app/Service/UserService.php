@@ -314,6 +314,7 @@ class UserService
                 'roles' => [
                     'is_employee'     => $user->isEmployee,
                     'is_client'       => $user->isClient,
+                    'is_family'       => $user->isClient && ($user->hasBooking || $user->hasPatient),
                     'is_system_owner' => $user->isSystemOwner,
                 ],
             ],
