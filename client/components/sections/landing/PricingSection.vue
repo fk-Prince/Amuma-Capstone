@@ -15,13 +15,13 @@
                     <span class="text-primary">features</span> you need.
                 </h1>
 
+                <TrialPromoBanner class="mx-auto mt-8 max-w-5xl" />
+
                 <PlanTypeToggle
-                    class="mt-8"
+                    class="mt-6"
                     :model-value="checkout.selectedPlanType"
                     @update:model-value="checkout.setSelectedPlanType"
                 />
-
-                <TrialPromoBanner class="mx-auto mt-6 max-w-5xl" />
             </div>
 
             <div

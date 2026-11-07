@@ -106,7 +106,15 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const { hasVisited } = useSetupVisits(() => setupAreaOf(scope()));
     const { showFor, skip, markFinished } = useFirstTimeUser();
-    const enabled = computed(() => showFor(scope()));
+
+    const branchApproved = computed(
+        () =>
+            props.context !== "branch" ||
+            (branchStore.activeBranch?.status === "verified" &&
+                branchStore.activeBranch?.agency?.status === "verified"),
+    );
+
+    const enabled = computed(() => branchApproved.value && showFor(scope()));
 
     // Shared per branch, so the dashboard guide and the page tips agree.
     const factsByBranch = useState<Record<string, { services: number; rooms: number; staff: number; plans: number }>>(
