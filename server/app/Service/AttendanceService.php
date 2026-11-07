@@ -57,22 +57,25 @@ class AttendanceService
         $scanner = Employee::find($scannerId);
         $wasCheckedIn = $this->visitAttendance($services)->isNotEmpty();
 
-        if ($wasCheckedIn) {
-            throw new Exception('This visit is already checked in. Change who attended from Schedule Details.', 409);
+        if (strtolower((string) $schedule->status) === Schedule::STATUS_COMPLETED) {
+            throw new Exception('This visit is already completed. Change who attended from Schedule Details.', 409);
         }
 
-        DB::transaction(function () use ($schedule, $services, $present, $scannerId, $scanner) {
+        DB::transaction(function () use ($schedule, $services, $present, $scannerId, $scanner, $wasCheckedIn) {
             foreach ($services as $scheduleService) {
                 foreach ($scheduleService->assigned as $assigned) {
                     $employeeId = (int) $assigned->employee_id;
                     $isOpen = $assigned->attendances->contains(fn($row) => $row->in_timestamp && !$row->out_timestamp);
+                    $attended = $assigned->attendances->contains(fn($row) => $row->in_timestamp !== null);
 
                     if (!$present->contains($employeeId)) {
-                        $this->attendanceRepository->removeMarked($assigned);
+                        if (!$wasCheckedIn) {
+                            $this->attendanceRepository->removeMarked($assigned);
+                        }
                         continue;
                     }
 
-                    if ($isOpen) {
+                    if ($isOpen || ($wasCheckedIn && $attended)) {
                         continue;
                     }
 

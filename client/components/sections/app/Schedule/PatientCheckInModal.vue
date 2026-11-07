@@ -50,8 +50,16 @@ watch(
 
 const alreadyCheckedIn = computed(() => Boolean(props.visit.checked_in_at));
 
+const newlyPresent = computed(() =>
+    props.visit.staff.filter(
+        (staff) => !staff.attended && selected.value.has(staff.employee_id),
+    ),
+);
+
+const isLocked = (staff: VisitStaff) => staff.is_me || staff.attended;
+
 function toggle(staff: VisitStaff) {
-    if (staff.is_me || alreadyCheckedIn.value) return;
+    if (isLocked(staff)) return;
 
     const next = new Set(selected.value);
 
@@ -76,7 +84,11 @@ async function confirm() {
             employee_ids: [...selected.value],
         });
 
-        success(`${props.visit.schedule_code} checked in.`);
+        success(
+            alreadyCheckedIn.value
+                ? `Timed in for ${props.visit.schedule_code}.`
+                : `${props.visit.schedule_code} checked in.`,
+        );
 
         emit("confirmed");
         emit("close");
@@ -196,7 +208,12 @@ async function timeOut(confirmUnpaid = false) {
                         class="rounded-xl border border-accent-100 bg-accent-50/60 px-3 py-2.5 text-xs text-accent-700 dark:border-accent-500/20 dark:bg-accent-500/10 dark:text-accent-300"
                     >
                         Checked in at {{ formatTime(visit.checked_in_at) }}.
-                        Time out to complete the visit.
+                        <template v-if="newlyPresent.length">
+                            Time in yourself and anyone who arrived later.
+                        </template>
+                        <template v-else>
+                            Time out to complete the visit.
+                        </template>
                     </p>
 
                     <div>
@@ -215,29 +232,32 @@ async function timeOut(confirmUnpaid = false) {
                                     type="button"
                                     class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition"
                                     :class="[
-                                        selected.has(staff.employee_id)
-                                            ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
-                                            : alreadyCheckedIn
-                                              ? 'border-slate-200 dark:border-white/10'
+                                        staff.attended
+                                            ? 'border-slate-200 opacity-50 dark:border-white/10'
+                                            : selected.has(staff.employee_id)
+                                              ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
                                               : 'border-slate-200 hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5',
-                                        staff.is_me || alreadyCheckedIn ? 'cursor-default' : '',
+                                        isLocked(staff) ? 'cursor-default' : '',
                                     ]"
                                     @click="toggle(staff)"
                                 >
                                     <span
                                         class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border"
                                         :class="
-                                            selected.has(staff.employee_id)
-                                                ? 'border-primary bg-primary text-white'
-                                                : 'border-slate-300 dark:border-white/20'
+                                            staff.attended
+                                                ? 'border-slate-300 dark:border-white/20'
+                                                : selected.has(staff.employee_id)
+                                                  ? 'border-primary bg-primary text-white'
+                                                  : 'border-slate-300 dark:border-white/20'
                                         "
                                     >
                                         <Lock
-                                            v-if="staff.is_me"
+                                            v-if="staff.is_me && !staff.attended"
                                             class="h-3 w-3"
                                         />
                                         <Check
                                             v-else-if="
+                                                !staff.attended &&
                                                 selected.has(staff.employee_id)
                                             "
                                             class="h-3.5 w-3.5"
@@ -316,7 +336,23 @@ async function timeOut(confirmUnpaid = false) {
                         </ActionButton>
 
                         <ActionButton
-                            v-if="alreadyCheckedIn"
+                            v-if="alreadyCheckedIn && newlyPresent.length"
+                            variant="primary"
+                            :disabled="saving || timingOut"
+                            @click="confirm"
+                        >
+                            <span class="inline-flex items-center gap-2">
+                                <Loader2
+                                    v-if="saving"
+                                    class="h-4 w-4 animate-spin"
+                                />
+                                <LogIn v-else class="h-4 w-4" />
+                                Time in
+                            </span>
+                        </ActionButton>
+
+                        <ActionButton
+                            v-else-if="alreadyCheckedIn"
                             variant="primary"
                             :disabled="saving || timingOut"
                             @click="timeOut()"
