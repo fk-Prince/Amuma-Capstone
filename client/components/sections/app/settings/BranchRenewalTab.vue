@@ -258,10 +258,11 @@
                             free trial.
                         </template>
                         <template v-else-if="awaitingPayment && !canPayTrial">
-                            Your free trial request is waiting for an admin to
-                            verify your branch. The 2-week trial starts on
-                            approval, and you can pay for your plan from then
-                            on. Nothing has been charged.
+                            Your free trial runs until
+                            {{ formatDate(pendingPlan?.starts_at) }} while an
+                            admin verifies your branch. You can pay or start
+                            your plan early once it's approved. Nothing has been
+                            charged.
                         </template>
                         <template v-else-if="awaitingPayment && trialEnded">
                             This branch is locked until its plan is paid for.
