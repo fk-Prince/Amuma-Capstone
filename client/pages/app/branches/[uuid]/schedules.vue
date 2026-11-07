@@ -506,6 +506,19 @@ function onAdlScheduleUpdated(updated: ScheduleItem) {
     if (index !== -1) {
         scheduleData.value[index] = updated;
     }
+
+    syncOpenSchedule(updated);
+}
+
+function syncOpenSchedule(updated?: ScheduleItem) {
+    if (!updated?.schedule_id) return;
+
+    if (selectedSchedule.value?.schedule_id === updated.schedule_id) {
+        selectedSchedule.value = updated;
+    }
+    if (assigneSchedule.value?.schedule_id === updated.schedule_id) {
+        assigneSchedule.value = updated;
+    }
 }
 
 async function onUpdateSchedule(payload: any) {
@@ -521,6 +534,7 @@ async function onUpdateSchedule(payload: any) {
         }
 
         saveConflicts.value = null;
+        syncOpenSchedule(res?.data);
         success(res.message);
         showScheduleModal.value = false;
     } catch (err: any) {
@@ -541,6 +555,7 @@ async function onAssignSubmit(payload: any) {
 
     try {
         const res = await handleAssignment(payload, uuid.value);
+        syncOpenSchedule(res?.data);
         success(res.message);
         assignModalOpen.value = false;
     } catch (err: any) {

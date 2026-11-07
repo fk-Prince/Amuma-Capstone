@@ -1,6 +1,6 @@
 <template>
     <div
-        class="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4 dark:bg-secondary"
+        class="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4 pt-32 pb-12 dark:bg-secondary"
     >
         <div
             class="w-full max-w-md bg-white rounded-3xl shadow-sm p-8 text-center dark:bg-secondary"
@@ -25,23 +25,25 @@
                 </div>
 
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    {{ withTrial ? "Free Trial Requested" : "Payment Successful" }}
+                    {{
+                        withTrial
+                            ? "Subscription Complete"
+                            : "Payment Successful"
+                    }}
                 </h1>
 
                 <p class="mt-3 text-sm text-slate-500 dark:text-gray-400">
                     We'll verify your subscription and notify you of your
                     request's status within 1-2 business days.
                     <template v-if="withTrial">
-                        Your 2-week free trial starts once your branch is
-                        approved. Nothing is charged today. Your card is
-                        charged when the trial ends, unless you cancel before
-                        then.
+                        Your 2-week free trial has started, and you can use every
+                        feature in your plan while we verify your documents.
+                        Nothing is charged today. Your card is charged when the
+                        trial ends, unless you cancel before then.
                     </template>
                     <template v-else>
                         Your paid year starts once your branch is approved.
                     </template>
-                    You can try AMUMA with demo data right away from your
-                    dashboard.
                 </p>
             </template>
 
@@ -176,6 +178,10 @@ const enterDashboard = () => {
 };
 const route = useRoute();
 
+definePageMeta({
+    navVariant: 3,
+});
+
 useHead({
     title: "Subscription Status",
 });
@@ -185,7 +191,6 @@ const withTrial = computed(() => route.query.trial !== "0");
 const isSuccess = computed(() => {
     return route.query.status === "true";
 });
-
 
 const branchUuid = computed(
     () =>
@@ -202,8 +207,6 @@ const paymentUrl = computed(() =>
 
 const isPreparing = ref(true);
 
-// The branch is created by the payment webhook, so it can take a few seconds
-// to exist after the payment succeeds.
 async function prepareWorkspace() {
     isPreparing.value = true;
 

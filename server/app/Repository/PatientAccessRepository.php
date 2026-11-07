@@ -17,6 +17,7 @@ class PatientAccessRepository
 {
     private const SECTIONS = [
         'all',
+        'directory',
         'profile',
         'details',
         'financials',

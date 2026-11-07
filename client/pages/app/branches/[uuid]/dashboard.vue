@@ -57,6 +57,7 @@ import CashierOverview from "~/components/sections/app/Dashboard/overview/Cashie
 import CaregiverOverview from "~/components/sections/app/Dashboard/overview/CaregiverOverview.vue";
 import GeneralOverview from "~/components/sections/app/Dashboard/overview/GeneralOverview.vue";
 import { useBranchStore } from "~/stores/branch";
+import { isBranchRejected } from "~/utils/branchAccess";
 
 definePageMeta({
     layout: "dashboard",
@@ -73,12 +74,9 @@ const branchStore = useBranchStore();
 const uuid = computed(() => route.params.uuid as string);
 const activeBranch = computed(() => branchStore.activeBranch);
 
-const isSubscriptionPending = computed(() => {
-    const branch = activeBranch.value;
-    return (
-        branch?.agency?.status !== "verified" || branch?.status !== "verified"
-    );
-});
+const isSubscriptionPending = computed(() =>
+    isBranchRejected(activeBranch.value),
+);
 
 const role = computed(() =>
     (activeBranch.value?.role_name ?? "")

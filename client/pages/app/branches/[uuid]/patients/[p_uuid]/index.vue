@@ -332,6 +332,12 @@ function updateScheduleInList(updated: ScheduleItem | undefined) {
     if (index !== -1) {
         scheduleData.value[index] = updated;
     }
+    if (selectedSchedule.value?.schedule_id === updated.schedule_id) {
+        selectedSchedule.value = updated;
+    }
+    if (assigneSchedule.value?.schedule_id === updated.schedule_id) {
+        assigneSchedule.value = updated;
+    }
 }
 
 async function runAssignment(payload: any) {

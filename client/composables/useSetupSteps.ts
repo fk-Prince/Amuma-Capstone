@@ -27,6 +27,7 @@ import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { routeAccess } from "~/composables/useRouteAccess";
 import { setupAreaOf, useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
 import { branchService } from "~/api/branch/BranchService";
+import { isBranchRejected } from "~/utils/branchAccess";
 import { serviceService } from "~/api/service/ServiceService";
 
 
@@ -107,14 +108,11 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const { hasVisited } = useSetupVisits(() => setupAreaOf(scope()));
     const { showFor, skip, markFinished } = useFirstTimeUser();
 
-    const branchApproved = computed(
-        () =>
-            props.context !== "branch" ||
-            (branchStore.activeBranch?.status === "verified" &&
-                branchStore.activeBranch?.agency?.status === "verified"),
+    const branchUsable = computed(
+        () => props.context !== "branch" || !isBranchRejected(branchStore.activeBranch),
     );
 
-    const enabled = computed(() => branchApproved.value && showFor(scope()));
+    const enabled = computed(() => branchUsable.value && showFor(scope()));
 
     // Shared per branch, so the dashboard guide and the page tips agree.
     const factsByBranch = useState<Record<string, { services: number; rooms: number; staff: number; plans: number }>>(

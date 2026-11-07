@@ -121,7 +121,7 @@
                     </ClientOnly>
 
                     <MessageBell
-                        v-if="branchStore.activeBranch?.status === 'verified'"
+                        v-if="!isBranchRejected(branchStore.activeBranch)"
                     />
                     <Notification />
 
@@ -184,6 +184,7 @@ import {
 
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
+import { isBranchRejected } from "~/utils/branchAccess";
 import { useRoute } from "vue-router";
 import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { getBranchImage } from "~/types/branch.js";

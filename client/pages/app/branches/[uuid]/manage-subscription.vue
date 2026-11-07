@@ -203,6 +203,17 @@
                         </ActionButton>
 
                         <ActionButton
+                            v-if="currentRejected && !isSandbox"
+                            extra-class="!rounded-xl !px-5 !py-2.5 !border-rose-200 !text-rose-600 hover:!bg-rose-50 dark:!border-rose-500/30 dark:!text-rose-300 dark:hover:!bg-rose-500/10"
+                            :disabled="!canResubmit"
+                            tooltip="You need permission to update Manage Subscription to resubmit."
+                            @click="resubmitSubscription"
+                        >
+                            <RotateCw class="h-4 w-4" />
+                            <span>Resubmit Subscription</span>
+                        </ActionButton>
+
+                        <ActionButton
                             variant="primary"
                             extra-class="!rounded-xl !px-5 !py-2.5"
                             @click="showRenewal = true"
@@ -353,6 +364,18 @@
         />
 
         <ResubmitBranchModal
+            v-if="showReapply && currentBranch"
+            :branch="currentBranch"
+            :acting-branch-uuid="currentBranch.uuid"
+            :rejection-reason="currentBranch.rejection_reason ?? null"
+            :requires-purchase="false"
+            :agency="currentBranch.agency"
+            show-plan
+            @close="showReapply = false"
+            @resubmitted="onReapplied"
+        />
+
+        <ResubmitBranchModal
             v-if="resubmitTarget"
             :branch="resubmitTarget.branch"
             :acting-branch-uuid="route.params.uuid as string"
@@ -388,7 +411,8 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { CircleCheck, CircleX, Clock, LayoutGrid, Eye, LifeBuoy } from "lucide-vue-next";
+import { CircleCheck, CircleX, Clock, LayoutGrid, Eye, LifeBuoy, RotateCw } from "lucide-vue-next";
+import { isBranchRejected } from "~/utils/branchAccess";
 import { useSupportCenter } from "~/composables/useSupportCenter";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
@@ -479,6 +503,50 @@ function onResubmitBranch(branch: Branch) {
     }
 
     resubmitTarget.value = target;
+}
+
+const currentBranch = computed(() => branchStore.activeBranch);
+const currentRejected = computed(() => isBranchRejected(currentBranch.value));
+const showReapply = ref(false);
+
+function resubmitSubscription() {
+    const branch = currentBranch.value;
+    if (!branch || !canResubmit.value) return;
+
+    if (branch.agency?.status === "rejected") {
+        showReapply.value = true;
+        return;
+    }
+
+    onResubmitBranch({
+        uuid: branch.uuid,
+        rejection_reason: branch.rejection_reason ?? null,
+        subscription_status: "rejected",
+        slot_available: !branch.resubmit_requires_payment,
+    } as Branch);
+}
+
+function onReapplied(result: any) {
+    showReapply.value = false;
+
+    const agency = result?.agency;
+
+    if (agency) {
+        branchStore.branches = branchStore.branches.map((item) =>
+            item.agency?.agency_id === agency.agency_id
+                ? {
+                      ...item,
+                      agency: {
+                          ...item.agency,
+                          ...agency,
+                          location: agency.location ?? item.agency.location,
+                      },
+                  }
+                : item,
+        );
+    }
+
+    onBranchResubmitted(result);
 }
 
 const purchasePrompt = ref<typeof resubmitTarget.value>(null);

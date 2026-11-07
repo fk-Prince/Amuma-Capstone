@@ -663,6 +663,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import { isBranchRejected } from "~/utils/branchAccess";
 import {
     BedDouble,
     ClipboardList,
@@ -719,10 +720,9 @@ const branchStore = useBranchStore();
 
 const activeBranch = computed(() => branchStore.activeBranch);
 
-const isSubscriptionPending = computed(() => {
-    const branch = activeBranch.value;
-    return branch?.agency?.status !== "verified" || branch?.status !== "verified";
-});
+const isSubscriptionPending = computed(() =>
+    isBranchRejected(activeBranch.value),
+);
 
 interface StatBucket {
     value: number;

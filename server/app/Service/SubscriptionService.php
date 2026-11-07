@@ -2037,11 +2037,8 @@ class SubscriptionService
             if ($subscription && $subscription->status === Subscription::STATUS_PENDING) {
                 $startDate = Carbon::now();
 
-                $subscription->update($subscription->isTest() && $subscription->pending_plan_id
-                    ? [
-                        ...Subscription::testTerms($subscription->pending_plan_id, $startDate),
-                        'status' => Subscription::STATUS_ACTIVE,
-                    ]
+                $subscription->update($subscription->isTest()
+                    ? ['status' => Subscription::STATUS_ACTIVE]
                     : [
                         'status' => Subscription::STATUS_ACTIVE,
                         'start_date' => $startDate,

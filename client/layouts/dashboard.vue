@@ -105,6 +105,7 @@ import { useRouteAccess } from "~/composables/useRouteAccess";
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useBranchStore } from "~/stores/branch";
+import { isBranchRejected } from "~/utils/branchAccess";
 import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { useTrackSetupVisits } from "~/composables/useSetupGuide";
 import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
@@ -179,12 +180,14 @@ const menus = computed(() => {
         return [];
     }
 
-    if (
-        branch?.agency?.status !== "verified" ||
-        branch?.status !== "verified"
-    ) {
+    if (isBranchRejected(branch)) {
         return authMenuList
-            .filter((item) => item.label === "Dashboard")
+            .filter(
+                (item) =>
+                    item.label === "Dashboard" ||
+                    (item.label === "Manage Subscription" &&
+                        modules.includes("Manage Subscription")),
+            )
             .map((item) => ({
                 label: item.label,
                 to: uuid ? item.to.replace("[uuid]", uuid) : item.to,

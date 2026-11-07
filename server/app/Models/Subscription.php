@@ -302,7 +302,6 @@ class Subscription extends Model
     public function trialHasEnded(): bool
     {
         return $this->isTest()
-            && $this->status !== self::STATUS_PENDING
             && ($this->status === self::STATUS_EXPIRED || $this->pendingPlanIsDue());
     }
 

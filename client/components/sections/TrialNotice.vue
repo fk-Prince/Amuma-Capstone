@@ -21,7 +21,16 @@
             />
 
             <p class="text-xs leading-5 sm:text-sm">
-                <template v-if="locked">
+                <template v-if="locked && underReview">
+                    <span class="font-semibold"
+                        >Your free trial has ended while we're still verifying
+                        your documents.</span
+                    >
+                    This branch is read-only for now. Once an admin approves
+                    it, your card is charged and everything unlocks.
+                </template>
+
+                <template v-else-if="locked">
                     <span class="font-semibold"
                         >Your subscription is locked. The free trial has
                         ended.</span
@@ -37,18 +46,14 @@
                     </template>
                 </template>
 
-                <template
-                    v-else-if="
-                        awaitingPayment &&
-                        branch?.subscription_status === 'pending'
-                    "
-                >
+                <template v-else-if="awaitingPayment && underReview">
                     <span class="font-semibold"
-                        >Your free trial request is being reviewed.</span
+                        >Your free trial runs until {{ trialEndsOn }}.</span
                     >
-                    The 2-week trial starts once an admin verifies your branch.
-                    Nothing has been charged. In the meantime, try AMUMA with
-                    demo data.
+                    While we verify your documents, set up your branch: add
+                    your services, rooms, staff and care plans. Families can't
+                    find or book this branch until it's approved. Nothing has
+                    been charged.
                 </template>
 
                 <template v-else-if="awaitingPayment">
@@ -142,6 +147,10 @@ const awaitingPayment = computed(
 );
 
 const locked = computed(() => Boolean(branch.value?.subscription_locked));
+
+const underReview = computed(
+    () => branch.value?.subscription_status === "pending",
+);
 
 const canManage = computed(() => hasModule(Modules.ManageSubscription));
 const canUpdateSubscription = computed(() => canUpdate(Modules.ManageSubscription));

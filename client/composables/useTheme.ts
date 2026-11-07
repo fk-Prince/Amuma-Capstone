@@ -1,7 +1,7 @@
 export type ThemeMode = "light" | "dark";
 
 const MODE_KEY = "theme";
-const DEFAULT_MODE: ThemeMode = "dark";
+const DEFAULT_MODE: ThemeMode = "light";
 
 export const THEME_MODES: ThemeMode[] = ["light", "dark"];
 
@@ -11,7 +11,7 @@ const isThemeMode = (v: unknown): v is ThemeMode =>
 export const useThemeMode = () =>
     useState<ThemeMode>("theme_mode", () => DEFAULT_MODE);
 
-export const useIsDark = () => useState<boolean>("theme_is_dark", () => true);
+export const useIsDark = () => useState<boolean>("theme_is_dark", () => false);
 
 const applyMode = (mode: ThemeMode) => {
     useThemeMode().value = mode;

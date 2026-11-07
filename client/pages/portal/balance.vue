@@ -94,8 +94,10 @@ const rawRecords = ref<any[]>([]);
 const lovedOnes = ref<LovedOne[]>([]);
 const selectedIndex = ref(0);
 
-const { syncQuery, selectedParams, indexOfPatient } =
+const { syncQuery, selectedParams, indexOfPatient, followQuery } =
     usePatientQuerySelection();
+
+followQuery(lovedOnes, selectedIndex);
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),

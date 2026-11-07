@@ -86,7 +86,7 @@
 
                 <SummaryRow
                     label="Free Trial"
-                    value="2 weeks, starts once your branch is approved"
+                    value="2 weeks, starts today"
                 />
 
                 <SummaryRow label="Due today" :value="formatCurrency(0)" />
@@ -100,9 +100,10 @@
                 />
                 <p class="text-xs leading-5 text-emerald-700 dark:text-emerald-300">
                     <span class="font-semibold">Nothing to pay today.</span>
-                    Your 2-week free trial starts once an admin approves your
-                    subscription and branch. Your card is charged for your
-                    plan when the trial ends, unless you cancel before then.
+                    Your 2-week free trial starts today, and you can use your
+                    plan while an admin verifies your subscription and branch.
+                    Your card is charged for your plan when the trial ends,
+                    unless you cancel before then.
                     If the charge fails, your branch is locked until the plan
                     is paid.
                 </p>

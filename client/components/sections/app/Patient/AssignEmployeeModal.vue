@@ -224,33 +224,6 @@
                                         </div>
 
                                         <div class="flex items-center gap-2">
-                                            <button
-                                                v-if="service.type === 'Medical'"
-                                                type="button"
-                                                class="flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition hover:border-primary/50"
-                                                :class="
-                                                    entry.can_scan
-                                                        ? 'border-primary/30 bg-primary/10 text-primary'
-                                                        : 'border-slate-200 bg-white text-slate-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500'
-                                                "
-                                                :title="
-                                                    entry.can_scan
-                                                        ? 'This staff can scan the patient QR. Click to turn off.'
-                                                        : 'This staff can\'t scan the patient QR. Click to turn on.'
-                                                "
-                                                @click="
-                                                    entry.can_scan =
-                                                        !entry.can_scan
-                                                "
-                                            >
-                                                <QrCode class="h-3.5 w-3.5" />
-                                                {{
-                                                    entry.can_scan
-                                                        ? "QR on"
-                                                        : "QR off"
-                                                }}
-                                            </button>
-
                                             <span
                                                 class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                             >
@@ -408,21 +381,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <p
-                                    v-if="
-                                        missingScanner(
-                                            service.schedule_services_id,
-                                        )
-                                    "
-                                    class="flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
-                                >
-                                    <AlertCircle
-                                        class="mt-0.5 h-3.5 w-3.5 shrink-0"
-                                    />
-                                    At least one staff must have QR on so the
-                                    patient QR can be scanned for this service.
-                                </p>
                             </div>
 
                             <p
@@ -934,9 +892,7 @@
                             type="button"
                             class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="
-                                isSaving ||
-                                missingNurseLines.length > 0 ||
-                                hasMissingScanner
+                                isSaving || missingNurseLines.length > 0
                             "
                             @click="confirm"
                         >
@@ -988,12 +944,18 @@ import {
     Search,
     Phone,
     Mail,
-    QrCode,
 } from "lucide-vue-next";
 
 interface AssignmentEntry {
     employee_id: number;
     note: string;
+    can_scan: boolean;
+}
+
+interface AssignmentRow {
+    employee_id: number | null;
+    schedule_services_id: number;
+    note: string | null;
     can_scan: boolean;
 }
 
@@ -1012,12 +974,7 @@ const emit = defineEmits<{
         e: "confirm",
         payload: {
             schedule_id: number;
-            assignments: {
-                employee_id: number;
-                schedule_services_id: number;
-                note: string | null;
-                can_scan: boolean;
-            }[];
+            assignments: AssignmentRow[];
         },
     ): void;
 }>();
@@ -1560,40 +1517,28 @@ watch(
     { immediate: true },
 );
 
-function missingScanner(serviceId: number) {
-    const entries = assignments.value[serviceId] ?? [];
-
-    return (
-        serviceTypeFor(serviceId) === "Medical" &&
-        entries.length > 0 &&
-        !entries.some((entry) => entry.can_scan)
-    );
-}
-
-const hasMissingScanner = computed(() =>
-    Object.keys(assignments.value).some((id) => missingScanner(Number(id))),
-);
-
 function confirm() {
     if (!props.schedule || props.isSaving) return;
 
-    if (hasMissingScanner.value) {
-        toastError("A medical service needs at least one staff with QR on.");
-        return;
-    }
-
     const formatted = Object.entries(assignments.value).flatMap(
-        ([serviceId, entries]) =>
-            entries.map((entry) => ({
-                employee_id: Number(entry.employee_id),
-                schedule_services_id: Number(serviceId),
-                note: isNoteLocked(entry, Number(serviceId))
-                    ? "Assistant"
-                    : entry.note.trim() || null,
-                can_scan:
-                    serviceTypeFor(Number(serviceId)) === "ADL" ||
-                    entry.can_scan,
-            })),
+        ([serviceId, entries]): AssignmentRow[] =>
+            !entries.length
+                ? [
+                      {
+                          employee_id: null,
+                          schedule_services_id: Number(serviceId),
+                          note: null,
+                          can_scan: true,
+                      },
+                  ]
+                : entries.map((entry) => ({
+                      employee_id: Number(entry.employee_id),
+                      schedule_services_id: Number(serviceId),
+                      note: isNoteLocked(entry, Number(serviceId))
+                          ? "Assistant"
+                          : entry.note.trim() || null,
+                      can_scan: true,
+                  })),
     );
 
     emit("confirm", {

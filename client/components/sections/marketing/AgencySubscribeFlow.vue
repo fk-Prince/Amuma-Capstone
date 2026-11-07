@@ -197,7 +197,7 @@ const steps = [
     {
         icon: ShieldCheck,
         title: "We verify your branch",
-        text: "The AMUMA team reviews it. Your trial starts once it's approved.",
+        text: "The AMUMA team reviews it while your trial runs, so you can use AMUMA right away.",
     },
     {
         icon: Rocket,

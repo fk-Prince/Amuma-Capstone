@@ -1131,7 +1131,9 @@ function prevLovedOne() {
         lovedOnes.value.length;
 }
 
-const { resolveIndex, syncQuery } = usePatientQuerySelection();
+const { resolveIndex, syncQuery, followQuery } = usePatientQuerySelection();
+
+followQuery(lovedOnes, selectedIndex);
 
 watch(selectedIndex, () =>
     syncQuery(lovedOnes.value[selectedIndex.value]?.uuid),

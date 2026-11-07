@@ -146,8 +146,9 @@
                                         }}2-week free trial
                                     </p>
                                     <p class="mt-0.5 text-xs">
-                                        Your trial starts once an admin approves
-                                        your branch. Nothing is charged now.
+                                        Your trial restarts when you send this,
+                                        and you can use your plan while we
+                                        review it. Nothing is charged now.
                                     </p>
                                 </div>
                             </div>
@@ -274,8 +275,9 @@
                                             v-if="isTrial"
                                             class="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800 dark:bg-amber-500/10 dark:text-amber-200"
                                         >
-                                            Your trial starts once an admin
-                                            approves your branch. Nothing is
+                                            Your trial restarts when you send
+                                            this, and you can use your plan
+                                            while we review it. Nothing is
                                             charged now.
                                         </p>
                                     </div>

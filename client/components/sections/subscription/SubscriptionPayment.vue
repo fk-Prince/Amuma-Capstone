@@ -26,11 +26,10 @@
             </h3>
 
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                No payment today. You can try AMUMA with demo data right away
-                while an admin reviews your subscription and branch. Your
-                2-week trial starts once they're approved, and your card is
-                charged only when the trial ends, unless you cancel before
-                then.
+                No payment today. Your 2-week trial starts right away, with
+                every feature in your plan, while an admin verifies your
+                subscription and branch. Your card is charged only when the
+                trial ends, unless you cancel before then.
             </p>
 
             <OrderSummary

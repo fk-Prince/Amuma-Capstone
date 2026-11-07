@@ -152,6 +152,13 @@ class PortalHelper
             'patient_id' => $patient->patient_id,
         ];
 
+        if (in_array('directory', $sections, true)) {
+            $payload['patient'] = array_intersect_key(
+                self::patient($patient),
+                array_flip(['patient_id', 'uuid', 'full_name', 'avatar'])
+            );
+        }
+
         if ($wants('profile')) {
             $payload['access'] = self::access($access);
             $payload['patient'] = self::patient($patient);
