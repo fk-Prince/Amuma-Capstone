@@ -27,7 +27,7 @@ export interface Branch {
     subscription_mode?: "test" | "live" | null;
     subscription_end_date?: string | null;
     subscription_locked?: boolean;
-    demo_locked?: "review" | "ended" | null;
+    demo_locked?: "rejected" | "ended" | null;
     subscription_awaiting_payment?: boolean;
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;
@@ -39,9 +39,6 @@ export interface Branch {
 export interface ResubmitPlan {
     name: string;
     type: "sme" | "enterprise";
-    subtotal: number;
-    vat_rate: number;
-    vat_amount: number;
     amount: number;
     trial_weeks: number;
     card: {

@@ -34,7 +34,6 @@ use App\Repository\ModuleRepository;
 use App\Service\External\SupabaseService;
 use App\Service\External\XenditService;
 use App\Utils\MoneyWords;
-use App\Utils\Vat;
 use App\Service\Geo\NominatimService;
 use App\Service\Sandbox\SandboxClient;
 use Exception;
@@ -151,13 +150,15 @@ class SubscriptionService
         AuthGuard::requireUser($user);
         set_time_limit(self::PAYMENT_TIME_LIMIT);
         $paymentMethod = PaymentFactory::make($payload['payment_method']);
-        $renewal = $this->withVat($this->createRenewal($user, $payload));
+        $renewal = $this->withoutTax($this->createRenewal($user, $payload));
         return $paymentMethod->subscriptionInvoice($payload, $renewal);
     }
 
-    private function withVat(array $detail): array
+    private function withoutTax(array $detail): array
     {
-        return [...$detail, ...Vat::exclusive((float) $detail['total_amount'])];
+        $total = round((float) $detail['total_amount'], 2);
+
+        return [...$detail, 'subtotal' => $total, 'vat_rate' => 0, 'vat_amount' => 0, 'total_amount' => $total];
     }
 
     private function cardDetails(array $payload): array
@@ -177,7 +178,7 @@ class SubscriptionService
             'start_now' => true,
         ];
 
-        return $this->withVat($subscription->awaitingTrialPayment()
+        return $this->withoutTax($subscription->awaitingTrialPayment()
             ? $this->createTrialPayment($owner, $subscription, $payload)
             : $this->createRenewal($owner, $payload));
     }
@@ -511,7 +512,7 @@ class SubscriptionService
                 'payment_reference_id' => $payload['external_id'] ?? null,
                 'masked_card_number' => $payload['masked_card_number'] ?? null,
                 'price' => $meta['total_amount'],
-                'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
+                'vat_rate' => 0,
                 'status' => SubscriptionPayment::STATUS_PAID,
                 'type' => match ($action) {
                     self::ACTION_RESUBSCRIBE,
@@ -835,7 +836,7 @@ class SubscriptionService
             $agencyDocument = SupabaseService::store($payload['agency_document']);
         }
 
-        return $this->withVat([
+        return $this->withoutTax([
             'user' => $user,
             'plan' => $plan,
             'branch' => [
@@ -1025,7 +1026,7 @@ class SubscriptionService
                         'payment_reference_id' => $reference_id,
                         'masked_card_number' => $masked_card_number,
                         'price' => $totalAmount,
-                        'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
+                        'vat_rate' => 0,
                         'status' => SubscriptionPayment::STATUS_PAID,
                         'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
                         'payment_method' => $meta['payment_method'] ?? null,
@@ -1333,7 +1334,7 @@ class SubscriptionService
             throw new Exception(__('Additional branches are not available on this plan.'), 422);
         }
 
-        return $this->withVat([
+        return $this->withoutTax([
             'user' => $user,
             'plan' => $subscription->plans,
             'branch' => $this->branchDetails($payload),
@@ -1399,7 +1400,7 @@ class SubscriptionService
                     'payment_reference_id' => $payload['external_id'] ?? null,
                     'masked_card_number' => $payload['masked_card_number'] ?? null,
                     'price' => $meta['total_amount'],
-                    'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
+                    'vat_rate' => 0,
                     'status' => SubscriptionPayment::STATUS_PAID,
                     'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
                     'payment_method' => $meta['payment_method'] ?? null,
@@ -1493,6 +1494,8 @@ class SubscriptionService
                     ...Subscription::testTerms($subscription->plan_id),
                     'status' => Subscription::STATUS_PENDING,
                 ]);
+
+                $this->sandboxClient->syncLock($subscription);
             } elseif (!$subscription?->hasFreeResubmitSlot()) {
                 throw new Exception(
                     'There\'s no free branch slot left on your subscription.',
@@ -1599,7 +1602,7 @@ class SubscriptionService
             'payment_reference_id' => $payload['external_id'] ?? null,
             'masked_card_number' => $payload['masked_card_number'] ?? null,
             'price' => $meta['total_amount'],
-            'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
+            'vat_rate' => 0,
             'status' => SubscriptionPayment::STATUS_PAID,
             'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
             'payment_method' => $meta['payment_method'] ?? null,
@@ -1660,7 +1663,7 @@ class SubscriptionService
             'payment_reference_id' => $reference,
             'masked_card_number' => $maskedCard,
             'price' => (float) $meta['total_amount'],
-            'vat_rate' => $meta['vat_rate'] ?? Vat::RATE,
+            'vat_rate' => 0,
             'status' => SubscriptionPayment::STATUS_PAID,
             'type' => SubscriptionPayment::TYPE_SUBSCRIPTION,
             'payment_method' => $meta['payment_method'] ?? null,
@@ -1677,6 +1680,8 @@ class SubscriptionService
             'status' => BranchSubscription::STATUS_PENDING,
             'type' => BranchSubscription::TYPE_INCLUDED,
         ]);
+
+        $this->sandboxClient->syncLock($subscription);
 
         $this->notifyAdmins(
             $branch,
@@ -2331,6 +2336,8 @@ class SubscriptionService
                 $subscription->update([
                     'status' => Subscription::STATUS_REJECTED,
                 ]);
+
+                $this->sandboxClient->syncLock($subscription);
             }
 
             return $link;

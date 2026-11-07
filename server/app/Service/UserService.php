@@ -17,7 +17,6 @@ use App\Repository\SubscriptionRepository;
 use App\Repository\TransactionRepository;
 use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
-use App\Utils\Vat;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -129,7 +128,7 @@ class UserService
                     'subscription_locked' => (bool) $branch?->subscriptionLink?->subscription?->isLockedForPayment(),
                     'demo_locked' => match (config('app.sandbox') ? $branch?->subscriptionLink?->subscription?->status : null) {
                         Subscription::STATUS_EXPIRED => 'ended',
-                        Subscription::STATUS_PENDING => 'review',
+                        Subscription::STATUS_REJECTED => 'rejected',
                         default => null,
                     },
                     'subscription_awaiting_payment' => (bool) $branch?->subscriptionLink?->subscription?->awaitingTrialPayment(),
@@ -219,15 +218,10 @@ class UserService
             return null;
         }
 
-        $price = Vat::exclusive($subscription->renewalAmount($plan));
-
         return [
             'name' => $plan->name,
             'type' => $plan->type,
-            'subtotal' => $price['subtotal'],
-            'vat_rate' => $price['vat_rate'],
-            'vat_amount' => $price['vat_amount'],
-            'amount' => $price['total_amount'],
+            'amount' => round($subscription->renewalAmount($plan), 2),
             'trial_weeks' => Subscription::TRIAL_WEEKS,
             'card' => $subscription->card_token_id ? [
                 'brand' => $subscription->card_brand,

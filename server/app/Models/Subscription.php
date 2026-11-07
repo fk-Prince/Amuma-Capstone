@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Service\AuditService;
-use App\Utils\Vat;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -477,7 +476,7 @@ class Subscription extends Model
             'auto_renew' => (bool) $this->auto_renew,
             'is_trial' => $this->awaitingTrialPayment(),
             'charges_on' => $chargesOn?->toDateString(),
-            'amount' => $plan ? Vat::exclusive($this->renewalAmount($plan))['total_amount'] : null,
+            'amount' => $plan ? round($this->renewalAmount($plan), 2) : null,
         ];
     }
 }

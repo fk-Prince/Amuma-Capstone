@@ -69,6 +69,7 @@ export function usePlanCards() {
                 description: plan.description,
                 price: planPrice(plan),
                 branchNote: branchLimitText(plan.type),
+                additionalBranchPrice: Number(plan.additional_branch_price) || 0,
                 ctaText: `Subscribe to ${plan.name}`,
                 featured: plan.plan_code === "C",
                 savePercent: plan.plan_code === "C" ? hybridSavePercent(plan.type) : 0,

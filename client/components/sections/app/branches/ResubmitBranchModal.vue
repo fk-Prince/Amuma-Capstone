@@ -219,29 +219,7 @@
                                                 >
                                                     ₱{{
                                                         formatAmount(
-                                                            resubmitPlan.subtotal,
-                                                        )
-                                                    }}
-                                                </span>
-                                            </div>
-
-                                            <div
-                                                class="flex justify-between gap-3"
-                                            >
-                                                <span
-                                                    class="text-slate-500 dark:text-gray-400"
-                                                >
-                                                    Taxes (VAT
-                                                    {{
-                                                        resubmitPlan.vat_rate
-                                                    }}%)
-                                                </span>
-                                                <span
-                                                    class="font-medium text-secondary dark:text-white"
-                                                >
-                                                    ₱{{
-                                                        formatAmount(
-                                                            resubmitPlan.vat_amount,
+                                                            resubmitPlan.amount,
                                                         )
                                                     }}
                                                 </span>
@@ -548,22 +526,6 @@
                                         </span>
                                     </div>
 
-                                    <div class="flex justify-between">
-                                        <span
-                                            class="text-muted dark:text-gray-400"
-                                            :title="`VAT: ${VAT_RATE}%`"
-                                        >
-                                            Taxes
-                                        </span>
-                                        <span
-                                            class="font-medium text-secondary dark:text-white"
-                                        >
-                                            ₱{{
-                                                formatAmount(withVat(total).vat)
-                                            }}
-                                        </span>
-                                    </div>
-
                                     <div
                                         class="flex justify-between border-t border-slate-100 pt-1.5 dark:border-white/10"
                                     >
@@ -684,7 +646,6 @@ import BranchForm from "~/components/forms/BranchForm.vue";
 import { agencySchema } from "~/schema/agency-schema";
 import type { Agency } from "~/types/agency";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
-import { VAT_RATE, withVat } from "~/utils/vat";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import InfoTooltip from "~/components/ui/InfoTooltip.vue";
 import { proratedHelp } from "~/utils/prorated";
@@ -921,7 +882,7 @@ const noSlotMessage = computed(() =>
           : "Your subscription ends this month, so it can't take an additional branch. Renew it in Manage Subscription, then resubmit this branch.",
 );
 
-const amountDue = computed(() => withVat(total.value).total);
+const amountDue = computed(() => total.value);
 
 const formatDate = (date?: string | null) => {
     if (!date) return "—";

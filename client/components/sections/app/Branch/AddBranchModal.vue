@@ -338,24 +338,12 @@
                                             </span>
                                         </div>
 
-                                        <div class="flex justify-between">
-                                            <span
-                                                class="text-muted dark:text-gray-400"
-                                                :title="`VAT: ${VAT_RATE}%`"
-                                            >
-                                                Taxes
-                                            </span>
-                                            <span class="font-medium text-secondary dark:text-white">
-                                                ₱{{ formatMoney(withVat(additionalOption?.amount ?? 0).vat) }}
-                                            </span>
-                                        </div>
-
                                         <div class="flex justify-between border-t border-slate-100 pt-1.5 dark:border-white/10">
                                             <span class="font-semibold text-secondary dark:text-white">
                                                 You pay today
                                             </span>
                                             <span class="font-bold text-primary">
-                                                ₱{{ formatMoney(withVat(additionalOption?.amount ?? 0).total) }}
+                                                ₱{{ formatMoney(additionalOption?.amount ?? 0) }}
                                             </span>
                                         </div>
                                     </div>
@@ -554,17 +542,6 @@
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center justify-between gap-3">
-                                        <span class="text-slate-600 dark:text-gray-400">
-                                            Taxes (VAT {{ VAT_RATE }}%)
-                                        </span>
-                                        <span
-                                            class="font-semibold text-slate-900 dark:text-white"
-                                        >
-                                            ₱{{ formatMoney(withVat(total).vat) }}
-                                        </span>
-                                    </div>
-
                                     <div
                                         class="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 dark:border-white/10"
                                     >
@@ -672,8 +649,8 @@
                                     terms-context="subscription"
                                 />
 
-                                <VatBreakdown
-                                    :subtotal="total"
+                                <OrderSummary
+                                    :amount="total"
                                     title="Order Details"
                                     :heading="usesAdditional ? `${additionalOption?.plan_name ?? 'Subscription'} · additional branch` : effectivePlan?.name"
                                     :item-label="
@@ -758,8 +735,7 @@ import BranchForm from "~/components/forms/BranchForm.vue";
 import { formatAmount } from "~/utils/currency";
 import SubcriptionConfigure from "~/components/forms/SubcriptionConfigure.vue";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
-import VatBreakdown from "~/components/billing/VatBreakdown.vue";
-import { VAT_RATE, withVat } from "~/utils/vat";
+import OrderSummary from "~/components/billing/OrderSummary.vue";
 
 import { planService } from "~/api/plan/PlanService";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
@@ -990,7 +966,7 @@ const validating = ref(false);
 const processing = ref(false);
 const loadingTotal = ref(false);
 const total = ref(0);
-const amountDue = computed(() => withVat(total.value).total);
+const amountDue = computed(() => total.value);
 const purchaseWithTrial = ref(false);
 
 const onOff = (value?: boolean | null) => (value ? "On" : "Off");

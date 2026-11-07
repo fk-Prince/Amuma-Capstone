@@ -505,15 +505,6 @@
                             </span>
                         </div>
 
-                        <div class="flex justify-between gap-3">
-                            <span class="text-slate-600 dark:text-gray-400">
-                                Taxes (VAT {{ yearlyCharge.vatRate }}%)
-                            </span>
-                            <span class="font-medium text-slate-800 dark:text-white">
-                                ₱{{ formatMoney(yearlyCharge.vat) }}
-                            </span>
-                        </div>
-
                         <div
                             class="flex justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/10"
                         >
@@ -999,12 +990,6 @@
                                 >
                                     ₱{{ formatMoney(renewTotal) }}
                                 </span>
-                                <span
-                                    v-if="renewVat.vat"
-                                    class="text-xs text-slate-500 dark:text-gray-400"
-                                >
-                                    includes ₱{{ formatMoney(renewVat.vat) }} taxes
-                                </span>
                             </p>
 
                             <p
@@ -1298,8 +1283,8 @@
                     <div
                         class="grid min-h-0 flex-1 gap-5 overflow-y-auto px-6 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] md:items-start"
                     >
-                        <VatBreakdown
-                            :subtotal="renewSubtotal"
+                        <OrderSummary
+                            :amount="renewTotal"
                             title="Order summary"
                             :heading="chargedPlan?.name"
                             :item-label="
@@ -1356,8 +1341,7 @@ import {
 } from "lucide-vue-next";
 
 import PaymentForm from "~/components/forms/PaymentForm.vue";
-import VatBreakdown from "~/components/billing/VatBreakdown.vue";
-import { withVat } from "~/utils/vat";
+import OrderSummary from "~/components/billing/OrderSummary.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import SavedCardModal from "~/components/sections/app/settings/SavedCardModal.vue";
 import AutoRenewCheckbox from "~/components/billing/AutoRenewCheckbox.vue";
@@ -1415,7 +1399,7 @@ const { isSandbox, switchLink } = useSandbox();
 const sandboxLink = computed(() =>
     isSandbox.value ||
     branchStore.activeBranch?.subscription_locked ||
-    branchStore.activeBranch?.subscription_status !== "approved"
+    !["pending", "approved"].includes(branchStore.activeBranch?.subscription_status ?? "")
         ? ""
         : switchLink.value,
 );
@@ -1700,17 +1684,13 @@ const yearlyCharge = computed(() => {
     const base = planPrice(plan);
     const additionalPrice = Number(plan.additional_branch_price) || 0;
     const additionalTotal = additionalBranches.value * additionalPrice;
-    const breakdown = withVat(base + additionalTotal);
-
     return {
         planName: plan.name,
         base,
         additionalCount: additionalBranches.value,
         additionalPrice,
         additionalTotal,
-        vatRate: breakdown.rate,
-        vat: breakdown.vat,
-        total: breakdown.total,
+        total: base + additionalTotal,
     };
 });
 
@@ -1730,9 +1710,7 @@ const renewSubtotal = computed(() =>
         : planTotal(chargedPlan.value),
 );
 
-const renewVat = computed(() => withVat(renewSubtotal.value));
-
-const renewTotal = computed(() => renewVat.value.total);
+const renewTotal = computed(() => renewSubtotal.value);
 
 const canSubmitRenewal = computed(() =>
     isCancelled.value || awaitingPayment.value

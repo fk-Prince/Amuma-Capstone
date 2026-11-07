@@ -34,7 +34,7 @@ class SandboxRepository
     {
         return match ($state) {
             'ended' => Subscription::STATUS_EXPIRED,
-            'review' => Subscription::STATUS_PENDING,
+            'rejected' => Subscription::STATUS_REJECTED,
             default => Subscription::STATUS_ACTIVE,
         };
     }

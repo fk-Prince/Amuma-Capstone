@@ -128,6 +128,14 @@
                     </p>
                 </div>
 
+                <p
+                    v-if="demoLocked && switchLink"
+                    class="mt-4 rounded-xl border border-muted-light px-4 py-3 text-left text-xs leading-5 text-muted-DEFAULT dark:border-white/10"
+                >
+                    The demo is locked until you reapply. It opens again while
+                    we review your new details.
+                </p>
+
                 <template v-if="agencyRejected">
                     <ActionButton
                         variant="primary"
@@ -153,6 +161,22 @@
                 <p v-else class="mt-4 text-xs leading-5 text-muted-DEFAULT">
                     To resubmit this branch, open Manage Subscription from any
                     of your approved branches.
+                </p>
+
+                <a
+                    v-if="demoLink"
+                    :href="demoLink"
+                    title="Open a copy of this branch filled with demo patients. Nothing you do there touches your real branch."
+                    class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-muted-light px-4 py-3 text-sm font-semibold text-secondary transition hover:bg-muted-light/60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                >
+                    <PlayCircle class="h-4 w-4" />
+                    Try with demo data
+                </a>
+                <p
+                    v-if="demoLink"
+                    class="mt-2 text-xs leading-5 text-muted-DEFAULT"
+                >
+                    You can keep using the demo while you fix your details.
                 </p>
             </template>
 
@@ -291,7 +315,8 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { LifeBuoy, RotateCw } from "lucide-vue-next";
+import { LifeBuoy, PlayCircle, RotateCw } from "lucide-vue-next";
+import { useSandbox } from "~/composables/useSandbox";
 import { useBranchStore } from "@/stores/branch";
 import { useSupportCenter } from "~/composables/useSupportCenter";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
@@ -307,6 +332,16 @@ const canContactSupport = computed(() => hasModule(Modules.ManageSubscription));
 const { openSupport } = useSupportCenter();
 
 const branch = computed(() => branchStore.activeBranch);
+
+const { isSandbox, switchLink } = useSandbox();
+const demoLocked = computed(
+    () =>
+        !isSandbox.value &&
+        branch.value?.resubmit_subscription_status === "rejected",
+);
+const demoLink = computed(() =>
+    isSandbox.value || demoLocked.value ? "" : switchLink.value,
+);
 
 const showReapply = ref(false);
 

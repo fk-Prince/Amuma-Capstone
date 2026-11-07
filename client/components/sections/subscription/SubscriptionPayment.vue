@@ -26,14 +26,15 @@
             </h3>
 
             <p class="mt-1 text-sm leading-6 text-slate-500 dark:text-gray-400">
-                No payment today. An admin reviews your subscription and branch
-                first, and your 2-week trial starts once they're approved. Your
-                card is charged only when the trial ends, unless you cancel
-                before then.
+                No payment today. You can try AMUMA with demo data right away
+                while an admin reviews your subscription and branch. Your
+                2-week trial starts once they're approved, and your card is
+                charged only when the trial ends, unless you cancel before
+                then.
             </p>
 
-            <VatBreakdown
-                :subtotal="subtotal"
+            <OrderSummary
+                :amount="total"
                 title="Order summary"
                 :heading="planName"
                 item-label="12-month period (after trial)"
@@ -74,7 +75,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { CreditCard, Gift } from "lucide-vue-next";
 import CheckoutSummary from "~/components/sections/subscription/CheckoutSummary.vue";
 import TrialCardModal from "~/components/sections/subscription/TrialCardModal.vue";
-import VatBreakdown from "~/components/billing/VatBreakdown.vue";
+import OrderSummary from "~/components/billing/OrderSummary.vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { cardPayment } from "~/composables/usePayment";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
@@ -115,7 +116,6 @@ const processing = ref(false);
 const xenditProcessing = ref(false);
 const loadingTotal = ref(true);
 const total = ref(0);
-const subtotal = ref(0);
 const showCardModal = ref(false);
 
 watch([processing, xenditProcessing], ([p, x]) => {
@@ -187,7 +187,6 @@ onMounted(async () => {
         const res =
             await subscriptionService.retrieveSubscriptionDetail(payload);
         total.value = Number(res.total_amount);
-        subtotal.value = Number(res.subtotal ?? res.total_amount);
     } catch (err: any) {
         error(err.message ?? "Failed to load subscription total.");
     } finally {

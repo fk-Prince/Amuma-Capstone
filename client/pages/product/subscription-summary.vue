@@ -40,6 +40,8 @@
                     <template v-else>
                         Your paid year starts once your branch is approved.
                     </template>
+                    You can try AMUMA with demo data right away from your
+                    dashboard.
                 </p>
             </template>
 

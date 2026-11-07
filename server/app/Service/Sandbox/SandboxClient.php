@@ -91,9 +91,8 @@ class SandboxClient
     public static function demoState(?Subscription $subscription): string
     {
         return match (true) {
-            !$subscription => 'open',
-            $subscription->isLockedForPayment() => 'ended',
-            $subscription->status === Subscription::STATUS_PENDING => 'review',
+            $subscription?->status === Subscription::STATUS_REJECTED => 'rejected',
+            (bool) $subscription?->isLockedForPayment() => 'ended',
             default => 'open',
         };
     }

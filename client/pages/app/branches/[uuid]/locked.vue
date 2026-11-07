@@ -27,19 +27,15 @@
             </div>
 
             <h1 class="text-3xl font-bold text-white">
-                <template v-if="underReview">
-                    The demo of {{ branchName || "this branch" }} opens after
-                    review
-                </template>
-                <template v-else>
-                    The demo of {{ branchName || "this branch" }} is locked
-                </template>
+                The demo of {{ branchName || "this branch" }} is locked
             </h1>
 
             <p class="mt-3 leading-relaxed text-gray-400">
-                <template v-if="underReview">
-                    Your free trial request is still being reviewed. The demo
-                    opens as soon as an admin verifies your branch.
+                <template v-if="rejected">
+                    Your application wasn't approved, so the demo is closed.
+                    Fix your details and reapply on your live AMUMA dashboard,
+                    and the demo opens again while we review it. Everything
+                    here is kept.
                 </template>
                 <template v-else>
                     Your free trial has ended, so the demo is closed until you
@@ -54,7 +50,7 @@
                     :href="subscribeLink"
                     class="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-white shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl"
                 >
-                    Subscribe on live AMUMA
+                    {{ rejected ? "Reapply on live AMUMA" : "Subscribe on live AMUMA" }}
                 </a>
 
                 <NuxtLink
@@ -92,13 +88,15 @@ const branch = computed(() =>
 
 const branchName = computed(() => branch.value?.name ?? "");
 
-const underReview = computed(() => branch.value?.demo_locked === "review");
+const rejected = computed(() => branch.value?.demo_locked === "rejected");
 
-const subscribeLink = computed(() =>
-    !underReview.value &&
-    liveUrl.value &&
-    branch.value?.role_name === "agency_owner"
-        ? `${liveUrl.value}/app/branches/${route.params.uuid}/manage-subscription?pay=1`
-        : "",
-);
+const subscribeLink = computed(() => {
+    if (!liveUrl.value || branch.value?.role_name !== "agency_owner") return "";
+
+    const base = `${liveUrl.value}/app/branches/${route.params.uuid}`;
+
+    return rejected.value
+        ? `${base}/dashboard`
+        : `${base}/manage-subscription?pay=1`;
+});
 </script>

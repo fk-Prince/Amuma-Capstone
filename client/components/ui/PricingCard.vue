@@ -67,11 +67,22 @@
             </p>
         </div>
 
+        <p
+            :class="[
+                'mb-1 text-sm font-bold uppercase tracking-wide',
+                featured ? 'text-emerald-100' : 'text-emerald-500 dark:text-emerald-300',
+            ]"
+        >
+            Free for 2 weeks
+        </p>
+
         <div class="flex items-baseline gap-1 mb-2">
             <span
                 :class="[
-                    'font-display font-extrabold text-4xl transition-transform duration-300 group-hover:scale-105 origin-left inline-block',
-                    featured ? 'text-white' : 'text-secondary dark:text-white',
+                    'font-display font-extrabold text-4xl line-through decoration-2 transition-transform duration-300 group-hover:scale-105 origin-left inline-block',
+                    featured
+                        ? 'text-white/60 decoration-white/80'
+                        : 'text-secondary/50 decoration-secondary/70 dark:text-white/50 dark:decoration-white/70',
                 ]"
             >
                 {{ formatCurrency(price) }}
@@ -82,7 +93,7 @@
                     featured ? 'text-white/60' : 'text-muted dark:text-gray-400',
                 ]"
             >
-                / year
+                / year after trial
             </span>
         </div>
 
@@ -95,11 +106,35 @@
 
         <p
             :class="[
-                'mb-5 text-sm font-medium',
+                'mb-5 flex items-center gap-1.5 text-sm font-medium',
                 featured ? 'text-white/80' : 'text-primary dark:text-primary-300',
             ]"
         >
             {{ branchNote }}
+            <span
+                v-if="additionalBranchPrice"
+                class="group/info relative inline-flex"
+            >
+                <Info
+                    :class="[
+                        'h-4 w-4 cursor-help transition',
+                        featured
+                            ? 'text-white/70 group-hover/info:text-white'
+                            : 'text-primary/70 group-hover/info:text-primary dark:text-primary-300/70',
+                    ]"
+                    tabindex="0"
+                    :aria-label="additionalBranchText"
+                />
+                <span
+                    role="tooltip"
+                    class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[240px] -translate-x-1/2 rounded-lg bg-slate-900 px-3 py-2 text-left text-xs font-normal leading-5 text-white opacity-0 shadow-lg transition group-hover/info:opacity-100 group-focus-within/info:opacity-100 dark:bg-slate-700"
+                >
+                    <span class="block font-semibold">
+                        Additional branch: {{ formatCurrency(additionalBranchPrice) }} / year
+                    </span>
+                    Prorated to the months left on your subscription.
+                </span>
+            </span>
         </p>
 
         <button
@@ -176,9 +211,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+import { Info } from "lucide-vue-next";
 import { formatCurrency } from "~/utils/currency";
 
-defineProps<{
+const props = defineProps<{
     planLabel: string;
     title: string;
     description: string;
@@ -188,7 +225,12 @@ defineProps<{
     features: string[];
     featured?: boolean;
     savePercent?: number;
+    additionalBranchPrice?: number;
 }>();
+
+const additionalBranchText = computed(
+    () => `Additional branch: ${formatCurrency(props.additionalBranchPrice)} / year`,
+);
 
 defineEmits<{
     (e: "select", plan: any): void;

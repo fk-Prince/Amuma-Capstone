@@ -47,7 +47,8 @@
                         >Your free trial request is being reviewed.</span
                     >
                     The 2-week trial starts once an admin verifies your branch.
-                    Nothing has been charged.
+                    Nothing has been charged. In the meantime, try AMUMA with
+                    demo data.
                 </template>
 
                 <template v-else-if="awaitingPayment">
@@ -178,7 +179,8 @@ const trialEndsOn = computed(() => {
 });
 
 const practiceLink = computed(() =>
-    isSandbox.value || branch.value?.subscription_status !== "approved"
+    isSandbox.value ||
+    !["pending", "approved"].includes(branch.value?.subscription_status ?? "")
         ? ""
         : switchLink.value,
 );

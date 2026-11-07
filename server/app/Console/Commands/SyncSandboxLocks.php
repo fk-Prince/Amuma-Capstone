@@ -10,7 +10,7 @@ class SyncSandboxLocks extends Command
 {
     protected $signature = 'sandbox:sync-locks';
 
-    protected $description = 'Tell the demo server which free trials have ended unpaid, so their demo copy is locked until they subscribe';
+    protected $description = 'Tell the demo server which free trials were rejected or have ended unpaid, so their demo copy is locked';
 
     public function handle(SandboxClient $sandboxClient): int
     {
@@ -24,6 +24,7 @@ class SyncSandboxLocks extends Command
                 Subscription::STATUS_PENDING,
                 Subscription::STATUS_ACTIVE,
                 Subscription::STATUS_EXPIRED,
+                Subscription::STATUS_REJECTED,
             ])
             ->each(fn(Subscription $subscription) => $sandboxClient->syncLock($subscription));
 
