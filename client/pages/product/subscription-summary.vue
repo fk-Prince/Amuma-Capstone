@@ -1,9 +1,20 @@
 <template>
     <div
-        class="min-h-screen w-full bg-slate-50 flex items-center justify-center px-4 pt-32 pb-12 dark:bg-secondary"
+        class="relative min-h-screen w-full overflow-hidden bg-slate-50 flex items-center justify-center px-4 pt-32 pb-12 dark:bg-secondary"
     >
+        <img
+            :src="wallpaper"
+            alt=""
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 h-full w-full select-none object-cover dark:opacity-20"
+        />
         <div
-            class="w-full max-w-md bg-white rounded-3xl shadow-sm p-8 text-center dark:bg-secondary"
+            class="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-white/50 dark:from-secondary/80 dark:via-secondary/60 dark:to-secondary/90"
+            aria-hidden="true"
+        />
+
+        <div
+            class="relative z-10 w-full max-w-md rounded-3xl bg-white/90 p-8 text-center shadow-xl shadow-primary/10 ring-1 ring-white/60 backdrop-blur-md dark:bg-secondary/90 dark:ring-white/10"
         >
             <template v-if="isSuccess">
                 <div
@@ -36,9 +47,9 @@
                     We'll verify your subscription and notify you of your
                     request's status within 1-2 business days.
                     <template v-if="withTrial">
-                        Your 2-week free trial has started, and you can use every
-                        feature in your plan while we verify your documents.
-                        Nothing is charged today. Your card is charged when the
+                        Your 2-week free trial has started, so you can set up
+                        your branch while we verify your documents. Nothing is
+                        charged today. Your card is charged when the
                         trial ends, unless you cancel before then.
                     </template>
                     <template v-else>
@@ -164,6 +175,7 @@
 
 <script setup lang="ts">
 import WelcomeSplash from "~/components/ui/WelcomeSplash.vue";
+import wallpaper from "~/assets/images/portalselection-bg.png";
 import { computed, onMounted, ref } from "vue";
 import { useBranchStore } from "~/stores/branch";
 import { fetchAuthUser, useAuthUser } from "~/composables/useAuthUser";

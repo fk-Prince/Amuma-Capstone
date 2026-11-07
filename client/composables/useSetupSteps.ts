@@ -109,7 +109,11 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const { showFor, skip, markFinished } = useFirstTimeUser();
 
     const branchUsable = computed(
-        () => props.context !== "branch" || !isBranchRejected(branchStore.activeBranch),
+        () =>
+            props.context !== "branch" ||
+            (!!props.branchUuid &&
+                branchStore.activeBranch?.uuid === props.branchUuid &&
+                !isBranchRejected(branchStore.activeBranch)),
     );
 
     const enabled = computed(() => branchUsable.value && showFor(scope()));
@@ -328,8 +332,15 @@ export function useSetupSteps(options: SetupStepsOptions) {
         steps.value.length ? Math.round((doneCount.value / steps.value.length) * 100) : 0,
     );
     // Finished once means finished for good.
+    const factsLoaded = computed(
+        () =>
+            props.context !== "branch" ||
+            !isSetupRole.value ||
+            !!factsByBranch.value[props.branchUuid ?? ""],
+    );
+
     watch(
-        allDone,
+        () => allDone.value && factsLoaded.value,
         (done) => {
             if (done) markFinished(scope());
         },
