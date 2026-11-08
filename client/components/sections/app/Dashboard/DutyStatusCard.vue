@@ -32,6 +32,8 @@ interface DutyBlock {
     schedule_services_id?: number | null;
     can_hand_over?: boolean;
     total_minutes: number;
+    timed_out_at?: string | null;
+    booked_end_at?: string | null;
 }
 
 interface DutyData {
@@ -518,7 +520,11 @@ const typeIcon = (type: string) =>
                         left: segment.left + '%',
                         width: segment.width + '%',
                     }"
-                    :title="`${segment.title} · ${formatTime(segment.start)} – ${formatTime(segment.end)}`"
+                    :title="
+                        segment.timed_out_at && segment.booked_end_at
+                            ? `${segment.title} · ${formatTime(segment.start)} – ${formatTime(segment.end)} · timed out (booked until ${formatTime(ms(segment.booked_end_at))})`
+                            : `${segment.title} · ${formatTime(segment.start)} – ${formatTime(segment.end)}`
+                    "
                 />
 
                 <div

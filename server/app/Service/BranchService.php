@@ -456,7 +456,7 @@ class BranchService
                     ->whereNotIn('status', ['cancelled', 'missed', 'completed'])
                     ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
             )
-            ->with(['scheduleService.service', 'scheduleService.schedule.patient'])
+            ->with(['scheduleService.service', 'scheduleService.schedule.patient', 'attendances'])
             ->orderBy('schedule_assigned_id')
             ->get()
             ->filter(fn($assignment) => $assignment->scheduleService?->schedule)
@@ -467,6 +467,15 @@ class BranchService
 
             // Services in one visit run back to back from the scheduled time.
             $cursor = $schedule->scheduled_at->copy();
+
+            $visitRows = $group
+                ->filter(fn($assignment) => $assignment->scheduleService->type !== 'ADL')
+                ->flatMap(fn($assignment) => $assignment->attendances)
+                ->filter(fn($row) => $row->in_timestamp !== null);
+
+            $timedOutAt = $visitRows->isNotEmpty() && !$visitRows->contains(fn($row) => $row->out_timestamp === null)
+                ? $visitRows->max('out_timestamp')
+                : null;
 
             foreach ($group as $assignment) {
                 $service = $assignment->scheduleService;
@@ -550,11 +559,23 @@ class BranchService
                     $cursor = $end->copy();
                 }
 
+                $bookedEnd = $end->copy();
+
+                if ($timedOutAt && $end->greaterThan($timedOutAt)) {
+                    $end = $timedOutAt->copy();
+                }
+
+                if ($end->lessThanOrEqualTo($start)) {
+                    continue;
+                }
+
                 if ($end->lessThanOrEqualTo($dayStart) || $start->greaterThan($dayEnd)) {
                     continue;
                 }
 
                 $blocks->push([
+                    'timed_out_at' => $timedOutAt,
+                    'booked_end' => $bookedEnd,
                     'type' => strtolower((string) $service->type),
                     'setting' => $schedule->category === 'Homecare' ? 'homecare' : 'facility',
                     'title' => $service->service?->service_name ?? $service->type,
@@ -589,6 +610,8 @@ class BranchService
             'schedule_services_id' => $block['schedule_services_id'] ?? null,
             'can_hand_over' => (bool) ($block['can_hand_over'] ?? false),
             'total_minutes' => (int) $block['start']->diffInMinutes($block['end']),
+            'timed_out_at' => isset($block['timed_out_at']) ? $block['timed_out_at']->toISOString() : null,
+            'booked_end_at' => isset($block['booked_end']) ? $block['booked_end']->toISOString() : null,
         ];
 
         $current = $blocks->first(fn($block) => !empty($block['clocked_in']))

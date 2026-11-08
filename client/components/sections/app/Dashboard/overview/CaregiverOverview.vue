@@ -156,6 +156,11 @@
                         <div class="shrink-0 text-right">
                             <p
                                 class="text-[11px] font-bold tabular-nums text-secondary dark:text-white"
+                                :title="
+                                    block.timed_out_at && block.booked_end_at
+                                        ? `Booked until ${formatTime(block.booked_end_at)}`
+                                        : undefined
+                                "
                             >
                                 {{ formatTime(block.start_at) }} –
                                 {{ formatTime(block.end_at) }}
@@ -163,8 +168,17 @@
                             <span
                                 class="mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
                                 :class="STATE_STYLES[block.state]"
+                                :title="
+                                    block.timed_out_at && block.booked_end_at
+                                        ? `Booked until ${formatTime(block.booked_end_at)}`
+                                        : undefined
+                                "
                             >
-                                {{ STATE_LABELS[block.state] }}
+                                {{
+                                    block.timed_out_at && block.state === "done"
+                                        ? "Timed out"
+                                        : STATE_LABELS[block.state]
+                                }}
                             </span>
                         </div>
                     </div>

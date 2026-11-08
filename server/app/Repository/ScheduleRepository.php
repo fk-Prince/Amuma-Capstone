@@ -419,6 +419,7 @@ class ScheduleRepository
                             'scheduleService.service:service_id,service_name,maximum_duration',
                             'scheduleService.schedule:schedule_id,schedule_code,patient_id,scheduled_at,status,category',
                             'scheduleService.schedule.patient:patient_id,first_name,last_name,suffix',
+                            'attendances:attendance_id,schedule_assigned_id,in_timestamp,out_timestamp',
                         ]);
                 },
             ])

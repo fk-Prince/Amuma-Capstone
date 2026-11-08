@@ -13,6 +13,8 @@ export interface DutyBlock {
     start_at: string;
     end_at: string;
     total_minutes: number;
+    timed_out_at?: string | null;
+    booked_end_at?: string | null;
 }
 
 export interface DutyData {

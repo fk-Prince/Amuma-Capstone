@@ -47,13 +47,15 @@ class EmployeeAssignedScheduleResource extends JsonResource
         $window = $assignments->first(fn($assignment) => $assignment->start_time && $assignment->end_time);
 
         $minutes = (int) $services->sum(fn($service) => $this->durationMinutes($service));
+        $isAdl = $services->contains(fn($service) => $service->duration !== null);
 
         return [
+            'timed_out_at' => $isAdl ? null : $this->timedOutAt($assignments),
             'schedule_id' => $schedule->schedule_id,
             'schedule_code' => $schedule->schedule_code,
             'status' => $schedule->status,
             'category' => $schedule->category,
-            'type' => $services->contains(fn($service) => $service->duration !== null) ? 'adl' : 'medical',
+            'type' => $isAdl ? 'adl' : 'medical',
             'patient_name' => $patient?->display_name,
             'services' => $services
                 ->map(fn($service) => $service->service?->service_name ?? 'ADL')
@@ -68,6 +70,20 @@ class EmployeeAssignedScheduleResource extends JsonResource
             'end_time' => $window ? substr($window->end_time, 0, 5) : null,
             'note' => ($window ?? $assignments->first())->note,
         ];
+    }
+
+    private function timedOutAt(Collection $assignments): ?string
+    {
+        $rows = $assignments
+            ->filter(fn($assignment) => $assignment->relationLoaded('attendances'))
+            ->flatMap(fn($assignment) => $assignment->attendances)
+            ->filter(fn($row) => $row->in_timestamp !== null);
+
+        if ($rows->isEmpty() || $rows->contains(fn($row) => $row->out_timestamp === null)) {
+            return null;
+        }
+
+        return $rows->max('out_timestamp')?->toISOString();
     }
 
     private function durationMinutes($service): int

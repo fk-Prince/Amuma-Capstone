@@ -140,11 +140,19 @@ function timeLabel(entry: EmployeeScheduleEntry) {
 
     const start = formatTime(entry.scheduled_at);
 
+    if (entry.scheduled_at && entry.timed_out_at) {
+        return `${start} – ${formatTime(entry.timed_out_at)}`;
+    }
+
     if (!entry.scheduled_at || !entry.ends_at) return start;
 
     return sameDay(entry.scheduled_at, entry.ends_at)
         ? `${start} – ${formatTime(entry.ends_at)}`
         : start;
+}
+
+function bookedLabel(entry: EmployeeScheduleEntry) {
+    return entry.ends_at ? `Booked until ${formatTime(entry.ends_at)}` : undefined;
 }
 </script>
 
@@ -335,13 +343,24 @@ function timeLabel(entry: EmployeeScheduleEntry) {
                                     {{ dateLabel(entry) }}
                                 </span>
 
-                                <span class="flex items-center gap-1">
+                                <span
+                                    class="flex items-center gap-1"
+                                    :title="entry.timed_out_at ? bookedLabel(entry) : undefined"
+                                >
                                     <Clock class="h-3.5 w-3.5 opacity-60" />
                                     {{ timeLabel(entry) }}
                                 </span>
 
                                 <span
-                                    v-if="entry.duration_minutes"
+                                    v-if="entry.timed_out_at"
+                                    class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-white/10 dark:text-gray-300"
+                                    :title="bookedLabel(entry)"
+                                >
+                                    Timed out
+                                </span>
+
+                                <span
+                                    v-else-if="entry.duration_minutes"
                                     class="text-[11px] font-normal text-slate-400 dark:text-gray-500"
                                 >
                                     {{

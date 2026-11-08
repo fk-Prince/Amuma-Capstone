@@ -219,6 +219,7 @@ export interface EmployeeScheduleEntry {
     services: string[];
     scheduled_at: string | null;
     ends_at: string | null;
+    timed_out_at?: string | null;
     duration_minutes: number;
     start_time: string | null;
     end_time: string | null;

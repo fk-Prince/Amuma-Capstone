@@ -61,16 +61,19 @@ export function scheduleItem(entry: EmployeeScheduleEntry): EmployeeCalendarItem
 
     const hours = (entry.duration_minutes ?? 0) / 60;
     const startAt = new Date(entry.scheduled_at!).getTime();
-    const end =
-        hours >= 24
-            ? addDays(start, Math.ceil(hours / 24) - 1)
-            : isoOf(new Date(startAt + Math.max(hours * 3_600_000 - 60_000, 0)));
+    const timedOutAt = entry.type !== "adl" ? entry.timed_out_at : null;
+    const end = timedOutAt
+        ? isoOf(timedOutAt)
+        : hours >= 24
+          ? addDays(start, Math.ceil(hours / 24) - 1)
+          : isoOf(new Date(startAt + Math.max(hours * 3_600_000 - 60_000, 0)));
 
-    const window =
-        hoursRange(entry.start_time, entry.end_time) ||
-        (entry.ends_at && hours < 24
-            ? `${formatTime(entry.scheduled_at)} – ${formatTime(entry.ends_at)}`
-            : formatTime(entry.scheduled_at));
+    const window = timedOutAt
+        ? `${formatTime(entry.scheduled_at)} – ${formatTime(timedOutAt)} · timed out`
+        : hoursRange(entry.start_time, entry.end_time) ||
+          (entry.ends_at && hours < 24
+              ? `${formatTime(entry.scheduled_at)} – ${formatTime(entry.ends_at)}`
+              : formatTime(entry.scheduled_at));
 
     return {
         key: `schedule-${entry.schedule_id}`,
