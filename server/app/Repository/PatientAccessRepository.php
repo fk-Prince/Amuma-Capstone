@@ -179,6 +179,10 @@ class PatientAccessRepository
         }
 
         $bookings = Booking::where('user_id', $payload['user_id'])
+            ->when(
+                !empty($payload['reference_id']),
+                fn($query) => $query->where('reference_id', $payload['reference_id'])
+            )
             ->with('branch', 'reviewer')
             ->orderByDesc('booking_id')
             ->paginate((int) ($payload['per_page'] ?? 10));

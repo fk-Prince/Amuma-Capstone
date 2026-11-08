@@ -452,7 +452,11 @@ async function handleSubmit() {
             action: "regular",
         });
         toast.success(res.message);
-        window.location.href = `/booking/provider/${uuid}/success?category=${bookingStore.category}`;
+        const query = new URLSearchParams({
+            category: String(bookingStore.category ?? ""),
+            ...(res?.data?.reference_id ? { booking: res.data.reference_id } : {}),
+        });
+        window.location.href = `/booking/provider/${uuid}/success?${query}`;
         // router.push({
         //     path: `/booking/provider/${uuid}/success`,
         //     // query: {

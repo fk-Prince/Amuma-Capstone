@@ -1,32 +1,22 @@
 <template>
     <div
-        class="relative min-h-screen overflow-hidden bg-slate-950 flex items-center justify-center px-5 py-12"
+        class="relative min-h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-5 py-12 dark:bg-secondary"
     >
         <img
             :src="backdrop"
-            class="pointer-events-none absolute inset-[-12px] h-[calc(100%+24px)] w-[calc(100%+24px)] scale-105 select-none object-cover blur-[2px]"
+            class="pointer-events-none absolute inset-0 h-full w-full select-none object-cover dark:opacity-20"
             alt=""
+            aria-hidden="true"
         />
 
         <div
-            class="pointer-events-none absolute inset-0 bg-blue-950/40 mix-blend-multiply"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-950/65 via-slate-950/50 to-slate-950/90"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-0 bg-white/[0.02] backdrop-blur-[1px]"
+            class="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-white/50 dark:from-secondary/80 dark:via-secondary/60 dark:to-secondary/90"
+            aria-hidden="true"
         />
 
         <div class="relative z-10 max-w-lg w-full">
             <div
-                class="rounded-[20px] border border-white/10 bg-white/95 px-6 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl text-center md:px-10 dark:bg-secondary/95"
+                class="rounded-3xl bg-white/90 px-6 py-8 text-center shadow-xl shadow-primary/10 ring-1 ring-white/60 backdrop-blur-md md:px-10 dark:bg-secondary/90 dark:ring-white/10"
             >
                 <div
                     class="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
@@ -60,6 +50,20 @@
                 >
                     {{ description }}
                 </p>
+
+                <div
+                    v-if="confirmState === 'submitted' && bookingReference"
+                    class="mt-6 inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-100 px-4 py-2 dark:bg-white/5 dark:border-white/10"
+                >
+                    <span class="text-xs text-gray-400 dark:text-gray-500"
+                        >Reference No.</span
+                    >
+                    <span
+                        class="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                        {{ bookingReference }}
+                    </span>
+                </div>
 
                 <div v-if="!isSuccess" class="mt-8 flex flex-col gap-3">
                     <div
@@ -168,24 +172,42 @@
                 </div>
 
                 <div v-else-if="confirmState === 'submitted'" class="mt-8">
-                    <BaseButton
-                        v-if="waitingReceipt || booking?.receipt_code"
-                        variant="secondary"
-                        class="mb-3 w-full rounded-xl py-3"
-                        :loading="waitingReceipt || openingReceipt"
-                        :disabled="waitingReceipt || openingReceipt"
-                        @click="printReceipt"
+                    <div
+                        v-if="waitingReceipt || booking"
+                        class="mb-3 flex flex-col gap-3 sm:flex-row"
                     >
-                        <ReceiptText
-                            v-if="!waitingReceipt && !openingReceipt"
-                            class="h-4 w-4"
-                        />
-                        {{
-                            waitingReceipt
-                                ? "Generating receipt..."
-                                : "Print receipt"
-                        }}
-                    </BaseButton>
+                        <BaseButton
+                            variant="secondary"
+                            class="w-full rounded-xl py-3"
+                            :loading="!booking"
+                            :disabled="!booking"
+                            @click="showAcknowledgement = true"
+                        >
+                            <Printer v-if="booking" class="h-4 w-4" />
+                            {{
+                                booking ? "Print booking form" : "Preparing..."
+                            }}
+                        </BaseButton>
+
+                        <BaseButton
+                            v-if="waitingReceipt || booking?.receipt_code"
+                            variant="secondary"
+                            class="w-full rounded-xl py-3"
+                            :loading="waitingReceipt || openingReceipt"
+                            :disabled="waitingReceipt || openingReceipt"
+                            @click="printReceipt"
+                        >
+                            <ReceiptText
+                                v-if="!waitingReceipt && !openingReceipt"
+                                class="h-4 w-4"
+                            />
+                            {{
+                                waitingReceipt
+                                    ? "Generating receipt..."
+                                    : "Print receipt"
+                            }}
+                        </BaseButton>
+                    </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row">
                         <BaseButton
@@ -236,6 +258,13 @@
             </div>
         </div>
 
+        <BookingAcknowledgement
+            v-if="showAcknowledgement && booking"
+            :booking="booking"
+            :branch-name="booking.branch_name"
+            @close="showAcknowledgement = false"
+        />
+
         <PaymentReceipt
             v-if="receipt"
             :receipt="receipt"
@@ -255,15 +284,31 @@ import {
     ShieldCheck,
     LoaderCircle,
     ReceiptText,
+    Printer,
 } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
-import backdrop from "~/assets/logo/signinLogo2.png";
+import backdrop from "~/assets/images/portalselection-bg.png";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
+import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import { paymentService } from "~/api/payment/PaymentService";
 import { useSubmittedBooking } from "~/composables/useSubmittedBooking";
 import { useToast } from "~/composables/useToast";
 
-definePageMeta({ layout: false });
+definePageMeta({
+    layout: false,
+    middleware: (to) => {
+        const status = to.query.status;
+        const hasReference = Boolean(to.query.ref || to.query.booking);
+
+        if (status !== "success" && status !== "failed") {
+            return navigateTo("/", { replace: true });
+        }
+
+        if (status === "success" && !hasReference) {
+            return navigateTo("/", { replace: true });
+        }
+    },
+});
 useHead({ title: "Payment" });
 
 const route = useRoute();
@@ -273,13 +318,6 @@ const uuid = route.params.branch_uuid as string;
 const isSuccess = computed(() => route.query.status === "success");
 const reference = computed(() => route.query.ref as string | undefined);
 
-// Xendit redirects here the moment the GCash payment clears on its side,
-// which happens independently of our server. The booking itself is only
-// created afterwards, asynchronously, when Xendit's webhook reaches us —
-// so "success" here only means the money moved, not that we've recorded
-// it yet. This state tracks that separate confirmation with a single
-// check: anything other than a confirmed "submitted" is treated as
-// failed rather than left ambiguous.
 type ConfirmState = "checking" | "submitted" | "failed";
 const confirmState = ref<ConfirmState>("checking");
 
@@ -321,6 +359,12 @@ const {
     openReceipt,
 } = useSubmittedBooking();
 const { error: showError } = useToast();
+
+const showAcknowledgement = ref(false);
+
+watch(showAcknowledgement, (open) => {
+    if (open) stopCountdown();
+});
 
 function stopCountdown() {
     countingDown.value = false;
@@ -373,7 +417,11 @@ async function confirmPayment() {
     try {
         let res = await paymentService.checkStatus(reference.value);
 
-        for (let attempt = 0; res.status === "pending" && attempt < 5; attempt++) {
+        for (
+            let attempt = 0;
+            res.status === "pending" && attempt < 5;
+            attempt++
+        ) {
             await new Promise((resolve) => setTimeout(resolve, 2000));
             res = await paymentService.checkStatus(reference.value);
         }

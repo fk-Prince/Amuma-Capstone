@@ -19,8 +19,9 @@ export const useSubmittedBooking = () => {
     const find = async (reference: string) => {
         const res = await patientAccessService.retrieveAction({
             action: "bookings",
+            reference_id: reference,
             page: 1,
-            per_page: 10,
+            per_page: 1,
         });
 
         return (

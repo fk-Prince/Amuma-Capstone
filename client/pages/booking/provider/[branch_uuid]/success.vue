@@ -1,32 +1,22 @@
 <template>
     <div
-        class="relative min-h-screen overflow-hidden bg-slate-950 flex items-center justify-center px-5 pt-28 pb-12"
+        class="relative min-h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-5 pt-28 pb-12 dark:bg-secondary"
     >
         <img
             :src="backdrop"
-            class="pointer-events-none absolute inset-[-12px] h-[calc(100%+24px)] w-[calc(100%+24px)] scale-105 select-none object-cover blur-[2px]"
+            class="pointer-events-none absolute inset-0 h-full w-full select-none object-cover dark:opacity-20"
             alt=""
+            aria-hidden="true"
         />
 
         <div
-            class="pointer-events-none absolute inset-0 bg-blue-950/40 mix-blend-multiply"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-950/65 via-slate-950/50 to-slate-950/90"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"
-        />
-
-        <div
-            class="pointer-events-none absolute inset-0 bg-white/[0.02] backdrop-blur-[1px]"
+            class="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/10 to-white/50 dark:from-secondary/80 dark:via-secondary/60 dark:to-secondary/90"
+            aria-hidden="true"
         />
 
         <div class="relative z-10 max-w-lg w-full">
             <div
-                class="rounded-[20px] border border-white/10 bg-white/95 px-6 py-8 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.65)] backdrop-blur-xl text-center md:px-10 dark:bg-secondary/95"
+                class="rounded-3xl bg-white/90 px-6 py-8 text-center shadow-xl shadow-primary/10 ring-1 ring-white/60 backdrop-blur-md md:px-10 dark:bg-secondary/90 dark:ring-white/10"
             >
                 <div
                     class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
@@ -206,7 +196,7 @@ import {
     ShieldCheck,
 } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
-import backdrop from "~/assets/logo/signinLogo2.png";
+import backdrop from "~/assets/images/portalselection-bg.png";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { useBookingStore } from "~/stores/booking";
@@ -214,7 +204,14 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useSubmittedBooking } from "~/composables/useSubmittedBooking";
 import { useToast } from "~/composables/useToast";
 
-definePageMeta({ layout: false });
+definePageMeta({
+    layout: false,
+    middleware: (to) => {
+        if (typeof to.query.booking !== "string" || !to.query.booking) {
+            return navigateTo("/", { replace: true });
+        }
+    },
+});
 useHead({ title: "Booking Submitted" });
 
 const route = useRoute();
@@ -232,7 +229,11 @@ const category = computed<"homecare" | "facility">(() => {
     return bookingStore.category ?? "homecare";
 });
 
-const referenceId = ref(bookingStore.lastSubmittedId ?? "");
+const referenceId = ref(
+    (typeof route.query.booking === "string" && route.query.booking) ||
+        bookingStore.lastSubmittedId ||
+        "",
+);
 
 const {
     booking: acknowledgement,
@@ -299,6 +300,11 @@ onMounted(async () => {
     }
 
     if (reference) await waitForReceipt(reference);
+
+    if (!acknowledgement.value) {
+        await router.replace("/");
+        return;
+    }
 
     if (acknowledgement.value?.receipt_code) {
         try {
