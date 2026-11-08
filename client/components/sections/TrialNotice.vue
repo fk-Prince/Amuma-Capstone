@@ -26,8 +26,16 @@
                         >Your free trial has ended while we're still verifying
                         your documents.</span
                     >
-                    This branch is read-only for now. Once an admin approves
-                    it, your card is charged and everything unlocks.
+                    This branch is read-only for now.
+                    <template v-if="canUpdateSubscription">
+                        Pay in Manage Subscription to unlock it. Your paid year
+                        starts once an admin approves it, and if it isn't
+                        approved, you get a full refund.
+                    </template>
+                    <template v-else>
+                        Ask your agency owner to pay in Manage Subscription to
+                        unlock it.
+                    </template>
                 </template>
 
                 <template v-else-if="locked">
@@ -53,7 +61,8 @@
                     While we verify your documents, set up your branch: add
                     your services, rooms, staff and care plans. Families can't
                     find or book this branch until it's approved. Nothing has
-                    been charged.
+                    been charged. You can pay ahead now, and you get a full
+                    refund if it isn't approved.
                 </template>
 
                 <template v-else-if="awaitingPayment">
@@ -165,7 +174,7 @@ const canPay = computed(
         awaitingPayment.value &&
         canManage.value &&
         !isSandbox.value &&
-        branch.value?.subscription_status === "approved",
+        ["pending", "approved"].includes(branch.value?.subscription_status ?? ""),
 );
 
 const canStart = computed(

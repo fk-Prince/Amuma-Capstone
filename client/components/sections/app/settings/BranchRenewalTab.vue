@@ -257,12 +257,25 @@
                             subscribe now. Your paid year starts today, with no
                             free trial.
                         </template>
-                        <template v-else-if="awaitingPayment && !canPayTrial">
+                        <template v-else-if="awaitingPayment && underReview && trialEnded">
+                            Your free trial ended while an admin is still
+                            verifying your branch. Pay now to unlock it. Your
+                            paid year starts once the branch is approved, and if
+                            it isn't approved, you get a full refund.
+                        </template>
+                        <template v-else-if="awaitingPayment && underReview">
                             Your free trial runs until
                             {{ formatDate(pendingPlan?.starts_at) }} while an
-                            admin verifies your branch. You can pay or start
-                            your plan early once it's approved. Nothing has been
-                            charged.
+                            admin verifies your branch. You can pay now, and
+                            your paid year starts when the trial ends. Starting
+                            your plan early opens once your branch is approved.
+                            If it isn't approved, you get a full refund.
+                        </template>
+                        <template v-else-if="isTest && underReview">
+                            Your plan is paid. Your paid year starts once an
+                            admin approves your branch, or when your free trial
+                            ends if it's approved before then. If it isn't
+                            approved, you get a full refund.
                         </template>
                         <template v-else-if="awaitingPayment && trialEnded">
                             This branch is locked until its plan is paid for.
@@ -634,7 +647,7 @@
                 </div>
 
                 <div
-                    v-if="canCancel && !awaitingPayment"
+                    v-if="canCancel && !awaitingPayment && !underReview"
                     class="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4"
                 >
                     <div
@@ -1012,8 +1025,19 @@
                             </p>
                         </div>
 
+                        <button
+                            v-if="awaitingPayment && underReview"
+                            type="button"
+                            :disabled="!canSubmitRenewal || !canUpdateSubscription"
+                            :title="noPermissionTitle"
+                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            @click="openPay(false)"
+                        >
+                            Pay now
+                        </button>
+
                         <div
-                            v-if="awaitingPayment"
+                            v-else-if="awaitingPayment"
                             class="flex shrink-0 flex-wrap items-center gap-2"
                         >
                             <button
@@ -1503,6 +1527,9 @@ const renewal = computed(() => subscription.value?.renewal ?? null);
 const awaitingPayment = computed(() => Boolean(renewal.value?.awaiting_payment));
 const canPayTrial = computed(() => Boolean(renewal.value?.can_pay));
 const trialEnded = computed(() => Boolean(renewal.value?.trial_ended));
+const underReview = computed(
+    () => (subscription.value?.subscription?.status ?? "") === "pending",
+);
 const payStartNow = ref(false);
 const savedCard = computed(() => renewal.value?.card ?? null);
 const showCardModal = ref(false);
@@ -1799,9 +1826,9 @@ const projectedEndDate = computed(() => {
         : new Date();
 
     if (awaitingPayment.value) {
-        return payStartNow.value || trialEnded.value
+        return payStartNow.value || (trialEnded.value && !underReview.value)
             ? addYear(new Date())
-            : addYear(pendingPlan.value?.starts_at ?? end);
+            : addYear(underReview.value && trialEnded.value ? new Date() : (pendingPlan.value?.starts_at ?? end));
     }
 
     if (isUpgrading.value) {
@@ -1820,6 +1847,18 @@ const paymentCopy = computed(() => {
             : "this branch";
     const until = formatDate(projectedEndDate.value);
     const newPlan = `${chargedPlan.value?.name ?? ""} ${planTypeLabel(chargedPlan.value?.type)}`.trim();
+
+    if (awaitingPayment.value && underReview.value) {
+        return {
+            heading: "Pay now",
+            subheading: trialEnded.value
+                ? `${newPlan} starts once an admin approves your branch, and runs for a year from then`
+                : `${newPlan} starts ${formatDate(pendingPlan.value?.starts_at)}, when your free trial ends, if your branch is approved by then`,
+            formTitle: "Plan payment",
+            description: `Choose how to pay for ${newPlan}. If your branch isn't approved, you get a full refund.`,
+            submitLabel: "Pay now",
+        };
+    }
 
     if (awaitingPayment.value) {
         const startsNow = payStartNow.value || trialEnded.value;
@@ -1922,7 +1961,7 @@ const openRenew = () => {
 };
 
 const openPay = (startNow: boolean) => {
-    payStartNow.value = startNow || trialEnded.value;
+    payStartNow.value = !underReview.value && (startNow || trialEnded.value);
     openRenew();
 };
 

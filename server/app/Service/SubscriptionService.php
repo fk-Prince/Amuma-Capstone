@@ -350,7 +350,14 @@ class SubscriptionService
     private function createTrialPayment(?User $user, Subscription $subscription, array $payload): array
     {
         if (!$subscription->canPayTrial()) {
-            throw new Exception(__('You can pay for your plan once an admin has verified your branch.'), 422);
+            throw new Exception(__('This plan has already been paid.'), 422);
+        }
+
+        $underReview = $subscription->status === Subscription::STATUS_PENDING;
+        $wantsStartNow = filter_var($payload['start_now'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if ($underReview && $wantsStartNow) {
+            throw new Exception(__('You can start your plan early once an admin has verified your branch. You can still pay now.'), 422);
         }
 
         $type = $subscription->plans?->type;
@@ -368,8 +375,7 @@ class SubscriptionService
             throw new Exception(__('Plan not found.'), 404);
         }
 
-        $startNow = $subscription->trialHasEnded()
-            || filter_var($payload['start_now'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $startNow = !$underReview && ($subscription->trialHasEnded() || $wantsStartNow);
 
         return [
             'user' => $user,
@@ -454,7 +460,13 @@ class SubscriptionService
             $paidPlanId = $meta['plan']['plan_id'] ?? $subscription->plan_id;
             $action = $meta['action'] ?? self::ACTION_RENEW;
 
-            if ($action === self::ACTION_PREPAY && $subscription->trialHasEnded()) {
+            $underReview = $subscription->status === Subscription::STATUS_PENDING;
+
+            if ($action === self::ACTION_ACTIVATE && $underReview) {
+                $action = self::ACTION_PREPAY;
+            }
+
+            if ($action === self::ACTION_PREPAY && !$underReview && $subscription->trialHasEnded()) {
                 $action = self::ACTION_ACTIVATE;
             }
 
@@ -530,9 +542,11 @@ class SubscriptionService
 
             $message = match ($action) {
                 self::ACTION_ACTIVATE => __('Payment received. Your paid year starts today.'),
-                self::ACTION_PREPAY => __('Payment received. Your paid year starts on :date, when your free trial ends.', [
-                    'date' => $subscription->pending_plan_starts_at?->toFormattedDateString(),
-                ]),
+                self::ACTION_PREPAY => $underReview
+                    ? __('Payment received. Your paid year starts once an admin approves your branch.')
+                    : __('Payment received. Your paid year starts on :date, when your free trial ends.', [
+                        'date' => $subscription->pending_plan_starts_at?->toFormattedDateString(),
+                    ]),
                 self::ACTION_RESUBSCRIBE => __('You are subscribed again.'),
                 self::ACTION_UPGRADE => __('Upgraded to :plan.', ['plan' => $subscription->plans?->name]),
                 default => !empty($meta['plan_starts_at'])
@@ -2037,13 +2051,22 @@ class SubscriptionService
             if ($subscription && $subscription->status === Subscription::STATUS_PENDING) {
                 $startDate = Carbon::now();
 
-                $subscription->update($subscription->isTest()
-                    ? ['status' => Subscription::STATUS_ACTIVE]
-                    : [
+                $paidDuringReview = $subscription->isTest()
+                    && $subscription->isPaid()
+                    && $subscription->pendingPlanIsDue();
+
+                $subscription->update(match (true) {
+                    $paidDuringReview => [
+                        ...$subscription->pendingPlanChanges($startDate),
+                        'status' => Subscription::STATUS_ACTIVE,
+                    ],
+                    $subscription->isTest() => ['status' => Subscription::STATUS_ACTIVE],
+                    default => [
                         'status' => Subscription::STATUS_ACTIVE,
                         'start_date' => $startDate,
                         'end_date' => Subscription::termEnd($startDate),
-                    ]);
+                    ],
+                });
             }
 
             if ($subscription) {

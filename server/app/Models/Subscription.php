@@ -314,7 +314,12 @@ class Subscription extends Model
 
     public function canPayTrial(): bool
     {
-        return $this->awaitingTrialPayment() && $this->status !== self::STATUS_PENDING;
+        return $this->awaitingTrialPayment();
+    }
+
+    public function canStartPlanNow(): bool
+    {
+        return $this->canPayTrial() && $this->status !== self::STATUS_PENDING;
     }
 
     public function isLockedForPayment(): bool
@@ -430,6 +435,7 @@ class Subscription extends Model
             'can_resubscribe' => $this->isCancelled(),
             'awaiting_payment' => $this->awaitingTrialPayment(),
             'can_pay' => $this->canPayTrial(),
+            'can_start_now' => $this->canStartPlanNow(),
             'trial_ended' => $this->trialHasEnded(),
             'upgrade_months' => $this->upgradeMonths(),
             'opens_at' => $this->renewalOpensAt()->toDateString(),
