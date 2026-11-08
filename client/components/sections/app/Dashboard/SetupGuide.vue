@@ -418,7 +418,16 @@ function whenBranchPickerClosed() {
     });
 }
 
-// Points at the guide, then the next step, then where it lives in the menu.
+let unmounted = false;
+let activeTour: ReturnType<typeof driver> | null = null;
+
+const startPath = route.path;
+
+const stillHere = () =>
+    !unmounted &&
+    route.path === startPath &&
+    (props.context !== "branch" || route.path.startsWith("/app/branches/"));
+
 async function startTour() {
     const next = steps.value.find((step) => step.key === nextKey.value);
     if (!next || allDone.value || !user.value?.uuid || tourSeenToday(scope()))
@@ -428,13 +437,22 @@ async function startTour() {
     if (props.context === "portal" && !user.value?.onboarding?.portal?.main)
         return;
 
+    if (!stillHere()) return;
+
     await whenBranchPickerClosed();
+
+    if (!stillHere()) return;
 
     markTourSeen(scope());
     measure();
     open.value = true;
     await nextTick();
     await new Promise((resolve) => setTimeout(resolve, 300));
+
+    if (!stillHere()) {
+        open.value = false;
+        return;
+    }
 
     const position = steps.value.findIndex((step) => step.key === next.key) + 1;
 
@@ -494,10 +512,22 @@ async function startTour() {
         overlayClickBehavior: () => {},
     });
 
+    activeTour = tour;
     tour.drive();
 }
 
+watch(
+    () => route.path,
+    () => {
+        activeTour?.destroy();
+        activeTour = null;
+    },
+);
+
 onBeforeUnmount(() => {
+    unmounted = true;
+    activeTour?.destroy();
+    activeTour = null;
     document.removeEventListener("click", onDocumentClick, true);
     document.removeEventListener("keydown", onKeydown);
     window.removeEventListener("resize", onResize);
