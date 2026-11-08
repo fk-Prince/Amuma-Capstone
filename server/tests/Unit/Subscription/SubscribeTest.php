@@ -59,12 +59,12 @@ class SubscribeTest extends TestCase
         return $this->actingAs($this->user, 'sanctum')->postJson('/api/subscriptions-validate', $details);
     }
 
-    public function test_almost_there_we_ll_notify_you_once_your_branch_is_verified(): void
+    public function test_your_free_trial_has_started_we_ll_notify_you_once_your_branch_is_verified(): void
     {
         $response = $this->subscribe();
 
         $this->assertSame(201, $response->getStatusCode());
-        $this->assertSame("Almost there! We'll notify you once your branch is verified.", $this->data($response)['message']);
+        $this->assertSame("Your 2-week free trial has started. We'll notify you once your branch is verified.", $this->data($response)['message']);
 
         $subscription = Subscription::firstOrFail();
         $this->assertSame(Subscription::STATUS_PENDING, $subscription->status);

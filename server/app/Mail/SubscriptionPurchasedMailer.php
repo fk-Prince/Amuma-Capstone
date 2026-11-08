@@ -19,7 +19,7 @@ class SubscriptionPurchasedMailer extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your AMUMA subscription request has been received'
+            subject: 'Your AMUMA subscription is complete'
         );
     }
 
@@ -27,10 +27,11 @@ class SubscriptionPurchasedMailer extends Mailable
     {
         $formattedAmount = '₱' . number_format($this->amount, 2);
         $isTrial = $this->amount <= 0;
-        $badge = $isTrial ? 'Free trial' : 'Payment received';
+        $badge = 'Subscription';
+        $subtitle = $isTrial ? 'Your 2-week free trial has started' : 'Your payment has been received';
         $intro = $isTrial
-            ? "we've received your free trial request for <strong style='color:#0f172a;'>{$this->branchName}</strong>. Nothing is charged today. Your card is charged for your plan when the 2-week trial ends, unless you cancel before then."
-            : "we've received your payment for <strong style='color:#0f172a;'>{$this->branchName}</strong>.";
+            ? "your subscription for <strong style='color:#0f172a;'>{$this->branchName}</strong> is complete. You can set up your branch while we verify your documents. Nothing is charged today. Once your branch is approved, your card is charged when the trial ends, unless you cancel before then."
+            : "your subscription for <strong style='color:#0f172a;'>{$this->branchName}</strong> is complete.";
         $amountLabel = $isTrial ? 'Due today' : 'Amount paid';
 
         $logoUrl = config('mail.logo_url');
@@ -76,7 +77,8 @@ class SubscriptionPurchasedMailer extends Mailable
                                         <tr>
                                             <td style='padding:40px 48px 28px;border-bottom:1px solid #f1f5f9;'>
                                                 <p style='margin:0 0 8px;display:inline-block;padding:4px 12px;border-radius:999px;background:#EAF2FE;color:#1E68D1;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'>{$badge}</p>
-                                                <p style='margin:12px 0 6px;font-size:22px;font-weight:700;color:#0f172a;'>Subscription request received</p>
+                                                <p style='margin:12px 0 6px;font-size:22px;font-weight:700;color:#0f172a;'>Subscription complete</p>
+                                                <p style='margin:0 0 14px;font-size:15px;font-weight:600;color:#1E68D1;'>{$subtitle}</p>
                                                 <p style='margin:0;font-size:14px;color:#64748b;line-height:1.7;'>
                                                     Hi <strong style='color:#0f172a;'>{$this->recipientName}</strong> — {$intro}
                                                 </p>
@@ -101,7 +103,7 @@ class SubscriptionPurchasedMailer extends Mailable
                                                 <table width='100%' cellpadding='0' cellspacing='0' style='background:#EAF2FE;border-radius:10px;margin-top:20px;'>
                                                     <tr>
                                                         <td style='padding:14px 18px;'>
-                                                            <p style='margin:0;font-size:13px;color:#1E68D1;line-height:1.6;'>We&#39;ll verify your subscription and notify you of your request&#39;s status within 2-3 business days.</p>
+                                                            <p style='margin:0;font-size:13px;color:#1E68D1;line-height:1.6;'>We&#39;ll verify your subscription and notify you of your request&#39;s status within 1-2 business days.</p>
                                                         </td>
                                                     </tr>
                                                 </table>

@@ -157,7 +157,7 @@ const startTrial = async () => {
             onSuccess: async (result) => {
                 xenditProcessing.value = false;
 
-                success("Free trial started", result.message);
+                success("Subscription complete", result.message);
 
                 await fetchAuthUser();
 

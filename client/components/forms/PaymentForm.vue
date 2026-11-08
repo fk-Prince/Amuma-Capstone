@@ -119,6 +119,12 @@ const bodyClass = computed(() =>
 
 const fieldClass = computed(() => (props.compact ? "!py-2" : ""));
 
+const footerClass = computed(() =>
+    props.compact
+        ? "sticky bottom-0 z-10 -mx-5 -mb-4 space-y-3 border-t border-slate-100 bg-white px-5 pb-4 pt-3 dark:border-white/10 dark:bg-secondary"
+        : "space-y-4",
+);
+
 const cardPanelRef = ref<HTMLElement | null>(null);
 const cardPanelHeight = ref(0);
 
@@ -329,11 +335,11 @@ watch(isCash, (active) => {
 <template>
     <div :class="compact ? 'w-full' : 'w-full max-w-2xl mx-auto'">
         <div
-            class="overflow-hidden border border-slate-200 bg-white dark:bg-secondary dark:border-white/10"
+            class="border border-slate-200 bg-white dark:bg-secondary dark:border-white/10"
             :class="
                 compact
-                    ? 'rounded-xl'
-                    : 'rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]'
+                    ? 'overflow-clip rounded-xl'
+                    : 'overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]'
             "
         >
             <!-- Header -->
@@ -649,6 +655,7 @@ watch(isCash, (active) => {
 
                 <slot name="card-options" />
 
+                <div :class="footerClass">
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
@@ -682,6 +689,7 @@ watch(isCash, (active) => {
 
                     {{ processing ? processingLabel : submitLabel }}
                 </button>
+                </div>
 
                 <div
                     v-if="!compact"

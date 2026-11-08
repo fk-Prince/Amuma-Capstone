@@ -49,8 +49,9 @@
                     <template v-if="withTrial">
                         Your 2-week free trial has started, so you can set up
                         your branch while we verify your documents. Nothing is
-                        charged today. Your card is charged when the
-                        trial ends, unless you cancel before then.
+                        charged today. Once your branch is approved, your card
+                        is charged when the trial ends, unless you cancel before
+                        then.
                     </template>
                     <template v-else>
                         Your paid year starts once your branch is approved.

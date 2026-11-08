@@ -1087,7 +1087,9 @@ class SubscriptionService
 
                 return response()->json([
                     'status' => true,
-                    'message' => __("Almost there! We'll notify you once your branch is verified."),
+                    'message' => $isPaid
+                        ? __("Your payment has been received. We'll notify you once your branch is verified.")
+                        : __("Your 2-week free trial has started. We'll notify you once your branch is verified."),
                     'payment_reference_id' => $reference_id,
                     'branch' => [
                         'branch_id' => $branchData->branch_id,
