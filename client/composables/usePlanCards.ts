@@ -12,7 +12,7 @@ const PLAN_LABELS: Record<string, string> = {
 const MODULE_FEATURES: Record<string, string[]> = {
     A: [
         "Home visit booking & scheduling",
-        "Caregiver assignment with QR clock-in",
+        "Homecare visits with QR attendance",
         "eMAR & vital signs charting",
         "Family portal & messaging",
         "Billing, invoices & online payments",

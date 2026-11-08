@@ -196,7 +196,7 @@ const features = [
         hybrid: true,
     },
     {
-        name: "Caregiver QR clock-in tracking",
+        name: "Homecare visits with QR attendance",
         homecare: true,
         facility: false,
         hybrid: true,

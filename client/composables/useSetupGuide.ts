@@ -45,7 +45,6 @@ function useSetupState() {
 
 export function useSetupVisits(area: MaybeRefOrGetter<SetupArea> = "dashboard") {
     const { setupOf, complete } = useSetupState();
-    const freshVisit = useState<string>("setup_fresh_visit", () => "");
 
     const visits = computed(() => Object.keys(setupOf(toValue(area)).visits ?? {}));
 
@@ -53,19 +52,15 @@ export function useSetupVisits(area: MaybeRefOrGetter<SetupArea> = "dashboard") 
         if (import.meta.server) return;
 
         const clean = path.split("?")[0]!.replace(/\/+$/, "");
-        if (visits.value.includes(clean)) {
-            freshVisit.value = "";
-            return;
-        }
+        if (visits.value.includes(clean)) return;
 
-        freshVisit.value = clean;
         complete(toValue(area), ["visits", clean]);
     };
 
     const hasVisited = (path: string) =>
         visits.value.some((visit) => visit === path || visit.startsWith(`${path}/`));
 
-    return { visits, freshVisit, markVisited, hasVisited };
+    return { visits, markVisited, hasVisited };
 }
 
 export function useSetupBranchUuid() {

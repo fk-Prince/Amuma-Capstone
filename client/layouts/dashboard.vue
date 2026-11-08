@@ -62,10 +62,6 @@
                 <DashboardHeader @open="isOpen = true" />
                 <SandboxNotice class="mt-3" />
                 <TrialNotice class="mt-3" />
-                <SetupStepBanner context="branch" class="mt-3" />
-                <ClientOnly>
-                    <SetupNextHint context="branch" />
-                </ClientOnly>
             </div>
 
             <main
@@ -92,8 +88,6 @@
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 import TrialNotice from "~/components/sections/TrialNotice.vue";
-import SetupStepBanner from "~/components/sections/SetupStepBanner.vue";
-import SetupNextHint from "~/components/sections/SetupNextHint.vue";
 import SandboxNotice from "~/components/sections/SandboxNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";

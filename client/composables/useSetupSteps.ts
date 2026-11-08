@@ -26,9 +26,7 @@ import { useBranchPlan } from "~/composables/useBranchPlan";
 import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { routeAccess } from "~/composables/useRouteAccess";
 import { setupAreaOf, useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
-import { branchService } from "~/api/branch/BranchService";
 import { isBranchRejected } from "~/utils/branchAccess";
-import { serviceService } from "~/api/service/ServiceService";
 
 
 export type SetupContext = "branch" | "portal";
@@ -49,15 +47,11 @@ export interface SetupStep {
     done: boolean;
     optional?: boolean;
     action?: string;
-    /** Ticks off by opening the page (rather than from branch data). */
-    byVisit?: boolean;
-    visitPath?: string;
 }
 
 /**
- * The setup checklist for the signed-in user. Steps depend on the role; some
- * tick themselves off from real branch data (rooms, staff, plans...), the
- * rest once the user has opened that page.
+ * The setup checklist for the signed-in user. Steps depend on the role; each
+ * ticks off once the user has opened that page.
  */
 // What to do once you're on the step's page ("role:key" first, then "key").
 const TIPS: Record<string, string> = {
@@ -118,15 +112,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const enabled = computed(() => branchUsable.value && showFor(scope()));
 
-    // Shared per branch, so the dashboard guide and the page tips agree.
-    const factsByBranch = useState<Record<string, { services: number; rooms: number; staff: number; plans: number }>>(
-        "setup_facts",
-        () => ({}),
-    );
-    const facts = computed(
-        () => factsByBranch.value[props.branchUuid ?? ""] ?? { services: 0, rooms: 0, staff: 0, plans: 0 },
-    );
-
     const branch = computed(() => branchStore.activeBranch);
 
     const role = computed(() =>
@@ -156,8 +141,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
             props.context === "portal"
                 ? !!user.value?.phone_number || hasVisited("/profile")
                 : hasVisited(profileVisit.value),
-        byVisit: true,
-        visitPath: props.context === "portal" ? undefined : profileVisit.value,
     }));
 
     const visitStep = (
@@ -175,7 +158,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
         icon,
         done: hasVisited(path),
         action,
-        byVisit: true,
     });
 
     function branchSteps(): SetupStep[] {
@@ -184,56 +166,13 @@ export function useSetupSteps(options: SetupStepsOptions) {
         if (isSetupRole.value) {
             const list: SetupStep[] = [
                 profileStep.value,
-                {
-                    key: "branch",
-                    title: "Fill in your branch details",
-                    description: "Description, contact number, photos, and your opening and closing hours.",
-                    to: `${p}/settings`,
-                    icon: Settings,
-                    done: hasVisited(`${p}/settings`),
-                    action: "Open settings",
-                    byVisit: true,
-                },
-                {
-                    key: "services",
-                    title: "Add your services",
-                    description: "List the care services families can book from this branch.",
-                    to: `${p}/services`,
-                    icon: Wrench,
-                    done: facts.value.services > 0,
-                    action: "Add services",
-                },
+                visitStep("branch", `${p}/settings`, "Fill in your branch details", "Description, contact number, photos, and your opening and closing hours.", Settings, "Open settings"),
+                visitStep("services", `${p}/services`, "Add your services", "List the care services families can book from this branch.", Wrench, "Add services"),
                 ...(hasFacilityPlan.value
-                    ? [
-                          {
-                              key: "rooms",
-                              title: "Set up rooms and beds",
-                              description: "Add your rooms and beds so admissions can assign them.",
-                              to: `${p}/rooms-beds`,
-                              icon: BedDouble,
-                              done: facts.value.rooms > 0,
-                              action: "Add rooms",
-                          },
-                      ]
+                    ? [visitStep("rooms", `${p}/rooms-beds`, "Set up rooms and beds", "Add your rooms and beds so admissions can assign them.", BedDouble, "Add rooms")]
                     : []),
-                {
-                    key: "contracts",
-                    title: "Create care plans and rates",
-                    description: "Set the monthly, yearly or hourly rates families will pay.",
-                    to: `${p}/contracts`,
-                    icon: FileText,
-                    done: facts.value.plans > 0,
-                    action: "Add plans",
-                },
-                {
-                    key: "staff",
-                    title: "Add your staff",
-                    description: "Invite admission, nurses, caregivers and cashiers, and give them access.",
-                    to: `${p}/employees`,
-                    icon: UserCog,
-                    done: facts.value.staff > 1,
-                    action: "Add staff",
-                },
+                visitStep("contracts", `${p}/contracts`, "Create care plans and rates", "Set the monthly, yearly or hourly rates families will pay.", FileText, "Add plans"),
+                visitStep("staff", `${p}/employees`, "Add your staff", "Invite admission, nurses, caregivers and cashiers, and give them access.", UserCog, "Add staff"),
             ];
 
             if (role.value === "agency_owner") {
@@ -336,23 +275,11 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const percent = computed(() =>
         steps.value.length ? Math.round((doneCount.value / steps.value.length) * 100) : 0,
     );
-    // Finished once means finished for good.
-    const factsLoaded = computed(
-        () =>
-            props.context !== "branch" ||
-            !isSetupRole.value ||
-            !!factsByBranch.value[props.branchUuid ?? ""],
-    );
-
     watch(
-        () => allDone.value && factsLoaded.value,
+        allDone,
         (done) => {
             if (done) markFinished(scope());
         },
-    );
-
-    const nextKey = computed(
-        () => steps.value.find((s) => !s.done && !s.optional)?.key ?? steps.value.find((s) => !s.done)?.key,
     );
 
     const firstName = computed(() => user.value?.first_name || "there");
@@ -366,46 +293,19 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const subheading = computed(() => {
         if (props.context === "branch" && isSetupRole.value) {
-            return "Complete these steps so families can find you, book, and pay online.";
+            return "Open any of these to set up your branch, in any order. Each one ticks off once you've opened it.";
         }
         return "A few quick stops to learn your way around. Each one ticks off once you've opened it.";
     });
-
-    async function loadFacts(force = true) {
-        if (!enabled.value) return;
-        if (props.context !== "branch" || !isSetupRole.value || !props.branchUuid) return;
-        if (!force && factsByBranch.value[props.branchUuid]) return;
-
-        const [dash, services] = await Promise.allSettled([
-            branchService.dashboard({ branch_uuid: props.branchUuid }),
-            serviceService.getBranchService(props.branchUuid),
-        ]);
-
-        const d: any = dash.status === "fulfilled" ? ((dash.value as any)?.data ?? dash.value) : null;
-        const s: any = services.status === "fulfilled" ? services.value : null;
-
-        factsByBranch.value = {
-            ...factsByBranch.value,
-            [props.branchUuid!]: {
-            services: Array.isArray(s?.services) ? s.services.length : 0,
-            rooms: Number(d?.occupancy?.total_rooms?.value) || 0,
-            staff: Number(d?.staff?.total) || 0,
-            plans: Number(d?.contracts?.total_active_plans) || 0,
-            },
-        };
-    }
-
 
     return {
         steps,
         doneCount,
         allDone,
         percent,
-        nextKey,
         heading,
         subheading,
         role,
-        loadFacts,
         enabled,
         scope,
         skip: () => skip(scope()),

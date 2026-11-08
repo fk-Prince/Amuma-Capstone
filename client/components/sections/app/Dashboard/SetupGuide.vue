@@ -135,12 +135,7 @@
 
                             <NuxtLink
                                 :to="step.to"
-                                class="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition"
-                                :class="
-                                    step.key === nextKey
-                                        ? 'bg-primary-50 dark:bg-primary-500/10'
-                                        : 'hover:bg-slate-50 dark:hover:bg-white/5'
-                                "
+                                class="group relative flex items-start gap-3 rounded-xl px-3 py-2.5 transition hover:bg-slate-50 dark:hover:bg-white/5"
                                 @click="open = false"
                             >
                                 <span
@@ -148,9 +143,7 @@
                                     :class="
                                         step.done
                                             ? 'bg-emerald-500 text-white'
-                                            : step.key === nextKey
-                                              ? 'bg-primary text-white'
-                                              : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                                            : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
                                     "
                                 >
                                     <Check
@@ -158,7 +151,11 @@
                                         class="h-3.5 w-3.5"
                                         :stroke-width="3"
                                     />
-                                    <template v-else>{{ index + 1 }}</template>
+                                    <component
+                                        :is="step.icon"
+                                        v-else
+                                        class="h-3.5 w-3.5"
+                                    />
                                 </span>
 
                                 <span class="min-w-0 flex-1">
@@ -168,21 +165,13 @@
                                             :class="
                                                 step.done
                                                     ? 'text-slate-400 line-through decoration-slate-300 dark:text-gray-500 dark:decoration-gray-600'
-                                                    : step.key === nextKey
-                                                      ? 'font-semibold text-primary dark:text-primary-300'
-                                                      : 'font-medium text-slate-700 dark:text-gray-200'
+                                                    : 'font-medium text-slate-700 group-hover:text-primary dark:text-gray-200 dark:group-hover:text-primary-300'
                                             "
                                         >
                                             {{ step.title }}
                                         </span>
                                         <span
-                                            v-if="step.key === nextKey"
-                                            class="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white"
-                                        >
-                                            Next
-                                        </span>
-                                        <span
-                                            v-else-if="
+                                            v-if="
                                                 step.optional && !step.done
                                             "
                                             class="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-slate-400"
@@ -215,16 +204,6 @@
                                     : "Don't show again"
                             }}
                         </button>
-
-                        <NuxtLink
-                            v-if="nextStep"
-                            :to="nextStep.to"
-                            class="ml-auto inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-600"
-                            @click="open = false"
-                        >
-                            {{ nextStep.action ?? "Continue" }}
-                            <ArrowRight class="h-3.5 w-3.5" />
-                        </NuxtLink>
                     </footer>
                 </section>
             </Transition>
@@ -241,11 +220,11 @@ import {
     ref,
     watch,
 } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import "~/assets/css/tour.css";
-import { ArrowRight, Check, ListChecks, X } from "lucide-vue-next";
+import { Check, ListChecks, X } from "lucide-vue-next";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import { useSetupSteps, type SetupContext } from "~/composables/useSetupSteps";
@@ -254,16 +233,11 @@ import {
     useSetupBranchUuid,
 } from "~/composables/useSetupGuide";
 
-/**
- * First-time checklist on the dashboard. Right after signing in it also walks
- * the user to the next thing to do (once a day, until everything is done).
- */
 const props = defineProps<{
     context: SetupContext;
     branchUuid?: string;
 }>();
 
-const router = useRouter();
 const route = useRoute();
 
 // In the header the branch comes from the address (or ?branch= / the open
@@ -278,11 +252,8 @@ const {
     doneCount,
     allDone,
     percent,
-    nextKey,
     heading,
     subheading,
-    role,
-    loadFacts,
     skip,
     scope,
 } = useSetupSteps({
@@ -345,60 +316,13 @@ const ready = ref(false);
 // Progress ring (circumference of r=16).
 const RING = 2 * Math.PI * 16;
 
-// Connecting line between two steps: done → done is green, done → the next
-// step fades from green to blue, anything after is still grey.
-function lineClass(
-    step: { done: boolean; key: string },
-    following?: { done: boolean; key: string },
-) {
-    if (step.done && following?.done)
-        return "bg-emerald-400 dark:bg-emerald-500/70";
-    if (step.done)
-        return "bg-gradient-to-b from-emerald-400 to-primary dark:from-emerald-500/70";
-    return "bg-slate-200 dark:bg-white/10";
+function lineClass(step: { done: boolean }, following?: { done: boolean }) {
+    return step.done && following?.done
+        ? "bg-emerald-400 dark:bg-emerald-500/70"
+        : "bg-slate-200 dark:bg-white/10";
 }
-
-const nextStep = computed(
-    () => steps.value.find((step) => step.key === nextKey.value) ?? null,
-);
 
 const { tourSeenToday, markTourSeen } = useFirstTimeUser();
-
-function menuLinkFor(to: string): HTMLElement | null {
-    const links = Array.from(
-        document.querySelectorAll<HTMLElement>(`a[href="${to}"]`),
-    );
-
-    return (
-        links.find((el) => {
-            if (el.closest('[data-tour="setup-guide"], [data-setup-hint]'))
-                return false;
-            if (
-                el.checkVisibility &&
-                !el.checkVisibility({
-                    visibilityProperty: true,
-                    opacityProperty: true,
-                })
-            )
-                return false;
-            const box = el.getBoundingClientRect();
-            const onScreen =
-                box.width > 0 &&
-                box.height > 0 &&
-                box.left >= 0 &&
-                box.right <= window.innerWidth &&
-                box.top >= 0 &&
-                box.bottom <= window.innerHeight;
-            if (!onScreen) return false;
-
-            const hit = document.elementFromPoint(
-                box.left + box.width / 2,
-                box.top + box.height / 2,
-            );
-            return !hit || el.contains(hit);
-        }) ?? null
-    );
-}
 
 // Waits for the "Select a branch" window to close before starting the tour.
 function whenBranchPickerClosed() {
@@ -427,8 +351,7 @@ const stillHere = () =>
     (props.context !== "branch" || route.path.startsWith("/app/branches/"));
 
 async function startTour() {
-    const next = steps.value.find((step) => step.key === nextKey.value);
-    if (!next || allDone.value || !user.value?.uuid || tourSeenToday(scope()))
+    if (allDone.value || !user.value?.uuid || tourSeenToday(scope()))
         return;
 
     // The family portal has its own first-visit tour; let that one go first.
@@ -452,58 +375,19 @@ async function startTour() {
         return;
     }
 
-    const position = steps.value.findIndex((step) => step.key === next.key) + 1;
-
-    const tourSteps: any[] = [
-        {
-            element: '[data-tour="setup-guide"]',
-            popover: {
-                title: "Let's get you set up",
-                description: `Your checklist lives in the checklist button at the top, next to your notifications. ${doneCount.value} of ${steps.value.length} done so far; each step ticks off as you go.`,
-                side: "left",
-                align: "start",
-            },
-        },
-        {
-            element: `[data-tour="setup-step-${next.key}"]`,
-            popover: {
-                title: `Next: step ${position}, ${next.title}`,
-                description: next.tip ?? next.description,
-                side: "left",
-                align: "center",
-            },
-        },
-    ];
-
-    const menuLink = menuLinkFor(next.to);
-
-    if (menuLink) {
-        tourSteps.push({
-            element: menuLink,
-            popover: {
-                title: "You'll find it here too",
-                description: `${next.title} is also in the menu, any time you need it.`,
-                side: window.innerWidth < 1024 ? "top" : "right",
-                align: "center",
-            },
-        });
-    }
-
-    const last = tourSteps[tourSteps.length - 1];
-    last.popover.doneBtnText = "Let's go";
-    last.popover.onNextClick = () => {
-        tour.destroy();
-        open.value = false;
-        router.push(next.to);
-    };
-
     const tour = driver({
-        steps: tourSteps,
-        showProgress: true,
-        progressText: "{{current}} of {{total}}",
-        nextBtnText: "Next",
-        prevBtnText: "Back",
-        doneBtnText: "Let's go",
+        steps: [
+            {
+                element: '[data-tour="setup-guide"]',
+                popover: {
+                    title: "Your setup guide",
+                    description: `It lives in the checklist button at the top, next to your notifications. Open any item, in any order, and it ticks off. ${doneCount.value} of ${steps.value.length} done so far.`,
+                    side: "left",
+                    align: "start",
+                },
+            },
+        ],
+        doneBtnText: "Got it",
         popoverClass: "amuma-tour",
         stagePadding: 4,
         stageRadius: 12,
@@ -535,8 +419,6 @@ onMounted(async () => {
     document.addEventListener("click", onDocumentClick, true);
     document.addEventListener("keydown", onKeydown);
     window.addEventListener("resize", onResize);
-
-    await loadFacts().catch(() => {});
     ready.value = true;
 });
 
@@ -553,12 +435,5 @@ watch(
         startTour();
     },
     { immediate: true },
-);
-
-watch(
-    () => [branchUuid.value, role.value],
-    async () => {
-        await loadFacts().catch(() => {});
-    },
 );
 </script>
