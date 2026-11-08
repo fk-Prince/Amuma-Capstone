@@ -1331,17 +1331,7 @@
                             gcash-processing-label="Waiting for GCash payment..."
                             terms-context="subscription"
                             compact
-                        >
-                            <template
-                                v-if="!savedCard?.auto_renew"
-                                #card-options
-                            >
-                                <AutoRenewCheckbox
-                                    v-model="autoRenew"
-                                    :disabled="!canUpdateSubscription"
-                                />
-                            </template>
-                        </PaymentForm>
+                        />
                     </div>
                 </div>
             </div>
@@ -1369,7 +1359,6 @@ import PaymentForm from "~/components/forms/PaymentForm.vue";
 import OrderSummary from "~/components/billing/OrderSummary.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import SavedCardModal from "~/components/sections/app/settings/SavedCardModal.vue";
-import AutoRenewCheckbox from "~/components/billing/AutoRenewCheckbox.vue";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import visaIcon from "@/assets/icons/visa.png";
@@ -1585,7 +1574,6 @@ const noPermissionTitle = computed(() =>
         : "You need permission to update the subscription.",
 );
 
-const autoRenew = ref(false);
 const togglingAutoRenew = ref(false);
 
 const toggleAutoRenew = async () => {
@@ -1976,7 +1964,7 @@ const payCard = async () => {
     processing.value = true;
 
     try {
-        const saveCard = autoRenew.value && canUpdateSubscription.value;
+        const saveCard = canUpdateSubscription.value;
 
         await cardPayment({
             card: card.value,

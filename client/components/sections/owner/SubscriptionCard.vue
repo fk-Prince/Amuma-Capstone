@@ -306,7 +306,9 @@
                 <span
                     class="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
                     :class="
-                        selectedBranch.branch_status === 'verified'
+                        withdrawn
+                            ? 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                            : selectedBranch.branch_status === 'verified'
                             ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
                             : selectedBranch.branch_status === 'rejected'
                               ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
@@ -314,7 +316,9 @@
                     "
                 >
                     {{
-                        selectedBranch.branch_status === "verified"
+                        withdrawn
+                            ? "Cancelled by owner"
+                            : selectedBranch.branch_status === "verified"
                             ? "Verified"
                             : selectedBranch.branch_status === "rejected"
                               ? "Rejected"
@@ -484,6 +488,15 @@
                 "
                 class="border-t border-slate-100 px-5 py-2.5 text-[11px] dark:border-white/10"
             >
+                <p
+                    v-if="withdrawn"
+                    class="mb-2 rounded-lg bg-slate-100 px-2.5 py-1.5 text-[11px] text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                >
+                    The owner cancelled this request before it was reviewed,
+                    so it no longer needs a decision. Anything they paid was
+                    refunded.
+                </p>
+
                 <p
                     class="text-[10px] font-semibold uppercase tracking-widest text-muted dark:text-gray-500"
                 >
@@ -723,13 +736,22 @@ const openLocation = (
     locationTarget.value = { name, address, latitude, longitude };
     showLocationModal.value = true;
 };
-const canShowActions = computed(() => isPending.value && props.showActions);
+const withdrawn = computed(
+    () =>
+        isPending.value &&
+        props.subscription.subscription?.status === "cancelled",
+);
+
+const canShowActions = computed(
+    () => isPending.value && !withdrawn.value && props.showActions,
+);
 
 const isFirstBranch = computed(
     () => props.subscription.is_first_branch !== false,
 );
 
 const planStatusLabel = computed(() => {
+    if (withdrawn.value) return "Cancelled by owner";
     if (isRejected.value && !isFirstBranch.value) return "Branch Rejected";
 
     return props.subscription.subscription?.status ?? props.subscription.status;

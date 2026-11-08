@@ -199,6 +199,13 @@ class SubscriptionRepository
                 BranchSubscription::STATUS_REJECTED,
             ], true)) {
                 $query->where('status', $status);
+
+                if ($status === BranchSubscription::STATUS_PENDING) {
+                    $query->whereDoesntHave(
+                        'subscription',
+                        fn($q) => $q->where('status', Subscription::STATUS_CANCELLED)
+                    );
+                }
             } elseif ($status === 'expiring') {
                 $query->where('status', '!=', BranchSubscription::STATUS_REJECTED)
                     ->whereHas('subscription', fn($q) => $this->expiringSoon($q));

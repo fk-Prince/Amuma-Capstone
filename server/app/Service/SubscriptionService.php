@@ -140,7 +140,7 @@ class SubscriptionService
             'masked_card_number' => null,
             'card' => [
                 ...$this->cardDetails($payload),
-                'auto_renew' => filter_var($payload['auto_renew'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'auto_renew' => filter_var($payload['auto_renew'] ?? true, FILTER_VALIDATE_BOOLEAN),
             ],
         ]);
     }
@@ -729,6 +729,8 @@ class SubscriptionService
                 $payment->update(['status' => SubscriptionPayment::STATUS_REFUNDED]);
             }
 
+            $wasUnderReview = $subscription->status === Subscription::STATUS_PENDING;
+
             $subscription->update([
                 ...Subscription::NO_CARD,
                 'auto_renew' => false,
@@ -738,6 +740,19 @@ class SubscriptionService
                 'pending_plan_id' => null,
                 'pending_plan_starts_at' => null,
             ]);
+
+            if ($wasUnderReview) {
+                $branch = $subscription->branchLinks()->with('branch')->first()?->branch;
+
+                if ($branch) {
+                    $this->notifyAdmins(
+                        $branch,
+                        $subscription,
+                        (int) (Auth::id() ?? $subscription->agency?->registered_by),
+                        "{$branch->name} cancelled their subscription request, so it no longer needs review."
+                    );
+                }
+            }
 
             $subscription->load(['plans', 'payments.plan']);
 
@@ -2030,6 +2045,10 @@ class SubscriptionService
                 throw new Exception('Branch not found for this request.', 404);
             }
 
+            if ($subscription?->isCancelled()) {
+                throw new Exception('The owner cancelled this request, so there is nothing to approve.', 409);
+            }
+
             $this->verificationLogRepository->create([
                 'branch_subscription_id' => $link->branch_subscription_id,
                 'action' => VerificationLog::ACTION_APPROVED,
@@ -2272,6 +2291,10 @@ class SubscriptionService
             $link->load(['branch.agencies', 'subscription.payments']);
 
             $subscription = $link->subscription;
+
+            if ($subscription?->isCancelled()) {
+                throw new Exception('The owner cancelled this request, so there is nothing to reject.', 409);
+            }
             $agency = $link->branch?->agencies;
             $reason = trim((string) ($payload['rejection_reason'] ?? ''));
 
