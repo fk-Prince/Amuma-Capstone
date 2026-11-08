@@ -472,21 +472,25 @@
                                             <div
                                                 class="flex items-center gap-3 min-w-0"
                                             >
-                                                <img
-                                                    v-if="assignee.avatar"
-                                                    :src="assignee.avatar"
-                                                    class="h-10 w-10 rounded-full object-cover"
-                                                />
-                                                <div
-                                                    v-else
-                                                    class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light dark:bg-white/10 text-sm font-semibold text-muted dark:text-gray-400"
+                                                <AchievementPeek
+                                                    :titles="assignee.achievement_titles ?? []"
                                                 >
-                                                    {{
-                                                        initials(
-                                                            assignee.full_name,
-                                                        )
-                                                    }}
-                                                </div>
+                                                    <img
+                                                        v-if="assignee.avatar"
+                                                        :src="assignee.avatar"
+                                                        class="h-10 w-10 rounded-full object-cover"
+                                                    />
+                                                    <div
+                                                        v-else
+                                                        class="flex h-10 w-10 items-center justify-center rounded-full bg-muted-light dark:bg-white/10 text-sm font-semibold text-muted dark:text-gray-400"
+                                                    >
+                                                        {{
+                                                            initials(
+                                                                assignee.full_name,
+                                                            )
+                                                        }}
+                                                    </div>
+                                                </AchievementPeek>
 
                                                 <div class="min-w-0">
                                                     <p
@@ -954,6 +958,7 @@ import { formatDuration, formatDurationShort, formatTime } from "~/utils/time";
 import AssignADLModal from "./AssignADLModal.vue";
 import InvoiceDeductionModal from "./InvoiceDeductionModal.vue";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import QrScanner from "~/components/ui/QrScanner.vue";
 import { scheduleService } from "~/api/schedule/ScheduleService.js";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";

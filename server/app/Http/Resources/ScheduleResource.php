@@ -306,6 +306,10 @@ class ScheduleResource extends JsonResource
                                         ?->role_name,
 
                                     'avatar' => $employee?->avatar,
+                                    'achievement_titles' => collect($employee?->achievements ?? [])
+                                        ->pluck('label')
+                                        ->filter()
+                                        ->values(),
                                     'phone_number' => $employee?->phone_number,
                                     'email' => $employee?->users?->email,
                                     'note' => $assignment->note,

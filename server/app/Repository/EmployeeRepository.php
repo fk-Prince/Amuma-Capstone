@@ -195,6 +195,7 @@ class EmployeeRepository
 
         $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
             $query->where('schedule_assigned.is_active', true)
+                ->tap(fn($q) => ScheduleRepository::stillOnDuty($q))
                 ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
                     $q->whereIn('schedules.status', ['ongoing', 'pending'])
                         ->where('schedules.schedule_id', '!=', $scheduleId)
@@ -271,7 +272,7 @@ class EmployeeRepository
             ->where('schedules.scheduled_at', '<=', $before)
             ->orderBy('schedule_assigned.employee_id')
             ->orderByDesc('schedules.scheduled_at')
-            ->with(['scheduleService.service', 'scheduleService.schedule'])
+            ->with(['scheduleService.service', 'scheduleService.schedule', 'attendances'])
             ->get()
             ->keyBy('employee_id');
     }

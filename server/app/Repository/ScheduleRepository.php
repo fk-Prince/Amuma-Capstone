@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\PatientAdmission;
 use App\Models\Schedule;
 use App\Models\ScheduleAssigned;
+use App\Models\ScheduleService as ScheduleServiceModel;
 use App\Models\Service;
 use Carbon\Carbon;
 
@@ -44,6 +45,21 @@ class ScheduleRepository
     }
 
 
+    public static function stillOnDuty(mixed $query): void
+    {
+        $query->where(function ($q) {
+            $q->whereDoesntHave(
+                'scheduleService',
+                fn($service) => $service->where('type', ScheduleServiceModel::TYPE_MEDICAL)
+            )
+                ->orWhereDoesntHave('attendances', fn($row) => $row->whereNotNull('out_timestamp'))
+                ->orWhereHas(
+                    'attendances',
+                    fn($row) => $row->whereNotNull('in_timestamp')->whereNull('out_timestamp')
+                );
+        });
+    }
+
     public function activeConflictCodes(
         int $employeeId,
         string $branchId,
@@ -56,6 +72,7 @@ class ScheduleRepository
         return ScheduleAssigned::query()
             ->where('employee_id', $employeeId)
             ->where('is_active', true)
+            ->tap(fn($query) => self::stillOnDuty($query))
             ->whereHas('scheduleService.schedule', function ($query) use ($targetStart, $targetEnd, $excludeScheduleId, $conflictWindowSql) {
                 $query->where('schedules.schedule_id', '!=', $excludeScheduleId)
                     ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
@@ -436,6 +453,7 @@ class ScheduleRepository
 
         $activeScheduleAssignments = function ($query) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
             $query->where('schedule_assigned.is_active', true)
+                ->tap(fn($q) => self::stillOnDuty($q))
                 ->whereHas('scheduleService.schedule', function ($q) use ($targetStart, $targetEnd, $scheduleId, $conflictWindowSql) {
                     $q->where('schedules.schedule_id', '!=', $scheduleId)
                         ->whereIn('schedules.status', [Schedule::STATUS_ONGOING, Schedule::STATUS_PENDING])
@@ -530,6 +548,7 @@ class ScheduleRepository
 
         $activeScheduleAssignments = function ($query) use ($scheduleConflict) {
             $query->where('schedule_assigned.is_active', true)
+                ->tap(fn($q) => self::stillOnDuty($q))
                 ->whereHas('scheduleService.schedule', $scheduleConflict);
         };
 

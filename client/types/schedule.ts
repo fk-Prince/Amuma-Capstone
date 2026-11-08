@@ -15,6 +15,7 @@ export interface ScheduleAssignee {
     employee_uuid?: string | null;
     full_name: string;
     avatar: string | null;
+    achievement_titles?: string[];
     phone_number: string | null;
     email: string | null;
     note: string | null;
@@ -256,6 +257,7 @@ export interface PatientVisitStaff {
     attended: boolean;
     attended_at: string | null;
     attendance_note: string | null;
+    timed_out_at?: string | null;
 }
 
 export interface PatientVisit {
@@ -266,5 +268,7 @@ export interface PatientVisit {
     patient: { name: string; avatar: string | null };
     services: string[];
     checked_in_at: string | null;
+    ends_at?: string | null;
+    unpaid?: boolean;
     staff: PatientVisitStaff[];
 }

@@ -134,13 +134,14 @@ class AttendanceController extends Controller
         $validated = $request->validate([
             'patient_uuid' => ['required', 'uuid'],
             'schedule_id' => ['required', 'integer'],
+            'complete' => ['sometimes', 'boolean'],
             'confirm_unpaid' => ['sometimes', 'boolean'],
         ]);
 
         $validated['employee_id'] = $user->employee->employee_id;
 
         return response()->json([
-            'message' => 'Visit timed out and completed.',
+            'message' => !empty($validated['complete']) ? 'Visit timed out and completed.' : 'Timed out.',
             'data' => $this->attendanceService->timeOutPatientVisit($validated, $user),
         ]);
     }

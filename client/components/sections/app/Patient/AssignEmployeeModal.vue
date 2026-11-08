@@ -247,31 +247,38 @@
                                     </div>
 
                                     <div class="mt-3 flex items-center gap-3">
-                                        <span
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
+                                        <AchievementPeek
+                                            :titles="
+                                                employeeById(entry.employee_id)
+                                                    ?.achievement_titles ?? []
+                                            "
                                         >
-                                            <img
-                                                v-if="
-                                                    employeeById(
-                                                        entry.employee_id,
-                                                    )?.avatar
-                                                "
-                                                :src="
-                                                    employeeById(
-                                                        entry.employee_id,
-                                                    )!.avatar
-                                                "
-                                                class="h-full w-full object-cover"
-                                            />
+                                            <span
+                                                class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
+                                            >
+                                                <img
+                                                    v-if="
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )?.avatar
+                                                    "
+                                                    :src="
+                                                        employeeById(
+                                                            entry.employee_id,
+                                                        )!.avatar
+                                                    "
+                                                    class="h-full w-full object-cover"
+                                                />
 
-                                            <template v-else>
-                                                {{
-                                                    initialsFor(
-                                                        entry.employee_id,
-                                                    )
-                                                }}
-                                            </template>
-                                        </span>
+                                                <template v-else>
+                                                    {{
+                                                        initialsFor(
+                                                            entry.employee_id,
+                                                        )
+                                                    }}
+                                                </template>
+                                            </span>
+                                        </AchievementPeek>
 
                                         <div class="min-w-0 flex-1">
                                             <p
@@ -551,45 +558,50 @@
                                         isSelected(employee.employee_id)
                                             ? 'border-primary/50 bg-primary/[0.04] ring-1 ring-primary/20'
                                             : 'border-slate-200 dark:border-white/10',
+                                        !isSelected(employee.employee_id) &&
+                                        !isPickDisabled(employee)
+                                            ? 'hover:bg-slate-50 dark:hover:bg-white/5'
+                                            : '',
                                     ]"
                                 >
                                 <button
                                     type="button"
                                     :disabled="isPickDisabled(employee)"
                                     class="flex w-full items-start gap-3 p-3 text-left"
-                                    :class="[
-                                        !isSelected(employee.employee_id)
-                                            ? 'hover:bg-slate-50 dark:hover:bg-white/5'
-                                            : '',
+                                    :class="
                                         isPickDisabled(employee)
-                                            ? 'cursor-not-allowed opacity-60 hover:bg-transparent dark:hover:bg-transparent'
-                                            : '',
-                                    ]"
+                                            ? 'cursor-not-allowed opacity-60'
+                                            : ''
+                                    "
                                     @click="
                                         requestToggle(activeService, employee)
                                     "
                                 >
-                                    <span
-                                        class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
-                                        :class="
-                                            isSelected(employee.employee_id)
-                                                ? 'bg-primary text-white'
-                                                : 'bg-primary/10 text-primary'
-                                        "
+                                    <AchievementPeek
+                                        :titles="employee.achievement_titles ?? []"
                                     >
-                                        <img
-                                            v-if="employee.avatar"
-                                            :src="employee.avatar"
-                                            :alt="employeeName(employee)"
-                                            class="h-full w-full object-cover"
-                                        />
+                                        <span
+                                            class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
+                                            :class="
+                                                isSelected(employee.employee_id)
+                                                    ? 'bg-primary text-white'
+                                                    : 'bg-primary/10 text-primary'
+                                            "
+                                        >
+                                            <img
+                                                v-if="employee.avatar"
+                                                :src="employee.avatar"
+                                                :alt="employeeName(employee)"
+                                                class="h-full w-full object-cover"
+                                            />
 
-                                        <template v-else>
-                                            {{
-                                                initials(employeeName(employee))
-                                            }}
-                                        </template>
-                                    </span>
+                                            <template v-else>
+                                                {{
+                                                    initials(employeeName(employee))
+                                                }}
+                                            </template>
+                                        </span>
+                                    </AchievementPeek>
 
                                     <div class="min-w-0 flex-1">
                                         <div class="flex items-center gap-1.5">
@@ -666,13 +678,6 @@
                                             </span>
                                         </div>
 
-                                        <LastScheduleNote
-                                            v-if="
-                                                employee.last_schedule &&
-                                                isAvailable(employee)
-                                            "
-                                            :schedule="employee.last_schedule"
-                                        />
 
                                         <p
                                             v-if="employee.conflict_schedules?.length"
@@ -699,6 +704,7 @@
                                         </p>
                                     </div>
 
+                                    <div class="flex shrink-0 flex-col items-end gap-1.5">
                                     <span
                                         v-if="employee.is_busy"
                                         class="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
@@ -744,7 +750,50 @@
                                         <Check class="h-3.5 w-3.5" />
                                         Available
                                     </span>
+
+                                    <span
+                                        v-if="
+                                            employee.last_schedule &&
+                                            isAvailable(employee)
+                                        "
+                                        role="button"
+                                        tabindex="0"
+                                        class="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                                        :title="
+                                            expandedLast.has(employee.employee_id)
+                                                ? 'Hide last schedule'
+                                                : 'Show last schedule'
+                                        "
+                                        :aria-expanded="expandedLast.has(employee.employee_id)"
+                                        @click.stop="toggleLast(employee.employee_id)"
+                                        @keydown.enter.stop.prevent="toggleLast(employee.employee_id)"
+                                        @keydown.space.stop.prevent="toggleLast(employee.employee_id)"
+                                    >
+                                        <ChevronDown
+                                            class="h-4 w-4 transition-transform"
+                                            :class="
+                                                expandedLast.has(employee.employee_id)
+                                                    ? 'rotate-180'
+                                                    : ''
+                                            "
+                                        />
+                                    </span>
+                                    </div>
                                 </button>
+
+                                <div
+                                    v-if="
+                                        employee.last_schedule &&
+                                        isAvailable(employee) &&
+                                        expandedLast.has(employee.employee_id)
+                                    "
+                                    class="px-3 pb-3 pl-[68px]"
+                                >
+                                    <LastScheduleNote
+                                        class="!mt-0"
+                                        :schedule="employee.last_schedule"
+                                    />
+                                </div>
 
                                 <div
                                     v-if="
@@ -922,6 +971,7 @@ import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import { hasScheduleAssignees } from "~/utils/schedule-status";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import LastScheduleNote from "~/components/sections/app/Patient/LastScheduleNote.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
@@ -944,6 +994,7 @@ import {
     Search,
     Phone,
     Mail,
+    ChevronDown,
 } from "lucide-vue-next";
 
 interface AssignmentEntry {
@@ -1004,6 +1055,17 @@ const expandedConflicts = ref<Set<string | number>>(new Set());
 
 function isOverdue(estimatedEnd?: string | null) {
     return !!estimatedEnd && new Date(estimatedEnd).getTime() < Date.now();
+}
+
+const expandedLast = ref<Set<string | number>>(new Set());
+
+function toggleLast(employeeId: string | number) {
+    const next = new Set(expandedLast.value);
+
+    if (next.has(employeeId)) next.delete(employeeId);
+    else next.add(employeeId);
+
+    expandedLast.value = next;
 }
 
 function toggleConflicts(employeeId: string | number) {

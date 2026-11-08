@@ -25,6 +25,7 @@ class AttendanceService
     public const QR_TTL_MINUTES = 5;
 
     public const UNPAID_COMPLETION_MESSAGE = "This service hasn't been fully paid yet. Do you still want to time out?";
+    public const UNPAID_VISIT_MESSAGE = "This service hasn't been fully paid yet. Do you still want to mark it as complete?";
 
     public function __construct(
         private ScheduleRepository $scheduleRepository,
@@ -115,15 +116,32 @@ class AttendanceService
             throw new Exception('This visit has not been checked in yet.', 409);
         }
 
-        $this->guardUnpaidCompletion($schedule, $payload);
+        $assigned = $services->flatMap(fn($scheduleService) => $scheduleService->assigned);
 
-        DB::transaction(function () use ($schedule, $services) {
-            $this->attendanceRepository->closeOpen(
-                $services
-                    ->flatMap(fn($scheduleService) => $scheduleService->assigned)
-                    ->pluck('schedule_assigned_id')
-                    ->all()
-            );
+        if (empty($payload['complete'])) {
+            $mine = $assigned->filter(fn($row) => (int) $row->employee_id === $scannerId);
+
+            $isOpen = $mine
+                ->flatMap(fn($row) => $row->attendances)
+                ->contains(fn($row) => $row->in_timestamp && !$row->out_timestamp);
+
+            if (!$isOpen) {
+                throw new Exception("You've already timed out of this visit.", 409);
+            }
+
+            $this->attendanceRepository->closeOpen($mine->pluck('schedule_assigned_id')->all());
+
+            return [
+                'schedule_id' => $schedule->schedule_id,
+                'schedule_code' => $schedule->schedule_code,
+                'status' => $schedule->status,
+            ];
+        }
+
+        $this->guardUnpaidCompletion($schedule, $payload, self::UNPAID_VISIT_MESSAGE);
+
+        DB::transaction(function () use ($schedule, $assigned) {
+            $this->attendanceRepository->closeOpen($assigned->pluck('schedule_assigned_id')->all());
 
             $schedule->update(['status' => Schedule::STATUS_COMPLETED]);
         });
@@ -281,10 +299,16 @@ class AttendanceService
             ->groupBy('employee_id')
             ->map(function ($rows, $employeeId) use ($scannerId) {
                 $employee = $rows->first()->employee?->employees;
-                $attendance = $rows
-                    ->flatMap(fn($assigned) => $assigned->attendances)
+                $attendances = $rows->flatMap(fn($assigned) => $assigned->attendances);
+
+                $attendance = $attendances
                     ->filter(fn($row) => $row->in_timestamp && !$row->out_timestamp)
                     ->sortBy('in_timestamp')
+                    ->first();
+
+                $timedOut = $attendance ? null : $attendances
+                    ->filter(fn($row) => $row->out_timestamp)
+                    ->sortByDesc('out_timestamp')
                     ->first();
 
                 return [
@@ -297,12 +321,21 @@ class AttendanceService
                     'attended' => $attendance !== null,
                     'attended_at' => $attendance?->in_timestamp?->toISOString(),
                     'attendance_note' => $attendance?->notes,
+                    'timed_out_at' => $timedOut?->out_timestamp?->toISOString(),
                 ];
             })
             ->sortByDesc('is_me')
             ->values();
 
         $first = $this->visitAttendance($services)->sortBy('in_timestamp')->first();
+
+        $start = $schedule->scheduled_at ? Carbon::parse($schedule->scheduled_at) : null;
+
+        if ($first?->in_timestamp && (!$start || Carbon::parse($first->in_timestamp)->lt($start))) {
+            $start = Carbon::parse($first->in_timestamp);
+        }
+
+        $endsAt = $start?->copy()->addMinutes($this->scheduleRepository->calculateScheduleDurationMinutes($schedule));
 
         return [
             'schedule_id' => $schedule->schedule_id,
@@ -317,6 +350,8 @@ class AttendanceService
                 ->map(fn($scheduleService) => $scheduleService->service?->service_name ?? 'Medical service')
                 ->values(),
             'checked_in_at' => $first?->in_timestamp?->toISOString(),
+            'ends_at' => $endsAt?->toISOString(),
+            'unpaid' => $this->scheduleRepository->hasUnpaidBalance($schedule),
             'staff' => $staff,
         ];
     }
@@ -892,13 +927,13 @@ class AttendanceService
         }
     }
 
-    private function guardUnpaidCompletion(Schedule $schedule, array $payload): void
+    private function guardUnpaidCompletion(Schedule $schedule, array $payload, string $message = self::UNPAID_COMPLETION_MESSAGE): void
     {
         if (!empty($payload['confirm_unpaid']) || !$this->scheduleRepository->hasUnpaidBalance($schedule)) {
             return;
         }
 
-        throw new Exception(self::UNPAID_COMPLETION_MESSAGE, 428);
+        throw new Exception($message, 428);
     }
 
     private function completeAdlScheduleIfDue(int $scheduleServicesId): void

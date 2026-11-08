@@ -459,32 +459,36 @@
                 >
                     <div class="flex items-center gap-3 mb-3.5">
                         <template v-if="assigneesOf(service).length <= 1">
-                            <img
-                                v-if="primaryAssignee(service)?.avatar"
-                                :src="
-                                    primaryAssignee(service)?.avatar ??
-                                    undefined
-                                "
-                                class="w-9 h-9 rounded-full object-cover shrink-0"
-                                alt=""
-                            />
-
-                            <span
-                                v-else
-                                class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-semibold shrink-0 dark:bg-primary-500/15 dark:text-primary-300"
+                            <AchievementPeek
+                                :titles="primaryAssignee(service)?.achievement_titles ?? []"
                             >
-                                <UserRound
-                                    v-if="!primaryAssignee(service)"
-                                    class="w-4 h-4"
+                                <img
+                                    v-if="primaryAssignee(service)?.avatar"
+                                    :src="
+                                        primaryAssignee(service)?.avatar ??
+                                        undefined
+                                    "
+                                    class="w-9 h-9 rounded-full object-cover shrink-0"
+                                    alt=""
                                 />
-                                <template v-else>
-                                    {{
-                                        initials(
-                                            primaryAssignee(service)?.full_name,
-                                        )
-                                    }}
-                                </template>
-                            </span>
+
+                                <span
+                                    v-else
+                                    class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xs font-semibold shrink-0 dark:bg-primary-500/15 dark:text-primary-300"
+                                >
+                                    <UserRound
+                                        v-if="!primaryAssignee(service)"
+                                        class="w-4 h-4"
+                                    />
+                                    <template v-else>
+                                        {{
+                                            initials(
+                                                primaryAssignee(service)?.full_name,
+                                            )
+                                        }}
+                                    </template>
+                                </span>
+                            </AchievementPeek>
 
                             <div class="min-w-0">
                                 <p
@@ -515,19 +519,23 @@
                                     ).slice(0, 3)"
                                     :key="idx"
                                 >
-                                    <img
-                                        v-if="assignee.avatar"
-                                        :src="assignee.avatar"
-                                        class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-50 dark:ring-white/10"
-                                        alt=""
-                                    />
-
-                                    <span
-                                        v-else
-                                        class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-[10px] font-semibold ring-2 ring-gray-50 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-white/10"
+                                    <AchievementPeek
+                                        :titles="assignee.achievement_titles ?? []"
                                     >
-                                        {{ initials(assignee.full_name) }}
-                                    </span>
+                                        <img
+                                            v-if="assignee.avatar"
+                                            :src="assignee.avatar"
+                                            class="w-9 h-9 rounded-full object-cover ring-2 ring-gray-50 dark:ring-white/10"
+                                            alt=""
+                                        />
+
+                                        <span
+                                            v-else
+                                            class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-[10px] font-semibold ring-2 ring-gray-50 dark:bg-primary-500/15 dark:text-primary-300 dark:ring-white/10"
+                                        >
+                                            {{ initials(assignee.full_name) }}
+                                        </span>
+                                    </AchievementPeek>
                                 </template>
 
                                 <span
@@ -1162,6 +1170,7 @@ import { formatCurrency } from "~/utils/currency";
 import { methodLabel } from "~/utils/payment-method";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import EmptyState from "~/components/ui/EmptyState.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import type { PatientActivity } from "~/types/patient-activity";
 

@@ -175,25 +175,32 @@
                                 </div>
 
                                 <div class="mt-3 flex items-center gap-3">
-                                    <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
+                                    <AchievementPeek
+                                        :titles="
+                                            employeeById(entry.employee_id)
+                                                ?.achievement_titles ?? []
+                                        "
                                     >
-                                        <img
-                                            v-if="
-                                                employeeById(entry.employee_id)
-                                                    ?.avatar
-                                            "
-                                            :src="
-                                                employeeById(entry.employee_id)!
-                                                    .avatar
-                                            "
-                                            class="h-full w-full object-cover"
-                                        />
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-[11px] font-semibold text-white"
+                                        >
+                                            <img
+                                                v-if="
+                                                    employeeById(entry.employee_id)
+                                                        ?.avatar
+                                                "
+                                                :src="
+                                                    employeeById(entry.employee_id)!
+                                                        .avatar
+                                                "
+                                                class="h-full w-full object-cover"
+                                            />
 
-                                        <template v-else>
-                                            {{ initialsFor(entry.employee_id) }}
-                                        </template>
-                                    </span>
+                                            <template v-else>
+                                                {{ initialsFor(entry.employee_id) }}
+                                            </template>
+                                        </span>
+                                    </AchievementPeek>
 
                                     <div class="min-w-0 flex-1">
                                         <p
@@ -475,27 +482,31 @@
                                         class="flex w-full items-center gap-3 p-3 text-left"
                                         @click="handleEmployeeClick(employee)"
                                     >
-                                        <div
-                                            class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0 dark:bg-accent-500/15"
+                                        <AchievementPeek
+                                            :titles="employee.achievement_titles ?? []"
                                         >
-                                            <img
-                                                v-if="employee.avatar"
-                                                :src="employee.avatar"
-                                                class="h-full w-full object-cover"
-                                            />
+                                            <div
+                                                class="h-10 w-10 overflow-hidden rounded-full bg-[#EAF4F2] flex items-center justify-center shrink-0 dark:bg-accent-500/15"
+                                            >
+                                                <img
+                                                    v-if="employee.avatar"
+                                                    :src="employee.avatar"
+                                                    class="h-full w-full object-cover"
+                                                />
 
-                                            <template v-else>
-                                                {{
-                                                    initials(
-                                                        fullName(
-                                                            employee.first_name,
-                                                            "",
-                                                            employee.last_name,
-                                                        ),
-                                                    )
-                                                }}
-                                            </template>
-                                        </div>
+                                                <template v-else>
+                                                    {{
+                                                        initials(
+                                                            fullName(
+                                                                employee.first_name,
+                                                                "",
+                                                                employee.last_name,
+                                                            ),
+                                                        )
+                                                    }}
+                                                </template>
+                                            </div>
+                                        </AchievementPeek>
 
                                         <div class="flex-1 min-w-0">
                                             <div
@@ -566,15 +577,9 @@
                                                 </span>
                                             </div>
 
-                                            <LastScheduleNote
-                                                v-if="
-                                                    employee.last_schedule &&
-                                                    isAvailable(employee)
-                                                "
-                                                :schedule="employee.last_schedule"
-                                            />
                                         </div>
 
+                                        <div class="flex shrink-0 flex-col items-end gap-1.5">
                                         <div
                                             v-if="employee.is_busy"
                                             class="flex flex-col items-end gap-1"
@@ -641,7 +646,50 @@
                                         >
                                             Available
                                         </span>
+
+                                        <span
+                                            v-if="
+                                                employee.last_schedule &&
+                                                isAvailable(employee)
+                                            "
+                                            role="button"
+                                            tabindex="0"
+                                            class="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                                            :title="
+                                                expandedLast.has(employee.employee_id)
+                                                    ? 'Hide last schedule'
+                                                    : 'Show last schedule'
+                                            "
+                                            :aria-expanded="expandedLast.has(employee.employee_id)"
+                                            @click.stop="toggleLast(employee.employee_id)"
+                                            @keydown.enter.stop.prevent="toggleLast(employee.employee_id)"
+                                            @keydown.space.stop.prevent="toggleLast(employee.employee_id)"
+                                        >
+                                            <ChevronDown
+                                                class="h-4 w-4 transition-transform"
+                                                :class="
+                                                    expandedLast.has(employee.employee_id)
+                                                        ? 'rotate-180'
+                                                        : ''
+                                                "
+                                            />
+                                        </span>
+                                        </div>
                                     </button>
+
+                                    <div
+                                        v-if="
+                                            employee.last_schedule &&
+                                            isAvailable(employee) &&
+                                            expandedLast.has(employee.employee_id)
+                                        "
+                                        class="px-3 pb-3 pl-[64px]"
+                                    >
+                                        <LastScheduleNote
+                                            class="!mt-0"
+                                            :schedule="employee.last_schedule"
+                                        />
+                                    </div>
 
                                     <div
                                         v-if="
@@ -797,6 +845,7 @@
 import ScheduleConflictNotice from "~/components/ui/ScheduleConflictNotice.vue";
 import PreviousAssignees from "~/components/sections/app/Patient/PreviousAssignees.vue";
 import LastScheduleNote from "~/components/sections/app/Patient/LastScheduleNote.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
@@ -807,7 +856,7 @@ import {
     bookingTimeWindow,
     format24To12,
 } from "~/utils/time";
-import { Check, Home, TriangleAlert } from "lucide-vue-next";
+import { Check, ChevronDown, Home, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
@@ -1118,6 +1167,16 @@ function restoreSavedAssignments(schedule: AuditRow) {
 }
 
 const expandedConflicts = ref<Set<string | number>>(new Set());
+const expandedLast = ref<Set<string | number>>(new Set());
+
+function toggleLast(employeeId: string | number) {
+    const next = new Set(expandedLast.value);
+
+    if (next.has(employeeId)) next.delete(employeeId);
+    else next.add(employeeId);
+
+    expandedLast.value = next;
+}
 
 function isOverdue(estimatedEnd?: string | null) {
     return !!estimatedEnd && new Date(estimatedEnd).getTime() < Date.now();

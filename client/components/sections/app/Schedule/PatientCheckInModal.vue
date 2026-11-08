@@ -2,6 +2,7 @@
 import { computed, ref, watch } from "vue";
 import {
     Check,
+    CheckCheck,
     Loader2,
     Lock,
     LogIn,
@@ -10,7 +11,7 @@ import {
     X,
 } from "lucide-vue-next";
 import ActionButton from "~/components/ui/ActionButton.vue";
-import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
+import TimeOutModal from "~/components/sections/app/Schedule/TimeOutModal.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { attendanceService } from "~/api/attendance/AttendanceService";
 import { useToast } from "~/composables/useToast";
@@ -50,13 +51,25 @@ watch(
 
 const alreadyCheckedIn = computed(() => Boolean(props.visit.checked_in_at));
 
+const isTimedOut = (staff: VisitStaff) => !staff.attended && !!staff.timed_out_at;
+
 const newlyPresent = computed(() =>
     props.visit.staff.filter(
-        (staff) => !staff.attended && selected.value.has(staff.employee_id),
+        (staff) =>
+            !staff.attended &&
+            !isTimedOut(staff) &&
+            selected.value.has(staff.employee_id),
     ),
 );
 
-const isLocked = (staff: VisitStaff) => staff.is_me || staff.attended;
+const me = computed(() => props.visit.staff.find((staff) => staff.is_me));
+const meTimedOut = computed(() => !!me.value && isTimedOut(me.value));
+const othersPresent = computed(() =>
+    props.visit.staff.some((staff) => !staff.is_me && staff.attended),
+);
+
+const isLocked = (staff: VisitStaff) =>
+    staff.is_me || staff.attended || isTimedOut(staff);
 
 function toggle(staff: VisitStaff) {
     if (isLocked(staff)) return;
@@ -104,9 +117,18 @@ async function confirm() {
 }
 
 const timingOut = ref(false);
-const unpaidMessage = ref("");
+const showTimeOut = ref(false);
+const unpaidFound = ref(false);
 
-async function timeOut(confirmUnpaid = false) {
+const othersPresentNames = computed(() =>
+    props.visit.staff
+        .filter((staff) => !staff.is_me && staff.attended)
+        .map((staff) => staff.name),
+);
+
+const visitUnpaid = computed(() => !!props.visit.unpaid || unpaidFound.value);
+
+async function timeOut(complete: boolean) {
     if (timingOut.value) return;
 
     timingOut.value = true;
@@ -115,21 +137,28 @@ async function timeOut(confirmUnpaid = false) {
         await attendanceService.timeOutPatientVisit({
             patient_uuid: props.patientUuid,
             schedule_id: props.visit.schedule_id,
-            ...(confirmUnpaid && { confirm_unpaid: true }),
+            ...(complete && { complete: true }),
+            ...(complete && visitUnpaid.value && { confirm_unpaid: true }),
         });
 
-        unpaidMessage.value = "";
-        success(`${props.visit.schedule_code} timed out and completed.`);
+        showTimeOut.value = false;
+        success(
+            complete
+                ? `${props.visit.schedule_code} completed.`
+                : `You timed out of ${props.visit.schedule_code}.`,
+        );
 
         emit("confirmed");
         emit("close");
     } catch (err: any) {
         if (err?.status === 428) {
-            unpaidMessage.value = err.message;
+            unpaidFound.value = true;
+            showTimeOut.value = false;
+            setTimeout(() => (showTimeOut.value = true));
             return;
         }
 
-        unpaidMessage.value = "";
+        showTimeOut.value = false;
         toastError(
             err?.response?.data?.message ??
                 err?.message ??
@@ -211,8 +240,18 @@ async function timeOut(confirmUnpaid = false) {
                         <template v-if="newlyPresent.length">
                             Time in yourself and anyone who arrived later.
                         </template>
+                        <template v-else-if="meTimedOut && me?.timed_out_at">
+                            You timed out at
+                            {{ formatTime(me.timed_out_at) }}. Complete the
+                            visit once everyone is done.
+                        </template>
+                        <template v-else-if="othersPresent">
+                            Time out when you leave. You can also mark the
+                            visit as complete for everyone.
+                        </template>
                         <template v-else>
-                            Time out to complete the visit.
+                            You're the last one here. Timing out completes the
+                            visit.
                         </template>
                     </p>
 
@@ -232,7 +271,7 @@ async function timeOut(confirmUnpaid = false) {
                                     type="button"
                                     class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition"
                                     :class="[
-                                        staff.attended
+                                        staff.attended || isTimedOut(staff)
                                             ? 'border-slate-200 opacity-50 dark:border-white/10'
                                             : selected.has(staff.employee_id)
                                               ? 'border-primary/40 bg-primary/[0.04] ring-1 ring-primary/20'
@@ -244,7 +283,7 @@ async function timeOut(confirmUnpaid = false) {
                                     <span
                                         class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border"
                                         :class="
-                                            staff.attended
+                                            staff.attended || isTimedOut(staff)
                                                 ? 'border-slate-300 dark:border-white/20'
                                                 : selected.has(staff.employee_id)
                                                   ? 'border-primary bg-primary text-white'
@@ -252,12 +291,17 @@ async function timeOut(confirmUnpaid = false) {
                                         "
                                     >
                                         <Lock
-                                            v-if="staff.is_me && !staff.attended"
+                                            v-if="
+                                                staff.is_me &&
+                                                !staff.attended &&
+                                                !isTimedOut(staff)
+                                            "
                                             class="h-3 w-3"
                                         />
                                         <Check
                                             v-else-if="
                                                 !staff.attended &&
+                                                !isTimedOut(staff) &&
                                                 selected.has(staff.employee_id)
                                             "
                                             class="h-3.5 w-3.5"
@@ -312,6 +356,14 @@ async function timeOut(confirmUnpaid = false) {
                                                 {{ staff.attendance_note }}
                                             </template>
                                         </span>
+
+                                        <span
+                                            v-else-if="isTimedOut(staff)"
+                                            class="block truncate text-[11px] text-slate-500 dark:text-gray-400"
+                                        >
+                                            Timed out at
+                                            {{ formatTime(staff.timed_out_at) }}
+                                        </span>
                                     </span>
                                 </button>
                             </li>
@@ -355,15 +407,22 @@ async function timeOut(confirmUnpaid = false) {
                             v-else-if="alreadyCheckedIn"
                             variant="primary"
                             :disabled="saving || timingOut"
-                            @click="timeOut()"
+                            @click="showTimeOut = true"
                         >
                             <span class="inline-flex items-center gap-2">
                                 <Loader2
                                     v-if="timingOut"
                                     class="h-4 w-4 animate-spin"
                                 />
+                                <CheckCheck v-else-if="meTimedOut" class="h-4 w-4" />
                                 <LogOut v-else class="h-4 w-4" />
-                                Time out
+                                {{
+                                    meTimedOut
+                                        ? "Complete visit"
+                                        : othersPresent
+                                          ? "Time out"
+                                          : "Time out & complete"
+                                }}
                             </span>
                         </ActionButton>
 
@@ -388,14 +447,19 @@ async function timeOut(confirmUnpaid = false) {
             </div>
         </div>
 
-        <ConfirmDialog
-            :open="!!unpaidMessage"
-            title="Not fully paid"
-            :message="unpaidMessage"
-            confirm-label="Time out"
+        <TimeOutModal
+            :open="showTimeOut"
+            :schedule-code="visit.schedule_code"
+            :patient-name="visit.patient.name"
+            :services="visit.services"
+            :scanner-name="me?.name ?? 'You'"
+            :scanner-timed-out="meTimedOut"
+            :others-present="othersPresentNames"
+            :ends-at="visit.ends_at ?? null"
+            :unpaid="visitUnpaid"
             :loading="timingOut"
-            @confirm="timeOut(true)"
-            @cancel="unpaidMessage = ''"
+            @close="showTimeOut = false"
+            @submit="timeOut"
         />
     </Teleport>
 </template>

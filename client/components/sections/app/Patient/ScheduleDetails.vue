@@ -805,6 +805,9 @@
                                                 <div
                                                     class="flex w-full items-start gap-3 p-3 text-left"
                                                 >
+                                                    <AchievementPeek
+                                                        :titles="achievementTitles(employee)"
+                                                    >
                                                     <span
                                                         class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full text-[11px] font-semibold"
                                                         :class="
@@ -836,6 +839,7 @@
                                                             }}
                                                         </template>
                                                     </span>
+                                                    </AchievementPeek>
 
                                                     <span
                                                         class="min-w-0 flex-1"
@@ -1172,6 +1176,9 @@
                                             <div
                                                 class="flex min-w-0 items-center gap-3"
                                             >
+                                                <AchievementPeek
+                                                    :titles="achievementTitles(employee)"
+                                                >
                                                 <span
                                                     class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-semibold text-white"
                                                 >
@@ -1189,6 +1196,7 @@
                                                         }}
                                                     </template>
                                                 </span>
+                                                </AchievementPeek>
 
                                                 <div class="min-w-0">
                                                     <p
@@ -1420,6 +1428,7 @@ import MedicalAttendance from "~/components/sections/app/Schedule/MedicalAttenda
 import AdlAttendance from "~/components/sections/app/Schedule/AdlAttendance.vue";
 import ScheduleSheet from "~/components/sections/app/Patient/ScheduleSheet.vue";
 import AssigneeNotes from "~/components/sections/app/Patient/AssigneeNotes.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import ExpandableText from "~/components/ui/ExpandableText.vue";
 import LocationMap from "~/components/ui/LocationMap.vue";
 import ScheduleLocationEditor from "~/components/sections/app/Schedule/ScheduleLocationEditor.vue";
@@ -1746,6 +1755,10 @@ const bodyGridClass =
 const leftColClass = "xl:col-start-1";
 
 const servicesColClass = "xl:col-start-2 xl:row-span-7 xl:row-start-1";
+
+function achievementTitles(employee: { achievement_titles?: string[] | null } | null | undefined): string[] {
+    return employee?.achievement_titles ?? [];
+}
 
 function employeeLabel(employee: Employee) {
     return (

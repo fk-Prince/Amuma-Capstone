@@ -41,6 +41,7 @@ class AttendanceService extends BaseService {
     async timeOutPatientVisit(payload: {
         patient_uuid: string;
         schedule_id: number;
+        complete?: boolean;
         confirm_unpaid?: boolean;
     }): Promise<any> {
         return await this.request(this.getBackendApi + '/api/qr/patient/time-out', 'POST', payload);

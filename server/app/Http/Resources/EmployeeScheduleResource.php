@@ -26,6 +26,10 @@ class EmployeeScheduleResource extends JsonResource
             'last_name' => $this->last_name,
             'full_name' => $this->full_name,
             'avatar' => $this->avatar,
+            'achievement_titles' => collect($this->achievements ?? [])
+                ->pluck('label')
+                ->filter()
+                ->values(),
             'location' => $this->locations,
             'birth_date' => $this->birth_date,
             'phone_number' => $this->phone_number,
@@ -99,7 +103,12 @@ class EmployeeScheduleResource extends JsonResource
 
                 [$category, $durationMinutes] = $this->categoryAndDuration($scheduleService);
 
+                $lastTimeOut = $assignment->relationLoaded('attendances')
+                    ? $assignment->attendances->whereNotNull('out_timestamp')->max('out_timestamp')
+                    : null;
+
                 return [
+                    'last_time_out' => $lastTimeOut ? Carbon::parse($lastTimeOut)->toISOString() : null,
                     'schedule_code' => $schedule->schedule_code,
                     'scheduled_at' => $schedule->scheduled_at,
                     'status' => $schedule->status,

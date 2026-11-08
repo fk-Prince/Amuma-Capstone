@@ -30,6 +30,14 @@
                 {{ formatTime(schedule.ends_at) }}
             </template>
             <template v-if="durationLabel"> ({{ durationLabel }})</template>
+            <template v-if="schedule.last_time_out">
+                <br />
+                <span class="font-medium text-slate-600 dark:text-gray-300">
+                    Last time out:
+                </span>
+                {{ formatDate(schedule.last_time_out) }},
+                {{ formatTime(schedule.last_time_out) }}
+            </template>
         </p>
     </div>
 </template>

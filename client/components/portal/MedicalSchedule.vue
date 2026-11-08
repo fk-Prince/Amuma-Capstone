@@ -147,7 +147,10 @@
                             class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <div class="flex min-w-0 items-center gap-3">
-                                <template v-if="service.assignees?.length">
+                                <AchievementPeek
+                                    v-if="service.assignees?.length"
+                                    :titles="service.assignees[0]?.achievement_titles ?? []"
+                                >
                                     <img
                                         v-if="service.assignees[0]?.avatar"
                                         :src="service.assignees[0].avatar!"
@@ -161,7 +164,7 @@
                                     >
                                         {{ initials(service.assignees[0]?.full_name) }}
                                     </span>
-                                </template>
+                                </AchievementPeek>
 
                                 <span
                                     v-else
@@ -255,18 +258,20 @@
                                 :key="assignee.employee_id"
                                 class="flex items-center gap-3 px-3 py-2.5"
                             >
-                                <img
-                                    v-if="assignee.avatar"
-                                    :src="assignee.avatar"
-                                    :alt="assignee.full_name"
-                                    class="h-8 w-8 shrink-0 rounded-full object-cover"
-                                />
-                                <span
-                                    v-else
-                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
-                                >
-                                    {{ initials(assignee.full_name) }}
-                                </span>
+                                <AchievementPeek :titles="assignee.achievement_titles ?? []">
+                                    <img
+                                        v-if="assignee.avatar"
+                                        :src="assignee.avatar"
+                                        :alt="assignee.full_name"
+                                        class="h-8 w-8 shrink-0 rounded-full object-cover"
+                                    />
+                                    <span
+                                        v-else
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-[11px] font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-300"
+                                    >
+                                        {{ initials(assignee.full_name) }}
+                                    </span>
+                                </AchievementPeek>
 
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-medium text-gray-800 dark:text-white">
@@ -365,6 +370,7 @@ import { useToast } from "~/composables/useToast";
 import { patientAccessService } from "~/api/patient-access/PatientAccessService";
 import { attendanceService } from "~/api/attendance/AttendanceService";
 import QrCodeModal from "~/components/ui/QrCodeModal.vue";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import { assignmentSummary, formatDurationShort } from "~/utils/time";
 
 const props = withDefaults(

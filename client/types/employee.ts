@@ -26,6 +26,7 @@ export interface Employee {
     avatar: string;
     documents?: EmployeeDocument[];
     achievements?: EmployeeAchievement[];
+    achievement_titles?: string[];
     location: Location;
     birth_date: string;
     phone_number: string;
@@ -61,6 +62,7 @@ export interface LastSchedule {
     service_name: string | null;
     duration_minutes: number | null;
     ends_at: string | null;
+    last_time_out?: string | null;
 }
 
 export interface EmployeeService {

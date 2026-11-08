@@ -753,6 +753,11 @@ class PortalHelper
                 ?->role_name,
 
             'avatar' => $employee?->avatar,
+            'achievement_titles' => collect($employee?->achievements ?? [])
+                ->pluck('label')
+                ->filter()
+                ->values()
+                ->toArray(),
             'note' => $assignment->note,
             'start_time' => $assignment->start_time ? substr($assignment->start_time, 0, 5) : null,
             'end_time' => $assignment->end_time ? substr($assignment->end_time, 0, 5) : null,
