@@ -95,12 +95,11 @@ export function useTrackSetupVisits(area: SetupArea) {
     const route = useRoute();
     const user = useAuthUser();
     const { markVisited } = useSetupVisits(area);
-    const { isSkipped } = useFirstTimeUser();
 
     watch(
         () => [route.path, user.value?.uuid],
         () => {
-            if (!user.value || isSkipped(area) || !isMenuPage(route.path)) return;
+            if (!user.value || !isMenuPage(route.path)) return;
             markVisited(route.path);
         },
         { immediate: true },
@@ -116,14 +115,11 @@ export function useFirstTimeUser() {
     const user = useAuthUser();
     const { setupOf, complete } = useSetupState();
 
-    const isSkipped = (area: SetupArea) => !!setupOf(area).skipped;
-
     const isFinished = (scope: string) => !!setupOf(setupAreaOf(scope)).finished?.[scope];
 
-    const showFor = (scope: string) =>
-        !!user.value && !isSkipped(setupAreaOf(scope)) && !isFinished(scope);
+    const showFor = (scope: string) => !!user.value && !isFinished(scope);
 
-    const skip = (scope: string) => complete(setupAreaOf(scope), ["skipped"]);
+    const skip = (scope: string) => complete(setupAreaOf(scope), ["finished", scope]);
 
     const markFinished = (scope: string) => {
         if (!isFinished(scope)) complete(setupAreaOf(scope), ["finished", scope], false);
@@ -134,5 +130,5 @@ export function useFirstTimeUser() {
 
     const markTourSeen = (scope: string) => complete(setupAreaOf(scope), ["tour", scope]);
 
-    return { isSkipped, showFor, skip, markFinished, tourSeenToday, markTourSeen };
+    return { showFor, skip, markFinished, tourSeenToday, markTourSeen };
 }

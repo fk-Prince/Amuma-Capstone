@@ -209,7 +209,11 @@
                             class="rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-white"
                             @click="skip"
                         >
-                            Don't show again
+                            {{
+                                context === "branch"
+                                    ? "Hide for this branch"
+                                    : "Don't show again"
+                            }}
                         </button>
 
                         <NuxtLink
