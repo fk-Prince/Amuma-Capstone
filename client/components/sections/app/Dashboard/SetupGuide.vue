@@ -284,13 +284,11 @@ const {
     role,
     loadFacts,
     skip,
+    scope,
 } = useSetupSteps({
     context: () => props.context,
     branchUuid: () => branchUuid.value,
 });
-
-const scope = () =>
-    props.context === "branch" ? `branch:${branchUuid.value}` : props.context;
 
 // The floating checklist: closed until the button is clicked (or the
 // walkthrough opens it).

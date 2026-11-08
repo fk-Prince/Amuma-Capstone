@@ -9,7 +9,6 @@ export type SetupArea = "portal" | "dashboard";
 
 export const setupAreaOf = (scope: string): SetupArea =>
     scope === "portal" ? "portal" : "dashboard";
-
 const nowStamp = () => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -94,12 +93,22 @@ const isMenuPage = (path: string) => {
 export function useTrackSetupVisits(area: SetupArea) {
     const route = useRoute();
     const user = useAuthUser();
+    const branchStore = useBranchStore();
     const { markVisited } = useSetupVisits(area);
 
+    const isProfile = () => area === "dashboard" && route.path.replace(/\/+$/, "") === "/profile";
+
     watch(
-        () => [route.path, user.value?.uuid],
+        () => [route.path, user.value?.uuid, isProfile() ? branchStore.activeBranch?.uuid : null],
         () => {
             if (!user.value || !isMenuPage(route.path)) return;
+
+            if (isProfile()) {
+                const branchUuid = branchStore.activeBranch?.uuid;
+                if (branchUuid) markVisited(`/profile/${branchUuid}`);
+                return;
+            }
+
             markVisited(route.path);
         },
         { immediate: true },

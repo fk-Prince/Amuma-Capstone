@@ -112,7 +112,7 @@ const current = computed(() => {
 
     // "Open this page" steps get the tip on the first visit; data-based steps
     // keep it until they're actually done.
-    if (step.byVisit) return freshVisit.value === path.value ? step : null;
+    if (step.byVisit) return freshVisit.value === (step.visitPath ?? path.value) ? step : null;
     return step.done ? null : step;
 });
 

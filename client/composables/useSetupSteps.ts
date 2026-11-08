@@ -51,6 +51,7 @@ export interface SetupStep {
     action?: string;
     /** Ticks off by opening the page (rather than from branch data). */
     byVisit?: boolean;
+    visitPath?: string;
 }
 
 /**
@@ -101,7 +102,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const branchStore = useBranchStore();
     const { hasFacilityPlan } = useBranchPlan();
     const { canSeeExecutiveOverview } = useAgencyBranches();
-    // Branches are set up one by one; the portal and admin area each have one guide.
     const scope = () =>
         props.context === "branch" ? `branch:${props.branchUuid ?? ""}` : props.context;
 
@@ -144,14 +144,20 @@ export function useSetupSteps(options: SetupStepsOptions) {
         return `/profile?tab=profile&from=dashboard&branch=${props.branchUuid ?? ""}`;
     });
 
+    const profileVisit = computed(() => `/profile/${props.branchUuid ?? ""}`);
+
     const profileStep = computed<SetupStep>(() => ({
         key: "profile",
         title: "Complete your profile",
         description: "Add your phone number and photo so others know who they're talking to.",
         to: profileLink.value,
         icon: UserRound,
-        done: !!user.value?.phone_number || hasVisited("/profile"),
+        done:
+            props.context === "portal"
+                ? !!user.value?.phone_number || hasVisited("/profile")
+                : hasVisited(profileVisit.value),
         byVisit: true,
+        visitPath: props.context === "portal" ? undefined : profileVisit.value,
     }));
 
     const visitStep = (
@@ -173,9 +179,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
     });
 
     function branchSteps(): SetupStep[] {
-        const b = branch.value;
         const p = base.value;
-        const settings: any = b?.settings ?? {};
 
         if (isSetupRole.value) {
             const list: SetupStep[] = [
@@ -186,8 +190,9 @@ export function useSetupSteps(options: SetupStepsOptions) {
                     description: "Description, contact number, photos, and your opening and closing hours.",
                     to: `${p}/settings`,
                     icon: Settings,
-                    done: !!(b?.description && b?.contact_number && settings.opening && settings.closing),
+                    done: hasVisited(`${p}/settings`),
                     action: "Open settings",
+                    byVisit: true,
                 },
                 {
                     key: "services",
@@ -402,6 +407,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
         role,
         loadFacts,
         enabled,
+        scope,
         skip: () => skip(scope()),
     };
 }
