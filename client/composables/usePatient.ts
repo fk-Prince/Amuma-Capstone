@@ -232,9 +232,11 @@ export function usePatient() {
                     patient_uuid: p_uuid,
                     payload,
                 });
-                const item = res.data;
+                const item = res.data?.data ?? res.data;
+                const { durationLabel: _staleLabel, ...current } =
+                    medications.value[index]!;
                 medications.value[index] = normalizeMedication({
-                    ...medications.value[index],
+                    ...current,
                     ...item,
                 });
                 return res;

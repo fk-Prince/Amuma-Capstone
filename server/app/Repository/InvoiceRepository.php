@@ -310,8 +310,7 @@ class InvoiceRepository
                         );
                 });
             })
-            ->orderBy('first_name')
-            ->orderBy('last_name')
+            ->orderBy('patient_code')
             ->paginate($payload['per_page'] ?? 10);
 
         if ($patients->isEmpty()) {

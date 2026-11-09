@@ -27,6 +27,7 @@ import { useToast } from "~/composables/useToast";
 import type { PatientRetrieve } from "~/types/patient";
 import type {
     MarkDosePayload,
+    Medication,
     MedicationForm,
     Vital,
     VitalFormData,
@@ -285,6 +286,12 @@ watch(activeTab, () => loadActiveTab());
 const showAddMedication = ref(false);
 const savingMedication = ref(false);
 const savingDosage = ref(false);
+const selectedMedication = ref<Medication | null>(null);
+
+function editMedication(medication: Medication) {
+    selectedMedication.value = medication;
+    showAddMedication.value = true;
+}
 
 const showRecordVital = ref(false);
 const savingVital = ref(false);
@@ -652,7 +659,11 @@ onBeforeUnmount(() => {
                             <MedicationTable
                                 :medications="medications"
                                 :saving-dose="savingDosage"
-                                @add-medication="showAddMedication = true"
+                                @add-medication="
+                                    selectedMedication = null;
+                                    showAddMedication = true;
+                                "
+                                @edit-medication="editMedication"
                                 @mark-dose="onDosageSubmit"
                             />
 
@@ -708,6 +719,7 @@ onBeforeUnmount(() => {
             :open="showAddMedication"
             :patient="patient"
             :submit-loading="savingMedication"
+            :medication="selectedMedication"
             @close="showAddMedication = false"
             @submit="onMedicationSubmit"
         />

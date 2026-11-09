@@ -865,7 +865,9 @@ async function fetchInvoices(page = pagination.currentPage.value) {
 
         invoices.value = res.data ?? [];
 
-        pagination.setTotal(res.total ?? invoices.value.length);
+        pagination.setTotal(
+            res.meta?.total ?? res.total ?? invoices.value.length,
+        );
     } catch (error) {
         console.error(error);
         invoices.value = [];
@@ -891,7 +893,9 @@ async function fetchInvoiceRows(page = invoicePagination.currentPage.value) {
 
         invoiceRows.value = res.data ?? [];
 
-        invoicePagination.setTotal(res.total ?? invoiceRows.value.length);
+        invoicePagination.setTotal(
+            res.meta?.total ?? res.total ?? invoiceRows.value.length,
+        );
     } catch (err) {
         console.error(err);
         invoiceRows.value = [];

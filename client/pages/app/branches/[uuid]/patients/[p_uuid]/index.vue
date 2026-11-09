@@ -793,6 +793,10 @@ onMounted(async () => {
                                         selectedMedication = null;
                                         showAddMedication = true;
                                     "
+                                    @edit-medication="
+                                        selectedMedication = $event;
+                                        showAddMedication = true;
+                                    "
                                     @mark-dose="onDosageSubmit"
                                 />
 
@@ -1082,6 +1086,7 @@ onMounted(async () => {
             :open="showAddMedication"
             :patient="patientData"
             :submit-loading="savingMedication"
+            :medication="selectedMedication"
             @close="showAddMedication = false"
             @submit="onMedicationSubmit"
         />

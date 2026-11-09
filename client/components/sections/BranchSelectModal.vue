@@ -123,6 +123,17 @@
                                     "
                                 />
                                 {{ filter.label }}
+                                <span
+                                    v-if="countByStatus(selectableAgencies, filter.value)"
+                                    class="min-w-[18px] rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums"
+                                    :class="
+                                        statusFilter === filter.value
+                                            ? 'bg-white/25 text-white'
+                                            : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                                    "
+                                >
+                                    {{ countByStatus(selectableAgencies, filter.value) }}
+                                </span>
                             </button>
                         </div>
 
@@ -343,6 +354,17 @@
                                         "
                                     />
                                     {{ filter.label }}
+                                    <span
+                                        v-if="countByStatus(branchesForView, filter.value)"
+                                        class="min-w-[18px] rounded-full px-1.5 py-px text-[10px] font-semibold tabular-nums"
+                                        :class="
+                                            statusFilter === filter.value
+                                                ? 'bg-white/25 text-white'
+                                                : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
+                                        "
+                                    >
+                                        {{ countByStatus(branchesForView, filter.value) }}
+                                    </span>
                                 </button>
                             </div>
 
@@ -687,6 +709,14 @@ const statusFilters = [
 ] as const;
 
 const statusFilter = ref<(typeof statusFilters)[number]["value"]>("verified");
+
+const countByStatus = (
+    items: { status?: string | null }[],
+    status: (typeof statusFilters)[number]["value"],
+) =>
+    status === "all"
+        ? items.length
+        : items.filter((item) => item.status === status).length;
 
 const filteredAgencies = computed(() =>
     statusFilter.value === "all"

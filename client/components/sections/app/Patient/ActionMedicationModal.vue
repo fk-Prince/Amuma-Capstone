@@ -86,7 +86,28 @@ watch(
     () => props.open,
     (isOpen) => {
         if (isOpen) {
-            Object.assign(form, emptyForm());
+            const med = props.medication;
+
+            Object.assign(
+                form,
+                emptyForm(),
+                med
+                    ? {
+                          name: med.name,
+                          strength: med.strength,
+                          dosageAmount: String(Number(med.dosageAmount)),
+                          dosageUnit: med.dosageUnit,
+                          route: med.route,
+                          instructions: med.instructions,
+                          takenFor: med.takenFor ?? "",
+                          duration: med.duration,
+                          frequency: med.frequency,
+                          startDate: med.startDate,
+                          kind: med.kind,
+                          times: [...(med.times ?? [])],
+                      }
+                    : {},
+            );
             reset();
             newTime.value = "12:00";
         }
@@ -105,6 +126,8 @@ const durationOptions = [
 ];
 
 const sortedTimes = computed(() => [...form.times].sort());
+
+const isEditing = computed(() => Boolean(props.medication?.id));
 
 function close() {
     emit("close");
@@ -138,7 +161,7 @@ function close() {
                         v-if="open"
                         role="dialog"
                         aria-modal="true"
-                        aria-label="Add Medication"
+                        :aria-label="isEditing ? 'Edit Medication' : 'Add Medication'"
                         class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
                     >
                         <div
@@ -155,12 +178,14 @@ function close() {
                                     <h2
                                         class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                                     >
-                                        Add Medication
+                                        {{ isEditing ? "Edit Medication" : "Add Medication" }}
                                     </h2>
                                     <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
-                                        Record a new medication and its
-                                        administration schedule for this
-                                        patient.
+                                        {{
+                                            isEditing
+                                                ? "Update this medication and its administration schedule."
+                                                : "Record a new medication and its administration schedule for this patient."
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -418,7 +443,9 @@ function close() {
                                     {{
                                         submitLoading
                                             ? "Saving Medication..."
-                                            : "Add Medication"
+                                            : isEditing
+                                              ? "Save Changes"
+                                              : "Add Medication"
                                     }}
                                 </button>
                             </div>

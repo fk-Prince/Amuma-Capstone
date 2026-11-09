@@ -88,7 +88,7 @@ class BookingRepository
                     });
                 }
             )
-            ->orderByDesc('created_at')
+            ->orderBy('reference_id')
             ->paginate($payload['per_page'] ?? 10);
     }
 
@@ -111,7 +111,7 @@ class BookingRepository
                         );
                 });
             })
-            ->orderByDesc('created_at')
+            ->orderBy('reference_id')
             ->paginate((int) ($payload['per_page'] ?? 10));
     }
 

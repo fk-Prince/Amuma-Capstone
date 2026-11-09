@@ -144,6 +144,7 @@ class PatientRepository
                         }
                     });
                 })
+                ->orderBy('patient_code')
                 ->paginate($payload['per_page'] ?? 10);
         }
 
@@ -196,6 +197,7 @@ class PatientRepository
             ->when(!empty($payload['date_to']), function ($query) use ($payload) {
                 $query->where('created_at', '<=', $payload['date_to'] . ' 23:59:59');
             })
+            ->orderBy('patient_code')
             ->paginate($payload['per_page'] ?? 10);
     }
 

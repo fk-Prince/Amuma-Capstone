@@ -7,6 +7,7 @@ import {
     Clock,
     X,
     Plus,
+    Pencil,
 } from "lucide-vue-next";
 import { formatDate } from "~/utils/time";
 import {
@@ -352,6 +353,7 @@ function cancelToggle() {
 
 const emit = defineEmits<{
     (e: "add-medication"): void;
+    (e: "edit-medication", medication: Medication): void;
     (e: "mark-dose", payload: MarkDosePayload): void;
 }>();
 </script>
@@ -566,11 +568,24 @@ const emit = defineEmits<{
                         -
                         {{ getEndDate(med.startDate, med.durationLabel) }}
                     </p>
-                    <label
-                        class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
-                    >
-                        {{ med.durationLabel }}
-                    </label>
+                    <div class="flex items-center gap-2">
+                        <label
+                            class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 dark:border-white/10 dark:text-gray-400"
+                        >
+                            {{ med.durationLabel }}
+                        </label>
+
+                        <ActionButton
+                            v-if="isProvider && !disabled"
+                            extra-class="px-3 py-1.5 text-xs"
+                            :disabled="!canRecordMedication"
+                            :tooltip="canRecordMedication ? '' : recordMedicationBlockedReason"
+                            @click="$emit('edit-medication', med)"
+                        >
+                            <Pencil class="h-3.5 w-3.5" />
+                            Edit
+                        </ActionButton>
+                    </div>
                 </div>
             </div>
 

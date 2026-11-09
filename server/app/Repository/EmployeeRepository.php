@@ -4,7 +4,6 @@ namespace App\Repository;
 
 use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
-use App\Enums\RoleEnum;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Schedule;
@@ -107,18 +106,9 @@ class EmployeeRepository
             });
         }
 
-        $rank = collect(RoleEnum::cases())
-            ->map(fn(RoleEnum $role, int $index) => "when '{$role->value}' then {$index}")
-            ->implode(' ');
-
         $query
             ->orderByRaw(
-                "(select case eb.role_name {$rank} else 99 end
-                    from employee_branches eb
-                    join employees e on e.employee_id = eb.employee_id
-                    where e.user_id = users.user_id and eb.branch_id = ?
-                    limit 1)",
-                [$branchId]
+                '(select e.employee_code from employees e where e.user_id = users.user_id limit 1)'
             )
             ->orderBy('users.user_id');
 
