@@ -305,6 +305,7 @@ class NotificationService
                 'from_user_id' => $actor?->user_id ?? $employee['user_id'],
                 'message_type' => $messageType,
                 'message' => $message,
+                'reference_id' => $referenceId,
             ]);
 
             NotificationEvent::safe(new NotificationEvent(

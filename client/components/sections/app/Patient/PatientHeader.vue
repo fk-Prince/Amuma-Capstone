@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 import { calculateAge } from "~/utils/user";
 import {
@@ -8,7 +8,6 @@ import {
     MoveLeft,
     Pencil,
     Printer,
-    QrCode,
     Send,
     Share2,
     UserRound,
@@ -18,7 +17,6 @@ import type { PatientRetrieve } from "~/types/patient";
 import { formatDate } from "~/utils/time";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
-import QrCodeModal from "~/components/ui/QrCodeModal.vue";
 import { Modules } from "~/types/module";
 
 const { canUpdate, canExport } = usePermissions();
@@ -61,15 +59,7 @@ const facts = computed(() => [
     },
 ]);
 
-const showQr = ref(false);
-
 const actions = [
-    {
-        label: "Patient QR",
-        icon: QrCode,
-        permission: "export",
-        onClick: () => (showQr.value = true),
-    },
     { label: "Share", icon: Share2, permission: "export" },
     { label: "Send", icon: Send, permission: "export" },
     {
@@ -186,13 +176,5 @@ const actions = [
                 {{ action.label }}
             </ActionButton>
         </div>
-
-        <QrCodeModal
-            :show="showQr"
-            :token="patient.uuid"
-            mode="patient"
-            :title="`${patient.full_name} QR`"
-            @close="showQr = false"
-        />
     </div>
 </template>

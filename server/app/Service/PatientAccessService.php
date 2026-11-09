@@ -167,7 +167,7 @@ class PatientAccessService
             'Schedule',
             $user,
             $schedule,
-            (string) $schedule->schedule_id,
+            $schedule->schedule_code,
             ['admission'],
         );
 

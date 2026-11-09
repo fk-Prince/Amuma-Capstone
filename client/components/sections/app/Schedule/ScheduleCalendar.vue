@@ -376,11 +376,11 @@
                                 </div>
                                 <p
                                     v-if="placeLabel(schedule)"
-                                    class="mt-1 flex items-center gap-1 truncate text-[11px] text-slate-500 dark:text-gray-400"
+                                    class="mt-1 flex min-w-0 items-center gap-1 text-[11px] text-slate-500 dark:text-gray-400"
                                     :title="placeLabel(schedule)"
                                 >
                                     <MapPin class="h-3 w-3 shrink-0" />
-                                    {{ placeLabel(schedule) }}
+                                    <span class="min-w-0 truncate">{{ placeLabel(schedule) }}</span>
                                 </p>
                             </div>
 
@@ -518,10 +518,22 @@
                                 </dd>
                             </div>
 
-                            <div v-if="placeLabel(peek.schedule)" class="flex gap-2">
+                            <div
+                                v-if="placeLabel(peek.schedule) || peek.schedule.note"
+                                class="flex gap-2"
+                            >
                                 <dt><MapPin class="h-3.5 w-3.5 text-slate-400" /></dt>
-                                <dd class="text-slate-700 dark:text-gray-200">
-                                    {{ placeLabel(peek.schedule) }}
+                                <dd class="min-w-0 text-slate-700 dark:text-gray-200">
+                                    <template v-if="placeLabel(peek.schedule)">
+                                        {{ placeLabel(peek.schedule) }}
+                                    </template>
+                                    <span
+                                        v-if="peek.schedule.note"
+                                        class="mt-0.5 flex items-start gap-1 text-slate-500 dark:text-gray-400"
+                                    >
+                                        <Signpost class="mt-0.5 h-3 w-3 shrink-0" />
+                                        <span class="line-clamp-3">{{ peek.schedule.note }}</span>
+                                    </span>
                                 </dd>
                             </div>
 
@@ -586,13 +598,6 @@
                                     </span>
                                 </dd>
                             </div>
-
-                            <div v-if="peek.schedule.note" class="flex gap-2">
-                                <dt><StickyNote class="h-3.5 w-3.5 text-slate-400" /></dt>
-                                <dd class="line-clamp-3 text-slate-600 dark:text-gray-300">
-                                    {{ peek.schedule.note }}
-                                </dd>
-                            </div>
                         </dl>
 
                         <div class="flex gap-2 pt-1">
@@ -641,7 +646,7 @@ import {
     MapPin,
     Phone,
     Stethoscope,
-    StickyNote,
+    Signpost,
     Users,
     UserX,
 } from "lucide-vue-next";
