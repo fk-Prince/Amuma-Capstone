@@ -3,12 +3,9 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { ArrowRight } from "lucide-vue-next";
 import ThemedLogo from "~/components/ui/ThemedLogo.vue";
 
-// Shown right after the agency subscribes and pays. Approval comes later,
-// so this screen says "in review", not "welcome".
 const props = withDefaults(
     defineProps<{
         name?: string;
-        agencyName?: string;
         title?: string;
         subtitle?: string;
         buttonLabel?: string;
@@ -16,7 +13,6 @@ const props = withDefaults(
     }>(),
     {
         name: "",
-        agencyName: "",
         title: "Your subscription is in review",
         subtitle: "",
         buttonLabel: "Go to dashboard",
@@ -31,13 +27,15 @@ const emit = defineEmits<{
 const body = computed(
     () =>
         props.subtitle ||
-        `We received your payment${
-            props.agencyName ? ` for ${props.agencyName}` : ""
-        }. You can start using your dashboard while our team checks your details, usually within 1 to 2 business days.`,
+        "Your 2-week free trial has started. You can start using your dashboard while our team checks your details, usually within 1 to 2 business days.",
 );
 
 const steps = [
-    { label: "Payment received", hint: "", state: "done" },
+    {
+        label: "Free trial started",
+        hint: "Nothing is charged today",
+        state: "done",
+    },
     {
         label: "Dashboard access",
         hint: "You can use your dashboard now",
@@ -137,25 +135,20 @@ onBeforeUnmount(() => {
                     <li
                         v-for="(s, i) in steps"
                         :key="s.label"
-                        class="flex items-center gap-3 py-3 text-sm"
-                        :class="[
+                        class="flex items-center gap-3 py-3 text-sm text-slate-900 dark:text-white"
+                        :class="
                             i > 0
                                 ? 'border-t border-slate-900/10 dark:border-white/10'
-                                : '',
-                            s.state === 'next'
-                                ? 'text-slate-400 dark:text-gray-500'
-                                : 'text-slate-900 dark:text-white',
-                        ]"
+                                : ''
+                        "
                     >
                         <span
                             class="relative grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold"
-                            :class="{
-                                'bg-primary-500 text-white': s.state === 'done',
-                                'border-2 border-primary-500':
-                                    s.state === 'now',
-                                'border-2 border-dashed border-slate-300 dark:border-white/20':
-                                    s.state === 'next',
-                            }"
+                            :class="
+                                s.state === 'done'
+                                    ? 'bg-primary-500 text-white'
+                                    : 'border-2 border-primary-500'
+                            "
                         >
                             <template v-if="s.state === 'done'">✓</template>
                             <span
