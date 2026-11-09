@@ -140,7 +140,11 @@ class BranchRepository
 
                 $query->where(fn($match) => $match
                     ->where('branches.name', 'ILIKE', $search)
-                    ->orWhereHas('agencies', fn($agency) => $agency->where('name', 'ILIKE', $search)));
+                    ->orWhereHas('agencies', fn($agency) => $agency->where('name', 'ILIKE', $search))
+                    ->orWhereHas('services', fn($service) => $service
+                        ->whereIn('type', ['online', 'both'])
+                        ->where('is_available', true)
+                        ->where('service_name', 'ILIKE', $search)));
             })
 
             ->when(

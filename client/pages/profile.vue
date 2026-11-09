@@ -189,6 +189,15 @@
                                 </button>
 
                                 <button
+                                    v-if="avatarFile && avatarSource"
+                                    type="button"
+                                    class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    @click="showAvatarCrop = true"
+                                >
+                                    Adjust
+                                </button>
+
+                                <button
                                     v-if="avatarPreview"
                                     type="button"
                                     class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
@@ -737,6 +746,13 @@
                 </div>
             </template>
         </div>
+
+        <AvatarCropModal
+            :show="showAvatarCrop"
+            :file="avatarSource"
+            @close="showAvatarCrop = false"
+            @apply="applyAvatarCrop"
+        />
     </div>
 </template>
 
@@ -776,6 +792,7 @@ import {
 } from "lucide-vue-next";
 
 import SoundSettings from "~/components/ui/SoundSettings.vue";
+import AvatarCropModal from "~/components/ui/AvatarCropModal.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import PhoneInput from "~/components/ui/PhoneInput.vue";
@@ -886,6 +903,8 @@ const avatarInput = ref<HTMLInputElement | null>(null);
 const avatarFile = ref<File | null>(null);
 const avatarPreview = ref<string | null>(null);
 const avatarCleared = ref(false);
+const avatarSource = ref<File | null>(null);
+const showAvatarCrop = ref(false);
 
 const errors = ref<Record<string, string>>({});
 
@@ -1094,17 +1113,35 @@ const handleLocation = ({
 };
 
 const handleAvatar = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    target.value = "";
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+        errors.value = { ...errors.value, avatar: "Choose an image file." };
+        return;
+    }
+
+    avatarSource.value = file;
+    showAvatarCrop.value = true;
+};
+
+const applyAvatarCrop = (file: File) => {
+    if (avatarPreview.value?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview.value);
+    }
 
     avatarFile.value = file;
     avatarCleared.value = false;
     avatarPreview.value = URL.createObjectURL(file);
+    showAvatarCrop.value = false;
     clearError("avatar");
 };
 
 const removeAvatar = () => {
     avatarFile.value = null;
+    avatarSource.value = null;
     avatarPreview.value = null;
     avatarCleared.value = true;
 

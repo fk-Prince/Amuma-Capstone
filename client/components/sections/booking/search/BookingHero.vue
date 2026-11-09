@@ -55,12 +55,12 @@
                         class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-gray-300"
                     >
                         <Search class="h-3.5 w-3.5" />
-                        Provider name
+                        Provider or service
                     </label>
                     <input
                         v-model="searchName"
                         type="text"
-                        placeholder="Enter provider name"
+                        placeholder="e.g. AMUMA Care or Wound care"
                         class="mt-1 w-full min-w-0 border-none bg-transparent p-0 text-sm md:text-[15px] text-secondary outline-none placeholder:text-muted dark:text-white dark:placeholder:text-gray-400"
                     />
                 </div>

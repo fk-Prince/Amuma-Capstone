@@ -197,6 +197,10 @@ onBeforeUnmount(() => {
                         address.
                     </p>
 
+                    <p class="mt-1 text-xs text-muted dark:text-gray-400">
+                        Don't see it? Check your spam or junk folder.
+                    </p>
+
                     <p
                         v-if="resending"
                         class="mt-3 text-sm font-medium text-primary"

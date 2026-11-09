@@ -8,7 +8,7 @@
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"
-                        placeholder="Search provider name"
+                        placeholder="Search provider or service"
                         input-class="px-4 py-2.5 rounded-full"
                     />
                 </div>
@@ -371,7 +371,7 @@ border-b border-slate-200/50 bg-white shadow-sm sticky top-0 z-40 dark:bg-second
                     <BaseInput
                         v-model="searchName"
                         :is-search="true"
-                        placeholder="Search provider name"
+                        placeholder="Search provider or service"
                         input-class="px-4 py-2.5 rounded-lg"
                     />
                 </div>
