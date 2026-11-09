@@ -238,13 +238,14 @@
                                 </span>
 
                                 <span
-                                    v-if="latestVisit(service)"
+                                    v-if="startedAt(service)"
                                     class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+                                    title="When the first staff member timed in"
                                 >
                                     <span
                                         class="h-1.5 w-1.5 rounded-full bg-emerald-500"
                                     />
-                                    {{ formatTimestamp(latestVisit(service)?.in_timestamp) }}
+                                    Started {{ formatTimestamp(startedAt(service)) }}
                                 </span>
                             </div>
                         </div>
@@ -346,6 +347,7 @@
             :mode="qrMode"
             :caregivers="qrCaregivers"
             :checked-in="qrCheckedIn"
+            :present="qrPresent"
             description="Show this code to the care team to scan."
             @close="closeQr"
             @scanned="onQrScanned"
@@ -451,18 +453,14 @@ function dayBadge(schedule: ScheduleItem) {
     return date === toLocalDateString(tomorrow) ? "Tomorrow" : null;
 }
 
-function latestVisit(service: ScheduleServiceItem) {
-    const visits = (service.assignees ?? []).flatMap((a) => a.online ?? []);
-    if (!visits.length) return null;
+function startedAt(service: ScheduleServiceItem) {
+    const times = (service.assignees ?? [])
+        .flatMap((a) => a.online ?? [])
+        .map((row) => row.in_timestamp)
+        .filter((value): value is string => !!value)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-    return visits.reduce((latest, visit) => {
-        if (!visit.in_timestamp) return latest;
-        if (!latest?.in_timestamp) return visit;
-
-        return new Date(visit.in_timestamp) > new Date(latest.in_timestamp)
-            ? visit
-            : latest;
-    }, visits[0]);
+    return times[0] ?? null;
 }
 
 const expandedStaff = ref<Set<number>>(new Set());
@@ -490,7 +488,9 @@ function staffState(assignee: ScheduleAssignee) {
 
     if (last) {
         return {
-            label: `Attended ${formatTimestamp(last.in_timestamp)}`,
+            label: last.out_timestamp
+                ? `In ${formatTimestamp(last.in_timestamp)} · Out ${formatClock(last.out_timestamp)}`
+                : `Attended ${formatTimestamp(last.in_timestamp)}`,
             class: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
         };
     }
@@ -617,6 +617,9 @@ const qrCheckedIn = ref<{
     name: string;
     in_timestamp: string | null;
 } | null>(null);
+const qrPresent = ref<
+    { employee_id: number; name: string; in_timestamp: string | null }[]
+>([]);
 
 const medicalServiceOf = (schedule: ScheduleItem) =>
     (schedule.services ?? []).find((service) => service.type === "Medical") ??
@@ -660,6 +663,7 @@ async function openQr(type: "in" | "out", schedule: ScheduleItem) {
         qrToken.value = res?.token ?? res?.data?.token ?? null;
         qrCaregivers.value = res?.caregivers ?? [];
         qrCheckedIn.value = res?.checked_in ?? null;
+        qrPresent.value = res?.present ?? [];
     } catch (err: any) {
         showQrModal.value = false;
         error(err?.message ?? "Unable to create the QR code.");
@@ -679,6 +683,18 @@ function onQrScanned() {
     success("The care team scanned your code.");
     closeQr();
     emit("refresh");
+}
+
+function formatClock(value?: string | null) {
+    if (!value) return "—";
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "—";
+
+    return parsed.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+    });
 }
 
 function formatTimestamp(value?: string | null) {

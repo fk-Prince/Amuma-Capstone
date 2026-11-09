@@ -62,7 +62,9 @@ class AttendanceService
             throw new Exception('This visit is already completed. Change who attended from Schedule Details.', 409);
         }
 
-        DB::transaction(function () use ($schedule, $services, $present, $scannerId, $scanner, $wasCheckedIn) {
+        $timedIn = [];
+
+        DB::transaction(function () use ($schedule, $services, $present, $scannerId, $scanner, $wasCheckedIn, &$timedIn) {
             foreach ($services as $scheduleService) {
                 foreach ($scheduleService->assigned as $assigned) {
                     $employeeId = (int) $assigned->employee_id;
@@ -85,6 +87,10 @@ class AttendanceService
                         $employeeId === $scannerId ? Attendance::TYPE_SCANNED : Attendance::TYPE_MARKED,
                         $employeeId === $scannerId ? null : 'Marked present by ' . ($scanner?->full_name ?? 'staff'),
                     );
+
+                    $timedIn[$employeeId] = $employeeId === $scannerId
+                        ? $scanner?->full_name
+                        : $assigned->employee?->full_name;
                 }
             }
 
@@ -93,8 +99,12 @@ class AttendanceService
             }
         });
 
+        $names = $this->joinNames(array_filter($timedIn));
+
         if (!$wasCheckedIn) {
-            $this->notifyFamilyOfVisit($schedule, 'has started', $scanner, $actor);
+            $this->notifyFamilyOfVisit($schedule, ' has started' . ($names ? " with {$names}" : '') . '.', $actor);
+        } elseif ($names) {
+            $this->notifyFamilyOfVisit($schedule, ": {$names} timed in.", $actor);
         }
 
         [$schedule, $services] = $this->resolvePatientVisit($payload['patient_uuid'], $scannerId);
@@ -131,6 +141,9 @@ class AttendanceService
 
             $this->attendanceRepository->closeOpen($mine->pluck('schedule_assigned_id')->all());
 
+            $scanner = Employee::find($scannerId);
+            $this->notifyFamilyOfVisit($schedule, ': ' . ($scanner?->full_name ?? 'A staff member') . ' timed out.', $actor);
+
             return [
                 'schedule_id' => $schedule->schedule_id,
                 'schedule_code' => $schedule->schedule_code,
@@ -146,7 +159,7 @@ class AttendanceService
             $schedule->update(['status' => Schedule::STATUS_COMPLETED]);
         });
 
-        $this->notifyFamilyOfVisit($schedule, 'has been completed', null, $actor);
+        $this->notifyFamilyOfVisit($schedule, ' has been completed.', $actor);
 
         return [
             'schedule_id' => $schedule->schedule_id,
@@ -356,7 +369,18 @@ class AttendanceService
         ];
     }
 
-    private function notifyFamilyOfVisit(Schedule $schedule, string $change, ?Employee $scanner, ?User $actor): void
+    private function joinNames(array $names): string
+    {
+        $names = array_values($names);
+
+        if (count($names) <= 1) {
+            return $names[0] ?? '';
+        }
+
+        return implode(', ', array_slice($names, 0, -1)) . ' and ' . end($names);
+    }
+
+    private function notifyFamilyOfVisit(Schedule $schedule, string $change, ?User $actor): void
     {
         try {
             $patient = $schedule->patient;
@@ -367,8 +391,7 @@ class AttendanceService
 
             $this->notificationService->notifyPatientAccess(
                 $patient,
-                "{$patient->display_name}'s medical visit {$schedule->schedule_code} {$change}"
-                    . ($scanner ? " with {$scanner->full_name}" : '') . '.',
+                "{$patient->display_name}'s medical visit {$schedule->schedule_code}{$change}",
                 'Schedule',
                 $actor,
             );
@@ -704,6 +727,8 @@ class AttendanceService
 
             $this->startAdlSchedule($assigned->schedule_services_id);
 
+            DB::afterCommit(fn() => $this->notifyFamilyOfAdlScan($assigned->schedule_services_id, (int) $assigned->employee_id, 'timed in'));
+
             broadcast(new QrScanned($payload['token'], 'in'));
 
             return $session;
@@ -749,6 +774,14 @@ class AttendanceService
 
             $this->completeAdlScheduleIfDue($session->assigned->schedule_services_id);
 
+            $scheduleServicesId = $session->assigned->schedule_services_id;
+            $employeeId = (int) $session->assigned->employee_id;
+            DB::afterCommit(fn() => $this->notifyFamilyOfAdlScan(
+                $scheduleServicesId,
+                $employeeId,
+                $dueSchedule ? 'timed out. The visit is now complete' : 'timed out'
+            ));
+
             broadcast(new QrScanned($payload['token'], 'out'));
 
             return $session;
@@ -782,7 +815,35 @@ class AttendanceService
                 'name' => $checkedIn->full_name,
                 'in_timestamp' => $session->in_timestamp,
             ] : null,
+            'present' => $this->presentStaff($scheduleServicesId),
         ];
+    }
+
+    private function presentStaff(int $scheduleServicesId): array
+    {
+        $scheduleService = ScheduleService::find($scheduleServicesId);
+
+        $serviceIds = $scheduleService?->type === ScheduleService::TYPE_MEDICAL
+            ? ScheduleService::where('schedule_id', $scheduleService->schedule_id)
+                ->where('type', ScheduleService::TYPE_MEDICAL)
+                ->pluck('schedule_services_id')
+            : collect([$scheduleServicesId]);
+
+        return Attendance::with('assigned.employee')
+            ->whereHas('assigned', fn($query) => $query->whereIn('schedule_services_id', $serviceIds))
+            ->whereNotNull('in_timestamp')
+            ->whereNull('out_timestamp')
+            ->orderBy('in_timestamp')
+            ->get()
+            ->unique(fn(Attendance $row) => $row->assigned?->employee_id)
+            ->filter(fn(Attendance $row) => $row->assigned?->employee)
+            ->map(fn(Attendance $row) => [
+                'employee_id' => $row->assigned->employee_id,
+                'name' => $row->assigned->employee->full_name,
+                'in_timestamp' => $row->in_timestamp,
+            ])
+            ->values()
+            ->all();
     }
 
     private function activeSessionFor(int $scheduleServicesId): ?Attendance
@@ -825,6 +886,33 @@ class AttendanceService
 
         if (!$exists) {
             throw new Exception('No active caregiver is assigned to this schedule.', 404);
+        }
+    }
+
+    private function notifyFamilyOfAdlScan(int $scheduleServicesId, int $employeeId, string $change): void
+    {
+        try {
+            $schedule = ScheduleService::with('schedule.patient')->find($scheduleServicesId)?->schedule;
+            $patient = $schedule?->patient;
+
+            if (!$patient) {
+                return;
+            }
+
+            $employee = Employee::with('users')->find($employeeId);
+
+            $this->notificationService->notifyPatientAccess(
+                $patient,
+                "{$patient->display_name}'s daily care (ADL) visit {$schedule->schedule_code}: "
+                    . ($employee?->full_name ?? 'The caregiver') . " {$change}.",
+                'Schedule',
+                $employee?->users,
+            );
+        } catch (\Throwable $e) {
+            Log::error('ADL scan family notice failed', [
+                'schedule_services_id' => $scheduleServicesId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

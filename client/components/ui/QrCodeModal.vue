@@ -33,6 +33,7 @@ const props = withDefaults(
         extraData?: Record<string, unknown>;
         caregivers?: QrCaregiver[];
         checkedIn?: QrCheckedIn | null;
+        present?: QrCheckedIn[];
     }>(),
     {
         mode: "check-in",
@@ -41,7 +42,16 @@ const props = withDefaults(
         extraData: () => ({}),
         caregivers: () => [],
         checkedIn: null,
+        present: () => [],
     },
+);
+
+const presentList = computed(() =>
+    props.present.length
+        ? props.present
+        : props.checkedIn
+          ? [props.checkedIn]
+          : [],
 );
 
 const emit = defineEmits<{
@@ -414,29 +424,39 @@ onUnmounted(() => {
                     </p>
 
                     <div
-                        v-if="checkedIn"
-                        class="mt-4 flex items-center justify-between gap-3 rounded-xl border border-accent-100 bg-accent-50/60 px-4 py-3"
+                        v-if="presentList.length"
+                        class="mt-4 rounded-xl border border-accent-100 bg-accent-50/60 px-4 py-3"
                     >
-                        <div class="min-w-0">
-                            <p
-                                class="text-[10px] font-semibold uppercase tracking-wider text-accent-600"
-                            >
-                                Currently checked in
-                            </p>
-
-                            <p
-                                class="truncate text-sm font-semibold text-gray-900"
-                            >
-                                {{ checkedIn.name }}
-                            </p>
-                        </div>
-
-                        <span
-                            v-if="formatCheckInTime(checkedIn.in_timestamp)"
-                            class="shrink-0 text-xs text-gray-500"
+                        <p
+                            class="text-[10px] font-semibold uppercase tracking-wider text-accent-600"
                         >
-                            since {{ formatCheckInTime(checkedIn.in_timestamp) }}
-                        </span>
+                            Currently checked in
+                            <template v-if="presentList.length > 1">
+                                ({{ presentList.length }})
+                            </template>
+                        </p>
+
+                        <ul class="mt-1 space-y-1">
+                            <li
+                                v-for="person in presentList"
+                                :key="person.employee_id"
+                                class="flex items-center justify-between gap-3"
+                            >
+                                <span
+                                    class="min-w-0 truncate text-sm font-semibold text-gray-900"
+                                >
+                                    {{ person.name }}
+                                </span>
+
+                                <span
+                                    v-if="formatCheckInTime(person.in_timestamp)"
+                                    class="shrink-0 text-xs text-gray-500"
+                                >
+                                    since
+                                    {{ formatCheckInTime(person.in_timestamp) }}
+                                </span>
+                            </li>
+                        </ul>
                     </div>
 
                     <!-- Demo clock-in/out, hidden for now

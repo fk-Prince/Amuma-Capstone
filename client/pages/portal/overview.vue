@@ -789,8 +789,9 @@
                     :mode="qrDirection === 'in' ? 'clock-in' : 'clock-out'"
                     :caregivers="qrCaregivers"
                     :checked-in="qrCheckedIn"
+                    :present="qrPresent"
                     description="Show this code to the caregiver to scan on arrival."
-                    @scanned="clearQr"
+                    @scanned="onQrScanned"
                     @close="closeQrModal"
                 />
             </div>
@@ -1348,7 +1349,7 @@ const recentScheduleSubtitle = computed(() => {
 
 const { scheduleStatusTheme, scheduleStatusLabel } = useSchedule();
 
-const { error: showError } = useToast();
+const { error: showError, success: showSuccess } = useToast();
 
 function initials(name?: string | null) {
     if (!name) {
@@ -1465,6 +1466,10 @@ const qrCheckedIn = ref<{
     name: string;
     in_timestamp: string | null;
 } | null>(null);
+
+const qrPresent = ref<
+    { employee_id: number; name: string; in_timestamp: string | null }[]
+>([]);
 
 const showQrModal = ref(false);
 
@@ -1817,6 +1822,7 @@ async function generateAttendanceQr(direction: "in" | "out") {
         qrToken.value = res?.token ?? res?.data?.token ?? null;
         qrCaregivers.value = res?.caregivers ?? [];
         qrCheckedIn.value = res?.checked_in ?? null;
+        qrPresent.value = res?.present ?? [];
         qrExpiresAt.value = qrToken.value
             ? Date.now() + (Number(res?.expires_in) || 300) * 1000
             : null;
@@ -1844,6 +1850,12 @@ function closeQrModal() {
     showQrModal.value = false;
 }
 
+function onQrScanned() {
+    showSuccess("The care team scanned your code.");
+    clearQr();
+    loadPatientData({ silent: true });
+}
+
 function clearQr() {
     stopQrTimer();
 
@@ -1856,8 +1868,10 @@ function clearQr() {
     qrExpiresAt.value = null;
 }
 
-async function loadPatientData() {
-    isLoading.value = true;
+async function loadPatientData(options?: { silent?: boolean } | Event) {
+    const silent = !!(options && "silent" in options && options.silent);
+
+    if (!silent) isLoading.value = true;
 
     loadError.value = null;
 
