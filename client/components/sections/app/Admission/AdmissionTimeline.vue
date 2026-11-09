@@ -514,13 +514,24 @@ function sortedInvoices(invoices: InvoiceAccommodation[]) {
     return ordered;
 }
 
+const CLOSED_ADMISSION_STATUSES = [
+    "discharged",
+    "cancelled",
+    "rejected",
+    "completed",
+];
+
+function isAdmissionClosed(admission: Admission) {
+    return CLOSED_ADMISSION_STATUSES.includes(String(admission.status ?? ""));
+}
+
 function isInEffect(invoice: InvoiceAccommodation, admission: Admission) {
     const currentId = admission.current_period?.admission_period_id;
 
     return (
         !!currentId &&
         invoice.admission_period_id === currentId &&
-        admission.status !== "discharged"
+        !isAdmissionClosed(admission)
     );
 }
 
@@ -532,6 +543,7 @@ function isUpcoming(invoice: InvoiceAccommodation, admission: Admission) {
     return (
         !isCancelled(invoice) &&
         !isInEffect(invoice, admission) &&
+        !isAdmissionClosed(admission) &&
         invoice.accommodation_status !== "inactive"
     );
 }
@@ -541,7 +553,12 @@ function coverageLabel(invoice: InvoiceAccommodation, admission: Admission) {
 
     if (isInEffect(invoice, admission)) return "In effect";
 
-    if (invoice.accommodation_status === "inactive") return "Ended";
+    if (
+        invoice.accommodation_status === "inactive" ||
+        isAdmissionClosed(admission)
+    ) {
+        return "Ended";
+    }
 
     if (invoice.accommodation_status === "pending") return "Awaiting payment";
 
@@ -557,7 +574,10 @@ function coverageClass(invoice: InvoiceAccommodation, admission: Admission) {
         return "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300";
     }
 
-    if (invoice.accommodation_status === "inactive") {
+    if (
+        invoice.accommodation_status === "inactive" ||
+        isAdmissionClosed(admission)
+    ) {
         return "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-400";
     }
 

@@ -734,7 +734,15 @@
                                                     )
                                                 }}
 
-                                                <span v-if="admission.end_date">
+                                                <span
+                                                    v-if="
+                                                        admission.status ===
+                                                        'cancelled'
+                                                    "
+                                                >
+                                                    — Cancelled
+                                                </span>
+                                                <span v-else-if="admission.end_date">
                                                     — Ended
                                                     {{
                                                         formatDate(
@@ -855,7 +863,15 @@
                                             timelineAdmission.admitted_at,
                                         )
                                     }}
-                                    <span v-if="timelineAdmission.end_date">
+                                    <span
+                                        v-if="
+                                            timelineAdmission.status ===
+                                            'cancelled'
+                                        "
+                                    >
+                                        — Cancelled
+                                    </span>
+                                    <span v-else-if="timelineAdmission.end_date">
                                         — Ended
                                         {{
                                             formatDate(
