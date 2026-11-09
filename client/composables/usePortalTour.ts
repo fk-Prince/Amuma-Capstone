@@ -24,6 +24,9 @@ const isVisible = (selector: string) => {
 
 export const usePortalTour = (sidebarOpen: Ref<boolean>) => {
     const user = useAuthUser();
+    let active: ReturnType<typeof driver> | null = null;
+    let interrupted = false;
+    let starting = false;
 
     const complete = async () => {
         if (!user.value) return;
@@ -45,11 +48,20 @@ export const usePortalTour = (sidebarOpen: Ref<boolean>) => {
     };
 
     const start = async () => {
+        if (active || starting) return;
+        starting = true;
+
         const mobile = window.matchMedia("(max-width: 1023px)").matches;
 
         if (mobile) {
             sidebarOpen.value = true;
             await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+
+        starting = false;
+        if (!window.location.pathname.startsWith("/portal")) {
+            if (mobile) sidebarOpen.value = false;
+            return;
         }
 
         const steps: DriveStep[] = [
@@ -83,13 +95,27 @@ export const usePortalTour = (sidebarOpen: Ref<boolean>) => {
             stageRadius: 12,
             overlayClickBehavior: () => {},
             onDestroyed: () => {
+                active = null;
                 if (mobile) sidebarOpen.value = false;
+                if (interrupted) {
+                    interrupted = false;
+                    return;
+                }
                 complete();
             },
         });
 
+        active = tour;
         tour.drive();
     };
 
-    return { start };
+    const stop = () => {
+        if (!active) return;
+        interrupted = true;
+        active.destroy();
+    };
+
+    const isActive = () => !!active || starting;
+
+    return { start, stop, isActive };
 };

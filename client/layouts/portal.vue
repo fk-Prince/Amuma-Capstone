@@ -56,7 +56,8 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import PortalSidebar from "~/components/sections/PortalSidebar.vue";
 import PortalHeader from "~/components/sections/PortalHeader.vue";
 import SandboxNotice from "~/components/sections/SandboxNotice.vue";
@@ -67,20 +68,29 @@ import { usePortalTour } from "~/composables/usePortalTour";
 const isOpen = ref(false);
 const authReady = useAuthReady();
 const user = useAuthUser();
+const route = useRoute();
 const tour = usePortalTour(isOpen);
 
-let tourStarted = false;
+const onPortal = () => route.path.startsWith("/portal");
 
 watch(
-    [authReady, user],
+    [authReady, user, () => route.path],
     async ([ready, current]) => {
-        if (import.meta.server || tourStarted || !ready || !current) return;
+        if (import.meta.server) return;
+
+        if (!onPortal()) {
+            tour.stop();
+            return;
+        }
+
+        if (tour.isActive() || !ready || !current) return;
         if (current.onboarding?.portal?.main) return;
 
-        tourStarted = true;
         await nextTick();
-        tour.start();
+        if (onPortal() && !tour.isActive()) tour.start();
     },
     { immediate: true },
 );
+
+onBeforeUnmount(() => tour.stop());
 </script>

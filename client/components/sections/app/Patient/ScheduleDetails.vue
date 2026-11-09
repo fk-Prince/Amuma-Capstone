@@ -555,25 +555,15 @@
                             amount before it's cancelled.
                         </p>
 
-                        <div>
-                            <BaseInput
-                                :model-value="form.note"
-                                label="Note"
-                                mode="textarea"
-                                :rows="3"
-                                :text-max="NOTE_MAX_LENGTH"
-                                placeholder="Add a note for this schedule"
-                                @update:model-value="update('note', $event)"
-                            />
-
-                            <div class="mt-1 flex justify-end">
-                                <span
-                                    class="text-[11px] text-slate-400 dark:text-gray-500"
-                                >
-                                    {{ form.note.length }}/{{ NOTE_MAX_LENGTH }}
-                                </span>
-                            </div>
-                        </div>
+                        <BaseInput
+                            :model-value="form.note"
+                            label="Location note"
+                            mode="textarea"
+                            :rows="3"
+                            :text-max="NOTE_MAX_LENGTH"
+                            placeholder="e.g. Near the BLVD, blue gate"
+                            @update:model-value="update('note', $event)"
+                        />
                     </div>
 
                     <div
@@ -686,7 +676,7 @@
                         :class="leftColClass"
                     >
                         <p class="text-xs text-slate-400 dark:text-gray-500">
-                            Note
+                            Location note
                         </p>
                         <p
                             class="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-700 dark:text-gray-400"

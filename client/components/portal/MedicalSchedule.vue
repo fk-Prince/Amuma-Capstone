@@ -300,7 +300,7 @@
                     >
                         <button
                             type="button"
-                            :disabled="hasStarted(schedule) || generatingFor === schedule.schedule_id"
+                            :disabled="generatingFor === schedule.schedule_id"
                             class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary-600 py-2 text-xs font-semibold text-primary-600 transition hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-transparent disabled:text-gray-400 dark:text-primary-300 dark:disabled:border-white/10 dark:disabled:text-gray-500"
                             @click="openQr('in', schedule)"
                         >

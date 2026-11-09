@@ -447,10 +447,6 @@ class AttendanceService
 
         $started = $this->medicalVisitStarted($schedule);
 
-        if ($type === 'in' && $started) {
-            throw new Exception('This visit has already started. Use the Time-Out QR when the visit ends.', 409);
-        }
-
         if ($type === 'out' && !$started) {
             throw new Exception("The care team hasn't timed in yet.", 409);
         }
