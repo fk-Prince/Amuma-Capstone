@@ -224,9 +224,10 @@ class CaregiverShiftRepository
                                     "schedules.scheduled_at + (schedule_services.duration * interval '1 hour') > ?",
                                     [$day->copy()->startOfDay()]
                                 ))))
-                    ->whereNotIn('status', ['cancelled', 'missed'])
+                    ->whereNotIn('status', ['cancelled', 'missed', 'completed'])
                     ->whereHas('patient', fn($patient) => $patient->where('branch_id', $branchId))
             )
+            ->tap(fn($query) => ScheduleRepository::stillOnDuty($query))
             ->with(['scheduleService.service', 'scheduleService.schedule.patient'])
             ->get();
     }
