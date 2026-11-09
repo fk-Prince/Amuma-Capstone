@@ -287,6 +287,52 @@ const onDutyCount = computed(
     () => caregivers.value.filter((c) => c.onDuty).length,
 );
 
+const residentRows = computed(() => {
+    const groups = new Map<
+        number,
+        { resident: ShiftBoardResident; shifts: ShiftBoardShift[] }
+    >();
+
+    for (const shift of visibleShifts.value) {
+        const id = shift.resident.admission_id;
+
+        if (!groups.has(id)) {
+            groups.set(id, { resident: shift.resident, shifts: [] });
+        }
+
+        groups.get(id)!.shifts.push(shift);
+    }
+
+    return [...groups.values()]
+        .map((group) => ({
+            ...group,
+            caregiverCount: new Set(
+                group.shifts.map((s) => s.caregiver.employee_id),
+            ).size,
+            layout: layoutBars(group.shifts),
+            coveredMinutes: dutyMinutes(group.shifts),
+            attended: group.shifts.some(isOnDuty),
+        }))
+        .sort(
+            (a, b) =>
+                (a.resident.room_no ?? "").localeCompare(
+                    b.resident.room_no ?? "",
+                    undefined,
+                    { numeric: true },
+                ) ||
+                a.resident.full_name.localeCompare(b.resident.full_name),
+        );
+});
+
+const overLimitCaregivers = computed(
+    () =>
+        new Set(
+            caregivers.value
+                .filter((row) => row.dutyMinutes > dutyLimitMinutes.value)
+                .map((row) => row.caregiver.employee_id),
+        ),
+);
+
 const residentsCovered = computed(
     () =>
         new Set(visibleShifts.value.map((s) => s.resident.admission_id)).size,
@@ -604,19 +650,22 @@ const residents = computed(() => {
 
                     <div class="space-y-2">
                         <div
-                            v-for="row in caregivers"
-                            :key="row.caregiver.employee_id"
+                            v-for="row in residentRows"
+                            :key="row.resident.admission_id"
                             class="flex items-center gap-4"
                         >
-                            <div class="flex w-56 shrink-0 items-center gap-2.5">
+                            <button
+                                type="button"
+                                class="flex w-56 shrink-0 items-center gap-2.5 rounded-lg text-left"
+                                @click="openResident(row.resident)"
+                            >
                                 <div class="relative">
                                     <MessageAvatar
-                                        :src="row.caregiver.avatar"
-                                        :name="row.caregiver.full_name"
+                                        :name="row.resident.full_name"
                                     />
 
                                     <span
-                                        v-if="row.onDuty"
+                                        v-if="row.attended"
                                         class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 dark:border-secondary"
                                     />
                                 </div>
@@ -625,25 +674,25 @@ const residents = computed(() => {
                                     <p
                                         class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                     >
-                                        {{ row.caregiver.full_name ?? "Caregiver" }}
+                                        {{ row.resident.full_name }}
                                     </p>
 
                                     <p
                                         class="truncate text-[11px]"
                                         :class="
-                                            row.dutyMinutes > dutyLimitMinutes
-                                                ? 'text-rose-500 dark:text-rose-300'
+                                            row.coveredMinutes < DAY
+                                                ? 'text-amber-600 dark:text-amber-300'
                                                 : 'text-slate-400 dark:text-gray-500'
                                         "
                                     >
-                                        {{ row.residents }} resident{{
-                                            row.residents === 1 ? "" : "s"
-                                        }}
-                                        · {{ formatHours(row.dutyMinutes) }} on
-                                        duty
+                                        <template v-if="roomLabel(row.resident)">
+                                            {{ roomLabel(row.resident) }} ·
+                                        </template>
+                                        {{ formatHours(row.coveredMinutes) }}
+                                        covered
                                     </p>
                                 </div>
-                            </div>
+                            </button>
 
                             <div
                                 class="relative flex-1 overflow-hidden rounded-lg bg-slate-50 dark:bg-white/5"
@@ -660,13 +709,18 @@ const residents = computed(() => {
                                     v-for="bar in row.layout.bars"
                                     :key="bar.key"
                                     type="button"
-                                    :title="`${bar.shift.resident.full_name} · ${formatTime(bar.shift.start_time)} – ${formatTime(bar.shift.end_time)}${bar.shift.note ? ` · ${bar.shift.note}` : ''}`"
+                                    :title="`${bar.shift.caregiver.full_name ?? 'Caregiver'} · ${formatTime(bar.shift.start_time)} – ${formatTime(bar.shift.end_time)}${overLimitCaregivers.has(bar.shift.caregiver.employee_id) ? ' · over the daily duty limit' : ''}${bar.shift.note ? ` · ${bar.shift.note}` : ''}`"
                                     class="absolute flex min-w-0 items-center gap-1.5 overflow-hidden rounded-md px-2 text-left text-[11px] font-medium transition hover:brightness-95"
-                                    :class="
+                                    :class="[
                                         isOnDuty(bar.shift)
                                             ? 'bg-primary-500 text-white'
-                                            : 'bg-primary-100 text-primary-800 dark:bg-primary-500/25 dark:text-primary-100'
-                                    "
+                                            : 'bg-primary-100 text-primary-800 dark:bg-primary-500/25 dark:text-primary-100',
+                                        overLimitCaregivers.has(
+                                            bar.shift.caregiver.employee_id,
+                                        )
+                                            ? 'ring-2 ring-inset ring-rose-400'
+                                            : '',
+                                    ]"
                                     :style="{
                                         top: `${LANE_GAP + bar.lane * (LANE_HEIGHT + LANE_GAP)}px`,
                                         height: `${LANE_HEIGHT}px`,
@@ -676,14 +730,12 @@ const residents = computed(() => {
                                     @click="openResident(bar.shift.resident)"
                                 >
                                     <span class="truncate">
-                                        {{ bar.shift.resident.full_name }}
+                                        {{ bar.shift.caregiver.full_name ?? "Caregiver" }}
                                     </span>
 
-                                    <span
-                                        v-if="bar.shift.resident.room_no"
-                                        class="shrink-0 opacity-75"
-                                    >
-                                        {{ bar.shift.resident.room_no }}
+                                    <span class="shrink-0 opacity-75">
+                                        {{ formatTime(bar.shift.start_time) }} –
+                                        {{ formatTime(bar.shift.end_time) }}
                                     </span>
                                 </button>
 
@@ -700,38 +752,40 @@ const residents = computed(() => {
                     class="divide-y divide-slate-100 md:hidden dark:divide-white/10"
                 >
                     <li
-                        v-for="row in caregivers"
-                        :key="row.caregiver.employee_id"
+                        v-for="row in residentRows"
+                        :key="row.resident.admission_id"
                         class="space-y-2.5 p-4"
                     >
                         <div class="flex items-center gap-2.5">
-                            <MessageAvatar
-                                :src="row.caregiver.avatar"
-                                :name="row.caregiver.full_name"
-                            />
+                            <MessageAvatar :name="row.resident.full_name" />
 
                             <div class="min-w-0 flex-1">
                                 <p
                                     class="truncate text-sm font-semibold text-slate-800 dark:text-white"
                                 >
-                                    {{ row.caregiver.full_name ?? "Caregiver" }}
+                                    {{ row.resident.full_name }}
                                 </p>
 
                                 <p
-                                    class="text-[11px] text-slate-400 dark:text-gray-500"
+                                    class="text-[11px]"
+                                    :class="
+                                        row.coveredMinutes < DAY
+                                            ? 'text-amber-600 dark:text-amber-300'
+                                            : 'text-slate-400 dark:text-gray-500'
+                                    "
                                 >
-                                    {{ row.residents }} resident{{
-                                        row.residents === 1 ? "" : "s"
-                                    }}
-                                    · {{ formatHours(row.dutyMinutes) }} on duty
+                                    <template v-if="roomLabel(row.resident)">
+                                        {{ roomLabel(row.resident) }} ·
+                                    </template>
+                                    {{ formatHours(row.coveredMinutes) }} covered
                                 </p>
                             </div>
 
                             <span
-                                v-if="row.onDuty"
+                                v-if="row.attended"
                                 class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                             >
-                                On duty
+                                Attended now
                             </span>
                         </div>
 
@@ -757,10 +811,7 @@ const residents = computed(() => {
                             <p
                                 class="mt-0.5 truncate text-[11px] text-slate-500 dark:text-gray-400"
                             >
-                                {{ shift.resident.full_name }}
-                                <template v-if="roomLabel(shift.resident)">
-                                    · {{ roomLabel(shift.resident) }}
-                                </template>
+                                {{ shift.caregiver.full_name ?? "Caregiver" }}
                             </p>
                         </button>
                     </li>
