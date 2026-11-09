@@ -191,7 +191,7 @@ const steps = [
     {
         icon: Sparkles,
         title: "Start your free trial",
-        text: "No payment needed to start. Or pay by card or GCash if you prefer.",
+        text: "Only a card is needed to start. You won't be charged during the trial.",
         tag: "2 weeks free",
     },
     {

@@ -46,7 +46,6 @@ import BookingNavbar from "~/components/sections/BookingNavbar.vue";
 import AppFooter from "~/components/sections/AppFooter.vue";
 import SubscribeAuthModal from "~/components/ui/SubscribeAuthModal.vue";
 import { navList as defaultNavList } from "~/config/publicMenu";
-import { useLandingAudience } from "~/composables/useLandingAudience";
 import { useSandbox } from "~/composables/useSandbox";
 import { isSandboxBlockedPath } from "~/utils/sandbox";
 
@@ -57,17 +56,14 @@ const navInFlow = computed(
     () => isBookingRoute.value && route.meta.navVariant === 6,
 );
 
-const { landingPath } = useLandingAudience();
 const { isSandbox } = useSandbox();
 
 const navList = computed(() => {
     const custom = route.meta.navList as typeof defaultNavList | undefined;
     if (custom) return custom;
 
-    return defaultNavList
-        .filter((item) => !isSandbox.value || !isSandboxBlockedPath(item.to))
-        .map((item) =>
-            item.to === "/" ? { ...item, to: landingPath.value } : item,
-        );
+    return defaultNavList.filter(
+        (item) => !isSandbox.value || !isSandboxBlockedPath(item.to),
+    );
 });
 </script>

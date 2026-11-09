@@ -1,4 +1,4 @@
-import { Home, Package, CalendarCheck, BookOpen, Building2, Info, Star, LifeBuoy } from "lucide-vue-next";
+import { Home, Package, CalendarCheck, BookOpen, Building2, Info, Star, LifeBuoy, Briefcase, HeartHandshake } from "lucide-vue-next";
 
 export const navList = [
     { label: "Home", to: "/", icon: Home },
@@ -20,6 +20,18 @@ export const navList = [
                 to: "/resources/support",
                 icon: LifeBuoy,
                 description: "Send a question or report a problem to the AMUMA team",
+            },
+            {
+                label: "For Agencies",
+                to: "/agencies",
+                icon: Briefcase,
+                description: "How AMUMA helps care agencies run scheduling, billing, and staff",
+            },
+            {
+                label: "Family Portal",
+                to: "/families",
+                icon: HeartHandshake,
+                description: "Book care, follow your loved one's stay, and pay online",
             },
         ],
     },
