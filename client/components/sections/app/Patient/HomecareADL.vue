@@ -252,6 +252,18 @@
                                 </ActionButton>
 
                                 <ActionButton
+                                    v-if="
+                                        canHandOver(log) &&
+                                        isAssignedToMe(log) &&
+                                        isMyShift(log)
+                                    "
+                                    variant="outline"
+                                    @click="showScanner = true"
+                                >
+                                    Scan QR
+                                </ActionButton>
+
+                                <ActionButton
                                     v-if="canHandOver(log) && isAssignedToMe(log)"
                                     :loading="generatingQr"
                                     @click="
@@ -264,7 +276,7 @@
                                     {{
                                         isMyShift(log)
                                             ? "Shift change QR"
-                                            : "Scan shift change"
+                                            : "Scan QR"
                                     }}
                                 </ActionButton>
                             </div>

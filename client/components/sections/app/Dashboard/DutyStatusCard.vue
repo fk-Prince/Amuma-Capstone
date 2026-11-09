@@ -419,23 +419,39 @@ const typeIcon = (type: string) =>
             </p>
 
             <div
-                v-if="current.can_hand_over && remainingMinutes > 0"
                 class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-emerald-100 pt-3 dark:border-white/10"
             >
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Ending your shift early? Let the next caregiver scan your
-                    code to take over.
+                    <template v-if="current.can_hand_over && remainingMinutes > 0">
+                        Leaving? Scan the family's QR to time out, or let the
+                        next caregiver scan your shift change QR.
+                    </template>
+                    <template v-else>
+                        Leaving? Scan the family's QR to time out.
+                    </template>
                 </p>
 
-                <button
-                    type="button"
-                    :disabled="generatingHandover"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
-                    @click="openHandoverQr(current.schedule_services_id)"
-                >
-                    <ArrowLeftRight class="h-3.5 w-3.5" />
-                    Shift change QR
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-primary px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 dark:text-primary-300"
+                        @click="showScanner = true"
+                    >
+                        <ScanLine class="h-3.5 w-3.5" />
+                        Scan QR
+                    </button>
+
+                    <button
+                        v-if="current.can_hand_over && remainingMinutes > 0"
+                        type="button"
+                        :disabled="generatingHandover"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                        @click="openHandoverQr(current.schedule_services_id)"
+                    >
+                        <ArrowLeftRight class="h-3.5 w-3.5" />
+                        Shift change QR
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -478,11 +494,7 @@ const typeIcon = (type: string) =>
                 @click="showScanner = true"
             >
                 <ScanLine class="h-3.5 w-3.5" />
-                {{
-                    shiftWithoutMe.state === "covered"
-                        ? "Scan shift change"
-                        : "Scan Time-In QR"
-                }}
+                Scan QR
             </button>
 
             <p
@@ -608,7 +620,7 @@ const typeIcon = (type: string) =>
                         v-if="block.type === 'medical' && block.state !== 'done'"
                         type="button"
                         class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-semibold text-white transition hover:opacity-90"
-                        title="Scan the patient QR to time in or time out"
+                        title="Scan the family's QR to time in or time out"
                         @click="showScanner = true"
                     >
                         <ScanLine class="h-3.5 w-3.5" />
