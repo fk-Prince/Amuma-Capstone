@@ -50,7 +50,7 @@ function peso(value: number) {
             @click.self="emit('close')"
         >
             <div
-                class="flex h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                class="flex h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Pay balance"
@@ -94,7 +94,7 @@ function peso(value: number) {
                 </div>
 
                 <div
-                    class="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 py-4 sm:gap-8 sm:px-8 sm:py-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start"
+                    class="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start"
                 >
                     <div class="space-y-5">
                         <div

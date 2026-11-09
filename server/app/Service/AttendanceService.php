@@ -37,6 +37,10 @@ class AttendanceService
     {
         [$schedule, $services] = $this->resolvePatientVisit($payload['patient_uuid'], (int) $payload['employee_id']);
 
+        if ($this->visitAttendance($services)->isEmpty()) {
+            $this->guardVisitOpen($schedule);
+        }
+
         return $this->patientVisitPayload($schedule, $services, (int) $payload['employee_id']);
     }
 
@@ -60,6 +64,10 @@ class AttendanceService
 
         if (strtolower((string) $schedule->status) === Schedule::STATUS_COMPLETED) {
             throw new Exception('This visit is already completed. Change who attended from Schedule Details.', 409);
+        }
+
+        if (!$wasCheckedIn) {
+            $this->guardVisitOpen($schedule);
         }
 
         $timedIn = [];
@@ -701,7 +709,18 @@ class AttendanceService
         }
 
         $this->guardAdlCanClockIn($assigned->schedule_services_id);
-        $this->guardWithinShift($assigned);
+
+        if ($this->activeSessionFor($assigned->schedule_services_id)) {
+            throw new Exception('Another caregiver is already clocked in for this visit. Ask them for the shift change QR to take over.', 409);
+        }
+
+        $adlSchedule =ScheduleService::with('schedule')->find($assigned->schedule_services_id)?->schedule;
+
+        if ($this->isAdl($assigned->schedule_services_id) && $adlSchedule && !$this->serviceStarted($assigned->schedule_services_id)) {
+            $this->guardVisitOpen($adlSchedule);
+        } else {
+            $this->guardWithinShift($assigned);
+        }
 
         Cache::forget($cacheKey);
 
@@ -946,6 +965,37 @@ class AttendanceService
     }
 
     public const EARLY_CLOCK_IN_MINUTES = 60;
+
+    private function serviceStarted(int $scheduleServicesId): bool
+    {
+        return Attendance::whereHas(
+            'assigned',
+            fn($query) => $query->where('schedule_services_id', $scheduleServicesId)
+        )
+            ->whereNotNull('in_timestamp')
+            ->exists();
+    }
+
+    private function guardVisitOpen(Schedule $schedule): void
+    {
+        if (!$schedule->scheduled_at) {
+            return;
+        }
+
+        $startsAt = Carbon::parse($schedule->scheduled_at);
+        $opensAt = $startsAt->copy()->subMinutes(self::EARLY_CLOCK_IN_MINUTES);
+
+        if (now()->greaterThanOrEqualTo($opensAt)) {
+            return;
+        }
+
+        $day = $opensAt->isToday() ? '' : ' on ' . $opensAt->format('M j');
+
+        throw new Exception(
+            "You can time in from {$opensAt->format('g:i A')}{$day}, 1 hour before this visit starts at {$startsAt->format('g:i A')}.",
+            422
+        );
+    }
 
     private function guardWithinShift(ScheduleAssigned $assigned): void
     {

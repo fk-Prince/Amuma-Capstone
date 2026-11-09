@@ -239,6 +239,15 @@
                                             </span>
 
                                             <span
+                                                v-else-if="timedOutHere(entry.employee_id)"
+                                                class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                                            >
+                                                <LogOut class="h-3 w-3" />
+                                                Timed out
+                                                {{ formatTime(timedOutHere(entry.employee_id)!) }}
+                                            </span>
+
+                                            <span
                                                 v-else
                                                 class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                             >
@@ -816,6 +825,17 @@
                                     />
                                 </div>
 
+                                <p
+                                    v-if="timedOutHere(employee.employee_id)"
+                                    class="mx-3 mb-3 flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                                >
+                                    <LogOut class="h-3.5 w-3.5 shrink-0" />
+                                    Done on
+                                    <span class="font-mono">{{ schedule?.schedule_code }}</span>
+                                    · timed out at
+                                    {{ formatTime(timedOutHere(employee.employee_id)!) }}
+                                </p>
+
                                 <div
                                     v-if="
                                         expandedConflicts.has(
@@ -1032,6 +1052,7 @@ import {
     Mail,
     ChevronDown,
     LogIn,
+    LogOut,
 } from "lucide-vue-next";
 
 interface AssignmentEntry {
@@ -1495,6 +1516,22 @@ function isEmployeeClockedIn(
     return (assignee?.online ?? []).some(
         (log) => log.in_timestamp && !log.out_timestamp,
     );
+}
+
+function timedOutHere(employeeId: string | number | null | undefined) {
+    if (!employeeId) return null;
+
+    const rows = (props.schedule?.services ?? [])
+        .flatMap((service) => service.assignees ?? [])
+        .filter((assignee) => Number(assignee.employee_id) === Number(employeeId))
+        .flatMap((assignee) => assignee.online ?? [])
+        .filter((row) => row.in_timestamp);
+
+    if (!rows.length || rows.some((row) => !row.out_timestamp)) return null;
+
+    return rows
+        .map((row) => row.out_timestamp as string)
+        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
 }
 
 function toggleEmployee(serviceId: number, employeeId: number) {

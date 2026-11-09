@@ -155,7 +155,7 @@ function close() {
             @click.self="close"
         >
             <div
-                class="flex h-[94dvh] w-full max-w-6xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                class="flex h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-2xl shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Pay booking"

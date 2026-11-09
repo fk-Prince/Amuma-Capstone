@@ -101,7 +101,7 @@
                 >
                     <button
                         type="button"
-                        class="flex w-full flex-col gap-3 p-4 sm:p-5 text-left lg:flex-row lg:items-center lg:justify-between"
+                        class="flex w-full flex-col gap-3 p-4 sm:p-5 text-left lg:flex-row lg:items-start lg:justify-between"
                         :class="
                             isExpanded(log)
                                 ? 'border-b border-muted-light dark:border-white/10'
@@ -162,6 +162,15 @@
                                             {{ log.address }}
                                         </span>
                                     </span>
+
+                                    <span
+                                        v-if="log.note"
+                                        class="flex min-w-0 basis-full items-center gap-1.5 text-[11px]"
+                                        :title="log.note"
+                                    >
+                                        <Signpost class="h-3 w-3 shrink-0" />
+                                        <span class="min-w-0 truncate">{{ log.note }}</span>
+                                    </span>
                                 </div>
 
                                 <template v-else>
@@ -182,10 +191,11 @@
                                     </p>
                                     <p
                                         v-if="log.note"
-                                        class="mt-0.5 truncate text-[12px] text-muted dark:text-gray-400"
+                                        class="mt-0.5 flex min-w-0 items-center gap-1.5 pl-5 text-[12px] text-muted dark:text-gray-400"
                                         :title="log.note"
                                     >
-                                        Note: {{ log.note }}
+                                        <Signpost class="h-3 w-3 shrink-0" />
+                                        <span class="min-w-0 truncate">{{ log.note }}</span>
                                     </p>
                                 </template>
 
@@ -401,7 +411,6 @@
                             <div class="px-4 sm:px-5">
                                 <div
                                     v-if="
-                                        log.note ||
                                         log.is_stay_in ||
                                         log.activities?.length
                                     "
@@ -430,19 +439,6 @@
                                                 {{ activity }}
                                             </span>
                                         </div>
-                                    </div>
-
-                                    <div v-if="log.note">
-                                        <p
-                                            class="text-xs font-semibold uppercase text-muted dark:text-gray-400"
-                                        >
-                                            Note
-                                        </p>
-                                        <p
-                                            class="mt-1 whitespace-pre-line text-sm text-secondary dark:text-gray-200"
-                                        >
-                                            {{ log.note }}
-                                        </p>
                                     </div>
                                 </div>
 
@@ -943,6 +939,7 @@ import {
     ChevronDown,
     CalendarClock,
     MapPinned,
+    Signpost,
     Phone,
     Mail,
     Bell,
