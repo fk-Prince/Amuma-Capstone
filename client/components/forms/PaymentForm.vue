@@ -54,6 +54,7 @@ interface Props {
     allowShortCash?: boolean;
     termsContext?: string;
     compact?: boolean;
+    fill?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -117,11 +118,18 @@ const bodyClass = computed(() =>
         : "space-y-6 px-6 py-6 sm:px-7 sm:py-7",
 );
 
+const cardBodyClass = computed(() => [
+    props.compact ? "space-y-3 px-5 pt-4" : bodyClass.value,
+    props.fill
+        ? "xl:min-h-0 xl:overflow-y-auto xl:[scrollbar-width:thin]"
+        : "",
+]);
+
 const fieldClass = computed(() => (props.compact ? "!py-2" : ""));
 
 const footerClass = computed(() =>
     props.compact
-        ? "sticky bottom-0 z-10 -mx-5 -mb-4 space-y-3 border-t border-slate-100 bg-white px-5 pb-4 pt-3 dark:border-white/10 dark:bg-secondary"
+        ? "sticky bottom-0 z-10 -mx-5 space-y-3 border-t border-slate-100 bg-white px-5 pb-4 pt-3 dark:border-white/10 dark:bg-secondary"
         : "space-y-4",
 );
 
@@ -333,19 +341,25 @@ watch(isCash, (active) => {
 </script>
 
 <template>
-    <div :class="compact ? 'w-full' : 'w-full max-w-2xl mx-auto'">
+    <div
+        :class="[
+            compact ? 'w-full' : 'w-full max-w-2xl mx-auto',
+            fill ? 'xl:flex xl:min-h-0 xl:flex-col' : '',
+        ]"
+    >
         <div
             class="border border-slate-200 bg-white dark:bg-secondary dark:border-white/10"
-            :class="
+            :class="[
                 compact
                     ? 'overflow-clip rounded-xl'
-                    : 'overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]'
-            "
+                    : 'overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]',
+                fill ? 'xl:flex xl:min-h-0 xl:flex-col' : '',
+            ]"
         >
             <!-- Header -->
             <div
                 v-if="compact"
-                class="border-b border-slate-100 px-5 py-3 dark:border-white/10"
+                class="shrink-0 border-b border-slate-100 px-5 py-3 dark:border-white/10"
             >
                 <h2
                     class="text-sm font-bold text-slate-900 dark:text-white"
@@ -391,19 +405,23 @@ watch(isCash, (active) => {
             <!-- Payment Methods -->
             <div
                 v-if="methods.length > 1 && compact"
-                class="grid gap-3 border-b border-slate-100 px-5 py-4 dark:border-white/10"
-                :class="methods.length > 2 ? 'grid-cols-3' : 'grid-cols-2'"
+                class="grid shrink-0 gap-3 border-b border-slate-100 px-5 dark:border-white/10"
+                :class="[
+                    fill ? 'py-3' : 'py-4',
+                    methods.length > 2 ? 'grid-cols-3' : 'grid-cols-2',
+                ]"
             >
                 <button
                     v-for="method in methods"
                     :key="method.value"
                     type="button"
-                    class="flex items-center justify-center gap-2.5 rounded-lg border px-3 py-3.5 text-sm font-semibold transition"
-                    :class="
+                    class="flex items-center justify-center gap-2.5 rounded-lg border px-3 text-sm font-semibold transition"
+                    :class="[
+                        fill ? 'py-2.5' : 'py-3.5',
                         checkout.payment_method === method.value
                             ? 'border-primary bg-primary/[0.04] text-primary ring-1 ring-primary/20'
-                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5'
-                    "
+                            : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/5',
+                    ]"
                     @click="selectMethod(method.value)"
                 >
                     <img
@@ -527,7 +545,7 @@ watch(isCash, (active) => {
                 v-if="isCard && card"
                 ref="cardPanelRef"
                 @submit.prevent="handleCardPay"
-                :class="bodyClass"
+                :class="cardBodyClass"
             >
                 <div v-if="!compact">
                     <h3
@@ -541,7 +559,11 @@ watch(isCash, (active) => {
                     </p>
                 </div>
 
-                <div :class="compact ? 'space-y-3' : 'space-y-4'">
+                <div
+                    :class="
+                        fill ? 'space-y-2.5' : compact ? 'space-y-3' : 'space-y-4'
+                    "
+                >
                     <LabelInput
                         label="Card number"
                         placeholder="1234 5678 9012 3456"
@@ -637,8 +659,11 @@ watch(isCash, (active) => {
                     />
                 </div>
 
+                <slot name="card-options" />
+
+                <div :class="footerClass">
                 <div
-                    v-if="amountLabel"
+                    v-if="amountLabel && !fill"
                     class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-white/5"
                     :class="compact ? 'py-2' : 'py-3'"
                 >
@@ -653,9 +678,6 @@ watch(isCash, (active) => {
                     </span>
                 </div>
 
-                <slot name="card-options" />
-
-                <div :class="footerClass">
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
@@ -688,6 +710,12 @@ watch(isCash, (active) => {
                     />
 
                     {{ processing ? processingLabel : submitLabel }}
+                    <span
+                        v-if="fill && amountLabel && !processing"
+                        class="tabular-nums"
+                    >
+                        · {{ currency }}{{ formatMoney(totalAmount) }}
+                    </span>
                 </button>
                 </div>
 

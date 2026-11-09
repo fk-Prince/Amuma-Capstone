@@ -64,7 +64,10 @@
                 </div>
             </div>
 
-            <div class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-4 lg:py-4">
+            <div
+                ref="scrollArea"
+                class="lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-4 lg:py-4"
+            >
             <div
                 :class="
                     showPayment
@@ -151,10 +154,15 @@
                     </div>
                 </div>
 
-                <div v-if="showPayment" class="xl:sticky xl:top-8">
-                    <div class="rounded-xl shadow-sm">
+                <div
+                    v-if="showPayment"
+                    class="xl:sticky xl:top-6 xl:mt-6 xl:flex xl:min-h-0 xl:flex-col"
+                    :style="payMaxHeight ? { maxHeight: `${payMaxHeight}px` } : undefined"
+                >
+                    <div class="rounded-xl shadow-sm xl:flex xl:min-h-0 xl:flex-col">
                         <PaymentForm
                             compact
+                            fill
                             :card="card"
                             :total-amount="bookingAmount"
                             amount-label="Amount to pay"
@@ -214,7 +222,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, reactive } from "vue";
 import { BellRing, CircleAlert, ShieldCheck } from "lucide-vue-next";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "~/composables/useToast";
@@ -256,10 +264,42 @@ const loadingTotal = ref(false);
 
 const { branch, fetchBranch } = useBranch();
 
+const scrollArea = ref<HTMLElement | null>(null);
+const payMaxHeight = ref<number | null>(null);
+let resizeObserver: ResizeObserver | null = null;
+let wideScreen: MediaQueryList | null = null;
+
+function measurePayPanel() {
+    const el = scrollArea.value;
+
+    if (!el || !wideScreen?.matches) {
+        payMaxHeight.value = null;
+        return;
+    }
+
+    const style = getComputedStyle(el);
+    payMaxHeight.value =
+        el.clientHeight -
+        24 -
+        parseFloat(style.paddingTop) -
+        parseFloat(style.paddingBottom);
+}
+
 onMounted(async () => {
     if (!branch.value || branch.value.uuid !== uuid) {
         fetchBranch(uuid).catch(() => {});
     }
+
+    wideScreen = window.matchMedia("(min-width: 1280px)");
+    wideScreen.addEventListener("change", measurePayPanel);
+    resizeObserver = new ResizeObserver(measurePayPanel);
+    if (scrollArea.value) resizeObserver.observe(scrollArea.value);
+    measurePayPanel();
+});
+
+onBeforeUnmount(() => {
+    resizeObserver?.disconnect();
+    wideScreen?.removeEventListener("change", measurePayPanel);
 });
 
 // Mirrors ReviewSection's own facilityTotal/ADL-rate math, so the amount
