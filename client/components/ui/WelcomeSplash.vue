@@ -19,7 +19,7 @@ const props = withDefaults(
         agencyName: "",
         title: "Your subscription is in review",
         subtitle: "",
-        buttonLabel: "Continue",
+        buttonLabel: "Go to dashboard",
         autoCloseMs: 0,
     },
 );
@@ -33,17 +33,21 @@ const body = computed(
         props.subtitle ||
         `We received your payment${
             props.agencyName ? ` for ${props.agencyName}` : ""
-        }. Our team is checking your details, usually within 1 to 2 business days.`,
+        }. You can start using your dashboard while our team checks your details, usually within 1 to 2 business days.`,
 );
 
 const steps = [
     { label: "Payment received", hint: "", state: "done" },
     {
+        label: "Dashboard access",
+        hint: "You can use your dashboard now",
+        state: "done",
+    },
+    {
         label: "Reviewing your subscription",
         hint: "We will email you once it is approved",
         state: "now",
     },
-    { label: "Dashboard access", hint: "", state: "next" },
 ] as const;
 
 const buttonRef = ref<HTMLButtonElement | null>(null);
@@ -199,7 +203,7 @@ onBeforeUnmount(() => {
                     class="ws-rise mt-3.5 text-xs text-slate-500 dark:text-gray-400"
                     style="--d: 1.05s"
                 >
-                    You can close this page. We will notify you.
+                    We will email you once your subscription is approved.
                 </p>
             </div>
         </div>

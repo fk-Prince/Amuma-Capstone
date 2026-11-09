@@ -51,7 +51,7 @@
                         <label
                             class="text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
-                            Agency Image
+                            Agency Logo
                         </label>
 
                         <button
@@ -64,7 +64,7 @@
                         </button>
                     </div>
                     <div
-                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="agencyImageInput?.click()"
                     >
                         <img
@@ -78,14 +78,14 @@
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
-                                class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
+                                class="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
                             >
                                 +
                             </div>
 
-                            <p class="text-sm font-medium">Upload Image</p>
+                            <p class="text-sm font-medium">Upload Logo</p>
 
-                            <span class="text-xs"> PNG, JPG up to 5MB </span>
+                            <span class="text-xs"> PNG, JPG, JPEG up to 5MB </span>
                         </div>
 
                         <div
@@ -97,7 +97,7 @@
                     <input
                         ref="agencyImageInput"
                         type="file"
-                        accept="image/*"
+                        accept="image/png,image/jpeg"
                         class="hidden"
                         @change="handleAgencyImage"
                     />
@@ -151,13 +151,16 @@
                 </p>
             </div>
 
-            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div
+                v-else
+                class="-mt-2 grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
+            >
                 <div
-                    class="space-y-2 p-4"
+                    class="flex flex-col gap-2"
                     data-field="agency_id_front agency_id_back"
                 >
                     <div
-                        class="flex flex-wrap items-center justify-between gap-2"
+                        class="flex h-9 items-center justify-between gap-2"
                     >
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -198,12 +201,12 @@
                             </button>
 
                             <div
-                                class="flex items-center gap-0.5 rounded-full border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold dark:border-white/10 dark:bg-white/5"
+                                class="flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold dark:border-white/10 dark:bg-white/5"
                             >
                                 <button
                                     type="button"
                                     @click="idSide = 'id_front'"
-                                    class="min-w-[52px] rounded-full px-3 py-1.5 text-center transition"
+                                    class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
                                     :class="
                                         idSide === 'id_front'
                                             ? 'bg-primary text-white shadow-sm'
@@ -216,7 +219,7 @@
                                 <button
                                     type="button"
                                     @click="idSide = 'id_back'"
-                                    class="min-w-[52px] rounded-full px-3 py-1.5 text-center transition"
+                                    class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
                                     :class="
                                         idSide === 'id_back'
                                             ? 'bg-primary text-white shadow-sm'
@@ -230,7 +233,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="idInput?.click()"
                     >
                         <img
@@ -244,7 +247,7 @@
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
-                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                                class="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
                             >
                                 +
                             </div>
@@ -328,7 +331,7 @@
 
                         <ul
                             v-if="showIdList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
+                            class="mt-2 space-y-1 rounded-md bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li v-for="item in applicableIds" :key="item">
                                 {{ item }}
@@ -337,8 +340,11 @@
                     </div>
                 </div>
 
-                <div class="space-y-2 p-4" data-field="agency_document">
-                    <div class="flex items-center justify-between">
+                <div
+                    class="flex flex-col gap-2"
+                    data-field="agency_document"
+                >
+                    <div class="flex h-9 items-center justify-between gap-2">
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
@@ -374,7 +380,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="documentInput?.click()"
                     >
                         <img
@@ -390,7 +396,7 @@
                             class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
                         >
                             <div
-                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500"
+                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-md bg-red-50 text-red-500"
                             >
                                 <svg
                                     class="h-5 w-5"
@@ -426,7 +432,7 @@
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
-                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                                class="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
                             >
                                 +
                             </div>
@@ -486,7 +492,7 @@
 
                         <ul
                             v-if="showDocumentList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
+                            class="mt-2 space-y-1 rounded-md bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li v-for="item in applicableDocuments" :key="item">
                                 {{ item }}
@@ -627,8 +633,8 @@ const idErrors = computed(() => {
 const idInput = ref<HTMLInputElement | null>(null);
 const documentInput = ref<HTMLInputElement | null>(null);
 
-const showIdList = ref(false);
-const showDocumentList = ref(false);
+const showIdList = ref(true);
+const showDocumentList = ref(true);
 
 const applicableIds = [
     "Philippine Passport",

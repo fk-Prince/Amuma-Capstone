@@ -96,7 +96,7 @@
                         <label
                             class="text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
-                            Branch Image
+                            Branch Logo
                         </label>
 
                         <button
@@ -110,7 +110,7 @@
                     </div>
 
                     <div
-                        class="relative h-52 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="branchImageInput?.click()"
                     >
                         <img
@@ -124,12 +124,12 @@
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
-                                class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
+                                class="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center text-primary text-2xl mb-3"
                             >
                                 +
                             </div>
 
-                            <p class="text-sm font-medium">Upload Image</p>
+                            <p class="text-sm font-medium">Upload Logo</p>
 
                             <span class="text-xs"> PNG, JPG, JPEG up to 5MB </span>
                         </div>
@@ -197,7 +197,7 @@
                 </div>
 
                 <div v-else class="space-y-2" data-field="branch_document">
-                    <div class="flex items-center justify-between">
+                    <div class="flex h-9 items-center justify-between gap-2">
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
@@ -233,7 +233,7 @@
                     </div>
 
                     <div
-                        class="relative h-40 w-full rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
                         @click="branchDocumentInput?.click()"
                     >
                         <img
@@ -247,7 +247,7 @@
                             class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center"
                         >
                             <div
-                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500"
+                                class="mb-2 flex h-10 w-10 items-center justify-center rounded-md bg-red-50 text-red-500"
                             >
                                 <svg
                                     class="h-5 w-5"
@@ -283,7 +283,7 @@
                             class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
                         >
                             <div
-                                class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                                class="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
                             >
                                 +
                             </div>
@@ -347,7 +347,7 @@
 
                         <ul
                             v-if="showBranchDocumentList"
-                            class="mt-2 space-y-1 rounded-lg bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
+                            class="mt-2 space-y-1 rounded-md bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
                         >
                             <li
                                 v-for="item in applicableBranchDocuments"
@@ -518,7 +518,7 @@ const branchDocumentPreview = ref<string | null>(
     initialPreview((props.branch as any).document),
 );
 const branchDocumentInput = ref<HTMLInputElement | null>(null);
-const showBranchDocumentList = ref(false);
+const showBranchDocumentList = ref(true);
 
 const branchDocumentName = ref<string | null>(
     (props.branch as any).document instanceof File &&
