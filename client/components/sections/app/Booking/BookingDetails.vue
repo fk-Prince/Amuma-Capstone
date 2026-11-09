@@ -94,18 +94,9 @@
                         <span
                             v-if="showPaymentBadge"
                             class="px-3 py-1 uppercase rounded-sm text-xs font-medium"
-                            :class="{
-                                'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300':
-                                    paymentStatus === 'paid',
-                                'bg-red-100 text-red-700':
-                                    paymentStatus === 'refunded',
-                                'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300':
-                                    paymentStatus === 'pending',
-                                'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300':
-                                    paymentStatus === 'partial',
-                            }"
+                            :class="paymentBadge.class"
                         >
-                            {{ paymentStatus }}
+                            {{ paymentBadge.label }}
                         </span>
 
                         <div class="text-right">
@@ -168,7 +159,7 @@
                     </div>
                 </section>
 
-                <section v-if="isPaid && paymentRows.length">
+                <section v-if="showPaymentSection">
                     <h3
                         class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                     >
@@ -189,7 +180,12 @@
                     </h3>
 
                     <div
-                        class="rounded-lg border border-emerald-100 bg-emerald-50/40 px-5 py-4 dark:border-emerald-500/20 dark:bg-emerald-500/10"
+                        class="rounded-lg border px-5 py-4"
+                        :class="
+                            isRefunded || !hasPayment
+                                ? 'border-slate-200 bg-slate-50/60 dark:border-white/10 dark:bg-white/5'
+                                : 'border-emerald-100 bg-emerald-50/40  dark:border-emerald-500/20 dark:bg-emerald-500/10'
+                        "
                     >
                         <div
                             class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm"
@@ -288,12 +284,18 @@
                                 <Field
                                     v-if="isMonthlyAdl"
                                     label="Stay-in Caregiver"
-                                    :value="booking.homecare?.stay_in ? 'Yes' : 'No'"
+                                    :value="
+                                        booking.homecare?.stay_in ? 'Yes' : 'No'
+                                    "
                                 />
 
                                 <Field
                                     v-if="adlRateLabel"
-                                    :label="isMonthlyAdl ? 'Base Price' : 'Hourly Rate'"
+                                    :label="
+                                        isMonthlyAdl
+                                            ? 'Base Price'
+                                            : 'Hourly Rate'
+                                    "
                                     :value="adlRateLabel"
                                 />
 
@@ -305,7 +307,8 @@
                                     <template #value>
                                         <span class="flex flex-wrap gap-1.5">
                                             <span
-                                                v-for="activity in booking.homecare.activities"
+                                                v-for="activity in booking
+                                                    .homecare.activities"
                                                 :key="activity"
                                                 class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium normal-case text-primary dark:bg-primary-500/15 dark:text-primary-300"
                                             >
@@ -739,19 +742,70 @@ const paymentStatus = computed(() => {
     return props.booking?.payment?.payment_status ?? null;
 });
 
-const isPaid = computed(
-    () => paymentStatus.value === "paid" || paymentStatus.value === "partial",
+const isRefunded = computed(() => paymentStatus.value === "refunded");
+
+const hasPayment = computed(
+    () =>
+        paymentStatus.value === "paid" ||
+        paymentStatus.value === "partial" ||
+        isRefunded.value,
+);
+
+const isRejected = computed(
+    () => String(props.booking?.status ?? "").toLowerCase() === "rejected",
+);
+
+const isClosed = computed(() =>
+    ["rejected", "expired"].includes(
+        String(props.booking?.status ?? "").toLowerCase(),
+    ),
 );
 
 const showPaymentBadge = computed(
     () =>
         Boolean(paymentStatus.value) &&
         (props.booking.facility?.type === "Complete" ||
-            paymentStatus.value === "partial"),
+            paymentStatus.value === "partial" ||
+            isRefunded.value ||
+            isClosed.value),
 );
 
-const isRejected = computed(
-    () => String(props.booking?.status ?? "").toLowerCase() === "rejected",
+const refundPending = computed(
+    () => isClosed.value && hasPayment.value && !isRefunded.value,
+);
+
+const BADGE_AMBER =
+    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300";
+
+const paymentBadge = computed(() => {
+    if (isClosed.value && !hasPayment.value) {
+        return {
+            label: "Not paid",
+            class: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
+        };
+    }
+
+    if (refundPending.value) {
+        return { label: "Refund pending", class: BADGE_AMBER };
+    }
+
+    const classes: Record<string, string> = {
+        paid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+        refunded:
+            "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
+        pending: BADGE_AMBER,
+        partial:
+            "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+    };
+
+    return {
+        label: paymentStatus.value ?? "",
+        class: classes[paymentStatus.value ?? ""] ?? "",
+    };
+});
+
+const showPaymentSection = computed(
+    () => (hasPayment.value || isClosed.value) && paymentRows.value.length > 0,
 );
 
 // Only a settled payment carries a method, reference and card — a pending one
@@ -772,15 +826,44 @@ const paymentRows = computed(() => {
           ? `Downpayment Paid (${payment.booking_percent}%)`
           : "Downpayment Paid";
 
+    const refundedAmount =
+        Number(payment.booking_amount) || Number(payment.total_amount) || 0;
+
+    if (!hasPayment.value) {
+        return [
+            { label: "Payment Status", value: "Not paid" },
+            {
+                label: "Amount paid",
+                value: formatCurrency(0),
+            },
+            { label: "Method", value: payment.payment_method },
+        ].filter((row) => Boolean(row.value));
+    }
+
     return [
+        {
+            label: "Payment Status",
+            value: isRefunded.value
+                ? "Refunded"
+                : isClosed.value
+                  ? "Paid, refund pending"
+                  : hasBalance
+                    ? "Partially paid"
+                    : "Paid",
+        },
         {
             label: hasBalance ? paidLabel : "Amount paid",
             value: formatCurrency(amountPaid),
         },
-        hasBalance && {
-            label: "Balance Due",
-            value: formatCurrency(Number(payment.balance_amount) || 0),
+        isRefunded.value && {
+            label: "Amount Refunded",
+            value: formatCurrency(refundedAmount),
         },
+        hasBalance &&
+            !isRefunded.value && {
+                label: "Balance Due",
+                value: formatCurrency(Number(payment.balance_amount) || 0),
+            },
         { label: "Method", value: payment.payment_method },
         { label: "Card", value: payment.masked_card_number },
     ].filter((row): row is { label: string; value: string } =>
