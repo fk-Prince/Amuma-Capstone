@@ -474,6 +474,7 @@ class ScheduleRepository
                 $activeScheduleAssignments($query);
             },
             'employeeBranch.scheduleAssignments.scheduleService.schedule',
+            'employeeBranch.scheduleAssignments.attendances:attendance_id,schedule_assigned_id,in_timestamp,out_timestamp',
             'employeeBranch' => function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
@@ -584,6 +585,7 @@ class ScheduleRepository
                 $scheduleConflict($query);
             },
             'employeeBranch.scheduleAssignments.scheduleService.schedule.patient',
+            'employeeBranch.scheduleAssignments.attendances:attendance_id,schedule_assigned_id,in_timestamp,out_timestamp',
         ])
             ->whereHas('employeeBranch', function ($query) use ($branchId, $allowedRoles) {
                 $query->where('branch_id', $branchId)

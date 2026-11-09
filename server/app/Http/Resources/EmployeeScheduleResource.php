@@ -88,6 +88,7 @@ class EmployeeScheduleResource extends JsonResource
                             'duration_minutes' => $durationMinutes,
                             'remaining_minutes' => $remainingMinutes,
                             'estimated_end' => $estimatedEnd,
+                            'checked_in_at' => $this->openCheckIn($assignment),
                         ];
                     })
                     ->filter()
@@ -121,6 +122,20 @@ class EmployeeScheduleResource extends JsonResource
                 ];
             }),
         ];
+    }
+
+    private function openCheckIn($assignment): ?string
+    {
+        if (!$assignment->relationLoaded('attendances')) {
+            return null;
+        }
+
+        $open = $assignment->attendances
+            ->filter(fn($row) => $row->in_timestamp && !$row->out_timestamp)
+            ->sortBy('in_timestamp')
+            ->first();
+
+        return $open ? Carbon::parse($open->in_timestamp)->toISOString() : null;
     }
 
     private function categoryAndDuration($scheduleService): array

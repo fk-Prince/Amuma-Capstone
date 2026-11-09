@@ -90,7 +90,7 @@ class AttendanceService
 
                     $timedIn[$employeeId] = $employeeId === $scannerId
                         ? $scanner?->full_name
-                        : $assigned->employee?->full_name;
+                        : $assigned->employee?->employees?->full_name;
                 }
             }
 
@@ -829,17 +829,17 @@ class AttendanceService
                 ->pluck('schedule_services_id')
             : collect([$scheduleServicesId]);
 
-        return Attendance::with('assigned.employee')
+        return Attendance::with('assigned.employee.employees')
             ->whereHas('assigned', fn($query) => $query->whereIn('schedule_services_id', $serviceIds))
             ->whereNotNull('in_timestamp')
             ->whereNull('out_timestamp')
             ->orderBy('in_timestamp')
             ->get()
             ->unique(fn(Attendance $row) => $row->assigned?->employee_id)
-            ->filter(fn(Attendance $row) => $row->assigned?->employee)
+            ->filter(fn(Attendance $row) => $row->assigned)
             ->map(fn(Attendance $row) => [
                 'employee_id' => $row->assigned->employee_id,
-                'name' => $row->assigned->employee->full_name,
+                'name' => $row->assigned->employee?->employees?->full_name ?? 'Staff',
                 'in_timestamp' => $row->in_timestamp,
             ])
             ->values()

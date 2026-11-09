@@ -128,12 +128,26 @@
                         </span>
                     </div>
 
-                    <p
-                        v-if="schedule.note"
-                        class="border-t border-gray-100 px-4 py-3 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400"
+                    <div
+                        v-if="schedule.address || schedule.note"
+                        class="space-y-1 border-t border-gray-100 px-4 py-3 text-xs dark:border-white/10"
                     >
-                        {{ schedule.note }}
-                    </p>
+                        <p
+                            v-if="schedule.address"
+                            class="flex items-start gap-1.5 text-gray-700 dark:text-gray-200"
+                        >
+                            <MapPin class="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+                            <span class="min-w-0 break-words">{{ schedule.address }}</span>
+                        </p>
+
+                        <p
+                            v-if="schedule.note"
+                            class="flex items-start gap-1.5 pl-5 text-gray-500 dark:text-gray-400"
+                        >
+                            <Signpost class="mt-0.5 h-3 w-3 shrink-0" />
+                            <span class="min-w-0 break-words">{{ schedule.note }}</span>
+                        </p>
+                    </div>
 
                     <div
                         v-if="schedule.services?.length"
@@ -365,6 +379,8 @@ import {
     Clock,
     QrCode,
     ChevronDown,
+    MapPin,
+    Signpost,
 } from "lucide-vue-next";
 import type { ScheduleAssignee, ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";

@@ -154,12 +154,23 @@
 
                                     <div class="flex items-center gap-2">
                                         <span
+                                            v-if="isEmployeeClockedIn(entry.employee_id)"
+                                            class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                            title="Checked in and not timed out yet, so they can't be removed"
+                                        >
+                                            <LogIn class="h-3 w-3" />
+                                            Checked in
+                                        </span>
+
+                                        <span
+                                            v-else
                                             class="rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                                         >
                                             Assigned
                                         </span>
 
                                         <button
+                                            v-if="!isEmployeeClockedIn(entry.employee_id)"
                                             type="button"
                                             class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
                                             title="Remove"
@@ -768,6 +779,21 @@
                                                 {{ conflict.status }}
                                             </p>
 
+                                            <span
+                                                v-if="conflict.checked_in_at"
+                                                class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+                                            >
+                                                <span
+                                                    class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                                />
+                                                Checked in since
+                                                {{
+                                                    formatTime(
+                                                        conflict.checked_in_at,
+                                                    )
+                                                }}
+                                            </span>
+
                                             <p
                                                 v-if="conflict.estimated_end"
                                                 class="mt-1 font-medium text-amber-700 dark:text-amber-300"
@@ -856,7 +882,7 @@ import {
     bookingTimeWindow,
     format24To12,
 } from "~/utils/time";
-import { Check, ChevronDown, Home, TriangleAlert } from "lucide-vue-next";
+import { Check, ChevronDown, Home, LogIn, TriangleAlert } from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
@@ -1041,7 +1067,7 @@ const bookingWindow = computed(() =>
     ),
 );
 
-const availableOnly = ref(false);
+const availableOnly = ref(true);
 const previousOnly = ref(false);
 
 const previousIds = computed(

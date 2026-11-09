@@ -50,6 +50,7 @@ export interface Employee {
         duration_minutes: number | null;
         remaining_minutes: number | null;
         estimated_end: string | null;
+        checked_in_at?: string | null;
     }[];
     last_schedule?: LastSchedule | null;
 }

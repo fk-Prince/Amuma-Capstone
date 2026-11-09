@@ -216,6 +216,7 @@ class EmployeeRepository
                         },
                         'scheduleAssignments' => $activeScheduleAssignments,
                         'scheduleAssignments.scheduleService.schedule',
+                        'scheduleAssignments.attendances:attendance_id,schedule_assigned_id,in_timestamp,out_timestamp',
                     ]);
             },
         ])
