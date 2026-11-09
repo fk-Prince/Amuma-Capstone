@@ -179,10 +179,10 @@
                                 </span>
                             </div>
 
-                            <div class="mt-4 flex justify-center gap-2">
+                            <div class="mt-4 flex items-center justify-center gap-2">
                                 <button
                                     type="button"
-                                    class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    class="inline-flex h-9 items-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                                     @click="avatarInput?.click()"
                                 >
                                     Change photo
@@ -191,7 +191,7 @@
                                 <button
                                     v-if="avatarFile && avatarSource"
                                     type="button"
-                                    class="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                    class="inline-flex h-9 items-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 text-[13px] font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
                                     @click="showAvatarCrop = true"
                                 >
                                     Adjust
@@ -200,7 +200,7 @@
                                 <button
                                     v-if="avatarPreview"
                                     type="button"
-                                    class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
+                                    class="inline-flex h-9 items-center whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600 dark:text-gray-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
                                     @click="removeAvatar"
                                 >
                                     Remove
