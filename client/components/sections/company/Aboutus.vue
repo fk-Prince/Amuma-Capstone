@@ -150,7 +150,14 @@
                             <div
                                 class="flex flex-col gap-5 sm:flex-row sm:items-start"
                             >
+                                <img
+                                    v-if="member.photo"
+                                    :src="member.photo"
+                                    :alt="member.name"
+                                    class="h-16 w-16 shrink-0 rounded-2xl object-cover"
+                                />
                                 <div
+                                    v-else
                                     class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
                                     :class="member.badge"
                                 >
@@ -232,6 +239,7 @@
 
 <script lang="ts" setup>
 import { User, Mail, Phone } from "lucide-vue-next";
+import princePhoto from "~/assets/images/developer/Prince_ID.png";
 
 const stats = [
     {
@@ -248,6 +256,7 @@ const team = [
     {
         name: "Prince I. Sestoso",
         title: "System Analysis & Development",
+        photo: princePhoto,
         blurb: "Prince leads the technical direction of AMUMA, from the database schema up to the code that ties every module together. He built the Laravel backend and worked across the Nuxt frontend to make sure bookings, billing, and the Family Portal all work together seamlessly.",
         roles: [
             "System Analysis",
