@@ -6,6 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Enums\RoleEnum;
 use App\Models\Branch;
+use App\Models\BranchSubscription;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\Subscription;
@@ -82,6 +83,17 @@ class AuthGuard
 
     public static function requireOpenSubscription(string|int $branchId): void
     {
+        $link = BranchSubscription::where('branch_id', $branchId)
+            ->latest('branch_subscription_id')
+            ->first();
+
+        if ($link?->isLapsed()) {
+            throw new Exception(
+                "This branch is deactivated, so it's view-only. Reactivate it in Manage Subscription to make changes.",
+                402
+            );
+        }
+
         $subscription = Subscription::query()
             ->whereHas('branchLinks', fn($q) => $q->where('branch_id', $branchId))
             ->latest('created_at')
