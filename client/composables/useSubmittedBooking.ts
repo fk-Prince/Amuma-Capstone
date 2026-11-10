@@ -50,6 +50,26 @@ export const useSubmittedBooking = () => {
         return booking.value;
     };
 
+    const loadBooking = async (reference: string, attempts = 3, delay = 1000) => {
+        waiting.value = true;
+
+        try {
+            for (let attempt = 0; attempt < attempts && !cancelled; attempt++) {
+                try {
+                    booking.value = (await find(reference)) ?? booking.value;
+                } catch {}
+
+                if (booking.value) break;
+
+                await sleep(delay);
+            }
+        } finally {
+            waiting.value = false;
+        }
+
+        return booking.value;
+    };
+
     const openReceipt = async () => {
         const code = booking.value?.receipt_code;
         if (!code || openingReceipt.value) return;
@@ -64,5 +84,13 @@ export const useSubmittedBooking = () => {
         }
     };
 
-    return { booking, waiting, receipt, openingReceipt, waitForReceipt, openReceipt };
+    return {
+        booking,
+        waiting,
+        receipt,
+        openingReceipt,
+        waitForReceipt,
+        loadBooking,
+        openReceipt,
+    };
 };

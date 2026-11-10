@@ -69,27 +69,6 @@
                         </span>
                     </div>
                     <div
-                        v-if="isLoadingAcknowledgement"
-                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
-                    >
-                        <LoaderCircle
-                            class="h-4 w-4 shrink-0 mt-0.5 animate-spin text-primary"
-                        />
-                        <span>Generating your receipt...</span>
-                    </div>
-                    <div
-                        v-else-if="acknowledgement?.receipt_code"
-                        class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
-                    >
-                        <ReceiptText
-                            class="h-4 w-4 shrink-0 mt-0.5 text-primary"
-                        />
-                        <span>
-                            Your receipt is ready. You can also print it later
-                            from your booking.
-                        </span>
-                    </div>
-                    <div
                         class="flex items-start gap-3 text-[13px] text-gray-500 text-left dark:text-gray-400"
                     >
                         <ShieldCheck
@@ -115,25 +94,6 @@
                     >
                         <Printer v-if="acknowledgement" class="h-4 w-4" />
                         {{ acknowledgement ? "Print booking form" : "Preparing..." }}
-                    </BaseButton>
-
-                    <BaseButton
-                        v-if="isLoadingAcknowledgement || acknowledgement?.receipt_code"
-                        variant="secondary"
-                        class="w-full rounded-xl py-3"
-                        :loading="isLoadingAcknowledgement || openingReceipt"
-                        :disabled="isLoadingAcknowledgement || openingReceipt"
-                        @click="printReceipt"
-                    >
-                        <ReceiptText
-                            v-if="!isLoadingAcknowledgement && !openingReceipt"
-                            class="h-4 w-4"
-                        />
-                        {{
-                            isLoadingAcknowledgement
-                                ? "Generating receipt..."
-                                : "Print receipt"
-                        }}
                     </BaseButton>
                 </div>
 
@@ -175,34 +135,19 @@
             :branch-name="acknowledgement.branch_name"
             @close="showAcknowledgement = false"
         />
-
-        <PaymentReceipt
-            v-if="receipt"
-            :receipt="receipt"
-            @close="receipt = null"
-        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import {
-    CheckCircle2,
-    BellRing,
-    LoaderCircle,
-    Printer,
-    ReceiptText,
-    ShieldCheck,
-} from "lucide-vue-next";
+import { CheckCircle2, BellRing, Printer, ShieldCheck } from "lucide-vue-next";
 import BaseButton from "~/components/ui/BaseButton.vue";
 import backdrop from "~/assets/images/portalselection-bg.png";
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
-import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import { useBookingStore } from "~/stores/booking";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useSubmittedBooking } from "~/composables/useSubmittedBooking";
-import { useToast } from "~/composables/useToast";
 
 definePageMeta({
     layout: false,
@@ -238,12 +183,8 @@ const referenceId = ref(
 const {
     booking: acknowledgement,
     waiting: isLoadingAcknowledgement,
-    receipt,
-    openingReceipt,
-    waitForReceipt,
-    openReceipt,
+    loadBooking,
 } = useSubmittedBooking();
-const { error: showError } = useToast();
 
 const showAcknowledgement = ref(false);
 const isOpeningBookings = ref(false);
@@ -264,16 +205,6 @@ function stopCountdown() {
 watch(showAcknowledgement, (open) => {
     if (open) stopCountdown();
 });
-
-async function printReceipt() {
-    stopCountdown();
-
-    try {
-        await openReceipt();
-    } catch (err: any) {
-        showError(err?.message || "Unable to load your receipt.");
-    }
-}
 
 function startCountdown() {
     if (countdownTimer || isOpeningBookings.value) return;
@@ -299,24 +230,14 @@ onMounted(async () => {
         authUser.value = { ...authUser.value, hasBooking: true };
     }
 
-    if (reference) await waitForReceipt(reference);
+    if (reference) await loadBooking(reference);
 
     if (!acknowledgement.value) {
         await router.replace("/");
         return;
     }
 
-    if (acknowledgement.value?.receipt_code) {
-        try {
-            await openReceipt();
-        } catch {}
-    }
-
-    if (!showAcknowledgement.value && !receipt.value) startCountdown();
-});
-
-watch(receipt, (current, previous) => {
-    if (!current && previous && !showAcknowledgement.value) startCountdown();
+    if (!showAcknowledgement.value) startCountdown();
 });
 
 onBeforeUnmount(stopCountdown);
