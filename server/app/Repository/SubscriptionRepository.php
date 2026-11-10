@@ -314,12 +314,24 @@ class SubscriptionRepository
         $total = $byStatus->sum();
 
         $branchTotals = Branch::query()
+            ->where(fn($branch) => $branch
+                ->where('status', '!=', 'pending')
+                ->orWhereHas(
+                    'subscriptions',
+                    fn($subscription) => $subscription->where('subscriptions.status', '!=', Subscription::STATUS_CANCELLED)
+                ))
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("COUNT(*) FILTER (WHERE status = 'verified') as verified")
             ->selectRaw("COUNT(*) FILTER (WHERE status = 'rejected') as rejected")
             ->first();
 
         $agencyTotals = Agency::query()
+            ->where(fn($agency) => $agency
+                ->where('status', '!=', 'pending')
+                ->orWhereHas(
+                    'subscriptions',
+                    fn($subscription) => $subscription->where('status', '!=', Subscription::STATUS_CANCELLED)
+                ))
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("COUNT(*) FILTER (WHERE status = 'verified') as verified")
             ->selectRaw("COUNT(*) FILTER (WHERE status = 'rejected') as rejected")

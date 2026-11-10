@@ -765,6 +765,7 @@ function differsFromPlan(label: string) {
 
 const showAgencyStatus = computed(
     () =>
+        !withdrawn.value &&
         agency.value.status !== "verified" &&
         differsFromPlan(agencyStatusLabel.value),
 );
@@ -838,6 +839,8 @@ const selectedBranch = computed<CoveredBranch | null>(() => {
 });
 
 const branchSubtitle = computed(() => {
+    if (withdrawn.value) return "Request cancelled";
+
     if (isPending.value) {
         return isFirstBranch.value
             ? "Needs verification"
