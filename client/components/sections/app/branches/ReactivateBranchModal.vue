@@ -125,7 +125,7 @@ import { rememberPaymentReturn } from "~/utils/paymentReturn";
 import { useToast } from "~/composables/useToast";
 import { formatAmount } from "~/utils/currency";
 import type { CardDetails } from "~/types/payment";
-import type { BranchActivation } from "./BranchCard.vue";
+import type { BranchActivation } from "~/types/branch";
 
 const props = defineProps<{
     branchName: string;

@@ -286,6 +286,15 @@ class Subscription extends Model
             'additional_branch_price' => (float) $this->plans?->additional_branch_price,
             'additional_branches' => $this->billedAdditionalBranchCount(),
             'deactivated_additional_branches' => $this->additionalBranchCount() - $this->billedAdditionalBranchCount(),
+            'included_used' => $this->branchLinks()
+                ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                ->where('type', BranchSubscription::TYPE_INCLUDED)
+                ->count(),
+            'included_deactivated' => $this->branchLinks()
+                ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+                ->where('type', BranchSubscription::TYPE_INCLUDED)
+                ->whereNotNull('active_until')
+                ->count(),
             'yearly_total' => $this->plans ? $this->renewalAmount($this->plans) : 0.0,
         ];
     }

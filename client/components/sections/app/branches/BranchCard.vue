@@ -296,20 +296,10 @@ import { Power, PowerOff, RotateCw, Star } from "lucide-vue-next";
 import BranchReviewsModal from "./BranchReviewsModal.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { formatAmount } from "~/utils/currency";
+import { useBranchActivation } from "~/composables/useBranchActivation";
+import type { BranchActivation } from "~/types/branch";
 
-export interface BranchActivation {
-    uuid: string;
-    status: "pending" | "approved" | "rejected";
-    slot_type: "included" | "additional";
-    active_until: string | null;
-    activity_state: "active" | "ending" | "inactive";
-    is_main: boolean;
-    reactivation_amount: number;
-    additional_branch_price: number;
-    renews_on: string | null;
-}
-
-interface BranchCardData {
+export interface BranchCardData {
     branch_id: number;
     uuid: string;
     name: string;
@@ -341,37 +331,11 @@ const isRejected = computed(() => props.branch.review_status === "rejected");
 const reviewsOpen = ref(false);
 
 const activation = computed(() => props.branch.activation ?? null);
-const activityState = computed(() => activation.value?.activity_state ?? "active");
-const reactivationAmount = computed(() => activation.value?.reactivation_amount ?? 0);
-
-const activationAction = computed<"deactivate" | "reactivate" | null>(() => {
-    const link = activation.value;
-    if (!link || link.status !== "approved") return null;
-    if (link.active_until) return "reactivate";
-    return link.is_main ? null : "deactivate";
-});
-
-const activationNote = computed(() => {
-    const link = activation.value;
-    if (!link?.active_until) return null;
-
-    if (link.slot_type === "included") {
-        return "View-only · included slot still reserved.";
-    }
-
-    return activityState.value === "ending"
-        ? `View-only · free to reactivate until ${formatDate(link.active_until)}.`
-        : "View-only · not billed at renewal.";
-});
-
-const formatDate = (date?: string | null) =>
-    date
-        ? new Date(date).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-          })
-        : "";
+const {
+    reactivationAmount,
+    action: activationAction,
+    note: activationNote,
+} = useBranchActivation(activation);
 
 const emit = defineEmits<{
     resubmit: [branch: BranchCardData];

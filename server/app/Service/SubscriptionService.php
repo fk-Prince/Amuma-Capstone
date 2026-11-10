@@ -2262,9 +2262,9 @@ class SubscriptionService
                 $this->sandboxClient->syncLock($subscription->fresh());
             }
 
-            DB::afterCommit(function () use ($branch, $subscription) {
+            DB::afterCommit(function () use ($branch, $subscription, $link) {
                 try {
-                    $this->announceApproval($branch, $subscription?->fresh('plans'));
+                    $this->announceApproval($branch, $subscription?->fresh('plans'), $link);
                 } catch (\Throwable $e) {
                     Log::error('Branch approval notice failed', [
                         'branch_id' => $branch->branch_id,
@@ -2280,7 +2280,7 @@ class SubscriptionService
         });
     }
 
-    private function announceApproval(Branch $branch, ?Subscription $subscription = null): void
+    private function announceApproval(Branch $branch, ?Subscription $subscription = null, ?BranchSubscription $link = null): void
     {
         $agency = $branch->agencies;
         $owner = $agency?->registered_by
@@ -2314,24 +2314,45 @@ class SubscriptionService
             return;
         }
 
-        $message = "{$branch->name} was approved and is now active.";
+        $mainLinkId = $subscription?->mainBranchLinkId();
+        $isExtraBranch = $link && $mainLinkId && (int) $mainLinkId !== (int) $link->branch_subscription_id;
 
-        $this->notificationRepository->create([
-            'branch_id' => $branch->branch_id,
-            'to_user_id' => $owner->user_id,
-            'from_user_id' => Auth::id(),
-            'message_type' => 'Subscription',
-            'message' => $message,
-        ]);
+        $message = match (true) {
+            $isExtraBranch && $link->type === BranchSubscription::TYPE_ADDITIONAL
+                => "{$branch->name} was approved as an additional branch. You can start setting it up.",
+            $isExtraBranch
+                => "{$branch->name} was approved and uses a free slot in your plan. You can start setting it up.",
+            default => "{$branch->name} was approved and is now active.",
+        };
 
-        NotificationEvent::safe(new NotificationEvent(
-            (string) $owner->uuid,
-            (string) $branch->uuid,
-            $message,
-            (string) $branch->branch_id,
-            'Subscription',
-            null
-        ));
+        $notifyBranches = collect([$branch]);
+
+        if ($isExtraBranch) {
+            $mainBranch = BranchSubscription::with('branch')->find($mainLinkId)?->branch;
+
+            if ($mainBranch) {
+                $notifyBranches->push($mainBranch);
+            }
+        }
+
+        foreach ($notifyBranches as $target) {
+            $this->notificationRepository->create([
+                'branch_id' => $target->branch_id,
+                'to_user_id' => $owner->user_id,
+                'from_user_id' => Auth::id(),
+                'message_type' => 'Subscription',
+                'message' => $message,
+            ]);
+
+            NotificationEvent::safe(new NotificationEvent(
+                (string) $owner->uuid,
+                (string) $target->uuid,
+                $message,
+                (string) $branch->branch_id,
+                'Subscription',
+                null
+            ));
+        }
     }
 
     public function paymentInvoice(string $reference, ?int $agencyId = null): array

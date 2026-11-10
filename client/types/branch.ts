@@ -39,6 +39,18 @@ export interface Branch {
     document?: File | string;
 }
 
+export interface BranchActivation {
+    uuid: string;
+    status: "pending" | "approved" | "rejected";
+    slot_type: "included" | "additional";
+    active_until: string | null;
+    activity_state: "active" | "ending" | "inactive";
+    is_main: boolean;
+    reactivation_amount: number;
+    additional_branch_price: number;
+    renews_on: string | null;
+}
+
 export interface ResubmitPlan {
     name: string;
     type: "sme" | "enterprise";

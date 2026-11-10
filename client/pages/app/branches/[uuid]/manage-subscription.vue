@@ -221,7 +221,7 @@
                 </div>
 
                 <div
-                    class="mb-6 border-t border-slate-100 pt-5 dark:border-white/10"
+                    class="mb-6 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-5 dark:border-white/10"
                 >
                     <div>
                         <h2
@@ -236,7 +236,36 @@
                             Manage and view branches under this agency.
                         </p>
                     </div>
+
+                    <div
+                        class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-white/10 dark:bg-white/5"
+                        role="group"
+                        aria-label="Layout"
+                    >
+                        <button
+                            v-for="option in layoutOptions"
+                            :key="option.value"
+                            type="button"
+                            :aria-pressed="layout === option.value"
+                            class="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition"
+                            :class="
+                                layout === option.value
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                            "
+                            @click="setLayout(option.value)"
+                        >
+                            <component :is="option.icon" class="h-3.5 w-3.5" />
+                            {{ option.label }}
+                        </button>
+                    </div>
                 </div>
+
+                <BranchSlotSummary
+                    v-if="subscriptionPlan?.branch_limit"
+                    :plan="subscriptionPlan"
+                    :renews-on="subscriptionEnd"
+                />
 
                 <div
                     v-if="loading"
@@ -309,6 +338,23 @@
                     <p class="mt-1 text-xs text-slate-400 dark:text-gray-500">
                         Try adjusting your search or filters.
                     </p>
+                </div>
+
+                <div
+                    v-else-if="layout === 'list'"
+                    class="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 dark:divide-white/10 dark:border-white/10"
+                >
+                    <BranchRow
+                        v-for="branch in branches"
+                        :key="branch.branch_id"
+                        :branch="branch"
+                        :active="branch.uuid === route.params.uuid"
+                        :can-resubmit="canResubmit"
+                        :can-manage="canResubmit && !isSandbox"
+                        @resubmit="onResubmitBranch"
+                        @deactivate="deactivateTarget = $event"
+                        @reactivate="reactivateTarget = $event"
+                    />
                 </div>
 
                 <div
@@ -426,7 +472,7 @@ import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBran
 import RenewalModal from "~/components/sections/app/branches/RenewalModal.vue";
 import DeactivateBranchModal from "~/components/sections/app/branches/DeactivateBranchModal.vue";
 import ReactivateBranchModal from "~/components/sections/app/branches/ReactivateBranchModal.vue";
-import type { BranchActivation } from "~/components/sections/app/branches/BranchCard.vue";
+import type { BranchActivation } from "~/types/branch";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
@@ -438,10 +484,13 @@ import {
     CircleX,
     Clock,
     LayoutGrid,
+    List,
     Eye,
     LifeBuoy,
     RotateCw,
 } from "lucide-vue-next";
+import BranchRow from "~/components/sections/app/branches/BranchRow.vue";
+import BranchSlotSummary from "~/components/sections/app/branches/BranchSlotSummary.vue";
 import { isBranchRejected } from "~/utils/branchAccess";
 import { useSupportCenter } from "~/composables/useSupportCenter";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
@@ -710,6 +759,26 @@ type Branch = {
     image: string;
     activation?: BranchActivation | null;
 };
+
+const LAYOUT_KEY = "amuma_branch_directory_layout";
+const layoutOptions = [
+    { value: "grid", label: "Grid", icon: LayoutGrid },
+    { value: "list", label: "List", icon: List },
+] as const;
+const layout = ref<"grid" | "list">("grid");
+
+const setLayout = (value: "grid" | "list") => {
+    layout.value = value;
+    try {
+        localStorage.setItem(LAYOUT_KEY, value);
+    } catch {}
+};
+
+onMounted(() => {
+    try {
+        if (localStorage.getItem(LAYOUT_KEY) === "list") layout.value = "list";
+    } catch {}
+});
 
 const deactivateTarget = ref<Branch | null>(null);
 const reactivateTarget = ref<Branch | null>(null);
@@ -1028,6 +1097,7 @@ const openedToEndTrial = ref(false);
 const openedToPay = ref(false);
 const renewalSummary = ref<any>(null);
 const subscriptionPlan = ref<any>(null);
+const subscriptionEnd = ref<string | null>(null);
 
 const fetchRenewal = async () => {
     try {
@@ -1038,9 +1108,11 @@ const fetchRenewal = async () => {
 
         renewalSummary.value = res?.data?.[0]?.renewal ?? null;
         subscriptionPlan.value = res?.data?.[0]?.plan ?? null;
+        subscriptionEnd.value = res?.data?.[0]?.end_date ?? null;
     } catch {
         renewalSummary.value = null;
         subscriptionPlan.value = null;
+        subscriptionEnd.value = null;
     }
 };
 

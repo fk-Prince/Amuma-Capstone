@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import { formatAmount } from "~/utils/currency";
-import type { BranchActivation } from "./BranchCard.vue";
+import type { BranchActivation } from "~/types/branch";
 
 defineProps<{
     branchName: string;
