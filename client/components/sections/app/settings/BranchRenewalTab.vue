@@ -566,14 +566,27 @@
                             <span
                                 class="h-1.5 w-1.5 shrink-0 rounded-full"
                                 :class="
-                                    covered.status === 'approved'
-                                        ? 'bg-emerald-500'
-                                        : 'bg-amber-500'
+                                    covered.active_until
+                                        ? 'bg-slate-400'
+                                        : covered.status === 'approved'
+                                          ? 'bg-emerald-500'
+                                          : 'bg-amber-500'
                                 "
                             />
-                            {{ covered.name }}
                             <span
-                                v-if="covered.status !== 'approved'"
+                                class="truncate"
+                                :class="covered.active_until ? 'text-slate-400 dark:text-gray-500' : ''"
+                            >
+                                {{ covered.name }}
+                            </span>
+                            <span
+                                v-if="covered.active_until"
+                                class="shrink-0 rounded bg-slate-200/70 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                            >
+                                Deactivated
+                            </span>
+                            <span
+                                v-else-if="covered.status !== 'approved'"
                                 class="text-[10px] uppercase text-amber-600 dark:text-amber-400"
                             >
                                 pending
@@ -1482,7 +1495,7 @@ const recentPayments = computed(() =>
 const showAllPayments = ref(false);
 
 const coveredBranches = computed<
-    { uuid: string; name: string; status: string }[]
+    { uuid: string; name: string; status: string; active_until?: string | null }[]
 >(() => subscription.value?.subscription?.covered_branches ?? []);
 
 const currentPlan = computed(() =>

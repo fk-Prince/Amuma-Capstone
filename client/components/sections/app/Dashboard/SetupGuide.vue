@@ -406,6 +406,12 @@ watch(
     },
 );
 
+watch(open, (isOpen) => {
+    if (isOpen || !activeTour) return;
+    activeTour.destroy();
+    activeTour = null;
+});
+
 onBeforeUnmount(() => {
     unmounted = true;
     activeTour?.destroy();
