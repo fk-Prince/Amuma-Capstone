@@ -16,8 +16,8 @@
             <input
                 type="text"
                 :value="search"
-                placeholder="Search by agency or branch name"
-                aria-label="Search by agency or branch name"
+                placeholder="Search by agency, branch, or owner email"
+                aria-label="Search by agency, branch, or owner email"
                 class="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-9 text-sm text-slate-700 transition placeholder:text-slate-400 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:focus:ring-primary-500/20"
                 @input="
                     emit(

@@ -231,10 +231,15 @@ class SubscriptionRepository
             $query->where(function ($builder) use ($search) {
                 $builder
                     ->whereHas('branch', function ($branchQuery) use ($search) {
-                        $branchQuery->where('name', 'ilike', "%{$search}%");
+                        $branchQuery->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('email', 'ilike', "%{$search}%");
                     })
                     ->orWhereHas('branch.agencies', function ($agencyQuery) use ($search) {
-                        $agencyQuery->where('name', 'ilike', "%{$search}%");
+                        $agencyQuery->where('name', 'ilike', "%{$search}%")
+                            ->orWhere('email', 'ilike', "%{$search}%");
+                    })
+                    ->orWhereHas('branch.agencies.registrant', function ($userQuery) use ($search) {
+                        $userQuery->where('email', 'ilike', "%{$search}%");
                     });
             });
         }

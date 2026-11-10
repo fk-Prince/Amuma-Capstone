@@ -81,6 +81,8 @@ export interface SubscriptionCardData {
             id_back: string | null;
             document: string | null;
             registered_by?: string | null;
+            owner_subscription_count?: number;
+            owner_subscription_number?: number;
         };
     };
 

@@ -1,6 +1,9 @@
 <template>
     <div class="flex flex-col gap-1.5 font-primary" :class="[className]">
-        <label v-if="label" class="text-sm font-semibold text-slate-700 dark:text-gray-300">
+        <label
+            v-if="label"
+            class="text-sm font-semibold text-slate-700 dark:text-gray-300"
+        >
             {{ label }}
             <span v-if="required" class="text-danger ml-0.5">*</span>
             <span
@@ -71,7 +74,9 @@
                 :maxlength="inputType === 'number' ? undefined : effectiveMax"
                 :data-input-kind="kindAttr"
                 :inputmode="inputMode"
-                :autocomplete="fieldKind === 'phone' ? 'tel-national' : undefined"
+                :autocomplete="
+                    fieldKind === 'phone' ? 'tel-national' : undefined
+                "
                 :min="min || undefined"
                 :max="max || undefined"
                 :step="step || undefined"
@@ -269,17 +274,26 @@ function blockSignKeys(event: KeyboardEvent) {
         event.preventDefault();
     }
 
-    if (inputType.value === "number" && nonNegative && ["-", "+", "e", "E"].includes(event.key)) {
+    if (
+        inputType.value === "number" &&
+        nonNegative &&
+        ["-", "+", "e", "E"].includes(event.key)
+    ) {
         event.preventDefault();
     }
 
-    if (inputType.value === "number" && props.step === "1" && [".", ","].includes(event.key)) {
+    if (
+        inputType.value === "number" &&
+        props.step === "1" &&
+        [".", ","].includes(event.key)
+    ) {
         event.preventDefault();
     }
 }
 
 // Typing rules (see plugins/input-guard.client.ts): which kind of field this is.
-const PERSON_NAME = /^(first|middle|last|full|given|family)\s*name$|^name$|^surname$|^suffix$/i;
+const PERSON_NAME =
+    /^(first|middle|last|full|given|family)\s*name$|^name$|^surname$|^suffix$/i;
 const PHONE_LABEL = /(phone|mobile|contact\s*(number|no\.?))/i;
 const TIN_LABEL = /^TIN\b|taxpayer identification/i;
 
@@ -288,7 +302,8 @@ const fieldKind = computed(() => {
     if (props.mode === "password") return "raw";
     if (props.mode === "email") return "email";
     if (props.mode === "textarea") return "textarea";
-    if (["number", "date", "time", "datetime"].includes(props.mode)) return "raw";
+    if (["number", "date", "time", "datetime"].includes(props.mode))
+        return "raw";
 
     const label = props.label.trim();
     if (/e-?mail/i.test(label)) return "email";
@@ -316,7 +331,7 @@ const effectiveMax = computed(() => {
 });
 
 const inputMode = computed(() => {
-    if (fieldKind.value === "phone" || fieldKind.value === "tin") return "numeric";
+    if (fieldKind.value === "phone") return "numeric";
     if (fieldKind.value === "email") return "email";
     return undefined;
 });

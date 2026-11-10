@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Agency;
 use App\Models\BranchSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,6 +21,19 @@ class SubscriptionResource extends JsonResource
             && (int) $this->branch_subscription_id === (int) $firstLinkId;
 
         $isRejected = $this->status === BranchSubscription::STATUS_REJECTED;
+
+        $agency = $this->branch?->agencies;
+        $registrantId = $agency?->registered_by;
+
+        $ownerAgencies = $registrantId && $isFirstBranch
+            ? Agency::where('registered_by', $registrantId)->whereHas('subscriptions')
+            : null;
+
+        $ownerSubscriptionCount = $ownerAgencies ? (clone $ownerAgencies)->count() : 0;
+
+        $ownerSubscriptionNumber = $ownerAgencies
+            ? (clone $ownerAgencies)->where('agency_id', '<=', $agency->agency_id)->count()
+            : 0;
 
         return [
             'uuid' => $this->uuid,
@@ -99,6 +113,8 @@ class SubscriptionResource extends JsonResource
                     'id_back' => $this->branch?->agencies?->id_back,
                     'document' => $this->branch?->agencies?->document,
                     'registered_by' => $this->branch?->agencies?->registrant?->email,
+                    'owner_subscription_count' => $ownerSubscriptionCount,
+                    'owner_subscription_number' => $ownerSubscriptionNumber,
                 ],
             ],
 

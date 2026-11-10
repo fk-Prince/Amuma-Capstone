@@ -531,6 +531,15 @@
                 >
                     {{ agency.registered_by }}
                 </span>
+
+                <span
+                    v-if="(agency.owner_subscription_count ?? 0) > 1"
+                    class="ml-auto shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                    :title="`This owner has ${agency.owner_subscription_count} subscriptions`"
+                >
+                    {{ ordinal(agency.owner_subscription_number ?? 0) }}
+                    of {{ agency.owner_subscription_count }} subscriptions
+                </span>
             </div>
 
             <div
@@ -658,6 +667,16 @@ const onCardClick = (event: MouseEvent) => {
 };
 
 const agency = computed(() => props.subscription.branch.agency);
+
+function ordinal(n: number) {
+    const tens = n % 100;
+    const suffix =
+        tens >= 11 && tens <= 13
+            ? "th"
+            : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th";
+
+    return `${n}${suffix}`;
+}
 
 const latestPayment = computed(() => {
     const payments = props.subscription.payments;
