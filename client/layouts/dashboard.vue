@@ -62,6 +62,7 @@
                 <DashboardHeader @open="isOpen = true" />
                 <SandboxNotice class="mt-3" />
                 <TrialNotice class="mt-3" />
+                <DeactivatedNotice class="mt-3" />
             </div>
 
             <main
@@ -88,6 +89,7 @@
 import DashboardSidebar from "~/components/sections/DashboardSidebar.vue";
 import DashboardHeader from "~/components/sections/DashboardHeader.vue";
 import TrialNotice from "~/components/sections/TrialNotice.vue";
+import DeactivatedNotice from "~/components/sections/DeactivatedNotice.vue";
 import SandboxNotice from "~/components/sections/SandboxNotice.vue";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import UnauthorizedSection from "~/components/sections/UnauthorizedSection.vue";

@@ -124,6 +124,24 @@ class SubscriptionRepository
             ->first();
     }
 
+    public function findAgencyBranchLink(int|string $agencyId, string $branchUuid, bool $lock = false): ?BranchSubscription
+    {
+        return BranchSubscription::with(['branch', 'subscription.plans'])
+            ->whereHas('branch', fn($branch) => $branch
+                ->where('uuid', $branchUuid)
+                ->where('agency_id', $agencyId))
+            ->latest('branch_subscription_id')
+            ->when($lock, fn($q) => $q->lockForUpdate())
+            ->first();
+    }
+
+    public function setBranchActiveUntil(BranchSubscription $link, ?string $date): BranchSubscription
+    {
+        $link->update(['active_until' => $date]);
+
+        return $link;
+    }
+
     public function findLatestForBranch(string $branchId)
     {
         return Subscription::with(['plans', 'latestPayment'])

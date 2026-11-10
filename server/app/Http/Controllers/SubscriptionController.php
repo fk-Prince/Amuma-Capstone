@@ -227,6 +227,39 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->setAutoRenew([...$data, 'branch_id' => $branch->branch_id]);
     }
 
+    public function deactivateBranch(Request $request)
+    {
+        return $this->subscriptionService->deactivateBranch($this->activationPayload($request));
+    }
+
+    public function reactivateBranch(Request $request)
+    {
+        return $this->subscriptionService->reactivateBranch($this->activationPayload($request));
+    }
+
+    public function reactivateBranchWithPurchase(Request $request)
+    {
+        $payload = $this->activationPayload($request, [
+            'payment_method' => ['required', 'in:CREDIT-CARD,GCASH'],
+            'token_id' => ['required_if:payment_method,CREDIT-CARD', 'nullable', 'string'],
+            'authentication_id' => ['required_if:payment_method,CREDIT-CARD', 'nullable', 'string'],
+        ]);
+        return $this->subscriptionService->makeReactivationPurchase($payload, $request->user());
+    }
+
+    private function activationPayload(Request $request, array $rules = []): array
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::ManageSubscription, PermissionAction::Update);
+
+        $data = $request->validate([
+            'target_uuid' => ['required', 'uuid'],
+            ...$rules,
+        ]);
+
+        return [...$data, 'agency_id' => $branch->agency_id];
+    }
+
     public function endTest(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
@@ -248,13 +281,6 @@ class SubscriptionController extends Controller
         ]);
 
         $branch = BranchGuard::resolveBranch($validated['branch_uuid']);
-
-        // AuthGuard::requireModule(
-        //     $user,
-        //     $branch->branch_id,
-        //     ModuleEnum::ManageSubscription,
-        //     PermissionAction::Read
-        // );       
 
         return $this->subscriptionService->paymentInvoice($reference, (int) $branch->agency_id);
     }

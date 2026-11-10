@@ -29,6 +29,9 @@ export interface Branch {
     subscription_locked?: boolean;
     demo_locked?: "rejected" | "ended" | null;
     subscription_awaiting_payment?: boolean;
+    branch_active_until?: string | null;
+    branch_deactivated?: boolean;
+    subscription_expired?: boolean;
     rejection_reason?: string | null;
     resubmit_requires_payment?: boolean;
     resubmit_subscription_status?: "active" | "expired" | "pending" | "rejected" | null;

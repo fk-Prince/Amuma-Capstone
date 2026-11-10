@@ -37,7 +37,10 @@ export const usePermissions = () => {
         if (
             changes &&
             !isSubscriptionModule &&
-            branchStore.activeBranch?.subscription_locked
+            (branchStore.activeBranch?.subscription_locked ||
+                ((branchStore.activeBranch?.branch_deactivated ||
+                    branchStore.activeBranch?.subscription_expired) &&
+                    module_name !== Modules.BillingAndInvoices))
         ) {
             return false;
         }

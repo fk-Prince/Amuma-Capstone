@@ -210,6 +210,7 @@ class BranchRepository
             JOIN subscriptions s ON s.subscription_id = bs.subscription_id
             WHERE bs.branch_id = branches.branch_id
               AND bs.status = ?
+              AND bs.active_until IS NULL
               AND s.status = ?
               AND s.end_date >= CURRENT_DATE
         ) THEN 0 ELSE 1 END", [

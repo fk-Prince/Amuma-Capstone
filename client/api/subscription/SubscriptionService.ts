@@ -52,6 +52,18 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-branch-resubmit-purchase', 'POST', payload);
     }
 
+    async deactivateBranch(payload: { branch_uuid: string; target_uuid: string }): Promise<any> {
+        return await this.request(this.resource + '-branch-deactivate', 'POST', payload);
+    }
+
+    async reactivateBranch(payload: { branch_uuid: string; target_uuid: string }): Promise<any> {
+        return await this.request(this.resource + '-branch-reactivate', 'POST', payload);
+    }
+
+    async reactivateBranchWithPurchase(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch-reactivate-purchase', 'POST', payload);
+    }
+
     async applyUpgrade(payload: any): Promise<any> {
         return await this.request(this.resource + '-apply-upgrade', 'POST', payload);
     }

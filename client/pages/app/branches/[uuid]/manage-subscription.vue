@@ -85,7 +85,7 @@
 
             <div class="p-6">
                 <div
-                    class="mb-6 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"
+                    class="mb-3 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between"
                 >
                     <div class="flex min-w-0 items-start gap-4">
                         <!-- <div
@@ -141,55 +141,6 @@
                                 {{ planTypeLabel(subscriptionPlan.type) }} ·
                                 {{ subscriptionPlan.name }}
                             </p>
-                            <div
-                                class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 dark:border-white/10"
-                            >
-                                <span
-                                    v-if="agency.email"
-                                    class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
-                                    >
-                                        <rect
-                                            x="2"
-                                            y="4"
-                                            width="20"
-                                            height="16"
-                                            rx="2"
-                                        />
-                                        <path d="m22 6-10 7L2 6" />
-                                    </svg>
-
-                                    <span>{{ agency.email }}</span>
-                                </span>
-
-                                <span
-                                    v-if="agency.location"
-                                    class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
-                                    >
-                                        <path
-                                            d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Z"
-                                        />
-                                        <circle cx="12" cy="10" r="2.5" />
-                                    </svg>
-
-                                    <span>{{ agency.location }}</span>
-                                </span>
-                            </div>
                         </div>
                     </div>
 
@@ -222,6 +173,51 @@
                             <span>View Subscription</span>
                         </ActionButton>
                     </div>
+                </div>
+
+                <div
+                    v-if="agency"
+                    class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 dark:border-white/10"
+                >
+                    <span
+                        v-if="agency.email"
+                        class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
+                        >
+                            <rect x="2" y="4" width="20" height="16" rx="2" />
+                            <path d="m22 6-10 7L2 6" />
+                        </svg>
+
+                        <span>{{ agency.email }}</span>
+                    </span>
+
+                    <span
+                        v-if="agency.location"
+                        class="flex items-center gap-2 text-sm text-slate-500 dark:text-gray-400"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
+                        >
+                            <path
+                                d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Z"
+                            />
+                            <circle cx="12" cy="10" r="2.5" />
+                        </svg>
+
+                        <span>{{ agency.location }}</span>
+                    </span>
                 </div>
 
                 <div
@@ -325,7 +321,10 @@
                         :branch="branch"
                         :active="branch.uuid === route.params.uuid"
                         :can-resubmit="canResubmit"
+                        :can-manage="canResubmit && !isSandbox"
                         @resubmit="onResubmitBranch"
+                        @deactivate="deactivateTarget = $event"
+                        @reactivate="reactivateTarget = $event"
                     />
                 </div>
 
@@ -366,7 +365,9 @@
         <ResubmitBranchModal
             v-if="showReapply && currentBranch"
             :branch="currentBranch"
-            :acting-branch-uuid="currentBranch.uuid"
+            :acting-branch-uuid="
+                currentBranch.uuid ?? (route.params.uuid as string)
+            "
             :rejection-reason="currentBranch.rejection_reason ?? null"
             :requires-purchase="false"
             :agency="currentBranch.agency"
@@ -387,6 +388,24 @@
             @resubmitted="onBranchResubmitted"
         />
 
+        <DeactivateBranchModal
+            v-if="deactivateTarget?.activation"
+            :branch-name="deactivateTarget.name"
+            :activation="deactivateTarget.activation"
+            :loading="deactivating"
+            @confirm="confirmDeactivate"
+            @close="deactivateTarget = null"
+        />
+
+        <ReactivateBranchModal
+            v-if="reactivateTarget?.activation"
+            :branch-name="reactivateTarget.name"
+            :branch-uuid="route.params.uuid as string"
+            :activation="reactivateTarget.activation"
+            @close="reactivateTarget = null"
+            @reactivated="onReactivated"
+        />
+
         <ConfirmDialog
             :open="!!purchasePrompt"
             title="Pay for an additional branch?"
@@ -405,13 +424,24 @@ import BranchCard from "~/components/sections/app/branches/BranchCard.vue";
 import AddBranchModal from "~/components/sections/app/Branch/AddBranchModal.vue";
 import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBranchModal.vue";
 import RenewalModal from "~/components/sections/app/branches/RenewalModal.vue";
+import DeactivateBranchModal from "~/components/sections/app/branches/DeactivateBranchModal.vue";
+import ReactivateBranchModal from "~/components/sections/app/branches/ReactivateBranchModal.vue";
+import type { BranchActivation } from "~/components/sections/app/branches/BranchCard.vue";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import type { Branch as FullBranch } from "~/types/branch";
 import Combobox from "~/components/ui/Combobox.vue";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { CircleCheck, CircleX, Clock, LayoutGrid, Eye, LifeBuoy, RotateCw } from "lucide-vue-next";
+import {
+    CircleCheck,
+    CircleX,
+    Clock,
+    LayoutGrid,
+    Eye,
+    LifeBuoy,
+    RotateCw,
+} from "lucide-vue-next";
 import { isBranchRejected } from "~/utils/branchAccess";
 import { useSupportCenter } from "~/composables/useSupportCenter";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
@@ -437,7 +467,7 @@ definePageMeta({
 useHead({ title: "Manage Subscription" });
 
 const route = useRoute();
-const { error, warning } = useToast();
+const { error, warning, success } = useToast();
 const { canCreate, canUpdate } = usePermissions();
 const { isSandbox } = useSandbox();
 const { openSupport } = useSupportCenter();
@@ -539,7 +569,7 @@ function onReapplied(result: any) {
                       agency: {
                           ...item.agency,
                           ...agency,
-                          location: agency.location ?? item.agency.location,
+                          location: agency.location ?? item.agency?.location,
                       },
                   }
                 : item,
@@ -678,6 +708,66 @@ type Branch = {
     patients: number;
     plan: { plan_code: string; name: string } | null;
     image: string;
+    activation?: BranchActivation | null;
+};
+
+const deactivateTarget = ref<Branch | null>(null);
+const reactivateTarget = ref<Branch | null>(null);
+const deactivating = ref(false);
+
+const applyActivation = (uuid: string, activation: BranchActivation | null) => {
+    if (!activation) return;
+
+    branches.value = branches.value.map((b) =>
+        b.uuid === uuid ? { ...b, activation } : b,
+    );
+
+    const stored = branchStore.branches.find((b) => b.uuid === uuid);
+
+    if (stored) {
+        stored.branch_active_until = activation.active_until;
+        stored.branch_deactivated = activation.active_until !== null;
+    }
+};
+
+const confirmDeactivate = async () => {
+    const target = deactivateTarget.value;
+    if (!target || deactivating.value) return;
+
+    deactivating.value = true;
+
+    try {
+        const res = await subscriptionService.deactivateBranch({
+            branch_uuid: route.params.uuid as string,
+            target_uuid: target.uuid,
+        });
+
+        applyActivation(target.uuid, res?.data ?? null);
+        success(res?.message ?? `${target.name} is deactivated.`);
+        deactivateTarget.value = null;
+        fetchRenewal();
+    } catch (err: any) {
+        error(err?.message ?? "Couldn't deactivate this branch.");
+    } finally {
+        deactivating.value = false;
+    }
+};
+
+const onReactivated = (result: any) => {
+    const target = reactivateTarget.value;
+    reactivateTarget.value = null;
+    if (!target?.activation) return;
+
+    applyActivation(
+        target.uuid,
+        result?.data ?? {
+            ...target.activation,
+            active_until: null,
+            activity_state: "active",
+            reactivation_amount: 0,
+        },
+    );
+    fetchRenewal();
 };
 
 type AvailableSubscription = {
@@ -820,6 +910,7 @@ const mapBranch = (b: any): Branch => ({
     patients: b.patients_count ?? 0,
     plan: b.plan ?? null,
     image: b.image ?? logo,
+    activation: b.activation ?? null,
 });
 
 const statsLoading = ref(true);
@@ -974,13 +1065,19 @@ onMounted(async () => {
     if (route.query.end_trial) {
         openedToEndTrial.value = true;
         showRenewal.value = true;
-        navigateTo({ query: { ...route.query, end_trial: undefined } }, { replace: true });
+        navigateTo(
+            { query: { ...route.query, end_trial: undefined } },
+            { replace: true },
+        );
     }
 
     if (route.query.pay) {
         openedToPay.value = true;
         showRenewal.value = true;
-        navigateTo({ query: { ...route.query, pay: undefined } }, { replace: true });
+        navigateTo(
+            { query: { ...route.query, pay: undefined } },
+            { replace: true },
+        );
     }
 
     await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);

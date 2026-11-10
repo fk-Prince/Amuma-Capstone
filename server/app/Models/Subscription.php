@@ -192,9 +192,39 @@ class Subscription extends Model
             ->count();
     }
 
+    public function hasExpired(): bool
+    {
+        if ($this->isTest()) {
+            return false;
+        }
+
+        return $this->status === self::STATUS_EXPIRED
+            || (
+                $this->status === self::STATUS_ACTIVE
+                && $this->end_date?->copy()->startOfDay()->lt(now()->startOfDay())
+                && !$this->pendingPlanIsDue()
+            );
+    }
+
+    public function billedAdditionalBranchCount(): int
+    {
+        return $this->branchLinks()
+            ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+            ->where('type', BranchSubscription::TYPE_ADDITIONAL)
+            ->whereNull('active_until')
+            ->count();
+    }
+
+    public function mainBranchLinkId(): ?int
+    {
+        return $this->branchLinks()
+            ->where('type', BranchSubscription::TYPE_INCLUDED)
+            ->min('branch_subscription_id');
+    }
+
     public function renewalAmount(Plan $plan, ?int $additionalBranches = null): float
     {
-        $additionalBranches ??= $this->additionalBranchCount();
+        $additionalBranches ??= $this->billedAdditionalBranchCount();
 
         return round((float) $plan->price + $additionalBranches * (float) $plan->additional_branch_price, 2);
     }
@@ -254,7 +284,8 @@ class Subscription extends Model
             'branch_limit' => $this->branchLimit(),
             'price' => (float) $this->plans?->price,
             'additional_branch_price' => (float) $this->plans?->additional_branch_price,
-            'additional_branches' => $this->additionalBranchCount(),
+            'additional_branches' => $this->billedAdditionalBranchCount(),
+            'deactivated_additional_branches' => $this->additionalBranchCount() - $this->billedAdditionalBranchCount(),
             'yearly_total' => $this->plans ? $this->renewalAmount($this->plans) : 0.0,
         ];
     }

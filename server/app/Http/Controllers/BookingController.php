@@ -31,6 +31,11 @@ class BookingController extends Controller
     public function store(Request $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
+
+        if ($branch->isDeactivated()) {
+            throw new \Exception("This provider isn't taking new bookings right now.", 422);
+        }
+
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['branch' => $branch]);
 

@@ -103,8 +103,13 @@ class Branch extends Model
             'subscription_id'
         )
             ->using(BranchSubscription::class)
-            ->withPivot(['branch_subscription_id', 'uuid', 'status'])
+            ->withPivot(['branch_subscription_id', 'uuid', 'status', 'active_until'])
             ->withTimestamps();
+    }
+
+    public function isDeactivated(): bool
+    {
+        return $this->subscriptionLink()->whereNotNull('active_until')->exists();
     }
 
     // Only a branch on an approved live plan is offered to the public. Trials and

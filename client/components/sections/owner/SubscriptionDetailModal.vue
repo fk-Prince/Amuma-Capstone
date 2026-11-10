@@ -268,6 +268,7 @@
                                 >
                                     <div
                                         class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary-50 text-primary dark:bg-primary-500/10"
+                                        :class="branch.activity_state === 'inactive' ? 'opacity-60 grayscale' : ''"
                                     >
                                         <img
                                             v-if="branch.image"
@@ -278,7 +279,10 @@
                                         <Store v-else class="h-4 w-4" />
                                     </div>
 
-                                    <div class="min-w-0 flex-1">
+                                    <div
+                                        class="min-w-0 flex-1"
+                                        :class="branch.activity_state === 'inactive' ? 'opacity-70' : ''"
+                                    >
                                         <p
                                             class="flex items-center gap-1 text-xs font-semibold"
                                         >
@@ -307,6 +311,13 @@
                                                     branch.branch_status,
                                                 ).label
                                             }}
+                                            <span
+                                                v-if="activityTag(branch)"
+                                                class="ml-0.5 whitespace-nowrap rounded px-1.5 text-[9px] font-semibold"
+                                                :class="activityTag(branch)!.class"
+                                            >
+                                                {{ activityTag(branch)!.label }}
+                                            </span>
                                         </p>
                                     </div>
                                 </button>
@@ -369,6 +380,13 @@
                                                 ).label
                                             }}
                                         </span>
+                                        <span
+                                            v-if="activityTag(selectedBranch)"
+                                            class="whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                            :class="activityTag(selectedBranch)!.class"
+                                        >
+                                            {{ activityTag(selectedBranch)!.label }}
+                                        </span>
                                     </div>
 
                                 </div>
@@ -389,6 +407,28 @@
                                         rejected
                                     </span>
                                 </button>
+                            </div>
+
+                            <div
+                                v-if="selectedBranch.active_until"
+                                class="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+                            >
+                                <p
+                                    class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                                >
+                                    Deactivated by owner
+                                </p>
+                                <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-gray-300">
+                                    View-only. Only billing and Manage
+                                    Subscription still work.
+                                    {{
+                                        selectedBranch.type !== "additional"
+                                            ? "It keeps its included slot."
+                                            : selectedBranch.activity_state === "ending"
+                                              ? `Not billed at renewal; free to reactivate until ${formatDate(selectedBranch.active_until)}.`
+                                              : "Not billed; reactivating needs a prorated payment."
+                                    }}
+                                </p>
                             </div>
 
                             <div
@@ -639,6 +679,14 @@ const selectedBranch = computed(
         branches.value[0] ??
         null,
 );
+
+const activityTag = (branch: SubscriptionCoveredBranch) =>
+    branch.active_until
+        ? {
+              label: "Deactivated",
+              class: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300",
+          }
+        : null;
 
 const showRejection = computed(
     () =>

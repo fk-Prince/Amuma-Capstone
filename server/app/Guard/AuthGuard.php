@@ -78,16 +78,19 @@ class AuthGuard
             return;
         }
 
-        self::requireOpenSubscription($branchId);
+        self::requireOpenSubscription(
+            $branchId,
+            $moduleNames->every(fn($name) => $name === ModuleEnum::BillingAndInvoices->value)
+        );
     }
 
-    public static function requireOpenSubscription(string|int $branchId): void
+    public static function requireOpenSubscription(string|int $branchId, bool $billing = false): void
     {
         $link = BranchSubscription::where('branch_id', $branchId)
             ->latest('branch_subscription_id')
             ->first();
 
-        if ($link?->isLapsed()) {
+        if ($link?->isDeactivated() && !$billing) {
             throw new Exception(
                 "This branch is deactivated, so it's view-only. Reactivate it in Manage Subscription to make changes.",
                 402
@@ -110,12 +113,15 @@ class AuthGuard
             );
         }
 
-        $ended = in_array($subscription->status, [Subscription::STATUS_EXPIRED, Subscription::STATUS_CANCELLED], true)
+        $expired = $subscription->status === Subscription::STATUS_EXPIRED
             || (
                 $subscription->status === Subscription::STATUS_ACTIVE
                 && $subscription->end_date?->copy()->startOfDay()->lt(now()->startOfDay())
                 && !$subscription->pendingPlanIsDue()
             );
+
+        $ended = $subscription->status === Subscription::STATUS_CANCELLED
+            || ($expired && !$billing);
 
         if ($ended) {
             throw new Exception(

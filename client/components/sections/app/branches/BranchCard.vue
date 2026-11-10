@@ -2,7 +2,7 @@
     <div
         class="flex h-full flex-col rounded-2xl border border-slate-100 bg-slate-50/60 p-4 transition-all duration-200 ease-out transform-gpu dark:border-white/10 dark:bg-white/5"
         :class="
-            isRejected
+            isRejected || activation?.active_until
                 ? 'opacity-80'
                 : active
                   ? 'border-primary-200 bg-white ring-1 ring-primary-200 dark:border-primary-500/40 dark:bg-white/10 dark:ring-primary-500/30'
@@ -94,6 +94,13 @@
                                       ? "Verified"
                                       : "Pending review"
                             }}
+                        </span>
+
+                        <span
+                            v-if="activation?.active_until"
+                            class="whitespace-nowrap rounded-full bg-slate-200/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                        >
+                            Deactivated
                         </span>
                     </div>
                 </div>
@@ -219,6 +226,47 @@
             </div>
         </div>
 
+        <p
+            v-if="activationNote"
+            class="mt-3 text-[11px] leading-4 text-slate-500 dark:text-gray-400"
+        >
+            {{ activationNote }}
+        </p>
+
+        <div
+            v-if="!isRejected && activationAction"
+            class="mt-auto flex items-center gap-2 pt-4"
+        >
+            <ActionButton
+                :variant="activationAction === 'deactivate' ? 'outline' : 'primary'"
+                class="flex-1"
+                :extra-class="
+                    activationAction === 'deactivate'
+                        ? 'w-full !px-3 !text-xs !text-rose-600 dark:!text-rose-300'
+                        : 'w-full !px-3 !text-xs'
+                "
+                :disabled="!canManage"
+                tooltip="You need permission to update Manage Subscription to change a branch."
+                @click="
+                    activationAction === 'deactivate'
+                        ? emit('deactivate', branch)
+                        : emit('reactivate', branch)
+                "
+            >
+                <component
+                    :is="activationAction === 'deactivate' ? PowerOff : Power"
+                    class="h-3.5 w-3.5"
+                />
+                {{
+                    activationAction === "deactivate"
+                        ? "Deactivate"
+                        : reactivationAmount > 0
+                          ? `Reactivate · ₱${formatAmount(reactivationAmount)}`
+                          : "Reactivate"
+                }}
+            </ActionButton>
+        </div>
+
         <div v-if="isRejected" class="mt-auto flex items-center gap-2 pt-4">
             <ActionButton
                 variant="primary"
@@ -243,10 +291,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { RotateCw, Star } from "lucide-vue-next";
+import { computed, ref } from "vue";
+import { Power, PowerOff, RotateCw, Star } from "lucide-vue-next";
 import BranchReviewsModal from "./BranchReviewsModal.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
+import { formatAmount } from "~/utils/currency";
+
+export interface BranchActivation {
+    uuid: string;
+    status: "pending" | "approved" | "rejected";
+    slot_type: "included" | "additional";
+    active_until: string | null;
+    activity_state: "active" | "ending" | "inactive";
+    is_main: boolean;
+    reactivation_amount: number;
+    additional_branch_price: number;
+    renews_on: string | null;
+}
 
 interface BranchCardData {
     branch_id: number;
@@ -263,6 +324,7 @@ interface BranchCardData {
     patients: number;
     plan: { plan_code: string; name: string } | null;
     image: string;
+    activation?: BranchActivation | null;
 }
 
 const props = withDefaults(
@@ -270,14 +332,50 @@ const props = withDefaults(
         branch: BranchCardData;
         active?: boolean;
         canResubmit?: boolean;
+        canManage?: boolean;
     }>(),
-    { canResubmit: true },
+    { canResubmit: true, canManage: false },
 );
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
 const reviewsOpen = ref(false);
 
+const activation = computed(() => props.branch.activation ?? null);
+const activityState = computed(() => activation.value?.activity_state ?? "active");
+const reactivationAmount = computed(() => activation.value?.reactivation_amount ?? 0);
+
+const activationAction = computed<"deactivate" | "reactivate" | null>(() => {
+    const link = activation.value;
+    if (!link || link.status !== "approved") return null;
+    if (link.active_until) return "reactivate";
+    return link.is_main ? null : "deactivate";
+});
+
+const activationNote = computed(() => {
+    const link = activation.value;
+    if (!link?.active_until) return null;
+
+    if (link.slot_type === "included") {
+        return "View-only · included slot still reserved.";
+    }
+
+    return activityState.value === "ending"
+        ? `View-only · free to reactivate until ${formatDate(link.active_until)}.`
+        : "View-only · not billed at renewal.";
+});
+
+const formatDate = (date?: string | null) =>
+    date
+        ? new Date(date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+          })
+        : "";
+
 const emit = defineEmits<{
     resubmit: [branch: BranchCardData];
+    deactivate: [branch: BranchCardData];
+    reactivate: [branch: BranchCardData];
 }>();
 </script>

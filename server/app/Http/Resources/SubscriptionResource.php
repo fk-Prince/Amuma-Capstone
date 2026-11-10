@@ -80,6 +80,8 @@ class SubscriptionResource extends JsonResource
                         'branch_status' => $link->branch?->status,
                         'status' => $link->status,
                         'type' => $link->type,
+                        'active_until' => $link->active_until?->toDateString(),
+                        'activity_state' => $link->activityState(),
                     ])
                     ->values()
                     : [],

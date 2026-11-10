@@ -245,6 +245,9 @@ class AgencyRepository
                 'rejection_reason' => $branch->subscriptionLink?->rejection_reason,
                 'subscription_status' => $branch->subscriptionLink?->subscription?->status,
                 'slot_available' => (bool) $branch->subscriptionLink?->subscription?->hasFreeResubmitSlot(),
+                'activation' => $branch->subscriptionLink
+                    ?->setRelation('branch', $branch)
+                    ->activationSummary(),
                 'contact_number' => $branch->contact_number,
                 'email' => $branch->email,
                 'tin' => data_get($branch->settings, 'tin'),

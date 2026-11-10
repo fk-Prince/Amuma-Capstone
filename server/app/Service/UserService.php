@@ -131,6 +131,9 @@ class UserService
                         Subscription::STATUS_REJECTED => 'rejected',
                         default => null,
                     },
+                    'branch_active_until' => $branch?->subscriptionLink?->active_until?->toDateString(),
+                    'branch_deactivated' => (bool) $branch?->subscriptionLink?->isDeactivated(),
+                    'subscription_expired' => (bool) $branch?->subscriptionLink?->subscription?->hasExpired(),
                     'subscription_awaiting_payment' => (bool) $branch?->subscriptionLink?->subscription?->awaitingTrialPayment(),
                     'rejection_reason' => $branch?->subscriptionLink?->rejection_reason,
                     'resubmit_requires_payment' => $branch?->subscriptionLink?->status === BranchSubscription::STATUS_REJECTED

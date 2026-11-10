@@ -76,7 +76,7 @@ class PatientAccessService
             throw new Exception('This patient has no branch on file.', 422);
         }
 
-        if (!$patient->branch->hasHomecareSubscription()) {
+        if (!$patient->branch->hasHomecareSubscription() || $patient->branch->isDeactivated()) {
             throw new Exception('This branch no longer support homecare service, so a new homecare service can\'t be requested right now.', 422);
         }
 

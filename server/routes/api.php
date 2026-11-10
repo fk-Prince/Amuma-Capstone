@@ -199,6 +199,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/subscriptions-card', [SubscriptionController::class, 'updateCard']);
         Route::post('/subscriptions-auto-renew', [SubscriptionController::class, 'setAutoRenew']);
         Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
+        Route::post('/subscriptions-branch-deactivate', [SubscriptionController::class, 'deactivateBranch']);
+        Route::post('/subscriptions-branch-reactivate', [SubscriptionController::class, 'reactivateBranch']);
+        Route::post('/subscriptions-branch-reactivate-purchase', [SubscriptionController::class, 'reactivateBranchWithPurchase']);
     });
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);

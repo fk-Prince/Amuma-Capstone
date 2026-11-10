@@ -160,11 +160,13 @@ class GCashPayment implements IPaymentMethod
 
     private function subscriptionRedirectUrl(string $reference, string $status, array $subscription = []): string
     {
-        $page = ($subscription['action'] ?? null) === 'additional_branch'
+        $action = $subscription['action'] ?? null;
+        $page = in_array($action, ['additional_branch', 'reactivate_branch'], true)
             ? 'branch-payment-complete'
             : 'payment-complete';
+        $kind = $action === 'reactivate_branch' ? '&kind=reactivate' : '';
 
-        return config('app.client_url') . "/product/{$page}?status={$status}&ref={$reference}";
+        return config('app.client_url') . "/product/{$page}?status={$status}&ref={$reference}{$kind}";
     }
 
     private function bookingRedirectUrl(Branch $branch, string $reference, string $status): string

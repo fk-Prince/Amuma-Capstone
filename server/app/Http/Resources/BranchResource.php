@@ -47,6 +47,7 @@ class BranchResource extends JsonResource
             'is_verified' => $this->status === Branch::STATUS_VERIFIED,
             'is_available' => $this->subscriptions->contains(
                 fn($subscription) => $subscription->pivot?->status === BranchSubscription::STATUS_APPROVED
+                    && $subscription->pivot?->active_until === null
                     && $subscription->status === Subscription::STATUS_ACTIVE
                     && $subscription->end_date?->copy()->startOfDay()->gte(now()->startOfDay())
             ),

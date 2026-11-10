@@ -520,6 +520,19 @@
                         </div>
 
                         <div
+                            v-if="deactivatedBranches"
+                            class="flex justify-between gap-3 text-xs"
+                        >
+                            <span class="text-slate-500 dark:text-gray-400">
+                                {{ deactivatedBranches }} deactivated
+                                {{ deactivatedBranches === 1 ? "branch" : "branches" }}
+                            </span>
+                            <span class="text-slate-500 dark:text-gray-400">
+                                Not billed
+                            </span>
+                        </div>
+
+                        <div
                             class="flex justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/10"
                         >
                             <span class="font-semibold text-slate-900 dark:text-white">
@@ -1687,6 +1700,10 @@ const showUpgradeMath = ref(false);
 
 const additionalBranches = computed(
     () => Number(subscription.value?.plan?.additional_branches) || 0,
+);
+
+const deactivatedBranches = computed(
+    () => Number(subscription.value?.plan?.deactivated_additional_branches) || 0,
 );
 
 const yearlyCharge = computed(() => {

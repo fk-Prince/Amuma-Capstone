@@ -35,6 +35,8 @@ export interface SubscriptionCoveredBranch {
     branch_status: "pending" | "verified" | "rejected";
     status: "pending" | "approved" | "rejected";
     type?: "included" | "additional";
+    active_until?: string | null;
+    activity_state?: "active" | "ending" | "inactive";
 }
 
 export interface SubscriptionCardData {
@@ -94,6 +96,7 @@ export interface SubscriptionCardData {
         branch_limit: number;
         yearly_total?: number;
         additional_branches?: number;
+        deactivated_additional_branches?: number;
         additional_branch_price?: number;
     };
 

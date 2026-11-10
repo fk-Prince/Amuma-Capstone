@@ -55,6 +55,7 @@ class SubscriptionService
     private const ACTION_ADDITIONAL_BRANCH = 'additional_branch';
     private const ACTION_ACTIVATE = 'activate';
     private const ACTION_PREPAY = 'prepay';
+    private const ACTION_REACTIVATE_BRANCH = 'reactivate_branch';
 
     private const PAYMENT_TYPE_ADDITIONAL_BRANCH = 'additional_branch';
 
@@ -301,7 +302,7 @@ class SubscriptionService
                     $current,
                     $plan,
                     $subscription->upgradeMonths(),
-                    $subscription->additionalBranchCount()
+                    $subscription->billedAdditionalBranchCount()
                 ),
                 'endDate' => $subscription->end_date->toDateString(),
             ];
@@ -1415,6 +1416,10 @@ class SubscriptionService
                     return $this->resubmitAsAdditionalBranch($payload, $meta, $subscription);
                 }
 
+                if (!empty($meta['branch']['reactivate_uuid'])) {
+                    return $this->reactivateAfterPayment($payload, $meta, $subscription);
+                }
+
                 [$branch, $location] = $this->storeBranch(
                     $agency,
                     $subscription,
@@ -1463,6 +1468,169 @@ class SubscriptionService
                 'status' => false,
                 'message' => 'Adding the branch failed. If your payment was made, it will be automatically refunded.',
             ], 500);
+        }
+    }
+
+    public function deactivateBranch(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $link = $this->activationLink($payload, true);
+            $subscription = $link->subscription;
+
+            if ($link->active_until) {
+                throw new Exception(__('This branch is already deactivated.'), 409);
+            }
+
+            if ($link->status !== BranchSubscription::STATUS_APPROVED) {
+                throw new Exception(__('Only an approved branch can be deactivated.'), 422);
+            }
+
+            if (
+                $subscription?->status !== Subscription::STATUS_ACTIVE
+                || $subscription->end_date->copy()->startOfDay()->lt(today())
+            ) {
+                throw new Exception(__('Only a branch on a running subscription can be deactivated.'), 422);
+            }
+
+            if ((int) $subscription->mainBranchLinkId() === (int) $link->branch_subscription_id) {
+                throw new Exception(__('The main branch can only end with the subscription.'), 422);
+            }
+
+            $this->subscriptionRepository->setBranchActiveUntil($link, $subscription->end_date->toDateString());
+
+            return response()->json([
+                'status' => true,
+                'message' => __(':branch is deactivated. It is now view-only.', [
+                    'branch' => $link->branch->name,
+                ]),
+                'data' => $link->activationSummary(),
+            ]);
+        });
+    }
+
+    public function reactivateBranch(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $link = $this->activationLink($payload, true);
+
+            $this->ensureReactivatable($link);
+
+            if ($link->reactivationAmount() > 0) {
+                throw new Exception(__('This branch needs a payment to be reactivated.'), 402);
+            }
+
+            $this->subscriptionRepository->setBranchActiveUntil($link, null);
+
+            return response()->json([
+                'status' => true,
+                'message' => __(':branch is active again.', ['branch' => $link->branch->name]),
+                'data' => $link->activationSummary(),
+            ]);
+        });
+    }
+
+    public function makeReactivationPurchase(array $payload, User $user)
+    {
+        AuthGuard::requireUser($user);
+        set_time_limit(self::PAYMENT_TIME_LIMIT);
+
+        $link = $this->activationLink($payload);
+        $subscription = $link->subscription;
+
+        $this->ensureReactivatable($link);
+
+        $amount = $link->reactivationAmount();
+
+        if ($amount <= 0) {
+            throw new Exception(__('This branch can be reactivated for free.'), 422);
+        }
+
+        $paymentMethod = PaymentFactory::make($payload['payment_method']);
+
+        return $paymentMethod->subscriptionInvoice($payload, $this->withoutTax([
+            'user' => $user,
+            'plan' => $subscription->plans,
+            'branch' => [
+                'name' => $link->branch->name,
+                'reactivate_uuid' => $link->branch->uuid,
+            ],
+            'agency' => ['id' => $subscription->agency_id],
+            'subscription_uuid' => $subscription->uuid,
+            'method' => $payload['payment_method'] ?? null,
+            'action' => self::ACTION_REACTIVATE_BRANCH,
+            'type' => self::PAYMENT_TYPE_ADDITIONAL_BRANCH,
+            'total_amount' => $amount,
+            'endDate' => $subscription->end_date->toDateString(),
+            'status' => true,
+            'payment_type' => 'SUBSCRIPTION',
+        ]));
+    }
+
+    private function reactivateAfterPayment(array $payload, array $meta, Subscription $subscription)
+    {
+        $link = $this->subscriptionRepository->findAgencyBranchLink(
+            $subscription->agency_id,
+            $meta['branch']['reactivate_uuid'],
+            true
+        );
+
+        if (!$link || (int) $link->subscription_id !== (int) $subscription->subscription_id || !$link->active_until) {
+            throw new Exception(__('This branch is no longer waiting to be reactivated.'), 409);
+        }
+
+        $this->subscriptionRepository->setBranchActiveUntil($link, null);
+
+        $subscription->payments()->create([
+            'subscription_id' => $subscription->subscription_id,
+            'user_id' => $meta['user']['user_id'] ?? null,
+            'plan_id' => $subscription->plan_id,
+            'branch_id' => $link->branch_id,
+            'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
+            'payment_reference_id' => $payload['external_id'] ?? null,
+            'masked_card_number' => $payload['masked_card_number'] ?? null,
+            'price' => $meta['total_amount'],
+            'vat_rate' => 0,
+            'status' => SubscriptionPayment::STATUS_PAID,
+            'type' => SubscriptionPayment::TYPE_ADDITIONAL_BRANCH,
+            'payment_method' => $meta['payment_method'] ?? null,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Payment received. :branch is active again.', ['branch' => $link->branch->name]),
+            'data' => $link->activationSummary(),
+            'payment_reference_id' => $payload['external_id'] ?? null,
+        ]);
+    }
+
+    private function activationLink(array $payload, bool $lock = false): BranchSubscription
+    {
+        $link = $this->subscriptionRepository->findAgencyBranchLink(
+            $payload['agency_id'],
+            $payload['target_uuid'],
+            $lock
+        );
+
+        if (!$link || !$link->subscription) {
+            throw new Exception(__('Branch not found.'), 404);
+        }
+
+        return $link;
+    }
+
+    private function ensureReactivatable(BranchSubscription $link): void
+    {
+        if (!$link->active_until) {
+            throw new Exception(__('This branch is already active.'), 409);
+        }
+
+        $subscription = $link->subscription;
+
+        if (
+            $subscription->status !== Subscription::STATUS_ACTIVE
+            || $subscription->end_date->copy()->startOfDay()->lt(today())
+        ) {
+            throw new Exception(__('Renew your subscription first, then reactivate this branch.'), 422);
         }
     }
 
