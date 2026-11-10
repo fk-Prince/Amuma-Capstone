@@ -166,19 +166,6 @@
                                 {{ form.email || "—" }}
                             </p>
 
-                            <div
-                                v-if="roleBadges.length"
-                                class="mt-3 flex flex-wrap justify-center gap-1.5"
-                            >
-                                <span
-                                    v-for="badge in roleBadges"
-                                    :key="badge"
-                                    class="rounded-full bg-primary-50 px-2.5 py-0.5 text-[11px] font-semibold text-primary dark:bg-primary-500/15 dark:text-primary-300"
-                                >
-                                    {{ badge }}
-                                </span>
-                            </div>
-
                             <div class="mt-4 flex items-center justify-center gap-2">
                                 <button
                                     type="button"
@@ -1012,14 +999,6 @@ const signInMethods = computed(() => {
 const displayName = computed(
     () => [form.first_name, form.last_name].filter(Boolean).join(" ") || "Your name",
 );
-
-const roleBadges = computed(() => {
-    const list: string[] = [];
-    if (roles.is_system_owner) list.push("AMUMA admin");
-    if (roles.is_employee) list.push("Staff");
-    if (roles.is_family) list.push("Family account");
-    return list;
-});
 
 const accountRows = computed(() => [
     { label: "Member since", value: memberSince.value },
