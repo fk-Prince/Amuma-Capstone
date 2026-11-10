@@ -1,5 +1,6 @@
 import { useToast } from '~/composables/useToast';
 import { xsrfCookieName } from '~/utils/sandbox';
+import { noteSetupChange } from '~/utils/setupSignal';
 
 type HttpMethod =
     | 'GET'
@@ -180,7 +181,7 @@ export class BaseService {
                 : method;
 
         try {
-            return await $fetch<T>(url, {
+            const response = await $fetch<T>(url, {
                 baseURL: config.public.backendApi,
                 method: requestMethod,
                 credentials: 'include',
@@ -189,6 +190,10 @@ export class BaseService {
                     ? { params }
                     : { body }),
             });
+
+            noteSetupChange(url, method);
+
+            return response;
         } catch (error: any) {
             if (
                 error?.name === 'AbortError' ||

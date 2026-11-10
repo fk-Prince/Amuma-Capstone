@@ -11,6 +11,7 @@ use App\Models\EmployeeBranch;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
+use Illuminate\Support\Facades\DB;
 
 class BranchRepository
 {
@@ -34,6 +35,31 @@ class BranchRepository
     public function findByField(string $column, string $value)
     {
         return Branch::where($column, $value)->first();
+    }
+
+    public function mergeSetting(Branch $branch, string $key, array $values): void
+    {
+        DB::update(
+            "UPDATE branches SET settings = (
+                COALESCE(settings::jsonb, '{}'::jsonb)
+                || jsonb_build_object(?::text, COALESCE(settings::jsonb -> ?::text, '{}'::jsonb) || ?::jsonb)
+            )::json WHERE branch_id = ?",
+            [$key, $key, json_encode($values), $branch->branch_id]
+        );
+
+        $branch->refresh();
+    }
+
+    public function putSetting(Branch $branch, string $key, mixed $value): void
+    {
+        DB::update(
+            "UPDATE branches SET settings = (
+                COALESCE(settings::jsonb, '{}'::jsonb) || jsonb_build_object(?::text, ?::jsonb)
+            )::json WHERE branch_id = ?",
+            [$key, json_encode($value), $branch->branch_id]
+        );
+
+        $branch->refresh();
     }
 
     public function setupCounts(Branch $branch): array

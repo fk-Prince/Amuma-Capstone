@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Resources\SalesResource;
+use App\Models\Invoice;
 use App\Models\User;
 use App\Repository\ReportRepository;
 use Carbon\Carbon;
@@ -38,6 +39,9 @@ class ReportService
         return [
             'gross_sales'      => round((float) $invoices->sum('sales_amount'), 2),
             'accounts_receivable' => round((float) $invoices->sum('balance_due'), 2),
+            'bad_debt'         => round((float) $invoices
+                ->where('status', Invoice::STATUS_WRITTEN_OFF)
+                ->sum(fn(Invoice $invoice) => max(0, $invoice->adjusted_total - $invoice->net_paid_amount)), 2),
             'invoice_count'    => $invoices->count(),
         ];
     }

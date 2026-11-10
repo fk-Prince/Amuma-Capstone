@@ -14,6 +14,7 @@ export interface SalesRow {
 export interface SalesSummary {
     gross_sales: number;
     accounts_receivable: number;
+    bad_debt: number;
     invoice_count: number;
 }
 

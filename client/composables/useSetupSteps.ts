@@ -25,6 +25,7 @@ import { routeAccess } from "~/composables/useRouteAccess";
 import { setupAreaOf, useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
 import { useBranchSetup, type BranchSetupStep } from "~/composables/useBranchSetup";
 import { useRoute } from "vue-router";
+import { setupDataVersion } from "~/utils/setupSignal";
 import { isBranchRejected } from "~/utils/branchAccess";
 
 
@@ -118,7 +119,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const setup = useBranchSetup(() => (required.value ? props.branchUuid : undefined));
 
     watch(
-        () => [required.value, props.branchUuid, route.path] as const,
+        () => [required.value, props.branchUuid, route.path, setupDataVersion.value] as const,
         ([isRequired]) => {
             if (isRequired) setup.refresh();
         },
@@ -172,7 +173,7 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     function contractsCopy(step: BranchSetupStep) {
         if (step.homecare && step.facility) {
-            return "Add at least one homecare plan and one facility plan, with the rates families will pay.";
+            return "Add at least one homecare plan or facility plan, with the rates families will pay.";
         }
 
         return step.facility
@@ -375,6 +376,9 @@ export function useSetupSteps(options: SetupStepsOptions) {
         scope,
         required,
         canHide,
+        refresh: () => {
+            if (required.value) setup.refresh();
+        },
         skip: () => {
             if (canHide.value) skip(scope());
         },

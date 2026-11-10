@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen-header flex flex-col gap-3 bg-[#EEF3FB] dark:bg-surface">
-        <section class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <section class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <OverviewStatCard
                 label="Gross Sales"
                 :value="money(summary?.gross_sales)"
@@ -13,6 +13,13 @@
                 :value="money(summary?.accounts_receivable)"
                 :icon="TrendingUp"
                 tone="amber"
+                :note="periodLabel"
+            />
+            <OverviewStatCard
+                label="Bad Debt"
+                :value="money(summary?.bad_debt)"
+                :icon="CircleSlash"
+                tone="rose"
                 :note="periodLabel"
             />
             <OverviewStatCard
@@ -104,6 +111,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounceFn } from "@vueuse/core";
 import {
+    CircleSlash,
     Download,
     FileText,
     Receipt,

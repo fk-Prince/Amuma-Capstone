@@ -267,6 +267,7 @@ const {
     scope,
     required,
     canHide,
+    refresh,
 } = useSetupSteps({
     context: () => props.context,
     branchUuid: () => branchUuid.value,
@@ -301,9 +302,34 @@ const panelStyle = computed(() => {
 });
 
 function toggle() {
-    if (!open.value) measure();
+    if (!open.value) {
+        measure();
+        refresh();
+    }
     open.value = !open.value;
 }
+
+function onVisible() {
+    if (document.visibilityState === "visible") refresh();
+}
+
+const POLL_MS = 20000;
+let poll: ReturnType<typeof setInterval> | null = null;
+
+watch(
+    () => required.value && !allDone.value,
+    (active) => {
+        if (poll) clearInterval(poll);
+        poll = null;
+
+        if (active && import.meta.client) {
+            poll = setInterval(() => {
+                if (document.visibilityState === "visible") refresh();
+            }, POLL_MS);
+        }
+    },
+    { immediate: true },
+);
 
 function onDocumentClick(event: MouseEvent) {
     if (!open.value || document.body.classList.contains("driver-active"))
@@ -427,16 +453,19 @@ watch(open, (isOpen) => {
 
 onBeforeUnmount(() => {
     unmounted = true;
+    if (poll) clearInterval(poll);
     activeTour?.destroy();
     activeTour = null;
     document.removeEventListener("click", onDocumentClick, true);
     document.removeEventListener("keydown", onKeydown);
+    document.removeEventListener("visibilitychange", onVisible);
     window.removeEventListener("resize", onResize);
 });
 
 onMounted(async () => {
     document.addEventListener("click", onDocumentClick, true);
     document.addEventListener("keydown", onKeydown);
+    document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("resize", onResize);
     ready.value = true;
 });

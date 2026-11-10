@@ -36,11 +36,9 @@ class BranchSetupService
             $facility ? ['key' => 'rooms', 'done' => $counts['rooms'] > 0, 'count' => $counts['rooms']] : null,
             [
                 'key' => 'contracts',
-                'done' => (!$homecare || $counts['homecare_plans'] > 0) && (!$facility || $counts['facility_plans'] > 0),
-                'needs' => array_values(array_filter([
-                    $homecare && $counts['homecare_plans'] === 0 ? 'homecare' : null,
-                    $facility && $counts['facility_plans'] === 0 ? 'facility' : null,
-                ])),
+                'done' => ($homecare && $counts['homecare_plans'] > 0)
+                    || ($facility && $counts['facility_plans'] > 0)
+                    || (!$homecare && !$facility && $counts['homecare_plans'] + $counts['facility_plans'] > 0),
                 'homecare' => $homecare,
                 'facility' => $facility,
             ],
@@ -52,7 +50,7 @@ class BranchSetupService
 
         if ($complete && !$completedAt) {
             $completedAt = now()->toDateTimeString();
-            $this->writeSettings($branch, ['setup_completed_at' => $completedAt]);
+            $this->branchRepository->putSetting($branch, 'setup_completed_at', $completedAt);
         }
 
         return [
@@ -68,11 +66,8 @@ class BranchSetupService
             throw new Exception('Unknown setup step.', 422);
         }
 
-        $visits = $branch->settings['setup_visits'] ?? [];
-
-        if (empty($visits[$step])) {
-            $visits[$step] = now()->toDateTimeString();
-            $this->writeSettings($branch, ['setup_visits' => $visits]);
+        if (empty($branch->settings['setup_visits'][$step])) {
+            $this->branchRepository->mergeSetting($branch, 'setup_visits', [$step => now()->toDateTimeString()]);
         }
 
         return $this->status($branch);
@@ -104,10 +99,5 @@ class BranchSetupService
             "Finish setting up {$branch->name} before it goes live: {$missing}.",
             422
         );
-    }
-
-    private function writeSettings(Branch $branch, array $values): void
-    {
-        $branch->forceFill(['settings' => array_merge($branch->settings ?? [], $values)])->saveQuietly();
     }
 }

@@ -16,7 +16,6 @@ export interface BranchSetupStep {
     done: boolean;
     count?: number;
     visited?: { details: boolean; operations: boolean };
-    needs?: ("homecare" | "facility")[];
     homecare?: boolean;
     facility?: boolean;
 }
@@ -26,6 +25,8 @@ export interface BranchSetupStatus {
     complete: boolean;
     completed_at: string | null;
 }
+
+const latest: Record<string, number> = {};
 
 export function useBranchSetup(branchUuid: MaybeRefOrGetter<string | undefined>) {
     const store = useState<Record<string, BranchSetupStatus>>("branch-setup", () => ({}));
@@ -44,12 +45,19 @@ export function useBranchSetup(branchUuid: MaybeRefOrGetter<string | undefined>)
         if (data?.steps) store.value = { ...store.value, [uuid]: data };
     };
 
+    const track = async (uuid: string, request: () => Promise<any>) => {
+        const ticket = (latest[uuid] = (latest[uuid] ?? 0) + 1);
+        const res = await request();
+
+        if (ticket === latest[uuid]) save(uuid, res);
+    };
+
     async function refresh() {
         const uuid = toValue(branchUuid);
         if (!uuid || import.meta.server) return;
 
         try {
-            save(uuid, await branchService.setup(uuid));
+            await track(uuid, () => branchService.setup(uuid));
         } catch {}
     }
 
@@ -62,7 +70,7 @@ export function useBranchSetup(branchUuid: MaybeRefOrGetter<string | undefined>)
         sent.value = { ...sent.value, [key]: true };
 
         try {
-            save(uuid, await branchService.setupVisit(uuid, step));
+            await track(uuid, () => branchService.setupVisit(uuid, step));
         } catch {
             sent.value = { ...sent.value, [key]: false };
         }
