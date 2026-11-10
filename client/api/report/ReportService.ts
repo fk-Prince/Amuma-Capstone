@@ -15,16 +15,16 @@ class ReportService extends BaseService {
         return ReportService.instance;
     }
 
-    async salesVat(params: object = {}): Promise<any> {
-        return await this.request(`${this.resource}/sales-vat`, 'GET', params);
+    async sales(params: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/sales`, 'GET', params);
     }
 
-    async salesVatSummary(params: object = {}): Promise<any> {
-        return await this.request(`${this.resource}/sales-vat/summary`, 'GET', params);
+    async salesSummary(params: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/sales/summary`, 'GET', params);
     }
 
-    async salesVatExport(params: object = {}): Promise<any> {
-        return await this.request(`${this.resource}/sales-vat/export`, 'GET', params);
+    async salesExport(params: object = {}): Promise<any> {
+        return await this.request(`${this.resource}/sales/export`, 'GET', params);
     }
 
     private get resource(): string {

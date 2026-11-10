@@ -1,33 +1,25 @@
 <template>
     <div class="min-h-screen-header flex flex-col gap-3 bg-[#EEF3FB] dark:bg-surface">
-        <section class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <section class="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <OverviewStatCard
                 label="Gross Sales"
                 :value="money(summary?.gross_sales)"
                 :icon="Receipt"
                 tone="primary"
-                :chip="`Receivable ${money(summary?.accounts_receivable)}`"
                 :note="periodLabel"
             />
             <OverviewStatCard
-                label="Vatable Sales"
-                :value="money(summary?.vatable_sales)"
+                label="Accounts Receivable"
+                :value="money(summary?.accounts_receivable)"
                 :icon="TrendingUp"
-                tone="accent"
-                :note="periodLabel"
-            />
-            <OverviewStatCard
-                label="VAT-Exempt Sales"
-                :value="money(summary?.vat_exempt_sales)"
-                :icon="ShieldCheck"
                 tone="amber"
                 :note="periodLabel"
             />
             <OverviewStatCard
-                label="Output VAT (12%)"
-                :value="money(summary?.output_vat)"
-                :icon="Landmark"
-                tone="rose"
+                label="Invoices"
+                :value="String(summary?.invoice_count ?? 0)"
+                :icon="FileText"
+                tone="accent"
                 :note="periodLabel"
             />
         </section>
@@ -43,13 +35,12 @@
                         <h2
                             class="font-semibold text-slate-800 dark:text-white"
                         >
-                            Sales &amp; VAT
+                            Sales
                         </h2>
                         <p
                             class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
                         >
-                            One row per invoice, VAT included in the gross
-                            amount.
+                            One row per invoice.
                         </p>
                     </div>
 
@@ -85,7 +76,7 @@
                     </div>
                 </div>
 
-                <SalesVatFilter
+                <SalesFilter
                     v-model:mode="mode"
                     v-model:anchor="anchor"
                     v-model:date-from="dateFrom"
@@ -95,7 +86,7 @@
                 />
             </div>
 
-            <SalesVatTable
+            <SalesTable
                 :rows="rows"
                 :loading="loading"
                 :current-page="currentPage"
@@ -114,15 +105,14 @@ import { useRoute } from "vue-router";
 import { useDebounceFn } from "@vueuse/core";
 import {
     Download,
-    Landmark,
+    FileText,
     Receipt,
     RefreshCw,
-    ShieldCheck,
     TrendingUp,
 } from "lucide-vue-next";
 import OverviewStatCard from "~/components/sections/app/Dashboard/overview/OverviewStatCard.vue";
-import SalesVatFilter from "~/components/sections/app/Report/SalesVatFilter.vue";
-import SalesVatTable from "~/components/sections/app/Report/SalesVatTable.vue";
+import SalesFilter from "~/components/sections/app/Report/SalesFilter.vue";
+import SalesTable from "~/components/sections/app/Report/SalesTable.vue";
 import ViewModeToggle from "~/components/ui/ViewModeToggle.vue";
 import { useListView } from "~/composables/useListView";
 import { reportService } from "~/api/report/ReportService";
@@ -132,8 +122,8 @@ import { Modules } from "~/types/module";
 import type {
     ReportPeriodMode,
     SalesStatus,
-    SalesVatRow,
-    SalesVatSummary,
+    SalesRow,
+    SalesSummary,
 } from "~/types/report";
 import { formatCurrency } from "~/utils/currency";
 import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
@@ -163,8 +153,8 @@ const dateTo = ref(toLocalDateString(new Date()));
 const status = ref<SalesStatus>("");
 const search = ref("");
 
-const rows = ref<SalesVatRow[]>([]);
-const summary = ref<SalesVatSummary | null>(null);
+const rows = ref<SalesRow[]>([]);
+const summary = ref<SalesSummary | null>(null);
 const loading = ref(false);
 const exporting = ref(false);
 const currentPage = ref(1);
@@ -226,7 +216,7 @@ async function fetchRows() {
     loading.value = true;
 
     try {
-        const res: any = await reportService.salesVat({
+        const res: any = await reportService.sales({
             ...filterParams(),
             page: currentPage.value,
             per_page: PAGE_SIZE,
@@ -246,7 +236,7 @@ async function fetchSummary() {
     if (!range.value.from) return;
 
     try {
-        const res: any = await reportService.salesVatSummary(periodParams());
+        const res: any = await reportService.salesSummary(periodParams());
         summary.value = res.data ?? res;
     } catch (err: any) {
         summary.value = null;
@@ -285,17 +275,18 @@ async function exportExcel() {
     exporting.value = true;
 
     try {
-        const res: any = await reportService.salesVatExport(filterParams());
-        const data: SalesVatRow[] = res.data ?? [];
-        const total = (key: keyof SalesVatRow) =>
-            moneyCell(data.reduce((sum, row) => sum + Number(row[key] ?? 0), 0));
+        const res: any = await reportService.salesExport(filterParams());
+        const data: SalesRow[] = res.data ?? [];
+        const total = moneyCell(
+            data.reduce((sum, row) => sum + Number(row.gross_amount ?? 0), 0),
+        );
         const branchName = branchStore.activeBranch?.name ?? "Branch";
 
-        await downloadExcel(fileSafe(`Sales_VAT_${branchName}_${periodLabel.value}`), [
+        await downloadExcel(fileSafe(`Sales_${branchName}_${periodLabel.value}`), [
             {
-                name: "Sales & VAT",
+                name: "Sales",
                 rows: [
-                    [`${branchName} – Sales & VAT Report`],
+                    [`${branchName} – Sales Report`],
                     [`Period: ${periodLabel.value}`],
                     [],
                     [
@@ -303,10 +294,7 @@ async function exportExcel() {
                         "Invoice No.",
                         "Patient",
                         "Description",
-                        "Gross Amount",
-                        "Vatable Sales",
-                        "VAT-Exempt Sales",
-                        "VAT (12%)",
+                        "Amount",
                         "Status",
                     ],
                     ...data.map((row) => [
@@ -315,22 +303,9 @@ async function exportExcel() {
                         row.patient_name ?? "",
                         row.description ?? "",
                         moneyCell(row.gross_amount),
-                        moneyCell(row.vatable_sales),
-                        moneyCell(row.vat_exempt_sales),
-                        moneyCell(row.vat_amount),
                         row.status.replace(/_/g, " "),
                     ]),
-                    [
-                        "Total",
-                        "",
-                        "",
-                        "",
-                        total("gross_amount"),
-                        total("vatable_sales"),
-                        total("vat_exempt_sales"),
-                        total("vat_amount"),
-                        "",
-                    ],
+                    ["Total", "", "", "", total, ""],
                 ],
             },
         ]);

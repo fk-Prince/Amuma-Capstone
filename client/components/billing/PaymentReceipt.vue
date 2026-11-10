@@ -38,18 +38,6 @@ const tableRows = computed(() =>
 
 const isOnline = computed(() => props.receipt.channel === "portal");
 
-const hasVat = computed(
-    () =>
-        Number(props.receipt.tax?.vat_amount) > 0 ||
-        Number(props.receipt.tax?.vat_exempt_sales) > 0,
-);
-
-const vatLabel = computed(() => {
-    const rate = props.receipt.tax?.vat_rate;
-
-    return rate ? `VAT (${Number(rate)}%)` : "VAT";
-});
-
 const isCredit = computed(() => props.receipt.payment.method === "CREDIT");
 
 const hasChange = computed(() => Number(props.receipt.payment.change_due) > 0);
@@ -193,7 +181,7 @@ onBeforeUnmount(() => {
                                         v-if="receipt.issuer.tin"
                                         class="text-[9px] font-semibold"
                                     >
-                                        VAT REG. TIN {{ receipt.issuer.tin }}
+                                        TIN {{ receipt.issuer.tin }}
                                     </p>
                                 </div>
                             </div>
@@ -334,7 +322,6 @@ onBeforeUnmount(() => {
                             </tbody>
                         </table>
 
-                        <!-- Words + tax summary -->
                         <div class="flex border-t border-black text-[10px]">
                             <div class="flex flex-1 flex-col">
                                 <div class="flex-1 border-b border-black p-2">
@@ -414,51 +401,6 @@ onBeforeUnmount(() => {
                             <div
                                 class="flex w-[280px] shrink-0 flex-col justify-end border-l border-black"
                             >
-                                <template v-if="hasVat">
-                                    <div
-                                        class="flex justify-between border-b border-black px-2 py-1"
-                                    >
-                                        <span class="uppercase">
-                                            Vatable Sales
-                                        </span>
-
-                                        <span class="font-mono font-bold">
-                                            {{
-                                                peso(receipt.tax?.vatable_sales)
-                                            }}
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        class="flex justify-between border-b border-black px-2 py-1"
-                                    >
-                                        <span class="uppercase">
-                                            VAT-Exempt Sales
-                                        </span>
-
-                                        <span class="font-mono font-bold">
-                                            {{
-                                                peso(
-                                                    receipt.tax
-                                                        ?.vat_exempt_sales,
-                                                )
-                                            }}
-                                        </span>
-                                    </div>
-
-                                    <div
-                                        class="flex justify-between border-b border-black px-2 py-1"
-                                    >
-                                        <span class="uppercase">
-                                            {{ vatLabel }}
-                                        </span>
-
-                                        <span class="font-mono font-bold">
-                                            {{ peso(receipt.tax?.vat_amount) }}
-                                        </span>
-                                    </div>
-                                </template>
-
                                 <div
                                     class="flex justify-between bg-black/[0.04] px-2 py-1.5"
                                 >

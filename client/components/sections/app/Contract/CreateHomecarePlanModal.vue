@@ -128,7 +128,6 @@
                             :model-value="form.price"
                             @update:model-value="update('price', $event)"
                             :label="isMonthly ? 'Base Price' : 'Hourly Rate'"
-                            :info="vatInfo"
                             mode="number"
                             placeholder="0.00"
                             :error="errors.price"
@@ -351,9 +350,6 @@ import { useRoute } from "vue-router";
 import { Info, X } from "lucide-vue-next";
 
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { useVatInfo } from "~/composables/useVatInfo";
-
-const vatInfo = useVatInfo();
 import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 import ActivityChipsInput from "~/components/ui/ActivityChipsInput.vue";
 

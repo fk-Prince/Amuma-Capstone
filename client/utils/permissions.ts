@@ -113,7 +113,7 @@ export const MODULE_DESCRIPTIONS: Record<Modules, string> = {
     [Modules.AuditLogs]:
         "Review who did what in the branch: sign-ins, bookings and billing changes, with the values before and after.",
     [Modules.Reports]:
-        "See the branch's sales and VAT for a month, quarter or date range, ready for tax filing.",
+        "See the branch's sales for a month, quarter or date range.",
 };
 
 export const ACTION_LABELS: Record<PermissionActionKey, string> = {
@@ -241,9 +241,9 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
     },
     [Modules.Reports]: {
         [PermissionAction.Read]:
-            "View the Sales & VAT report: gross sales, vatable sales and output VAT per invoice.",
+            "View the Sales report: gross sales and receivables per invoice.",
         [PermissionAction.Export]:
-            "Download the Sales & VAT report as an Excel file for the accountant.",
+            "Download the Sales report as an Excel file for the accountant.",
     },
 };
 

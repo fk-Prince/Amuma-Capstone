@@ -118,9 +118,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/audit-logs/{uuid}', [AuditLogController::class, 'show']);
 
     // REPORTS
-    Route::get('/reports/sales-vat', [ReportController::class, 'salesVat']);
-    Route::get('/reports/sales-vat/summary', [ReportController::class, 'salesVatSummary']);
-    Route::get('/reports/sales-vat/export', [ReportController::class, 'salesVatExport']);
+    Route::get('/reports/sales', [ReportController::class, 'sales']);
+    Route::get('/reports/sales/summary', [ReportController::class, 'salesSummary']);
+    Route::get('/reports/sales/export', [ReportController::class, 'salesExport']);
 
     // EMPLOYEE / STAFF
     Route::post('/services/assign-employee', [ServiceController::class, 'assignEmployee']);

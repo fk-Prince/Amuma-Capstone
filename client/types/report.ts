@@ -2,24 +2,17 @@ export type ReportPeriodMode = "month" | "quarter" | "range";
 
 export type SalesStatus = "" | "paid" | "partially_paid" | "unpaid";
 
-export interface SalesVatRow {
+export interface SalesRow {
     invoice_code: string;
     created_at: string | null;
     patient_name: string | null;
     description: string | null;
     gross_amount: number;
-    vatable_sales: number;
-    vat_exempt_sales: number;
-    vat_amount: number;
-    vat_rate: number;
     status: string;
 }
 
-export interface SalesVatSummary {
+export interface SalesSummary {
     gross_sales: number;
-    vatable_sales: number;
-    vat_exempt_sales: number;
-    output_vat: number;
     accounts_receivable: number;
     invoice_count: number;
 }

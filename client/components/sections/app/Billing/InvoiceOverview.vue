@@ -202,13 +202,6 @@
                                     </p>
 
                                     <p
-                                        v-if="metric.note"
-                                        class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
-                                    >
-                                        {{ metric.note }}
-                                    </p>
-
-                                    <p
                                         v-if="metric.secondary"
                                         class="mt-1 text-xs truncate"
                                         :class="metric.secondaryColor"
@@ -474,10 +467,6 @@ const metrics = computed(() => [
         key: "revenue",
         label: "Revenue",
         display: formatCurrency(props.overview?.total_revenue?.value ?? 0),
-        note:
-            Number(props.overview?.vat_collected) > 0
-                ? `Excl. VAT ${formatCurrency(props.overview.vat_collected)}`
-                : "",
         secondary: props.overview?.total_revenue?.secondary ?? "",
         secondaryColor:
             period.value === "all"

@@ -170,11 +170,20 @@ const submitRoom = async () => {
         return;
     }
     try {
+        const isCreate = !editingRoomId.value;
         const res = editingRoomId.value
             ? await roomService.update(editingRoomId.value, roomForm)
             : await roomService.create(roomForm);
 
         const savedRoom = res.data;
+        if (isCreate && savedRoom) {
+            if (roomMatchesCurrentFilter(savedRoom)) {
+                pagination.setTotal(pagination.totalItems.value + 1);
+            }
+            if (overview.value?.total_rooms) {
+                overview.value.total_rooms.value += 1;
+            }
+        }
         if (savedRoom && roomMatchesCurrentFilter(savedRoom)) {
             const index = roomData.value.findIndex(
                 (room) => room.room_id === savedRoom.room_id,

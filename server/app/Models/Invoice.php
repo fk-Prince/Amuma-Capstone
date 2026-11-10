@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Concerns\Auditable;
 use App\Utils\BranchCode;
-use App\Utils\Vat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,7 +30,6 @@ class Invoice extends Model
 
     protected $fillable = [
         'total_amount',
-        'vat_rate',
         'branch_id',
         'invoice_code',
         'status',
@@ -45,7 +43,6 @@ class Invoice extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
-        'vat_rate' => 'decimal:2',
         'created_at' => 'datetime',
         'voided_at' => 'datetime',
         'written_off_at' => 'datetime',
@@ -304,14 +301,7 @@ class Invoice extends Model
                     $invoice->branch_id
                 );
             }
-
-            $invoice->vat_rate ??= Vat::RATE;
         });
-    }
-
-    public function getVatAmountAttribute(): float
-    {
-        return Vat::portion((float) $this->adjusted_total, (float) $this->vat_rate);
     }
 
     public function getSalesAmountAttribute(): float
@@ -319,11 +309,6 @@ class Invoice extends Model
         return round((float) ($this->status === self::STATUS_WRITTEN_OFF
             ? min($this->net_paid_amount, $this->adjusted_total)
             : $this->adjusted_total), 2);
-    }
-
-    public function getSalesVatAttribute(): float
-    {
-        return Vat::portion($this->sales_amount, (float) $this->vat_rate);
     }
 
     public function getAmountPaidAttribute()

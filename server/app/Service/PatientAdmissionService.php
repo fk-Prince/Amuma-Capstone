@@ -27,6 +27,7 @@ use App\Utils\AdmissionHelper;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -757,6 +758,25 @@ class PatientAdmissionService
 
             if ($fees->isEmpty() || $fees->every(fn(array $fee) => (float) $fee['amount'] < 0.01)) {
                 throw new Exception('Choose a diagnosis case with an amount greater than zero.', 422);
+            }
+
+            $charged = $this->diagnosisFees->admissionCharges($admission->patient_admission_id)
+                ->reject(fn(array $charge) => $charge['needs_charge']);
+
+            $errors = [];
+
+            foreach (array_values((array) ($payload['diagnoses'] ?? [])) as $index => $entry) {
+                $diagnosis = $fees->first(
+                    fn(array $fee) => $fee['diagnosis']->uuid === ($entry['patient_diagnosis_uuid'] ?? null)
+                )['diagnosis'] ?? null;
+
+                if ($diagnosis && $charged->has($diagnosis->patient_diagnosis_id)) {
+                    $errors["diagnoses.$index.patient_diagnosis_uuid"] = 'This diagnosis is already charged. Edit its case instead.';
+                }
+            }
+
+            if ($errors) {
+                throw ValidationException::withMessages($errors);
             }
 
             $invoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);

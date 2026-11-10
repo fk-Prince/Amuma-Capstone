@@ -199,6 +199,21 @@
                                 </span>
 
                                 <span
+                                    v-if="isNewAgency"
+                                    class="flex items-baseline gap-2 whitespace-nowrap"
+                                >
+                                    <span
+                                        class="text-sm font-semibold text-muted line-through decoration-2 dark:text-gray-500"
+                                    >
+                                        {{ formatCurrency(planPrice(plan)) }}
+                                    </span>
+                                    <span class="font-bold text-lg text-primary">
+                                        {{ formatCurrency(0) }}
+                                    </span>
+                                </span>
+
+                                <span
+                                    v-else
                                     class="font-bold text-lg text-primary whitespace-nowrap"
                                 >
                                     {{ formatCurrency(planPrice(plan)) }}
@@ -298,7 +313,7 @@ import {
     ChevronRight,
     LoaderCircle,
 } from "lucide-vue-next";
-import { ref, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
 import { agencySchema } from "~/schema/agency-schema";
@@ -319,6 +334,7 @@ import SubscriptionSkeleton from "~/components/sections/subscription/Subscriptio
 import SubscriptionPayment from "~/components/sections/subscription/SubscriptionPayment.vue";
 import { branchSchema } from "~/schema/branch-schema";
 const checkout = useSubscriptionCheckout();
+const isNewAgency = computed(() => !checkout.agency.agency_id);
 const { error } = useToast();
 
 const loading = ref(true);

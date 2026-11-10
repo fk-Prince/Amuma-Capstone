@@ -5,14 +5,14 @@ import { usePagination } from "~/composables/usePagination";
 import {
     SALES_STATUS_CLASS,
     SALES_STATUS_LABEL,
-    type SalesVatRow,
+    type SalesRow,
 } from "~/types/report";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate } from "~/utils/time";
 
 const props = withDefaults(
     defineProps<{
-        rows: SalesVatRow[];
+        rows: SalesRow[];
         loading: boolean;
         currentPage?: number;
         totalItems?: number;
@@ -53,10 +53,7 @@ const columns: DataTableColumn[] = [
     { key: "invoice_code", label: "Invoice No.", primary: true },
     { key: "patient", label: "Patient" },
     { key: "description", label: "Description" },
-    { key: "gross", label: "Gross Amount", align: "right" },
-    { key: "vatable", label: "Vatable Sales", align: "right" },
-    { key: "exempt", label: "VAT-Exempt", align: "right" },
-    { key: "vat", label: "VAT (12%)", align: "right" },
+    { key: "gross", label: "Amount", align: "right" },
     { key: "status", label: "Status", badge: true },
 ];
 
@@ -71,9 +68,6 @@ const tableRows = computed(() =>
         patient: row.patient_name ?? "—",
         description: row.description || "—",
         gross: money(row.gross_amount),
-        vatable: money(row.vatable_sales),
-        exempt: money(row.vat_exempt_sales),
-        vat: money(row.vat_amount),
         status: row.status,
     })),
 );
@@ -116,15 +110,11 @@ const tableRows = computed(() =>
             </p>
         </template>
 
-        <template
-            v-for="key in ['gross', 'vatable', 'exempt', 'vat']"
-            :key="key"
-            #[`cell-${key}`]="{ row }"
-        >
+        <template #cell-gross="{ row }">
             <span
                 class="whitespace-nowrap font-mono tabular-nums text-slate-700 dark:text-gray-200"
             >
-                {{ row[key] }}
+                {{ row.gross }}
             </span>
         </template>
 

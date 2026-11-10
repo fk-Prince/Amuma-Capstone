@@ -3,9 +3,6 @@ import { onMounted, onUnmounted, ref, computed, watch } from "vue";
 import { X, Check, LoaderCircle, Stethoscope } from "lucide-vue-next";
 import { categoryService } from "~/api/category/CategoryService";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { useVatInfo } from "~/composables/useVatInfo";
-
-const vatInfo = useVatInfo();
 import Combobox from "~/components/ui/Combobox.vue";
 import { useRoute } from "vue-router";
 import type { Service } from "~/types/service";
@@ -337,7 +334,6 @@ watch(
                                         step="0.01"
                                         min="0"
                                         label="Price"
-                                        :info="vatInfo"
                                         placeholder="e.g. 500"
                                         :error="errors?.price"
                                         @update:modelValue="clearError('price')"

@@ -89,12 +89,6 @@
                             >
                                 Revenue per month · this month highlighted
                             </p>
-                            <p
-                                v-if="vatCollected > 0"
-                                class="text-[11px] text-slate-400 dark:text-gray-500"
-                            >
-                                Excl. VAT {{ money(vatCollected) }}
-                            </p>
                         </div>
                     </div>
 
@@ -222,7 +216,6 @@ const invoicesLink = computed(() => `/app/branches/${props.branchUuid}/invoices`
 const money = (value: unknown) => formatCurrency(Number(value) || 0);
 
 const periodLabel = computed(() => overview.value?.period ?? "This month");
-const vatCollected = computed(() => Number(overview.value?.vat_collected) || 0);
 
 const paid = computed(() => Number(overview.value?.payments_received?.value) || 0);
 const outstanding = computed(

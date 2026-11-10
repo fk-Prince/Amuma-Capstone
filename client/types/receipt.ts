@@ -28,13 +28,6 @@ export interface PaymentReceipt {
         tin: string | null;
         permit_no: string | null;    };
 
-    tax?: {
-        vat_rate: number | null;
-        vatable_sales: number;
-        vat_exempt_sales?: number;
-        vat_amount: number;
-    };
-
     payor: {
         name: string | null;
     };

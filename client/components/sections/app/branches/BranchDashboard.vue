@@ -274,6 +274,7 @@ interface BranchStatsData {
     maintenance_alerts: number;
     cancelled_subscriptions?: number;
     rejected_branches?: number;
+    deactivated_branches?: number;
     branch_capacity?: { is_testing?: boolean } | null;
     pending_plan?: {
         name?: string | null;
@@ -302,6 +303,7 @@ const alerts = computed(() => {
     const rejected = props.statsData.rejected_branches ?? 0;
     const expired = props.statsData.maintenance_alerts ?? 0;
     const cancelled = props.statsData.cancelled_subscriptions ?? 0;
+    const deactivated = props.statsData.deactivated_branches ?? 0;
 
     if (rejected > 0) {
         list.push({
@@ -324,6 +326,13 @@ const alerts = computed(() => {
         });
     }
 
+    if (deactivated > 0) {
+        list.push({
+            key: "deactivated",
+            label: `${plural(deactivated, "branch", "branches")} deactivated`,
+        });
+    }
+
     return list;
 });
 
@@ -331,7 +340,8 @@ const alertTotal = computed(
     () =>
         (props.statsData.rejected_branches ?? 0) +
         (props.statsData.maintenance_alerts ?? 0) +
-        (props.statsData.cancelled_subscriptions ?? 0),
+        (props.statsData.cancelled_subscriptions ?? 0) +
+        (props.statsData.deactivated_branches ?? 0),
 );
 
 const alertTone = computed(() =>

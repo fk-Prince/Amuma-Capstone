@@ -265,20 +265,6 @@
                     </span>
                 </div>
             </div>
-
-            <div class="bg-white p-1 dark:bg-transparent">
-                <BaseInput
-                    :model-value="vatRate"
-                    label="VAT Rate (%)"
-                    mode="number"
-                    disabled
-                />
-
-                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
-                    Fixed at {{ vatRate }}%. Prices already include VAT;
-                    invoices and receipts show the VAT portion.
-                </p>
-            </div>
         </div>
 
         <div class="pt-2">
@@ -408,7 +394,6 @@ function reset() {
     Object.assign(setting, JSON.parse(JSON.stringify(savedValues.value)));
 }
 
-const vatRate = computed(() => activeBranch.value?.settings?.vat_rate ?? 12);
 
 const saving = ref(false);
 

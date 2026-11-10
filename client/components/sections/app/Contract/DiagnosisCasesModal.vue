@@ -72,8 +72,7 @@
 
                         <BaseInput
                             v-model="form.price"
-                            label="Base Price"
-                            :info="vatInfo"
+                            label="Monthly Base Price"
                             mode="number"
                             step="0.01"
                             min="0.01"
@@ -112,7 +111,7 @@
                     </form>
 
                     <div
-                        v-if="loading"
+                        v-else-if="loading"
                         class="divide-y divide-muted-light dark:divide-white/10"
                     >
                         <div v-for="n in 4" :key="n" class="px-6 py-4">
@@ -157,7 +156,7 @@
                                     <p
                                         class="text-[10px] font-semibold uppercase tracking-wide text-muted dark:text-gray-500"
                                     >
-                                        Base Price
+                                        Monthly Base Price
                                     </p>
                                     <p
                                         class="text-sm font-semibold text-secondary dark:text-white"
@@ -202,9 +201,6 @@
 import { reactive, ref, watch } from "vue";
 import { LoaderCircle, Pencil, Plus, X } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
-import { useVatInfo } from "~/composables/useVatInfo";
-
-const vatInfo = useVatInfo();
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import { useToast } from "~/composables/useToast";
 import { formatCurrency } from "~/utils/currency";

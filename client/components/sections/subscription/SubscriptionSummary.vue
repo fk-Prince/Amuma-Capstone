@@ -62,10 +62,17 @@
                         Price
                     </span>
 
-                    <span class="font-bold text-primary">
+                    <span
+                        class="font-bold"
+                        :class="
+                            isNewAgency && checkout.selectedPrice != null
+                                ? 'text-slate-400 line-through decoration-2 dark:text-gray-500'
+                                : 'text-primary'
+                        "
+                    >
                         {{
                             checkout.selectedPrice != null
-                                ? `₱${checkout.selectedPrice}`
+                                ? formatCurrency(checkout.selectedPrice)
                                 : "—"
                         }}
                     </span>
@@ -237,7 +244,18 @@
                 Total
             </span>
 
-            <span class="text-2xl font-bold text-primary">
+            <span v-if="isNewAgency" class="flex items-baseline gap-2">
+                <span
+                    class="text-base font-semibold text-slate-400 line-through decoration-2 dark:text-gray-500"
+                >
+                    {{ formatCurrency(checkout.selectedPrice) }}
+                </span>
+                <span class="text-2xl font-bold text-primary">
+                    {{ formatCurrency(0) }}
+                </span>
+            </span>
+
+            <span v-else class="text-2xl font-bold text-primary">
                 {{ formatCurrency(checkout.selectedPrice) }}
             </span>
         </div>

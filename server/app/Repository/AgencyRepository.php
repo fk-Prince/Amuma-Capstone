@@ -74,6 +74,11 @@ class AgencyRepository
             ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
             ->count();
 
+        $deactivatedBranches = Branch::query()
+            ->when($agencyId, fn($q) => $q->where('agency_id', $agencyId))
+            ->whereHas('subscriptionLink', fn($link) => $link->whereNotNull('active_until'))
+            ->count();
+
         return response()->json([
             'data' => [
                 'total_branches' => $totalBranches,
@@ -95,6 +100,7 @@ class AgencyRepository
                 'maintenance_alerts' => $maintenanceAlerts,
                 'cancelled_subscriptions' => $cancelledSubscriptions,
                 'rejected_branches' => $rejectedBranches,
+                'deactivated_branches' => $deactivatedBranches,
                 'branch_capacity' => $this->branchCapacity($agencyId),
                 'pending_plan' => Subscription::query()
                     ->with('pendingPlan')

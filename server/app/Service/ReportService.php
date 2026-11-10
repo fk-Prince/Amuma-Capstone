@@ -6,8 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
-use App\Http\Resources\SalesVatResource;
-use App\Models\Invoice;
+use App\Http\Resources\SalesResource;
 use App\Models\User;
 use App\Repository\ReportRepository;
 use Carbon\Carbon;
@@ -16,11 +15,11 @@ class ReportService
 {
     public function __construct(private ReportRepository $reportRepository) {}
 
-    public function salesVat(array $payload, User $user)
+    public function sales(array $payload, User $user)
     {
         $branch = $this->authorize($payload, $user, PermissionAction::Read);
 
-        return SalesVatResource::collection(
+        return SalesResource::collection(
             $this->reportRepository->paginateSales(
                 $branch->branch_id,
                 $this->filters($payload),
@@ -29,31 +28,25 @@ class ReportService
         );
     }
 
-    public function salesVatSummary(array $payload, User $user): array
+    public function salesSummary(array $payload, User $user): array
     {
         $branch = $this->authorize($payload, $user, PermissionAction::Read);
         $filters = $this->filters($payload);
 
         $invoices = $this->reportRepository->salesForPeriod($branch->branch_id, $filters['from'], $filters['to']);
-        [$taxed, $exempt] = $invoices->partition(fn(Invoice $invoice) => (float) $invoice->vat_rate > 0);
-
-        $vat = round((float) $taxed->sum('sales_vat'), 2);
 
         return [
             'gross_sales'      => round((float) $invoices->sum('sales_amount'), 2),
-            'vatable_sales'    => round((float) $taxed->sum('sales_amount') - $vat, 2),
-            'vat_exempt_sales' => round((float) $exempt->sum('sales_amount'), 2),
-            'output_vat'       => $vat,
             'accounts_receivable' => round((float) $invoices->sum('balance_due'), 2),
             'invoice_count'    => $invoices->count(),
         ];
     }
 
-    public function salesVatExport(array $payload, User $user)
+    public function salesExport(array $payload, User $user)
     {
         $branch = $this->authorize($payload, $user, PermissionAction::Export);
 
-        return SalesVatResource::collection(
+        return SalesResource::collection(
             $this->reportRepository->allSales($branch->branch_id, $this->filters($payload))
         );
     }

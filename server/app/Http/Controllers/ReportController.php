@@ -9,19 +9,19 @@ class ReportController extends Controller
 {
     public function __construct(private ReportService $reportService) {}
 
-    public function salesVat(Request $request)
+    public function sales(Request $request)
     {
-        return $this->reportService->salesVat($this->validated($request, true), $request->user());
+        return $this->reportService->sales($this->validated($request, true), $request->user());
     }
 
-    public function salesVatSummary(Request $request)
+    public function salesSummary(Request $request)
     {
-        return $this->reportService->salesVatSummary($this->validated($request), $request->user());
+        return $this->reportService->salesSummary($this->validated($request), $request->user());
     }
 
-    public function salesVatExport(Request $request)
+    public function salesExport(Request $request)
     {
-        return $this->reportService->salesVatExport($this->validated($request, true), $request->user());
+        return $this->reportService->salesExport($this->validated($request, true), $request->user());
     }
 
     private function validated(Request $request, bool $withFilters = false): array

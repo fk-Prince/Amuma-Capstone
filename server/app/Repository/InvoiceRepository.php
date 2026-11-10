@@ -1285,8 +1285,6 @@ class InvoiceRepository
                 'trend' => $compare && $billed < $previousBilled ? 'down' : 'up',
             ],
 
-            'vat_collected' => round($billed - $revenue, 2),
-
             'payments_received' => [
                 'value' => $paid,
                 'secondary' => $compare
@@ -1443,10 +1441,7 @@ class InvoiceRepository
 
     private function revenueTotal($invoices): float
     {
-        return round(
-            (float) $invoices->sum(fn(Invoice $invoice) => $invoice->sales_amount - $invoice->sales_vat),
-            2
-        );
+        return $this->billedTotal($invoices);
     }
 
     private function paidTotal($invoices): float

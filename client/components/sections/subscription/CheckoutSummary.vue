@@ -89,7 +89,27 @@
                     value="2 weeks, starts today"
                 />
 
-                <SummaryRow label="Due today" :value="formatCurrency(0)" />
+                <div
+                    class="flex flex-col items-start gap-1 py-2.5 border-t border-slate-100 dark:border-white/10 sm:flex-row sm:justify-between sm:gap-4"
+                >
+                    <span
+                        class="text-slate-500 dark:text-gray-400 text-[13px] font-semibold tracking-wide shrink-0 pt-0.5"
+                    >
+                        Due today
+                    </span>
+
+                    <span class="flex items-baseline gap-2 text-sm font-medium">
+                        <span
+                            v-if="checkout.selectedPrice != null"
+                            class="text-slate-400 line-through decoration-2 dark:text-gray-500"
+                        >
+                            {{ formatCurrency(checkout.selectedPrice) }}
+                        </span>
+                        <span class="font-semibold text-emerald-600 dark:text-emerald-400">
+                            {{ formatCurrency(0) }}
+                        </span>
+                    </span>
+                </div>
             </div>
 
             <div

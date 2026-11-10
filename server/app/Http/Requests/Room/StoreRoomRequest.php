@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Room;
 
+use App\Models\Branch;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -28,7 +29,14 @@ class StoreRoomRequest extends FormRequest
     {
         return [
             'branch_uuid' => ['required', 'string'],
-            'room_no' => ['required', 'string', 'max:50', 'unique:rooms'],
+            'room_no' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('rooms', 'room_no')->where(
+                    fn ($q) => $q->whereIn('branch_id', Branch::select('branch_id')->where('uuid', $this->input('branch_uuid')))
+                ),
+            ],
             'floor' => ['required', 'string', 'min:1'],
             'capacity' => ['required', 'integer', 'min:1'],
             'room_type' => ['required', Rule::in(['VIP', 'Common',])],

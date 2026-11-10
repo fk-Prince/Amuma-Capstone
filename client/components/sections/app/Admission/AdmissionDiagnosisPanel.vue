@@ -356,7 +356,15 @@
                                         </span>
                                     </label>
 
+                                    <span
+                                        v-if="!SHOW_ONE_TIME"
+                                        class="text-sm text-slate-600 dark:text-gray-300"
+                                    >
+                                        Every month
+                                    </span>
+
                                     <label
+                                        v-else
                                         class="flex cursor-pointer items-center gap-2"
                                     >
                                         <input
@@ -624,6 +632,7 @@
                         </div>
                     </div>
 
+                    <template v-if="!addingDiagnosis">
                     <p
                         v-if="!diagnoses.length"
                         class="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
@@ -642,9 +651,14 @@
                                 :class="
                                     active.diagnosis_uuid === item.uuid
                                         ? 'bg-primary/5'
-                                        : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                                        : isCharged(item)
+                                          ? ''
+                                          : 'hover:bg-slate-50 dark:hover:bg-white/5'
                                 "
-                                :disabled="takenByOthers.has(item.uuid)"
+                                :disabled="
+                                    takenByOthers.has(item.uuid) ||
+                                    (isCharged(item) && !editingUuid)
+                                "
                                 @click="pickDiagnosis(item.uuid)"
                             >
                                 <div class="min-w-0">
@@ -744,12 +758,16 @@
                             </div>
                         </li>
                     </ul>
+                    </template>
                 </section>
             </div>
         </div>
 
         <div class="border-t border-slate-100 px-6 py-4 dark:border-white/10">
-            <div class="mb-3 flex items-center justify-between text-sm">
+            <div
+                v-if="filledEntries.length"
+                class="mb-3 flex items-center justify-between text-sm"
+            >
                 <span class="text-slate-500 dark:text-gray-400">
                     Total ({{ filledEntries.length }}
                     {{ filledEntries.length === 1 ? "case" : "cases" }})
@@ -759,10 +777,10 @@
                 </span>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex justify-end gap-3">
                 <button
                     type="button"
-                    class="flex-1 rounded-xl border py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
+                    class="rounded-xl border px-5 py-2.5 text-sm font-medium transition hover:bg-slate-50 dark:border-white/10 dark:hover:bg-white/5"
                     :disabled="submitting"
                     @click="editingUuid ? cancelEdit() : $emit('close')"
                 >
@@ -771,9 +789,13 @@
 
                 <button
                     type="button"
-                    class="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="
-                        submitting || loading || !!loadError || !cases.length
+                        submitting ||
+                        loading ||
+                        !!loadError ||
+                        !cases.length ||
+                        !filledEntries.length
                     "
                     @click="submit"
                 >
@@ -998,7 +1020,9 @@ const billedRows = computed(() => diagnoses.value.filter(isCharged));
 
 const diagnosisItems = computed(() => [
     ...diagnoses.value
-        .filter((item) => !takenByOthers.value.has(item.uuid))
+        .filter(
+            (item) => !takenByOthers.value.has(item.uuid) && !isCharged(item),
+        )
         .map((item) => ({
             label: item.diagnosis_date
                 ? `${item.diagnosis} — ${formatDate(item.diagnosis_date)}`

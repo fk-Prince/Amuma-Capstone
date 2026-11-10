@@ -38,7 +38,7 @@ class ReportRepository
             ->where('branch_id', $branchId)
             ->where('status', '!=', Invoice::STATUS_VOID)
             ->whereBetween('created_at', [$from, $to])
-            ->get(['invoice_id', 'status', 'total_amount', 'vat_rate', 'created_at']);
+            ->get(['invoice_id', 'status', 'total_amount', 'created_at']);
     }
 
     private function salesQuery(int $branchId, array $filters)
