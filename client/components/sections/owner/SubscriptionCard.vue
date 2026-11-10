@@ -27,28 +27,16 @@
                 </div>
 
                 <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <p
-                            class="truncate text-sm font-semibold text-secondary dark:text-white"
-                        >
-                            {{ subscription.plan.name }}
-                        </p>
-
-                        <span
-                            class="rounded-md bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary dark:bg-primary-500/10 dark:text-primary-300"
-                        >
-                            {{ subscription.plan.plan_code }}
-                        </span>
-
-                        <span
-                            v-if="subscription.plan.type"
-                            class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
-                        >
-                            {{ planTypeLabel(subscription.plan.type) }}
-                        </span>
-                    </div>
+                    <p
+                        class="truncate text-sm font-semibold text-secondary dark:text-white"
+                    >
+                        {{ subscription.plan.name }}
+                    </p>
 
                     <p class="mt-0.5 text-[11px] text-muted dark:text-gray-400">
+                        <template v-if="subscription.plan.type">
+                            {{ planTypeLabel(subscription.plan.type) }} ·
+                        </template>
                         Runs through {{ formatDate(subscription.end_date) }}
                     </p>
                 </div>
@@ -151,6 +139,7 @@
             </div>
 
             <span
+                v-if="showAgencyStatus"
                 class="self-start rounded-full px-2 py-1 text-[10px] font-medium sm:shrink-0"
                 :class="
                     agency.status === 'verified'
@@ -160,13 +149,7 @@
                           : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
                 "
             >
-                {{
-                    agency.status === "verified"
-                        ? "Verified"
-                        : agency.status === "rejected"
-                          ? "Rejected"
-                          : "Pending"
-                }}
+                {{ agencyStatusLabel }}
             </span>
         </div>
 
@@ -304,6 +287,7 @@
                 </div>
 
                 <span
+                    v-if="differsFromPlan(branchStatusLabel)"
                     class="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
                     :class="
                         withdrawn
@@ -315,15 +299,7 @@
                               : 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300'
                     "
                 >
-                    {{
-                        withdrawn
-                            ? "Cancelled by owner"
-                            : selectedBranch.branch_status === "verified"
-                            ? "Verified"
-                            : selectedBranch.branch_status === "rejected"
-                              ? "Rejected"
-                              : "Pending"
-                    }}
+                    {{ branchStatusLabel }}
                 </span>
             </div>
 
@@ -403,17 +379,17 @@
                 </span>
 
                 <span
-                    class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                    class="text-[11px] font-semibold"
                     :class="
                         props.subscription.renewal?.trial_ended
-                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-300'
-                            : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                            ? 'text-rose-600 dark:text-rose-300'
+                            : 'text-amber-600 dark:text-amber-300'
                     "
                 >
                     {{
                         props.subscription.renewal?.trial_ended
                             ? "Unpaid · locked"
-                            : "Free trial · unpaid"
+                            : "Free trial"
                     }}
                 </span>
             </div>
@@ -534,7 +510,7 @@
 
                 <span
                     v-if="(agency.owner_subscription_count ?? 0) > 1"
-                    class="ml-auto shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                    class="ml-auto shrink-0 font-semibold text-violet-600 dark:text-violet-300"
                     :title="`This owner has ${agency.owner_subscription_count} subscriptions`"
                 >
                     {{ ordinal(agency.owner_subscription_number ?? 0) }}
@@ -776,6 +752,41 @@ const planStatusLabel = computed(() => {
     return props.subscription.subscription?.status ?? props.subscription.status;
 });
 
+function normalizeStatus(label: string) {
+    return label.toLowerCase().replace(/^branch\s+/, "");
+}
+
+function differsFromPlan(label: string) {
+    return (
+        normalizeStatus(label) !==
+        normalizeStatus(String(planStatusLabel.value ?? ""))
+    );
+}
+
+const showAgencyStatus = computed(
+    () =>
+        agency.value.status !== "verified" &&
+        differsFromPlan(agencyStatusLabel.value),
+);
+
+const agencyStatusLabel = computed(() =>
+    agency.value.status === "verified"
+        ? "Verified"
+        : agency.value.status === "rejected"
+          ? "Rejected"
+          : "Pending",
+);
+
+const branchStatusLabel = computed(() =>
+    withdrawn.value
+        ? "Cancelled by owner"
+        : selectedBranch.value?.branch_status === "verified"
+          ? "Verified"
+          : selectedBranch.value?.branch_status === "rejected"
+            ? "Rejected"
+            : "Pending",
+);
+
 const coveredBranches = computed<CoveredBranch[]>(
     () => props.subscription.subscription?.covered_branches ?? [],
 );
@@ -827,7 +838,11 @@ const selectedBranch = computed<CoveredBranch | null>(() => {
 });
 
 const branchSubtitle = computed(() => {
-    if (isPending.value) return "Needs verification";
+    if (isPending.value) {
+        return isFirstBranch.value
+            ? "Needs verification"
+            : "Additional branch · Needs verification";
+    }
 
     return selectedBranch.value?.uuid === props.subscription.branch.uuid
         ? "Covered branch"
