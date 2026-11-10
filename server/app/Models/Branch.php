@@ -62,17 +62,56 @@ class Branch extends Model
             ->where('subscriptions.status', Subscription::STATUS_ACTIVE)
             ->whereDate('subscriptions.end_date', '>=', now())
             ->where(function ($q) use ($planCodes) {
-                $q->where(function ($current) use ($planCodes) {
-                    $current->where(function ($notDue) {
-                        $notDue->whereNull('subscriptions.pending_plan_starts_at')
-                            ->orWhereDate('subscriptions.pending_plan_starts_at', '>', now());
-                    })
-                        ->whereHas('plans', fn($p) => $p->whereIn('plan_code', $planCodes));
-                })->orWhere(function ($upgraded) use ($planCodes) {
-                    $upgraded->whereDate('subscriptions.pending_plan_starts_at', '<=', now())
-                        ->whereHas('pendingPlan', fn($p) => $p->whereIn('plan_code', $planCodes));
+                $q->where(function ($follows) use ($planCodes) {
+                    $follows->whereNull('branch_subscription.plan_id');
+                    self::subscriptionPlanIn($follows, $planCodes);
+                })->orWhere(function ($additional) use ($planCodes) {
+                    $additional->whereNotNull('branch_subscription.plan_id')
+                        ->where('branch_subscription.type', BranchSubscription::TYPE_ADDITIONAL)
+                        ->whereIn('branch_subscription.plan_id', Plan::select('plan_id')->whereIn('plan_code', $planCodes));
+                })->orWhere(function ($included) use ($planCodes) {
+                    $included->whereNotNull('branch_subscription.plan_id')
+                        ->where('branch_subscription.type', BranchSubscription::TYPE_INCLUDED)
+                        ->where(function ($own) use ($planCodes) {
+                            $own->where(function ($onHybrid) use ($planCodes) {
+                                self::subscriptionPlanIn($onHybrid, [Plan::CODE_HYBRID]);
+                                $onHybrid->whereIn('branch_subscription.plan_id', Plan::select('plan_id')->whereIn('plan_code', $planCodes));
+                            })->orWhere(function ($followsMain) use ($planCodes) {
+                                self::subscriptionPlanIn($followsMain, array_values(array_diff($planCodes, [Plan::CODE_HYBRID])));
+                            });
+                        });
                 });
             });
+    }
+
+    private static function subscriptionPlanIn($query, array $planCodes): void
+    {
+        if (!$planCodes) {
+            $query->whereRaw('1 = 0');
+            return;
+        }
+
+        $query->where(function ($q) use ($planCodes) {
+            $q->where(function ($current) use ($planCodes) {
+                $current->where(function ($notDue) {
+                    $notDue->whereNull('subscriptions.pending_plan_starts_at')
+                        ->orWhereDate('subscriptions.pending_plan_starts_at', '>', now());
+                })
+                    ->whereHas('plans', fn($p) => $p->whereIn('plan_code', $planCodes));
+            })->orWhere(function ($upgraded) use ($planCodes) {
+                $upgraded->whereDate('subscriptions.pending_plan_starts_at', '<=', now())
+                    ->whereHas('pendingPlan', fn($p) => $p->whereIn('plan_code', $planCodes));
+            });
+        });
+    }
+
+    public function effectivePlanCodes(): array
+    {
+        return $this->subscriptions
+            ->map(fn($subscription) => $subscription->planForLink($subscription->pivot?->plan_id, $subscription->pivot?->type)?->plan_code)
+            ->filter()
+            ->values()
+            ->all();
     }
 
     protected $casts = [
@@ -103,7 +142,7 @@ class Branch extends Model
             'subscription_id'
         )
             ->using(BranchSubscription::class)
-            ->withPivot(['branch_subscription_id', 'uuid', 'status', 'active_until'])
+            ->withPivot(['branch_subscription_id', 'uuid', 'status', 'type', 'plan_id', 'active_until'])
             ->withTimestamps();
     }
 

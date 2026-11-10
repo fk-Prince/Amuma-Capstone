@@ -40,7 +40,13 @@ enum ModuleEnum: string
                 PermissionAction::Assign,
                 PermissionAction::Export,
             ],
-            self::Admissions, self::Medications => [
+            self::Admissions => [
+                PermissionAction::Read,
+                PermissionAction::Create,
+                PermissionAction::Update,
+                PermissionAction::ForceDischarge,
+            ],
+            self::Medications => [
                 PermissionAction::Read,
                 PermissionAction::Create,
                 PermissionAction::Update,

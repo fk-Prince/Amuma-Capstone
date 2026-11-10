@@ -145,8 +145,62 @@ class Subscription extends Model
             'branch_id'
         )
             ->using(BranchSubscription::class)
-            ->withPivot(['branch_subscription_id', 'uuid', 'status'])
+            ->withPivot(['branch_subscription_id', 'uuid', 'status', 'type', 'plan_id'])
             ->withTimestamps();
+    }
+
+    private static array $planCache = [];
+
+    private static function cachedPlan(int $planId): ?Plan
+    {
+        return self::$planCache[$planId] ??= Plan::find($planId);
+    }
+
+    public function planOfCode(?string $code, ?Plan $main = null): ?Plan
+    {
+        $main ??= $this->effectivePlan();
+
+        if (!$code || !$main) {
+            return null;
+        }
+
+        if ($main->plan_code === $code) {
+            return $main;
+        }
+
+        return Plan::where('plan_code', $code)->where('type', $main->type)->first();
+    }
+
+    public function planForLink(?int $planId, ?string $type, ?Plan $main = null): ?Plan
+    {
+        $main ??= $this->effectivePlan();
+
+        if (!$planId || !$main) {
+            return $main;
+        }
+
+        if ($type === BranchSubscription::TYPE_INCLUDED && $main->plan_code !== Plan::CODE_HYBRID) {
+            return $main;
+        }
+
+        $own = self::cachedPlan($planId);
+
+        if (!$own) {
+            return $main;
+        }
+
+        return $own->type === $main->type
+            ? $own
+            : ($this->planOfCode($own->plan_code, $main) ?? $own);
+    }
+
+    public function linkPlanId(?Plan $branchPlan): ?int
+    {
+        $main = $this->effectivePlan();
+
+        return $branchPlan && $main && $branchPlan->plan_code !== $main->plan_code
+            ? $branchPlan->plan_id
+            : null;
     }
 
     public function branchLinks()
@@ -222,34 +276,94 @@ class Subscription extends Model
             ->min('branch_subscription_id');
     }
 
-    public function renewalAmount(Plan $plan, ?int $additionalBranches = null): float
+    private function billedAdditionalLinks()
     {
-        $additionalBranches ??= $this->billedAdditionalBranchCount();
-
-        return round((float) $plan->price + $additionalBranches * (float) $plan->additional_branch_price, 2);
+        return $this->branchLinks()
+            ->where('status', '!=', BranchSubscription::STATUS_REJECTED)
+            ->where('type', BranchSubscription::TYPE_ADDITIONAL)
+            ->whereNull('active_until')
+            ->get(['branch_subscription_id', 'plan_id', 'type']);
     }
 
-    public function canAddAdditionalBranch(): bool
+    public function billedAdditionalFollowingMainCount(): int
+    {
+        return $this->billedAdditionalLinks()->whereNull('plan_id')->count();
+    }
+
+    public function renewalAmount(Plan $plan): float
+    {
+        $additional = $this->billedAdditionalLinks()->sum(
+            fn(BranchSubscription $link) => (float) $this->planForLink($link->plan_id, $link->type, $plan)?->additional_branch_price
+        );
+
+        return round((float) $plan->price + $additional, 2);
+    }
+
+    public function canAddAdditionalBranch(?string $planCode = null): bool
     {
         if (!in_array($this->status, [self::STATUS_PENDING, self::STATUS_ACTIVE], true)) {
             return false;
         }
 
-        $hasPaid = $this->payments()->where('status', SubscriptionPayment::STATUS_PAID)->exists();
+        if ($this->isTest() || $this->upgradeMonths() <= 0) {
+            return false;
+        }
 
-        return $hasPaid && !$this->isTest() && !$this->hasOpenSlot() && $this->upgradeMonths() > 0;
+        if (!$this->payments()->where('status', SubscriptionPayment::STATUS_PAID)->exists()) {
+            return false;
+        }
+
+        if (!$this->hasOpenSlot()) {
+            return true;
+        }
+
+        $mainCode = $this->effectivePlan()?->plan_code;
+
+        return $planCode
+            ? !Plan::covers($mainCode, $planCode)
+            : $mainCode !== Plan::CODE_HYBRID;
     }
 
-    public function additionalBranchQuote(): array
+    public function additionalBranchQuote(?Plan $branchPlan = null): array
     {
         $months = $this->upgradeMonths();
-        $unit = (float) ($this->plans?->additional_branch_price ?? 0);
+        $unit = (float) (($branchPlan ?? $this->plans)?->additional_branch_price ?? 0);
 
         return [
             'additional_branch_price' => $unit,
             'months' => $months,
             'amount' => self::proratedAdditionalBranch($unit, $months),
         ];
+    }
+
+    public function additionalPlanOptions(): array
+    {
+        $main = $this->effectivePlan();
+
+        if (!$main) {
+            return [];
+        }
+
+        $openSlot = $this->hasOpenSlot();
+
+        return Plan::where('type', $main->type)
+            ->orderBy('plan_code')
+            ->get()
+            ->map(fn(Plan $plan) => [
+                'plan_code' => $plan->plan_code,
+                'name' => $plan->name,
+                'available' => !$openSlot || !Plan::covers($main->plan_code, $plan->plan_code),
+                ...$this->additionalBranchQuote($plan),
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function includedPlanCodes(): array
+    {
+        $mainCode = $this->effectivePlan()?->plan_code;
+
+        return array_values(array_filter(Plan::CODES, fn($code) => Plan::covers($mainCode, $code)));
     }
 
     public static function proratedAdditionalBranch(float $unitPrice, int $months): float

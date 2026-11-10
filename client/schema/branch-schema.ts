@@ -152,6 +152,14 @@ export const settingSchema = z.object({
             .max(100, "Downpayment percentage must be between 1 and 100."),
     ),
 
+    force_discharge_paid_percent: z.preprocess(
+        (value) => (value === "" ? undefined : value),
+        z.coerce
+            .number({ message: "Force discharge percentage is required." })
+            .min(1, "Force discharge percentage must be between 1 and 100.")
+            .max(100, "Force discharge percentage must be between 1 and 100."),
+    ),
+
     minimum_adl_hours: z.preprocess(
         (value) => (value === "" ? undefined : value),
         z.coerce

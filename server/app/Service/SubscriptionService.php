@@ -302,7 +302,7 @@ class SubscriptionService
                     $current,
                     $plan,
                     $subscription->upgradeMonths(),
-                    $subscription->billedAdditionalBranchCount()
+                    $subscription->billedAdditionalFollowingMainCount()
                 ),
                 'endDate' => $subscription->end_date->toDateString(),
             ];
@@ -1219,6 +1219,7 @@ class SubscriptionService
         BranchSubscription::create([
             'subscription_id' => $subscription->subscription_id,
             'branch_id' => $branchData->branch_id,
+            'plan_id' => $branch['plan_id'] ?? null,
             'status' => BranchSubscription::STATUS_PENDING,
             'type' => $type,
         ]);
@@ -1307,10 +1308,22 @@ class SubscriptionService
                 );
             }
 
+            $branchPlan = $subscription->planOfCode($payload['plan_code'] ?? $subscription->effectivePlan()?->plan_code);
+
+            if (!$branchPlan || !Plan::covers($subscription->effectivePlan()?->plan_code, $branchPlan->plan_code)) {
+                throw new Exception(
+                    __(':plan isn\'t covered by your :main subscription. Add it as an additional branch instead.', [
+                        'plan' => $branchPlan?->name ?? __('This plan'),
+                        'main' => $subscription->effectivePlan()?->name,
+                    ]),
+                    422
+                );
+            }
+
             [$branchData, $branchLocation] = $this->storeBranch(
                 $agency,
                 $subscription,
-                $this->branchDetails($payload),
+                [...$this->branchDetails($payload), 'plan_id' => $subscription->linkPlanId($branchPlan)],
                 BranchSubscription::TYPE_INCLUDED
             );
 
@@ -1352,15 +1365,23 @@ class SubscriptionService
             throw new Exception(__('Subscription not found.'), 404);
         }
 
-        if ($subscription->hasOpenSlot()) {
-            throw new Exception(__('This subscription still has a free branch slot. Use it instead.'), 409);
+        $branchPlan = $subscription->planOfCode($payload['plan_code'] ?? $subscription->effectivePlan()?->plan_code);
+
+        if (!$branchPlan) {
+            throw new Exception(__('Plan not found.'), 404);
         }
 
-        if (!$subscription->canAddAdditionalBranch()) {
+        if ($subscription->hasOpenSlot() && Plan::covers($subscription->effectivePlan()?->plan_code, $branchPlan->plan_code)) {
+            throw new Exception(__('This subscription still has a free branch slot that covers :plan. Use it instead.', [
+                'plan' => $branchPlan->name,
+            ]), 409);
+        }
+
+        if (!$subscription->canAddAdditionalBranch($branchPlan->plan_code)) {
             throw new Exception(__('This subscription can\'t take an additional branch.'), 409);
         }
 
-        $quote = $subscription->additionalBranchQuote();
+        $quote = $subscription->additionalBranchQuote($branchPlan);
 
         if ($quote['amount'] <= 0) {
             throw new Exception(__('Additional branches are not available on this plan.'), 422);
@@ -1368,8 +1389,8 @@ class SubscriptionService
 
         return $this->withoutTax([
             'user' => $user,
-            'plan' => $subscription->plans,
-            'branch' => $this->branchDetails($payload),
+            'plan' => $branchPlan,
+            'branch' => [...$this->branchDetails($payload), 'plan_id' => $branchPlan->plan_id],
             'agency' => ['id' => $subscription->agency_id],
             'subscription_uuid' => $subscription->uuid,
             'method' => $payload['payment_method'] ?? null,
@@ -1430,7 +1451,7 @@ class SubscriptionService
                 $subscription->payments()->create([
                     'subscription_id' => $subscription->subscription_id,
                     'user_id' => $meta['user']['user_id'] ?? null,
-                    'plan_id' => $subscription->plan_id,
+                    'plan_id' => $meta['branch']['plan_id'] ?? $subscription->plan_id,
                     'branch_id' => $branch->branch_id,
                     'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
                     'payment_reference_id' => $payload['external_id'] ?? null,
@@ -1529,6 +1550,41 @@ class SubscriptionService
         });
     }
 
+    public function changeBranchPlan(array $payload)
+    {
+        return DB::transaction(function () use ($payload) {
+            $link = $this->activationLink($payload, true);
+            $subscription = $link->subscription;
+
+            if ($link->type === BranchSubscription::TYPE_ADDITIONAL) {
+                throw new Exception(__('An additional branch keeps the plan it was bought on.'), 422);
+            }
+
+            if (!$link->canChangePlan()) {
+                throw new Exception(__('Only a branch on a Hybrid subscription can switch plans. The main branch always follows the subscription plan.'), 422);
+            }
+
+            $plan = $subscription->planOfCode($payload['plan_code']);
+
+            if (!$plan || !Plan::covers($subscription->effectivePlan()?->plan_code, $plan->plan_code)) {
+                throw new Exception(__('That plan isn\'t covered by your subscription.'), 422);
+            }
+
+            $link->update(['plan_id' => $subscription->linkPlanId($plan)]);
+
+            $this->sandboxClient->provisionBranch($link->branch);
+
+            return response()->json([
+                'status' => true,
+                'message' => __(':branch now uses :plan.', [
+                    'branch' => $link->branch->name,
+                    'plan' => $plan->name,
+                ]),
+                'data' => $link->fresh(['subscription', 'branch'])->activationSummary(),
+            ]);
+        });
+    }
+
     public function makeReactivationPurchase(array $payload, User $user)
     {
         AuthGuard::requireUser($user);
@@ -1583,7 +1639,7 @@ class SubscriptionService
         $subscription->payments()->create([
             'subscription_id' => $subscription->subscription_id,
             'user_id' => $meta['user']['user_id'] ?? null,
-            'plan_id' => $subscription->plan_id,
+            'plan_id' => $link->effectivePlan()?->plan_id ?? $subscription->plan_id,
             'branch_id' => $link->branch_id,
             'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
             'payment_reference_id' => $payload['external_id'] ?? null,
@@ -1788,6 +1844,7 @@ class SubscriptionService
 
         $link->update([
             'subscription_id' => $subscription->subscription_id,
+            'plan_id' => $meta['branch']['plan_id'] ?? null,
             'status' => BranchSubscription::STATUS_PENDING,
             'type' => BranchSubscription::TYPE_ADDITIONAL,
         ]);
@@ -1795,7 +1852,7 @@ class SubscriptionService
         $subscription->payments()->create([
             'subscription_id' => $subscription->subscription_id,
             'user_id' => $meta['user']['user_id'] ?? null,
-            'plan_id' => $subscription->plan_id,
+            'plan_id' => $meta['branch']['plan_id'] ?? $subscription->plan_id,
             'branch_id' => $branch->branch_id,
             'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
             'payment_reference_id' => $payload['external_id'] ?? null,

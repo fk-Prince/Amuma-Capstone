@@ -26,6 +26,12 @@
                 >
                     {{ activation.slot_type === "included" ? "Included" : "Additional" }}
                 </span>
+                <span
+                    v-if="activation?.plan"
+                    class="shrink-0 rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
+                >
+                    {{ activation.plan.name }}
+                </span>
             </div>
             <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-gray-400">
                 {{ note ?? branch.address }}
@@ -43,6 +49,17 @@
             >
                 {{ statusPill.label }}
             </span>
+
+            <ActionButton
+                v-if="!isRejected && activation?.can_change_plan"
+                variant="outline"
+                extra-class="!px-3 !py-1.5 !text-xs"
+                :disabled="!canManage"
+                tooltip="You need permission to update Manage Subscription to change a branch's plan."
+                @click="emit('change-plan', branch)"
+            >
+                Change plan
+            </ActionButton>
 
             <ActionButton
                 v-if="isRejected"
@@ -110,6 +127,7 @@ const emit = defineEmits<{
     resubmit: [branch: BranchCardData];
     deactivate: [branch: BranchCardData];
     reactivate: [branch: BranchCardData];
+    "change-plan": [branch: BranchCardData];
 }>();
 
 const isRejected = computed(() => props.branch.review_status === "rejected");

@@ -246,6 +246,7 @@ class BranchService
             'requires_full_payment_on_admit',
             'complete_admission_booking_percent',
             'homecare_downpayment_percent',
+            'force_discharge_paid_percent',
             'minimum_adl_hours',
             'is_open',
             'time_zone',
@@ -272,7 +273,7 @@ class BranchService
             }
         }
 
-        foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent'] as $key) {
+        foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent', 'force_discharge_paid_percent'] as $key) {
             if (array_key_exists($key, $settingPayload)) {
                 $settingPayload[$key] = min(100, max(1, (int) $settingPayload[$key]));
             }

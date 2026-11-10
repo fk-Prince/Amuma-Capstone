@@ -201,6 +201,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/subscriptions-cancel-pending', [SubscriptionController::class, 'cancelPendingPlan']);
         Route::post('/subscriptions-branch-deactivate', [SubscriptionController::class, 'deactivateBranch']);
         Route::post('/subscriptions-branch-reactivate', [SubscriptionController::class, 'reactivateBranch']);
+        Route::post('/subscriptions-branch-plan', [SubscriptionController::class, 'changeBranchPlan']);
         Route::post('/subscriptions-branch-reactivate-purchase', [SubscriptionController::class, 'reactivateBranchWithPurchase']);
     });
 

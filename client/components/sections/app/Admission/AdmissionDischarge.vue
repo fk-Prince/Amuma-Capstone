@@ -916,23 +916,80 @@
                         class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-4 sm:px-8 py-5 dark:border-white/10 dark:bg-white/5"
                     >
                         <div
-                            v-if="owesBalance"
-                            class="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3.5 dark:border-rose-500/20 dark:bg-rose-500/10"
+                            v-if="owesBalance || !canDischarge"
+                            class="flex items-start gap-3 rounded-lg border p-3.5"
+                            :class="
+                                mayForce
+                                    ? 'border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10'
+                                    : 'border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10'
+                            "
                         >
                             <div>
                                 <p
-                                    class="text-sm font-semibold text-rose-800 dark:text-rose-300"
+                                    class="text-sm font-semibold"
+                                    :class="
+                                        mayForce
+                                            ? 'text-amber-900 dark:text-amber-300'
+                                            : 'text-rose-800 dark:text-rose-300'
+                                    "
                                 >
-                                    Not fully paid
+                                    {{ footerTitle }}
                                 </p>
 
                                 <p
-                                    class="mt-0.5 text-xs leading-5 text-rose-700 dark:text-rose-300"
+                                    class="mt-0.5 text-xs leading-5"
+                                    :class="
+                                        mayForce
+                                            ? 'text-amber-800 dark:text-amber-300'
+                                            : 'text-rose-700 dark:text-rose-300'
+                                    "
                                 >
-                                    This patient still owes
-                                    {{ formatCurrency(overallBalance) }}. The
-                                    balance must be settled before the patient
-                                    can be discharged.
+                                    <template v-if="!owesBalance">
+                                        You need permission to update
+                                        admissions to discharge a patient who
+                                        has paid in full.
+                                    </template>
+
+                                    <template v-else-if="!canForce">
+                                        This patient still owes
+                                        {{ formatCurrency(overallBalance) }}.
+                                        The balance must be settled before the
+                                        patient can be discharged.
+                                    </template>
+
+                                    <template v-else-if="mayForce">
+                                        This patient still owes
+                                        {{ formatCurrency(overallBalance) }}.
+                                        {{ formatCurrency(forceShare!.paid) }}
+                                        of
+                                        {{ formatCurrency(forceShare!.billed) }}
+                                        is paid ({{ paidPercent }}%), which
+                                        meets the branch's
+                                        {{ forceShare!.percent }}% minimum.
+                                        Force discharge writes off
+                                        {{ formatCurrency(forceShare!.write_off) }}
+                                        as bad debt.
+                                        <template v-if="serviceBalance > 0">
+                                            Unpaid services and schedules are
+                                            not written off and stay on the
+                                            patient's account.
+                                        </template>
+                                    </template>
+
+                                    <template v-else>
+                                        This patient still owes
+                                        {{ formatCurrency(overallBalance) }}.
+                                        Only
+                                        {{ formatCurrency(forceShare?.paid ?? 0) }}
+                                        of
+                                        {{ formatCurrency(forceShare?.billed ?? 0) }}
+                                        is paid ({{ paidPercent }}%). Force
+                                        discharge needs at least
+                                        {{ forceShare?.percent ?? 50 }}% paid, so
+                                        collect
+                                        {{ formatCurrency(forceShare?.short ?? 0) }}
+                                        more first.
+                                    </template>
                                 </p>
                             </div>
                         </div>
@@ -949,7 +1006,7 @@
 
                             <button
                                 type="button"
-                                :disabled="loading || owesBalance"
+                                :disabled="loading || !canProceed"
                                 class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="handleConfirm"
                             >
@@ -976,7 +1033,13 @@
                                     />
                                 </svg>
 
-                                {{ loading ? "Discharging…" : "Discharge patient" }}
+                                {{
+                                    loading
+                                        ? "Discharging…"
+                                        : owesBalance
+                                          ? "Force discharge"
+                                          : "Discharge patient"
+                                }}
                             </button>
                         </div>
                     </div>
@@ -986,10 +1049,22 @@
 
         <ConfirmDialog
             :open="confirming"
-            title="Discharge patient?"
-            message="This ends the current admission and any future periods."
-            description="This action cannot be undone."
-            confirm-label="Yes, discharge"
+            :title="
+                owesBalance ? 'Force discharge patient?' : 'Discharge patient?'
+            "
+            :message="
+                owesBalance
+                    ? `This patient still owes ${formatCurrency(overallBalance)}.`
+                    : 'This ends the current admission and any future periods.'
+            "
+            :description="
+                owesBalance
+                    ? `${formatCurrency(forceShare?.write_off ?? 0)} of this admission's bill will be written off as bad debt. Services and schedules are not affected. This action cannot be undone.`
+                    : 'This action cannot be undone.'
+            "
+            :confirm-label="
+                owesBalance ? 'Yes, force discharge' : 'Yes, discharge'
+            "
             variant="danger"
             :loading="loading"
             @confirm="confirmDischargeNow"
@@ -1025,11 +1100,15 @@ const props = withDefaults(
         futureInvoices?: InvoiceAccommodation[];
         billing?: PatientBilling | null;
         loading?: boolean;
+        canDischarge?: boolean;
+        canForce?: boolean;
     }>(),
     {
         futureInvoices: () => [],
         billing: null,
         loading: false,
+        canDischarge: true,
+        canForce: false,
     },
 );
 
@@ -1039,6 +1118,7 @@ const emit = defineEmits<{
             refund: boolean;
             currentRefundAmount: number | null;
             note: string;
+            force: boolean;
         },
     ];
     cancel: [];
@@ -1167,6 +1247,33 @@ const isMonthly = computed(() => currentBillingCycle.value === "MONTHLY");
 
 const owesBalance = computed(() => overallBalance.value > 0);
 
+const forceShare = computed(() => calculation.value?.force_discharge ?? null);
+
+const mayForce = computed(
+    () => owesBalance.value && props.canForce && !!forceShare.value?.allowed,
+);
+
+const canProceed = computed(() =>
+    owesBalance.value ? mayForce.value : props.canDischarge,
+);
+
+const paidPercent = computed(() => {
+    const billed = getNumber(forceShare.value?.billed);
+
+    return billed > 0
+        ? Math.floor((getNumber(forceShare.value?.paid) / billed) * 100)
+        : 0;
+});
+
+const footerTitle = computed(() => {
+    if (!owesBalance.value) return "You don't have permission to do this";
+    if (!props.canForce) return "Not fully paid";
+
+    return mayForce.value
+        ? "Not fully paid"
+        : `Below the ${forceShare.value?.percent ?? 50}% minimum`;
+});
+
 const confirming = ref(false);
 
 function getNumber(value: unknown, fallback = 0): number {
@@ -1255,7 +1362,7 @@ function handleConfirm() {
         return;
     }
 
-    if (owesBalance.value) {
+    if (!canProceed.value) {
         return;
     }
 
@@ -1279,6 +1386,8 @@ function proceedWithDischarge() {
             : null,
 
         note: dischargeNote.value.trim(),
+
+        force: owesBalance.value,
     });
 }
 

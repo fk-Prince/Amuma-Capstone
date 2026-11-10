@@ -292,7 +292,6 @@
                                         <input
                                             v-model="entry.end_time"
                                             type="time"
-                                            :min="entry.start_time || undefined"
                                             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                         />
                                     </label>
@@ -875,6 +874,7 @@ import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import { ref, computed, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import { fullName, initials } from "~/utils/user";
+import { shiftMinutes, shiftsOverlap } from "~/utils/shiftTime";
 import {
     formatDate,
     formatTime,
@@ -918,12 +918,7 @@ const DUTY_LIMIT_HOURS = 12;
 function shiftHours(entry: AssignmentEntry) {
     const { start, end } = shiftRange(entry);
 
-    const [startHour = 0, startMinute = 0] = start.split(":").map(Number);
-    const [endHour = 0, endMinute = 0] = end.split(":").map(Number);
-
-    const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
-
-    return minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : 0;
+    return Math.round((shiftMinutes(start, end) / 60) * 10) / 10;
 }
 
 // The duty limit is per day: the start and end times are the hours worked each day.
@@ -951,8 +946,7 @@ function shiftOverlaps(entry: AssignmentEntry): AssignmentEntry[] {
         (other) =>
             other.employee_id !== entry.employee_id &&
             hasShift(other) &&
-            entry.start_time < other.end_time &&
-            other.start_time < entry.end_time,
+            shiftsOverlap(entry, other),
     );
 }
 
@@ -1337,8 +1331,8 @@ function confirm() {
             return;
         }
 
-        if (entry.start_time && entry.end_time <= entry.start_time) {
-            toastError(`The end time for ${name} must be later than the start time.`);
+        if (entry.end_time === entry.start_time) {
+            toastError(`The end time for ${name} must be different from the start time.`);
             return;
         }
 

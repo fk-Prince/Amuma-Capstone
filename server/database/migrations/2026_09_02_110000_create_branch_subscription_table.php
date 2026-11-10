@@ -14,6 +14,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('subscription_id')->constrained('subscriptions', 'subscription_id');
             $table->foreignId('branch_id')->constrained('branches', 'branch_id');
+            $table->foreignId('plan_id')->nullable()->constrained('plans', 'plan_id');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->enum('type', ['included', 'additional'])->default('included');
             $table->date('active_until')->nullable();

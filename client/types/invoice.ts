@@ -111,6 +111,16 @@
 //     invoices: PatientInvoiceItem[];
 // }
 
+export interface ForceDischargeShare {
+    percent: number;
+    billed: number;
+    paid: number;
+    required: number;
+    short: number;
+    write_off: number;
+    allowed: boolean;
+}
+
 export interface InvoiceBranch {
     branch_id: number;
     name: string | null;
@@ -287,6 +297,7 @@ export interface DischargeCalculation {
     refund_applied?: number;
     credit_applied?: number;
     overall_balance?: number;
+    force_discharge?: ForceDischargeShare;
     // True once the invoice itself is void or written off: it is closed, so no
     // payment is required and no refund is worked out against it.
     is_closed_invoice?: boolean;

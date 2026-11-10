@@ -313,16 +313,6 @@
                             </template>
                         </BaseInput>
 
-                        <BaseInput
-                            :key="`description-${active.key}`"
-                            v-model="active.description"
-                            label="Description"
-                            mode="textarea"
-                            :textMax="255"
-                            placeholder="Optional note saved with this diagnosis case"
-                            :error="errorFor(activeIndex, 'description')"
-                        />
-
                         <div
                             :key="`billing-${active.key}`"
                             class="flex flex-col gap-3"
@@ -405,7 +395,7 @@
                                 </div>
                             </div>
 
-                            <div v-if="active.billed && !editingUuid">
+                            <div v-if="SHOW_START_BILLING && active.billed && !editingUuid">
                                 <p
                                     class="mb-2 text-sm font-medium text-slate-700 dark:text-gray-300"
                                 >
@@ -690,18 +680,6 @@
                                             }}
                                         </p>
                                         <p
-                                            v-if="
-                                                item.admission_charge
-                                                    .description
-                                            "
-                                            class="mt-0.5 break-words text-xs text-slate-500 dark:text-gray-400"
-                                        >
-                                            {{
-                                                item.admission_charge
-                                                    .description
-                                            }}
-                                        </p>
-                                        <p
                                             class="mt-0.5 text-[11px] text-slate-500 dark:text-gray-400"
                                         >
                                             Billed:
@@ -924,6 +902,7 @@ const branchStore = useBranchStore();
 const NEW_DIAGNOSIS = "__new__";
 
 const SHOW_ONE_TIME = false;
+const SHOW_START_BILLING = false;
 
 const loading = ref(false);
 const loadError = ref("");

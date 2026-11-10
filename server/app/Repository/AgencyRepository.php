@@ -152,6 +152,7 @@ class AgencyRepository
                 'plan_code' => $subscription->plans?->plan_code,
                 'plan_type' => $subscription->plans?->type,
                 'end_date' => $subscription->end_date,
+                'plans' => $subscription->additionalPlanOptions(),
                 ...$subscription->additionalBranchQuote(),
             ])
             ->values();
@@ -178,6 +179,7 @@ class AgencyRepository
                 'branches_used' => (int) $subscription->branches_used,
                 'branch_limit' => $subscription->branchLimit(),
                 'slots_left' => $subscription->branchLimit() - (int) $subscription->branches_used,
+                'plan_codes' => $subscription->includedPlanCodes(),
             ])
             ->values();
 
@@ -270,10 +272,10 @@ class AgencyRepository
                 ] : null,
                 'staff_count' => $branch->employees_count,
                 'patients_count' => $branch->patients_count,
-                'plan' => $branch->subscriptionLink?->subscription?->effectivePlan()
+                'plan' => ($plan = $branch->subscriptionLink?->effectivePlan())
                     ? [
-                        'plan_code' => $branch->subscriptionLink->subscription->effectivePlan()->plan_code,
-                        'name' => $branch->subscriptionLink->subscription->effectivePlan()->name,
+                        'plan_code' => $plan->plan_code,
+                        'name' => $plan->name,
                     ]
                     : null,
             ];

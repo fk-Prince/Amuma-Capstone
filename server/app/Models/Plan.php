@@ -13,7 +13,15 @@ class Plan extends Model
     public const TYPE_ENTERPRISE = 'enterprise';
     public const TYPES = [self::TYPE_SME, self::TYPE_ENTERPRISE];
 
+    public const CODE_HOMECARE = 'A';
+    public const CODE_FACILITY = 'B';
     public const CODE_HYBRID = 'C';
+    public const CODES = [self::CODE_HOMECARE, self::CODE_FACILITY, self::CODE_HYBRID];
+
+    public static function covers(?string $mainCode, ?string $code): bool
+    {
+        return $mainCode === self::CODE_HYBRID || ($mainCode !== null && $mainCode === $code);
+    }
 
     public const BRANCH_LIMITS = [
         self::TYPE_SME => 1,

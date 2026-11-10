@@ -24,6 +24,23 @@
                         >
                             {{ branch.name }}
                         </p>
+                        <div
+                            v-if="activation?.slot_type || activation?.plan"
+                            class="mt-1 flex flex-wrap items-center gap-1"
+                        >
+                            <span
+                                v-if="activation?.slot_type"
+                                class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                            >
+                                {{ activation.slot_type === "included" ? "Included" : "Additional" }}
+                            </span>
+                            <span
+                                v-if="activation?.plan"
+                                class="rounded bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
+                            >
+                                {{ activation.plan.name }}
+                            </span>
+                        </div>
                     </div>
 
                     <div class="flex shrink-0 flex-col items-end gap-1">
@@ -234,10 +251,22 @@
         </p>
 
         <div
-            v-if="!isRejected && activationAction"
+            v-if="!isRejected && (activationAction || activation?.can_change_plan)"
             class="mt-auto flex items-center gap-2 pt-4"
         >
             <ActionButton
+                v-if="activation?.can_change_plan"
+                variant="outline"
+                class="flex-1"
+                extra-class="w-full !px-3 !text-xs"
+                :disabled="!canManage"
+                tooltip="You need permission to update Manage Subscription to change a branch's plan."
+                @click="emit('change-plan', branch)"
+            >
+                Change plan
+            </ActionButton>
+            <ActionButton
+                v-if="activationAction"
                 :variant="activationAction === 'deactivate' ? 'outline' : 'primary'"
                 class="flex-1"
                 :extra-class="
@@ -341,5 +370,6 @@ const emit = defineEmits<{
     resubmit: [branch: BranchCardData];
     deactivate: [branch: BranchCardData];
     reactivate: [branch: BranchCardData];
+    "change-plan": [branch: BranchCardData];
 }>();
 </script>

@@ -530,6 +530,7 @@ const route = useRoute();
 const props = defineProps<{
     open: boolean;
     admission: Admission | null;
+    requirePayment?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -732,6 +733,7 @@ watch(
             const res = await admissionService.action({
                 branch_uuid: route.params.uuid,
                 action: "branch_contract",
+                ...(props.requirePayment ? { require_payment: true } : {}),
             });
 
             contracts.value = res.data?.data ?? res.data ?? res ?? [];

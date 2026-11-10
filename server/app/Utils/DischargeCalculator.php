@@ -121,6 +121,7 @@ class DischargeCalculator
             'refund_applied' => $plan['refund_applied'],
             'credit_applied' => $plan['credit_applied'],
             'overall_balance' => $plan['balance'],
+            'force_discharge' => self::forceDischarge($admission, $period, $plan),
 
             'period_code' => AdmissionPeriod::codeFor($period->admission_period_id),
             'invoice_codes' => $current
@@ -332,6 +333,39 @@ class DischargeCalculator
             'chain' => $chain,
             'invoices' => $invoices,
             'entries' => $entries->map(fn(array $entry) => $entry + $shares[$entry['line']->invoice_admission_id])->values(),
+        ];
+    }
+
+    public static function forceDischargePercent(PatientAdmission $admission): int
+    {
+        $settings = $admission->patient?->branch?->settings ?? [];
+
+        return min(100, max(1, (int) ($settings['force_discharge_paid_percent'] ?? 50)));
+    }
+
+    public static function forceDischarge(PatientAdmission $admission, AdmissionPeriod $period, ?array $plan = null): array
+    {
+        $plan ??= self::plan($admission, $period);
+        $percent = self::forceDischargePercent($admission);
+
+        $invoices = app(InvoiceRepository::class)
+            ->openAdmissionInvoices($admission, $period->admission_period_id);
+
+        $billed = round((float) $invoices->sum(
+            fn(Invoice $invoice) => $plan['invoices'][$invoice->invoice_id]['new_total'] ?? (float) $invoice->adjusted_total
+        ), 2);
+
+        $paid = round(min($billed, (float) $invoices->sum(fn(Invoice $invoice) => (float) $invoice->net_paid_amount)), 2);
+        $required = round($billed * $percent / 100, 2);
+
+        return [
+            'percent' => $percent,
+            'billed' => $billed,
+            'paid' => $paid,
+            'required' => $required,
+            'short' => round(max(0, $required - $paid), 2),
+            'write_off' => round(max(0, $billed - $paid), 2),
+            'allowed' => $paid >= $required - 0.005,
         ];
     }
 

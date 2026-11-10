@@ -354,6 +354,7 @@
                         @resubmit="onResubmitBranch"
                         @deactivate="deactivateTarget = $event"
                         @reactivate="reactivateTarget = $event"
+                        @change-plan="changePlanTarget = $event"
                     />
                 </div>
 
@@ -371,6 +372,7 @@
                         @resubmit="onResubmitBranch"
                         @deactivate="deactivateTarget = $event"
                         @reactivate="reactivateTarget = $event"
+                        @change-plan="changePlanTarget = $event"
                     />
                 </div>
 
@@ -452,6 +454,18 @@
             @reactivated="onReactivated"
         />
 
+        <ChangeBranchPlanModal
+            v-if="changePlanTarget?.activation?.plan"
+            :branch-name="changePlanTarget.name"
+            :branch-uuid="route.params.uuid as string"
+            :target-uuid="changePlanTarget.uuid"
+            :current-code="changePlanTarget.activation.plan.plan_code"
+            :current-name="changePlanTarget.activation.plan.name"
+            :plan-type="subscriptionPlan?.type ?? 'enterprise'"
+            @close="changePlanTarget = null"
+            @changed="onPlanChanged"
+        />
+
         <ConfirmDialog
             :open="!!purchasePrompt"
             title="Pay for an additional branch?"
@@ -472,6 +486,7 @@ import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBran
 import RenewalModal from "~/components/sections/app/branches/RenewalModal.vue";
 import DeactivateBranchModal from "~/components/sections/app/branches/DeactivateBranchModal.vue";
 import ReactivateBranchModal from "~/components/sections/app/branches/ReactivateBranchModal.vue";
+import ChangeBranchPlanModal from "~/components/sections/app/branches/ChangeBranchPlanModal.vue";
 import type { BranchActivation } from "~/types/branch";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
@@ -782,6 +797,27 @@ onMounted(() => {
 
 const deactivateTarget = ref<Branch | null>(null);
 const reactivateTarget = ref<Branch | null>(null);
+const changePlanTarget = ref<Branch | null>(null);
+
+const onPlanChanged = (result: any) => {
+    const target = changePlanTarget.value;
+    changePlanTarget.value = null;
+
+    const activation: BranchActivation | null = result?.data ?? null;
+    if (!target || !activation) return;
+
+    branches.value = branches.value.map((b) =>
+        b.uuid === target.uuid
+            ? { ...b, activation, plan: activation.plan ?? b.plan }
+            : b,
+    );
+
+    success(result?.message ?? `${target.name}'s plan was changed.`);
+
+    if (target.uuid === route.params.uuid) {
+        branchStore.refreshBranch().catch(() => {});
+    }
+};
 const deactivating = ref(false);
 
 const applyActivation = (uuid: string, activation: BranchActivation | null) => {

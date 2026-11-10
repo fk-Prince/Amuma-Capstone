@@ -966,8 +966,8 @@ class ScheduleService
             throw new Exception('Start and end times must look like 08:00.', 422);
         }
 
-        if ($endAt->lte($startAt)) {
-            throw new Exception('The end time must be later than the start time.', 422);
+        if ($endAt->eq($startAt)) {
+            throw new Exception('The end time must be different from the start time.', 422);
         }
 
         return [$startAt->format('H:i:s'), $endAt->format('H:i:s')];
@@ -981,6 +981,10 @@ class ScheduleService
 
         $shiftStart = $scheduleStart->copy()->setTimeFromTimeString($startTime);
         $shiftEnd = $scheduleStart->copy()->setTimeFromTimeString($endTime);
+
+        if ($shiftEnd->lte($shiftStart)) {
+            $shiftEnd->gt($scheduleStart) ? $shiftStart->subDay() : $shiftEnd->addDay();
+        }
 
         $windowStart = $shiftStart->max($scheduleStart)->copy();
         $windowEnd = $shiftEnd->min($scheduleEnd)->copy();
@@ -1042,9 +1046,20 @@ class ScheduleService
             })
             ->values();
 
+        $spans = function (string $start, string $end): array {
+            $from = (int) substr($start, 0, 2) * 60 + (int) substr($start, 3, 2);
+            $to = (int) substr($end, 0, 2) * 60 + (int) substr($end, 3, 2);
+
+            return $to > $from ? [[$from, $to]] : [[$from, 1440], [0, $to]];
+        };
+
+        $collide = fn(array $a, array $b) => collect($spans($a['start'], $a['end']))
+            ->contains(fn($x) => collect($spans($b['start'], $b['end']))
+                ->contains(fn($y) => $x[0] < $y[1] && $y[0] < $x[1]));
+
         foreach ($shifts as $index => $mine) {
             foreach ($shifts->slice($index + 1) as $theirs) {
-                if ($mine['start'] < $theirs['end'] && $theirs['start'] < $mine['end']) {
+                if ($collide($mine, $theirs)) {
                     $first = Employee::find($mine['employee_id'])?->full_name ?? "Employee #{$mine['employee_id']}";
                     $second = Employee::find($theirs['employee_id'])?->full_name ?? "Employee #{$theirs['employee_id']}";
 

@@ -407,6 +407,7 @@ class PatientResource extends JsonResource
             'note' => $period->note,
             'started_at' => $period->start_date,
             'ended_at' => $period->end_date,
+            'cycle_days' => $period->cycleDays(),
             'charged_amount' => round((float) $charged, 2),
             'room_charged_amount' => $period->roomChargedInChain(),
             'contract' => $this->formatContract($period->branchContract),

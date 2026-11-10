@@ -182,6 +182,24 @@ class InvoiceRepository
             ->get();
     }
 
+    public function openAdmissionInvoices(PatientAdmission $admission, ?int $exceptPeriodId = null)
+    {
+        $invoiceIds = $admission->invoiceAdmission()->pluck('invoice_id')
+            ->merge($admission->additionalCharges()->pluck('invoice_id'))
+            ->merge(
+                $admission->chargeDiagnoses()
+                    ->when($exceptPeriodId, fn($query) => $query->where('admission_period_id', '!=', $exceptPeriodId))
+                    ->pluck('invoice_id')
+            )
+            ->filter()
+            ->unique();
+
+        return Invoice::with('allocations.refundAllocations', 'invoiceAdjustments')
+            ->whereIn('invoice_id', $invoiceIds)
+            ->whereNotIn('status', Invoice::CLOSED_STATUSES)
+            ->get();
+    }
+
     public function owedAtDischarge(PatientAdmission $admission, array $exceptIds = [], ?int $exceptPeriodId = null)
     {
         $invoiceIds = InvoiceAdmission::whereHas(

@@ -115,7 +115,7 @@ class SandboxClient
         ])->find($branchId);
 
         $agency = $branch?->agencies;
-        $plan = $branch?->subscriptionLink?->subscription?->plans;
+        $plan = $branch?->subscriptionLink?->effectivePlan();
         $owner = $agency ? User::with('employee')->find($agency->registered_by) : null;
 
         if (!$branch || !$agency || !$plan || !$owner) {

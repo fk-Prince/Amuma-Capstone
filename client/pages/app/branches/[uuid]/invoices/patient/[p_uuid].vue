@@ -1838,6 +1838,7 @@
         <BillingCycleModal
             :open="extendModalOpen"
             :admission="extendAdmission as any"
+            require-payment
             @select="handleExtendSelect"
             @close="closeExtendModal"
         />

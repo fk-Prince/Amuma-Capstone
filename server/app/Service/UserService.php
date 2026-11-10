@@ -109,7 +109,7 @@ class UserService
                     }
                 }
 
-                foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent'] as $key) {
+                foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent', 'force_discharge_paid_percent'] as $key) {
                     if (array_key_exists($key, $settings)) {
                         $settings[$key] = min(100, max(1, (int) $settings[$key]));
                     }
@@ -177,7 +177,7 @@ class UserService
                     'settings' => $settings,
                     'plan' => $branch?->subscriptions
                         ? $branch->subscriptions->map(function ($subscription) {
-                            $plan = $subscription->effectivePlan();
+                            $plan = $subscription->planForLink($subscription->pivot?->plan_id, $subscription->pivot?->type);
                             return [
                                 'plan_code' => $plan?->plan_code,
                                 'name' => $plan?->name,

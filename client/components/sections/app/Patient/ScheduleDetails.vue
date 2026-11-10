@@ -1449,6 +1449,7 @@ function durationLabelFor(service: ScheduleServiceItem): string {
     return service.duration_minutes ? `${service.duration_minutes} min` : "—";
 }
 import { fullName, initials } from "~/utils/user";
+import { shiftMinutes, shiftsOverlap } from "~/utils/shiftTime";
 import type { Employee } from "~/types/employee";
 import type {
     ScheduleAssignee,
@@ -1764,11 +1765,8 @@ function longDutyHours(serviceId: number, employeeId: number) {
 
     if (!entry?.start_time || !entry.end_time) return 0;
 
-    const [startHour = 0, startMinute = 0] = entry.start_time.split(":").map(Number);
-    const [endHour = 0, endMinute = 0] = entry.end_time.split(":").map(Number);
-
-    const minutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
-    const hours = minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : 0;
+    const hours =
+        Math.round((shiftMinutes(entry.start_time, entry.end_time) / 60) * 10) / 10;
 
     return hours > DUTY_LIMIT_HOURS ? hours : 0;
 }
@@ -2073,9 +2071,9 @@ function validate() {
                 return false;
             }
 
-            if (entry.end_time <= entry.start_time) {
+            if (entry.end_time.slice(0, 5) === entry.start_time.slice(0, 5)) {
                 toastError(
-                    `The end time for ${name} must be later than the start time.`,
+                    `The end time for ${name} must be different from the start time.`,
                 );
                 return false;
             }
@@ -2083,8 +2081,9 @@ function validate() {
             const overlap = entries.find(
                 (other) =>
                     other.employee_id !== entry.employee_id &&
-                    other.start_time.slice(0, 5) < entry.end_time.slice(0, 5) &&
-                    entry.start_time.slice(0, 5) < other.end_time.slice(0, 5),
+                    !!other.start_time &&
+                    !!other.end_time &&
+                    shiftsOverlap(entry, other),
             );
 
             if (overlap) {

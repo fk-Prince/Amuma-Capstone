@@ -237,6 +237,13 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->reactivateBranch($this->activationPayload($request));
     }
 
+    public function changeBranchPlan(Request $request)
+    {
+        return $this->subscriptionService->changeBranchPlan($this->activationPayload($request, [
+            'plan_code' => ['required', 'in:A,B,C'],
+        ]));
+    }
+
     public function reactivateBranchWithPurchase(Request $request)
     {
         $payload = $this->activationPayload($request, [

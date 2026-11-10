@@ -23,6 +23,10 @@ enum RoleEnum: string
             self::BranchManager => collect(ModuleEnum::cases())
                 ->mapWithKeys(fn(ModuleEnum $module) => [
                     $module->value => match ($module) {
+                        ModuleEnum::Admissions => [
+                            PermissionAction::Read->value,
+                            PermissionAction::ForceDischarge->value,
+                        ],
                         ModuleEnum::Patients, ModuleEnum::Schedules => [
                             PermissionAction::Read->value,
                             PermissionAction::Export->value,
@@ -52,7 +56,10 @@ enum RoleEnum: string
                 ],
                 ModuleEnum::Medications->value => ModuleEnum::Medications->actionColumns(),
                 ModuleEnum::Schedules->value => ModuleEnum::Schedules->actionColumns(),
-                ModuleEnum::Admissions->value => ModuleEnum::Admissions->actionColumns(),
+                ModuleEnum::Admissions->value => array_values(array_diff(
+                    ModuleEnum::Admissions->actionColumns(),
+                    [PermissionAction::ForceDischarge->value]
+                )),
                 ModuleEnum::RoomsAndBeds->value => [PermissionAction::Read->value],
                 ModuleEnum::Services->value => [PermissionAction::Read->value],
                 ModuleEnum::Contracts->value => [PermissionAction::Read->value],

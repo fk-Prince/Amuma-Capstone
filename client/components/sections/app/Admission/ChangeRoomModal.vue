@@ -522,7 +522,7 @@
                                                             proration.newContractPrice,
                                                         )
                                                     }}
-                                                    ÷ {{ proration.totalDays }} =
+                                                    ÷ {{ proration.cycleDays }} =
                                                     {{
                                                         formatCurrency(
                                                             proration.newDailyRate,
@@ -1183,8 +1183,10 @@ const proration = computed(() => {
     const oldDailyRate =
         Number(currentPeriod.value?.charged_amount ?? 0) / totalDays;
 
+    const cycleDays = Number(currentPeriod.value?.cycle_days) || totalDays;
+
     const newDailyRate =
-        Number(selectedContract.value?.price ?? 0) / totalDays;
+        Number(selectedContract.value?.price ?? 0) / cycleDays;
 
     const oldRemaining = round2(oldDailyRate * remainingDays);
     const newRemaining = round2(newDailyRate * remainingDays);
@@ -1228,6 +1230,7 @@ const proration = computed(() => {
     return {
         remainingDays,
         totalDays,
+        cycleDays,
         consumedDays,
         oldDailyRate: round2(oldDailyRate),
         newDailyRate: round2(newDailyRate),

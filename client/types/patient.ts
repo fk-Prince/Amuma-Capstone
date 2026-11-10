@@ -225,6 +225,7 @@ export interface AdmissionPeriod {
     note?: string | null;
     started_at?: string | null;
     ended_at?: string | null;
+    cycle_days?: number;
     charged_amount: number;
     // Room price billed so far across the accommodation changes of this stay.
     room_charged_amount?: number;

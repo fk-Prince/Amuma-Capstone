@@ -975,6 +975,8 @@
             :future-invoices="notStartedInvoices"
             :billing="patient?.billing ?? null"
             :loading="actionLoading"
+            :can-discharge="canUpdateAdmission"
+            :can-force="canForceDischarge(Modules.Admissions)"
             @confirm="confirmDischarge"
             @cancel="dischargeDialogOpen = false"
         />
@@ -1380,14 +1382,17 @@ const unavailableWhileNotAdmitted = computed(() => {
 
 const { hasFacilityPlan } = useBranchPlan();
 const facilityLocked = computed(() => !hasFacilityPlan.value);
-const { hasModule, canCreate, canUpdate } = usePermissions();
+const { hasModule, canCreate, canUpdate, canForceDischarge } = usePermissions();
 const canViewPatient = computed(() => hasModule(Modules.Patients));
 const addServiceModalOpen = ref(false);
 
 const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
 const canAdmitAdmission = computed(() => canUpdate(Modules.Admissions));
 const canUpdateAdmission = computed(() => canUpdate(Modules.Admissions));
-const canDischargeAdmission = computed(() => canUpdate(Modules.Admissions));
+const canDischargeAdmission = computed(
+    () =>
+        canUpdate(Modules.Admissions) || canForceDischarge(Modules.Admissions),
+);
 const canAddService = computed(() => canUpdate(Modules.Admissions));
 const canViewCaregiver = computed(() =>
     hasModule(Modules.Admissions, Modules.Schedules),
@@ -1487,11 +1492,13 @@ function confirmDischarge(payload: {
     refund: boolean;
     currentRefundAmount: number | null;
     note: string;
+    force: boolean;
 }) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
         note: payload.note,
+        force: payload.force,
     });
 }
 

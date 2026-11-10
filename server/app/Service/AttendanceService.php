@@ -659,6 +659,9 @@ class AttendanceService
                 throw new Exception('You are not assigned to this schedule.', 403);
             }
 
+            $this->guardCanScan($next);
+            $this->guardWithinShift($next, 'take over');
+
             Cache::forget($cacheKey);
 
             $now = now();
@@ -708,6 +711,7 @@ class AttendanceService
             throw new Exception('You are not assigned to this schedule.', 403);
         }
 
+        $this->guardCanScan($assigned);
         $this->guardAdlCanClockIn($assigned->schedule_services_id);
 
         if ($this->activeSessionFor($assigned->schedule_services_id)) {
@@ -718,8 +722,10 @@ class AttendanceService
 
         if ($this->isAdl($assigned->schedule_services_id) && $adlSchedule && !$this->serviceStarted($assigned->schedule_services_id)) {
             $this->guardVisitOpen($adlSchedule);
-        } else {
-            $this->guardWithinShift($assigned);
+        }
+
+        if (strtolower((string) $adlSchedule?->status) !== Schedule::STATUS_ONGOING) {
+            $this->guardWithinShift($assigned, 'time in');
         }
 
         Cache::forget($cacheKey);
@@ -985,6 +991,13 @@ class AttendanceService
         $startsAt = Carbon::parse($schedule->scheduled_at);
         $opensAt = $startsAt->copy()->subMinutes(self::EARLY_CLOCK_IN_MINUTES);
 
+        if (strtolower((string) $schedule->status) === Schedule::STATUS_PENDING && now()->greaterThan($startsAt)) {
+            throw new Exception(
+                "This visit started at {$startsAt->format('g:i A')} and nobody timed in, so it's missed. Ask the branch to reschedule it.",
+                422
+            );
+        }
+
         if (now()->greaterThanOrEqualTo($opensAt)) {
             return;
         }
@@ -997,18 +1010,9 @@ class AttendanceService
         );
     }
 
-    private function guardWithinShift(ScheduleAssigned $assigned): void
+    private function guardWithinShift(ScheduleAssigned $assigned, string $action): void
     {
         if (!$assigned->start_time || !$assigned->end_time || !$this->isAdl($assigned->schedule_services_id)) {
-            return;
-        }
-
-        $schedule = ScheduleService::with('schedule')->find($assigned->schedule_services_id)?->schedule;
-
-        if (
-            strtolower((string) $schedule?->status) === Schedule::STATUS_ONGOING
-            && !$this->activeSessionFor($assigned->schedule_services_id)
-        ) {
             return;
         }
 
@@ -1034,9 +1038,16 @@ class AttendanceService
             . Carbon::parse((string) $assigned->end_time)->format('g:i A'));
 
         throw new Exception(
-            "You can only clock in during your shift ({$shift}), or up to 1 hour before it starts.",
+            "You can only {$action} during your shift ({$shift}), or up to 1 hour before it starts.",
             422
         );
+    }
+
+    private function guardCanScan(ScheduleAssigned $assigned): void
+    {
+        if ($assigned->can_scan === false && $this->isAdl($assigned->schedule_services_id)) {
+            throw new Exception("You can't scan the QR for this visit. Ask the branch to turn on QR for you.", 403);
+        }
     }
 
     private function isAdl(int $scheduleServicesId): bool

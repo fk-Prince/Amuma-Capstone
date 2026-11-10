@@ -82,6 +82,19 @@ class AdmissionPeriod extends Model
     }
 
 
+    public function cycleDays(): int
+    {
+        $first = $this;
+
+        while ($first->reason === self::REASON_ACCOMMODATION_CHANGE && $first->parentPeriod) {
+            $first = $first->parentPeriod;
+        }
+
+        return max(1, (int) Carbon::parse($first->start_date)
+            ->startOfDay()
+            ->diffInDays(Carbon::parse($this->end_date)->startOfDay()));
+    }
+
     public function consumedDays(?Carbon $asOf = null): int
     {
         $start = Carbon::parse($this->start_date)->startOfDay();

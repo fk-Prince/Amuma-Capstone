@@ -30,6 +30,7 @@ class BranchSubscription extends Pivot
     protected $fillable = [
         'subscription_id',
         'branch_id',
+        'plan_id',
         'status',
         'type',
         'active_until',
@@ -68,12 +69,50 @@ class BranchSubscription extends Pivot
             return 0.0;
         }
 
-        return (float) $subscription->additionalBranchQuote()['amount'];
+        return (float) $subscription->additionalBranchQuote($this->effectivePlan())['amount'];
+    }
+
+    public static function hasPlanCodeSql(string $codes, string $branchColumn = 'branches.branch_id'): string
+    {
+        return "EXISTS (
+            SELECT 1 FROM branch_subscription bs
+            JOIN subscriptions s ON s.subscription_id = bs.subscription_id
+            JOIN plans sp ON sp.plan_id = s.plan_id
+            LEFT JOIN plans lp ON lp.plan_id = bs.plan_id
+            WHERE bs.branch_id = {$branchColumn}
+              AND (CASE
+                    WHEN lp.plan_id IS NULL OR (bs.type = '" . self::TYPE_INCLUDED . "' AND sp.plan_code <> '" . Plan::CODE_HYBRID . "')
+                    THEN sp.plan_code
+                    ELSE lp.plan_code
+                  END) IN ({$codes})
+        )";
+    }
+
+    public function effectivePlan(): ?Plan
+    {
+        return $this->subscription?->planForLink($this->plan_id, $this->type);
+    }
+
+    public function isMain(): bool
+    {
+        $subscription = $this->subscription;
+
+        return $subscription
+            && (int) $subscription->mainBranchLinkId() === (int) $this->branch_subscription_id;
+    }
+
+    public function canChangePlan(): bool
+    {
+        return $this->type === self::TYPE_INCLUDED
+            && $this->status !== self::STATUS_REJECTED
+            && !$this->isMain()
+            && $this->subscription?->effectivePlan()?->plan_code === Plan::CODE_HYBRID;
     }
 
     public function activationSummary(): array
     {
         $subscription = $this->subscription;
+        $plan = $this->effectivePlan();
 
         return [
             'uuid' => $this->branch?->uuid,
@@ -81,12 +120,21 @@ class BranchSubscription extends Pivot
             'slot_type' => $this->type,
             'active_until' => $this->active_until?->toDateString(),
             'activity_state' => $this->activityState(),
-            'is_main' => $subscription
-                && (int) $subscription->mainBranchLinkId() === (int) $this->branch_subscription_id,
+            'is_main' => $this->isMain(),
+            'plan' => $plan ? [
+                'plan_code' => $plan->plan_code,
+                'name' => $plan->name,
+            ] : null,
+            'can_change_plan' => $this->canChangePlan(),
             'reactivation_amount' => $this->reactivationAmount(),
-            'additional_branch_price' => (float) $subscription?->plans?->additional_branch_price,
+            'additional_branch_price' => (float) $plan?->additional_branch_price,
             'renews_on' => $subscription?->end_date?->toDateString(),
         ];
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'plan_id', 'plan_id');
     }
 
     public function isDeactivated(): bool

@@ -69,6 +69,7 @@ class BranchResource extends JsonResource
                 'requires_full_payment_on_admit' => $settings['requires_full_payment_on_admit'] ?? true,
                 'complete_admission_booking_percent' => $settings['complete_admission_booking_percent'] ?? 100,
                 'homecare_downpayment_percent' => $settings['homecare_downpayment_percent'] ?? 50,
+                'force_discharge_paid_percent' => $settings['force_discharge_paid_percent'] ?? 50,
                 'minimum_adl_hours' => $settings['minimum_adl_hours'] ?? 8,
                 'currency' => $settings['currency'] ?? 'PHP',
                 'tin' => $settings['tin'] ?? null,
@@ -92,7 +93,7 @@ class BranchResource extends JsonResource
                 : 0.00,
 
             'subscriptions' => $this->subscriptions->map(function ($subscription) {
-                $plan = $subscription->effectivePlan();
+                $plan = $subscription->planForLink($subscription->pivot?->plan_id, $subscription->pivot?->type);
 
                 return [
                     'plans' => [
@@ -218,7 +219,7 @@ class BranchResource extends JsonResource
     private function startingPrice(): ?array
     {
         $codes = $this->relationLoaded('subscriptions')
-            ? $this->subscriptions->map(fn($subscription) => $subscription->plans?->plan_code)->filter()->all()
+            ? $this->resource->effectivePlanCodes()
             : [];
 
         $candidates = [];

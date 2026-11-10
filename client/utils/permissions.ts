@@ -6,6 +6,7 @@ export const PermissionAction = {
     Update: "can_update",
     Export: "can_export",
     Assign: "can_assign",
+    ForceDischarge: "can_force_discharge",
     Renew: "can_renew",
     Review: "can_review",
 } as const;
@@ -40,6 +41,7 @@ export const MODULE_ACTIONS: Record<Modules, PermissionActionKey[]> = {
         PermissionAction.Read,
         PermissionAction.Create,
         PermissionAction.Update,
+        PermissionAction.ForceDischarge,
     ],
     [Modules.RoomsAndBeds]: [
         PermissionAction.Read,
@@ -122,6 +124,7 @@ export const ACTION_LABELS: Record<PermissionActionKey, string> = {
     [PermissionAction.Update]: "Update",
     [PermissionAction.Export]: "Export",
     [PermissionAction.Assign]: "Assign",
+    [PermissionAction.ForceDischarge]: "Force discharge",
     [PermissionAction.Renew]: "Renew",
     [PermissionAction.Review]: "Accept/Reject",
 };
@@ -172,6 +175,8 @@ const ACTION_DESCRIPTIONS: Record<Modules, ActionCopy> = {
             "Start an admission for a resident: contract, accommodation and dates.",
         [PermissionAction.Update]:
             "Change an admission's details such as its rate, room or billing period, admit the resident into their bed to start billing, and discharge them once everything owed is settled.",
+        [PermissionAction.ForceDischarge]:
+            "Discharge a resident who still owes, once the branch's minimum share of the bill is paid. The rest is written off as bad debt.",
     },
     [Modules.RoomsAndBeds]: {
         [PermissionAction.Read]:
@@ -255,7 +260,10 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     branch_manager: {
         [Modules.Bookings]: [PermissionAction.Read],
         [Modules.Schedules]: [PermissionAction.Read, PermissionAction.Export],
-        [Modules.Admissions]: [PermissionAction.Read],
+        [Modules.Admissions]: [
+            PermissionAction.Read,
+            PermissionAction.ForceDischarge,
+        ],
         [Modules.Patients]: [PermissionAction.Read, PermissionAction.Export],
         [Modules.Medications]: [PermissionAction.Read],
         [Modules.Contracts]: MODULE_ACTIONS[Modules.Contracts],
@@ -282,7 +290,9 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
         ],
         [Modules.Medications]: MODULE_ACTIONS[Modules.Medications],
         [Modules.Schedules]: MODULE_ACTIONS[Modules.Schedules],
-        [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions],
+        [Modules.Admissions]: MODULE_ACTIONS[Modules.Admissions].filter(
+            (action) => action !== PermissionAction.ForceDischarge,
+        ),
         [Modules.RoomsAndBeds]: [PermissionAction.Read],
         [Modules.Services]: [PermissionAction.Read],
         [Modules.Contracts]: [PermissionAction.Read],

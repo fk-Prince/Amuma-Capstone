@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\BranchImage;
 use App\Models\BranchSubscription;
 use App\Models\EmployeeBranch;
+use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\SubscriptionPayment;
 
@@ -150,9 +151,11 @@ class BranchRepository
             ->when(
                 !empty($filters['plan_code']) && $filters['plan_code'] !== 'C',
                 function ($query) use ($filters) {
-                    $query->whereHas('subscriptions.plans', function ($q) use ($filters) {
-                        $q->whereIn('plan_code', [$filters['plan_code'], 'C']);
-                    });
+                    $code = in_array($filters['plan_code'], [Plan::CODE_HOMECARE, Plan::CODE_FACILITY], true)
+                        ? $filters['plan_code']
+                        : Plan::CODE_HYBRID;
+
+                    $query->whereRaw(BranchSubscription::hasPlanCodeSql("'{$code}', '" . Plan::CODE_HYBRID . "'"));
                 }
             );
 
@@ -221,12 +224,7 @@ class BranchRepository
 
     private function prioritizeStartingPrice($query): void
     {
-        $hasPlan = fn(string $codes) => "EXISTS (
-            SELECT 1 FROM branch_subscription bs
-            JOIN subscriptions s ON s.subscription_id = bs.subscription_id
-            JOIN plans p ON p.plan_id = s.plan_id
-            WHERE bs.branch_id = branches.branch_id AND p.plan_code IN ({$codes})
-        )";
+        $hasPlan = fn(string $codes) => BranchSubscription::hasPlanCodeSql($codes);
 
         $query->orderByRaw("(
             ({$hasPlan("'A', 'C'")} AND EXISTS (

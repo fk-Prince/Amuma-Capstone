@@ -24,6 +24,7 @@ use App\Repository\InvoiceRepository;
 use App\Repository\PatientAdmissionRepository;
 use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
+use App\Utils\DischargeCalculator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
@@ -356,6 +357,21 @@ class PatientAdmissionService
                 ->with('branchContract', 'invoiceAdmissionLines')
                 ->first();
 
+            $force = !empty($payload['force']) && $currentPeriod;
+
+            if ($force) {
+                $share = DischargeCalculator::forceDischarge($admission, $currentPeriod);
+
+                if (!$share['allowed']) {
+                    throw new Exception(
+                        "Force discharge needs at least {$share['percent']}% of this admission's bill paid. "
+                            . 'Paid ' . number_format($share['paid'], 2) . ' of ' . number_format($share['billed'], 2)
+                            . '. Collect ' . number_format($share['short'], 2) . ' more first.',
+                        422
+                    );
+                }
+            }
+
             $dischargedAt = now();
 
             $admission->update([
@@ -375,7 +391,7 @@ class PatientAdmissionService
             $this->closeUnstartedDiagnosisInvoices($admission, $payload['user']->user_id ?? null);
 
             if ($currentPeriod) {
-                $settled = $this->refundService->settleDischarge($admission, $currentPeriod);
+                $settled = $this->refundService->settleDischarge($admission, $currentPeriod, $force);
 
                 if ($settled['offset'] > 0 && $settled['owed_invoices']->isNotEmpty() && $admission->patient) {
                     $this->invoiceService->applyCredit(
@@ -385,6 +401,10 @@ class PatientAdmissionService
                         $payload['user'] ?? null,
                         $settled['offset']
                     );
+                }
+
+                if ($force) {
+                    $this->writeOffOutstanding($admission, $payload['user'] ?? null, $currentPeriod->admission_period_id);
                 }
             }
 
@@ -427,6 +447,18 @@ class PatientAdmissionService
 
                 $this->invoiceService->closeAsVoid($invoice, $reason, $userId);
             });
+    }
+
+    private function writeOffOutstanding(PatientAdmission $admission, ?User $user, ?int $exceptPeriodId = null): void
+    {
+        $this->invoiceRepository->openAdmissionInvoices($admission, $exceptPeriodId)
+            ->filter(fn(Invoice $invoice) => $invoice->balance_due > 0)
+            ->each(fn(Invoice $invoice) => $invoice->update([
+                'status' => Invoice::STATUS_WRITTEN_OFF,
+                'written_off_at' => now(),
+                'written_off_by' => $user?->user_id,
+                'write_off_reason' => 'Force discharged with an unpaid balance. Marked as bad debt.',
+            ]));
     }
 
     // Periods that never began bill nothing, diagnosis cases included.
@@ -1260,7 +1292,7 @@ class PatientAdmissionService
             $oldConsumed = round($oldPrice - $oldRemaining, 2);
 
             $newRemaining = round(
-                ((float) $newContract->price / $totalDays) * $remainingDays,
+                ((float) $newContract->price / $period->cycleDays()) * $remainingDays,
                 2
             );
 

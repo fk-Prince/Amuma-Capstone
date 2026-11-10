@@ -66,6 +66,9 @@ export const usePermissions = () => {
     const canExport = (module_name: string) =>
         can(module_name, PermissionAction.Export);
 
+    const canForceDischarge = (module_name: string) =>
+        can(module_name, PermissionAction.ForceDischarge);
+
     const role = computed(() =>
         (branchStore.activeBranch?.role_name ?? "").toLowerCase(),
     );
@@ -111,6 +114,7 @@ export const usePermissions = () => {
         canAssign,
         canReview,
         canExport,
+        canForceDischarge,
         role,
         hasRole,
         canChart,

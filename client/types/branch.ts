@@ -46,6 +46,8 @@ export interface BranchActivation {
     active_until: string | null;
     activity_state: "active" | "ending" | "inactive";
     is_main: boolean;
+    plan: { plan_code: "A" | "B" | "C"; name: string } | null;
+    can_change_plan: boolean;
     reactivation_amount: number;
     additional_branch_price: number;
     renews_on: string | null;
@@ -82,6 +84,7 @@ export interface BranchSettings {
     requires_full_payment_on_admit: boolean;
     complete_admission_booking_percent: number;
     homecare_downpayment_percent: number;
+    force_discharge_paid_percent?: number;
     minimum_adl_hours: number | null;
     is_open: boolean;
     status?: "OPEN" | "CLOSED";

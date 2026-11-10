@@ -139,6 +139,25 @@
                 </p>
             </div>
 
+            <div class="bg-white p-1 dark:bg-transparent">
+                <BaseInput
+                    v-model="setting.force_discharge_paid_percent"
+                    label="Force Discharge Minimum Payment"
+                    mode="number"
+                    placeholder="Example: 50"
+                    :error="errors.force_discharge_paid_percent"
+                    @update:modelValue="
+                        clearError('force_discharge_paid_percent')
+                    "
+                />
+
+                <p class="text-xs text-slate-400 mt-2 dark:text-gray-500">
+                    Percentage of an admission's bill that must be paid before
+                    a resident with an unpaid balance can be force discharged
+                    (1-100). The rest is written off as bad debt.
+                </p>
+            </div>
+
             <!-- <div class="bg-white p-1 dark:bg-transparent">
                 <BaseInput
                     v-model="setting.billing_due_date"
@@ -373,6 +392,8 @@ const setting = reactive<OperationSetting>({
         activeBranch.value?.settings?.complete_admission_booking_percent ?? 100,
     homecare_downpayment_percent:
         activeBranch.value?.settings?.homecare_downpayment_percent ?? 50,
+    force_discharge_paid_percent:
+        activeBranch.value?.settings?.force_discharge_paid_percent ?? 50,
     minimum_adl_hours: activeBranch.value?.settings?.minimum_adl_hours ?? 8,
     // billing_due_date: activeBranch.value?.settings?.billing_due_date ?? 31,
     is_open: activeBranch.value?.settings?.is_open ?? false,

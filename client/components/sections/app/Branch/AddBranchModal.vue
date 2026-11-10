@@ -171,8 +171,13 @@
                                         >
                                             {{ option.slots_left }} of
                                             {{ option.branch_limit }} slots
-                                            left. The branch shares this plan
-                                            and runs until
+                                            left.
+                                            {{
+                                                (option.plan_codes?.length ?? 1) > 1
+                                                    ? `Pick any plan your ${option.plan_name} subscription covers.`
+                                                    : `The branch uses ${option.plan_name}.`
+                                            }}
+                                            Runs until
                                             {{ formatDate(option.end_date) }}.
                                         </p>
                                     </div>
@@ -224,8 +229,9 @@
                                         <p
                                             class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
                                         >
-                                            ₱{{ formatMoney(option.additional_branch_price) }}
-                                            / year, prorated for the
+                                            Pick a plan for this branch. It's
+                                            billed per year at that plan's
+                                            branch price, prorated for the
                                             {{ option.months }}
                                             {{ option.months === 1 ? "month" : "months" }}
                                             left until
@@ -236,7 +242,7 @@
                                     <span
                                         class="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary"
                                     >
-                                        ₱{{ formatMoney(option.amount) }}
+                                        From ₱{{ formatMoney(lowestAdditionalAmount(option)) }}
                                     </span>
                                 </button>
                             </div>
@@ -246,21 +252,18 @@
                                 v-else-if="addMode === 'capacity'"
                                 class="space-y-4"
                             >
-                                <div
-                                    class="rounded-xl border border-slate-200 p-5 dark:border-white/10"
-                                >
+                                <div>
                                     <p
-                                        class="text-sm font-semibold text-secondary dark:text-white"
+                                        class="text-base font-semibold text-slate-900 dark:text-white"
                                     >
-                                        {{ availableSubscription?.plan_name }} —
-                                        included
+                                        Choose this branch's plan
                                     </p>
                                     <p
-                                        class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
+                                        class="mt-0.5 text-sm text-muted dark:text-gray-400"
                                     >
-                                        This branch joins your existing
-                                        subscription, so it uses the same plan
-                                        and expires with it on
+                                        Included slot on your
+                                        {{ availableSubscription?.plan_name }}
+                                        subscription. It expires with it on
                                         {{
                                             formatDate(
                                                 availableSubscription?.end_date,
@@ -268,6 +271,11 @@
                                         }}.
                                     </p>
                                 </div>
+
+                                <BranchPlanPicker
+                                    v-model="branchPlanCode"
+                                    :options="includedPlanOptions"
+                                />
 
                                 <button
                                     v-if="optionCount > 1"
@@ -283,14 +291,36 @@
                                 v-else-if="addMode === 'additional'"
                                 class="space-y-4"
                             >
+                                <div>
+                                    <p
+                                        class="text-base font-semibold text-slate-900 dark:text-white"
+                                    >
+                                        Choose this branch's plan
+                                    </p>
+                                    <p
+                                        class="mt-0.5 text-sm text-muted dark:text-gray-400"
+                                    >
+                                        Additional branch on your
+                                        {{ additionalOption?.plan_name }}
+                                        subscription. Its plan can't be
+                                        changed after you buy it.
+                                    </p>
+                                </div>
+
+                                <BranchPlanPicker
+                                    v-model="branchPlanCode"
+                                    :options="additionalPlanOptions"
+                                />
+
                                 <div
+                                    v-if="additionalQuote"
                                     class="rounded-xl border border-slate-200 p-5 dark:border-white/10"
                                 >
                                     <p
                                         class="text-sm font-semibold text-secondary dark:text-white"
                                     >
-                                        {{ additionalOption?.plan_name }} —
-                                        additional branch
+                                        {{ additionalQuote.name }} — additional
+                                        branch
                                     </p>
                                     <p
                                         class="mt-1 text-xs leading-5 text-muted dark:text-gray-400"
@@ -298,10 +328,10 @@
                                         This branch joins your existing
                                         subscription and expires with it on
                                         {{ formatDate(additionalOption?.end_date) }}.
-                                        You pay ₱{{ formatMoney(additionalOption?.amount ?? 0) }},
+                                        You pay ₱{{ formatMoney(additionalQuote.amount) }},
                                         prorated for the time left. It renews
                                         with the subscription at
-                                        ₱{{ formatMoney(additionalOption?.additional_branch_price ?? 0) }}
+                                        ₱{{ formatMoney(additionalQuote.additional_branch_price) }}
                                         / year.
                                     </p>
 
@@ -310,10 +340,10 @@
                                     >
                                         <div class="flex justify-between">
                                             <span class="text-muted dark:text-gray-400">
-                                                Additional branch (yearly)
+                                                {{ additionalQuote.name }} branch (yearly)
                                             </span>
                                             <span class="font-medium text-secondary dark:text-white">
-                                                ₱{{ formatMoney(additionalOption?.additional_branch_price ?? 0) }}
+                                                ₱{{ formatMoney(additionalQuote.additional_branch_price) }}
                                             </span>
                                         </div>
 
@@ -322,7 +352,7 @@
                                                 Months left on subscription
                                             </span>
                                             <span class="font-medium text-secondary dark:text-white">
-                                                {{ additionalOption?.months ?? 0 }} of 12
+                                                {{ additionalQuote.months }} of 12
                                             </span>
                                         </div>
 
@@ -330,11 +360,11 @@
                                             <span class="flex items-center gap-1.5 text-muted dark:text-gray-400">
                                                 Subtotal (prorated)
                                                 <InfoTooltip
-                                                    :text="proratedHelp(additionalOption?.additional_branch_price ?? 0, additionalOption?.months ?? 0)"
+                                                    :text="proratedHelp(additionalQuote.additional_branch_price, additionalQuote.months)"
                                                 />
                                             </span>
                                             <span class="font-medium text-secondary dark:text-white">
-                                                ₱{{ formatMoney(additionalOption?.amount ?? 0) }}
+                                                ₱{{ formatMoney(additionalQuote.amount) }}
                                             </span>
                                         </div>
 
@@ -343,7 +373,7 @@
                                                 You pay today
                                             </span>
                                             <span class="font-bold text-primary">
-                                                ₱{{ formatMoney(additionalOption?.amount ?? 0) }}
+                                                ₱{{ formatMoney(additionalQuote.amount) }}
                                             </span>
                                         </div>
                                     </div>
@@ -525,14 +555,14 @@
                                         >
                                             {{
                                                 usesAdditional
-                                                    ? `Prorated · ${additionalOption?.months ?? 0} of 12 months`
+                                                    ? `Prorated · ${additionalQuote?.months ?? 0} of 12 months`
                                                     : purchaseWithTrial
                                                       ? "12-month period (after trial)"
                                                       : "12-month period"
                                             }}
                                             <InfoTooltip
                                                 v-if="usesAdditional"
-                                                :text="proratedHelp(additionalOption?.additional_branch_price ?? 0, additionalOption?.months ?? 0)"
+                                                :text="proratedHelp(additionalQuote?.additional_branch_price ?? 0, additionalQuote?.months ?? 0)"
                                             />
                                         </span>
                                         <span
@@ -652,10 +682,10 @@
                                 <OrderSummary
                                     :amount="total"
                                     title="Order Details"
-                                    :heading="usesAdditional ? `${additionalOption?.plan_name ?? 'Subscription'} · additional branch` : effectivePlan?.name"
+                                    :heading="usesAdditional ? `${effectivePlan?.name ?? 'Branch'} · additional branch` : effectivePlan?.name"
                                     :item-label="
                                         usesAdditional
-                                            ? `Prorated · ${additionalOption?.months ?? 0} of 12 months`
+                                            ? `Prorated · ${additionalQuote?.months ?? 0} of 12 months`
                                             : purchaseWithTrial
                                               ? '12-month period (after trial)'
                                               : '12-month period'
@@ -751,6 +781,9 @@ import SummaryRow from "~/components/ui/SummaryRow.vue";
 import InfoTooltip from "~/components/ui/InfoTooltip.vue";
 import ResubmitReview from "~/components/sections/app/branches/ResubmitReview.vue";
 import { proratedHelp } from "~/utils/prorated";
+import BranchPlanPicker, {
+    type BranchPlanOption,
+} from "~/components/sections/app/branches/BranchPlanPicker.vue";
 import { planIcon } from "~/utils/planIcon";
 import {
     DEFAULT_PLAN_TYPE,
@@ -771,6 +804,16 @@ interface AvailableSubscription {
     branches_used: number;
     branch_limit: number;
     slots_left: number;
+    plan_codes?: string[];
+}
+
+interface AdditionalPlanQuote {
+    plan_code: string;
+    name: string;
+    available: boolean;
+    additional_branch_price: number;
+    months: number;
+    amount: number;
 }
 
 interface AdditionalOption {
@@ -782,6 +825,7 @@ interface AdditionalOption {
     additional_branch_price: number;
     months: number;
     amount: number;
+    plans?: AdditionalPlanQuote[];
 }
 
 interface BranchCapacity {
@@ -835,13 +879,56 @@ const usesAdditional = computed(
     () => addMode.value === "additional" && !!additionalOption.value,
 );
 
+const branchPlanCode = ref<string | null>(null);
+
+const additionalPlans = computed<AdditionalPlanQuote[]>(() => {
+    const option = additionalOption.value;
+    if (!option) return [];
+
+    return option.plans?.length
+        ? option.plans
+        : option.plan_code
+          ? [
+                {
+                    plan_code: option.plan_code,
+                    name: option.plan_name ?? "",
+                    available: true,
+                    additional_branch_price: option.additional_branch_price,
+                    months: option.months,
+                    amount: option.amount,
+                },
+            ]
+          : [];
+});
+
+const additionalQuote = computed<AdditionalPlanQuote | null>(
+    () =>
+        additionalPlans.value.find(
+            (plan) => plan.plan_code === branchPlanCode.value,
+        ) ?? null,
+);
+
+const lowestAdditionalAmount = (option: AdditionalOption) => {
+    const amounts = (option.plans ?? [])
+        .filter((plan) => plan.available)
+        .map((plan) => plan.amount);
+
+    return amounts.length ? Math.min(...amounts) : option.amount;
+};
+
 function chooseAdditional(uuid: string) {
     selectedSubscriptionUuid.value = uuid;
     addMode.value = "additional";
-    total.value =
-        additionalOptions.value.find((option) => option.uuid === uuid)
-            ?.amount ?? 0;
+    branchPlanCode.value =
+        additionalPlans.value.find((plan) => plan.available)?.plan_code ?? null;
+    total.value = additionalQuote.value?.amount ?? 0;
 }
+
+watch(branchPlanCode, () => {
+    if (addMode.value === "additional") {
+        total.value = additionalQuote.value?.amount ?? 0;
+    }
+});
 
 const selectedSubscriptionUuid = ref<string | null>(null);
 
@@ -862,7 +949,55 @@ const canUseCapacity = computed(() => availableSubscriptions.value.length > 0);
 function chooseSubscription(uuid: string) {
     selectedSubscriptionUuid.value = uuid;
     addMode.value = "capacity";
+    branchPlanCode.value = availableSubscription.value?.plan_code ?? null;
 }
+
+const includedPlanOptions = computed<BranchPlanOption[]>(() => {
+    const subscription = availableSubscription.value;
+    if (!subscription) return [];
+
+    const covered = subscription.plan_codes ?? [subscription.plan_code];
+
+    return plansOfType(plans.value, subscription.plan_type ?? DEFAULT_PLAN_TYPE).map(
+        (plan: any) => {
+            const allowed = covered.includes(plan.plan_code);
+
+            return {
+                plan_code: plan.plan_code,
+                name: plan.name,
+                description: plan.description,
+                disabled: !allowed,
+                reason: allowed
+                    ? ""
+                    : `Not covered by ${subscription.plan_name}. Add it as an additional branch.`,
+                label: "Included slot",
+                amount: `₱${formatMoney(0)}`,
+            };
+        },
+    );
+});
+
+const additionalPlanOptions = computed<BranchPlanOption[]>(() =>
+    additionalPlans.value.map((quote) => {
+        const plan = findPlan(
+            plans.value,
+            quote.plan_code,
+            additionalOption.value?.plan_type,
+        );
+
+        return {
+            plan_code: quote.plan_code,
+            name: quote.name || plan?.name,
+            description: plan?.description,
+            disabled: !quote.available,
+            reason: quote.available
+                ? ""
+                : "You have a free slot that covers this plan. Use it instead.",
+            label: `₱${formatMoney(quote.additional_branch_price)} / year`,
+            amount: `₱${formatMoney(quote.amount)}`,
+        };
+    }),
+);
 
 const optionCount = computed(
     () => availableSubscriptions.value.length + additionalOptions.value.length,
@@ -886,6 +1021,7 @@ watch(optionCount, selectSingleOption);
 function resetChoice() {
     selectedSubscriptionUuid.value = null;
     addMode.value = null;
+    branchPlanCode.value = null;
 }
 
 const planKey = (code?: string | null, type?: string | null) =>
@@ -930,7 +1066,7 @@ const effectivePlan = computed(() => {
     if (usesAdditional.value) {
         return findPlan(
             plans.value,
-            additionalOption.value?.plan_code,
+            branchPlanCode.value ?? additionalOption.value?.plan_code,
             additionalOption.value?.plan_type,
         );
     }
@@ -939,7 +1075,7 @@ const effectivePlan = computed(() => {
 
     return findPlan(
         plans.value,
-        availableSubscription.value?.plan_code,
+        branchPlanCode.value ?? availableSubscription.value?.plan_code,
         availableSubscription.value?.plan_type,
     );
 });
@@ -1027,6 +1163,7 @@ const continueDisabled = computed(() => {
         if (addMode.value === "purchase") {
             return loadingPlans.value || !form.plan;
         }
+        if (!branchPlanCode.value) return true;
     }
 
     return false;
