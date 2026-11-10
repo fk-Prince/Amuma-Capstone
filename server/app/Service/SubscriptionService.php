@@ -72,9 +72,19 @@ class SubscriptionService
         private ModuleRepository $moduleRepository,
         private NotificationRepository $notificationRepository,
         private VerificationLogRepository $verificationLogRepository,
-        private SandboxClient $sandboxClient
+        private SandboxClient $sandboxClient,
+        private BranchSetupService $branchSetupService
     ) {
         $this->secretKey = config('services.xendit.secret_key');
+    }
+
+    private function assertBranchSetUp(mixed $branchId): void
+    {
+        $branch = $branchId ? $this->branchRepository->findByField('branch_id', (string) $branchId) : null;
+
+        if ($branch) {
+            $this->branchSetupService->assertComplete($branch);
+        }
     }
 
     private function grantOwnerPermissions(int $employeeId, int $branchId): void
@@ -359,6 +369,10 @@ class SubscriptionService
 
         if ($underReview && $wantsStartNow) {
             throw new Exception(__('You can start your plan early once an admin has verified your branch. You can still pay now.'), 422);
+        }
+
+        if ($wantsStartNow && !$subscription->trialHasEnded()) {
+            $this->assertBranchSetUp($payload['branch_id'] ?? null);
         }
 
         $type = $subscription->plans?->type;
@@ -794,6 +808,8 @@ class SubscriptionService
             if ($subscription->awaitingTrialPayment()) {
                 throw new Exception(__('Pay for your plan to start your paid year.'), 422);
             }
+
+            $this->assertBranchSetUp($payload['branch_id'] ?? null);
 
             $subscription->update([
                 ...$subscription->pendingPlanChanges(Carbon::now()),

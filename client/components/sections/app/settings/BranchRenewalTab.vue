@@ -681,14 +681,22 @@
                         class="flex flex-wrap items-center justify-between gap-3"
                     >
                         <p class="text-xs text-primary">
-                            Done with your trial? Start your paid year now instead of
-                            waiting until {{ formatDate(pendingPlan?.starts_at) }}.
+                            <template v-if="setupPending">
+                                Finish the setup guide to start your paid year
+                                early. Until then your trial runs until
+                                {{ formatDate(pendingPlan?.starts_at) }}.
+                            </template>
+                            <template v-else>
+                                Done with your trial? Start your paid year now
+                                instead of waiting until
+                                {{ formatDate(pendingPlan?.starts_at) }}.
+                            </template>
                         </p>
 
                         <button
                             type="button"
-                            :disabled="!canUpdateSubscription"
-                            :title="noPermissionTitle"
+                            :disabled="!canUpdateSubscription || setupPending"
+                            :title="setupPending ? SETUP_PENDING_TITLE : noPermissionTitle"
                             class="rounded-lg border border-primary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-secondary"
                             @click="confirmEnd = true"
                         >
@@ -1079,8 +1087,8 @@
 
                             <button
                                 type="button"
-                                :disabled="!canSubmitRenewal || !canUpdateSubscription"
-                                :title="noPermissionTitle"
+                                :disabled="!canSubmitRenewal || !canUpdateSubscription || (!trialEnded && setupPending)"
+                                :title="!trialEnded && setupPending ? SETUP_PENDING_TITLE : noPermissionTitle"
                                 class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                 @click="openPay(true)"
                             >
@@ -1402,6 +1410,7 @@ import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
 import { useSubscriptionVersion } from "~/composables/useSubscriptionVersion";
 import { useSandbox } from "~/composables/useSandbox";
+import { useBranchSetup } from "~/composables/useBranchSetup";
 import type { CardDetails } from "~/types/payment";
 import {
     DEFAULT_PLAN_TYPE,
@@ -1421,6 +1430,11 @@ const props = defineProps<{
 }>();
 
 const { success, error, info } = useToast();
+
+const branchSetup = useBranchSetup(() => props.uuid);
+const setupPending = computed(() => branchSetup.loaded.value && !branchSetup.complete.value);
+const SETUP_PENDING_TITLE =
+    "Finish the setup guide for this branch before starting your plan early.";
 
 const HYBRID_PLAN_CODE = "C";
 const TERM_MONTHS = 12;
@@ -1979,6 +1993,11 @@ const openRenew = () => {
 };
 
 const openPay = (startNow: boolean) => {
+    if (startNow && !trialEnded.value && setupPending.value) {
+        error(SETUP_PENDING_TITLE);
+        return;
+    }
+
     payStartNow.value = !underReview.value && (startNow || trialEnded.value);
     openRenew();
 };
@@ -2231,7 +2250,7 @@ const formatMoney = (value: number | string) =>
     formatAmount(value, { treatMissingAsZero: true });
 
 onMounted(async () => {
-    await fetchSubscription();
+    await Promise.all([fetchSubscription(), branchSetup.refresh()]);
 
     if (canPayTrial.value && (props.pay || props.endTrial)) {
         openPay(Boolean(props.endTrial));
@@ -2239,7 +2258,7 @@ onMounted(async () => {
     }
 
     // Arrived from the "end trial" link in the header notice.
-    if (props.endTrial && canCancel.value && canUpdateSubscription.value) {
+    if (props.endTrial && canCancel.value && canUpdateSubscription.value && !setupPending.value) {
         confirmEnd.value = true;
     }
 });

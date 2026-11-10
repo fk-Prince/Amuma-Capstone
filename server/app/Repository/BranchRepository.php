@@ -36,6 +36,26 @@ class BranchRepository
         return Branch::where($column, $value)->first();
     }
 
+    public function setupCounts(Branch $branch): array
+    {
+        $contracts = $branch->contracts()
+            ->where('is_active', true)
+            ->selectRaw('category, count(*) as total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        return [
+            'staff' => EmployeeBranch::where('branch_id', $branch->branch_id)
+                ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+                ->whereRaw("LOWER(REPLACE(role_name, ' ', '_')) <> ?", [RoleEnum::AgencyOwner->value])
+                ->count(),
+            'services' => $branch->services()->count(),
+            'rooms' => $branch->rooms()->whereHas('beds')->count(),
+            'homecare_plans' => (int) ($contracts['Homecare'] ?? 0),
+            'facility_plans' => (int) ($contracts['Facility'] ?? 0),
+        ];
+    }
+
     public function getHighestReviewPaginate(int $perPage)
     {
         return Branch::with([
@@ -46,6 +66,7 @@ class BranchRepository
         ])
             ->where('status', Branch::STATUS_VERIFIED)
             ->onLivePlan()
+            ->setupComplete()
             ->whereHas('agencies', function ($q) {
                 $q->where('status', Branch::STATUS_VERIFIED);
             })
@@ -108,6 +129,7 @@ class BranchRepository
         ])
             ->where('status', Branch::STATUS_VERIFIED)
             ->onLivePlan()
+            ->setupComplete()
             ->whereHas('agencies', function ($q) {
                 $q->where('status', Branch::STATUS_VERIFIED);
             })

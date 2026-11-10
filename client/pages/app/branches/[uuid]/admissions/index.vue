@@ -419,6 +419,7 @@ import {
     onMounted,
     onBeforeUnmount,
     toRaw,
+    toRef,
     watch,
     nextTick,
 } from "vue";
@@ -437,7 +438,7 @@ import AssessmentForm from "~/components/forms/AssessmentForm.vue";
 import DiagnosisForm from "~/components/forms/DiagnosisForm.vue";
 import { diagnosisCaseService } from "~/api/diagnosis-case/DiagnosisCaseService";
 import type { DiagnosisCase } from "~/types/additional-charge";
-import { resetAdmissionForm } from "~/utils/admission-form";
+import { guardianLink, resetAdmissionForm } from "~/utils/admission-form";
 
 import {
     patientData,
@@ -1047,12 +1048,12 @@ onMounted(async () => {
 });
 
 const showEmailExistsWarning = ref(false);
-const emailExistsConfirmed = ref(false);
+const emailExistsConfirmed = toRef(guardianLink, "confirmed");
 const submitting = ref(false);
 const checkingEmail = ref(false);
-const checkedEmail = ref("");
-const emailAvailable = ref(false);
-const existingGuardian = ref<Partial<Guardian> | null>(null);
+const checkedEmail = toRef(guardianLink, "checkedEmail");
+const emailAvailable = toRef(guardianLink, "available");
+const existingGuardian = toRef(guardianLink, "existing");
 const emailPromptSource = ref<"check" | "submit">("submit");
 
 const normalizedGuardianEmail = computed(() =>
@@ -1109,7 +1110,7 @@ async function checkGuardianEmail() {
     }
 }
 
-const linkedGuardianFields = ref<(keyof Guardian)[]>([]);
+const linkedGuardianFields = toRef(guardianLink, "fields");
 
 watch(guardianEmailStatus, (status) => {
     if (status !== "linked") linkedGuardianFields.value = [];

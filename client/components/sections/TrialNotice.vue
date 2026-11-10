@@ -82,7 +82,10 @@
                     >
                     People can't find it in the booking search yet, so take this
                     time to set up your branch.
-                    <template v-if="canStart">
+                    <template v-if="canStart && setupPending">
+                        Finish the setup guide to start your plan early.
+                    </template>
+                    <template v-else-if="canStart">
                         When you're ready, start your plan now.
                     </template>
                     <template v-else>
@@ -120,8 +123,8 @@
             <button
                 v-else-if="canStart"
                 type="button"
-                :disabled="!canUpdateSubscription"
-                :title="noPermissionTitle"
+                :disabled="!canUpdateSubscription || setupPending"
+                :title="setupPending ? 'Finish the setup guide before starting your plan early.' : noPermissionTitle"
                 class="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
                 @click="goToSubscription({ end_trial: '1' })"
             >
@@ -132,8 +135,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { FlaskConical, Lock, PlayCircle } from "lucide-vue-next";
+import { useBranchSetup } from "~/composables/useBranchSetup";
 import { useBranchStore } from "~/stores/branch";
 import { usePermissions } from "~/composables/usePermission";
 import { useSandbox } from "~/composables/useSandbox";
@@ -182,6 +186,17 @@ const canStart = computed(
         !awaitingPayment.value &&
         branch.value?.subscription_status === "approved" &&
         canManage.value,
+);
+
+const branchSetup = useBranchSetup(() => (onTrial.value ? branch.value?.uuid : undefined));
+const setupPending = computed(() => !branchSetup.complete.value);
+
+watch(
+    () => [onTrial.value, branch.value?.uuid] as const,
+    ([trial]) => {
+        if (trial && !branchSetup.loaded.value) branchSetup.refresh();
+    },
+    { immediate: true },
 );
 
 const trialEndsOn = computed(() => {

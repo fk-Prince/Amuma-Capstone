@@ -167,6 +167,11 @@ class Branch extends Model
                 ])));
     }
 
+    public function scopeSetupComplete(Builder $query): Builder
+    {
+        return $query->whereNotNull('settings->setup_completed_at');
+    }
+
     public function subscriptionLink()
     {
         return $this->hasOne(BranchSubscription::class, 'branch_id', 'branch_id')

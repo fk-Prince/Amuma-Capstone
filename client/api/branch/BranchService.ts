@@ -48,6 +48,14 @@ class BranchService extends BaseService {
         return await this.request(this.resource + '/dashboard', 'GET', params);
     }
 
+    async setup(uuid: string): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/setup`, 'GET');
+    }
+
+    async setupVisit(uuid: string, step: 'details' | 'operations' | 'subscription'): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/setup/visits`, 'POST', { step });
+    }
+
 
     private get resource(): string {
         return `${this.getBackendApi}/api/branches`;

@@ -10,9 +10,9 @@
             <div
                 class="relative grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-8"
             >
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-4 lg:contents">
                     <div
-                        class="relative rounded-2xl overflow-hidden border border-muted-light aspect-[4/3] dark:border-white/10"
+                        class="relative rounded-2xl overflow-hidden border border-muted-light aspect-[4/3] dark:border-white/10 lg:col-start-1 lg:row-start-1"
                     >
                         <img
                             :src="plan.image"
@@ -30,7 +30,7 @@
                         </span>
                     </div>
 
-                    <div>
+                    <div class="lg:col-span-2 lg:row-start-2">
                         <p
                             class="text-2xl font-bold text-secondary leading-tight dark:text-white"
                         >
@@ -42,7 +42,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:col-start-2 lg:row-start-1">
                     <div>
                         <p
                             class="text-[11px] font-semibold uppercase tracking-wide text-muted mb-4 dark:text-gray-400"

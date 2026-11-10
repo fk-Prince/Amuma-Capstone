@@ -8,6 +8,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Requests\Branch\BranchRequest;
 use App\Service\BranchService;
+use App\Service\BranchSetupService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -15,7 +16,35 @@ use Illuminate\Support\Facades\Log;
 class BranchController extends Controller
 {
 
-    public function __construct(private BranchService $branchService) {}
+    public function __construct(
+        private BranchService $branchService,
+        private BranchSetupService $branchSetupService,
+    ) {}
+
+    public function setup(Request $request, string $uuid)
+    {
+        $branch = BranchGuard::resolveBranch($uuid);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::cases(), PermissionAction::Read);
+
+        return response()->json(['data' => $this->branchSetupService->status($branch)]);
+    }
+
+    public function setupVisit(Request $request, string $uuid)
+    {
+        $validated = $request->validate([
+            'step' => ['required', 'in:' . implode(',', BranchSetupService::VISITS)],
+        ]);
+
+        $branch = BranchGuard::resolveBranch($uuid);
+        AuthGuard::requireModule(
+            $request->user(),
+            $branch->branch_id,
+            $validated['step'] === 'subscription' ? ModuleEnum::ManageSubscription : ModuleEnum::BranchSettings,
+            PermissionAction::Read
+        );
+
+        return response()->json(['data' => $this->branchSetupService->markVisit($branch, $validated['step'])]);
+    }
 
 
     public function fetchBranch(string $uuid)

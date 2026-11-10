@@ -20,7 +20,7 @@
             <OwnerHeader @open="isOpen = true" />
 
             <main
-                class="scrollbar-none flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative"
             >
                 <div
                     class="pointer-events-none absolute inset-0 overflow-hidden"

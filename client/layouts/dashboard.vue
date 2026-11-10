@@ -1,4 +1,4 @@
-﻿﻿<template>
+﻿<template>
     <UnauthorizedSection v-if="mounted && access === 'no-branch'" full-page />
     <div
         v-else
@@ -69,7 +69,7 @@
 
             <main
                 id="dashboard-scroll"
-                class="scrollbar-none flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative -mt-1 pt-1"
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden relative -mt-1 pt-1"
             >
                 <div class="relative min-h-full flex flex-col">
                     <template v-if="mounted">

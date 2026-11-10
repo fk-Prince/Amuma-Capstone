@@ -88,6 +88,8 @@ Route::prefix('branches')->group(function () {
     // AUTHENTICATED BRACNHES ACCESS
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{uuid}/services', [ServiceController::class, 'getBranchServices']);
+        Route::get('/{uuid}/setup', [BranchController::class, 'setup']);
+        Route::post('/{uuid}/setup/visits', [BranchController::class, 'setupVisit']);
     });
 });
 

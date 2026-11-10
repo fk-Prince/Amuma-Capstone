@@ -1,3 +1,4 @@
+import { reactive } from "vue";
 import {
     patientData,
     guardianData,
@@ -6,6 +7,15 @@ import {
 } from "~/schema/patient-schema";
 import { facilityData } from "~/schema/booking-schema";
 import { reserved } from "~/types/contract";
+import type { Guardian } from "~/types/patient";
+
+export const guardianLink = reactive({
+    checkedEmail: "",
+    confirmed: false,
+    available: false,
+    existing: null as Partial<Guardian> | null,
+    fields: [] as (keyof Guardian)[],
+});
 
 function replaceFields<T extends object>(target: T, fresh: T) {
     Object.keys(target).forEach((key) => {
@@ -41,6 +51,14 @@ export function resetAdmissionForm() {
         relationship: "",
         occupation: "",
         address: "",
+    });
+
+    Object.assign(guardianLink, {
+        checkedEmail: "",
+        confirmed: false,
+        available: false,
+        existing: null,
+        fields: [],
     });
 
     diagnosisData.splice(0, diagnosisData.length, {

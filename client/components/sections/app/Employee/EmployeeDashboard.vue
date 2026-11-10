@@ -2,7 +2,7 @@
     <div class="w-full">
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <div
-                class="relative group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
+                class="relative group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl dark:bg-primary-500/10"
@@ -11,10 +11,10 @@
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
+                            class="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-primary"
+                                class="h-4 w-4 text-primary"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -35,19 +35,19 @@
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Total Employees
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ props.totalEmployee ?? 0 }}
                     </p>
 
                     <div
-                        class="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400"
+                        class="mt-2 flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-primary" />
                         Assigned to this branch
@@ -56,7 +56,7 @@
             </div>
 
             <div
-                class="relative group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
+                class="relative group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/10"
@@ -65,10 +65,10 @@
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
+                            class="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-emerald-600 dark:text-emerald-300"
+                                class="h-4 w-4 text-emerald-600 dark:text-emerald-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -89,19 +89,19 @@
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         On Duty
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ props.onDuty ?? 0 }}
                     </p>
 
                     <div
-                        class="mt-3 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300"
+                        class="mt-2 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                         Active staff today
@@ -110,7 +110,7 @@
             </div>
 
             <div
-                class="relative group col-span-2 sm:col-span-1 rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
+                class="relative group col-span-2 sm:col-span-1 rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/40"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/10"
@@ -119,10 +119,10 @@
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
+                            class="h-8 w-8 rounded-lg bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-rose-500 dark:text-rose-300"
+                                class="h-4 w-4 text-rose-500 dark:text-rose-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -141,18 +141,18 @@
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         On Leave
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ props.onLeave ?? 0 }}
                     </p>
 
-                    <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                    <p class="mt-2 text-xs text-rose-500 dark:text-rose-300">
                         Current on leave
                     </p>
                 </div>

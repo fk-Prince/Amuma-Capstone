@@ -153,6 +153,7 @@ import {
 } from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
+import { useBranchSetup } from "~/composables/useBranchSetup";
 
 import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.vue";
 import BranchAgencyTab from "~/components/sections/app/settings/BranchAgencyTab.vue";
@@ -213,6 +214,18 @@ const tabRef = ref<{
 watch(
     () => route.query.tab,
     () => (activeTab.value = tabFromQuery()),
+);
+
+const setup = useBranchSetup(() => route.params.uuid as string | undefined);
+
+watch(
+    activeTab,
+    (tab) => {
+        if (import.meta.server) return;
+        if (tab === "branch") setup.markVisit("details");
+        if (tab === "operation") setup.markVisit("operations");
+    },
+    { immediate: true },
 );
 
 // On phones the tab row scrolls; keep the open tab in view.

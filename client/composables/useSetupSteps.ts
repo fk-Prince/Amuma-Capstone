@@ -8,7 +8,6 @@ import {
     CreditCard,
     FileText,
     HandCoins,
-    LayoutGrid,
     MessageCircleQuestion,
     MessageSquare,
     Pill,
@@ -22,10 +21,10 @@ import {
 } from "lucide-vue-next";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
-import { useBranchPlan } from "~/composables/useBranchPlan";
-import { useAgencyBranches } from "~/composables/useAgencyBranches";
 import { routeAccess } from "~/composables/useRouteAccess";
 import { setupAreaOf, useFirstTimeUser, useSetupVisits } from "~/composables/useSetupGuide";
+import { useBranchSetup, type BranchSetupStep } from "~/composables/useBranchSetup";
+import { useRoute } from "vue-router";
 import { isBranchRejected } from "~/utils/branchAccess";
 
 
@@ -49,20 +48,15 @@ export interface SetupStep {
     action?: string;
 }
 
-/**
- * The setup checklist for the signed-in user. Steps depend on the role; each
- * ticks off once the user has opened that page.
- */
-// What to do once you're on the step's page ("role:key" first, then "key").
+
 const TIPS: Record<string, string> = {
     profile: "Add your phone number and a photo, then save.",
-    branch: "Fill in the description and contact number, add photos, and set your opening and closing hours.",
+    branch: "Open the Branch Information tab, then the Operation Settings tab.",
     services: "Add at least one service with its price so families can book it.",
-    rooms: "Create your rooms, then add the beds in each one.",
-    contracts: "Add the rates for your care plans: monthly, yearly or hourly.",
-    staff: "Add your team members and choose each person's role and access.",
+    rooms: "Create a room, then add at least one bed in it.",
+    contracts: "Add at least one care plan with its rate.",
+    staff: "Add at least one team member and choose their role and access.",
     subscription: "Check your plan and trial days. You can pay here any time.",
-    overview: "Compare your branches and see revenue by month.",
     "admission:bookings": "Open a booking request to approve or decline it.",
     "admission:admissions": "Pick an approved booking and admit the patient to a bed.",
     "admission:rooms": "See which beds are free before you admit someone.",
@@ -94,13 +88,12 @@ export function useSetupSteps(options: SetupStepsOptions) {
 
     const user = useAuthUser();
     const branchStore = useBranchStore();
-    const { hasFacilityPlan } = useBranchPlan();
-    const { canSeeExecutiveOverview } = useAgencyBranches();
     const scope = () =>
         props.context === "branch" ? `branch:${props.branchUuid ?? ""}` : props.context;
 
     const { hasVisited } = useSetupVisits(() => setupAreaOf(scope()));
     const { showFor, skip, markFinished } = useFirstTimeUser();
+    const route = useRoute();
 
     const branchUsable = computed(
         () =>
@@ -109,8 +102,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
                 branchStore.activeBranch?.uuid === props.branchUuid &&
                 !isBranchRejected(branchStore.activeBranch)),
     );
-
-    const enabled = computed(() => branchUsable.value && showFor(scope()));
 
     const branch = computed(() => branchStore.activeBranch);
 
@@ -121,6 +112,25 @@ export function useSetupSteps(options: SetupStepsOptions) {
     const isSetupRole = computed(
         () => role.value === "agency_owner" || role.value === "branch_manager",
     );
+
+    const required = computed(() => props.context === "branch" && isSetupRole.value);
+
+    const setup = useBranchSetup(() => (required.value ? props.branchUuid : undefined));
+
+    watch(
+        () => [required.value, props.branchUuid, route.path] as const,
+        ([isRequired]) => {
+            if (isRequired) setup.refresh();
+        },
+        { immediate: true },
+    );
+
+    const enabled = computed(() => {
+        if (!branchUsable.value) return false;
+        if (!required.value) return showFor(scope());
+        if (!setup.loaded.value) return false;
+        return !setup.complete.value || showFor(scope());
+    });
 
     const base = computed(() => `/app/branches/${props.branchUuid}`);
 
@@ -160,47 +170,95 @@ export function useSetupSteps(options: SetupStepsOptions) {
         action,
     });
 
+    function contractsCopy(step: BranchSetupStep) {
+        if (step.homecare && step.facility) {
+            return "Add at least one homecare plan and one facility plan, with the rates families will pay.";
+        }
+
+        return step.facility
+            ? "Add at least one facility plan: the monthly or yearly rate for each accommodation."
+            : "Add at least one homecare plan: the hourly rate families will pay.";
+    }
+
+    function requiredStep(step: BranchSetupStep): SetupStep | null {
+        const p = base.value;
+
+        switch (step.key) {
+            case "details":
+                return {
+                    key: "branch",
+                    title: "Visit Branch Information and Operation Settings",
+                    description: "Check your branch details, then your hours, booking and payment settings.",
+                    to: `${p}/settings?tab=${step.visited?.details ? "operation" : "branch"}`,
+                    icon: Settings,
+                    done: step.done,
+                    action: "Open settings",
+                };
+            case "staff":
+                return {
+                    key: "staff",
+                    title: "Add an employee",
+                    description: "Add at least one staff member and choose their role and access.",
+                    to: `${p}/employees`,
+                    icon: UserCog,
+                    done: step.done,
+                    action: "Add staff",
+                };
+            case "services":
+                return {
+                    key: "services",
+                    title: "Add a service",
+                    description: "Add at least one care service families can book from this branch.",
+                    to: `${p}/services`,
+                    icon: Wrench,
+                    done: step.done,
+                    action: "Add services",
+                };
+            case "rooms":
+                return {
+                    key: "rooms",
+                    title: "Set up rooms and beds",
+                    description: "Add at least one room with a bed so residents can be admitted.",
+                    to: `${p}/rooms-beds`,
+                    icon: BedDouble,
+                    done: step.done,
+                    action: "Add rooms",
+                };
+            case "contracts":
+                return {
+                    key: "contracts",
+                    title: step.homecare && !step.facility
+                        ? "Create a homecare plan"
+                        : step.facility && !step.homecare
+                            ? "Create a facility plan"
+                            : "Create your care plans",
+                    description: contractsCopy(step),
+                    to: `${p}/contracts`,
+                    icon: FileText,
+                    done: step.done,
+                    action: "Add plans",
+                };
+            case "subscription":
+                return {
+                    key: "subscription",
+                    title: "Check your subscription",
+                    description: "See your plan and trial days, and pay whenever you're ready.",
+                    to: `${p}/manage-subscription`,
+                    icon: CreditCard,
+                    done: step.done,
+                };
+        }
+
+        return null;
+    }
+
     function branchSteps(): SetupStep[] {
         const p = base.value;
 
         if (isSetupRole.value) {
-            const list: SetupStep[] = [
-                profileStep.value,
-                visitStep("branch", `${p}/settings`, "Fill in your branch details", "Description, contact number, photos, and your opening and closing hours.", Settings, "Open settings"),
-                visitStep("services", `${p}/services`, "Add your services", "List the care services families can book from this branch.", Wrench, "Add services"),
-                ...(hasFacilityPlan.value
-                    ? [visitStep("rooms", `${p}/rooms-beds`, "Set up rooms and beds", "Add your rooms and beds so admissions can assign them.", BedDouble, "Add rooms")]
-                    : []),
-                visitStep("contracts", `${p}/contracts`, "Create care plans and rates", "Set the monthly, yearly or hourly rates families will pay.", FileText, "Add plans"),
-                visitStep("staff", `${p}/employees`, "Add your staff", "Invite admission, nurses, caregivers and cashiers, and give them access.", UserCog, "Add staff"),
-            ];
-
-            if (role.value === "agency_owner") {
-                list.push(
-                    visitStep(
-                        "subscription",
-                        `${p}/manage-subscription`,
-                        "Check your subscription",
-                        "See your plan, your trial days left, and pay whenever you're ready.",
-                        CreditCard,
-                    ),
-                );
-
-                if (canSeeExecutiveOverview.value) {
-                    list.push({
-                        ...visitStep(
-                            "overview",
-                            `${p}/overview`,
-                            "See all your branches together",
-                            "The Executive Overview compares every branch and shows revenue by month.",
-                            LayoutGrid,
-                        ),
-                        optional: true,
-                    });
-                }
-            }
-
-            return list;
+            return (setup.status.value?.steps ?? [])
+                .map(requiredStep)
+                .filter((step): step is SetupStep => !!step);
         }
 
         const byRole: Record<string, SetupStep[]> = {
@@ -227,7 +285,6 @@ export function useSetupSteps(options: SetupStepsOptions) {
         };
 
         return [
-            profileStep.value,
             ...(byRole[role.value] ?? []),
             visitStep("messages", `${p}/messages`, "Message families and staff", "Keep families updated and talk with your team.", MessageSquare),
         ];
@@ -265,20 +322,26 @@ export function useSetupSteps(options: SetupStepsOptions) {
         return withTips.filter(
             (step) =>
                 !step.to.startsWith("/app/branches/") ||
-                routeAccess({ path: step.to, params: { uuid: props.branchUuid } } as any) ===
-                    "allowed",
+                routeAccess({ path: step.to.split("?")[0], params: { uuid: props.branchUuid } } as any) ===
+                "allowed",
         );
     });
 
     const doneCount = computed(() => steps.value.filter((s) => s.done).length);
-    const allDone = computed(() => steps.value.length > 0 && doneCount.value === steps.value.length);
+    const allDone = computed(() =>
+        required.value
+            ? setup.complete.value
+            : steps.value.length > 0 && doneCount.value === steps.value.length,
+    );
     const percent = computed(() =>
         steps.value.length ? Math.round((doneCount.value / steps.value.length) * 100) : 0,
     );
+    const canHide = computed(() => !required.value || allDone.value);
+
     watch(
         allDone,
         (done) => {
-            if (done) markFinished(scope());
+            if (done && !required.value) markFinished(scope());
         },
     );
 
@@ -292,8 +355,10 @@ export function useSetupSteps(options: SetupStepsOptions) {
     });
 
     const subheading = computed(() => {
-        if (props.context === "branch" && isSetupRole.value) {
-            return "Open any of these to set up your branch, in any order. Each one ticks off once you've opened it.";
+        if (required.value) {
+            return allDone.value
+                ? "Your branch is ready. Once your plan is live it shows on the booking page."
+                : "Finish every step to go live. Until then the branch stays off the booking page and you can't start your plan early.";
         }
         return "A few quick stops to learn your way around. Each one ticks off once you've opened it.";
     });
@@ -308,6 +373,10 @@ export function useSetupSteps(options: SetupStepsOptions) {
         role,
         enabled,
         scope,
-        skip: () => skip(scope()),
+        required,
+        canHide,
+        skip: () => {
+            if (canHide.value) skip(scope());
+        },
     };
 }

@@ -1,7 +1,7 @@
 <template>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div
-            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-primary-200 dark:border-white/10 dark:bg-secondary dark:hover:border-primary-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-primary-100/40 blur-2xl dark:bg-primary-500/10"
@@ -10,10 +10,10 @@
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
+                        class="h-8 w-8 rounded-lg bg-primary-50 flex items-center justify-center dark:bg-primary-500/10"
                     >
                         <svg
-                            class="h-5 w-5 text-primary"
+                            class="h-4 w-4 text-primary"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -28,18 +28,18 @@
                 </div>
 
                 <p
-                    class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Total Branches
                 </p>
 
                 <p
-                    class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                    class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                 >
                     {{ statsData.total_branches }}
                 </p>
 
-                <div class="mt-3 flex items-center gap-2 text-xs text-primary">
+                <div class="mt-2 flex items-center gap-2 text-xs text-primary">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -56,7 +56,7 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/10"
@@ -65,10 +65,10 @@
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
+                        class="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
                     >
                         <svg
-                            class="h-5 w-5 text-emerald-600 dark:text-emerald-300"
+                            class="h-4 w-4 text-emerald-600 dark:text-emerald-300"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -92,19 +92,19 @@
                 </div>
 
                 <p
-                    class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Active Branches
                 </p>
 
                 <p
-                    class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                    class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                 >
                     {{ statsData.active_branches }}
                 </p>
 
                 <div
-                    class="mt-3 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300"
+                    class="mt-2 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                     {{ statsData.active_branches_percent }}% of total branches
@@ -113,7 +113,7 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200 dark:border-white/10 dark:bg-secondary dark:hover:border-fuchsia-500/40"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-fuchsia-200 dark:border-white/10 dark:bg-secondary dark:hover:border-fuchsia-500/40"
         >
             <div
                 class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-fuchsia-100/50 blur-2xl dark:bg-fuchsia-500/10"
@@ -122,10 +122,10 @@
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl bg-fuchsia-50 flex items-center justify-center dark:bg-fuchsia-500/10"
+                        class="h-8 w-8 rounded-lg bg-fuchsia-50 flex items-center justify-center dark:bg-fuchsia-500/10"
                     >
                         <svg
-                            class="h-5 w-5 text-fuchsia-600"
+                            class="h-4 w-4 text-fuchsia-600"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
@@ -138,20 +138,20 @@
                 </div>
 
                 <p
-                    class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Subscription Ends
                 </p>
 
                 <p
-                    class="mt-1 text-xl sm:text-3xl font-bold break-words text-slate-800 tabular-nums dark:text-white"
+                    class="mt-0.5 text-lg sm:text-2xl font-bold break-words text-slate-800 tabular-nums dark:text-white"
                 >
                     {{ expiresInLabel }}
                 </p>
 
                 <div
                     v-if="isTesting && !loading"
-                    class="mt-3 flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-300"
+                    class="mt-2 flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
                     Still on free trial
@@ -162,7 +162,7 @@
 
                 <div
                     v-if="daysLeftLabel"
-                    class="mt-3 flex items-center gap-2 text-xs text-fuchsia-600 dark:text-fuchsia-300"
+                    class="mt-2 flex items-center gap-2 text-xs text-fuchsia-600 dark:text-fuchsia-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-fuchsia-500" />
                     {{ daysLeftLabel }}
@@ -171,7 +171,7 @@
         </div>
 
         <div
-            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-secondary"
+            class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-secondary"
             :class="alerts.length ? alertTone.cardHover : 'hover:border-emerald-200 dark:hover:border-emerald-500/40'"
         >
             <div
@@ -182,12 +182,12 @@
             <div class="relative">
                 <div class="flex items-center justify-between">
                     <div
-                        class="h-10 w-10 rounded-xl flex items-center justify-center"
+                        class="h-8 w-8 rounded-lg flex items-center justify-center"
                         :class="alertTone.tile"
                     >
                         <svg
                             v-if="alerts.length"
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             :class="alertTone.icon"
                             fill="none"
                             stroke="currentColor"
@@ -203,7 +203,7 @@
 
                         <svg
                             v-else
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             :class="alertTone.icon"
                             fill="none"
                             stroke="currentColor"
@@ -223,18 +223,18 @@
                 </div>
 
                 <p
-                    class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                 >
                     Alerts
                 </p>
 
                 <p
-                    class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                    class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                 >
                     {{ loading ? "…" : alertTotal }}
                 </p>
 
-                <ul v-if="alerts.length && !loading" class="mt-3 space-y-1.5">
+                <ul v-if="alerts.length && !loading" class="mt-2 space-y-1.5">
                     <li
                         v-for="alert in alerts"
                         :key="alert.key"
@@ -251,7 +251,7 @@
 
                 <p
                     v-else-if="!loading"
-                    class="mt-3 text-xs"
+                    class="mt-2 text-xs"
                     :class="alertTone.text"
                 >
                     Every branch is in good standing

@@ -21,7 +21,7 @@ const overview = computed<Overview>(() => {
     <div class="w-full">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div
-                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-blue-200 dark:border-white/10 dark:bg-secondary dark:hover:border-blue-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-blue-200 dark:border-white/10 dark:bg-secondary dark:hover:border-blue-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-blue-100/50 blur-2xl dark:bg-blue-500/15"
@@ -30,10 +30,10 @@ const overview = computed<Overview>(() => {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center dark:bg-blue-500/10"
+                            class="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center dark:bg-blue-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-blue-600 dark:text-blue-300"
+                                class="h-4 w-4 text-blue-600 dark:text-blue-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -54,25 +54,25 @@ const overview = computed<Overview>(() => {
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Total Rooms
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ overview.total_rooms.value }}
                     </p>
 
-                    <p class="mt-3 text-xs text-slate-400 dark:text-gray-500">
+                    <p class="mt-2 text-xs text-slate-400 dark:text-gray-500">
                         {{ overview.total_rooms.secondary }}
                     </p>
                 </div>
             </div>
 
             <div
-                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-emerald-200 dark:border-white/10 dark:bg-secondary dark:hover:border-emerald-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-emerald-100/50 blur-2xl dark:bg-emerald-500/15"
@@ -81,10 +81,10 @@ const overview = computed<Overview>(() => {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
+                            class="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center dark:bg-emerald-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-emerald-600 dark:text-emerald-300"
+                                class="h-4 w-4 text-emerald-600 dark:text-emerald-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -105,19 +105,19 @@ const overview = computed<Overview>(() => {
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Available Beds
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ overview.available.value }}
                     </p>
 
                     <p
-                        class="mt-3 text-xs text-emerald-600 dark:text-emerald-300"
+                        class="mt-2 text-xs text-emerald-600 dark:text-emerald-300"
                     >
                         Ready for occupancy
                     </p>
@@ -126,7 +126,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Occupied -->
             <div
-                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-violet-200 dark:border-white/10 dark:bg-secondary dark:hover:border-violet-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-violet-200 dark:border-white/10 dark:bg-secondary dark:hover:border-violet-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-100/50 blur-2xl dark:bg-violet-500/15"
@@ -135,10 +135,10 @@ const overview = computed<Overview>(() => {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-violet-50 flex items-center justify-center dark:bg-violet-500/10"
+                            class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center dark:bg-violet-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-violet-600 dark:text-violet-300"
+                                class="h-4 w-4 text-violet-600 dark:text-violet-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -159,19 +159,19 @@ const overview = computed<Overview>(() => {
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Occupied
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ overview.occupied.value }}
                     </p>
 
                     <p
-                        class="mt-3 text-xs text-violet-600 dark:text-violet-300"
+                        class="mt-2 text-xs text-violet-600 dark:text-violet-300"
                     >
                         Currently in use
                     </p>
@@ -180,7 +180,7 @@ const overview = computed<Overview>(() => {
 
             <!-- Maintenance -->
             <div
-                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3.5 sm:p-5 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/20"
+                class="relative overflow-hidden group rounded-lg border border-slate-200 bg-white p-3 sm:p-4 shadow-sm transition-all duration-300 sm:hover:-translate-y-1 hover:shadow-xl hover:border-rose-200 dark:border-white/10 dark:bg-secondary dark:hover:border-rose-500/20"
             >
                 <div
                     class="absolute -top-10 -right-10 h-28 w-28 rounded-full bg-rose-100/50 blur-2xl dark:bg-rose-500/15"
@@ -189,10 +189,10 @@ const overview = computed<Overview>(() => {
                 <div class="relative">
                     <div class="flex items-center justify-between">
                         <div
-                            class="h-10 w-10 rounded-xl bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
+                            class="h-8 w-8 rounded-lg bg-rose-50 flex items-center justify-center dark:bg-rose-500/10"
                         >
                             <svg
-                                class="h-5 w-5 text-rose-500 dark:text-rose-300"
+                                class="h-4 w-4 text-rose-500 dark:text-rose-300"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
@@ -214,18 +214,18 @@ const overview = computed<Overview>(() => {
                     </div>
 
                     <p
-                        class="mt-3 sm:mt-4 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                        class="mt-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
                     >
                         Maintenance
                     </p>
 
                     <p
-                        class="mt-1 text-2xl sm:text-3xl font-bold text-slate-800 tabular-nums dark:text-white"
+                        class="mt-0.5 text-xl sm:text-2xl font-bold text-slate-800 tabular-nums dark:text-white"
                     >
                         {{ overview.maintenance.value }}
                     </p>
 
-                    <p class="mt-3 text-xs text-rose-500 dark:text-rose-300">
+                    <p class="mt-2 text-xs text-rose-500 dark:text-rose-300">
                         Needs inspection
                     </p>
                 </div>

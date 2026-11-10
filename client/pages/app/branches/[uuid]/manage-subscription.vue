@@ -517,6 +517,7 @@ import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { useRoute } from "vue-router";
 import { useSandbox } from "~/composables/useSandbox";
+import { useBranchSetup } from "~/composables/useBranchSetup";
 import logo from "~/assets/logo/logo.png";
 import {
     planTypeBranchLimit,
@@ -1168,7 +1169,11 @@ watch(subscriptionVersion, () => {
     branchStore.refreshBranch().catch(() => {});
 });
 
+const branchSetup = useBranchSetup(() => route.params.uuid as string | undefined);
+
 onMounted(async () => {
+    branchSetup.markVisit("subscription");
+
     // The trial notice in the header links here to end the trial.
     if (route.query.end_trial) {
         openedToEndTrial.value = true;

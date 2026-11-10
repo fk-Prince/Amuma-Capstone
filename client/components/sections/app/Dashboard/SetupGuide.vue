@@ -1,6 +1,6 @@
 <template>
     <!-- Header button: progress ring around a checklist icon; opens the full guide -->
-    <div v-if="ready && steps.length && !allDone" class="relative">
+    <div v-if="ready && steps.length && (!allDone || required)" class="relative">
         <button
             ref="launcherEl"
             type="button"
@@ -45,10 +45,12 @@
             <ListChecks class="h-[18px] w-[18px]" />
 
             <span
-                class="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-secondary"
+                class="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-secondary"
+                :class="allDone ? 'bg-emerald-500' : 'bg-primary'"
                 aria-hidden="true"
             >
-                {{ steps.length - doneCount }}
+                <Check v-if="allDone" class="h-3 w-3" :stroke-width="3" />
+                <template v-else>{{ steps.length - doneCount }}</template>
             </span>
         </button>
 
@@ -193,7 +195,14 @@
                     <footer
                         class="flex items-center gap-2 border-t border-slate-100 p-3 dark:border-white/10"
                     >
+                        <p
+                            v-if="!canHide"
+                            class="px-2 py-1.5 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                        >
+                            You can hide this guide once every step is done.
+                        </p>
                         <button
+                            v-else
                             type="button"
                             class="rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-white"
                             @click="skip"
@@ -256,6 +265,8 @@ const {
     subheading,
     skip,
     scope,
+    required,
+    canHide,
 } = useSetupSteps({
     context: () => props.context,
     branchUuid: () => branchUuid.value,
@@ -381,7 +392,9 @@ async function startTour() {
                 element: '[data-tour="setup-guide"]',
                 popover: {
                     title: "Your setup guide",
-                    description: `It lives in the checklist button at the top, next to your notifications. Open any item, in any order, and it ticks off. ${doneCount.value} of ${steps.value.length} done so far.`,
+                    description: required.value
+                        ? `It lives in the checklist button at the top, next to your notifications. Finish every step to put this branch on the booking page. ${doneCount.value} of ${steps.value.length} done so far.`
+                        : `It lives in the checklist button at the top, next to your notifications. Open any item, in any order, and it ticks off. ${doneCount.value} of ${steps.value.length} done so far.`,
                     side: "left",
                     align: "start",
                 },
