@@ -18,6 +18,8 @@
             :agency-name="approvedAgency"
             :branch-name="approvedBranch"
             :valid-until="approvedUntil"
+            :on-trial="approvedOnTrial"
+            :trial-ended="approvedTrialEnded"
             @continue="dismissApproved"
         />
 
@@ -118,6 +120,8 @@ const {
     agencyName: approvedAgency,
     branchName: approvedBranch,
     validUntil: approvedUntil,
+    onTrial: approvedOnTrial,
+    trialEnded: approvedTrialEnded,
     dismiss: dismissApproved,
 } = useApprovalSplash();
 const access = useRouteAccess();

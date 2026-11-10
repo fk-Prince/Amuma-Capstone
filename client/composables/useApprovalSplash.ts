@@ -14,6 +14,8 @@ export function useApprovalSplash() {
 
     const agencyName = computed(() => branch.value?.agency?.name ?? "");
     const branchName = computed(() => branch.value?.name ?? "");
+    const onTrial = computed(() => branch.value?.subscription_mode === "test");
+    const trialEnded = computed(() => Boolean(branch.value?.subscription_locked));
 
     const validUntil = computed(() => {
         const raw = branch.value?.subscription_end_date;
@@ -70,5 +72,5 @@ export function useApprovalSplash() {
         check,
     );
 
-    return { show, agencyName, branchName, validUntil, dismiss };
+    return { show, agencyName, branchName, validUntil, onTrial, trialEnded, dismiss };
 }

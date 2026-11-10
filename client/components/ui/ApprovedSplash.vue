@@ -10,6 +10,8 @@ const props = withDefaults(
         branchName?: string;
         planName?: string;
         validUntil?: string;
+        onTrial?: boolean;
+        trialEnded?: boolean;
         title?: string;
         subtitle?: string;
         buttonLabel?: string;
@@ -21,6 +23,8 @@ const props = withDefaults(
         branchName: "",
         planName: "",
         validUntil: "",
+        onTrial: false,
+        trialEnded: false,
         title: "",
         subtitle: "",
         buttonLabel: "Go to dashboard",
@@ -38,19 +42,32 @@ const headline = computed(
         (props.name ? `Welcome aboard, ${props.name}!` : "Welcome aboard!"),
 );
 
-const body = computed(
-    () =>
-        props.subtitle ||
-        `${
-            props.agencyName || "Your agency"
-        } is now live on AMUMA. Your dashboard is ready for your first branch, staff, and patients.`,
-);
+const body = computed(() => {
+    if (props.subtitle) return props.subtitle;
+
+    const agency = props.agencyName || "Your agency";
+
+    if (props.trialEnded) {
+        return `${agency} is approved, but your free trial has ended. Pay for your plan in Manage Subscription to unlock your branch and get listed.`;
+    }
+
+    return props.onTrial
+        ? `${agency} is approved. Keep using your free trial. Families can find and book you once your plan is paid.`
+        : `${agency} is approved and now listed on AMUMA. Families can find and book your branch.`;
+});
 
 const chips = computed(() =>
     [
         { label: "Branch", value: props.branchName },
         { label: "Plan", value: props.planName },
-        { label: "Valid until", value: props.validUntil },
+        {
+            label: props.trialEnded
+                ? "Free trial ended"
+                : props.onTrial
+                  ? "Free trial until"
+                  : "Valid until",
+            value: props.validUntil,
+        },
     ].filter((c) => c.value),
 );
 
