@@ -44,7 +44,7 @@
 
             <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <span
-                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize"
+                    class="inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-[11px] font-semibold capitalize leading-none"
                     :class="statusClass(subscription.subscription?.status)"
                 >
                     {{ planStatusLabel }}
@@ -140,7 +140,7 @@
 
             <span
                 v-if="showAgencyStatus"
-                class="self-start rounded-full px-2 py-1 text-[10px] font-medium sm:shrink-0"
+                class="inline-flex h-6 items-center self-start whitespace-nowrap rounded-full px-2.5 text-[11px] font-semibold leading-none sm:shrink-0"
                 :class="
                     agency.status === 'verified'
                         ? 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-300'
@@ -288,7 +288,7 @@
 
                 <span
                     v-if="differsFromPlan(branchStatusLabel)"
-                    class="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
+                    class="inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-[11px] font-semibold leading-none"
                     :class="
                         withdrawn
                             ? 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-gray-300'
@@ -510,7 +510,7 @@
 
                 <span
                     v-if="(agency.owner_subscription_count ?? 0) > 1"
-                    class="ml-auto shrink-0 font-semibold text-violet-600 dark:text-violet-300"
+                    class="ml-auto shrink-0 font-semibold text-primary dark:text-primary-300"
                     :title="`This owner has ${agency.owner_subscription_count} subscriptions`"
                 >
                     {{ ordinal(agency.owner_subscription_number ?? 0) }}
