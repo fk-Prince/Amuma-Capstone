@@ -140,13 +140,13 @@
         </div>
     </div>
 
+    <div v-else-if="variant === 2" class="v2-wrap">
     <div
-        v-else-if="variant === 2"
         @mouseenter="$emit('hover', branch.uuid)"
         @mouseleave="$emit('hover', null)"
-        class="group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary-200 cursor-pointer md:flex-row dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
+        class="v2-card group flex flex-col overflow-hidden rounded-2xl border border-muted-light bg-white shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary-200 cursor-pointer dark:border-white/5 dark:bg-secondary dark:shadow-none dark:hover:border-primary-500/30"
     >
-        <div class="relative flex w-full shrink-0 flex-col md:w-64">
+        <div class="v2-media relative flex w-full shrink-0 flex-col">
             <div class="relative h-48 w-full flex-1 overflow-hidden bg-muted-light dark:bg-white/10">
                 <img
                     v-if="branch?.image && !imageBroken"
@@ -338,7 +338,7 @@
         </div>
 
         <div
-            class="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-muted-light p-6 md:w-56 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 dark:border-white/10"
+            class="v2-side flex shrink-0 flex-row items-center justify-between gap-4 border-t border-muted-light p-6 dark:border-white/10"
         >
             <div v-if="priceLabel" class="text-right">
                 <p class="text-xs text-muted dark:text-gray-400">Starting at</p>
@@ -349,12 +349,13 @@
 
             <button
                 @click="$emit('select', branch)"
-                class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 md:w-full md:justify-center"
+                class="v2-btn inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
             >
                 View Provider
                 <ArrowRight class="h-3.5 w-3.5" />
             </button>
         </div>
+    </div>
     </div>
 
     <div
@@ -534,3 +535,49 @@ const priceLabel = computed(() => {
     return price ? formatCurrency(price.amount) : null;
 });
 </script>
+
+<style scoped>
+.v2-wrap {
+    container-type: inline-size;
+}
+
+@container (min-width: 560px) {
+    .v2-card {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .v2-media {
+        width: 14rem;
+    }
+
+    .v2-side {
+        flex-basis: 100%;
+    }
+}
+
+@container (min-width: 820px) {
+    .v2-card {
+        flex-wrap: nowrap;
+    }
+
+    .v2-media {
+        width: 16rem;
+    }
+
+    .v2-side {
+        flex-basis: auto;
+        width: 14rem;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        border-top-width: 0;
+        border-left-width: 1px;
+    }
+
+    .v2-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
