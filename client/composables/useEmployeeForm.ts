@@ -3,6 +3,7 @@ import { useRoute } from "vue-router";
 import {
     createEmployee,
     type Employee,
+    employeePositions,
     employeeSchema,
     type EmployeePayload,
     type EmployeeStatus,
@@ -34,7 +35,7 @@ export interface UseEmployeeFormOptions {
 export function useEmployeeForm(options: UseEmployeeFormOptions) {
     const user = useAuthUser();
     const branchStore = useBranchStore();
-    const { success, error } = useToast();
+    const { success, error, info } = useToast();
     const route = useRoute();
     const uuid = route.params.uuid as string;
 
@@ -128,10 +129,16 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             : [...moduleActions(module?.module_name ?? "")];
     }
 
+    const roleSlug = (role?: string | null) =>
+        String(role ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(/[\s-]+/g, "_");
+
     function applyRoleDefaults(role: string) {
         if (!modules.value.length) return;
 
-        const roleDefaults = ROLE_DEFAULT_PERMISSIONS[role] ?? {};
+        const roleDefaults = ROLE_DEFAULT_PERMISSIONS[roleSlug(role)] ?? {};
 
         modules.value.forEach((module) => {
             const actions = (roleDefaults as Record<string, PermissionActionKey[]>)[
@@ -144,11 +151,39 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         });
     }
 
+    function applySavedPermissions() {
+        const saved = options.employee()?.permissions ?? [];
+
+        modules.value.forEach((module) => {
+            permissions.value[module.module_id] = [
+                ...(saved.find((p) => p.module_name === module.module_name)
+                    ?.actions ?? []),
+            ];
+        });
+    }
+
     watch(
         () => employee.value.role_name,
         (role) => {
-            if (hasExistingEmployee.value || !role) return;
+            if (!role || isViewMode.value) return;
+
+            if (roleSlug(role) === roleSlug(options.employee()?.role_name)) {
+                applySavedPermissions();
+                return;
+            }
+
             applyRoleDefaults(role);
+
+            if (hasExistingEmployee.value) {
+                const label =
+                    employeePositions.find(
+                        (position) => position.value === roleSlug(role),
+                    )?.label ?? "new position's";
+
+                info(
+                    `Permissions changed to the ${label} defaults. Review them in the Permissions tab.`,
+                );
+            }
         },
     );
 
@@ -220,15 +255,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             },
         };
 
-        current.permissions?.forEach((p) => {
-            const module = modules.value.find(
-                (m) => m.module_name === p.module_name,
-            );
-
-            if (!module) return;
-
-            permissions.value[module.module_id] = [...(p.actions ?? [])];
-        });
+        applySavedPermissions();
     }
 
     function onFileSelected(e: Event) {

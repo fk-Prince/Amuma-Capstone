@@ -46,21 +46,10 @@
                 </div>
 
                 <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
-                    <div
-                        v-if="loading"
-                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                    >
-                        <div
-                            v-for="n in 3"
-                            :key="n"
-                            class="h-56 animate-pulse rounded-xl bg-slate-100 dark:bg-white/5"
-                        />
-                    </div>
-
                     <BranchPlanPicker
-                        v-else
                         v-model="selected"
                         :options="options"
+                        :loading="loading"
                     />
 
                     <div
@@ -127,6 +116,7 @@ const props = defineProps<{
     currentCode: string;
     currentName: string;
     planType: PlanType;
+    plans?: any[];
 }>();
 
 const emit = defineEmits<{
@@ -134,8 +124,8 @@ const emit = defineEmits<{
     changed: [result: any];
 }>();
 
-const plans = ref<any[]>([]);
-const loading = ref(true);
+const plans = ref<any[]>([...(props.plans ?? [])]);
+const loading = ref(!plans.value.length);
 const saving = ref(false);
 const errorMessage = ref<string | null>(null);
 const selected = ref<string | null>(props.currentCode);
@@ -177,6 +167,8 @@ const save = async () => {
 };
 
 onMounted(async () => {
+    if (!loading.value) return;
+
     try {
         plans.value = (await planService.list()) ?? [];
     } catch (err: any) {

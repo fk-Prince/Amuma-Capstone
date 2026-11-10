@@ -398,6 +398,7 @@
             :agency-name="agency?.name ?? 'Your agency'"
             :branch-uuid="route.params.uuid as string"
             :capacity="statsData.branch_capacity"
+            :plans="planList"
             @close="showAddBranch = false"
             @created="onBranchCreated"
         />
@@ -462,6 +463,7 @@
             :current-code="changePlanTarget.activation.plan.plan_code"
             :current-name="changePlanTarget.activation.plan.name"
             :plan-type="subscriptionPlan?.type ?? 'enterprise'"
+            :plans="planList"
             @close="changePlanTarget = null"
             @changed="onPlanChanged"
         />
@@ -510,6 +512,7 @@ import { isBranchRejected } from "~/utils/branchAccess";
 import { useSupportCenter } from "~/composables/useSupportCenter";
 import { computed, ref, h, onMounted, onBeforeUnmount, watch } from "vue";
 import { agencyService } from "~/api/agency/AgencyService";
+import { planService } from "~/api/plan/PlanService";
 import { useBranchStore } from "~/stores/branch";
 import { useSubscriptionVersion } from "~/composables/useSubscriptionVersion";
 import { useToast } from "~/composables/useToast";
@@ -1171,6 +1174,14 @@ watch(subscriptionVersion, () => {
 
 const branchSetup = useBranchSetup(() => route.params.uuid as string | undefined);
 
+const planList = ref<any[]>([]);
+
+const fetchPlans = async () => {
+    try {
+        planList.value = (await planService.list()) ?? [];
+    } catch {}
+};
+
 onMounted(async () => {
     branchSetup.markVisit("subscription");
 
@@ -1193,6 +1204,11 @@ onMounted(async () => {
         );
     }
 
-    await Promise.all([fetchStats(), fetchBranches(), fetchRenewal()]);
+    await Promise.all([
+        fetchStats(),
+        fetchBranches(),
+        fetchRenewal(),
+        fetchPlans(),
+    ]);
 });
 </script>

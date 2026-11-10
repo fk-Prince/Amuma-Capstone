@@ -326,8 +326,8 @@ const roomMatchesCurrentFilter = (room: Room) => {
 </script>
 
 <template>
-    <div class="dashboard-fit-tall min-h-screen-header rounded-lg px-3 pb-4 pt-3 sm:px-0 sm:pb-0 lg:pt-0">
-        <div class="dashboard-fit-fill mx-auto flex w-full flex-col space-y-6">
+    <div class="min-h-screen-header rounded-lg px-3 pb-4 pt-3 sm:px-0 sm:pb-0 lg:pt-0">
+        <div class="mx-auto flex w-full flex-col space-y-6">
             <PlanLockNotice
                 v-if="!hasFacilityPlan"
                 title="Rooms & beds are read-only"

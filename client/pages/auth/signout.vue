@@ -10,7 +10,7 @@ import { useRoute } from "vue-router";
 import AuthTransitionScreen from "~/components/ui/AuthTransitionScreen.vue";
 import { authService } from "~/api/auth/AuthService";
 import { clearStoredAuth } from "~/composables/useAuthUser";
-import { useSandbox } from "~/composables/useSandbox";
+import { SIGNED_OUT_MESSAGE, useSandbox } from "~/composables/useSandbox";
 
 definePageMeta({
     layout: "auth",
@@ -38,6 +38,17 @@ onMounted(async () => {
     } catch {}
 
     clearStoredAuth();
+
+    if (route.query.silent && window.parent !== window) {
+        try {
+            window.parent.postMessage(
+                { type: SIGNED_OUT_MESSAGE },
+                new URL(switchUrl.value).origin,
+            );
+        } catch {}
+        return;
+    }
+
     window.location.replace(nextUrl());
 });
 </script>

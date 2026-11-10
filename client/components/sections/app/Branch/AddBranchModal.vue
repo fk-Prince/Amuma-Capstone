@@ -275,6 +275,7 @@
                                 <BranchPlanPicker
                                     v-model="branchPlanCode"
                                     :options="includedPlanOptions"
+                                    :loading="loadingPlans"
                                 />
 
                                 <button
@@ -310,6 +311,7 @@
                                 <BranchPlanPicker
                                     v-model="branchPlanCode"
                                     :options="additionalPlanOptions"
+                                    :loading="loadingPlans"
                                 />
 
                                 <div
@@ -842,6 +844,7 @@ const props = defineProps<{
     agencyName: string;
     branchUuid: string;
     capacity?: BranchCapacity | null;
+    plans?: any[];
 }>();
 
 const emit = defineEmits<{
@@ -857,8 +860,8 @@ const currentStep = ref(1);
 const stepError = ref<string | null>(null);
 const errors = ref<Record<string, string>>({});
 
-const plans = ref<any[]>([]);
-const loadingPlans = ref(true);
+const plans = ref<any[]>([...(props.plans ?? [])]);
+const loadingPlans = ref(!plans.value.length);
 
 const capacity = computed(() => props.capacity ?? null);
 
@@ -1521,8 +1524,7 @@ onMounted(async () => {
     selectSingleOption();
 
     try {
-        const res = await planService.list();
-        plans.value = res ?? [];
+        if (loadingPlans.value) plans.value = (await planService.list()) ?? [];
         form.plan = selectablePlans.value[0] ?? null;
     } catch (err: any) {
         stepError.value = err?.message ?? "Failed to load plans.";

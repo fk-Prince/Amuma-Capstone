@@ -43,21 +43,62 @@ export const useSandbox = () => {
 export const signOutUrl = (base: string, next: string) =>
     `${base}/auth/signout?next=${encodeURIComponent(next)}`;
 
+export const SIGNED_OUT_MESSAGE = "amuma:signed-out";
+
+const BACKGROUND_SIGN_OUT_TIMEOUT = 4000;
+
+const signOutInBackground = (base: string) =>
+    new Promise<void>((resolve) => {
+        let origin: string;
+
+        try {
+            origin = new URL(base).origin;
+        } catch {
+            resolve();
+            return;
+        }
+
+        const frame = document.createElement("iframe");
+        let finished = false;
+
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            window.removeEventListener("message", onMessage);
+            clearTimeout(timer);
+            frame.remove();
+            resolve();
+        };
+
+        const onMessage = (event: MessageEvent) => {
+            if (event.origin === origin && event.data?.type === SIGNED_OUT_MESSAGE) {
+                finish();
+            }
+        };
+
+        const timer = setTimeout(finish, BACKGROUND_SIGN_OUT_TIMEOUT);
+
+        window.addEventListener("message", onMessage);
+
+        frame.src = `${base}/auth/signout?silent=1`;
+        frame.setAttribute("aria-hidden", "true");
+        frame.tabIndex = -1;
+        frame.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
+
+        document.body.appendChild(frame);
+    });
+
 export const useSignOut = () => {
     const { switchUrl } = useSandbox();
 
     return async () => {
-        try {
-            await authService.logout();
-        } catch (err) {
-            console.error(err);
-        }
+        await Promise.all([
+            authService.logout().catch((err) => console.error(err)),
+            switchUrl.value ? signOutInBackground(switchUrl.value) : null,
+        ]);
 
         clearStoredAuth();
 
-        const signin = `${window.location.origin}/auth/signin`;
-        window.location.href = switchUrl.value
-            ? signOutUrl(switchUrl.value, signin)
-            : "/auth/signin";
+        window.location.href = "/auth/signin";
     };
 };
