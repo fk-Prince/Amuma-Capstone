@@ -7,6 +7,7 @@
  * - emails: only characters an email address can have, no spaces;
  * - PH mobile numbers: digits only, at most 10 after +63
  *   (typing the 11-digit 09XX… form drops the leading 0 automatically);
+ * - TINs: digits and dashes only;
  * - number fields never go past their max.
  *
  * Fields tell it what they are with data-input-kind (BaseInput sets this);
@@ -20,7 +21,7 @@ const CODE_SYMBOLS = /[<>{}[\]\\|^~`]/g;
 const NOT_NAME = /[^\p{L}\p{M} .'\-]/gu;
 const NOT_EMAIL = /[^A-Za-z0-9@._%+\-]/g;
 
-type Kind = "name" | "email" | "phone" | "text" | "textarea" | "raw";
+type Kind = "name" | "email" | "phone" | "tin" | "text" | "textarea" | "raw";
 
 const TEXT_TYPES = new Set(["text", "search", "email", "tel", "url", ""]);
 
@@ -73,6 +74,8 @@ function clean(kind: Kind, value: string) {
             return noEmoji.replace(NOT_EMAIL, "");
         case "phone":
             return cleanPhone(noEmoji);
+        case "tin":
+            return noEmoji.replace(/[^\d-]/g, "");
         case "textarea":
         case "text":
             return noEmoji.replace(CODE_SYMBOLS, "");

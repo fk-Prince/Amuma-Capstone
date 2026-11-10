@@ -281,6 +281,7 @@ function blockSignKeys(event: KeyboardEvent) {
 // Typing rules (see plugins/input-guard.client.ts): which kind of field this is.
 const PERSON_NAME = /^(first|middle|last|full|given|family)\s*name$|^name$|^surname$|^suffix$/i;
 const PHONE_LABEL = /(phone|mobile|contact\s*(number|no\.?))/i;
+const TIN_LABEL = /^TIN\b|taxpayer identification/i;
 
 const fieldKind = computed(() => {
     if (props.kind) return props.kind;
@@ -293,6 +294,7 @@ const fieldKind = computed(() => {
     if (/e-?mail/i.test(label)) return "email";
     if (PERSON_NAME.test(label)) return "name";
     if (PHONE_LABEL.test(label)) return "phone";
+    if (TIN_LABEL.test(label)) return "tin";
     return "text";
 });
 
@@ -314,7 +316,7 @@ const effectiveMax = computed(() => {
 });
 
 const inputMode = computed(() => {
-    if (fieldKind.value === "phone") return "numeric";
+    if (fieldKind.value === "phone" || fieldKind.value === "tin") return "numeric";
     if (fieldKind.value === "email") return "email";
     return undefined;
 });
