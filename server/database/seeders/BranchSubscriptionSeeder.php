@@ -248,6 +248,7 @@ class BranchSubscriptionSeeder extends Seeder
                         'masked_card_number' => $existingPayment?->masked_card_number
                             ?? '400000XXXXXX' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
                         'price' => (float) $plan->price + $additionalBranches * (float) $plan->additional_branch_price,
+                        'vat_rate' => 0,
                         'status' => $isRejected
                             ? SubscriptionPayment::STATUS_REFUNDED
                             : SubscriptionPayment::STATUS_PAID,
