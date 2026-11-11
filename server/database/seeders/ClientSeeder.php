@@ -104,6 +104,41 @@ class ClientSeeder extends Seeder
                 'last_name' => 'Sestoso',
                 'phone_number' => '9171234515',
             ],
+            [
+                'email' => 'prince6@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Six',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234516',
+            ],
+            [
+                'email' => 'prince7@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Seven',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234517',
+            ],
+            [
+                'email' => 'prince8@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Eight',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234518',
+            ],
+            [
+                'email' => 'prince9@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Nine',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234519',
+            ],
+            [
+                'email' => 'prince10@gmail.com',
+                'first_name' => 'Prince',
+                'middle_name' => 'Ten',
+                'last_name' => 'Sestoso',
+                'phone_number' => '9171234520',
+            ],
         ];
 
         $location = Location::firstOrCreate(
