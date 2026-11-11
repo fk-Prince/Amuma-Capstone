@@ -239,6 +239,8 @@
                         v-model:errors="checkout.errors"
                         mode="new"
                         :name-prefix="checkout.agency.name"
+                        :same-as-location="checkout.agency.location"
+                        same-as-label="agency"
                     />
                 </div>
 

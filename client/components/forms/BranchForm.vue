@@ -373,18 +373,35 @@
                 :icon="isNew ? MapPin : undefined"
             >
                 <template #actions>
-                    <button
-                        type="button"
-                        @click="resetLocation"
-                        class="text-xs font-medium text-red-500 hover:text-red-600 whitespace-nowrap"
-                    >
-                        Reset
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button
+                            v-if="canCopyLocation"
+                            type="button"
+                            @click="useSameLocation"
+                            class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
+                            :class="
+                                sameAsCopied
+                                    ? 'border-primary bg-primary-50 text-primary dark:bg-primary-500/10 dark:text-primary-300'
+                                    : 'border-slate-200 text-slate-600 hover:border-primary hover:text-primary dark:border-white/10 dark:text-gray-300'
+                            "
+                        >
+                            <MapPin class="h-3.5 w-3.5" />
+                            {{ sameAsCopied ? `Same as ${sameAsLabel}` : `Use ${sameAsLabel} address` }}
+                        </button>
+                        <button
+                            type="button"
+                            @click="resetLocation"
+                            class="text-xs font-medium text-red-500 hover:text-red-600 whitespace-nowrap"
+                        >
+                            Reset
+                        </button>
+                    </div>
                 </template>
             </FormSectionHeader>
 
             <ClientOnly>
                 <LocationSelector
+                    :key="locationKey"
                     :initial-lat="branch.location?.latitude || undefined"
                     :initial-lng="branch.location?.longitude || undefined"
                     :initial-street="branch.location?.street || undefined"
@@ -440,9 +457,60 @@ const props = defineProps<{
     lockVerification?: boolean;
     hideImage?: boolean;
     namePrefix?: string;
+    sameAsLocation?: Record<string, any> | null;
+    sameAsLabel?: string;
 }>();
 
 const isNew = computed(() => props.mode === "new");
+
+const sameAsLabel = computed(() => props.sameAsLabel ?? "agency");
+const locationKey = ref(0);
+
+const canCopyLocation = computed(() => {
+    const source = props.sameAsLocation;
+    return Boolean(source && (source.street || source.city) && source.city && source.province);
+});
+
+const sameAsCopied = computed(() => {
+    const source = props.sameAsLocation;
+    const current = props.branch.location as Record<string, any> | undefined;
+    if (!source || !current) return false;
+
+    return ["street", "city", "province", "country", "latitude", "longitude"].every(
+        (key) => (source[key] ?? "") === (current[key] ?? ""),
+    );
+});
+
+function useSameLocation() {
+    const source = props.sameAsLocation;
+    if (!source) return;
+
+    emit("update:branch", {
+        ...props.branch,
+        location: {
+            street: source.street ?? "",
+            full_address: source.full_address ?? "",
+            city: source.city ?? "",
+            province: source.province ?? "",
+            country: source.country ?? "",
+            latitude: source.latitude ?? undefined,
+            longitude: source.longitude ?? undefined,
+        },
+    } as Branch);
+
+    if (props.errors) {
+        emit(
+            "update:errors",
+            Object.fromEntries(
+                Object.entries(props.errors).filter(
+                    ([key]) => key !== "location" && !key.startsWith("location."),
+                ),
+            ),
+        );
+    }
+
+    locationKey.value++;
+}
 
 const cardClass = computed(() =>
     isNew.value

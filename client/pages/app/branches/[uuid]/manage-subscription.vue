@@ -188,7 +188,7 @@
 
                 <div
                     v-if="agency"
-                    class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 dark:border-white/10"
+                    class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 py-3 dark:border-white/10"
                 >
                     <span
                         v-if="agency.email"
@@ -1132,9 +1132,16 @@ const agency = computed(() => {
             a.image instanceof File
                 ? URL.createObjectURL(a.image)
                 : (a.image ?? logo),
-        location: [a.location?.city, a.location?.province]
-            .filter(Boolean)
-            .join(", "),
+        location:
+            (a.location as { full_address?: string } | undefined)?.full_address ||
+            [
+                a.location?.street,
+                a.location?.city,
+                a.location?.province,
+                a.location?.country,
+            ]
+                .filter(Boolean)
+                .join(", "),
     };
 });
 
