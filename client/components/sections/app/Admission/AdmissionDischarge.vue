@@ -1084,13 +1084,14 @@
                             </button>
 
                             <button
+                                v-if="canForce && owesBalance"
                                 type="button"
-                                :disabled="loading || !canProceed"
-                                class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                @click="handleConfirm"
+                                :disabled="loading || !canForceNow"
+                                class="inline-flex items-center gap-2 rounded-lg border border-rose-300 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/40 dark:bg-transparent dark:text-rose-300 dark:hover:bg-rose-500/10"
+                                @click="handleConfirm(true)"
                             >
                                 <svg
-                                    v-if="loading"
+                                    v-if="loading && forcing"
                                     class="h-4 w-4 animate-spin"
                                     xmlns="http://www.w3.org/2000/svg"
                                     fill="none"
@@ -1113,11 +1114,50 @@
                                 </svg>
 
                                 {{
-                                    loading
+                                    loading && forcing
                                         ? "Discharging…"
-                                        : owesBalance
-                                          ? "Force discharge"
-                                          : "Discharge patient"
+                                        : "Force discharge"
+                                }}
+                            </button>
+
+                            <button
+                                type="button"
+                                :disabled="loading || !canDischargeNow"
+                                :title="
+                                    canDischarge
+                                        ? undefined
+                                        : 'You need permission to update admissions.'
+                                "
+                                class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                @click="handleConfirm(false)"
+                            >
+                                <svg
+                                    v-if="loading && !forcing"
+                                    class="h-4 w-4 animate-spin"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        stroke-width="4"
+                                    />
+
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    />
+                                </svg>
+
+                                {{
+                                    loading && !forcing
+                                        ? "Discharging…"
+                                        : "Discharge patient"
                                 }}
                             </button>
                         </div>
@@ -1129,22 +1169,22 @@
         <ConfirmDialog
             :open="confirming"
             :title="
-                owesBalance ? 'Force discharge patient?' : 'Discharge patient?'
+                forcing ? 'Force discharge patient?' : 'Discharge patient?'
             "
             :message="
-                owesBalance
+                forcing && owesBalance
                     ? `This patient still owes ${formatCurrency(overallBalance)}.`
                     : 'This ends the current admission and any future periods.'
             "
             :description="
-                !owesBalance
+                !(forcing && owesBalance)
                     ? 'This action cannot be undone.'
                     : giveBack > 0
                       ? `The branch keeps ${formatCurrency(keepValue)}. ${formatCurrency(giveBack)} goes back to the family as credit and the unpaid ${formatCurrency(forceShare?.write_off ?? 0)} is waived. Services and schedules are not affected. This action cannot be undone.`
                       : `${formatCurrency(forceShare?.write_off ?? 0)} of this admission's bill will be written off as bad debt. Services and schedules are not affected. This action cannot be undone.`
             "
             :confirm-label="
-                owesBalance ? 'Yes, force discharge' : 'Yes, discharge'
+                forcing ? 'Yes, force discharge' : 'Yes, discharge'
             "
             variant="danger"
             :loading="loading"
@@ -1388,11 +1428,15 @@ watch(
 
 const hasReason = computed(() => dischargeNote.value.trim().length > 0);
 
-const canProceed = computed(
-    () =>
-        hasReason.value &&
-        (owesBalance.value ? mayForce.value && !keepError.value : props.canDischarge),
+const canDischargeNow = computed(
+    () => hasReason.value && !owesBalance.value && props.canDischarge,
 );
+
+const canForceNow = computed(
+    () => hasReason.value && mayForce.value && !keepError.value,
+);
+
+const forcing = ref(false);
 
 const paidPercent = computed(() => {
     const billed = getNumber(forceShare.value?.billed);
@@ -1494,15 +1538,16 @@ function statusClasses(status?: string | null) {
     );
 }
 
-function handleConfirm() {
+function handleConfirm(force: boolean) {
     if (props.loading) {
         return;
     }
 
-    if (!canProceed.value) {
+    if (!(force ? canForceNow.value : canDischargeNow.value)) {
         return;
     }
 
+    forcing.value = force;
     confirming.value = true;
 }
 
@@ -1524,9 +1569,12 @@ function proceedWithDischarge() {
 
         note: dischargeNote.value.trim(),
 
-        force: owesBalance.value,
+        force: forcing.value,
 
-        keep: owesBalance.value && giveBack.value > 0 ? keepValue.value : null,
+        keep:
+            forcing.value && owesBalance.value && giveBack.value > 0
+                ? keepValue.value
+                : null,
     });
 }
 
