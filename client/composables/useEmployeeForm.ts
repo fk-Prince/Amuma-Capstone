@@ -458,7 +458,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
                 (doc) => doc.label.trim() && (doc.file || doc.url),
             ),
             achievements: employee.value.achievements.filter(
-                (item) => item.label.trim() && item.date && (item.file || item.url),
+                (item) => item.label.trim() && item.date,
             ),
             permissions: permissionPayload,
             type: "employee",

@@ -134,7 +134,9 @@ const todayStr = new Date().toISOString().split("T")[0];
                             >
                                 View
                             </a>
-                            <template v-else>Choose file</template>
+                            <template v-else>
+                                {{ disabled ? "No file" : "Choose file" }}
+                            </template>
                             <input
                                 type="file"
                                 accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
