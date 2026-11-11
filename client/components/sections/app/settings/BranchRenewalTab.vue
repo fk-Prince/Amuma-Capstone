@@ -926,23 +926,6 @@
                                         <span>Plan price</span>
                                         <span>₱{{ formatMoney(planPrice(plan)) }} / year</span>
                                     </span>
-                                    <span
-                                        v-if="additionalBranches"
-                                        class="flex justify-between gap-3"
-                                    >
-                                        <span>
-                                            + {{ additionalBranches }} additional
-                                            {{ additionalBranches === 1 ? "branch" : "branches" }}
-                                            × ₱{{ formatMoney(Number(plan.additional_branch_price) || 0) }}
-                                        </span>
-                                        <span>
-                                            ₱{{ formatMoney(additionalBranches * (Number(plan.additional_branch_price) || 0)) }} / year
-                                        </span>
-                                    </span>
-                                    <span class="flex justify-between gap-3 font-semibold">
-                                        <span>Yearly total</span>
-                                        <span>₱{{ formatMoney(planTotal(plan)) }} / year</span>
-                                    </span>
 
                                     <span class="mt-2 font-semibold text-slate-700 dark:text-white">
                                         Current plan · {{ currentPlan?.name }}
@@ -951,29 +934,12 @@
                                         <span>Plan price</span>
                                         <span>₱{{ formatMoney(planPrice(currentPlan)) }} / year</span>
                                     </span>
-                                    <span
-                                        v-if="additionalBranches"
-                                        class="flex justify-between gap-3"
-                                    >
-                                        <span>
-                                            + {{ additionalBranches }} additional
-                                            {{ additionalBranches === 1 ? "branch" : "branches" }}
-                                            × ₱{{ formatMoney(Number(currentPlan?.additional_branch_price) || 0) }}
-                                        </span>
-                                        <span>
-                                            ₱{{ formatMoney(additionalBranches * (Number(currentPlan?.additional_branch_price) || 0)) }} / year
-                                        </span>
-                                    </span>
-                                    <span class="flex justify-between gap-3 font-semibold">
-                                        <span>Yearly total</span>
-                                        <span>₱{{ formatMoney(planTotal(currentPlan)) }} / year</span>
-                                    </span>
 
                                     <span
                                         class="mt-2 flex justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/10"
                                     >
                                         <span>
-                                            Difference (₱{{ formatMoney(planTotal(plan)) }} − ₱{{ formatMoney(planTotal(currentPlan)) }})
+                                            Difference (₱{{ formatMoney(planPrice(plan)) }} − ₱{{ formatMoney(planPrice(currentPlan)) }})
                                             ÷ {{ TERM_MONTHS }} months
                                         </span>
                                         <span>₱{{ formatMoney(monthlyDifference(plan)) }} / month</span>
@@ -990,6 +956,13 @@
                                                 ? "Your paid year hasn't started yet, so all 12 months are counted."
                                                 : "The month you're in counts as a full month, even if only one day of it is used."
                                         }}
+                                    </span>
+                                    <span
+                                        v-if="additionalBranches"
+                                        class="text-slate-500 dark:text-gray-400"
+                                    >
+                                        Your additional branches keep their plans. Upgrade
+                                        each one from its Upgrade button whenever you want.
                                     </span>
                                 </span>
                             </template>
@@ -1664,11 +1637,13 @@ const selectablePlans = computed(() => {
     if (isCancelled.value) return plansOfType(plans.value, planType.value);
 
     if (awaitingPayment.value) {
-        return canPayTrial.value ? plansOfType(plans.value, currentType.value) : [];
+        return canPayTrial.value
+            ? [currentPlan.value, isOnHybrid.value ? null : hybridPlan.value].filter(Boolean)
+            : [];
     }
 
     if (isOnHybrid.value) {
-        return canRenew.value ? plansOfType(plans.value, currentType.value) : [];
+        return canRenew.value ? [currentPlan.value].filter(Boolean) : [];
     }
 
     return [
@@ -1729,6 +1704,10 @@ const additionalBranches = computed(
     () => Number(subscription.value?.plan?.additional_branches) || 0,
 );
 
+const additionalYearly = computed(
+    () => Number(subscription.value?.plan?.additional_yearly) || 0,
+);
+
 const deactivatedBranches = computed(
     () => Number(subscription.value?.plan?.deactivated_additional_branches) || 0,
 );
@@ -1743,7 +1722,7 @@ const yearlyCharge = computed(() => {
 
     const base = planPrice(plan);
     const additionalPrice = Number(plan.additional_branch_price) || 0;
-    const additionalTotal = additionalBranches.value * additionalPrice;
+    const additionalTotal = additionalYearly.value;
     return {
         planName: plan.name,
         base,
@@ -1754,12 +1733,10 @@ const yearlyCharge = computed(() => {
     };
 });
 
-const planTotal = (plan: any) =>
-    planPrice(plan) +
-    additionalBranches.value * (Number(plan?.additional_branch_price) || 0);
+const planTotal = (plan: any) => planPrice(plan) + additionalYearly.value;
 
 const monthlyDifference = (plan: any) =>
-    (planTotal(plan) - planTotal(currentPlan.value)) / TERM_MONTHS;
+    (planPrice(plan) - planPrice(currentPlan.value)) / TERM_MONTHS;
 
 const upgradeCost = (plan: any) =>
     Math.round(monthlyDifference(plan) * upgradeMonths.value * 100) / 100;

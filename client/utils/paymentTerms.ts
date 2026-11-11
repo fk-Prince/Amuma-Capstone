@@ -171,7 +171,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
                 },
                 {
                     type: "paragraph",
-                    text: "Plan upgrades. You may upgrade your plan (for example, from Homecare to Hybrid). An upgrade can start right away, charged for the months left in your current term, or start at your next renewal. A downgrade takes effect only at renewal.",
+                    text: "Plan upgrades. You may upgrade your plan (for example, from Homecare to Hybrid). An upgrade can start right away, charged for the months left in your current term, or start at your next renewal. Upgrading your plan doesn't change your additional branches; each keeps its plan until you upgrade it separately. Plans can't be downgraded; you keep your plan when you renew.",
                 },
                 {
                     type: "paragraph",

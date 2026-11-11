@@ -285,18 +285,37 @@ class Subscription extends Model
             ->get(['branch_subscription_id', 'plan_id', 'type']);
     }
 
-    public function billedAdditionalFollowingMainCount(): int
-    {
-        return $this->billedAdditionalLinks()->whereNull('plan_id')->count();
-    }
-
     public function renewalAmount(Plan $plan): float
     {
-        $additional = $this->billedAdditionalLinks()->sum(
-            fn(BranchSubscription $link) => (float) $this->planForLink($link->plan_id, $link->type, $plan)?->additional_branch_price
-        );
+        return round((float) $plan->price + $this->additionalYearly($plan), 2);
+    }
 
-        return round((float) $plan->price + $additional, 2);
+    public function additionalYearly(?Plan $main = null): float
+    {
+        $current = $this->effectivePlan();
+        $main ??= $current;
+
+        return round((float) $this->billedAdditionalLinks()->sum(
+            fn(BranchSubscription $link) => (float) $this->planForLink(
+                $link->plan_id ?? $current?->plan_id,
+                $link->type,
+                $main
+            )?->additional_branch_price
+        ), 2);
+    }
+
+    public function pinAdditionalBranches(): void
+    {
+        $current = $this->effectivePlan();
+
+        if (!$current) {
+            return;
+        }
+
+        $this->branchLinks()
+            ->where('type', BranchSubscription::TYPE_ADDITIONAL)
+            ->whereNull('plan_id')
+            ->update(['plan_id' => $current->plan_id]);
     }
 
     public function canAddAdditionalBranch(?string $planCode = null): bool
@@ -399,6 +418,7 @@ class Subscription extends Model
             'price' => (float) $this->plans?->price,
             'additional_branch_price' => (float) $this->plans?->additional_branch_price,
             'additional_branches' => $this->billedAdditionalBranchCount(),
+            'additional_yearly' => $this->additionalYearly(),
             'deactivated_additional_branches' => $this->additionalBranchCount() - $this->billedAdditionalBranchCount(),
             'included_used' => $this->branchLinks()
                 ->where('status', '!=', BranchSubscription::STATUS_REJECTED)

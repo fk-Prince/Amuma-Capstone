@@ -301,8 +301,13 @@ class SubscriptionService
         $changesPlan = $plan->plan_id !== $current->plan_id;
         $isUpgrade = $changesPlan && $plan->plan_code === Plan::CODE_HYBRID;
 
-        if ($changesPlan && !$isUpgrade && $current->plan_code !== Plan::CODE_HYBRID) {
-            throw new Exception(__('This plan can only be upgraded to Hybrid.'), 422);
+        if ($changesPlan && !$isUpgrade) {
+            throw new Exception(
+                $current->plan_code === Plan::CODE_HYBRID
+                    ? __('Hybrid can\'t be downgraded. Renew on Hybrid to keep your branches as they are.')
+                    : __('This plan can only be upgraded to Hybrid.'),
+                422
+            );
         }
 
         if ($isUpgrade && $subscription->canUpgrade()) {
@@ -312,8 +317,7 @@ class SubscriptionService
                 'total_amount' => Subscription::proratedUpgrade(
                     $current,
                     $plan,
-                    $subscription->upgradeMonths(),
-                    $subscription->billedAdditionalFollowingMainCount()
+                    $subscription->upgradeMonths()
                 ),
                 'endDate' => $subscription->end_date->toDateString(),
             ];
@@ -389,6 +393,17 @@ class SubscriptionService
 
         if (!$plan) {
             throw new Exception(__('Plan not found.'), 404);
+        }
+
+        $currentCode = $subscription->plans?->plan_code;
+
+        if ($plan->plan_code !== $currentCode && $plan->plan_code !== Plan::CODE_HYBRID) {
+            throw new Exception(
+                $currentCode === Plan::CODE_HYBRID
+                    ? __('Hybrid can\'t be downgraded. Pay for Hybrid to keep your branches as they are.')
+                    : __('This plan can only be upgraded to Hybrid.'),
+                422
+            );
         }
 
         $startNow = !$underReview && ($subscription->trialHasEnded() || $wantsStartNow);
@@ -522,6 +537,10 @@ class SubscriptionService
             };
 
             $paysTrial = in_array($action, [self::ACTION_ACTIVATE, self::ACTION_PREPAY], true);
+
+            if ((int) $paidPlanId !== (int) $subscription->plan_id) {
+                $subscription->pinAdditionalBranches();
+            }
 
             $subscription->update([
                 ...$changes,
