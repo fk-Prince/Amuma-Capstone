@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="bg-white rounded-3xl shadow-sm p-6 space-y-6 dark:bg-secondary">
         <div class="flex items-center justify-between">
             <div>
@@ -348,6 +348,7 @@ const send = async () => {
             agency_image: checkout.agency.image,
             agency_id_front: checkout.agency.id_front ?? "",
             agency_id_back: checkout.agency.id_back ?? "",
+            agency_id_selfie: checkout.agency.id_selfie ?? "",
             agency_document: checkout.agency.document ?? "",
         };
         await subscriptionService.validateSubscription(payload);

@@ -66,6 +66,7 @@ class BranchResubmitRequest extends FormRequest
             'agency_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'agency_image' => ['nullable', 'file', 'image', 'max:5120'],
             'agency_id_front' => ['nullable', 'file', 'image', 'max:5120'],
+            'agency_id_selfie' => ['nullable', 'file', 'image', 'max:5120'],
             'agency_id_back' => ['nullable', 'file', 'image', 'max:5120'],
             'agency_document' => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'],
         ];

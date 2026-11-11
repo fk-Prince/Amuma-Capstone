@@ -140,6 +140,12 @@
                     />
 
                     <DocumentLink
+                        v-if="fileUrls.id_selfie"
+                        :url="fileUrls.id_selfie"
+                        label="Photo holding ID"
+                    />
+
+                    <DocumentLink
                         v-if="fileUrls.document"
                         :url="fileUrls.document"
                         label="Agency Document"
@@ -153,190 +159,338 @@
 
             <div
                 v-else
-                class="-mt-2 grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
+                class="-mt-2 space-y-5"
             >
-                <div
-                    class="flex flex-col gap-2"
-                    data-field="agency_id_front agency_id_back"
-                >
+                <div class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
                     <div
-                        class="flex h-9 items-center justify-between gap-2"
+                        class="flex flex-col gap-2"
+                        data-field="agency_id_front agency_id_back"
                     >
-                        <label
-                            class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
-                        >
-                            <svg
-                                class="w-4 h-4 text-slate-400 dark:text-gray-500"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <rect
-                                    x="2"
-                                    y="5"
-                                    width="20"
-                                    height="14"
-                                    rx="2"
-                                />
-                                <circle cx="8" cy="12" r="2" />
-                                <path d="M14 10h4" />
-                                <path d="M14 14h4" />
-                            </svg>
-
-                            Valid ID
-                            <span class="text-red-500">*</span>
-                        </label>
-
-                        <div class="flex items-center gap-2">
-                            <button
-                                v-if="currentIdFile"
-                                type="button"
-                                @click="removeFile(idSide)"
-                                class="text-xs font-medium text-red-500 hover:text-red-600"
-                            >
-                                Remove
-                            </button>
-
-                            <div
-                                class="flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold dark:border-white/10 dark:bg-white/5"
-                            >
-                                <button
-                                    type="button"
-                                    @click="idSide = 'id_front'"
-                                    class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
-                                    :class="
-                                        idSide === 'id_front'
-                                            ? 'bg-primary text-white shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                    "
-                                >
-                                    Front
-                                </button>
-
-                                <button
-                                    type="button"
-                                    @click="idSide = 'id_back'"
-                                    class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
-                                    :class="
-                                        idSide === 'id_back'
-                                            ? 'bg-primary text-white shadow-sm'
-                                            : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                    "
-                                >
-                                    Back
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
-                        @click="idInput?.click()"
-                    >
-                        <img
-                            v-if="currentIdPreview"
-                            :src="currentIdPreview"
-                            class="h-full w-full object-cover"
-                        />
-
                         <div
-                            v-else
-                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
+                            class="flex h-9 items-center justify-between gap-2"
                         >
-                            <div
-                                class="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                            <label
+                                class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                             >
-                                +
-                            </div>
-
-                            <p class="text-sm font-medium">
-                                Upload ID
-                                {{ idSide === "id_front" ? "Front" : "Back" }}
-                            </p>
-
-                            <span class="text-xs"> PNG, JPG up to 5MB </span>
-                        </div>
-
-                        <div
-                            v-if="currentIdPreview"
-                            class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
-                        />
-
-                        <span
-                            v-if="idFrontPreview && idBackPreview"
-                            class="absolute bottom-2 right-2 flex gap-1"
-                        >
-                            <span
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="
-                                    idSide === 'id_front'
-                                        ? 'bg-primary'
-                                        : 'bg-white/70'
-                                "
-                            />
-
-                            <span
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="
-                                    idSide === 'id_back'
-                                        ? 'bg-primary'
-                                        : 'bg-white/70'
-                                "
-                            />
-                        </span>
-                    </div>
-
-                    <input
-                        ref="idInput"
-                        type="file"
-                        accept="image/*"
-                        class="hidden"
-                        @change="(e) => handleFile(e, idSide)"
-                    />
-
-                    <p
-                        v-for="message in idErrors"
-                        :key="message"
-                        class="text-xs text-red-500"
-                    >
-                        {{ message }}
-                    </p>
-
-                    <div>
-                        <button
-                            type="button"
-                            @click="showIdList = !showIdList"
-                            class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
-                        >
-                            {{ showIdList ? "Hide" : "Show" }} applicable IDs
-
-                            <svg
-                                class="w-3 h-3 transition-transform"
-                                :class="{ 'rotate-180': showIdList }"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                            >
-                                <path
-                                    d="M5 7.5L10 12.5L15 7.5"
+                                <svg
+                                    class="w-4 h-4 text-slate-400 dark:text-gray-500"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
                                     stroke="currentColor"
-                                    stroke-width="1.75"
+                                    stroke-width="1.8"
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                />
-                            </svg>
-                        </button>
+                                >
+                                    <rect
+                                        x="2"
+                                        y="5"
+                                        width="20"
+                                        height="14"
+                                        rx="2"
+                                    />
+                                    <circle cx="8" cy="12" r="2" />
+                                    <path d="M14 10h4" />
+                                    <path d="M14 14h4" />
+                                </svg>
 
-                        <ul
-                            v-if="showIdList"
-                            class="mt-2 space-y-1 rounded-md bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
+                                Valid ID
+                                <span class="text-red-500">*</span>
+                            </label>
+
+                            <div class="flex items-center gap-2">
+                                <button
+                                    v-if="currentIdFile"
+                                    type="button"
+                                    @click="removeFile(idSide)"
+                                    class="text-xs font-medium text-red-500 hover:text-red-600"
+                                >
+                                    Remove
+                                </button>
+
+                                <div
+                                    class="flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold dark:border-white/10 dark:bg-white/5"
+                                >
+                                    <button
+                                        type="button"
+                                        @click="idSide = 'id_front'"
+                                        class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
+                                        :class="
+                                            idSide === 'id_front'
+                                                ? 'bg-primary text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                        "
+                                    >
+                                        Front
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="idSide = 'id_back'"
+                                        class="min-w-[52px] rounded px-3 py-1.5 text-center transition"
+                                        :class="
+                                            idSide === 'id_back'
+                                                ? 'bg-primary text-white shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                        "
+                                    >
+                                        Back
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="relative h-52 w-full rounded-md bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden cursor-pointer hover:border-primary/40 hover:bg-slate-100 transition group dark:bg-secondary dark:border-white/10"
+                            @click="idInput?.click()"
                         >
-                            <li v-for="item in applicableIds" :key="item">
-                                {{ item }}
-                            </li>
-                        </ul>
+                            <img
+                                v-if="currentIdPreview"
+                                :src="currentIdPreview"
+                                class="h-full w-full object-cover"
+                            />
+
+                            <div
+                                v-else
+                                class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500"
+                            >
+                                <div
+                                    class="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center text-primary text-xl mb-2"
+                                >
+                                    +
+                                </div>
+
+                                <p class="text-sm font-medium">
+                                    Upload ID
+                                    {{ idSide === "id_front" ? "Front" : "Back" }}
+                                </p>
+
+                                <span class="text-xs"> PNG, JPG up to 5MB </span>
+                            </div>
+
+                            <div
+                                v-if="currentIdPreview"
+                                class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition"
+                            />
+
+                            <span
+                                v-if="idFrontPreview && idBackPreview"
+                                class="absolute bottom-2 right-2 flex gap-1"
+                            >
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full"
+                                    :class="
+                                        idSide === 'id_front'
+                                            ? 'bg-primary'
+                                            : 'bg-white/70'
+                                    "
+                                />
+
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full"
+                                    :class="
+                                        idSide === 'id_back'
+                                            ? 'bg-primary'
+                                            : 'bg-white/70'
+                                    "
+                                />
+                            </span>
+                        </div>
+
+                        <input
+                            ref="idInput"
+                            type="file"
+                            accept="image/*"
+                            class="hidden"
+                            @change="(e) => handleFile(e, idSide)"
+                        />
+
+                        <p
+                            v-for="message in idErrors"
+                            :key="message"
+                            class="text-xs text-red-500"
+                        >
+                            {{ message }}
+                        </p>
+
+                        <div>
+                            <button
+                                type="button"
+                                @click="showIdList = !showIdList"
+                                class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
+                            >
+                                {{ showIdList ? "Hide" : "Show" }} applicable IDs
+
+                                <svg
+                                    class="w-3 h-3 transition-transform"
+                                    :class="{ 'rotate-180': showIdList }"
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                >
+                                    <path
+                                        d="M5 7.5L10 12.5L15 7.5"
+                                        stroke="currentColor"
+                                        stroke-width="1.75"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </button>
+
+                            <ul
+                                v-if="showIdList"
+                                class="mt-2 space-y-1 rounded-md bg-primary/5 border border-primary/10 p-3 text-[11px] text-slate-600 list-disc list-inside dark:text-gray-300"
+                            >
+                                <li v-for="item in applicableIds" :key="item">
+                                    {{ item }}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2" data-field="agency_id_selfie">
+                        <div class="flex h-9 items-center justify-between gap-2">
+                            <label
+                                class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
+                            >
+                                <ScanFace class="h-4 w-4 text-slate-400 dark:text-gray-500" />
+                                Photo holding your ID
+                                <span class="text-red-500">*</span>
+                                <IdSelfieGuide />
+                            </label>
+
+                            <div class="flex items-center gap-3">
+                                <button
+                                    v-if="agency.id_selfie"
+                                    type="button"
+                                    @click="removeSelfie"
+                                    class="text-xs font-medium text-red-500 hover:text-red-600"
+                                >
+                                    Remove
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="showCamera = true"
+                                    class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:text-gray-300"
+                                >
+                                    <Camera class="h-3.5 w-3.5" />
+                                    Use camera
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            class="relative h-52 w-full cursor-pointer overflow-hidden rounded-md border-2 border-dashed border-slate-200 bg-slate-50 transition group hover:border-primary/40 hover:bg-slate-100 dark:border-white/10 dark:bg-secondary"
+                            @click="selfieInput?.click()"
+                        >
+                            <div
+                                v-if="selfiePreview"
+                                class="flex h-full w-full items-center justify-center"
+                            >
+                                <div class="relative max-h-full max-w-full">
+                                    <img
+                                        :src="selfiePreview"
+                                        class="block max-h-[12.75rem] max-w-full"
+                                    />
+
+                                    <div
+                                        v-for="(box, i) in scanBoxes"
+                                        :key="i"
+                                        class="pointer-events-none absolute rounded border-2"
+                                        :class="faceScan?.status === 'face' ? 'border-emerald-400' : 'border-amber-400'"
+                                        :style="{
+                                            left: `${box.x}%`,
+                                            top: `${box.y}%`,
+                                            width: `${box.width}%`,
+                                            height: `${box.height}%`,
+                                        }"
+                                    />
+                                </div>
+                            </div>
+
+                            <span
+                                v-if="selfiePreview && (faceChecking || faceScan)"
+                                class="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold shadow-sm"
+                                :class="
+                                    faceChecking
+                                        ? 'bg-white/90 text-slate-600 dark:bg-secondary/90 dark:text-gray-300'
+                                        : faceScan?.status === 'face'
+                                          ? 'bg-emerald-500 text-white'
+                                          : faceScan?.status === 'no_id'
+                                            ? 'bg-amber-500 text-white'
+                                            : 'bg-rose-500 text-white'
+                                "
+                            >
+                                <LoaderCircle v-if="faceChecking" class="h-3.5 w-3.5 animate-spin" />
+                                <Check v-else-if="faceScan?.status === 'face'" class="h-3.5 w-3.5" />
+                                {{
+                                    faceChecking
+                                        ? "Checking the photo…"
+                                        : faceScan?.status === "face"
+                                          ? "Face and ID found"
+                                          : faceScan?.status === "no_id"
+                                            ? "ID not found"
+                                            : faceScan?.status === "error"
+                                              ? "Couldn't check"
+                                              : "No face found"
+                                }}
+                            </span>
+
+                            <span
+                                v-if="selfiePreview && (faceMatching || matchChip)"
+                                class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold shadow-sm"
+                                :class="faceMatching ? 'bg-white/90 text-slate-600 dark:bg-secondary/90 dark:text-gray-300' : matchChip?.class"
+                            >
+                                <LoaderCircle v-if="faceMatching" class="h-3.5 w-3.5 animate-spin" />
+                                {{ faceMatching ? "Matching with ID…" : matchChip?.label }}
+                            </span>
+
+                            <div
+                                v-if="!selfiePreview"
+                                class="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-slate-400 dark:text-gray-500"
+                            >
+                                <div
+                                    class="mb-2 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-xl text-primary"
+                                >
+                                    +
+                                </div>
+                                <p class="text-sm font-medium">Upload Photo</p>
+                                <span class="text-xs">
+                                    Your face with the same ID held next to it.
+                                    PNG, JPG up to 5MB
+                                </span>
+                            </div>
+                        </div>
+
+                        <input
+                            ref="selfieInput"
+                            type="file"
+                            accept="image/png,image/jpeg"
+                            class="hidden"
+                            @change="handleSelfie"
+                        />
+
+                        <CameraCaptureModal
+                            :open="showCamera"
+                            title="Photo holding your ID"
+                            description="Take a photo of yourself holding the same ID you uploaded."
+                            @capture="setSelfie"
+                            @close="showCamera = false"
+                        />
+
+                        <p
+                            v-if="errors?.agency_id_selfie"
+                            class="text-xs text-red-500"
+                        >
+                            {{ errors.agency_id_selfie }}
+                        </p>
+
+                        <p
+                            v-else-if="faceScanMessage(faceScan)"
+                            class="text-xs text-amber-600 dark:text-amber-400"
+                        >
+                            {{ faceScanMessage(faceScan) }}
+                        </p>
                     </div>
                 </div>
 
@@ -563,14 +717,24 @@
 </template>
 
 <script setup lang="ts">
-import { Building2, Check, MapPin, ShieldCheck } from "lucide-vue-next";
+import { Building2, Camera, Check, LoaderCircle, MapPin, ScanFace, ShieldCheck } from "lucide-vue-next";
 import FormSectionHeader from "../ui/FormSectionHeader.vue";
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
 import AvatarCropModal from "../ui/AvatarCropModal.vue";
+import CameraCaptureModal from "../ui/CameraCaptureModal.vue";
+import IdSelfieGuide from "../ui/IdSelfieGuide.vue";
 import type { Agency } from "~/types/agency";
+import {
+    FACE_MATCH_PASS,
+    compareFaces,
+    faceScanMessage,
+    scanFace,
+    type FaceMatchResult,
+    type FaceScanResult,
+} from "~/utils/faceMatch";
 
 const props = defineProps<{
     agency: Agency | any;
@@ -596,6 +760,8 @@ const fileUrls = computed(() => ({
         typeof props.agency.id_front === "string" ? props.agency.id_front : "",
     id_back:
         typeof props.agency.id_back === "string" ? props.agency.id_back : "",
+    id_selfie:
+        typeof props.agency.id_selfie === "string" ? props.agency.id_selfie : "",
     document:
         typeof props.agency.document === "string" ? props.agency.document : "",
 }));
@@ -877,6 +1043,114 @@ const removeFile = (field: FileField) => {
         idInput.value.value = "";
     }
 };
+
+const selfieInput = ref<HTMLInputElement | null>(null);
+const selfiePreview = ref<string | null>(initialPreview(props.agency.id_selfie));
+const faceChecking = ref(false);
+const faceScan = computed<FaceScanResult | null>(() => props.agency.face_scan ?? null);
+let faceRun = 0;
+
+const scanBoxes = computed(() => {
+    const scan = faceScan.value;
+    if (scan?.status === "face") return [scan.box, scan.idBox];
+    if (scan?.status === "no_id") return [scan.box];
+    return [];
+});
+
+const showCamera = ref(false);
+
+const handleSelfie = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) setSelfie(file);
+};
+
+const setSelfie = (file: File) => {
+    emit("update:agency", { ...agency.value, id_selfie: file, face_scan: null });
+    selfiePreview.value = URL.createObjectURL(file);
+    clearError("agency_id_selfie");
+};
+
+const removeSelfie = () => {
+    faceRun++;
+    faceChecking.value = false;
+    emit("update:agency", { ...agency.value, id_selfie: null, face_scan: null });
+    selfiePreview.value = null;
+};
+
+async function runFaceScan() {
+    const selfie = props.agency.id_selfie;
+    const run = ++faceRun;
+
+    if (props.lockVerification || !selfie) {
+        faceChecking.value = false;
+        return;
+    }
+
+    faceChecking.value = true;
+    const result = await scanFace(selfie);
+    if (run !== faceRun) return;
+
+    faceChecking.value = false;
+    emit("update:agency", { ...agency.value, face_scan: result });
+
+    if (result.status === "face") clearError("agency_id_selfie");
+}
+
+watch(
+    () => props.agency.id_selfie,
+    () => runFaceScan(),
+);
+
+if (props.agency.id_selfie && !props.agency.face_scan) runFaceScan();
+
+const faceMatch = ref<FaceMatchResult | null>(null);
+const faceMatching = ref(false);
+let matchRun = 0;
+
+const isImage = (value: unknown) =>
+    typeof value === "string"
+        ? !value.toLowerCase().endsWith(".pdf")
+        : value instanceof File && value.type.startsWith("image/");
+
+const matchChip = computed(() => {
+    const match = faceMatch.value;
+    if (match?.status === "match") {
+        return {
+            label: `${match.score}% match`,
+            class: match.score >= FACE_MATCH_PASS ? "bg-emerald-500 text-white" : "bg-rose-500 text-white",
+        };
+    }
+    if (match?.status === "no_face" && match.which === "id") {
+        return { label: "No face on ID front", class: "bg-amber-500 text-white" };
+    }
+    return null;
+});
+
+async function runFaceMatch() {
+    const { id_front, id_selfie } = props.agency;
+    const run = ++matchRun;
+    faceMatch.value = null;
+
+    if (props.lockVerification || faceScan.value?.status !== "face" || !id_selfie || !id_front || !isImage(id_front)) {
+        faceMatching.value = false;
+        return;
+    }
+
+    faceMatching.value = true;
+    const result = await compareFaces(id_front, id_selfie);
+    if (run !== matchRun) return;
+
+    faceMatching.value = false;
+    faceMatch.value = result;
+}
+
+watch(
+    () => [props.agency.id_front, props.agency.id_selfie, faceScan.value?.status],
+    () => runFaceMatch(),
+    { immediate: true },
+);
 
 function clearError(field: string) {
     if (!props.errors) return;

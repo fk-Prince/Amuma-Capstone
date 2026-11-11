@@ -438,6 +438,7 @@ const agencyDocuments = computed(() =>
     [
         toDocument("ID (Front)", checkout.agency.id_front),
         toDocument("ID (Back)", checkout.agency.id_back),
+        toDocument("Photo holding ID", checkout.agency.id_selfie),
         toDocument("Agency Document", checkout.agency.document),
     ].filter((doc) => doc !== null),
 );

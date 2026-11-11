@@ -9,6 +9,8 @@ export interface Agency {
     location: Location;
     id_front?: string | File;
     id_back?: string | File;
+    id_selfie?: string | File | null;
+    face_scan?: import("~/utils/faceMatch").FaceScanResult | null;
     document?: string | File;
     status: "pending" | "verified" | "rejected";
     registered_by?: { name: string | null; email: string } | null;

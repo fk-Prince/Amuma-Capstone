@@ -98,7 +98,7 @@ const handleSave = async (): Promise<boolean> => {
     // Verification files are read-only here and never sent, so requiring them
     // would block every other edit.
     const result = agencySchema
-        .omit({ id_front: true, id_back: true, document: true })
+        .omit({ id_front: true, id_back: true, id_selfie: true, document: true })
         .safeParse(localValue.value);
 
     if (!result.success) {

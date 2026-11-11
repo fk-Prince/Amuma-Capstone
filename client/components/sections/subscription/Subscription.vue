@@ -467,10 +467,17 @@ const checkUnique = async (
     }
 };
 
+const selfieError = (): string | null => {
+    if (!isNewAgency.value) return null;
+    if (!checkout.agency.id_selfie) return "Photo holding your ID is required";
+    return null;
+};
+
 const validateAgency = async (): Promise<boolean> => {
     const result = agencySchema.safeParse(checkout.agency);
+    const selfie = selfieError();
 
-    if (!result.success) {
+    if (!result.success || selfie) {
         const errors: Record<string, string> = {};
         const keyMap: Record<string, string> = {
             name: "agency_name",
@@ -479,12 +486,14 @@ const validateAgency = async (): Promise<boolean> => {
             image: "agency_image",
             id_front: "agency_id_front",
             id_back: "agency_id_back",
+            id_selfie: "agency_id_selfie",
             document: "agency_document",
         };
-        result.error.issues.forEach((issue: any) => {
+        result.error?.issues.forEach((issue: any) => {
             const path = issue.path.join(".");
             errors[keyMap[path] ?? path] = issue.message;
         });
+        if (selfie) errors.agency_id_selfie = selfie;
         claimErrors(errors, 2);
         mergeStepErrors(isAgencyField, errors);
         return false;
@@ -667,6 +676,7 @@ const submitDetails = async () => {
             agency_image: checkout.agency.image,
             agency_id_front: checkout.agency.id_front ?? "",
             agency_id_back: checkout.agency.id_back ?? "",
+            agency_id_selfie: checkout.agency.id_selfie ?? "",
             agency_document: checkout.agency.document ?? "",
         };
         await subscriptionService.validateSubscription(payload);

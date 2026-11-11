@@ -32,7 +32,7 @@ class SubscriptionController extends Controller
     {
         $data = $request->validated();
 
-        foreach (['branch_image', 'agency_image', 'branch_document', 'agency_document', 'agency_id_back', 'agency_id_front'] as $file) {
+        foreach (['branch_image', 'agency_image', 'branch_document', 'agency_document', 'agency_id_back', 'agency_id_front', 'agency_id_selfie'] as $file) {
             if ($request->hasFile($file)) {
                 $data[$file] = $request->file($file);
             }
@@ -119,7 +119,7 @@ class SubscriptionController extends Controller
 
         $data = $request->validated();
         $data['agency_id'] = $branch->agency_id;
-        foreach (['branch_image', 'branch_document', 'agency_image', 'agency_id_front', 'agency_id_back', 'agency_document'] as $file) {
+        foreach (['branch_image', 'branch_document', 'agency_image', 'agency_id_front', 'agency_id_back', 'agency_id_selfie', 'agency_document'] as $file) {
             $data[$file] = $request->file($file);
         }
 

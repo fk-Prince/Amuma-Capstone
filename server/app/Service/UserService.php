@@ -171,6 +171,7 @@ class UserService
                         'registered_by' => $this->registrantSummary($branch->agencies->registrant),
                         'id_front' => $branch->agencies->id_front,
                         'id_back' => $branch->agencies->id_back,
+                        'id_selfie' => $branch->agencies->id_selfie,
                         'document' => $branch->agencies->document,
                     ],
 

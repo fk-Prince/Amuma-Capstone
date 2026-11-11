@@ -759,6 +759,7 @@ const agencyClientKeys: Record<string, string> = {
     image: "agency_image",
     id_front: "agency_id_front",
     id_back: "agency_id_back",
+    id_selfie: "agency_id_selfie",
     document: "agency_document",
 };
 
@@ -842,6 +843,7 @@ const agencyPayload = () => {
         agency_image: fileOrUndefined(agency.image),
         agency_id_front: fileOrUndefined(agency.id_front),
         agency_id_back: fileOrUndefined(agency.id_back),
+        agency_id_selfie: fileOrUndefined(agency.id_selfie),
         agency_document: fileOrUndefined(agency.document),
     };
 };

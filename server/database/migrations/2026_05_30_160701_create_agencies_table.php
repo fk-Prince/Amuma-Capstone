@@ -21,6 +21,7 @@ return new class extends Migration
             $table->foreignId('registered_by')->constrained('users', 'user_id');
             $table->string('description', 2000)->nullable();
             $table->string('id_front')->nullable();
+            $table->string('id_selfie')->nullable();
             $table->string('id_back')->nullable();
             $table->string('document')->nullable();
             $table->enum('status', ['pending', 'verified', 'rejected'])->default('pending');

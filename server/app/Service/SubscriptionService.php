@@ -897,6 +897,11 @@ class SubscriptionService
             $agencyIdBack = SupabaseService::store($payload['agency_id_back']);
         }
 
+        $agencyIdSelfie = null;
+        if (!empty($payload['agency_id_selfie']) && $payload['agency_id_selfie'] instanceof UploadedFile) {
+            $agencyIdSelfie = SupabaseService::store($payload['agency_id_selfie']);
+        }
+
         $agencyDocument = null;
         if (!empty($payload['agency_document']) && $payload['agency_document'] instanceof UploadedFile) {
             $agencyDocument = SupabaseService::store($payload['agency_document']);
@@ -918,6 +923,7 @@ class SubscriptionService
                 'image'          => is_array($agencyImage) ? ($agencyImage['url'] ?? null) : null,
                 'id_front'       => is_array($agencyIdFront) ? ($agencyIdFront['url'] ?? null) : null,
                 'id_back'        => is_array($agencyIdBack) ? ($agencyIdBack['url'] ?? null) : null,
+                'id_selfie'      => is_array($agencyIdSelfie) ? ($agencyIdSelfie['url'] ?? null) : null,
                 'document'       => is_array($agencyDocument) ? ($agencyDocument['url'] ?? null) : null,
                 'street'         => $payload['agency_street'] ?? null,
                 'city'           => $payload['agency_city'] ?? null,
@@ -1017,6 +1023,7 @@ class SubscriptionService
                         'image' => $agency['image'] ?? null,
                         'id_front' => $agency['id_front'] ?? null,
                         'id_back' => $agency['id_back'] ?? null,
+                        'id_selfie' => $agency['id_selfie'] ?? null,
                         'document' => $agency['document'] ?? null,
                     ]);
                 }
@@ -1857,7 +1864,7 @@ class SubscriptionService
                 'full_address' => $payload['agency_full_address'] ?? null,
                 'latitude' => $payload['agency_latitude'] ?? null,
                 'longitude' => $payload['agency_longitude'] ?? null,
-                ...collect(['image', 'id_front', 'id_back', 'document'])
+                ...collect(['image', 'id_front', 'id_back', 'id_selfie', 'document'])
                     ->mapWithKeys(fn($key) => [
                         $key => ($payload["agency_{$key}"] ?? null) instanceof UploadedFile
                             ? (SupabaseService::store($payload["agency_{$key}"])['url'] ?? null)
@@ -2136,6 +2143,7 @@ class SubscriptionService
             'image' => ($fields['image'] ?? null) ?: $agency->image,
             'id_front' => ($fields['id_front'] ?? null) ?: $agency->id_front,
             'id_back' => ($fields['id_back'] ?? null) ?: $agency->id_back,
+            'id_selfie' => ($fields['id_selfie'] ?? null) ?: $agency->id_selfie,
             'document' => ($fields['document'] ?? null) ?: $agency->document,
             'status' => Agency::STATUS_PENDING,
         ]);
@@ -2229,6 +2237,7 @@ class SubscriptionService
                 'image' => $branch->agencies->image,
                 'id_front' => $branch->agencies->id_front,
                 'id_back' => $branch->agencies->id_back,
+                'id_selfie' => $branch->agencies->id_selfie,
                 'document' => $branch->agencies->document,
                 'status' => $branch->agencies->status,
                 'location' => $branch->agencies->locations,

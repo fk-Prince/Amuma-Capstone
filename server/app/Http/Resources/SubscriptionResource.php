@@ -113,6 +113,7 @@ class SubscriptionResource extends JsonResource
                     'image' => $this->branch?->agencies?->image,
                     'id_front' => $this->branch?->agencies?->id_front,
                     'id_back' => $this->branch?->agencies?->id_back,
+                    'id_selfie' => $this->branch?->agencies?->id_selfie,
                     'document' => $this->branch?->agencies?->document,
                     'registered_by' => $this->branch?->agencies?->registrant?->email,
                     'owner_subscription_count' => $ownerSubscriptionCount,

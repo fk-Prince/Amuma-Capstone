@@ -14,7 +14,7 @@ class Agency extends Model
 
     public function auditExclude(): array
     {
-        return ['updated_at', 'id_front', 'id_back', 'document'];
+        return ['updated_at', 'id_front', 'id_back', 'id_selfie', 'document'];
     }
 
     protected $primaryKey = 'agency_id';
@@ -31,6 +31,7 @@ class Agency extends Model
         'email',
         'image',
         'id_front',
+        'id_selfie',
         'id_back',
         'document',
         'status',

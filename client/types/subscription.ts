@@ -81,6 +81,7 @@ export interface SubscriptionCardData {
             image?: string | null;
             id_front: string | null;
             id_back: string | null;
+            id_selfie?: string | null;
             document: string | null;
             registered_by?: string | null;
             owner_subscription_count?: number;
@@ -167,5 +168,6 @@ export interface SubscriptionRequest {
     agency_email?: string;
     agency_id_front?: string | File;
     agency_id_back?: string | File;
+    agency_id_selfie?: string | File;
     agency_document?: string | File;
 }

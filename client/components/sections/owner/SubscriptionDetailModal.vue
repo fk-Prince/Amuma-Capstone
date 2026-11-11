@@ -121,6 +121,7 @@
                                 v-if="
                                     agency.id_front ||
                                     agency.id_back ||
+                                    agency.id_selfie ||
                                     agency.document
                                 "
                                 class="mt-3 flex flex-wrap gap-1.5"
@@ -136,11 +137,29 @@
                                     label="ID Back"
                                 />
                                 <DocumentLink
+                                    v-if="agency.id_selfie"
+                                    :url="agency.id_selfie"
+                                    label="Photo holding ID"
+                                />
+                                <DocumentLink
                                     v-if="agency.document"
                                     :url="agency.document"
                                     label="Agency Document"
                                 />
                             </div>
+
+                            <span
+                                v-if="agency.id_front && agency.id_selfie"
+                                class="mt-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold"
+                                :class="faceBadge.class"
+                            >
+                                <LoaderCircle
+                                    v-if="faceChecking"
+                                    class="h-3.5 w-3.5 animate-spin"
+                                />
+                                <ScanFace v-else class="h-3.5 w-3.5" />
+                                {{ faceBadge.label }}
+                            </span>
 
                             <RejectionRecord
                                 v-if="agencyRejections > 0"
@@ -578,10 +597,12 @@ import {
     FileText,
     Hash,
     History,
+    LoaderCircle,
     Mail,
     MapPin,
     Phone,
     Plus,
+    ScanFace,
     Store,
     UserRound,
     X,
@@ -591,6 +612,7 @@ import LocationModal from "~/components/sections/owner/LocationModal.vue";
 import VerificationLogsModal from "~/components/sections/owner/VerificationLogsModal.vue";
 import SubscriptionPaymentsModal from "~/components/sections/owner/SubscriptionPaymentsModal.vue";
 import RejectionRecord from "~/components/sections/owner/RejectionRecord.vue";
+import { FACE_MATCH_PASS, compareFaces, type FaceMatchResult } from "~/utils/faceMatch";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
 import { formatDate } from "~/utils/time";
 import { planTypeBranchLimit, planTypeLabel } from "~/utils/planType";
@@ -662,6 +684,64 @@ const usedSlots = computed(() => coveredBranches.value.length);
 const openSlots = computed(() =>
     Math.max(0, branchLimit.value - usedSlots.value),
 );
+
+const faceChecking = ref(false);
+const faceResult = ref<FaceMatchResult | null>(null);
+let faceRun = 0;
+
+async function checkFaces() {
+    const { id_front, id_selfie } = agency.value;
+    const run = ++faceRun;
+    faceResult.value = null;
+
+    if (!props.open || !id_front || !id_selfie) {
+        faceChecking.value = false;
+        return;
+    }
+
+    faceChecking.value = true;
+    const result = await compareFaces(id_front, id_selfie);
+    if (run !== faceRun) return;
+
+    faceResult.value = result;
+    faceChecking.value = false;
+}
+
+watch(
+    () => [props.open, agency.value.id_front, agency.value.id_selfie],
+    () => {
+        checkFaces();
+    },
+    { immediate: true },
+);
+
+const faceBadge = computed(() => {
+    const result = faceResult.value;
+
+    if (faceChecking.value || !result) {
+        return {
+            label: "Checking face match…",
+            class: "border-slate-200 bg-slate-50 text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300",
+        };
+    }
+
+    if (result.status === "match") {
+        return result.score >= FACE_MATCH_PASS
+            ? {
+                  label: `Face match ${result.score}%`,
+                  class: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+              }
+            : {
+                  label: `Face match ${result.score}%, low`,
+                  class: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+              };
+    }
+
+    return {
+        label: result.status === "error" ? "Face match failed" : "No face found",
+        class: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+    };
+});
 
 const selectedUuid = ref<string | null>(null);
 

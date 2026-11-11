@@ -119,6 +119,8 @@ export const agencySchema = z.object({
 
     id_back: imageOrString("ID Back"),
 
+    id_selfie: imageOrString("Photo holding your ID").optional().nullable(),
+
     document: documentOrString("Document"),
 
     location: locationSchema,
