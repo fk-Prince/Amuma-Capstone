@@ -407,7 +407,7 @@ class PatientAccessRepository
             $relations['currentAdmission.caregiverShifts'] = fn($query) =>
             $query->where('is_active', true)
                 ->orderBy('start_time')
-                ->with('caregiver');
+                ->with('caregiver.users');
         }
 
         return $relations;

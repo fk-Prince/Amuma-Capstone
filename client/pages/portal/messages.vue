@@ -69,6 +69,46 @@ function staffFromQuery() {
         : undefined;
 }
 
+function contactFromQuery() {
+    const { patient, staff } = route.query;
+
+    return typeof patient === "string" && typeof staff === "string"
+        ? { patient_uuid: patient, staff_uuid: staff }
+        : null;
+}
+
+async function openContactFromQuery() {
+    const contact = contactFromQuery();
+
+    if (!contact) return;
+
+    try {
+        const res = await messageService.openContact(contact);
+        const summary: ConversationSummary | undefined = res?.conversation;
+
+        if (!summary) return;
+
+        upsertRow(summary);
+        activeId.value = summary.conversation_id;
+        messages.value = res?.messages ?? [];
+        mobileThreadOpen.value = true;
+    } catch (err: any) {
+        error(err?.message ?? "Unable to open this conversation.");
+    }
+}
+
+function upsertRow(summary: ConversationSummary) {
+    const existing = rows.value.find(
+        (r) => r.conversation_id === summary.conversation_id,
+    );
+
+    if (existing) {
+        Object.assign(existing, summary, { unread_count: 0 });
+    } else {
+        rows.value.unshift(summary);
+    }
+}
+
 async function load() {
     loadingList.value = true;
     loadingContacts.value = true;
@@ -84,7 +124,9 @@ async function load() {
             ? contactRes
             : (contactRes?.data ?? []);
 
-        if (rows.value.length) {
+        if (contactFromQuery()) {
+            await openContactFromQuery();
+        } else if (rows.value.length) {
             await openThread(
                 (staffFromQuery() ?? rows.value[0]!).conversation_id,
             );
@@ -176,15 +218,7 @@ async function startConversation(
 
         if (!summary) return;
 
-        const existing = rows.value.find(
-            (r) => r.conversation_id === summary.conversation_id,
-        );
-
-        if (existing) {
-            Object.assign(existing, summary);
-        } else {
-            rows.value.unshift(summary);
-        }
+        upsertRow(summary);
 
         member.conversation_id = summary.conversation_id;
         activeId.value = summary.conversation_id;
@@ -264,9 +298,13 @@ watch(
     async (staff) => {
         if (typeof staff !== "string") return;
 
-        const row = staffFromQuery();
+        if (contactFromQuery()) {
+            await openContactFromQuery();
+        } else {
+            const row = staffFromQuery();
 
-        if (row) await openThread(row.conversation_id);
+            if (row) await openThread(row.conversation_id);
+        }
 
         router.replace({ query: {} });
     },

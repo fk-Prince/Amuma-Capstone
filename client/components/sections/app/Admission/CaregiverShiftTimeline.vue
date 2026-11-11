@@ -78,6 +78,16 @@
                                         : "Unassign"
                                 }}
                             </button>
+
+                            <button
+                                v-else-if="messageable && shift.caregiver_uuid"
+                                type="button"
+                                class="mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-primary transition hover:underline dark:text-primary-300"
+                                @click="$emit('message', shift)"
+                            >
+                                <MessageCircle class="h-3 w-3" />
+                                Message
+                            </button>
                         </div>
                     </div>
 
@@ -141,7 +151,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Loader2, TriangleAlert } from "lucide-vue-next";
+import { Loader2, MessageCircle, TriangleAlert } from "lucide-vue-next";
 
 import type { CaregiverShift, FacilityCaregiver } from "~/types/caregiver-shift";
 import { formatPhone } from "~/utils/phone";
@@ -157,6 +167,7 @@ const props = withDefaults(
         dutyLimit?: number;
         busyId?: number | null;
         readonly?: boolean;
+        messageable?: boolean;
     }>(),
     {
         draftShift: null,
@@ -165,11 +176,13 @@ const props = withDefaults(
         dutyLimit: 12,
         busyId: null,
         readonly: false,
+        messageable: false,
     },
 );
 
 defineEmits<{
     (e: "unassign", shift: CaregiverShift): void;
+    (e: "message", shift: CaregiverShift): void;
 }>();
 
 const rows = computed(() =>

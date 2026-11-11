@@ -33,8 +33,10 @@ class MessageController extends Controller
         $user = AuthGuard::requireUser($request->user());
 
         $validated = $request->validate([
-            'patient_id' => ['required', 'integer'],
-            'employee_id' => ['required', 'integer'],
+            'patient_id' => ['required_without:patient_uuid', 'integer'],
+            'employee_id' => ['required_without:staff_uuid', 'integer'],
+            'patient_uuid' => ['required_without:patient_id', 'uuid'],
+            'staff_uuid' => ['required_without:employee_id', 'uuid'],
         ]);
 
         return $this->messageService->openContact($user, $validated);

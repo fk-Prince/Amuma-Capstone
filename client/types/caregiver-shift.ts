@@ -3,6 +3,7 @@ export interface CaregiverShift {
     caregiver_id: number;
     admission_id: number;
     caregiver_name: string | null;
+    caregiver_uuid?: string | null;
     avatar: string | null;
     phone_number: string | null;
     note: string | null;

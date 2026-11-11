@@ -14,6 +14,10 @@ class CaregiverShiftResource extends JsonResource
             'caregiver_id' => $this->caregiver_id,
             'admission_id' => $this->admission_id,
             'caregiver_name' => $this->caregiver?->full_name,
+            'caregiver_uuid' => $this->when(
+                (bool) $this->caregiver?->relationLoaded('users'),
+                fn() => $this->caregiver->users?->uuid,
+            ),
             'avatar' => $this->caregiver?->avatar,
             'phone_number' => $this->caregiver?->phone_number,
             'note' => $this->note,

@@ -23,10 +23,11 @@ class MessageService extends BaseService {
         return await this.request(`${this.resource}/contacts`, 'GET');
     }
 
-    async openContact(payload: {
-        patient_id: number;
-        employee_id: number;
-    }): Promise<any> {
+    async openContact(
+        payload:
+            | { patient_id: number; employee_id: number }
+            | { patient_uuid: string; staff_uuid: string },
+    ): Promise<any> {
         return await this.request(`${this.resource}/open-contact`, 'POST', payload);
     }
 

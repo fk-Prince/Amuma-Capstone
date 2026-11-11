@@ -938,6 +938,7 @@
         :patient-name="lovedOne.name"
         :shifts="caregiverShifts"
         @close="showCaregiverShiftsModal = false"
+        @message="messageCaregiver"
     />
 </template>
 
@@ -1236,6 +1237,17 @@ async function openCaregiverShifts() {
     ) {
         await loadCaregiverShifts(lovedOne.value.patient_id);
     }
+}
+
+function messageCaregiver(shift: CaregiverShift) {
+    if (!lovedOne.value.uuid || !shift.caregiver_uuid) return;
+
+    showCaregiverShiftsModal.value = false;
+
+    navigateTo({
+        path: "/portal/messages",
+        query: { patient: lovedOne.value.uuid, staff: shift.caregiver_uuid },
+    });
 }
 
 const latestDiagnosis = computed(() => lovedOne.value.diagnoses[0] ?? null);

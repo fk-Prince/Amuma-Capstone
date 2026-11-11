@@ -61,7 +61,13 @@
                         No caregiver is assigned to this resident yet.
                     </div>
 
-                    <CaregiverShiftTimeline v-else :shifts="shifts" readonly />
+                    <CaregiverShiftTimeline
+                        v-else
+                        :shifts="shifts"
+                        readonly
+                        messageable
+                        @message="emit('message', $event)"
+                    />
                 </div>
             </div>
         </div>
@@ -90,5 +96,6 @@ withDefaults(
 
 const emit = defineEmits<{
     (e: "close"): void;
+    (e: "message", shift: CaregiverShift): void;
 }>();
 </script>

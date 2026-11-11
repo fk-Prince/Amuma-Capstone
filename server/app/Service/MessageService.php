@@ -112,8 +112,12 @@ class MessageService
         }
 
         $access = PatientAccess::where('client_id', $client->client_id)
-            ->where('patient_id', $payload['patient_id'])
             ->where('have_access', true)
+            ->when(
+                isset($payload['patient_uuid']),
+                fn($q) => $q->whereHas('patient', fn($p) => $p->where('uuid', $payload['patient_uuid'])),
+                fn($q) => $q->where('patient_id', $payload['patient_id'])
+            )
             ->with('patient')
             ->first();
 
@@ -123,10 +127,14 @@ class MessageService
 
         $branchId = $access->patient->branch_id;
 
-        $role = EmployeeBranch::where('branch_id', $branchId)
-            ->where('employee_id', $payload['employee_id'])
+        $employeeId = isset($payload['staff_uuid'])
+            ? Employee::whereHas('users', fn($q) => $q->where('uuid', $payload['staff_uuid']))->value('employee_id')
+            : $payload['employee_id'];
+
+        $role = $employeeId ? EmployeeBranch::where('branch_id', $branchId)
+            ->where('employee_id', $employeeId)
             ->whereIn('status', self::MESSAGEABLE_STATUSES)
-            ->value('role_name');
+            ->value('role_name') : null;
 
         if (!$role) {
             throw new Exception('That staff member is not part of this branch.', 403);
@@ -140,7 +148,7 @@ class MessageService
             [
                 'branch_id' => $branchId,
                 'client_id' => $client->client_id,
-                'employee_one_id' => $payload['employee_id'],
+                'employee_one_id' => $employeeId,
             ],
             [
                 'type' => Conversation::TYPE_FAMILY,
