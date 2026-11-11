@@ -88,7 +88,7 @@ const fieldClass =
         <div class="fixed inset-0 z-[60] overflow-y-auto bg-gray-900/60 backdrop-blur-sm">
             <div class="flex min-h-full items-center justify-center p-4">
                 <form
-                    class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
+                    class="w-full max-w-lg overflow-hidden rounded-2xl md:max-w-4xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="terms-section-title"
@@ -126,7 +126,8 @@ const fieldClass =
                         </button>
                     </div>
 
-                    <div class="space-y-4 px-6 py-5">
+                    <div class="grid gap-x-8 gap-y-4 px-6 py-5 md:grid-cols-2">
+                    <div class="min-w-0 space-y-4">
                         <label class="flex flex-col gap-1.5">
                             <span class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                 Title <span class="text-rose-500">*</span>
@@ -154,14 +155,16 @@ const fieldClass =
                                 rows="6"
                                 maxlength="1500"
                                 placeholder="Write the policy the way you would explain it to a family."
-                                :class="[fieldClass, 'mt-1.5 resize-y py-2 leading-6']"
+                                :class="[fieldClass, 'mt-1.5 resize-y py-2 leading-6 md:min-h-[268px]']"
                                 @input="touched = true"
                             />
                             <p class="mt-1 text-right text-xs text-slate-400 dark:text-gray-500">
                                 {{ draft.body.length }}/1500
                             </p>
                         </div>
+                    </div>
 
+                    <div class="min-w-0 space-y-4">
                         <fieldset v-if="typed">
                             <legend class="text-sm font-medium text-slate-700 dark:text-gray-300">
                                 Show on <span class="text-rose-500">*</span>
@@ -216,6 +219,7 @@ const fieldClass =
                         <p v-if="touched && error" class="text-xs text-rose-500">
                             {{ error }}
                         </p>
+                    </div>
                     </div>
 
                     <div
