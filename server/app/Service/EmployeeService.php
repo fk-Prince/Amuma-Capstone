@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
+use App\Repository\ServiceRepository;
 use App\Repository\UserRepository;
 use App\Service\External\SupabaseService;
 use Carbon\Carbon;
@@ -33,17 +34,37 @@ class EmployeeService
     private UserRepository $userRepository;
     private LocationRepository $locationRepository;
     private AuditService $auditService;
+    private ServiceRepository $serviceRepository;
 
     public function __construct(
         EmployeeRepository $employeeRepository,
         UserRepository $userRepository,
         LocationRepository $locationRepository,
-        AuditService $auditService
+        AuditService $auditService,
+        ServiceRepository $serviceRepository
     ) {
         $this->auditService = $auditService;
         $this->employeeRepository = $employeeRepository;
         $this->userRepository = $userRepository;
         $this->locationRepository = $locationRepository;
+        $this->serviceRepository = $serviceRepository;
+    }
+
+    private function autoAssignServices(array $payload, ?EmployeeBranch $employeeBranch): void
+    {
+        if (
+            !$employeeBranch
+            || $employeeBranch->role_name !== RoleEnum::Nurse->value
+            || !filter_var($payload['auto_assign_services'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        ) {
+            return;
+        }
+
+        $this->serviceRepository->nurseServicesFor($employeeBranch)
+            ->each(fn($service) => $this->serviceRepository->assignIfNew(
+                $employeeBranch->employee_branch_id,
+                $service->service_id
+            ));
     }
 
     private function resolveDocuments(array $payload): array
@@ -315,13 +336,15 @@ class EmployeeService
                 throw new Exception('Failed to create employee.', 500);
             }
 
-            $employee->employeeBranch()->create([
+            $employeeBranch = $employee->employeeBranch()->create([
                 'role_name' => RoleEnum::slug($payload['role_name']),
                 'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
                 'branch_id' => $branch->branch_id,
                 'employee_id' => $employee->employee_id,
                 'status' => $payload['status'] ?? EmployeeBranch::STATUS_ACTIVE,
             ]);
+
+            $this->autoAssignServices($payload, $employeeBranch);
 
             //INSERT PERMISSION
             $this->savePermissions($employee, $branch->branch_id, $payload['permissions'] ?? []);
@@ -457,6 +480,8 @@ class EmployeeService
                 'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
                 'status' => $payload['status'] ?? $employeeBranch->status,
             ]);
+
+            $this->autoAssignServices($payload, $employeeBranch);
 
 
             // UPDATE PERMISSIONS

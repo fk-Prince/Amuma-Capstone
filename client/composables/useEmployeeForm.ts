@@ -237,6 +237,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             ...createEmployee(),
             ...current,
             status,
+            auto_assign_services: false,
             phone_number: current.phone_number ?? "",
             documents: (current.documents ?? []).map((doc) => ({
                 label: doc.label,
@@ -447,6 +448,9 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         return {
             ...details,
             assignment_type: hasAssignment ? details.assignment_type : null,
+            auto_assign_services:
+                roleSlug(details.role_name) === "nurse" &&
+                details.auto_assign_services,
             ...(isEditMode.value && password
                 ? { password, password_confirmation }
                 : {}),

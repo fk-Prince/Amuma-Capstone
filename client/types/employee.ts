@@ -90,6 +90,7 @@ export interface EmployeePayload {
     role_name: string;
     assignment_type: string;
     status: EmployeeStatus;
+    auto_assign_services: boolean;
     password?: string;
     password_confirmation?: string;
 }
@@ -130,6 +131,7 @@ export const createEmployee = (): EmployeePayload => ({
     role_name: "branch_manager",
     assignment_type: "both",
     status: "active",
+    auto_assign_services: true,
 });
 
 export const employeeSchema = z.object({

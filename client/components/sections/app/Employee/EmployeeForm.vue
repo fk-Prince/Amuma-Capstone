@@ -146,6 +146,10 @@ const isCaregiver = computed(
     () => String(employee.value.role_name ?? "").toLowerCase() === "caregiver",
 );
 
+const isNurse = computed(
+    () => String(employee.value.role_name ?? "").toLowerCase() === "nurse",
+);
+
 const assignmentItems = computed(() =>
     employeeAssignmentTypes.value.filter(
         (type) => type.value !== "both" || !isCaregiver.value,
@@ -768,6 +772,37 @@ init();
                                         {{ errors.assignment_type }}
                                     </p>
                                 </div>
+
+                                <div
+                                    v-if="isNurse && !isViewMode"
+                                    class="-mt-2 md:col-span-2"
+                                >
+                                    <label
+                                        class="inline-flex cursor-pointer select-none items-center gap-2.5 text-sm"
+                                        :class="
+                                            employee.auto_assign_services
+                                                ? 'text-gray-900 dark:text-white'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                        "
+                                    >
+                                        <input
+                                            id="auto-assign-services"
+                                            v-model="employee.auto_assign_services"
+                                            type="checkbox"
+                                            class="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary/30 dark:border-white/20 dark:bg-white/5"
+                                        />
+                                        <span class="font-medium">
+                                            Auto-assign to existing services
+                                        </span>
+                                    </label>
+                                    <p
+                                        class="mt-0.5 text-xs text-gray-400 dark:text-gray-500"
+                                    >
+                                        Assigns this nurse to every service that
+                                        has Nurse checked and matches the nurse
+                                        assignment.
+                                    </p>
+                                </div>
                             </div>
 
                             <div
@@ -785,8 +820,8 @@ init();
                                     >
                                         {{
                                             isActive
-                                                ? "This employee can sign in and be assigned work."
-                                                : "Inactive employees can still sign in, but can't access this branch. Their record is kept."
+                                                ? "This employee can sign in, use this branch and be assigned work."
+                                                : "Can't open this branch. Their record is kept."
                                         }}
                                     </p>
                                 </div>

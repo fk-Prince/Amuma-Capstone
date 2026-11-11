@@ -63,6 +63,22 @@ class ServiceRepository
         );
     }
 
+    public function nurseServicesFor(EmployeeBranch $nurse)
+    {
+        $types = match (strtolower((string) $nurse->assignment_type)) {
+            'online', 'homecare' => ['online', 'both'],
+            'facility', 'inhouse facility' => ['facility', 'both'],
+            default => ['online', 'facility', 'both'],
+        };
+
+        return Service::where('branch_id', $nurse->branch_id)
+            ->whereIn('type', $types)
+            ->where(fn($query) => $query
+                ->whereNull('performed_by')
+                ->orWhere('performed_by', '!=', Service::STAFF_ROLE_CAREGIVER))
+            ->get();
+    }
+
     public function assignIfNew(int $employeeBranchId, int $serviceId)
     {
         return EmployeeService::firstOrCreate(

@@ -61,6 +61,7 @@ class StoreEmployeeRequest extends FormRequest
                 )),
             ],
             'status' => ['nullable', 'in:active,inactive,on_leave'],
+            'auto_assign_services' => ['nullable', 'boolean'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
 

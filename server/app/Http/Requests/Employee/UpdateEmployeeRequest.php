@@ -60,6 +60,7 @@ class UpdateEmployeeRequest extends FormRequest
             'role_name' => ['required', 'string', 'max:255'],
             'assignment_type' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'in:active,inactive,on_leave'],
+            'auto_assign_services' => ['nullable', 'boolean'],
 
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
 

@@ -100,7 +100,7 @@ export type HomecarePlan = z.infer<typeof homecarePlanSchema>;
 export const homecarePlanForm = () => ({
     category: "Homecare",
     accommodation_type: "ADL",
-    price: 500,
+    price: null as number | null,
     billing_cycle: "HOURLY",
     is_active: true,
     description: "",
