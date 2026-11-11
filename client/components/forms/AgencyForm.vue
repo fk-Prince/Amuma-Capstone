@@ -469,7 +469,7 @@
                         <CameraCaptureModal
                             :open="cameraMode !== null"
                             :mode="cameraMode ?? 'selfie'"
-                            v-bind="cameraCopy"
+                            :file-name="cameraMode === 'id' ? idSide.replace('_', '-') : 'id-selfie'"
                             @capture="onCameraCapture"
                             @close="cameraMode = null"
                         />
@@ -1054,20 +1054,6 @@ const cameraMode = ref<"id" | "selfie" | null>(null);
 
 const cameraButtonClass =
     "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-primary hover:text-primary dark:border-white/10 dark:text-gray-400";
-
-const cameraCopy = computed(() =>
-    cameraMode.value === "id"
-        ? {
-              title: `Valid ID (${idSideLabel.value.toLowerCase()})`,
-              description: `Take a photo of the ${idSideLabel.value.toLowerCase()} of your ID.`,
-              fileName: idSide.value.replace("_", "-"),
-          }
-        : {
-              title: "Photo holding your ID",
-              description: "Take a photo of yourself holding the same ID you uploaded.",
-              fileName: "id-selfie",
-          },
-);
 
 const onCameraCapture = (file: File) => {
     if (cameraMode.value === "id") setFile(file, idSide.value);
