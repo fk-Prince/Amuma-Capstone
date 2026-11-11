@@ -380,9 +380,14 @@ class EmployeeService
                 $userChanges['password'] = Hash::make($payload['password']);
             }
 
-            $user = $this->userRepository->update($employee->user_id, $userChanges);
+            $this->userRepository->update($employee->user_id, $userChanges);
 
             if (!empty($payload['password'])) {
+                if ($actor->user_id === $employee->user_id) {
+                    $actor->forceFill(['password' => $userChanges['password']])
+                        ->syncOriginalAttribute('password');
+                }
+
                 $this->auditService->log(
                     AuditLog::ACTION_UPDATED,
                     'employees',
