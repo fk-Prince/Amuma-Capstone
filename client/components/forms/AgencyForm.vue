@@ -195,6 +195,7 @@
 
                                 Valid ID
                                 <span class="text-red-500">*</span>
+                                <PhotoGuide variant="id" />
                             </label>
 
                             <div class="flex items-center gap-2">
@@ -205,6 +206,16 @@
                                     class="text-xs font-medium text-red-500 hover:text-red-600"
                                 >
                                     Remove
+                                </button>
+
+                                <button
+                                    type="button"
+                                    :aria-label="`Take the ID ${idSideLabel.toLowerCase()} with the camera`"
+                                    :title="`Take the ID ${idSideLabel.toLowerCase()} with the camera`"
+                                    @click="cameraMode = 'id'"
+                                    :class="cameraButtonClass"
+                                >
+                                    <Camera class="h-4 w-4" />
                                 </button>
 
                                 <div
@@ -260,8 +271,7 @@
                                 </div>
 
                                 <p class="text-sm font-medium">
-                                    Upload ID
-                                    {{ idSide === "id_front" ? "Front" : "Back" }}
+                                    Upload ID {{ idSideLabel }}
                                 </p>
 
                                 <span class="text-xs"> PNG, JPG up to 5MB </span>
@@ -355,10 +365,10 @@
                                 <ScanFace class="h-4 w-4 text-slate-400 dark:text-gray-500" />
                                 Photo holding your ID
                                 <span class="text-red-500">*</span>
-                                <IdSelfieGuide />
+                                <PhotoGuide variant="selfie" />
                             </label>
 
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
                                 <button
                                     v-if="agency.id_selfie"
                                     type="button"
@@ -370,11 +380,12 @@
 
                                 <button
                                     type="button"
-                                    @click="showCamera = true"
-                                    class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-primary hover:text-primary dark:border-white/10 dark:text-gray-300"
+                                    aria-label="Take the photo with the camera"
+                                    title="Take the photo with the camera"
+                                    @click="cameraMode = 'selfie'"
+                                    :class="cameraButtonClass"
                                 >
-                                    <Camera class="h-3.5 w-3.5" />
-                                    Use camera
+                                    <Camera class="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
@@ -387,25 +398,10 @@
                                 v-if="selfiePreview"
                                 class="flex h-full w-full items-center justify-center"
                             >
-                                <div class="relative max-h-full max-w-full">
-                                    <img
-                                        :src="selfiePreview"
-                                        class="block max-h-[12.75rem] max-w-full"
-                                    />
-
-                                    <div
-                                        v-for="(box, i) in scanBoxes"
-                                        :key="i"
-                                        class="pointer-events-none absolute rounded border-2"
-                                        :class="faceScan?.status === 'face' ? 'border-emerald-400' : 'border-amber-400'"
-                                        :style="{
-                                            left: `${box.x}%`,
-                                            top: `${box.y}%`,
-                                            width: `${box.width}%`,
-                                            height: `${box.height}%`,
-                                        }"
-                                    />
-                                </div>
+                                <img
+                                    :src="selfiePreview"
+                                    class="block max-h-[12.75rem] max-w-full"
+                                />
                             </div>
 
                             <span
@@ -471,11 +467,11 @@
                         />
 
                         <CameraCaptureModal
-                            :open="showCamera"
-                            title="Photo holding your ID"
-                            description="Take a photo of yourself holding the same ID you uploaded."
-                            @capture="setSelfie"
-                            @close="showCamera = false"
+                            :open="cameraMode !== null"
+                            :mode="cameraMode ?? 'selfie'"
+                            v-bind="cameraCopy"
+                            @capture="onCameraCapture"
+                            @close="cameraMode = null"
                         />
 
                         <p
@@ -725,7 +721,7 @@ import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
 import AvatarCropModal from "../ui/AvatarCropModal.vue";
 import CameraCaptureModal from "../ui/CameraCaptureModal.vue";
-import IdSelfieGuide from "../ui/IdSelfieGuide.vue";
+import PhotoGuide from "../ui/PhotoGuide.vue";
 import type { Agency } from "~/types/agency";
 import {
     FACE_MATCH_PASS,
@@ -1012,8 +1008,10 @@ const removeAgencyImage = () => {
 
 const handleFile = (event: Event, field: FileField) => {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+    if (file) setFile(file, field);
+};
 
+const setFile = (file: File, field: FileField) => {
     emit("update:agency", { ...agency.value, [field]: file });
 
     const previewRef = previewRefs[field];
@@ -1050,14 +1048,31 @@ const faceChecking = ref(false);
 const faceScan = computed<FaceScanResult | null>(() => props.agency.face_scan ?? null);
 let faceRun = 0;
 
-const scanBoxes = computed(() => {
-    const scan = faceScan.value;
-    if (scan?.status === "face") return [scan.box, scan.idBox];
-    if (scan?.status === "no_id") return [scan.box];
-    return [];
-});
+const idSideLabel = computed(() => (idSide.value === "id_front" ? "Front" : "Back"));
 
-const showCamera = ref(false);
+const cameraMode = ref<"id" | "selfie" | null>(null);
+
+const cameraButtonClass =
+    "inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-primary hover:text-primary dark:border-white/10 dark:text-gray-400";
+
+const cameraCopy = computed(() =>
+    cameraMode.value === "id"
+        ? {
+              title: `Valid ID (${idSideLabel.value.toLowerCase()})`,
+              description: `Take a photo of the ${idSideLabel.value.toLowerCase()} of your ID.`,
+              fileName: idSide.value.replace("_", "-"),
+          }
+        : {
+              title: "Photo holding your ID",
+              description: "Take a photo of yourself holding the same ID you uploaded.",
+              fileName: "id-selfie",
+          },
+);
+
+const onCameraCapture = (file: File) => {
+    if (cameraMode.value === "id") setFile(file, idSide.value);
+    else setSelfie(file);
+};
 
 const handleSelfie = (event: Event) => {
     const input = event.target as HTMLInputElement;

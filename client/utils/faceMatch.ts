@@ -2,22 +2,15 @@ export const FACE_MATCH_PASS = 50;
 
 const MODEL_URL = "/models/face";
 
-export interface FaceBox {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
 export type FaceMatchResult =
-    | { status: "match"; score: number; idBox: FaceBox; selfieBox: FaceBox }
+    | { status: "match"; score: number }
     | { status: "no_face"; which: "id" | "selfie" }
     | { status: "error" };
 
 export type FaceScanResult =
-    | { status: "face"; box: FaceBox; idBox: FaceBox }
+    | { status: "face" }
     | { status: "no_face" }
-    | { status: "no_id"; box: FaceBox }
+    | { status: "no_id" }
     | { status: "error" };
 
 type FaceApi = typeof import("@vladmandic/face-api");
@@ -85,21 +78,6 @@ async function largestFace(faceapi: FaceApi, image: HTMLImageElement) {
     );
 }
 
-function relativeBox(
-    box: { x: number; y: number; width: number; height: number },
-    image: HTMLImageElement | HTMLVideoElement,
-): FaceBox {
-    const w = (image instanceof HTMLVideoElement ? image.videoWidth : image.naturalWidth) || 1;
-    const h = (image instanceof HTMLVideoElement ? image.videoHeight : image.naturalHeight) || 1;
-
-    return {
-        x: (box.x / w) * 100,
-        y: (box.y / h) * 100,
-        width: (box.width / w) * 100,
-        height: (box.height / h) * 100,
-    };
-}
-
 export async function scanFace(source: File | string | HTMLVideoElement): Promise<FaceScanResult> {
     try {
         const faceapi = await loadDetector();
@@ -111,12 +89,9 @@ export async function scanFace(source: File | string | HTMLVideoElement): Promis
         const [face, idPhoto] = faces;
 
         if (!face || face.score < 0.5) return { status: "no_face" };
+        if (!idPhoto || idPhoto.box.area > face.box.area * 0.5) return { status: "no_id" };
 
-        const box = relativeBox(face.box, image);
-
-        if (!idPhoto || idPhoto.box.area > face.box.area * 0.5) return { status: "no_id", box };
-
-        return { status: "face", box, idBox: relativeBox(idPhoto.box, image) };
+        return { status: "face" };
     } catch (err) {
         console.error("Face scan failed", err);
         return { status: "error" };
@@ -149,12 +124,7 @@ export async function compareFaces(
         const distance = faceapi.euclideanDistance(idFace.descriptor, selfieFace.descriptor);
         const score = Math.round(Math.max(0, Math.min(100, (1 - distance / 1.2) * 100)));
 
-        return {
-            status: "match",
-            score,
-            idBox: relativeBox(idFace.detection.box, idImage),
-            selfieBox: relativeBox(selfieFace.detection.box, selfieImage),
-        };
+        return { status: "match", score };
     } catch (err) {
         console.error("Face match failed", err);
         return { status: "error" };
