@@ -235,6 +235,17 @@ function isTaken(med: Medication, time: string, date: string) {
     return findSchedule(med, time, date)?.status === "taken";
 }
 
+function doseDateTime(date: string, time: string) {
+    const [year, month, day] = date.split("-").map(Number);
+    const [hour, minute] = time.split(":").map(Number);
+
+    if ([year, month, day, hour, minute].some((part) => Number.isNaN(part))) {
+        return null;
+    }
+
+    return new Date(year!, month! - 1, day!, hour!, minute!);
+}
+
 function isMissed(med: Medication, time: string, date: string) {
     const schedule = findSchedule(med, time, date);
     if (schedule?.status === "missed") {
@@ -243,26 +254,14 @@ function isMissed(med: Medication, time: string, date: string) {
     if (schedule?.status === "taken") {
         return false;
     }
-    const now = new Date();
-    const dateParts = date.split("-");
-    const timeParts = time.split(":");
-    const year = Number(dateParts[0]);
-    const month = Number(dateParts[1]);
-    const day = Number(dateParts[2]);
-    const hour = Number(timeParts[0]);
-    const minute = Number(timeParts[1]);
+    const due = doseDateTime(date, time);
+    return !!due && due < new Date();
+}
 
-    if (
-        Number.isNaN(year) ||
-        Number.isNaN(month) ||
-        Number.isNaN(day) ||
-        Number.isNaN(hour) ||
-        Number.isNaN(minute)
-    ) {
-        return false;
-    }
-    const doseDateTime = new Date(year, month - 1, day, hour, minute);
-    return doseDateTime < now;
+function isFuture(med: Medication, time: string, date: string) {
+    if (isTaken(med, time, date)) return false;
+    const due = doseDateTime(date, time);
+    return !!due && due > new Date();
 }
 
 function getEndDate(startDate: string, durationLabel: string) {
@@ -319,7 +318,8 @@ const confirmVariant = computed(() =>
 );
 
 function requestToggle(med: Medication, time: string, date: string) {
-    if (props.disabled || !isProvider.value) return;
+    if (props.disabled || !isProvider.value || isFuture(med, time, date))
+        return;
     pendingDose.value = { med, time, date };
 }
 
@@ -403,7 +403,11 @@ const emit = defineEmits<{
 
             <div
                 class="grid grid-cols-2 gap-3 border-t border-gray-50 px-5 py-4 dark:border-white/10"
-                :class="latestMedication.recorded_by ? 'sm:grid-cols-4' : 'sm:grid-cols-3'"
+                :class="
+                    latestMedication.recorded_by
+                        ? 'sm:grid-cols-4'
+                        : 'sm:grid-cols-3'
+                "
             >
                 <div>
                     <p
@@ -579,7 +583,11 @@ const emit = defineEmits<{
                             v-if="isProvider && !disabled"
                             extra-class="px-3 py-1.5 text-xs"
                             :disabled="!canRecordMedication"
-                            :tooltip="canRecordMedication ? '' : recordMedicationBlockedReason"
+                            :tooltip="
+                                canRecordMedication
+                                    ? ''
+                                    : recordMedicationBlockedReason
+                            "
                             @click="$emit('edit-medication', med)"
                         >
                             <Pencil class="h-3.5 w-3.5" />
@@ -768,17 +776,26 @@ const emit = defineEmits<{
                                                         day.fullDate,
                                                     )
                                                   ? 'border-rose-300 bg-rose-50 text-rose-500 dark:bg-rose-500/10 dark:text-rose-300'
-                                                  : 'border-gray-200 bg-white hover:border-emerald-400 hover:bg-emerald-50 dark:border-white/10 dark:bg-secondary dark:hover:bg-emerald-500/10'
+                                                  : 'border-gray-200 bg-white enabled:hover:border-emerald-400 enabled:hover:bg-emerald-50 dark:border-white/10 dark:bg-secondary dark:enabled:hover:bg-emerald-500/10'
                                         "
                                         :disabled="
                                             disabled ||
                                             !isProvider ||
-                                            !canRecordMedication
+                                            !canRecordMedication ||
+                                            isFuture(med, time, day.fullDate)
                                         "
                                         :title="
-                                            !isProvider || canRecordMedication
+                                            !isProvider
                                                 ? ''
-                                                : recordMedicationBlockedReason
+                                                : !canRecordMedication
+                                                  ? recordMedicationBlockedReason
+                                                  : isFuture(
+                                                          med,
+                                                          time,
+                                                          day.fullDate,
+                                                      )
+                                                    ? 'Not due yet'
+                                                    : ''
                                         "
                                         :aria-label="
                                             (isTaken(med, time, day.fullDate)
@@ -789,7 +806,13 @@ const emit = defineEmits<{
                                                         day.fullDate,
                                                     )
                                                   ? 'Missed dose: '
-                                                  : 'Mark as taken: ') +
+                                                  : isFuture(
+                                                          med,
+                                                          time,
+                                                          day.fullDate,
+                                                      )
+                                                    ? 'Not due yet: '
+                                                    : 'Mark as taken: ') +
                                             formatTime(time) +
                                             ' on day ' +
                                             day.date
@@ -852,7 +875,7 @@ const emit = defineEmits<{
                         <span
                             class="h-3 w-3 rounded-full border border-gray-200 bg-white dark:border-white/10 dark:bg-secondary"
                         ></span>
-                        Not yet given
+                        Not due yet
                     </div>
                 </div>
             </div>
@@ -873,7 +896,9 @@ const emit = defineEmits<{
             >
                 {{ otherMonthsCount }}
                 {{ scheduleKind.toLowerCase() }}
-                {{ otherMonthsCount === 1 ? "medication is" : "medications are" }}
+                {{
+                    otherMonthsCount === 1 ? "medication is" : "medications are"
+                }}
                 on file from other months. Use the arrows above to view
                 {{ otherMonthsCount === 1 ? "it" : "them" }}.
             </p>

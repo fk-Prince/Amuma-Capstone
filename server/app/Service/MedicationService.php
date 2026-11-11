@@ -7,6 +7,7 @@ use App\Models\MedicationSchedule;
 use App\Models\User;
 use App\Repository\PatientRepository;
 use App\Utils\MedicationPresenter;
+use Carbon\Carbon;
 use Exception;
 
 class MedicationService
@@ -148,6 +149,10 @@ class MedicationService
                 'data' => $removed ? MedicationPresenter::schedule($removed) : null,
                 'status' => $schedule['status'],
             ], 200);
+        }
+
+        if (Carbon::parse("{$schedule['date']} {$schedule['time']}")->isFuture()) {
+            throw new Exception('This dose is not due yet.', 422);
         }
 
         $existing = $medication->schedules()
