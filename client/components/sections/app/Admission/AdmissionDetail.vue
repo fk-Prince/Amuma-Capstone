@@ -138,13 +138,6 @@
                         "
                     >
                         Yearly
-
-                        <span
-                            v-if="activeDiscountPercent !== null"
-                            class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                        >
-                            Save {{ activeDiscountPercent }}%
-                        </span>
                     </span>
                 </div>
             </div>
@@ -722,32 +715,6 @@ function contractFor(type: string, interval: "monthly" | "yearly") {
 const hasYearlyOption = computed(() =>
     contracts.value.some((c) => c.billing_cycle.toUpperCase() === "YEARLY"),
 );
-
-const activeDiscountPercent = computed(() => {
-    const type =
-        activeType.value ??
-        accommodationTypes.value.find(
-            (t) =>
-                contractFor(t.value, "monthly") &&
-                contractFor(t.value, "yearly"),
-        )?.value;
-
-    if (!type) return null;
-
-    const monthly = contractFor(type, "monthly");
-    const yearly = contractFor(type, "yearly");
-
-    if (!monthly || !yearly) return null;
-
-    const monthlyAnnual = monthly.price * 12;
-    const yearlyPrice = yearly.price;
-
-    if (!monthlyAnnual) return null;
-
-    const percent = Math.round((1 - yearlyPrice / monthlyAnnual) * 100);
-
-    return percent > 0 ? percent : null;
-});
 
 function formatPrice(type: string | null | undefined) {
     if (!type) return "";

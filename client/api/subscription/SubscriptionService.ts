@@ -68,6 +68,10 @@ class SubscriptionService extends BaseService {
         return await this.request(this.resource + '-branch-reactivate-purchase', 'POST', payload);
     }
 
+    async upgradeBranchWithPurchase(payload: any): Promise<any> {
+        return await this.request(this.resource + '-branch-upgrade-purchase', 'POST', payload);
+    }
+
     async applyUpgrade(payload: any): Promise<any> {
         return await this.request(this.resource + '-apply-upgrade', 'POST', payload);
     }

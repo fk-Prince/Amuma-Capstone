@@ -4,13 +4,27 @@ import { Move, X, ZoomIn, ZoomOut } from "lucide-vue-next";
 import ActionButton from "./ActionButton.vue";
 
 const VIEWPORT = 256;
+const WIDE_VIEWPORT = 400;
 const OUTPUT = 512;
+const WIDE_OUTPUT = 1280;
 const MAX_ZOOM = 3;
 
-const props = defineProps<{
-    show: boolean;
-    file: File | null;
-}>();
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+        file: File | null;
+        shape?: "circle" | "square";
+        aspect?: number;
+        title?: string;
+        description?: string;
+    }>(),
+    {
+        shape: "circle",
+        aspect: 1,
+        title: "Adjust photo",
+        description: "Drag to reposition. Zoom to fit your face in the circle.",
+    },
+);
 
 const emit = defineEmits<{
     close: [];
@@ -46,10 +60,15 @@ watch(
 
 onBeforeUnmount(revoke);
 
+const viewW = computed(() => (props.aspect > 1 ? WIDE_VIEWPORT : VIEWPORT));
+const viewH = computed(() => Math.round(viewW.value / props.aspect));
+const outW = computed(() => (props.aspect > 1 ? WIDE_OUTPUT : OUTPUT));
+const outH = computed(() => Math.round(outW.value / props.aspect));
+
 const baseScale = computed(() => {
     const { width, height } = natural.value;
     if (!width || !height) return 1;
-    return Math.max(VIEWPORT / width, VIEWPORT / height);
+    return Math.max(viewW.value / width, viewH.value / height);
 });
 
 const displayed = computed(() => ({
@@ -58,8 +77,8 @@ const displayed = computed(() => ({
 }));
 
 function clamp(x: number, y: number) {
-    const maxX = Math.max(0, (displayed.value.width - VIEWPORT) / 2);
-    const maxY = Math.max(0, (displayed.value.height - VIEWPORT) / 2);
+    const maxX = Math.max(0, (displayed.value.width - viewW.value) / 2);
+    const maxY = Math.max(0, (displayed.value.height - viewH.value) / 2);
 
     return {
         x: Math.min(maxX, Math.max(-maxX, x)),
@@ -133,23 +152,23 @@ async function apply() {
         await img.decode();
 
         const canvas = document.createElement("canvas");
-        canvas.width = OUTPUT;
-        canvas.height = OUTPUT;
+        canvas.width = outW.value;
+        canvas.height = outH.value;
 
         const context = canvas.getContext("2d");
         if (!context) return;
 
-        const ratio = OUTPUT / VIEWPORT;
+        const ratio = outW.value / viewW.value;
         const width = displayed.value.width * ratio;
         const height = displayed.value.height * ratio;
-        const x = OUTPUT / 2 - width / 2 + offset.value.x * ratio;
-        const y = OUTPUT / 2 - height / 2 + offset.value.y * ratio;
+        const x = outW.value / 2 - width / 2 + offset.value.x * ratio;
+        const y = outH.value / 2 - height / 2 + offset.value.y * ratio;
 
         const type = props.file.type === "image/png" ? "image/png" : "image/jpeg";
 
         if (type === "image/jpeg") {
             context.fillStyle = "#ffffff";
-            context.fillRect(0, 0, OUTPUT, OUTPUT);
+            context.fillRect(0, 0, outW.value, outH.value);
         }
 
         context.drawImage(img, x, y, width, height);
@@ -178,20 +197,20 @@ async function apply() {
                 @click.self="emit('close')"
             >
                 <div
-                    class="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-secondary"
+                    class="w-full rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-secondary"
+                    :class="aspect > 1 ? 'max-w-lg' : 'max-w-sm'"
                 >
                     <div class="mb-5 flex items-start justify-between gap-3">
                         <div>
                             <h2
                                 class="text-lg font-semibold text-gray-900 dark:text-white"
                             >
-                                Adjust photo
+                                {{ title }}
                             </h2>
                             <p
                                 class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
                             >
-                                Drag to reposition. Zoom to fit your face in the
-                                circle.
+                                {{ description }}
                             </p>
                         </div>
 
@@ -206,9 +225,12 @@ async function apply() {
                     </div>
 
                     <div
-                        class="relative mx-auto touch-none select-none overflow-hidden rounded-full bg-slate-100 ring-4 ring-primary/20 dark:bg-white/5"
-                        :class="dragging ? 'cursor-grabbing' : 'cursor-grab'"
-                        :style="{ width: `${VIEWPORT}px`, height: `${VIEWPORT}px` }"
+                        class="relative mx-auto touch-none select-none overflow-hidden bg-slate-100 ring-4 ring-primary/20 dark:bg-white/5"
+                        :class="[
+                            shape === 'square' ? 'rounded-2xl' : 'rounded-full',
+                            dragging ? 'cursor-grabbing' : 'cursor-grab',
+                        ]"
+                        :style="{ width: `${viewW}px`, height: `${viewH}px` }"
                         @pointerdown="onPointerDown"
                         @pointermove="onPointerMove"
                         @pointerup="onPointerUp"

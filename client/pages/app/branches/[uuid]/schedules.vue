@@ -31,7 +31,7 @@
                         v-model:board="shiftBoard"
                         :loading="pending"
                         :mine-only="route.query.assignment === 'mine'"
-                        :can-assign="canAssign(Modules.Schedules)"
+                        :can-assign="canUpdate(Modules.Admissions)"
                         :search="
                             typeof route.query.search === 'string'
                                 ? route.query.search
@@ -323,7 +323,7 @@ import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import { X } from "lucide-vue-next";
 
-const { canAssign } = usePermissions();
+const { canUpdate } = usePermissions();
 
 const DESKTOP_WIDTH = 1024;
 

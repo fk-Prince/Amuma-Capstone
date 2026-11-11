@@ -39,6 +39,15 @@ export interface Branch {
     document?: File | string;
 }
 
+export interface BranchUpgradeOption {
+    plan_code: "A" | "B" | "C";
+    name: string;
+    additional_branch_price: number;
+    current_price: number;
+    months: number;
+    amount: number;
+}
+
 export interface BranchActivation {
     uuid: string;
     status: "pending" | "approved" | "rejected";
@@ -48,6 +57,7 @@ export interface BranchActivation {
     is_main: boolean;
     plan: { plan_code: "A" | "B" | "C"; name: string } | null;
     can_change_plan: boolean;
+    upgrade_options?: BranchUpgradeOption[];
     reactivation_amount: number;
     additional_branch_price: number;
     renews_on: string | null;

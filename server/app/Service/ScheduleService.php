@@ -786,8 +786,8 @@ class ScheduleService
             throw new Exception('Facility schedules use the room and bed, not a service location.', 422);
         }
 
-        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING], true)) {
-            throw new Exception("The location can't be changed after the visit has ended.", 422);
+        if (!in_array(strtolower((string) $schedule->status), [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING, Schedule::STATUS_MISSED], true)) {
+            throw new Exception("The location can't be changed once the visit is completed or cancelled.", 422);
         }
 
         $street = trim((string) ($payload['street'] ?? ''));

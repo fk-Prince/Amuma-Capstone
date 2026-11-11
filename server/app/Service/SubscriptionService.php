@@ -56,6 +56,7 @@ class SubscriptionService
     private const ACTION_ACTIVATE = 'activate';
     private const ACTION_PREPAY = 'prepay';
     private const ACTION_REACTIVATE_BRANCH = 'reactivate_branch';
+    private const ACTION_UPGRADE_BRANCH = 'upgrade_branch';
 
     private const PAYMENT_TYPE_ADDITIONAL_BRANCH = 'additional_branch';
 
@@ -1457,6 +1458,10 @@ class SubscriptionService
                     return $this->reactivateAfterPayment($payload, $meta, $subscription);
                 }
 
+                if (!empty($meta['branch']['upgrade_uuid'])) {
+                    return $this->upgradeBranchAfterPayment($payload, $meta, $subscription);
+                }
+
                 [$branch, $location] = $this->storeBranch(
                     $agency,
                     $subscription,
@@ -1671,6 +1676,93 @@ class SubscriptionService
             'status' => true,
             'message' => __('Payment received. :branch is active again.', ['branch' => $link->branch->name]),
             'data' => $link->activationSummary(),
+            'payment_reference_id' => $payload['external_id'] ?? null,
+        ]);
+    }
+
+    public function makeBranchUpgradePurchase(array $payload, User $user)
+    {
+        AuthGuard::requireUser($user);
+        set_time_limit(self::PAYMENT_TIME_LIMIT);
+
+        $link = $this->activationLink($payload);
+        $subscription = $link->subscription;
+        [$plan, $option] = $this->branchUpgrade($link, $payload['plan_code']);
+
+        $paymentMethod = PaymentFactory::make($payload['payment_method']);
+
+        return $paymentMethod->subscriptionInvoice($payload, $this->withoutTax([
+            'user' => $user,
+            'plan' => $plan,
+            'branch' => [
+                'name' => $link->branch->name,
+                'upgrade_uuid' => $link->branch->uuid,
+                'plan_code' => $plan->plan_code,
+            ],
+            'agency' => ['id' => $subscription->agency_id],
+            'subscription_uuid' => $subscription->uuid,
+            'method' => $payload['payment_method'] ?? null,
+            'action' => self::ACTION_UPGRADE_BRANCH,
+            'type' => self::PAYMENT_TYPE_ADDITIONAL_BRANCH,
+            'total_amount' => $option['amount'],
+            'endDate' => $subscription->end_date->toDateString(),
+            'status' => true,
+            'payment_type' => 'SUBSCRIPTION',
+        ]));
+    }
+
+    private function branchUpgrade(BranchSubscription $link, ?string $planCode): array
+    {
+        $option = collect($link->upgradeOptions())->firstWhere('plan_code', $planCode);
+        $plan = $option ? $link->subscription->planOfCode($planCode, $link->effectivePlan()) : null;
+
+        if (!$option || !$plan || $option['amount'] <= 0) {
+            throw new Exception(__('This branch can\'t be upgraded to that plan.'), 422);
+        }
+
+        return [$plan, $option];
+    }
+
+    private function upgradeBranchAfterPayment(array $payload, array $meta, Subscription $subscription)
+    {
+        $link = $this->subscriptionRepository->findAgencyBranchLink(
+            $subscription->agency_id,
+            $meta['branch']['upgrade_uuid'],
+            true
+        );
+
+        if (!$link || (int) $link->subscription_id !== (int) $subscription->subscription_id) {
+            throw new Exception(__('This branch can no longer be upgraded.'), 409);
+        }
+
+        [$plan] = $this->branchUpgrade($link, $meta['branch']['plan_code'] ?? null);
+
+        $link->update(['plan_id' => $subscription->linkPlanId($plan)]);
+
+        $subscription->payments()->create([
+            'subscription_id' => $subscription->subscription_id,
+            'user_id' => $meta['user']['user_id'] ?? null,
+            'plan_id' => $plan->plan_id,
+            'branch_id' => $link->branch_id,
+            'xendit_invoice_id' => $payload['xendit_invoice_id'] ?? null,
+            'payment_reference_id' => $payload['external_id'] ?? null,
+            'masked_card_number' => $payload['masked_card_number'] ?? null,
+            'price' => $meta['total_amount'],
+            'vat_rate' => 0,
+            'status' => SubscriptionPayment::STATUS_PAID,
+            'type' => SubscriptionPayment::TYPE_UPGRADE,
+            'payment_method' => $meta['payment_method'] ?? null,
+        ]);
+
+        $this->sandboxClient->provisionBranch($link->branch);
+
+        return response()->json([
+            'status' => true,
+            'message' => __('Payment received. :branch now uses :plan.', [
+                'branch' => $link->branch->name,
+                'plan' => $plan->name,
+            ]),
+            'data' => $link->fresh(['subscription', 'branch'])->activationSummary(),
             'payment_reference_id' => $payload['external_id'] ?? null,
         ]);
     }

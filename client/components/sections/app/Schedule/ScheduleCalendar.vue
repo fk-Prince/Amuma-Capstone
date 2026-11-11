@@ -961,7 +961,7 @@ function dayNumberClass(cell: Cell) {
 const isCancelled = (s: ScheduleItem) => s.status?.toLowerCase() === "cancelled";
 const isMissed = (s: ScheduleItem) => s.status?.toLowerCase() === "missed";
 const canBeAssigned = (s: ScheduleItem) =>
-    !["missed", "completed", "cancelled"].includes(s.status?.toLowerCase() ?? "");
+    !["completed", "cancelled"].includes(s.status?.toLowerCase() ?? "");
 
 const CHIP: Record<string, string> = {
     pending: "border-violet-400 bg-violet-50 text-violet-900 dark:bg-violet-500/15 dark:text-violet-100",

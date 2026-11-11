@@ -41,6 +41,14 @@ class EmployeeBranch extends Model
         return $this->hasMany(EmployeeService::class, 'employee_branch_id', 'employee_branch_id');
     }
 
+    public function scopeQualifiedFor($query, array $serviceIds)
+    {
+        return $query->whereHas(
+            'employeeServices',
+            fn($q) => $q->where('is_active', true)->whereIn('service_id', $serviceIds)
+        );
+    }
+
 
     public function caregiverShifts()
     {

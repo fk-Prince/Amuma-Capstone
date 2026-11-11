@@ -251,7 +251,7 @@
         </p>
 
         <div
-            v-if="!isRejected && (activationAction || activation?.can_change_plan)"
+            v-if="!isRejected && (activationAction || activation?.can_change_plan || canUpgrade)"
             class="mt-auto flex items-center gap-2 pt-4"
         >
             <ActionButton
@@ -264,6 +264,18 @@
                 @click="emit('change-plan', branch)"
             >
                 Change plan
+            </ActionButton>
+            <ActionButton
+                v-if="canUpgrade"
+                variant="outline"
+                class="flex-1"
+                extra-class="w-full !px-3 !text-xs"
+                :disabled="!canManage"
+                tooltip="You need permission to update Manage Subscription to upgrade a branch."
+                @click="emit('upgrade', branch)"
+            >
+                <ArrowUpCircle class="h-3.5 w-3.5" />
+                Upgrade
             </ActionButton>
             <ActionButton
                 v-if="activationAction"
@@ -321,7 +333,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Power, PowerOff, RotateCw, Star } from "lucide-vue-next";
+import { ArrowUpCircle, Power, PowerOff, RotateCw, Star } from "lucide-vue-next";
 import BranchReviewsModal from "./BranchReviewsModal.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { formatAmount } from "~/utils/currency";
@@ -366,10 +378,15 @@ const {
     note: activationNote,
 } = useBranchActivation(activation);
 
+const canUpgrade = computed(
+    () => !activation.value?.active_until && !!activation.value?.upgrade_options?.length,
+);
+
 const emit = defineEmits<{
     resubmit: [branch: BranchCardData];
     deactivate: [branch: BranchCardData];
     reactivate: [branch: BranchCardData];
     "change-plan": [branch: BranchCardData];
+    upgrade: [branch: BranchCardData];
 }>();
 </script>

@@ -144,6 +144,10 @@ const description = computed(() => {
             : "We couldn't complete your payment. Nothing was charged. You can go back and try again.";
     }
 
+    if (route.query.kind === "upgrade") {
+        return "Your branch is on its new plan now and renews at that plan's branch price.";
+    }
+
     return route.query.kind === "reactivate"
         ? "Your branch is active again and renews with your subscription."
         : "Your additional branch has been submitted. We'll notify you once it has been reviewed.";

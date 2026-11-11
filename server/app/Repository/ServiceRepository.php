@@ -63,12 +63,29 @@ class ServiceRepository
         );
     }
 
-    public function unassignEmployee(int $employeeBranchId, int $serviceId): int
+    public function assignIfNew(int $employeeBranchId, int $serviceId)
     {
-        return EmployeeService::where('employee_branch_id', $employeeBranchId)
-            ->where('service_id', $serviceId)
-            ->update([
+        return EmployeeService::firstOrCreate(
+            [
+                'employee_branch_id' => $employeeBranchId,
+                'service_id' => $serviceId,
+            ],
+            [
+                'is_active' => true,
+            ]
+        );
+    }
+
+    public function unassignEmployee(int $employeeBranchId, int $serviceId)
+    {
+        return EmployeeService::updateOrCreate(
+            [
+                'employee_branch_id' => $employeeBranchId,
+                'service_id' => $serviceId,
+            ],
+            [
                 'is_active' => false,
-            ]);
+            ]
+        );
     }
 }

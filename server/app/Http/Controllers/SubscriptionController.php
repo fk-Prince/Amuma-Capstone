@@ -254,6 +254,17 @@ class SubscriptionController extends Controller
         return $this->subscriptionService->makeReactivationPurchase($payload, $request->user());
     }
 
+    public function upgradeBranchWithPurchase(Request $request)
+    {
+        $payload = $this->activationPayload($request, [
+            'plan_code' => ['required', 'in:A,B,C'],
+            'payment_method' => ['required', 'in:CREDIT-CARD,GCASH'],
+            'token_id' => ['required_if:payment_method,CREDIT-CARD', 'nullable', 'string'],
+            'authentication_id' => ['required_if:payment_method,CREDIT-CARD', 'nullable', 'string'],
+        ]);
+        return $this->subscriptionService->makeBranchUpgradePurchase($payload, $request->user());
+    }
+
     private function activationPayload(Request $request, array $rules = []): array
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);

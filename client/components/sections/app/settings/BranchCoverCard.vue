@@ -106,6 +106,27 @@
         >
             {{ uploadError }}
         </p>
+
+        <AvatarCropModal
+            :show="!!coverSource"
+            :file="coverSource"
+            shape="square"
+            :aspect="3"
+            title="Adjust cover photo"
+            description="Drag to reposition. Zoom to fill the banner on your provider page."
+            @close="coverSource = null"
+            @apply="uploadCover"
+        />
+
+        <AvatarCropModal
+            :show="!!profileSource"
+            :file="profileSource"
+            shape="square"
+            title="Adjust logo"
+            description="Drag to reposition. Zoom to fit your logo in the square."
+            @close="profileSource = null"
+            @apply="applyProfile"
+        />
     </div>
 </template>
 
@@ -122,6 +143,7 @@ import { useToast } from "~/composables/useToast";
 import { Modules } from "~/types/module";
 import { getBranchImage } from "~/types/branch";
 import { branchSettingService } from "~/api/branch-setting/BranchSettingService";
+import AvatarCropModal from "~/components/ui/AvatarCropModal.vue";
 
 const props = defineProps<{
     uuid?: string;
@@ -144,6 +166,8 @@ const loading = ref(false);
 const uploading = ref(false);
 const uploadError = ref("");
 const fileInput = ref<HTMLInputElement | null>(null);
+const coverSource = ref<File | null>(null);
+const profileSource = ref<File | null>(null);
 
 const profileSrc = computed(() => getBranchImage(props.profile));
 
@@ -192,6 +216,13 @@ const handleFile = async (event: Event) => {
         return;
     }
 
+    coverSource.value = file;
+};
+
+const uploadCover = async (file: File) => {
+    coverSource.value = null;
+    if (!props.uuid) return;
+
     uploading.value = true;
 
     try {
@@ -236,6 +267,11 @@ const handleProfile = (event: Event) => {
         return;
     }
 
+    profileSource.value = file;
+};
+
+const applyProfile = (file: File) => {
+    profileSource.value = null;
     emit("select-profile", file);
 };
 

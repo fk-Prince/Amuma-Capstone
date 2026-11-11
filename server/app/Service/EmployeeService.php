@@ -82,7 +82,7 @@ class EmployeeService
                 $url = $achievement['url'];
             }
 
-            if (!$url) {
+            if (blank($achievement['label'] ?? null)) {
                 continue;
             }
 

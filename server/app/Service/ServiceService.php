@@ -9,6 +9,7 @@ use App\Models\Service;
 use App\Repository\ServiceRepository;
 use App\Models\User;
 use App\Repository\CategoryRepository;
+use App\Repository\EmployeeRepository;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,24 @@ class ServiceService
 {
 
 
-    public function __construct(private ServiceRepository $serviceRepository, private CategoryRepository $categoryRepository) {}
+    public function __construct(
+        private ServiceRepository $serviceRepository,
+        private CategoryRepository $categoryRepository,
+        private EmployeeRepository $employeeRepository,
+    ) {}
+
+    private function assignNurses(Service $service): void
+    {
+        if (!in_array(Service::STAFF_ROLE_NURSE, $service->allowedStaffRoles(), true)) {
+            return;
+        }
+
+        $this->employeeRepository->nursesForService($service)
+            ->each(fn(EmployeeBranch $nurse) => $this->serviceRepository->assignIfNew(
+                $nurse->employee_branch_id,
+                $service->service_id
+            ));
+    }
 
     public function createService(array $payload)
     {
@@ -60,6 +78,8 @@ class ServiceService
                 'performed_by'       => $payload['performed_by'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
+
+            $this->assignNurses($service);
 
             return response()->json([
                 'message' => 'Service created successfully',
@@ -106,6 +126,8 @@ class ServiceService
                 'performed_by'       => $payload['performed_by'] ?? 'both',
                 'type'             => $payload['type'],
             ]);
+
+            $this->assignNurses($existingService);
 
             return response()->json([
                 'message' => 'Service updated successfully',

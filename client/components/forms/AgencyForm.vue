@@ -549,6 +549,16 @@
                 {{ locationError }}
             </p>
         </div>
+
+        <AvatarCropModal
+            :show="!!logoSource"
+            :file="logoSource"
+            shape="square"
+            title="Adjust logo"
+            description="Drag to reposition. Zoom to fit your logo in the square."
+            @close="logoSource = null"
+            @apply="applyAgencyLogo"
+        />
     </div>
 </template>
 
@@ -559,6 +569,7 @@ import { ref, computed } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
+import AvatarCropModal from "../ui/AvatarCropModal.vue";
 import type { Agency } from "~/types/agency";
 
 const props = defineProps<{
@@ -807,9 +818,18 @@ const resetLocation = () => {
     }
 };
 
+const logoSource = ref<File | null>(null);
+
 const handleAgencyImage = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
     if (!file) return;
+    logoSource.value = file;
+};
+
+const applyAgencyLogo = (file: File) => {
+    logoSource.value = null;
     emit("update:agency", { ...agency.value, image: file });
     agencyImagePreview.value = URL.createObjectURL(file);
     clearError("agency_image");

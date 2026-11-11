@@ -20,7 +20,7 @@
                     </h1>
 
                     <p class="text-sm text-muted dark:text-gray-400">
-                        Manage your branch information, agency details, images,
+                        Manage your branch information, images,
                         operation settings and terms.
                     </p>
                 </div>
@@ -110,15 +110,6 @@
                         v-model:branch="branchStore.activeBranch"
                     />
 
-                    <BranchAgencyTab
-                        ref="tabRef"
-                        v-else-if="
-                            activeTab === 'agency' && branchStore.activeBranch
-                        "
-                        v-model:agency="branchStore.activeBranch.agency"
-                        :uuid="branchStore.activeBranch.uuid"
-                    />
-
                     <BranchImagesTab
                         v-else-if="
                             activeTab === 'images' && branchStore.activeBranch
@@ -151,7 +142,6 @@
 import { nextTick, ref, watch } from "vue";
 import {
     Building2,
-    Landmark,
     Image,
     Settings,
     Check,
@@ -163,7 +153,6 @@ import { useBranchStore } from "~/stores/branch";
 import { useBranchSetup } from "~/composables/useBranchSetup";
 
 import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.vue";
-import BranchAgencyTab from "~/components/sections/app/settings/BranchAgencyTab.vue";
 import BranchImagesTab from "~/components/sections/app/settings/BranchImagesTab.vue";
 import BranchOperationTab from "~/components/sections/app/settings/BranchOperationTab.vue";
 import BranchTermsTab from "~/components/sections/app/settings/BranchTermsTab.vue";
@@ -180,11 +169,6 @@ useHead({
 const branchStore = useBranchStore();
 
 const tabs = [
-    {
-        label: "Agency Information",
-        value: "agency",
-        icon: Landmark,
-    },
     {
         label: "Branch Information",
         value: "branch",
@@ -212,7 +196,7 @@ const route = useRoute();
 const tabFromQuery = () =>
     tabs.some((tab) => tab.value === route.query.tab)
         ? String(route.query.tab)
-        : "agency";
+        : "branch";
 
 const activeTab = ref(tabFromQuery());
 

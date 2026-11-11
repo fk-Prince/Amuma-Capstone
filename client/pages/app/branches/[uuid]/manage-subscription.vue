@@ -146,6 +146,17 @@
 
                     <div class="flex shrink-0 flex-wrap items-center gap-3">
                         <ActionButton
+                            v-if="agency && !isSandbox"
+                            extra-class="!rounded-xl !px-5 !py-2.5"
+                            :disabled="!canResubmit"
+                            tooltip="You need permission to update Manage Subscription to edit the agency information."
+                            @click="showAgencyEdit = true"
+                        >
+                            <Pencil class="h-4 w-4" />
+                            <span>Edit Agency</span>
+                        </ActionButton>
+
+                        <ActionButton
                             extra-class="!rounded-xl !px-5 !py-2.5"
                             @click="openSupport()"
                         >
@@ -355,6 +366,7 @@
                         @deactivate="deactivateTarget = $event"
                         @reactivate="reactivateTarget = $event"
                         @change-plan="changePlanTarget = $event"
+                        @upgrade="upgradeTarget = $event"
                     />
                 </div>
 
@@ -373,6 +385,7 @@
                         @deactivate="deactivateTarget = $event"
                         @reactivate="reactivateTarget = $event"
                         @change-plan="changePlanTarget = $event"
+                        @upgrade="upgradeTarget = $event"
                     />
                 </div>
 
@@ -437,6 +450,14 @@
             @resubmitted="onBranchResubmitted"
         />
 
+        <EditAgencyModal
+            v-if="showAgencyEdit && branchStore.activeBranch"
+            v-model:agency="branchStore.activeBranch.agency"
+            :uuid="route.params.uuid as string"
+            @close="showAgencyEdit = false"
+            @saved="showAgencyEdit = false"
+        />
+
         <DeactivateBranchModal
             v-if="deactivateTarget?.activation"
             :branch-name="deactivateTarget.name"
@@ -453,6 +474,15 @@
             :activation="reactivateTarget.activation"
             @close="reactivateTarget = null"
             @reactivated="onReactivated"
+        />
+
+        <UpgradeBranchPlanModal
+            v-if="upgradeTarget?.activation?.upgrade_options?.length"
+            :branch-name="upgradeTarget.name"
+            :branch-uuid="route.params.uuid as string"
+            :activation="upgradeTarget.activation"
+            @close="upgradeTarget = null"
+            @upgraded="onBranchUpgraded"
         />
 
         <ChangeBranchPlanModal
@@ -488,6 +518,8 @@ import ResubmitBranchModal from "~/components/sections/app/branches/ResubmitBran
 import RenewalModal from "~/components/sections/app/branches/RenewalModal.vue";
 import DeactivateBranchModal from "~/components/sections/app/branches/DeactivateBranchModal.vue";
 import ReactivateBranchModal from "~/components/sections/app/branches/ReactivateBranchModal.vue";
+import UpgradeBranchPlanModal from "~/components/sections/app/branches/UpgradeBranchPlanModal.vue";
+import EditAgencyModal from "~/components/sections/app/settings/EditAgencyModal.vue";
 import ChangeBranchPlanModal from "~/components/sections/app/branches/ChangeBranchPlanModal.vue";
 import type { BranchActivation } from "~/types/branch";
 import { subscriptionService } from "~/api/subscription/SubscriptionService";
@@ -504,6 +536,7 @@ import {
     List,
     Eye,
     LifeBuoy,
+    Pencil,
     RotateCw,
 } from "lucide-vue-next";
 import BranchRow from "~/components/sections/app/branches/BranchRow.vue";
@@ -541,6 +574,7 @@ const { isSandbox } = useSandbox();
 const { openSupport } = useSupportCenter();
 
 const canResubmit = computed(() => canUpdate(Modules.ManageSubscription));
+const showAgencyEdit = ref(false);
 const canAddBranch = computed(() => canCreate(Modules.ManageSubscription));
 
 const resubmitTarget = ref<{
@@ -802,6 +836,27 @@ onMounted(() => {
 const deactivateTarget = ref<Branch | null>(null);
 const reactivateTarget = ref<Branch | null>(null);
 const changePlanTarget = ref<Branch | null>(null);
+const upgradeTarget = ref<Branch | null>(null);
+
+const onBranchUpgraded = (result: any) => {
+    const target = upgradeTarget.value;
+    upgradeTarget.value = null;
+
+    const activation: BranchActivation | null = result?.data ?? null;
+    if (!target || !activation) return;
+
+    branches.value = branches.value.map((b) =>
+        b.uuid === target.uuid
+            ? { ...b, activation, plan: activation.plan ?? b.plan }
+            : b,
+    );
+
+    fetchRenewal();
+
+    if (target.uuid === route.params.uuid) {
+        branchStore.refreshBranch().catch(() => {});
+    }
+};
 
 const onPlanChanged = (result: any) => {
     const target = changePlanTarget.value;

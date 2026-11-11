@@ -46,7 +46,7 @@ class CaregiverShiftController extends Controller
     public function store(CaregiverShiftRequest $request)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, [ModuleEnum::Admissions, ModuleEnum::Schedules], PermissionAction::Update);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         return $this->caregiverShifts->assign($request->all());
     }
@@ -54,7 +54,7 @@ class CaregiverShiftController extends Controller
     public function update(CaregiverShiftRequest $request, string $id)
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
-        AuthGuard::requireModule($request->user(), $branch->branch_id, [ModuleEnum::Admissions, ModuleEnum::Schedules], PermissionAction::Update);
+        AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Admissions, PermissionAction::Update);
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['id' => $id]);
         return $this->caregiverShifts->update($request->all());

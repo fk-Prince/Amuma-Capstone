@@ -57,6 +57,12 @@
                                     will be responsible for processing requests
                                     related to this service.
                                 </p>
+                                <p
+                                    v-if="nursesIncluded"
+                                    class="mt-1 text-xs font-medium text-primary"
+                                >
+                                    Every nurse is assigned by default. Unselect a nurse to stop them from performing this service.
+                                </p>
                             </div>
                         </div>
 
@@ -535,6 +541,7 @@ const unassignedCount = computed(
 );
 
 const staffRole = computed(() => props.service?.performed_by ?? "both");
+const nursesIncluded = computed(() => staffRole.value !== "caregiver");
 
 const staffTitle = computed(() =>
     staffRole.value === "nurse"

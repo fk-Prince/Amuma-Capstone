@@ -223,10 +223,7 @@ class EmployeeRepository
             ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $scheduleServiceIds, $allowedRoles) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
-                    ->whereHas('employeeServices', function ($q) use ($scheduleServiceIds) {
-                        $q->where('is_active', true)
-                            ->whereIn('service_id', $scheduleServiceIds);
-                    });
+                    ->qualifiedFor($scheduleServiceIds);
             }])
             ->get();
 
@@ -304,6 +301,16 @@ class EmployeeRepository
 
             default => [],
         };
+    }
+
+    public function nursesForService(Service $service)
+    {
+        return EmployeeBranch::query()
+            ->where('branch_id', $service->branch_id)
+            ->where('role_name', Service::STAFF_ROLE_NURSE)
+            ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+            ->whereIn('assignment_type', $this->eligibleAssignmentTypes((string) $service->type))
+            ->get();
     }
 
     public function getEmployeeServices(string $branchId, array $payload)

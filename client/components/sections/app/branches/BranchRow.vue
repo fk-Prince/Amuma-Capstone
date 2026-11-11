@@ -62,6 +62,18 @@
             </ActionButton>
 
             <ActionButton
+                v-if="!isRejected && !deactivated && activation?.upgrade_options?.length"
+                variant="outline"
+                extra-class="!px-3 !py-1.5 !text-xs"
+                :disabled="!canManage"
+                tooltip="You need permission to update Manage Subscription to upgrade a branch."
+                @click="emit('upgrade', branch)"
+            >
+                <ArrowUpCircle class="h-3.5 w-3.5" />
+                Upgrade
+            </ActionButton>
+
+            <ActionButton
                 v-if="isRejected"
                 variant="primary"
                 extra-class="!px-3 !py-1.5 !text-xs"
@@ -107,7 +119,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Power, PowerOff, RotateCw } from "lucide-vue-next";
+import { ArrowUpCircle, Power, PowerOff, RotateCw } from "lucide-vue-next";
 import ActionButton from "~/components/ui/ActionButton.vue";
 import { formatAmount } from "~/utils/currency";
 import { useBranchActivation } from "~/composables/useBranchActivation";
@@ -128,6 +140,7 @@ const emit = defineEmits<{
     deactivate: [branch: BranchCardData];
     reactivate: [branch: BranchCardData];
     "change-plan": [branch: BranchCardData];
+    upgrade: [branch: BranchCardData];
 }>();
 
 const isRejected = computed(() => props.branch.review_status === "rejected");

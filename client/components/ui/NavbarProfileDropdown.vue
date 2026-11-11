@@ -61,10 +61,11 @@
 
                     <div
                         v-if="!avatarOnly"
-                        class="hidden md:flex flex-col items-start leading-tight"
+                        class="hidden min-w-0 max-w-[10rem] md:flex flex-col items-start leading-tight"
                     >
                         <span
-                            class="text-sm font-medium transition-colors duration-300"
+                            class="block w-full truncate whitespace-nowrap text-left text-sm font-medium transition-colors duration-300"
+                            :title="`${user.first_name} ${user.last_name}`"
                             :class="[
                                 scrolled || navTheme !== 'dark'
                                     ? 'text-secondary/80'

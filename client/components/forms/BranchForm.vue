@@ -408,6 +408,16 @@
                 {{ locationError }}
             </p>
         </div>
+
+        <AvatarCropModal
+            :show="!!logoSource"
+            :file="logoSource"
+            shape="square"
+            title="Adjust logo"
+            description="Drag to reposition. Zoom to fit your logo in the square."
+            @close="logoSource = null"
+            @apply="applyBranchLogo"
+        />
     </div>
 </template>
 
@@ -419,6 +429,7 @@ import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import PhoneInput from "../ui/PhoneInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
+import AvatarCropModal from "../ui/AvatarCropModal.vue";
 import type { Branch } from "~/types/branch";
 import { formatTin } from "~/schema/tin-schema";
 
@@ -646,9 +657,18 @@ const resetLocation = () => {
     }
 };
 
+const logoSource = ref<File | null>(null);
+
 const handleBranchImage = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
     if (!file) return;
+    logoSource.value = file;
+};
+
+const applyBranchLogo = (file: File) => {
+    logoSource.value = null;
     emit("update:branch", { ...props.branch, image: file });
     branchImagePreview.value = URL.createObjectURL(file);
     clearError("branch_image");

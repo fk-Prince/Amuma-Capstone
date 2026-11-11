@@ -179,7 +179,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
                 },
                 {
                     type: "paragraph",
-                    text: "Additional branches. When your included slots are used, or you need a plan your subscription doesn't cover, you may add an additional branch on a paid subscription. You choose its plan when you buy it, and that plan can't be changed afterwards. It is charged at that plan's yearly branch price, prorated for the months left in your current term, and renews at its full yearly branch price together with your subscription.",
+                    text: "Additional branches. When your included slots are used, or you need a plan your subscription doesn't cover, you may add an additional branch on a paid subscription. You choose its plan when you buy it, and you may later upgrade it to a bigger plan by paying the difference in yearly branch price for the months left in your current term. It is charged at that plan's yearly branch price, prorated for the months left in your current term, and renews at its full yearly branch price together with your subscription.",
                 },
                 {
                     type: "paragraph",

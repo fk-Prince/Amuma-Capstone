@@ -225,7 +225,7 @@ const emit = defineEmits<{
 const { dayGroups, schedulesForDay, scheduleStatusTheme, scheduleStatusLabel } =
     useSchedule(props);
 
-const CLOSED_STATUSES = ["missed", "completed", "cancelled"];
+const CLOSED_STATUSES = ["completed", "cancelled"];
 
 const { canAssign: canAssignModule } = usePermissions();
 

@@ -206,6 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/subscriptions-branch-reactivate', [SubscriptionController::class, 'reactivateBranch']);
         Route::post('/subscriptions-branch-plan', [SubscriptionController::class, 'changeBranchPlan']);
         Route::post('/subscriptions-branch-reactivate-purchase', [SubscriptionController::class, 'reactivateBranchWithPurchase']);
+        Route::post('/subscriptions-branch-upgrade-purchase', [SubscriptionController::class, 'upgradeBranchWithPurchase']);
     });
 
     Route::post('/notifications/read', [NotificationController::class, 'markRead']);

@@ -109,6 +109,51 @@ class BranchSubscription extends Pivot
             && $this->subscription?->effectivePlan()?->plan_code === Plan::CODE_HYBRID;
     }
 
+    public function upgradeOptions(): array
+    {
+        $subscription = $this->subscription;
+
+        if (
+            $this->type !== self::TYPE_ADDITIONAL
+            || $this->status !== self::STATUS_APPROVED
+            || $this->active_until
+            || !$subscription
+            || $subscription->status !== Subscription::STATUS_ACTIVE
+            || $subscription->upgradeMonths() <= 0
+        ) {
+            return [];
+        }
+
+        $current = $this->effectivePlan();
+
+        if (!$current) {
+            return [];
+        }
+
+        $months = $subscription->upgradeMonths();
+        $currentPrice = (float) $current->additional_branch_price;
+
+        return Plan::where('type', $current->type)
+            ->orderBy('plan_code')
+            ->get()
+            ->filter(fn(Plan $plan) => $plan->plan_code !== $current->plan_code
+                && Plan::covers($plan->plan_code, $current->plan_code)
+                && (float) $plan->additional_branch_price > $currentPrice)
+            ->map(fn(Plan $plan) => [
+                'plan_code' => $plan->plan_code,
+                'name' => $plan->name,
+                'additional_branch_price' => (float) $plan->additional_branch_price,
+                'current_price' => $currentPrice,
+                'months' => $months,
+                'amount' => Subscription::proratedAdditionalBranch(
+                    (float) $plan->additional_branch_price - $currentPrice,
+                    $months
+                ),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function activationSummary(): array
     {
         $subscription = $this->subscription;
@@ -126,6 +171,7 @@ class BranchSubscription extends Pivot
                 'name' => $plan->name,
             ] : null,
             'can_change_plan' => $this->canChangePlan(),
+            'upgrade_options' => $this->upgradeOptions(),
             'reactivation_amount' => $this->reactivationAmount(),
             'additional_branch_price' => (float) $plan?->additional_branch_price,
             'renews_on' => $subscription?->end_date?->toDateString(),

@@ -260,6 +260,7 @@
                             </p>
 
                             <button
+                                v-if="patientOutstanding.total_balance > 0"
                                 type="button"
                                 class="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary transition hover:opacity-80"
                                 @click="openBalanceSlip"

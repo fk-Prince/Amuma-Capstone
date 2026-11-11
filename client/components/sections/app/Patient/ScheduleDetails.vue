@@ -1712,7 +1712,7 @@ const canEditLocation = computed(
         !!props.schedule &&
         !props.schedule.is_onsite &&
         !isFacilitySchedule.value &&
-        ["pending", "ongoing"].includes((props.schedule.status ?? "").toLowerCase()) &&
+        ["pending", "ongoing", "missed"].includes((props.schedule.status ?? "").toLowerCase()) &&
         canUpdate(Modules.Schedules),
 );
 

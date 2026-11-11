@@ -396,9 +396,6 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             if (!hasDate) {
                 fieldErrors[`achievements.${index}.date`] = "Date is required.";
             }
-            if (!hasFile) {
-                fieldErrors[`achievements.${index}.file`] = "File is required.";
-            }
         });
 
         return fieldErrors;

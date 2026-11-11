@@ -307,7 +307,7 @@ watch(
                                         v-model="form.description"
                                         rows="3"
                                         maxlength="1000"
-                                        placeholder="What does this service include?"
+                                        placeholder="Short description, e.g. what's included, how long it takes, what to prepare"
                                         class="w-full resize-none rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500"
                                         :class="
                                             errors?.description
@@ -500,8 +500,9 @@ watch(
                                         v-else
                                         class="mt-1.5 text-xs text-gray-400 dark:text-gray-500"
                                     >
-                                        Only staff with a checked role can be
-                                        assigned to this service.
+                                        Every nurse can perform this service when
+                                        Nurse is checked.
+                                        Caregivers need to be assigned one by one.
                                     </p>
                                 </div>
                             </div>

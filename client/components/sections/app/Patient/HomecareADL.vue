@@ -1355,7 +1355,7 @@ const canRequestDeduction = computed(
     () => props.variant !== 3 && canAssignSchedule.value,
 );
 
-const CLOSED_STATUSES = ["completed", "cancelled", "missed"];
+const CLOSED_STATUSES = ["completed", "cancelled"];
 
 function isOpen(log: AuditRow) {
     return !CLOSED_STATUSES.includes(log.status);

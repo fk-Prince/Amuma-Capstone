@@ -499,10 +499,7 @@ class ScheduleRepository
             ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $scheduleServiceIds, $allowedRoles) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
-                    ->whereHas('employeeServices', function ($q) use ($scheduleServiceIds) {
-                        $q->where('is_active', true)
-                            ->whereIn('service_id', $scheduleServiceIds);
-                    });
+                    ->qualifiedFor($scheduleServiceIds);
             }])
             ->get();
     }
@@ -597,10 +594,7 @@ class ScheduleRepository
             ->withExists(['employeeBranch as is_assigned' => function ($query) use ($branchId, $allowedRoles, $serviceIds) {
                 $query->where('branch_id', $branchId)
                     ->whereIn('role_name', $allowedRoles)
-                    ->whereHas('employeeServices', function ($q) use ($serviceIds) {
-                        $q->where('is_active', true)
-                            ->whereIn('service_id', $serviceIds);
-                    });
+                    ->qualifiedFor($serviceIds);
             }])
             ->get();
     }

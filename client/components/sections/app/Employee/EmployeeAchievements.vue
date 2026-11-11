@@ -107,6 +107,7 @@ const todayStr = new Date().toISOString().split("T")[0];
                         class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                         File
+                        <span class="font-normal text-slate-400 dark:text-gray-500">(optional)</span>
                     </p>
                     <div class="flex items-center gap-2">
                         <label

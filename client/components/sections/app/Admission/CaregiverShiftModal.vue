@@ -95,7 +95,7 @@
                             :limit="limit"
                             :duty-limit="dutyLimit"
                             :busy-id="busyId"
-                            :readonly="readonly"
+                            :readonly="locked"
                             class="mt-3"
                             @unassign="
                                 (shift: CaregiverShift) =>
@@ -137,7 +137,7 @@
                                     </div>
 
                                     <button
-                                        v-if="!readonly"
+                                        v-if="!locked"
                                         type="button"
                                         :disabled="
                                             busyId ===
@@ -163,7 +163,7 @@
                     </section>
 
                     <section
-                        v-if="!readonly"
+                        v-if="!locked"
                         class="border-t border-slate-100 pt-6 dark:border-white/10"
                     >
                         <p
@@ -409,6 +409,8 @@ import type {
     FacilityCaregiver,
 } from "~/types/caregiver-shift";
 import { useToast } from "~/composables/useToast";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 import { formatTime } from "~/utils/time";
 import { initials } from "~/utils/user";
 
@@ -427,6 +429,8 @@ const emit = defineEmits<{
 }>();
 
 const { success, error } = useToast();
+const { canUpdate } = usePermissions();
+const locked = computed(() => props.readonly || !canUpdate(Modules.Admissions));
 
 const PRESETS = [
     { note: "AM Shift", start_time: "00:00", end_time: "12:00" },
