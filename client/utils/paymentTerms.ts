@@ -15,7 +15,7 @@ export interface PaymentTerms {
 
 const SUBSCRIPTION_TERMS: PaymentTerms = {
     heading: "Subscription & Billing Terms",
-    lastUpdated: "September 2, 2026",
+    lastUpdated: "November 11, 2026",
     sections: [
         {
             title: "Scope & acceptance",
@@ -26,7 +26,7 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
                 },
                 {
                     type: "paragraph",
-                    text: "By selecting a plan, entering payment details, and clicking Confirm & Pay, you agree to be charged according to these Terms and to the pricing, billing cycle, and payment method you selected at checkout. If you are subscribing on behalf of an agency, you confirm you're authorized to bind that agency to these Terms.",
+                    text: "By selecting a plan, entering payment details, and clicking Start free trial or Confirm & Pay, you agree to be charged according to these Terms and to the pricing, billing cycle, and payment method you selected at checkout. If you are subscribing on behalf of an agency, you confirm you're authorized to bind that agency to these Terms.",
                 },
             ],
         },
@@ -35,16 +35,35 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
             blocks: [
                 {
                     type: "paragraph",
-                    text: "AMUMA offers three subscription modules. Each unlocks a distinct part of the platform, and each is billed as a single subscription covering up to 10 branches.",
+                    text: "AMUMA offers three plans: Homecare Services, In-house Facility, and Hybrid, which includes both. Each plan comes in two sizes:",
+                },
+                {
+                    type: "list",
+                    items: [
+                        "Small-Medium Enterprise, which covers one (1) branch.",
+                        "Enterprise, which covers up to ten (10) branches.",
+                    ],
+                },
+                {
+                    type: "paragraph",
+                    text: "The price of your plan, and of any additional branch, is shown to you before you confirm.",
                 },
             ],
         },
         {
-            title: "Billing cycle",
+            title: "Free trial & billing cycle",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "All plans are billed yearly. Your subscription period starts on the date payment is confirmed and runs for 12 months from that date.",
+                    text: "Every new subscription starts with a 2-week free trial. A card is required to start it, but nothing is charged during the trial. When the trial ends, your card is charged for your plan's first 12 months, unless you cancel the trial before then. If that charge fails, your branches become view-only until the plan is paid.",
+                },
+                {
+                    type: "paragraph",
+                    text: "All plans are billed yearly. Your paid subscription period runs for 12 months from the day it starts.",
+                },
+                {
+                    type: "paragraph",
+                    text: "You can renew your subscription from 7 days before it ends; a renewal adds 12 months to your current end date. If you save a card and turn on auto-renew, we charge that card for the renewal automatically. A subscription that is not renewed expires on its end date, and its branches become view-only until it is renewed.",
                 },
                 // {
                 //     type: "paragraph",
@@ -90,7 +109,11 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
                 },
                 {
                     type: "paragraph",
-                    text: "Where additional branches are included as part of the subscription, they are subject to the same subscription review and refund terms. No separate payment or refund applies specifically to additional branches.",
+                    text: "You may cancel during the free trial. Anything you paid ahead during the trial is refunded in full to the original payment method.",
+                },
+                {
+                    type: "paragraph",
+                    text: "Each additional branch is paid for and reviewed on its own. If an additional branch is rejected, its payment is refunded to the original payment method. Once it is approved, that payment is non-refundable.",
                 },
                 {
                     type: "paragraph",
@@ -99,19 +122,27 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
             ],
         },
         {
-            title: "Upgrades & additional branches",
+            title: "Upgrades, branch plans & additional branches",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "You may change your subscription plan or add branch capacity at any time through your subscription dashboard.",
+                    text: "You manage your plan and branches through Manage Subscription in your dashboard.",
                 },
                 {
                     type: "paragraph",
-                    text: "Plan Upgrades. You may upgrade your subscription plan (for example, from Homecare to Hybrid). An upgrade may take effect immediately upon confirmation, or you may choose to have the upgraded plan take effect when your current subscription term ends, as made available through the subscription dashboard.",
+                    text: "Plan upgrades. You may upgrade your plan (for example, from Homecare to Hybrid). An upgrade can start right away, charged for the months left in your current term, or start at your next renewal. A downgrade takes effect only at renewal.",
                 },
                 {
                     type: "paragraph",
-                    text: "Additional Branches. Each plan includes up to five (5) branches. If you add branches beyond the five (5) included branches, the additional branches will be billed as additional subscription capacity at the rate displayed to you before you confirm the purchase. Additional branch capacity will remain subject to the terms of your subscription and any applicable renewal charges.",
+                    text: "Branch plans. A branch in one of your included slots uses your subscription's plan. On a Hybrid subscription you may choose Homecare Services, In-house Facility, or Hybrid for each included branch and change it at any time at no charge. If you move from Hybrid to another plan, those branches follow the new plan.",
+                },
+                {
+                    type: "paragraph",
+                    text: "Additional branches. When your included slots are used, or you need a plan your subscription doesn't cover, you may add an additional branch on a paid subscription. You choose its plan when you buy it, and that plan can't be changed afterwards. It is charged at that plan's yearly branch price, prorated for the months left in your current term, and renews at its full yearly branch price together with your subscription.",
+                },
+                {
+                    type: "paragraph",
+                    text: "Deactivating a branch. You may deactivate a branch, which makes it view-only. Reactivating an additional branch may require a payment for the months left in your current term; the amount is shown before you pay.",
                 },
             ],
         },

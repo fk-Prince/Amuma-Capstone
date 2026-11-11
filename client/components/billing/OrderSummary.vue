@@ -31,7 +31,20 @@
             <span class="text-base font-semibold text-slate-900 dark:text-white">
                 {{ totalLabel ?? "Total" }}
             </span>
-            <span class="text-lg font-bold text-slate-900 dark:text-white">
+            <span
+                v-if="dueNow != null"
+                class="flex items-baseline gap-2 whitespace-nowrap"
+            >
+                <span
+                    class="text-sm font-semibold text-slate-400 line-through decoration-2 dark:text-gray-500"
+                >
+                    {{ formatCurrency(amount) }}
+                </span>
+                <span class="text-lg font-bold text-primary">
+                    {{ formatCurrency(dueNow) }}
+                </span>
+            </span>
+            <span v-else class="text-lg font-bold text-slate-900 dark:text-white">
                 {{ formatCurrency(amount) }}
             </span>
         </div>
@@ -47,5 +60,6 @@ defineProps<{
     heading?: string;
     itemLabel?: string;
     totalLabel?: string;
+    dueNow?: number | null;
 }>();
 </script>

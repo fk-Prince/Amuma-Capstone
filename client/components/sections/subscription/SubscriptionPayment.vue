@@ -1,6 +1,6 @@
 <template>
     <div
-        class="w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 items-start"
+        class="grid w-full grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_400px]"
     >
         <div class="w-full">
             <CheckoutSummary
@@ -11,7 +11,7 @@
 
         <div
             v-if="!loadingTotal"
-            class="rounded-2xl bg-white p-6 shadow-sm dark:bg-secondary"
+            class="rounded-2xl bg-white p-6 shadow-sm lg:sticky lg:top-0 dark:bg-secondary"
         >
             <div
                 class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
@@ -37,7 +37,8 @@
                 title="Order summary"
                 :heading="planName"
                 item-label="12-month period (after trial)"
-                total-label="Total after trial"
+                total-label="Total today"
+                :due-now="0"
                 class="mt-5"
             />
 

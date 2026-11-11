@@ -234,11 +234,31 @@
                                                 >
                                                     {{
                                                         isTrial
-                                                            ? "Total after trial"
+                                                            ? "Total today"
                                                             : "Total"
                                                     }}
                                                 </span>
                                                 <span
+                                                    v-if="isTrial"
+                                                    class="flex items-baseline gap-2 whitespace-nowrap"
+                                                >
+                                                    <span
+                                                        class="text-sm font-semibold text-slate-400 line-through decoration-2 dark:text-gray-500"
+                                                    >
+                                                        ₱{{
+                                                            formatAmount(
+                                                                resubmitPlan.amount,
+                                                            )
+                                                        }}
+                                                    </span>
+                                                    <span
+                                                        class="text-base font-bold text-primary"
+                                                    >
+                                                        ₱0.00
+                                                    </span>
+                                                </span>
+                                                <span
+                                                    v-else
                                                     class="text-base font-bold text-primary"
                                                 >
                                                     ₱{{
@@ -254,21 +274,6 @@
                                                 </span>
                                             </div>
 
-                                            <div
-                                                v-if="isTrial"
-                                                class="flex justify-between gap-3"
-                                            >
-                                                <span
-                                                    class="text-slate-500 dark:text-gray-400"
-                                                >
-                                                    Due today
-                                                </span>
-                                                <span
-                                                    class="font-semibold text-emerald-600 dark:text-emerald-400"
-                                                >
-                                                    ₱0.00
-                                                </span>
-                                            </div>
                                         </div>
 
                                         <p

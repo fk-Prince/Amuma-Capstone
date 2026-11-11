@@ -358,7 +358,7 @@ watch(isCash, (active) => {
         >
             <!-- Header -->
             <div
-                v-if="compact"
+                v-if="compact && title"
                 class="shrink-0 border-b border-slate-100 px-5 py-3 dark:border-white/10"
             >
                 <h2
@@ -376,7 +376,7 @@ watch(isCash, (active) => {
             </div>
 
             <div
-                v-else
+                v-else-if="!compact"
                 class="border-b border-slate-100 bg-gradient-to-br from-slate-50 to-white px-6 py-5 sm:px-7 dark:border-white/10 dark:from-secondary dark:to-secondary"
             >
                 <div class="flex items-start gap-4">

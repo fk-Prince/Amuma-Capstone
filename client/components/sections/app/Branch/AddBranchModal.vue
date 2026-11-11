@@ -580,9 +580,22 @@
                                         <span
                                             class="text-base font-semibold text-slate-900 dark:text-white"
                                         >
-                                            {{ purchaseWithTrial ? "Total after trial" : "Total" }}
+                                            {{ purchaseWithTrial ? "Total today" : "Total" }}
                                         </span>
-                                        <span class="text-lg font-bold text-primary">
+                                        <span
+                                            v-if="purchaseWithTrial"
+                                            class="flex items-baseline gap-2 whitespace-nowrap"
+                                        >
+                                            <span
+                                                class="text-sm font-semibold text-slate-400 line-through decoration-2 dark:text-gray-500"
+                                            >
+                                                ₱{{ formatMoney(amountDue) }}
+                                            </span>
+                                            <span class="text-lg font-bold text-primary">
+                                                ₱{{ formatMoney(0) }}
+                                            </span>
+                                        </span>
+                                        <span v-else class="text-lg font-bold text-primary">
                                             ₱{{ formatMoney(amountDue) }}
                                         </span>
                                     </div>
