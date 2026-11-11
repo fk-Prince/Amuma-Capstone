@@ -1,9 +1,12 @@
 <template>
     <div v-if="localValue" class="space-y-6 w-full">
         <BranchCoverCard
+            ref="coverRef"
             :uuid="branch?.uuid"
             :profile="localValue.image"
+            :pending-cover="pendingCover"
             @select-profile="(file) => (localValue!.image = file)"
+            @select-cover="(file) => (pendingCover = file)"
         />
 
         <ClientOnly>
@@ -72,7 +75,10 @@ const editable = (value: Branch | null | undefined) =>
         : "";
 
 const savedSnapshot = ref("");
-const dirty = computed(() => Boolean(localValue.value) && editable(localValue.value) !== savedSnapshot.value);
+const pendingCover = ref<File | null>(null);
+const coverRef = ref<{ saveCover: (file: File) => Promise<boolean> } | null>(null);
+const fieldsDirty = computed(() => Boolean(localValue.value) && editable(localValue.value) !== savedSnapshot.value);
+const dirty = computed(() => fieldsDirty.value || Boolean(pendingCover.value));
 
 function copyFrom(value: Branch) {
     const copy = structuredClone(toRaw(value));
@@ -107,6 +113,11 @@ const fieldKeyMap: Record<string, string> = {
 
 const handleSave = async (): Promise<boolean> => {
     if (!localValue.value) return false;
+
+    if (!fieldsDirty.value) {
+        return saveCoverOnly();
+    }
+
     // Verification is read-only here and never sent, so requiring it would
     // block every other edit — including for branches predating the TIN.
     const result = branchSchema
@@ -160,6 +171,11 @@ const handleSave = async (): Promise<boolean> => {
 
         await branchStore.refreshBranch();
 
+        if (pendingCover.value && !(await coverRef.value?.saveCover(pendingCover.value))) {
+            return false;
+        }
+
+        pendingCover.value = null;
         success(res.message);
 
         return true;
@@ -182,10 +198,28 @@ const handleSave = async (): Promise<boolean> => {
         saving.value = false;
     }
 };
+async function saveCoverOnly(): Promise<boolean> {
+    if (!pendingCover.value) return true;
+
+    saving.value = true;
+
+    try {
+        if (!(await coverRef.value?.saveCover(pendingCover.value))) return false;
+
+        pendingCover.value = null;
+        success("Cover photo updated.");
+
+        return true;
+    } finally {
+        saving.value = false;
+    }
+}
+
 // Puts back what was last saved.
 function reset() {
     if (!branch.value) return;
     copyFrom(branch.value);
+    pendingCover.value = null;
     errors.value = {};
 }
 

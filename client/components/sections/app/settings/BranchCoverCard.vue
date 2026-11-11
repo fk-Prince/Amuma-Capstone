@@ -7,8 +7,8 @@
             class="relative h-40 w-full bg-gradient-to-br from-secondary-800 via-primary-900 to-primary-700 sm:h-56"
         >
             <img
-                v-if="cover"
-                :src="cover"
+                v-if="coverSrc"
+                :src="coverSrc"
                 alt="Cover photo"
                 class="absolute inset-0 h-full w-full object-cover"
             />
@@ -35,7 +35,7 @@
                 {{
                     uploading
                         ? "Uploading..."
-                        : cover
+                        : coverSrc
                           ? "Change cover photo"
                           : "Upload cover photo"
                 }}
@@ -86,8 +86,8 @@
                 <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     The cover photo is the banner on your public provider page.
                     Your profile photo is the square logo on top of it; click it
-                    to choose one, then press Save Changes. JPG, PNG or JPEG,
-                    up to 5MB.
+                    to choose one. Both are saved when you press Save Changes.
+                    JPG, PNG or JPEG, up to 5MB.
                 </p>
             </div>
 
@@ -115,7 +115,7 @@
             title="Adjust cover photo"
             description="Drag to reposition. Zoom to fill the banner on your provider page."
             @close="coverSource = null"
-            @apply="uploadCover"
+            @apply="applyCover"
         />
 
         <AvatarCropModal
@@ -149,15 +149,17 @@ const props = defineProps<{
     uuid?: string;
     // The branch's current profile photo (URL, or a File that is still unsaved).
     profile?: File | string | null;
+    pendingCover?: File | null;
 }>();
 
 const emit = defineEmits<{
     (e: "select-profile", file: File): void;
+    (e: "select-cover", file: File): void;
 }>();
 
 const profileInput = ref<HTMLInputElement | null>(null);
 
-const { success, error } = useToast();
+const { error } = useToast();
 const { canCreate } = usePermissions();
 const canEdit = computed(() => canCreate(Modules.BranchSettings));
 
@@ -170,6 +172,12 @@ const coverSource = ref<File | null>(null);
 const profileSource = ref<File | null>(null);
 
 const profileSrc = computed(() => getBranchImage(props.profile));
+
+const pendingCoverUrl = computed(() =>
+    props.pendingCover ? URL.createObjectURL(props.pendingCover) : null,
+);
+
+const coverSrc = computed(() => pendingCoverUrl.value ?? cover.value);
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED = ["image/png", "image/jpeg"];
@@ -219,10 +227,15 @@ const handleFile = async (event: Event) => {
     coverSource.value = file;
 };
 
-const uploadCover = async (file: File) => {
+const applyCover = (file: File) => {
     coverSource.value = null;
-    if (!props.uuid) return;
+    emit("select-cover", file);
+};
 
+const saveCover = async (file: File): Promise<boolean> => {
+    if (!props.uuid) return false;
+
+    uploadError.value = "";
     uploading.value = true;
 
     try {
@@ -235,15 +248,18 @@ const uploadCover = async (file: File) => {
         });
 
         cover.value = res?.data?.image_url ?? cover.value;
-        success(res?.message ?? "Cover photo updated.");
+        return true;
     } catch (err: any) {
         uploadError.value =
             err?.response?.data?.message ?? err?.message ?? "Upload failed.";
         error(uploadError.value);
+        return false;
     } finally {
         uploading.value = false;
     }
 };
+
+defineExpose({ saveCover });
 
 // The profile photo is the branch image; it is saved together with the rest
 // of the branch information.
