@@ -63,8 +63,8 @@
                     <CancelInvoiceAmount
                         v-if="preview?.invoice && preview.invoice.billed > 0"
                         v-model:amount="amount"
-                        v-model:reason="reason"
                         v-model:editing="editing"
+                        hide-reason
                         class="mt-4"
                         :invoice-code="preview.invoice.invoice_code"
                         :deposit="preview.invoice.booking_deposit"
@@ -76,7 +76,6 @@
                         :max-hint="`the ${formatCurrency(preview.invoice.paid)} paid`"
                         :disabled="loading"
                         :amount-error="amountError"
-                        :reason-error="reasonError"
                     />
 
                     <p
@@ -151,11 +150,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     (
         e: "confirm",
-        settlement: {
-            cancel_reason: string;
-            final_amount?: number;
-            adjustment_reason?: string;
-        },
+        settlement: { cancel_reason: string; final_amount?: number },
     ): void;
     (e: "cancel"): void;
 }>();
@@ -169,10 +164,8 @@ const fetchFailed = ref(false);
 const cancelReason = ref("");
 const cancelReasonError = ref("");
 const amount = ref<number | string>(0);
-const reason = ref("");
 const editing = ref(false);
 const amountError = ref("");
-const reasonError = ref("");
 
 watch(
     () => props.open,
@@ -184,10 +177,8 @@ watch(
         cancelReason.value = "";
         cancelReasonError.value = "";
         amount.value = 0;
-        reason.value = "";
         editing.value = false;
         amountError.value = "";
-        reasonError.value = "";
 
         if (!props.schedule) return;
 
@@ -218,7 +209,6 @@ function handleClose() {
 
 function handleConfirm() {
     amountError.value = "";
-    reasonError.value = "";
     cancelReasonError.value = "";
 
     const cancel_reason = cancelReason.value.trim();
@@ -249,13 +239,6 @@ function handleConfirm() {
         return;
     }
 
-    const why = reason.value.trim();
-
-    if (why.length < 3) {
-        reasonError.value = "Give a reason for changing the amount.";
-        return;
-    }
-
-    emit("confirm", { cancel_reason, final_amount: rounded, adjustment_reason: why });
+    emit("confirm", { cancel_reason, final_amount: rounded });
 }
 </script>

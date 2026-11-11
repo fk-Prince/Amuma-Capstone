@@ -693,12 +693,6 @@ class ScheduleService
             throw new Exception("The amount kept can't be more than the {$collected} that was paid.", 422);
         }
 
-        $reason = $remaining < $collected ? trim((string) ($payload['adjustment_reason'] ?? '')) : '';
-
-        if ($remaining < $collected && mb_strlen($reason) < 3) {
-            throw new Exception('Give a reason for changing the amount kept.', 422);
-        }
-
         $settled = collect();
 
         foreach ($invoices as $invoice) {
@@ -716,7 +710,7 @@ class ScheduleService
             $this->invoiceService->settleCancelled(
                 $invoice,
                 $final,
-                trim("Schedule {$schedule->schedule_code} was cancelled. {$reason}"),
+                "Cancellation of schedule {$schedule->schedule_code}",
                 $user->user_id
             );
 

@@ -118,7 +118,7 @@
             {{ amountError }}
         </p>
 
-        <div v-if="editing" class="mt-3">
+        <div v-if="editing && !hideReason" class="mt-3">
             <label
                 for="cancel-invoice-reason"
                 class="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
@@ -171,10 +171,11 @@ const props = defineProps<{
     disabled?: boolean;
     amountError?: string;
     reasonError?: string;
+    hideReason?: boolean;
 }>();
 
 const amount = defineModel<number | string>("amount", { required: true });
-const reason = defineModel<string>("reason", { required: true });
+const reason = defineModel<string>("reason", { default: "" });
 const editing = defineModel<boolean>("editing", { required: true });
 
 const canEdit = computed(() => props.max > 0);

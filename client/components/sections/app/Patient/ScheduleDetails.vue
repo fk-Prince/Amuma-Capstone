@@ -2196,7 +2196,6 @@ function handleSchedule() {
 function confirmCancelSchedule(settlement: {
     cancel_reason: string;
     final_amount?: number;
-    adjustment_reason?: string;
 }) {
     cancelConfirmOpen.value = false;
 
