@@ -182,6 +182,8 @@
                             gcash-label="Pay with GCash"
                             gcash-processing-label="Redirecting to GCash..."
                             terms-context="booking"
+                            :terms-branch="uuid"
+                            :terms-booking-type="termsType"
                             @update:card="(value) => Object.assign(card, value)"
                             @card-pay="handleCardPay"
                             @g-cash-pay="handleGCashPay"
@@ -193,18 +195,31 @@
 
             <div
                 v-if="!showPayment"
-                class="sticky bottom-3 z-20 mt-4 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur lg:static lg:mt-0 lg:rounded-none lg:border-0 lg:border-t lg:bg-white lg:px-6 lg:py-3.5 lg:shadow-none lg:backdrop-blur-none dark:border-white/10 dark:bg-secondary/95 dark:lg:bg-secondary"
+                class="sticky bottom-3 z-20 mt-4 flex shrink-0 flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur lg:static lg:mt-0 lg:rounded-none lg:border-0 lg:border-t lg:bg-white lg:px-6 lg:py-3.5 lg:shadow-none lg:backdrop-blur-none dark:border-white/10 dark:bg-secondary/95 dark:lg:bg-secondary"
             >
-                <p
-                    class="hidden text-xs text-gray-500 sm:block dark:text-gray-400"
-                >
-                    Please double-check your details before you submit.
-                </p>
+                <label class="flex min-w-0 items-start gap-2">
+                    <input
+                        v-model="agreedToTerms"
+                        type="checkbox"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                    />
+                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                        I have read and agree to the
+                        <button
+                            type="button"
+                            class="font-semibold text-primary hover:underline"
+                            @click.stop.prevent="showTerms = true"
+                        >
+                            Terms and Conditions
+                        </button>
+                        for this booking.
+                    </span>
+                </label>
 
                 <BaseButton
                     variant="primary"
-                    class="w-full rounded-xl px-6 py-2.5 sm:ml-auto sm:w-auto"
-                    :disabled="submitting || loadingTotal"
+                    class="w-full shrink-0 rounded-xl px-6 py-2.5 sm:ml-auto sm:w-auto"
+                    :disabled="submitting || loadingTotal || !agreedToTerms"
                     @click="handleSubmit"
                 >
                     {{
@@ -218,6 +233,17 @@
             </div>
         </main>
     </div>
+
+    <PaymentTermsModal
+        v-if="showTerms && preTerms"
+        :terms="preTerms"
+        show-accept
+        @close="showTerms = false"
+        @accept="
+            agreedToTerms = true;
+            showTerms = false;
+        "
+    />
     </div>
 </template>
 
@@ -237,6 +263,9 @@ import type { CardDetails } from "~/types/payment";
 import PaymentForm from "~/components/forms/PaymentForm.vue";
 import Breadcrumb from "~/components/ui/Breadcrumb.vue";
 import { useBranch } from "~/composables/useBranchProvider";
+import PaymentTermsModal from "~/components/ui/PaymentTermsModal.vue";
+import { useBranchTerms } from "~/composables/useBranchTerms";
+import { buildPaymentTerms, bookingTermsType } from "~/utils/paymentTerms";
 
 useHead({ title: "Review Booking" });
 definePageMeta({
@@ -348,6 +377,17 @@ const showPayment = computed(
         isHomecare.value ||
         (bookingStore.category === "facility" &&
             bookingStore.facility?.type === "Complete"),
+);
+
+const termsType = computed(() =>
+    bookingTermsType(bookingStore.category, bookingStore.facility?.type),
+);
+
+const agreedToTerms = ref(false);
+const showTerms = ref(false);
+const { terms: branchTerms } = useBranchTerms(uuid);
+const preTerms = computed(() =>
+    buildPaymentTerms("booking", branchTerms.value, termsType.value),
 );
 
 const paymentAction = computed(() =>

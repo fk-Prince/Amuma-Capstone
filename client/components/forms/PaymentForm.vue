@@ -25,7 +25,8 @@ import gcashIcon from "@/assets/icons/gcash.png";
 import LabelInput from "../ui/BaseInput.vue";
 import PaymentTermsModal from "../ui/PaymentTermsModal.vue";
 import { formatAmount } from "~/utils/currency";
-import { getPaymentTerms } from "~/utils/paymentTerms";
+import { buildPaymentTerms, type BookingTermsType } from "~/utils/paymentTerms";
+import { useBranchTerms } from "~/composables/useBranchTerms";
 
 type PaymentMethod = "CREDIT-CARD" | "GCASH" | "CASH";
 
@@ -53,6 +54,8 @@ interface Props {
     currency?: string;
     allowShortCash?: boolean;
     termsContext?: string;
+    termsBranch?: string | null;
+    termsBookingType?: BookingTermsType | null;
     compact?: boolean;
     fill?: boolean;
 }
@@ -142,7 +145,10 @@ const panelStyle = computed(() =>
         : undefined,
 );
 
-const terms = computed(() => getPaymentTerms(props.termsContext));
+const { terms: branchTerms } = useBranchTerms(() => props.termsBranch);
+const terms = computed(() =>
+    buildPaymentTerms(props.termsContext, branchTerms.value, props.termsBookingType),
+);
 const agreedToTerms = ref(false);
 const showTermsModal = ref(false);
 const termsBlocked = computed(() => !!terms.value && !agreedToTerms.value);

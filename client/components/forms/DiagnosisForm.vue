@@ -24,6 +24,7 @@
         <DiagnosisPriceNotice
             :show="chargeNotice"
             :charges="charges"
+            :chosen="chosenCases"
             class="mb-8"
         />
 
@@ -139,6 +140,103 @@
                     </div>
                 </div>
 
+                <div v-if="cases">
+                    <p
+                        class="mb-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
+                    >
+                        Diagnosis case
+                        <span
+                            class="ml-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-gray-500"
+                        >
+                            (Optional)
+                        </span>
+                    </p>
+
+                    <button
+                        type="button"
+                        class="group flex w-full items-center justify-between gap-3 rounded-xl border p-3.5 text-left transition-all duration-200"
+                        :class="
+                            activeCase
+                                ? 'border-primary bg-primary/5 dark:bg-primary-500/10'
+                                : 'border-slate-200 hover:border-primary-200 hover:bg-primary-50/30 dark:border-white/10 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/5'
+                        "
+                        @click="caseModalOpen = true"
+                    >
+                        <div class="flex min-w-0 items-center gap-3">
+                            <div
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                                :class="
+                                    activeCase
+                                        ? 'bg-primary text-white'
+                                        : 'bg-primary/10 text-primary'
+                                "
+                            >
+                                <Check v-if="activeCase" class="h-5 w-5" />
+                                <Stethoscope v-else class="h-5 w-5" />
+                            </div>
+
+                            <div class="min-w-0">
+                                <p
+                                    class="truncate text-sm font-semibold"
+                                    :class="
+                                        activeCase
+                                            ? 'text-slate-800 dark:text-white'
+                                            : 'text-slate-400 dark:text-gray-500'
+                                    "
+                                >
+                                    {{ activeCase?.title || "Choose the diagnosis case" }}
+                                </p>
+                                <p class="mt-0.5 text-[11px] text-slate-400 dark:text-gray-500">
+                                    {{
+                                        activeCase
+                                            ? `${formatCurrency(activeCase.price)} monthly base price`
+                                            : cases.length
+                                              ? "Leave it empty if the patient doesn't need one. You can add it later from the admission."
+                                              : "This branch has no diagnosis cases yet."
+                                    }}
+                                </p>
+                                <p
+                                    v-if="activeCase?.description"
+                                    class="mt-1 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-gray-400"
+                                >
+                                    {{ activeCase.description }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <span
+                            class="shrink-0 whitespace-nowrap text-xs font-semibold transition-colors"
+                            :class="
+                                activeCase
+                                    ? 'text-primary'
+                                    : 'text-slate-400 group-hover:text-primary dark:text-gray-500'
+                            "
+                        >
+                            {{ activeCase ? "Change" : "Choose" }}
+                        </span>
+                    </button>
+
+                    <div
+                        v-if="activeCase"
+                        class="mt-2 flex flex-wrap items-start justify-between gap-x-4 gap-y-1"
+                    >
+                        <p class="min-w-0 flex-1 text-xs text-slate-400 dark:text-gray-500">
+                            Billed at its monthly base price on its own invoice
+                            when the patient is admitted, then every month while
+                            the patient is admitted. You can stop or change it
+                            later from the admission.
+                        </p>
+
+                        <button
+                            type="button"
+                            class="shrink-0 text-xs font-medium text-slate-400 underline transition hover:text-red-500 dark:text-gray-500"
+                            @click="clearCase(activeIndex)"
+                        >
+                            Remove case
+                        </button>
+                    </div>
+                </div>
+
                 <BaseInput
                     label="Diagnosis Notes"
                     :model-value="activeDiagnosis.diagnosis_notes"
@@ -228,6 +326,15 @@
                 Add Another Diagnosis
             </button>
         </div>
+
+        <DiagnosisCaseModal
+            v-if="cases"
+            :open="caseModalOpen"
+            :cases="cases"
+            :model-value="activeDiagnosis.diagnosis_case_uuid ?? ''"
+            @update:model-value="selectCase"
+            @close="caseModalOpen = false"
+        />
     </section>
 </template>
 
@@ -235,7 +342,9 @@
 import { EMOJI_MESSAGE, hasEmoji } from "~/utils/emoji";
 import { ref, computed, watch, nextTick } from "vue";
 import {
+    Check,
     FileText,
+    Stethoscope,
     UploadCloud,
     Plus as PlusIcon,
     X as XIcon,
@@ -243,7 +352,10 @@ import {
 import BaseInput from "../ui/BaseInput.vue";
 import DatePickerField from "../ui/DatePickerField.vue";
 import DiagnosisPriceNotice from "./DiagnosisPriceNotice.vue";
+import DiagnosisCaseModal from "~/components/sections/app/Admission/DiagnosisCaseModal.vue";
 import type { Diagnosis } from "~/types/patient";
+import type { DiagnosisCase } from "~/types/additional-charge";
+import { formatCurrency } from "~/utils/currency";
 import { getLocalDateStr } from "~/utils/time";
 import {
     DIAGNOSIS_WINDOW_MONTHS,
@@ -257,6 +369,7 @@ const props = defineProps<{
     // as a heads-up that the bill can grow with the patient's diagnosis.
     charges?: { min: number; max: number } | null;
     chargeNotice?: boolean;
+    cases?: DiagnosisCase[];
 }>();
 
 const emit = defineEmits<{
@@ -288,6 +401,35 @@ const activeIndex = ref(0);
 const activeDiagnosis = computed(
     () => diagnoses.value[activeIndex.value] ?? createDiagnosis(),
 );
+
+const caseModalOpen = ref(false);
+
+const activeCase = computed(() =>
+    activeDiagnosis.value.diagnosis_case_uuid
+        ? props.cases?.find(
+              (item) => item.uuid === activeDiagnosis.value.diagnosis_case_uuid,
+          )
+        : undefined,
+);
+
+const chosenCases = computed(() =>
+    diagnoses.value.flatMap((entry) => {
+        const item = props.cases?.find(
+            (candidate) => candidate.uuid === entry.diagnosis_case_uuid,
+        );
+
+        return item ? [{ title: item.title, amount: Number(item.price) || 0 }] : [];
+    }),
+);
+
+function selectCase(uuid: string) {
+    const picked = props.cases?.find((item) => item.uuid === uuid);
+    if (picked) update(activeIndex.value, "diagnosis_case_uuid", picked.uuid);
+}
+
+function clearCase(index: number) {
+    update(index, "diagnosis_case_uuid", undefined);
+}
 
 watch(
     () => props.model,

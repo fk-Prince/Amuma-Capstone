@@ -58,7 +58,7 @@ export function useBookingFlowValidation(opts: {
     // A diagnosis is optional: an untouched entry is skipped, a started one
     // has to be complete.
     function isAssessmentTouched(item: Diagnosis): boolean {
-        return ASSESSMENT_FIELDS.some((key) => {
+        return [...ASSESSMENT_FIELDS, "diagnosis_case_uuid"].some((key) => {
             const value = (item as any)[key];
             return value !== "" && value !== undefined && value !== null;
         });

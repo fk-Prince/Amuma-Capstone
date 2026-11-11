@@ -40,6 +40,7 @@ class BranchService
         private BookingRepository $bookingRepository,
         private BranchContractRepository $branchContractRepository,
         private AuditService $auditService,
+        private BranchTermsService $branchTermsService,
     ) {}
 
     public function getBranch(string $uuid)
@@ -276,6 +277,12 @@ class BranchService
         foreach (['complete_admission_booking_percent', 'homecare_downpayment_percent', 'force_discharge_paid_percent'] as $key) {
             if (array_key_exists($key, $settingPayload)) {
                 $settingPayload[$key] = min(100, max(1, (int) $settingPayload[$key]));
+            }
+        }
+
+        foreach (BranchTermsService::DOCS as $doc) {
+            if (array_key_exists($doc, $payload)) {
+                $settingPayload[$doc] = $this->branchTermsService->sanitize($branch, $doc, $payload[$doc]);
             }
         }
 

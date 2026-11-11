@@ -60,6 +60,7 @@ interface LovedOne {
     uuid: string | null;
     full_name: string;
     photo: string | null;
+    branch_uuid: string | null;
     branch_name: string | null;
     branch_address: string | null;
     status: string | null;
@@ -621,6 +622,7 @@ function mapPatientRecord(item: any): LovedOne {
         uuid: patient.uuid ?? null,
         full_name: patient.full_name,
         photo: patient.avatar ?? patient.photo ?? null,
+        branch_uuid: org.uuid ?? null,
         branch_name: org.name ?? null,
         branch_address: org.full_address ?? null,
         status: admissionStatusLabel(ctx.admission?.status),
@@ -2506,6 +2508,7 @@ async function openReceipt(receiptNo?: string | null) {
             <PayBalanceModal
                 :open="showPaymentModal"
                 :patient-name="selectedLovedOne?.full_name"
+                :branch-uuid="selectedLovedOne?.branch_uuid"
                 :current-balance="currentBalance"
                 :unpaid-invoice-count="unpaidInvoiceCount"
                 v-model:amount="payAmount"

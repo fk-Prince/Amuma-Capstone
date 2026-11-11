@@ -14,6 +14,7 @@
         />
 
         <div
+            v-if="!showSplash"
             class="relative z-10 w-full max-w-md rounded-3xl bg-white/90 p-8 text-center shadow-xl shadow-primary/10 ring-1 ring-white/60 backdrop-blur-md dark:bg-secondary/90 dark:ring-white/10"
         >
             <template v-if="isSuccess">
@@ -184,11 +185,6 @@ import { subscriptionInvoiceLink } from "~/utils/subscriptionInvoice";
 
 const branchStore = useBranchStore();
 const authUser = useAuthUser();
-const showSplash = ref(false);
-
-const enterDashboard = () => {
-    if (dashboardUrl.value) navigateTo(dashboardUrl.value);
-};
 const route = useRoute();
 
 definePageMeta({
@@ -205,6 +201,8 @@ const isSuccess = computed(() => {
     return route.query.status === "true";
 });
 
+const showSplash = ref(isSuccess.value && withTrial.value);
+
 const branchUuid = computed(
     () =>
         branchStore.activeBranch?.uuid ??
@@ -219,21 +217,27 @@ const paymentUrl = computed(() =>
 );
 
 const isPreparing = ref(true);
+let preparing: Promise<void> | null = null;
 
-async function prepareWorkspace() {
-    isPreparing.value = true;
+function prepareWorkspace() {
+    preparing ??= (async () => {
+        isPreparing.value = true;
 
-    try {
-        for (let attempt = 0; attempt < 8; attempt++) {
-            await branchStore.refreshBranch();
+        try {
+            for (let attempt = 0; attempt < 8; attempt++) {
+                await branchStore.refreshBranch();
 
-            if (branchStore.branches?.length) break;
+                if (branchStore.branches?.length) break;
 
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
+        } finally {
+            isPreparing.value = false;
+            preparing = null;
         }
-    } finally {
-        isPreparing.value = false;
-    }
+    })();
+
+    return preparing;
 }
 
 onMounted(async () => {
@@ -244,4 +248,12 @@ onMounted(async () => {
 const dashboardUrl = computed(() =>
     branchUuid.value ? `/app/branches/${branchUuid.value}/dashboard` : null,
 );
+
+async function enterDashboard() {
+    if (!dashboardUrl.value) await prepareWorkspace();
+
+    if (dashboardUrl.value) return navigateTo(dashboardUrl.value);
+
+    showSplash.value = false;
+}
 </script>

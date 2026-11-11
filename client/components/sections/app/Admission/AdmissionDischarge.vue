@@ -892,22 +892,23 @@
                                 for="discharge-note"
                                 class="block text-sm font-semibold text-slate-700 mb-2 dark:text-gray-400"
                             >
-                                Discharge note
-                                <span
-                                    class="font-normal text-slate-400 dark:text-gray-500"
-                                >
-                                    (optional)
-                                </span>
+                                Reason for discharge
+                                <span class="text-rose-500">*</span>
                             </label>
 
                             <textarea
                                 id="discharge-note"
                                 v-model="dischargeNote"
                                 rows="3"
+                                maxlength="255"
                                 :disabled="loading"
                                 placeholder="Why is this patient being discharged?"
                                 class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none resize-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-secondary dark:text-white dark:placeholder:text-gray-500 dark:disabled:bg-white/5"
                             />
+                            <p class="mt-1 flex justify-between gap-3 text-xs text-slate-400 dark:text-gray-500">
+                                <span>Needed for every discharge, forced or not. It is saved on the admission.</span>
+                                <span class="shrink-0 tabular-nums">{{ dischargeNote.length }}/255</span>
+                            </p>
                         </div>
                     </div>
 
@@ -966,9 +967,20 @@
                                         is paid ({{ paidPercent }}%), which
                                         meets the branch's
                                         {{ forceShare!.percent }}% minimum.
-                                        Force discharge writes off
-                                        {{ formatCurrency(forceShare!.write_off) }}
-                                        as bad debt.
+                                        <template v-if="giveBack > 0">
+                                            The branch keeps
+                                            {{ formatCurrency(keepValue) }},
+                                            {{ formatCurrency(giveBack) }} goes
+                                            back to the family as credit, and
+                                            the unpaid
+                                            {{ formatCurrency(forceShare!.write_off) }}
+                                            is waived.
+                                        </template>
+                                        <template v-else>
+                                            Force discharge writes off
+                                            {{ formatCurrency(forceShare!.write_off) }}
+                                            as bad debt.
+                                        </template>
                                         <template v-if="serviceBalance > 0">
                                             Unpaid services and schedules are
                                             not written off and stay on the
@@ -991,6 +1003,73 @@
                                         more first.
                                     </template>
                                 </p>
+
+                                <div
+                                    v-if="canKeepLess"
+                                    class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-end"
+                                >
+                                    <label class="flex flex-col gap-1">
+                                        <span
+                                            class="text-xs font-semibold text-amber-900 dark:text-amber-200"
+                                        >
+                                            Amount the branch keeps
+                                        </span>
+                                        <div
+                                            class="flex items-center rounded-lg border pl-3"
+                                            :class="[
+                                                keepError
+                                                    ? 'border-rose-400'
+                                                    : 'border-amber-200 focus-within:border-amber-400 dark:border-amber-500/30',
+                                                editingKeep
+                                                    ? 'bg-white dark:bg-secondary'
+                                                    : 'bg-amber-50/60 dark:bg-white/5',
+                                            ]"
+                                        >
+                                            <span class="text-sm text-slate-400">₱</span>
+                                            <input
+                                                ref="keepRef"
+                                                v-model="keepInput"
+                                                type="number"
+                                                inputmode="decimal"
+                                                step="0.01"
+                                                :min="forceShare!.required"
+                                                :max="forceShare!.paid"
+                                                :readonly="!editingKeep"
+                                                :disabled="loading"
+                                                class="h-10 min-w-0 flex-1 bg-transparent px-2 text-sm text-slate-800 outline-none [appearance:textfield] dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                                :class="editingKeep ? '' : 'cursor-default'"
+                                            />
+                                            <button
+                                                type="button"
+                                                :disabled="loading || (editingKeep && !!keepError)"
+                                                class="mr-1.5 flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-50 dark:text-primary-300"
+                                                @click="toggleKeepEdit"
+                                            >
+                                                <Check v-if="editingKeep" class="h-3.5 w-3.5" />
+                                                <Pencil v-else class="h-3.5 w-3.5" />
+                                                {{ editingKeep ? "Done" : "Edit amount" }}
+                                            </button>
+                                        </div>
+                                    </label>
+
+                                    <p class="text-xs leading-5 text-amber-800 dark:text-amber-300">
+                                        Between
+                                        {{ formatCurrency(forceShare!.required) }}
+                                        and
+                                        {{ formatCurrency(forceShare!.paid) }}.
+                                        <template v-if="giveBack > 0">
+                                            {{ formatCurrency(giveBack) }} goes
+                                            back to the family as credit.
+                                        </template>
+                                    </p>
+
+                                    <p
+                                        v-if="keepError"
+                                        class="text-xs text-rose-600 sm:col-span-2 dark:text-rose-300"
+                                    >
+                                        {{ keepError }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -1058,9 +1137,11 @@
                     : 'This ends the current admission and any future periods.'
             "
             :description="
-                owesBalance
-                    ? `${formatCurrency(forceShare?.write_off ?? 0)} of this admission's bill will be written off as bad debt. Services and schedules are not affected. This action cannot be undone.`
-                    : 'This action cannot be undone.'
+                !owesBalance
+                    ? 'This action cannot be undone.'
+                    : giveBack > 0
+                      ? `The branch keeps ${formatCurrency(keepValue)}. ${formatCurrency(giveBack)} goes back to the family as credit and the unpaid ${formatCurrency(forceShare?.write_off ?? 0)} is waived. Services and schedules are not affected. This action cannot be undone.`
+                      : `${formatCurrency(forceShare?.write_off ?? 0)} of this admission's bill will be written off as bad debt. Services and schedules are not affected. This action cannot be undone.`
             "
             :confirm-label="
                 owesBalance ? 'Yes, force discharge' : 'Yes, discharge'
@@ -1080,7 +1161,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { Check, Pencil } from "lucide-vue-next";
 import type {
     Admission,
     InvoiceAccommodation,
@@ -1119,6 +1201,7 @@ const emit = defineEmits<{
             currentRefundAmount: number | null;
             note: string;
             force: boolean;
+            keep: number | null;
         },
     ];
     cancel: [];
@@ -1253,8 +1336,62 @@ const mayForce = computed(
     () => owesBalance.value && props.canForce && !!forceShare.value?.allowed,
 );
 
-const canProceed = computed(() =>
-    owesBalance.value ? mayForce.value : props.canDischarge,
+const keepInput = ref<string | number>("");
+const editingKeep = ref(false);
+const keepRef = ref<HTMLInputElement | null>(null);
+
+async function toggleKeepEdit() {
+    editingKeep.value = !editingKeep.value;
+
+    if (editingKeep.value) {
+        await nextTick();
+        keepRef.value?.focus();
+        keepRef.value?.select();
+    }
+}
+
+const canKeepLess = computed(
+    () =>
+        mayForce.value &&
+        getNumber(forceShare.value?.paid) - getNumber(forceShare.value?.required) >= 0.01,
+);
+
+const keepValue = computed(() =>
+    keepInput.value === "" ? getNumber(forceShare.value?.paid) : getNumber(keepInput.value, NaN),
+);
+
+const keepError = computed(() => {
+    if (!canKeepLess.value) return "";
+
+    const min = getNumber(forceShare.value?.required);
+    const max = getNumber(forceShare.value?.paid);
+
+    return !Number.isFinite(keepValue.value) || keepValue.value < min - 0.005 || keepValue.value > max + 0.005
+        ? `Enter an amount between ${formatCurrency(min)} and ${formatCurrency(max)}.`
+        : "";
+});
+
+const giveBack = computed(() =>
+    canKeepLess.value && !keepError.value
+        ? Math.round((getNumber(forceShare.value?.paid) - keepValue.value) * 100) / 100
+        : 0,
+);
+
+watch(
+    () => forceShare.value?.paid,
+    (paid) => {
+        keepInput.value = paid !== undefined && paid !== null ? getNumber(paid) : "";
+        editingKeep.value = false;
+    },
+    { immediate: true },
+);
+
+const hasReason = computed(() => dischargeNote.value.trim().length > 0);
+
+const canProceed = computed(
+    () =>
+        hasReason.value &&
+        (owesBalance.value ? mayForce.value && !keepError.value : props.canDischarge),
 );
 
 const paidPercent = computed(() => {
@@ -1388,6 +1525,8 @@ function proceedWithDischarge() {
         note: dischargeNote.value.trim(),
 
         force: owesBalance.value,
+
+        keep: owesBalance.value && giveBack.value > 0 ? keepValue.value : null,
     });
 }
 

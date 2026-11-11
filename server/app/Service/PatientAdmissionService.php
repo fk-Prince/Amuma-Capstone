@@ -352,12 +352,23 @@ class PatientAdmissionService
             throw new Exception('Admission not found.', 404);
         }
 
-        return DB::transaction(function () use ($admission, $payload) {
+        $note = trim((string) ($payload['note'] ?? ''));
+
+        if ($note === '' || mb_strlen($note) > 255) {
+            throw ValidationException::withMessages([
+                'note' => $note === ''
+                    ? 'Give the reason for this discharge.'
+                    : 'The reason may not be longer than 255 characters.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($admission, $payload, $note) {
             $currentPeriod = $admission->currentPeriod()
                 ->with('branchContract', 'invoiceAdmissionLines')
                 ->first();
 
             $force = !empty($payload['force']) && $currentPeriod;
+            $giveBack = 0.0;
 
             if ($force) {
                 $share = DischargeCalculator::forceDischarge($admission, $currentPeriod);
@@ -370,6 +381,8 @@ class PatientAdmissionService
                         422
                     );
                 }
+
+                $giveBack = $this->forceGiveBack($share, $payload['force_keep'] ?? null);
             }
 
             $dischargedAt = now();
@@ -377,7 +390,7 @@ class PatientAdmissionService
             $admission->update([
                 'discharged_at' => $dischargedAt,
                 'status' => PatientAdmission::STATUS_DISCHARGED,
-                'note' => ($payload['note'] ?? '') ?: null,
+                'note' => $note,
             ]);
 
             $bedIds = collect([$admission->bed_id])->filter();
@@ -401,6 +414,10 @@ class PatientAdmissionService
                         $payload['user'] ?? null,
                         $settled['offset']
                     );
+                }
+
+                if ($force && $giveBack >= 0.01) {
+                    $this->creditBackOnForce($admission, $currentPeriod->admission_period_id, $giveBack);
                 }
 
                 if ($force) {
@@ -446,6 +463,57 @@ class PatientAdmissionService
                 }
 
                 $this->invoiceService->closeAsVoid($invoice, $reason, $userId);
+            });
+    }
+
+    private function forceGiveBack(array $share, mixed $keep): float
+    {
+        if ($keep === null || $keep === '') {
+            return 0.0;
+        }
+
+        if (!is_numeric($keep)) {
+            throw ValidationException::withMessages(['force_keep' => 'Enter the amount the branch keeps.']);
+        }
+
+        $keep = round((float) $keep, 2);
+
+        if ($keep < $share['required'] - 0.005 || $keep > $share['paid'] + 0.005) {
+            throw ValidationException::withMessages([
+                'force_keep' => 'The branch has to keep between ' . number_format($share['required'], 2)
+                    . ' and ' . number_format($share['paid'], 2) . '.',
+            ]);
+        }
+
+        return round(max(0, $share['paid'] - $keep), 2);
+    }
+
+    private function creditBackOnForce(PatientAdmission $admission, int $exceptPeriodId, float $giveBack): void
+    {
+        $left = $giveBack;
+        $reason = 'Force discharged. The branch credited ' . number_format($giveBack, 2)
+            . ' of what was paid back to the family.';
+
+        $this->invoiceRepository->openAdmissionInvoices($admission, $exceptPeriodId)
+            ->each(function (Invoice $invoice) use (&$left, $reason) {
+                $invoice->refresh();
+
+                $paid = max(0, (float) $invoice->net_paid_amount);
+                $back = round(min($left, $paid), 2);
+                $delta = round(($paid - $back) - (float) $invoice->adjusted_total, 2);
+
+                if ($delta <= -0.01) {
+                    InvoiceAdjustment::create([
+                        'invoice_id' => $invoice->invoice_id,
+                        'type' => InvoiceAdjustment::TYPE_CORRECTION,
+                        'amount' => $delta,
+                        'reason' => $reason,
+                    ]);
+
+                    $invoice->refresh()->syncStatus();
+                }
+
+                $left = round($left - $back, 2);
             });
     }
 
@@ -875,7 +943,6 @@ class PatientAdmissionService
                 [[
                     'patient_diagnosis_uuid' => $payload['patient_diagnosis_uuid'] ?? null,
                     'diagnosis_case_uuid' => $payload['diagnosis_case_uuid'] ?? null,
-                    'amount' => $payload['amount'] ?? null,
                     'description' => $payload['description'] ?? null,
                     'billed' => $payload['billed'] ?? null,
                     'is_active' => $payload['is_active'] ?? true,

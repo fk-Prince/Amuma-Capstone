@@ -9,6 +9,7 @@ const props = withDefaults(
         description?: string;
         confirmLabel?: string;
         cancelLabel?: string;
+        loadingLabel?: string;
         loading?: boolean;
         variant?: "default" | "danger";
         hideCancel?: boolean;
@@ -17,6 +18,7 @@ const props = withDefaults(
         description: "",
         confirmLabel: "Confirm",
         cancelLabel: "Cancel",
+        loadingLabel: "Saving...",
         variant: "default",
         loading: false,
         hideCancel: false,
@@ -90,7 +92,7 @@ const emit = defineEmits<{
                                 v-if="props.loading"
                                 class="h-4 w-4 shrink-0 animate-spin"
                             />
-                            {{ props.loading ? "Saving..." : confirmLabel }}
+                            {{ props.loading ? loadingLabel : confirmLabel }}
                         </button>
                     </div>
                 </div>

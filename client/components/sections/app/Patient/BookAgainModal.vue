@@ -190,6 +190,8 @@
                             gcash-label="Pay with GCash"
                             gcash-processing-label="Redirecting to GCash..."
                             terms-context="booking"
+                            :terms-branch="branchUuid"
+                            terms-booking-type="homecare"
                             @update:card="(value) => Object.assign(card, value)"
                             @card-pay="handleCardPay"
                             @g-cash-pay="handleGCashPay"

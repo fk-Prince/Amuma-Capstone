@@ -8,6 +8,7 @@ import { formatCurrency } from "~/utils/currency";
 const props = defineProps<{
     open: boolean;
     patientName?: string;
+    branchUuid?: string | null;
     currentBalance: number;
     unpaidInvoiceCount: number;
     amount: number;
@@ -287,6 +288,7 @@ function peso(value: number) {
                             :on-card-pay="onCardPay"
                             :on-g-cash-pay="onGCashPay"
                             terms-context="balance"
+                            :terms-branch="branchUuid"
                             title="Payment method"
                             description="Pay by card or GCash. Payments are processed securely through Xendit."
                             submit-label="Pay now"

@@ -293,7 +293,7 @@
                                     v-if="adlRateLabel"
                                     :label="
                                         isMonthlyAdl
-                                            ? 'Base Price'
+                                            ? 'Monthly Base Price'
                                             : 'Hourly Rate'
                                     "
                                     :value="adlRateLabel"

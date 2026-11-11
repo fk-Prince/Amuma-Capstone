@@ -31,11 +31,19 @@ class DiagnosisFeeService
     public function fromCreated(array $created, int $branchId): Collection
     {
         return collect($created)
-            ->map(fn(array $entry) => $this->pair(
-                $entry['diagnosis'],
-                $entry['diagnosis_case_uuid'] ?? null,
-                $branchId
-            ))
+            ->values()
+            ->map(function (array $entry, int $index) use ($branchId) {
+                $fee = $this->pair($entry['diagnosis'], $entry['diagnosis_case_uuid'] ?? null, $branchId, $index);
+
+                if (!$fee) {
+                    return null;
+                }
+
+                $fee['billed'] = AdmissionDiagnosis::BILLED_MONTHLY;
+                $fee['is_active'] = true;
+
+                return $fee;
+            })
             ->filter()
             ->values();
     }
@@ -62,18 +70,6 @@ class DiagnosisFeeService
             }
 
             $fee = $this->pair($diagnosis, $entry['diagnosis_case_uuid'], $branchId, $index);
-
-            $amount = $entry['amount'] ?? null;
-
-            if (filled($amount)) {
-                if (!is_numeric($amount) || (float) $amount < 0 || (float) $amount > 99999999.99) {
-                    throw ValidationException::withMessages([
-                        "diagnoses.$index.amount" => 'Enter a valid amount.',
-                    ]);
-                }
-
-                $fee['amount'] = round((float) $amount, 2);
-            }
 
             $description = trim((string) ($entry['description'] ?? ''));
 

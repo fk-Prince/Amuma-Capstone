@@ -20,8 +20,8 @@
                     </h1>
 
                     <p class="text-sm text-muted dark:text-gray-400">
-                        Manage your branch information, agency details, images, and
-                        operation settings.
+                        Manage your branch information, agency details, images,
+                        operation settings and terms.
                     </p>
                 </div>
             </div>
@@ -135,6 +135,12 @@
                         "
                         v-model:setting="branchStore.activeBranch.settings"
                     />
+
+                    <BranchTermsTab
+                        ref="tabRef"
+                        v-else-if="activeTab === 'terms'"
+                        :uuid="String(route.params.uuid)"
+                    />
                 </Transition>
             </div>
         </div>
@@ -150,6 +156,7 @@ import {
     Settings,
     Check,
     LoaderCircle,
+    FileText,
 } from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
@@ -159,6 +166,7 @@ import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.v
 import BranchAgencyTab from "~/components/sections/app/settings/BranchAgencyTab.vue";
 import BranchImagesTab from "~/components/sections/app/settings/BranchImagesTab.vue";
 import BranchOperationTab from "~/components/sections/app/settings/BranchOperationTab.vue";
+import BranchTermsTab from "~/components/sections/app/settings/BranchTermsTab.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -191,6 +199,11 @@ const tabs = [
         label: "Operation Settings",
         value: "operation",
         icon: Settings,
+    },
+    {
+        label: "Terms",
+        value: "terms",
+        icon: FileText,
     },
 ];
 

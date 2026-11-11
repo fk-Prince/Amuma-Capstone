@@ -9,6 +9,7 @@ use App\Guard\BranchGuard;
 use App\Http\Requests\Branch\BranchRequest;
 use App\Service\BranchService;
 use App\Service\BranchSetupService;
+use App\Service\BranchTermsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,7 @@ class BranchController extends Controller
     public function __construct(
         private BranchService $branchService,
         private BranchSetupService $branchSetupService,
+        private BranchTermsService $branchTermsService,
     ) {}
 
     public function setup(Request $request, string $uuid)
@@ -50,6 +52,11 @@ class BranchController extends Controller
     public function fetchBranch(string $uuid)
     {
         return $this->branchService->getBranch($uuid);
+    }
+
+    public function terms(string $uuid)
+    {
+        return response()->json(['data' => $this->branchTermsService->forBranch($uuid)]);
     }
 
     public function healthProviders(string $uuid)

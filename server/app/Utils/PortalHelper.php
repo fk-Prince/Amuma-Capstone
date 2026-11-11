@@ -37,6 +37,7 @@ class PortalHelper
             'reason' => $booking->reason,
             'reviewed_by' => $booking->reviewed_by_name,
             'reviewed_at' => $booking->reviewed_by ? $booking->updated_at : null,
+            'branch_uuid' => $booking->branch?->uuid,
             'branch_name' => $booking->branch?->name,
             'branch_image' => $booking->branch?->image,
 

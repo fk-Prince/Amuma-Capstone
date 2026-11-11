@@ -8,6 +8,7 @@ import { cardPayment, gcashPayment } from "~/composables/usePayment";
 import { useToast } from "~/composables/useToast";
 import { formatCurrency } from "~/utils/currency";
 import type { CardDetails } from "~/types/payment";
+import type { BookingTermsType } from "~/utils/paymentTerms";
 
 const props = defineProps<{
     open: boolean;
@@ -16,6 +17,8 @@ const props = defineProps<{
     total: number;
     amountDue: number;
     percent: number | null;
+    branchUuid?: string | null;
+    bookingType?: BookingTermsType | null;
 }>();
 
 const emit = defineEmits<{
@@ -255,6 +258,8 @@ function close() {
                         :on-card-pay="handleCardPay"
                         :on-g-cash-pay="handleGCashPay"
                         terms-context="booking"
+                        :terms-branch="branchUuid"
+                        :terms-booking-type="bookingType"
                         title="Payment method"
                         description="Pay by card or GCash. Payments are processed securely through Xendit."
                         submit-label="Pay now"

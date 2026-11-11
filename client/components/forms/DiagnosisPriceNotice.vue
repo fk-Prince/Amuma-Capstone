@@ -7,7 +7,20 @@
             class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300"
         />
 
-        <p class="text-[13px] leading-5 text-amber-800 dark:text-amber-200">
+        <p
+            v-if="chosen?.length"
+            class="text-[13px] leading-5 text-amber-800 dark:text-amber-200"
+        >
+            This patient's bill includes
+            <template v-for="(item, index) in chosen" :key="index">
+                <template v-if="index > 0">{{ index === chosen.length - 1 ? " and " : ", " }}</template>
+                <span class="font-semibold">{{ item.title }}</span> at
+                <span class="font-semibold">{{ formatCurrency(item.amount) }}</span>
+            </template>
+            monthly, billed on a separate invoice.
+        </p>
+
+        <p v-else class="text-[13px] leading-5 text-amber-800 dark:text-amber-200">
             Additional charges may be added to the bill depending on the
             patient's diagnosis.
             <template v-if="charges && charges.min === charges.max">
@@ -41,5 +54,6 @@ defineProps<{
     show?: boolean;
     // Lowest and highest diagnosis case price, when the facility has any.
     charges?: { min: number; max: number } | null;
+    chosen?: { title: string; amount: number }[];
 }>();
 </script>

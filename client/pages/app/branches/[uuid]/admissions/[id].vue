@@ -1493,12 +1493,14 @@ function confirmDischarge(payload: {
     currentRefundAmount: number | null;
     note: string;
     force: boolean;
+    keep: number | null;
 }) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
         note: payload.note,
         force: payload.force,
+        ...(payload.keep !== null ? { force_keep: payload.keep } : {}),
     });
 }
 

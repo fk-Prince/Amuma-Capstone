@@ -33,6 +33,7 @@ import type { BookingRetrieve } from "~/types/booking";
 import { formatDuration, stringToDateTime } from "~/utils/time";
 import { fullName } from "~/utils/user";
 import { useToast } from "~/composables/useToast";
+import { bookingTermsType } from "~/utils/paymentTerms";
 
 useHead({ title: "Bookings" });
 
@@ -42,6 +43,7 @@ definePageMeta({
 });
 
 type PortalBooking = BookingRetrieve & {
+    branch_uuid?: string | null;
     branch_name: string | null;
     receipt_code?: string | null;
     can_pay?: boolean;
@@ -1080,7 +1082,7 @@ onBeforeUnmount(() => {
                                             >
                                                 {{
                                                     isMonthlyAdl(booking)
-                                                        ? "Base Price"
+                                                        ? "Monthly Base Price"
                                                         : "Hourly Rate"
                                                 }}
                                             </dt>
@@ -1493,6 +1495,8 @@ onBeforeUnmount(() => {
             :total="Number((payingBooking.payment as any)?.total_amount ?? 0)"
             :amount-due="Number(payingBooking.amount_due ?? 0)"
             :percent="payingBooking.percent_due ?? null"
+            :branch-uuid="payingBooking.branch_uuid"
+            :booking-type="bookingTermsType(payingBooking.category, (payingBooking as any).facility?.type)"
             @close="onPayClosed"
             @paid="onBookingPaid"
         />

@@ -3,14 +3,55 @@ export type PaymentTermsBlock =
     | { type: "list"; items: string[] };
 
 export interface PaymentTermsSection {
+    key?: string;
     title: string;
     blocks: PaymentTermsBlock[];
+    branch?: boolean;
 }
 
 export interface PaymentTerms {
     heading: string;
     lastUpdated: string;
     sections: PaymentTermsSection[];
+    branchName?: string;
+    footnote?: string;
+}
+
+export type BranchTermsDocKey = "booking_terms" | "balance_terms";
+
+export type BookingTermsType = "homecare" | "complete" | "pre";
+
+export const BOOKING_TERMS_TYPES: {
+    value: BookingTermsType;
+    label: string;
+    hint: string;
+}[] = [
+    { value: "homecare", label: "Homecare", hint: "Medical and ADL visits" },
+    { value: "complete", label: "Complete Admission", hint: "Paid facility booking" },
+    { value: "pre", label: "Pre-Admission", hint: "Free facility request" },
+];
+
+export const BRANCH_TERMS_MAX_SECTIONS = 6;
+
+export interface BranchTermsSection {
+    after: string;
+    title: string;
+    body: string;
+    show_on?: BookingTermsType[];
+}
+
+export interface BranchTermsDoc {
+    updated_at: string | null;
+    sections: BranchTermsSection[];
+}
+
+export interface BranchTermsData {
+    name: string;
+    booking_percent: number;
+    downpayment_percent: number;
+    discharge_percent: number;
+    booking_terms: BranchTermsDoc;
+    balance_terms: BranchTermsDoc;
 }
 
 const SUBSCRIPTION_TERMS: PaymentTerms = {
@@ -199,9 +240,10 @@ const SUBSCRIPTION_TERMS: PaymentTerms = {
 
 const BOOKING_TERMS: PaymentTerms = {
     heading: "Booking & Payment Terms",
-    lastUpdated: "October 14, 2026",
+    lastUpdated: "November 11, 2026",
     sections: [
         {
+            key: "scope",
             title: "Scope & acceptance",
             blocks: [
                 {
@@ -211,6 +253,7 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "request",
             title: "Booking is a request, not a confirmed reservation",
             blocks: [
                 {
@@ -220,19 +263,26 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "payment_required",
             title: "When payment is required",
             blocks: [
                 {
                     type: "list",
                     items: [
                         "Facility Pre-Admission bookings do not require payment at the time of booking. These are submitted free of charge; payment is arranged later as part of the admission process.",
-                        "Facility Complete Admission bookings require payment of a reservation fee before the booking is submitted. This fee is a percentage of the total contract amount, set by the branch, and is not the full cost of admission. The remaining balance is due separately as part of completing the admission.",
-                        "Homecare bookings (Medical/ADL) require payment of a downpayment before the booking is submitted. The downpayment is a percentage of the total service amount, set by the branch, and is not the full cost of the service. The remaining balance is due separately.",
+                        "Facility Complete Admission bookings require payment of a reservation fee before the booking is submitted. This fee is {reservation} of the total contract amount, set by the branch, and is not the full cost of admission. The remaining balance is due separately as part of completing the admission.",
+                        "Homecare bookings (Medical/ADL) you make online require payment of a downpayment before the booking is submitted. The downpayment is {downpayment} of the total service amount, set by the branch, and is not the full cost of the service. The remaining balance is due separately.",
+                        "If the branch creates a homecare booking for you, you pay its downpayment afterwards, from the family portal or at the branch.",
                     ],
+                },
+                {
+                    type: "paragraph",
+                    text: "If your payment goes through but the booking can't be completed, the payment is refunded automatically.",
                 },
             ],
         },
         {
+            key: "payment_methods",
             title: "Payment methods",
             blocks: [
                 {
@@ -242,24 +292,39 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "expiry",
             title: "Booking expiry",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Every booking has a review deadline, shown to you as the booking's valid-until date. If the branch does not approve or reject the booking before that deadline, the booking automatically expires. If a reservation fee or downpayment was paid on an expired booking, it is automatically refunded to your original payment method.",
+                    text: "Every booking has a review deadline, shown to you as the booking's valid-until date:",
+                },
+                {
+                    type: "list",
+                    items: [
+                        "Homecare: the date and time of the visit you requested.",
+                        "Facility Complete Admission: the admission date you requested.",
+                        "Facility Pre-Admission: one month after you submit it.",
+                    ],
+                },
+                {
+                    type: "paragraph",
+                    text: "If the branch does not approve or reject the booking before that deadline, the booking automatically expires. If a reservation fee or downpayment was paid on an expired booking, it is automatically refunded to your original payment method.",
                 },
             ],
         },
         {
+            key: "rejected",
             title: "Rejected bookings",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "If the branch rejects your booking, any reservation fee or downpayment paid is automatically refunded to your original payment method, subject to the processing time required by our payment partner.",
+                    text: "If the branch rejects your booking, any reservation fee or downpayment paid is automatically refunded to your original payment method, subject to the processing time required by our payment partner. If the automatic refund doesn't go through, the branch issues it for you.",
                 },
             ],
         },
         {
+            key: "approved",
             title: "Approved bookings",
             blocks: [
                 {
@@ -269,6 +334,31 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "cancelling",
+            title: "Cancelling after approval",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "If an approved homecare visit or admission is cancelled, its invoice is closed at the amount already paid. You are not charged the unpaid part, and what you have already paid is kept by the branch.",
+                },
+            ],
+        },
+        {
+            key: "discharge",
+            title: "Discharge by the branch",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "The branch may end an admission early when a resident's behaviour puts others at risk, for example hurting other residents or staff, or for another serious reason the branch explains to you.",
+                },
+                {
+                    type: "paragraph",
+                    text: "If the resident still has an unpaid balance, at least {discharge} of the admission's bill, as set by the branch, must be paid before the branch discharges the resident.",
+                },
+            ],
+        },
+        {
+            key: "accuracy",
             title: "Accuracy of information",
             blocks: [
                 {
@@ -278,6 +368,7 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "liability",
             title: "Disclaimers & limitation of liability",
             blocks: [
                 {
@@ -287,6 +378,7 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "governing_law",
             title: "Governing law",
             blocks: [
                 {
@@ -296,6 +388,7 @@ const BOOKING_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "changes",
             title: "Changes to these Terms & contact",
             blocks: [
                 {
@@ -309,9 +402,10 @@ const BOOKING_TERMS: PaymentTerms = {
 
 const BALANCE_TERMS: PaymentTerms = {
     heading: "Online Payment Terms",
-    lastUpdated: "September 20, 2026",
+    lastUpdated: "November 11, 2026",
     sections: [
         {
+            key: "scope",
             title: "Scope",
             blocks: [
                 {
@@ -321,15 +415,32 @@ const BALANCE_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "payment_methods",
             title: "Accepted payment methods",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Payments made through the portal may be completed via GCash or Credit/Debit Card. Cash payments are accepted only in person at the branch and are recorded by branch staff — they are not processed through the portal.",
+                    text: "Payments made through the portal may be completed via GCash or Credit/Debit Card, or with credit already on your account. Cash payments are accepted only in person at the branch and are recorded by branch staff; they are not processed through the portal.",
                 },
             ],
         },
         {
+            key: "payment_applied",
+            title: "How your payment is applied",
+            blocks: [
+                {
+                    type: "list",
+                    items: [
+                        "You may pay your full balance or part of it.",
+                        "Each payment is made either by card or GCash, or with credit on your account, not both at once.",
+                        "Your payment goes to the invoices you select. If you don't select any, it is applied to your unpaid invoices in the order the branch billed them.",
+                        "Every payment produces a receipt you can view in the portal.",
+                    ],
+                },
+            ],
+        },
+        {
+            key: "authorization",
             title: "Payment authorization",
             blocks: [
                 {
@@ -339,15 +450,17 @@ const BALANCE_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "accuracy",
             title: "Invoice accuracy",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Please review the invoice details (services, dates, and amount due) before paying. If you believe an invoice contains an error, contact the branch to request a review before submitting payment — adjustments cannot be applied to an invoice after it has been paid in full.",
+                    text: "Please review the invoice details (services, dates, and amount due) before paying. If you believe an invoice contains an error, contact the branch to request a review.",
                 },
             ],
         },
         {
+            key: "processing",
             title: "Processing time",
             blocks: [
                 {
@@ -357,29 +470,54 @@ const BALANCE_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "adjustments",
             title: "Invoice adjustments",
             blocks: [
                 {
                     type: "paragraph",
-                    text: "Charges may be adjusted by the branch to correct billing errors, apply discounts, or account for schedule changes (e.g., an accommodation change, a shortened service, or a late/incomplete visit). Adjustments are applied to the invoice before payment is due; they do not affect invoices you have already paid in full.",
+                    text: "The branch may adjust an invoice to correct a billing error, apply a discount, or reflect a change in care, such as an accommodation change, a shortened stay, or a cancelled visit. If an adjustment lowers an invoice you have already paid, the difference becomes credit on your account. If it raises an invoice, the new balance is shown to you before you pay.",
                 },
             ],
         },
         {
+            key: "early_discharge",
+            title: "Leaving a facility early",
+            blocks: [
+                {
+                    type: "paragraph",
+                    text: "If a resident is discharged before the end of a paid billing period, part of that period may come back to you as credit:",
+                },
+                {
+                    type: "list",
+                    items: [
+                        "Monthly stays: if the resident leaves within the first 14 days of the month, half of the month is kept and the other half is credited back. From day 14 onwards, the full month is charged.",
+                        "Yearly stays: if the resident leaves within the first 6 months, half of the year is kept, the days already stayed are deducted from the other half, and what remains is credited back. After 6 months, the full year is charged.",
+                    ],
+                },
+                {
+                    type: "paragraph",
+                    text: "Any credit from a discharge first settles what the resident still owes the branch. Anything left stays on your account as credit.",
+                },
+            ],
+        },
+        {
+            key: "refunds",
             title: "Refunds and credits",
             blocks: [
                 {
                     type: "list",
                     items: [
-                        "A refund reflects credit created on your account, most commonly from an invoice adjustment made after a payment.",
-                        "Credit on your account can be applied automatically to a future invoice or withdrawn as a payout upon request.",
-                        "A withdrawal request is reviewed by branch/cashier staff and may be approved or rejected; approved withdrawals are paid out via the method selected at request time.",
-                        "Refunds and withdrawals are not guaranteed to be instant and follow the branch's review process.",
+                        "A refund is credit added to your account, most often from an invoice adjustment or an early discharge.",
+                        "You can use your credit to pay an invoice by choosing \"Use credit on account\" when you pay.",
+                        "You can also ask to withdraw your credit as a payout, for any amount up to your available credit, to the GCash number or card you enter. You can have one withdrawal request open at a time.",
+                        "The branch reviews each withdrawal request and may approve or reject it. The branch may also pay out credit in cash at the branch.",
+                        "Refunds and withdrawals are not instant and follow the branch's review process.",
                     ],
                 },
             ],
         },
         {
+            key: "non_refundable",
             title: "Non-refundable charges",
             blocks: [
                 {
@@ -389,6 +527,7 @@ const BALANCE_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "security",
             title: "Data and security",
             blocks: [
                 {
@@ -398,6 +537,7 @@ const BALANCE_TERMS: PaymentTerms = {
             ],
         },
         {
+            key: "changes",
             title: "Changes to these terms",
             blocks: [
                 {
@@ -415,10 +555,160 @@ const PAYMENT_TERMS: Partial<Record<string, PaymentTerms>> = {
     balance: BALANCE_TERMS,
 };
 
+const DOC_FOR_CONTEXT: Partial<Record<string, BranchTermsDocKey>> = {
+    booking: "booking_terms",
+    balance: "balance_terms",
+};
+
+export function termsContextFor(doc: BranchTermsDocKey): string {
+    return doc === "booking_terms" ? "booking" : "balance";
+}
+
+export function bookingTermsType(
+    category?: string | null,
+    facilityType?: string | null,
+): BookingTermsType | null {
+    const value = String(category ?? "").toLowerCase();
+
+    if (value === "homecare") return "homecare";
+    if (value !== "facility") return null;
+
+    return String(facilityType ?? "").toLowerCase().startsWith("pre")
+        ? "pre"
+        : "complete";
+}
+
+function fillPercents(text: string, data?: BranchTermsData | null): string {
+    const percent = (value?: number) =>
+        value === undefined || value === null ? "a percentage" : `${value}%`;
+
+    return text
+        .replaceAll("{reservation}", percent(data?.booking_percent))
+        .replaceAll("{downpayment}", percent(data?.downpayment_percent))
+        .replaceAll("{discharge}", percent(data?.discharge_percent));
+}
+
+function fillSection(
+    section: PaymentTermsSection,
+    data?: BranchTermsData | null,
+): PaymentTermsSection {
+    return {
+        ...section,
+        blocks: section.blocks.map((block) =>
+            block.type === "paragraph"
+                ? { ...block, text: fillPercents(block.text, data) }
+                : { ...block, items: block.items.map((item) => fillPercents(item, data)) },
+        ),
+    };
+}
+
+function branchSection(section: BranchTermsSection): PaymentTermsSection {
+    return {
+        title: section.title,
+        branch: true,
+        blocks: section.body
+            .split(/\n+/)
+            .map((text) => text.trim())
+            .filter(Boolean)
+            .map((text) => ({ type: "paragraph" as const, text })),
+    };
+}
+
+export function lockedTermsSections(doc: BranchTermsDocKey): PaymentTermsSection[] {
+    return PAYMENT_TERMS[termsContextFor(doc)]?.sections ?? [];
+}
+
+export type TermsOrderItem =
+    | { kind: "locked"; section: PaymentTermsSection }
+    | { kind: "branch"; section: BranchTermsSection };
+
+export function mergeTermsOrder(
+    locked: PaymentTermsSection[],
+    branch: BranchTermsSection[],
+): TermsOrderItem[] {
+    const keys = new Set(locked.map((section) => section.key));
+    const order: TermsOrderItem[] = [];
+
+    for (const section of locked) {
+        order.push({ kind: "locked", section });
+        branch
+            .filter((item) => item.after === section.key)
+            .forEach((item) => order.push({ kind: "branch", section: item }));
+    }
+
+    branch
+        .filter((item) => !keys.has(item.after))
+        .forEach((item) => order.push({ kind: "branch", section: item }));
+
+    return order;
+}
+
+export function branchSectionsFromOrder(order: TermsOrderItem[]): BranchTermsSection[] {
+    let anchor = "";
+
+    return order.flatMap((item) => {
+        if (item.kind === "locked") {
+            anchor = item.section.key ?? anchor;
+            return [];
+        }
+
+        return [{ ...item.section, after: anchor }];
+    });
+}
+
+function latestDate(base: string, updatedAt?: string | null): string {
+    const baseTime = Date.parse(base);
+    const branchTime = updatedAt ? Date.parse(updatedAt) : NaN;
+
+    if (Number.isNaN(branchTime) || (!Number.isNaN(baseTime) && baseTime >= branchTime)) {
+        return base;
+    }
+
+    return new Date(branchTime).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+    });
+}
+
+export function buildPaymentTerms(
+    context?: string | null,
+    data?: BranchTermsData | null,
+    bookingType?: BookingTermsType | null,
+): PaymentTerms | null {
+    const base = context ? PAYMENT_TERMS[context] : null;
+    if (!base) return null;
+
+    const docKey = context ? DOC_FOR_CONTEXT[context] : undefined;
+    const locked = base.sections.map((section) => fillSection(section, data));
+
+    if (!docKey || !data) return { ...base, sections: locked };
+
+    const doc = data[docKey];
+    const shown = (doc?.sections ?? []).filter(
+        (section) =>
+            docKey !== "booking_terms" ||
+            !bookingType ||
+            (section.show_on ?? []).includes(bookingType),
+    );
+
+    const sections = mergeTermsOrder(locked, shown).map((item) =>
+        item.kind === "locked" ? item.section : branchSection(item.section),
+    );
+
+    return {
+        ...base,
+        sections,
+        branchName: data.name,
+        lastUpdated: latestDate(base.lastUpdated, doc?.updated_at),
+        footnote: shown.length
+            ? `Sections marked Branch policy are written by ${data.name}. If one conflicts with a section set by AMUMA, AMUMA's section applies.`
+            : undefined,
+    };
+}
+
 export function getPaymentTerms(
     context?: string | null,
 ): PaymentTerms | null {
-    if (!context) return null;
-
-    return PAYMENT_TERMS[context] ?? null;
+    return buildPaymentTerms(context);
 }

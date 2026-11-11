@@ -467,11 +467,15 @@ function caseFor(entry: Diagnosis) {
         : undefined;
 }
 
+function caseAmount(entry: Diagnosis) {
+    return Number(caseFor(entry)?.price ?? 0);
+}
+
 // Only a diagnosis that was actually filled in is billed.
 const diagnosisFeeTotal = computed(() =>
     diagnosisList.value.reduce(
         (sum, entry) =>
-            entry.diagnosis ? sum + Number(caseFor(entry)?.price ?? 0) : sum,
+            entry.diagnosis ? sum + caseAmount(entry) : sum,
         0,
     ),
 );
@@ -543,7 +547,7 @@ function getDiagnosisRows(entry: Diagnosis): Row[] {
         {
             label: "Diagnosis Case",
             value: diagnosisCase
-                ? `${diagnosisCase.title} — ${formatCurrency(diagnosisCase.price)}`
+                ? `${diagnosisCase.title} — ${formatCurrency(caseAmount(entry))} monthly`
                 : "",
         },
         {

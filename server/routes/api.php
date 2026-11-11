@@ -83,6 +83,7 @@ Route::prefix('branches')->group(function () {
     Route::get('/featured', [BranchController::class, 'retrieveFeaturedBranch']);
     Route::get('/filtered', [BranchController::class, 'retrieveFilteredBranch']);
     Route::get('/{uuid}/health-providers', [BranchController::class, 'healthProviders']);
+    Route::get('/{uuid}/terms', [BranchController::class, 'terms']);
     Route::post('/{uuid}/inquiries', [InquiryController::class, 'store'])->middleware('throttle:5,1');
 
     // AUTHENTICATED BRACNHES ACCESS
