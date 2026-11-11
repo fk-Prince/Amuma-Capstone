@@ -54,6 +54,14 @@
                     </span>
                 </div>
 
+                <p
+                    v-if="!isEditing && schedule.status?.toLowerCase() === 'cancelled' && schedule.cancel_reason"
+                    class="mx-6 mt-4 flex shrink-0 items-start gap-2 rounded-lg bg-rose-50 px-3 py-2.5 text-sm text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                >
+                    <Ban class="mt-0.5 h-4 w-4 shrink-0" />
+                    <span class="min-w-0 break-words"><span class="font-semibold">Cancellation reason:</span> {{ schedule.cancel_reason }}</span>
+                </p>
+
                 <ScheduleConflictNotice
                     v-if="isEditing"
                     title="Nurse required"
@@ -1470,6 +1478,7 @@ import {
     Printer,
     TriangleAlert,
     Users,
+    Ban,
 } from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";
@@ -2185,6 +2194,7 @@ function handleSchedule() {
 }
 
 function confirmCancelSchedule(settlement: {
+    cancel_reason: string;
     final_amount?: number;
     adjustment_reason?: string;
 }) {

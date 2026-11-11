@@ -128,6 +128,14 @@
                         </span>
                     </div>
 
+                    <p
+                        v-if="schedule.status === 'cancelled' && schedule.cancel_reason"
+                        class="flex items-start gap-1.5 border-t border-rose-100 bg-rose-50 px-4 py-2.5 text-xs text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300"
+                    >
+                        <Ban class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span class="min-w-0 break-words"><span class="font-semibold">Cancelled:</span> {{ schedule.cancel_reason }}</span>
+                    </p>
+
                     <div
                         v-if="schedule.address || schedule.note"
                         class="space-y-1 border-t border-gray-100 px-4 py-3 text-xs dark:border-white/10"
@@ -381,6 +389,7 @@ import {
     ChevronDown,
     MapPin,
     Signpost,
+    Ban,
 } from "lucide-vue-next";
 import type { ScheduleAssignee, ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { useSchedule } from "~/composables/useSchedule";

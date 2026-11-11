@@ -23,6 +23,37 @@
                     will be cancelled and can no longer be edited.
                 </p>
 
+                <div class="mt-4">
+                    <label
+                        for="schedule-cancel-reason"
+                        class="text-xs font-semibold text-gray-700 dark:text-gray-300"
+                    >
+                        Reason for cancelling <span class="text-red-500">*</span>
+                    </label>
+
+                    <textarea
+                        id="schedule-cancel-reason"
+                        v-model="cancelReason"
+                        rows="3"
+                        maxlength="500"
+                        :disabled="loading"
+                        placeholder="Why is this schedule being cancelled?"
+                        class="mt-1.5 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition focus:ring-2 disabled:opacity-60 dark:bg-white/5 dark:text-white"
+                        :class="
+                            cancelReasonError
+                                ? 'border-red-400 focus:ring-red-200 dark:border-red-500/60'
+                                : 'border-gray-200 focus:border-primary focus:ring-primary/20 dark:border-white/10'
+                        "
+                    />
+
+                    <p
+                        v-if="cancelReasonError"
+                        class="mt-1 text-xs text-red-500"
+                    >
+                        {{ cancelReasonError }}
+                    </p>
+                </div>
+
                 <div
                     v-if="fetching"
                     class="mt-4 h-40 animate-pulse rounded-xl bg-gray-100 dark:bg-white/10"
@@ -120,7 +151,11 @@ const props = defineProps<{
 const emit = defineEmits<{
     (
         e: "confirm",
-        settlement: { final_amount?: number; adjustment_reason?: string },
+        settlement: {
+            cancel_reason: string;
+            final_amount?: number;
+            adjustment_reason?: string;
+        },
     ): void;
     (e: "cancel"): void;
 }>();
@@ -131,6 +166,8 @@ const preview = ref<CancelPreview | null>(null);
 const fetching = ref(false);
 const fetchFailed = ref(false);
 
+const cancelReason = ref("");
+const cancelReasonError = ref("");
 const amount = ref<number | string>(0);
 const reason = ref("");
 const editing = ref(false);
@@ -144,6 +181,8 @@ watch(
 
         preview.value = null;
         fetchFailed.value = false;
+        cancelReason.value = "";
+        cancelReasonError.value = "";
         amount.value = 0;
         reason.value = "";
         editing.value = false;
@@ -180,11 +219,19 @@ function handleClose() {
 function handleConfirm() {
     amountError.value = "";
     reasonError.value = "";
+    cancelReasonError.value = "";
+
+    const cancel_reason = cancelReason.value.trim();
+
+    if (cancel_reason.length < 3) {
+        cancelReasonError.value = "Give a reason for cancelling this schedule.";
+        return;
+    }
 
     const invoice = preview.value?.invoice;
 
     if (!invoice || !editing.value) {
-        emit("confirm", {});
+        emit("confirm", { cancel_reason });
         return;
     }
 
@@ -198,7 +245,7 @@ function handleConfirm() {
     const rounded = Math.round(final * 100) / 100;
 
     if (rounded >= invoice.paid) {
-        emit("confirm", {});
+        emit("confirm", { cancel_reason });
         return;
     }
 
@@ -209,6 +256,6 @@ function handleConfirm() {
         return;
     }
 
-    emit("confirm", { final_amount: rounded, adjustment_reason: why });
+    emit("confirm", { cancel_reason, final_amount: rounded, adjustment_reason: why });
 }
 </script>

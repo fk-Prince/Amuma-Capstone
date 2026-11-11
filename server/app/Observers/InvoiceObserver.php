@@ -30,6 +30,7 @@ class InvoiceObserver
             ->reject(fn(Schedule $schedule) => $schedule->status === Schedule::STATUS_CANCELLED)
             ->each(fn(Schedule $schedule) => $schedule->update([
                 'status' => Schedule::STATUS_CANCELLED,
+                'cancel_reason' => "Invoice {$invoice->invoice_code} was voided.",
             ]));
     }
 }

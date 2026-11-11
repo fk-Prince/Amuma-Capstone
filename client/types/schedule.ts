@@ -101,6 +101,7 @@ export interface ScheduleItem {
     status: string;
     category: string | null;
     note: string | null;
+    cancel_reason?: string | null;
     is_stay_in?: boolean;
     payment_status?: "paid" | "partially_paid" | null;
 
@@ -166,6 +167,7 @@ export interface AuditRow {
     avatar: string | null;
 
     note: string | null;
+    cancel_reason?: string | null;
     is_stay_in?: boolean;
     activities?: string[];
 

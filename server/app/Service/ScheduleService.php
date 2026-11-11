@@ -359,10 +359,19 @@ class ScheduleService
                 ? mb_substr(trim($note), 0, 500)
                 : null;
 
+            $cancelReason = trim((string) ($payload['cancel_reason'] ?? ''));
+
+            if ($newStatus === Schedule::STATUS_CANCELLED && mb_strlen($cancelReason) < 3) {
+                throw new Exception('Give a reason for cancelling this schedule.', 422);
+            }
+
             $schedule->update([
                 'status' => $newStatus,
                 'scheduled_at' => $targetStart,
                 'note' => $note,
+                'cancel_reason' => $newStatus === Schedule::STATUS_CANCELLED
+                    ? mb_substr($cancelReason, 0, 500)
+                    : null,
             ]);
 
             $schedule->load('scheduleServices.service');

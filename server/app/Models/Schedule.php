@@ -56,6 +56,7 @@ class Schedule extends Model
         'category',
         'schedule_code',
         'note',
+        'cancel_reason',
         'is_stay_in',
     ];
 
@@ -85,7 +86,8 @@ class Schedule extends Model
             return match ($this->status) {
                 self::STATUS_ONGOING => "Started schedule {$code}{$for}.",
                 self::STATUS_COMPLETED => "Completed schedule {$code}{$for}.",
-                self::STATUS_CANCELLED => "Cancelled schedule {$code}{$for}.",
+                self::STATUS_CANCELLED => "Cancelled schedule {$code}{$for}."
+                    . ($this->cancel_reason ? " Reason: {$this->cancel_reason}" : ''),
                 self::STATUS_MISSED => "Marked schedule {$code}{$for} as missed.",
                 self::STATUS_PENDING => "Set schedule {$code}{$for} back to pending.",
                 default => null,

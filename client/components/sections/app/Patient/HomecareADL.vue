@@ -171,6 +171,14 @@
                                         <Signpost class="h-3 w-3 shrink-0" />
                                         <span class="min-w-0 truncate">{{ log.note }}</span>
                                     </span>
+
+                                    <span
+                                        v-if="log.status === 'cancelled' && log.cancel_reason"
+                                        class="flex min-w-0 basis-full items-start gap-1.5 text-[11px] text-rose-600 dark:text-rose-300"
+                                    >
+                                        <Ban class="mt-0.5 h-3 w-3 shrink-0" />
+                                        <span class="min-w-0 break-words">Cancelled: {{ log.cancel_reason }}</span>
+                                    </span>
                                 </div>
 
                                 <template v-else>
@@ -196,6 +204,13 @@
                                     >
                                         <Signpost class="h-3 w-3 shrink-0" />
                                         <span class="min-w-0 truncate">{{ log.note }}</span>
+                                    </p>
+                                    <p
+                                        v-if="log.status === 'cancelled' && log.cancel_reason"
+                                        class="mt-1.5 flex min-w-0 items-start gap-1.5 rounded-lg bg-rose-50 px-2.5 py-1.5 text-[12px] text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                                    >
+                                        <Ban class="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                        <span class="min-w-0 break-words"><span class="font-semibold">Cancelled:</span> {{ log.cancel_reason }}</span>
                                     </p>
                                 </template>
 
@@ -952,6 +967,7 @@ import {
     CalendarClock,
     MapPinned,
     Signpost,
+    Ban,
     Phone,
     Mail,
     Bell,
@@ -1470,6 +1486,7 @@ const filteredLogs = computed<AuditRow[]>(() => {
                 full_name: firstAssignee?.full_name ?? null,
                 avatar: firstAssignee?.avatar ?? null,
                 note: schedule.note ?? null,
+                cancel_reason: schedule.cancel_reason ?? null,
                 is_stay_in: !!schedule.is_stay_in,
                 activities: service.activities ?? [],
 

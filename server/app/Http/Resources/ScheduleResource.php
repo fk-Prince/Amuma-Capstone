@@ -193,6 +193,7 @@ class ScheduleResource extends JsonResource
             'status' => $this->status,
             'category' => $this->category,
             'note' => $this->note,
+            'cancel_reason' => $this->cancel_reason,
             'is_stay_in' => (bool) $this->is_stay_in,
             'payment_status' => $this->paymentStatus(),
 

@@ -29,6 +29,7 @@ return new class extends Migration
                 'missed'
             ])->default('pending')->index();
             $table->string('note', 500)->nullable();
+            $table->string('cancel_reason', 500)->nullable();
             $table->boolean('is_stay_in')->default(false);
             $table->enum('category', ['Homecare', 'Facility'])->index();
             $table->timestamps();

@@ -413,6 +413,7 @@ class PatientAccessResource extends JsonResource
             'started_at' => $schedule->startedAt()?->format('Y-m-d H:i:s'),
             'category' => $schedule->category,
             'status' => $schedule->status,
+            'cancel_reason' => $schedule->cancel_reason,
 
             'services' => $schedule->relationLoaded('scheduleServices')
                 ? $schedule->scheduleServices

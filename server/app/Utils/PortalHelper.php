@@ -684,6 +684,7 @@ class PortalHelper
             'status' => $schedule->status,
             'category' => $schedule->category,
             'note' => $schedule->note,
+            'cancel_reason' => $schedule->cancel_reason,
 
             'scheduled_at' => $schedule->scheduled_at?->toISOString(),
             'scheduled_date' => $schedule->scheduled_at?->format('Y-m-d'),
