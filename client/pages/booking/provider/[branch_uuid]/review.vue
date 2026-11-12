@@ -156,10 +156,11 @@
 
                 <div
                     v-if="showPayment"
-                    class="xl:sticky xl:top-6 xl:mt-6 xl:flex xl:min-h-0 xl:flex-col"
-                    :style="payMaxHeight ? { maxHeight: `${payMaxHeight}px` } : undefined"
+                    ref="payPanel"
+                    class="xl:mt-6"
+                    :class="payFits ? 'xl:sticky xl:top-6' : ''"
                 >
-                    <div class="rounded-xl shadow-sm xl:flex xl:min-h-0 xl:flex-col">
+                    <div class="rounded-xl shadow-sm">
                         <PaymentForm
                             compact
                             fill
@@ -294,24 +295,28 @@ const loadingTotal = ref(false);
 const { branch, fetchBranch } = useBranch();
 
 const scrollArea = ref<HTMLElement | null>(null);
-const payMaxHeight = ref<number | null>(null);
+const payPanel = ref<HTMLElement | null>(null);
+const payFits = ref(true);
 let resizeObserver: ResizeObserver | null = null;
 let wideScreen: MediaQueryList | null = null;
 
 function measurePayPanel() {
-    const el = scrollArea.value;
+    const area = scrollArea.value;
+    const panel = payPanel.value;
 
-    if (!el || !wideScreen?.matches) {
-        payMaxHeight.value = null;
+    if (!area || !panel || !wideScreen?.matches) {
+        payFits.value = true;
         return;
     }
 
-    const style = getComputedStyle(el);
-    payMaxHeight.value =
-        el.clientHeight -
+    const style = getComputedStyle(area);
+    const available =
+        area.clientHeight -
         24 -
         parseFloat(style.paddingTop) -
         parseFloat(style.paddingBottom);
+
+    payFits.value = panel.offsetHeight <= available;
 }
 
 onMounted(async () => {
@@ -323,6 +328,12 @@ onMounted(async () => {
     wideScreen.addEventListener("change", measurePayPanel);
     resizeObserver = new ResizeObserver(measurePayPanel);
     if (scrollArea.value) resizeObserver.observe(scrollArea.value);
+    measurePayPanel();
+});
+
+watch(payPanel, (el, old) => {
+    if (old) resizeObserver?.unobserve(old);
+    if (el) resizeObserver?.observe(el);
     measurePayPanel();
 });
 

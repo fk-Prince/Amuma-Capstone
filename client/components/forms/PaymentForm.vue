@@ -121,12 +121,9 @@ const bodyClass = computed(() =>
         : "space-y-6 px-6 py-6 sm:px-7 sm:py-7",
 );
 
-const cardBodyClass = computed(() => [
+const cardBodyClass = computed(() =>
     props.compact ? "space-y-3 px-5 pt-4" : bodyClass.value,
-    props.fill
-        ? "xl:min-h-0 xl:overflow-y-auto xl:[scrollbar-width:thin]"
-        : "",
-]);
+);
 
 const fieldClass = computed(() => (props.compact ? "!py-2" : ""));
 
@@ -347,20 +344,14 @@ watch(isCash, (active) => {
 </script>
 
 <template>
-    <div
-        :class="[
-            compact ? 'w-full' : 'w-full max-w-2xl mx-auto',
-            fill ? 'xl:flex xl:min-h-0 xl:flex-col' : '',
-        ]"
-    >
+    <div :class="compact ? 'w-full' : 'w-full max-w-2xl mx-auto'">
         <div
             class="border border-slate-200 bg-white dark:bg-secondary dark:border-white/10"
-            :class="[
+            :class="
                 compact
                     ? 'overflow-clip rounded-xl'
-                    : 'overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]',
-                fill ? 'xl:flex xl:min-h-0 xl:flex-col' : '',
-            ]"
+                    : 'overflow-hidden rounded-2xl shadow-[0_8px_30px_rgba(15,23,42,0.06)]'
+            "
         >
             <!-- Header -->
             <div
