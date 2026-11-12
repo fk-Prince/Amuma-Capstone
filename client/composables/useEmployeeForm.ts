@@ -474,8 +474,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
     const currentLeave = ref<EmployeeCurrentLeave | null>(null);
 
-    async function updateLeave(details: LeaveDetails | null) {
-        const next: EmployeeStatus = details ? "on_leave" : "active";
+    function updateLeave(details: LeaveDetails | null) {
+        return changeStatus(details ? "on_leave" : "active", details ?? {});
+    }
+
+    async function changeStatus(
+        next: EmployeeStatus,
+        extra: Partial<LeaveDetails> = {},
+    ) {
         const current = options.employee();
 
         if (!current?.uuid || saving.value) return false;
@@ -488,7 +494,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             const res: any = await employeeService.updateStatus(current.uuid, {
                 status: next,
                 branch_uuid: uuid,
-                ...(details ?? {}),
+                ...extra,
             });
 
             employee.value.status = next;
@@ -642,6 +648,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         isOnLeave,
         currentLeave,
         updateLeave,
+        changeStatus,
         employeeSlip,
         dismissSlip,
         isActive,

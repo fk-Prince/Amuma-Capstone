@@ -12,8 +12,10 @@ import {
     type LeaveDetails,
 } from "~/types/employee";
 import { formatDate } from "~/utils/time";
+import { employeeService } from "~/api/employee/EmployeeService";
 import MarkLeaveModal from "~/components/sections/app/Employee/MarkLeaveModal.vue";
 import LeaveHistoryModal from "~/components/sections/app/Employee/LeaveHistoryModal.vue";
+import DeactivateEmployeeModal from "~/components/sections/app/Employee/DeactivateEmployeeModal.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { useEmployeeForm } from "~/composables/useEmployeeForm";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -88,6 +90,7 @@ const {
     isOnLeave,
     currentLeave,
     updateLeave,
+    changeStatus,
     hasExistingEmployee,
     employeeSlip,
     dismissSlip,
@@ -144,6 +147,55 @@ async function handleLeaveClick() {
 async function confirmLeave(details: LeaveDetails) {
     if (await updateLeave(details)) {
         markLeaveOpen.value = false;
+    }
+}
+
+const deactivateOpen = ref(false);
+const checkingWork = ref(false);
+
+async function hasOpenWork() {
+    const uuid = props.employee?.uuid;
+
+    if (!uuid) return false;
+
+    checkingWork.value = true;
+
+    try {
+        const res: any = await employeeService.workload(uuid, {
+            branch_uuid: branchUuid,
+        });
+        const work = res?.data ?? {};
+
+        return Boolean(work.in_progress?.length || work.upcoming?.length);
+    } catch {
+        return true;
+    } finally {
+        checkingWork.value = false;
+    }
+}
+
+async function handleActiveToggle() {
+    if (!hasExistingEmployee.value) {
+        isActive.value = !isActive.value;
+        return;
+    }
+
+    if (!isActive.value) {
+        await changeStatus("active");
+        return;
+    }
+
+    if (await hasOpenWork()) {
+        deactivateOpen.value = true;
+        return;
+    }
+
+    await changeStatus("inactive");
+}
+
+async function confirmDeactivate() {
+    if (await changeStatus("inactive")) {
+        deactivateOpen.value = false;
     }
 }
 
@@ -903,14 +955,20 @@ init();
                                         type="button"
                                         role="switch"
                                         :aria-checked="isActive"
-                                        :disabled="isViewMode || isAgencyOwner"
+                                        :disabled="
+                                            isViewMode ||
+                                            isAgencyOwner ||
+                                            (hasExistingEmployee && isOwnerRole) ||
+                                            saving ||
+                                            checkingWork
+                                        "
                                         class="relative h-6 w-11 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50"
                                         :class="
                                             isActive
                                                 ? 'bg-emerald-500'
                                                 : 'bg-slate-300 dark:bg-white/20'
                                         "
-                                        @click="isActive = !isActive"
+                                        @click="handleActiveToggle"
                                     >
                                         <span
                                             class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
@@ -1218,9 +1276,21 @@ init();
         <MarkLeaveModal
             :open="markLeaveOpen"
             :name="employeeName"
+            :employee-uuid="props.employee?.uuid"
+            :branch-uuid="branchUuid"
             :loading="saving"
             @close="markLeaveOpen = false"
             @confirm="confirmLeave"
+        />
+
+        <DeactivateEmployeeModal
+            :open="deactivateOpen"
+            :name="employeeName"
+            :employee-uuid="props.employee?.uuid"
+            :branch-uuid="branchUuid"
+            :loading="saving"
+            @close="deactivateOpen = false"
+            @confirm="confirmDeactivate"
         />
 
         <LeaveHistoryModal

@@ -1,0 +1,124 @@
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { UserX, X } from "lucide-vue-next";
+import WorkloadNotice from "~/components/sections/app/Employee/WorkloadNotice.vue";
+
+const props = defineProps<{
+    open: boolean;
+    name: string;
+    employeeUuid?: string | null;
+    branchUuid: string;
+    loading?: boolean;
+}>();
+
+const emit = defineEmits<{
+    close: [];
+    confirm: [];
+}>();
+
+const work = ref({ loading: true, blocked: false, count: 0 });
+
+const canConfirm = computed(
+    () => !props.loading && !work.value.loading && !work.value.blocked,
+);
+
+function close() {
+    if (props.loading) return;
+    emit("close");
+}
+</script>
+
+<template>
+    <Teleport to="body">
+        <div
+            v-if="open"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+            @click.self="close"
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="deactivate-title"
+                class="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
+            >
+                <header
+                    class="flex items-start gap-4 border-b border-slate-100 px-6 py-5 dark:border-white/10"
+                >
+                    <span
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20"
+                    >
+                        <UserX class="h-5 w-5" />
+                    </span>
+
+                    <div class="min-w-0 flex-1">
+                        <h3
+                            id="deactivate-title"
+                            class="text-lg font-semibold text-slate-800 dark:text-white"
+                        >
+                            Mark {{ name }} as inactive?
+                        </h3>
+                        <p class="mt-0.5 text-sm text-slate-500 dark:text-gray-400">
+                            They won't be able to open this branch. Their record
+                            is kept.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        aria-label="Close"
+                        :disabled="loading"
+                        class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
+                        @click="close"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
+                </header>
+
+                <div
+                    :class="
+                        work.loading || work.blocked || work.count
+                            ? 'overflow-y-auto px-6 py-5'
+                            : 'hidden'
+                    "
+                >
+                    <WorkloadNotice
+                        :open="open"
+                        :employee-uuid="employeeUuid"
+                        :branch-uuid="branchUuid"
+                        :name="name"
+                        mode="inactive"
+                        @state="work = $event"
+                    />
+                </div>
+
+                <footer
+                    class="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 dark:border-white/10 dark:bg-white/5"
+                >
+                    <button
+                        type="button"
+                        :disabled="loading"
+                        class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200/60 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-white/15"
+                        @click="close"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        :disabled="!canConfirm"
+                        class="rounded-lg bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        @click="emit('confirm')"
+                    >
+                        {{
+                            loading
+                                ? "Saving…"
+                                : work.count
+                                  ? "Mark inactive and unassign"
+                                  : "Mark inactive"
+                        }}
+                    </button>
+                </footer>
+            </div>
+        </div>
+    </Teleport>
+</template>

@@ -17,10 +17,11 @@ class UpdateEmployeeStatusRequest extends FormRequest
     {
         return [
             'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
-            'status' => ['required', Rule::in(['active', 'on_leave'])],
+            'status' => ['required', Rule::in(['active', 'on_leave', 'inactive'])],
             'type' => ['exclude_unless:status,on_leave', 'required', Rule::in(EmployeeLeave::TYPES)],
             'reason' => ['exclude_unless:status,on_leave', 'required', 'string', 'max:255'],
             'ends_on' => ['exclude_unless:status,on_leave', 'nullable', 'date', 'after:today'],
+            'unassign_work' => ['exclude_unless:status,on_leave', 'nullable', 'boolean'],
         ];
     }
 

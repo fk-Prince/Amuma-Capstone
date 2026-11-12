@@ -3,14 +3,20 @@ import { computed, ref, watch } from "vue";
 import { CalendarOff, X } from "lucide-vue-next";
 import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
+import WorkloadNotice from "~/components/sections/app/Employee/WorkloadNotice.vue";
 import { leaveTypes, type LeaveDetails, type LeaveType } from "~/types/employee";
 import { toLocalDateString } from "~/utils/time";
 
 const props = defineProps<{
     open: boolean;
     name: string;
+    employeeUuid?: string | null;
+    branchUuid: string;
     loading?: boolean;
 }>();
+
+const unassign = ref(true);
+const work = ref({ loading: true, blocked: false, count: 0 });
 
 const emit = defineEmits<{
     close: [];
@@ -37,6 +43,7 @@ watch(
         reason.value = "";
         endsOn.value = "";
         errors.value = {};
+        unassign.value = true;
     },
 );
 
@@ -53,12 +60,13 @@ function submit() {
 
     errors.value = next;
 
-    if (Object.keys(next).length) return;
+    if (Object.keys(next).length || work.value.loading || work.value.blocked) return;
 
     emit("confirm", {
         type: type.value as LeaveType,
         reason: reason.value.trim(),
         ends_on: endsOn.value || null,
+        unassign_work: work.value.count > 0 && unassign.value,
     });
 }
 </script>
@@ -170,6 +178,17 @@ function submit() {
                             Leave it empty if you don't know yet.
                         </p>
                     </div>
+
+                    <WorkloadNotice
+                        :open="open"
+                        :employee-uuid="employeeUuid"
+                        :branch-uuid="branchUuid"
+                        :name="name"
+                        mode="leave"
+                        :until="endsOn || null"
+                        v-model:unassign="unassign"
+                        @state="work = $event"
+                    />
                 </div>
 
                 <footer
@@ -186,7 +205,7 @@ function submit() {
 
                     <button
                         type="button"
-                        :disabled="loading"
+                        :disabled="loading || work.loading || work.blocked"
                         class="rounded-lg bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
                         @click="submit"
                     >

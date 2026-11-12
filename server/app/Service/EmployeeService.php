@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeLeaveRepository;
 use App\Repository\EmployeeRepository;
+use App\Repository\EmployeeWorkloadRepository;
 use App\Repository\LocationRepository;
 use App\Repository\ServiceRepository;
 use App\Repository\UserRepository;
@@ -38,6 +39,8 @@ class EmployeeService
     private AuditService $auditService;
     private ServiceRepository $serviceRepository;
     private EmployeeLeaveRepository $employeeLeaveRepository;
+    private EmployeeWorkloadRepository $employeeWorkloadRepository;
+    private NotificationService $notificationService;
 
     public function __construct(
         EmployeeRepository $employeeRepository,
@@ -45,7 +48,9 @@ class EmployeeService
         LocationRepository $locationRepository,
         AuditService $auditService,
         ServiceRepository $serviceRepository,
-        EmployeeLeaveRepository $employeeLeaveRepository
+        EmployeeLeaveRepository $employeeLeaveRepository,
+        EmployeeWorkloadRepository $employeeWorkloadRepository,
+        NotificationService $notificationService
     ) {
         $this->auditService = $auditService;
         $this->employeeRepository = $employeeRepository;
@@ -53,6 +58,8 @@ class EmployeeService
         $this->locationRepository = $locationRepository;
         $this->serviceRepository = $serviceRepository;
         $this->employeeLeaveRepository = $employeeLeaveRepository;
+        $this->employeeWorkloadRepository = $employeeWorkloadRepository;
+        $this->notificationService = $notificationService;
     }
 
     private function autoAssignServices(array $payload, ?EmployeeBranch $employeeBranch): void
@@ -127,50 +134,196 @@ class EmployeeService
         $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
         AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Update);
 
+        [$target, $employeeBranch] = $this->resolveEmployeeBranch($uuid, $branch->branch_id);
+
+        $current = $employeeBranch->status;
+        $next = $payload['status'];
+
+        if ($employeeBranch->role_name === RoleEnum::AgencyOwner->value) {
+            throw new Exception(
+                $next === EmployeeBranch::STATUS_INACTIVE
+                    ? 'The agency owner cannot be marked inactive.'
+                    : 'The agency owner cannot be put on leave.',
+                403
+            );
+        }
+
+        if ($current === $next) {
+            throw new Exception(match ($next) {
+                EmployeeBranch::STATUS_ONLEAVE => 'This employee is already on leave.',
+                EmployeeBranch::STATUS_INACTIVE => 'This employee is already inactive.',
+                default => 'This employee is already active.',
+            }, 422);
+        }
+
+        if ($current === EmployeeBranch::STATUS_INACTIVE && $next === EmployeeBranch::STATUS_ONLEAVE) {
+            throw new Exception('Inactive employees cannot be put on leave.', 422);
+        }
+
+        $assignments = collect();
+        $shifts = collect();
+        $stepsAway = in_array($next, [EmployeeBranch::STATUS_INACTIVE, EmployeeBranch::STATUS_ONLEAVE], true);
+
+        if ($stepsAway) {
+            $before = $next === EmployeeBranch::STATUS_ONLEAVE && !empty($payload['ends_on'])
+                ? Carbon::parse($payload['ends_on'])->startOfDay()
+                : null;
+
+            $assignments = $this->employeeWorkloadRepository->assignments($employeeBranch, $before);
+
+            if ($assignments->contains('clocked_in', true)) {
+                throw new Exception(
+                    'This employee is checked in to a visit right now. Finish or hand over that visit first.',
+                    422
+                );
+            }
+
+            $releases = $next === EmployeeBranch::STATUS_INACTIVE
+                || filter_var($payload['unassign_work'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            if ($releases) {
+                $shifts = $this->employeeWorkloadRepository->shifts($employeeBranch);
+            } else {
+                $assignments = collect();
+            }
+        }
+
+        DB::transaction(function () use ($employeeBranch, $payload, $user, $next, $assignments, $shifts) {
+            $this->employeeLeaveRepository->closeOpen($employeeBranch, $user->user_id);
+
+            if ($next === EmployeeBranch::STATUS_ONLEAVE) {
+                $this->employeeLeaveRepository->start($employeeBranch, $payload, $user->user_id);
+            }
+
+            $this->employeeWorkloadRepository->release($assignments, $shifts);
+
+            $employeeBranch->update(['status' => $next]);
+        });
+
+        if ($assignments->isNotEmpty() || $shifts->isNotEmpty()) {
+            $this->notifyReassignment($branch, $user, $target, $next, $payload['ends_on'] ?? null, $assignments->count(), $shifts->count());
+        }
+
+        return response()->json([
+            'message' => match (true) {
+                $next === EmployeeBranch::STATUS_ONLEAVE => 'Employee is now on leave.',
+                $next === EmployeeBranch::STATUS_INACTIVE => 'Employee is now inactive.',
+                $current === EmployeeBranch::STATUS_INACTIVE => 'Employee is active again.',
+                default => 'Employee is back from leave.',
+            },
+            'employee' => $this->employeeRow($target, $branch->branch_id),
+        ], 200);
+    }
+
+    public function getWorkload(array $payload, string $uuid, User $user)
+    {
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Update);
+
+        [, $employeeBranch] = $this->resolveEmployeeBranch($uuid, $branch->branch_id);
+
+        $before = !empty($payload['until'])
+            ? Carbon::parse($payload['until'])->startOfDay()
+            : null;
+
+        $assignments = $this->employeeWorkloadRepository->assignments($employeeBranch, $before)
+            ->map(fn($assigned) => [
+                'kind' => 'schedule',
+                'title' => $assigned->scheduleService?->service?->service_name ?? 'ADL care',
+                'patient' => $this->personName($assigned->scheduleService?->schedule?->patient),
+                'scheduled_at' => $assigned->scheduleService?->schedule?->scheduled_at?->toIso8601String(),
+                'in_progress' => (bool) $assigned->clocked_in,
+            ]);
+
+        $timeZone = data_get($branch->settings, 'time_zone') ?: config('app.timezone');
+
+        $shifts = $this->employeeWorkloadRepository->shifts($employeeBranch)
+            ->map(fn($shift) => [
+                'kind' => 'shift',
+                'title' => 'Caregiver shift',
+                'patient' => $this->personName($shift->admission?->patient),
+                'room' => $shift->admission?->bed?->room?->room_no,
+                'in_progress' => false,
+                'on_duty' => $this->onDutyNow($shift, $timeZone),
+            ])
+            ->sortByDesc('on_duty')
+            ->values();
+
+        return response()->json([
+            'data' => [
+                'in_progress' => $assignments->where('in_progress', true)->values(),
+                'upcoming' => $assignments->where('in_progress', false)->values()->concat($shifts)->values(),
+            ],
+        ]);
+    }
+
+    private function resolveEmployeeBranch(string $uuid, int $branchId): array
+    {
         $target = $this->userRepository->findByField('uuid', $uuid);
 
-        $employee = $target
-            ? $this->employeeRepository->findEmployeeByFields([['user_id', '=', $target->user_id]])
-            : null;
-
-        $employeeBranch = $employee
-            ? $employee->employeeBranch()->where('branch_id', $branch->branch_id)->first()
-            : null;
+        $employeeBranch = $target?->employee
+            ?->employeeBranch()
+            ->where('branch_id', $branchId)
+            ->first();
 
         if (!$employeeBranch) {
             throw new Exception('Employee not found.', 404);
         }
 
-        if ($employeeBranch->role_name === RoleEnum::AgencyOwner->value) {
-            throw new Exception('The agency owner cannot be put on leave.', 403);
+        return [$target, $employeeBranch];
+    }
+
+    private function onDutyNow(object $shift, string $timeZone): bool
+    {
+        $now = now($timeZone)->format('H:i');
+        $start = substr((string) $shift->start_time, 0, 5);
+        $end = substr((string) $shift->end_time, 0, 5);
+
+        if ($start === $end) {
+            return true;
         }
 
-        if ($employeeBranch->status === EmployeeBranch::STATUS_INACTIVE) {
-            throw new Exception('Inactive employees cannot be put on leave.', 422);
-        }
+        return $start < $end
+            ? $now >= $start && $now < $end
+            : $now >= $start || $now < $end;
+    }
 
-        $goingOnLeave = $payload['status'] === EmployeeBranch::STATUS_ONLEAVE;
+    private function personName(?object $person): ?string
+    {
+        return $person ? trim("{$person->first_name} {$person->last_name}") : null;
+    }
 
-        if ($goingOnLeave && $employeeBranch->status === EmployeeBranch::STATUS_ONLEAVE) {
-            throw new Exception('This employee is already on leave.', 422);
-        }
+    private function notifyReassignment(
+        object $branch,
+        User $actor,
+        User $target,
+        string $status,
+        ?string $endsOn,
+        int $scheduleCount,
+        int $shiftCount,
+    ): void {
+        $name = $this->personName($target->employee) ?: 'An employee';
 
-        DB::transaction(function () use ($employeeBranch, $payload, $user, $goingOnLeave) {
-            $this->employeeLeaveRepository->closeOpen($employeeBranch, $user->user_id);
+        $parts = array_filter([
+            $scheduleCount ? $scheduleCount . ' ' . Str::plural('schedule', $scheduleCount) : null,
+            $shiftCount ? $shiftCount . ' caregiver ' . Str::plural('shift', $shiftCount) : null,
+        ]);
 
-            if ($goingOnLeave) {
-                $this->employeeLeaveRepository->start($employeeBranch, $payload, $user->user_id);
-            }
+        $reason = $status === EmployeeBranch::STATUS_INACTIVE
+            ? 'was marked inactive'
+            : 'is on leave' . ($endsOn ? ' until ' . Carbon::parse($endsOn)->format('M j, Y') : '');
 
-            $employeeBranch->update(['status' => $payload['status']]);
-        });
+        $message = "{$name} {$reason}, so " . implode(' and ', $parts) . ' no longer have staff. Assign someone else.';
 
-        return response()->json([
-            'message' => $payload['status'] === EmployeeBranch::STATUS_ONLEAVE
-                ? 'Employee is now on leave.'
-                : 'Employee is back from leave.',
-            'employee' => $this->employeeRow($target, $branch->branch_id),
-        ], 200);
+        $this->notificationService->notifyBranchStaff(
+            $branch,
+            $message,
+            'Schedule',
+            $actor,
+            null,
+            null,
+            [RoleEnum::Admission->value],
+        );
     }
 
     public function getLeaveHistory(array $payload, string $uuid, User $user)
@@ -535,20 +688,9 @@ class EmployeeService
                 ->where('branch_id', $branch->branch_id)
                 ->first();
 
-            $nextStatus = $payload['status'] ?? $employeeBranch?->status;
-
-            if ($employeeBranch && $nextStatus === EmployeeBranch::STATUS_ONLEAVE && $employeeBranch->status !== EmployeeBranch::STATUS_ONLEAVE) {
-                $nextStatus = $employeeBranch->status;
-            }
-
-            if ($employeeBranch?->status === EmployeeBranch::STATUS_ONLEAVE && $nextStatus !== EmployeeBranch::STATUS_ONLEAVE) {
-                $this->employeeLeaveRepository->closeOpen($employeeBranch, $actor->user_id);
-            }
-
             $employeeBranch?->update([
                 'role_name' => RoleEnum::slug($payload['role_name']),
                 'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
-                'status' => $nextStatus,
             ]);
 
             $this->autoAssignServices($payload, $employeeBranch);

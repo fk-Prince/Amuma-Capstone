@@ -40,9 +40,14 @@ class EmployeeService extends BaseService {
             type?: string;
             reason?: string;
             ends_on?: string | null;
+            unassign_work?: boolean;
         },
     ): Promise<any> {
         return await this.request(`${this.resource}/${uuid}/status`, 'PATCH', payload);
+    }
+
+    async workload(uuid: string, params: { branch_uuid: string; until?: string }): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/workload`, 'GET', params);
     }
 
     async leaves(uuid: string, params: { branch_uuid: string }): Promise<any> {

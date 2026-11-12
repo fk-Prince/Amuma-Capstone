@@ -47,6 +47,16 @@ class EmployeeController extends Controller
         return $this->employeeService->getLeaveHistory($request->only('branch_uuid'), $uuid, $request->user());
     }
 
+    public function workload(Request $request, string $uuid)
+    {
+        $request->validate([
+            'branch_uuid' => ['required', 'string', 'exists:branches,uuid'],
+            'until' => ['nullable', 'date'],
+        ]);
+
+        return $this->employeeService->getWorkload($request->only('branch_uuid', 'until'), $uuid, $request->user());
+    }
+
     public function index(Request $request)
     {
         $type = $request->input('type', 'regular');

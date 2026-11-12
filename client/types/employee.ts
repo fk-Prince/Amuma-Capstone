@@ -132,6 +132,22 @@ export interface LeaveDetails {
     type: LeaveType;
     reason: string;
     ends_on: string | null;
+    unassign_work: boolean;
+}
+
+export interface WorkloadItem {
+    kind: "schedule" | "shift";
+    title: string;
+    patient: string | null;
+    scheduled_at?: string | null;
+    room?: string | null;
+    in_progress: boolean;
+    on_duty?: boolean;
+}
+
+export interface EmployeeWorkload {
+    in_progress: WorkloadItem[];
+    upcoming: WorkloadItem[];
 }
 
 // On leave is a flavour of active — the employee still has access, they are
