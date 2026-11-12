@@ -11,9 +11,7 @@
             v-if="open"
             class="fixed inset-0 z-[49] flex items-center justify-center p-4"
         >
-            <div
-                class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
-            />
+            <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" />
 
             <div
                 class="relative z-50 flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary"
@@ -239,12 +237,22 @@
                                             </span>
 
                                             <span
-                                                v-else-if="timedOutHere(entry.employee_id)"
+                                                v-else-if="
+                                                    timedOutHere(
+                                                        entry.employee_id,
+                                                    )
+                                                "
                                                 class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-gray-300"
                                             >
                                                 <LogOut class="h-3 w-3" />
                                                 Timed out
-                                                {{ formatTime(timedOutHere(entry.employee_id)!) }}
+                                                {{
+                                                    formatTime(
+                                                        timedOutHere(
+                                                            entry.employee_id,
+                                                        )!,
+                                                    )
+                                                }}
                                             </span>
 
                                             <span
@@ -369,12 +377,89 @@
                                         </div>
                                     </div>
 
+                                    <template
+                                        v-if="
+                                            isAdlService(
+                                                service.schedule_services_id,
+                                            )
+                                        "
+                                    >
+                                        <div
+                                            class="mt-3 grid grid-cols-2 gap-3"
+                                        >
+                                            <label class="flex flex-col gap-1">
+                                                <span
+                                                    class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                                >
+                                                    Start time
+                                                    <span class="text-rose-500"
+                                                        >*</span
+                                                    >
+                                                </span>
+                                                <input
+                                                    v-model="entry.start_time"
+                                                    type="time"
+                                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                                />
+                                            </label>
+
+                                            <label class="flex flex-col gap-1">
+                                                <span
+                                                    class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
+                                                >
+                                                    End time
+                                                    <span class="text-rose-500"
+                                                        >*</span
+                                                    >
+                                                </span>
+                                                <input
+                                                    v-model="entry.end_time"
+                                                    type="time"
+                                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                                                />
+                                            </label>
+                                        </div>
+
+                                        <p
+                                            v-if="!hasShift(entry)"
+                                            class="mt-2 text-[11px] text-rose-500 dark:text-rose-300"
+                                        >
+                                            Pick a shift for this caregiver.
+                                            Only one caregiver can be on a
+                                            shift.
+                                        </p>
+
+                                        <p
+                                            v-for="overlap in shiftOverlapsFor(
+                                                service.schedule_services_id,
+                                                entry,
+                                            )"
+                                            :key="overlap.employee_id"
+                                            class="mt-3 flex items-start gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"
+                                        >
+                                            <TriangleAlert
+                                                class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                                            />
+                                            This shift collides with
+                                            {{ nameFor(overlap.employee_id) }}'s
+                                            shift ({{ formatShift(overlap) }}).
+                                            Only one caregiver can be on a
+                                            shift. Change the hours before
+                                            assigning.
+                                        </p>
+                                    </template>
+
                                     <div class="mt-3">
                                         <input
                                             v-model="entry.note"
                                             type="text"
                                             :maxlength="NOTE_MAX"
-                                            :readonly="isNoteLocked(entry, service.schedule_services_id)"
+                                            :readonly="
+                                                isNoteLocked(
+                                                    entry,
+                                                    service.schedule_services_id,
+                                                )
+                                            "
                                             placeholder="Note for this assignment"
                                             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
                                         />
@@ -407,10 +492,11 @@
                                                         : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
                                                 "
                                                 @click="
-                                                    entry.note =
-                                                        entry.note === preset
-                                                            ? ''
-                                                            : preset
+                                                    applyPreset(
+                                                        entry,
+                                                        preset,
+                                                        service.schedule_services_id,
+                                                    )
                                                 "
                                             >
                                                 {{ preset }}
@@ -594,378 +680,464 @@
                                             : '',
                                     ]"
                                 >
-                                <button
-                                    type="button"
-                                    :disabled="isPickDisabled(employee)"
-                                    class="flex w-full items-start gap-3 p-3 text-left"
-                                    :class="
-                                        isPickDisabled(employee)
-                                            ? 'cursor-not-allowed opacity-60'
-                                            : ''
-                                    "
-                                    @click="
-                                        requestToggle(activeService, employee)
-                                    "
-                                >
-                                    <AchievementPeek
-                                        :titles="employee.achievement_titles ?? []"
+                                    <button
+                                        type="button"
+                                        :disabled="isPickDisabled(employee)"
+                                        class="flex w-full items-start gap-3 p-3 text-left"
+                                        :class="
+                                            isPickDisabled(employee)
+                                                ? 'cursor-not-allowed opacity-60'
+                                                : ''
+                                        "
+                                        @click="
+                                            requestToggle(
+                                                activeService,
+                                                employee,
+                                            )
+                                        "
                                     >
-                                        <span
-                                            class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
-                                            :class="
-                                                isSelected(employee.employee_id)
-                                                    ? 'bg-primary text-white'
-                                                    : 'bg-primary/10 text-primary'
+                                        <AchievementPeek
+                                            :titles="
+                                                employee.achievement_titles ??
+                                                []
                                             "
                                         >
-                                            <img
-                                                v-if="employee.avatar"
-                                                :src="employee.avatar"
-                                                :alt="employeeName(employee)"
-                                                class="h-full w-full object-cover"
-                                            />
-
-                                            <template v-else>
-                                                {{
-                                                    initials(employeeName(employee))
-                                                }}
-                                            </template>
-                                        </span>
-                                    </AchievementPeek>
-
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-1.5">
-                                            <p
-                                                class="truncate text-sm font-semibold text-slate-700 dark:text-gray-400"
-                                            >
-                                                {{ employeeName(employee) }}
-                                            </p>
-
-                                            <Check
-                                                v-if="
+                                            <span
+                                                class="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
+                                                :class="
                                                     isSelected(
                                                         employee.employee_id,
                                                     )
+                                                        ? 'bg-primary text-white'
+                                                        : 'bg-primary/10 text-primary'
                                                 "
-                                                class="h-3.5 w-3.5 shrink-0 text-primary"
-                                            />
+                                            >
+                                                <img
+                                                    v-if="employee.avatar"
+                                                    :src="employee.avatar"
+                                                    :alt="
+                                                        employeeName(employee)
+                                                    "
+                                                    class="h-full w-full object-cover"
+                                                />
+
+                                                <template v-else>
+                                                    {{
+                                                        initials(
+                                                            employeeName(
+                                                                employee,
+                                                            ),
+                                                        )
+                                                    }}
+                                                </template>
+                                            </span>
+                                        </AchievementPeek>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div
+                                                class="flex items-center gap-1.5"
+                                            >
+                                                <p
+                                                    class="truncate text-sm font-semibold text-slate-700 dark:text-gray-400"
+                                                >
+                                                    {{ employeeName(employee) }}
+                                                </p>
+
+                                                <Check
+                                                    v-if="
+                                                        isSelected(
+                                                            employee.employee_id,
+                                                        )
+                                                    "
+                                                    class="h-3.5 w-3.5 shrink-0 text-primary"
+                                                />
+                                            </div>
+
+                                            <p
+                                                class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
+                                            >
+                                                {{
+                                                    employee.role_name ??
+                                                    "Staff"
+                                                }}
+                                                <template
+                                                    v-if="
+                                                        isAssistant(
+                                                            employee,
+                                                            activeService,
+                                                        )
+                                                    "
+                                                >
+                                                    · Assistant
+                                                </template>
+                                            </p>
+
+                                            <p
+                                                v-if="
+                                                    employee.formatted_assignment_type
+                                                "
+                                                class="truncate text-xs text-slate-400 dark:text-gray-500"
+                                            >
+                                                {{
+                                                    employee.formatted_assignment_type
+                                                }}
+                                            </p>
+
+                                            <div
+                                                class="mt-1 flex flex-nowrap items-center gap-x-3 text-[11px] text-slate-400 dark:text-gray-500"
+                                            >
+                                                <span
+                                                    v-if="employee.phone_number"
+                                                    class="flex shrink-0 items-center gap-1"
+                                                >
+                                                    <Phone
+                                                        class="h-3 w-3 shrink-0"
+                                                    />
+                                                    {{
+                                                        formatPhone(
+                                                            employee.phone_number,
+                                                        )
+                                                    }}
+                                                </span>
+
+                                                <span
+                                                    v-if="employee.email"
+                                                    class="flex min-w-0 flex-1 items-center gap-1"
+                                                >
+                                                    <Mail
+                                                        class="h-3 w-3 shrink-0"
+                                                    />
+                                                    <span
+                                                        class="min-w-0 truncate"
+                                                    >
+                                                        {{ employee.email }}
+                                                    </span>
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                v-if="
+                                                    employee.conflict_schedules
+                                                        ?.length
+                                                "
+                                                class="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-300"
+                                                @click.stop="
+                                                    toggleConflicts(
+                                                        employee.employee_id,
+                                                    )
+                                                "
+                                            >
+                                                More information
+                                                <span
+                                                    class="transition-transform"
+                                                    :class="
+                                                        expandedConflicts.has(
+                                                            employee.employee_id,
+                                                        )
+                                                            ? 'rotate-180'
+                                                            : ''
+                                                    "
+                                                >
+                                                    ▾
+                                                </span>
+                                            </p>
                                         </div>
 
-                                        <p
-                                            class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
+                                        <div
+                                            class="flex shrink-0 flex-col items-end gap-1.5"
                                         >
-                                            {{ employee.role_name ?? "Staff" }}
-                                            <template
-                                                v-if="
-                                                    isAssistant(
+                                            <span
+                                                v-if="employee.is_busy"
+                                                class="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                                            >
+                                                <TriangleAlert
+                                                    class="h-3.5 w-3.5"
+                                                />
+                                                Conflict
+                                            </span>
+
+                                            <span
+                                                v-else-if="
+                                                    hasRoleMismatch(employee)
+                                                "
+                                                class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
+                                            >
+                                                <CircleHelp
+                                                    class="h-3.5 w-3.5"
+                                                />
+                                                {{ requiredRoleLabel }} only
+                                            </span>
+
+                                            <span
+                                                v-else-if="
+                                                    isAssignmentTypeMismatch(
+                                                        employee,
+                                                    )
+                                                "
+                                                class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
+                                            >
+                                                <CircleHelp
+                                                    class="h-3.5 w-3.5"
+                                                />
+                                                {{
+                                                    assignmentTypeLabel(
+                                                        employee,
+                                                    )
+                                                }}
+                                            </span>
+
+                                            <span
+                                                v-else-if="
+                                                    !employee.is_assigned &&
+                                                    !isActiveServiceAdl &&
+                                                    !isAssistant(
                                                         employee,
                                                         activeService,
                                                     )
                                                 "
+                                                class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
                                             >
-                                                · Assistant
-                                            </template>
-                                        </p>
-
-                                        <p
-                                            v-if="
-                                                employee.formatted_assignment_type
-                                            "
-                                            class="truncate text-xs text-slate-400 dark:text-gray-500"
-                                        >
-                                            {{
-                                                employee.formatted_assignment_type
-                                            }}
-                                        </p>
-
-                                        <div
-                                            class="mt-1 flex flex-nowrap items-center gap-x-3 text-[11px] text-slate-400 dark:text-gray-500"
-                                        >
-                                            <span
-                                                v-if="employee.phone_number"
-                                                class="flex shrink-0 items-center gap-1"
-                                            >
-                                                <Phone
-                                                    class="h-3 w-3 shrink-0"
+                                                <CircleHelp
+                                                    class="h-3.5 w-3.5"
                                                 />
-                                                {{
-                                                    formatPhone(
-                                                        employee.phone_number,
-                                                    )
-                                                }}
+                                                Not specialized
                                             </span>
 
                                             <span
-                                                v-if="employee.email"
-                                                class="flex min-w-0 flex-1 items-center gap-1"
+                                                v-else
+                                                class="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                                             >
-                                                <Mail
-                                                    class="h-3 w-3 shrink-0"
-                                                />
-                                                <span class="min-w-0 truncate">
-                                                    {{ employee.email }}
-                                                </span>
+                                                <Check class="h-3.5 w-3.5" />
+                                                Available
                                             </span>
-                                        </div>
 
-
-                                        <p
-                                            v-if="employee.conflict_schedules?.length"
-                                            class="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:underline dark:text-amber-300"
-                                            @click.stop="
-                                                toggleConflicts(
-                                                    employee.employee_id,
-                                                )
-                                            "
-                                        >
-                                            More information
                                             <span
-                                                class="transition-transform"
-                                                :class="
-                                                    expandedConflicts.has(
+                                                v-if="
+                                                    employee.last_schedule &&
+                                                    isAvailable(employee)
+                                                "
+                                                role="button"
+                                                tabindex="0"
+                                                class="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
+                                                :title="
+                                                    expandedLast.has(
                                                         employee.employee_id,
                                                     )
-                                                        ? 'rotate-180'
-                                                        : ''
+                                                        ? 'Hide last schedule'
+                                                        : 'Show last schedule'
+                                                "
+                                                :aria-expanded="
+                                                    expandedLast.has(
+                                                        employee.employee_id,
+                                                    )
+                                                "
+                                                @click.stop="
+                                                    toggleLast(
+                                                        employee.employee_id,
+                                                    )
+                                                "
+                                                @keydown.enter.stop.prevent="
+                                                    toggleLast(
+                                                        employee.employee_id,
+                                                    )
+                                                "
+                                                @keydown.space.stop.prevent="
+                                                    toggleLast(
+                                                        employee.employee_id,
+                                                    )
                                                 "
                                             >
-                                                ▾
+                                                <ChevronDown
+                                                    class="h-4 w-4 transition-transform"
+                                                    :class="
+                                                        expandedLast.has(
+                                                            employee.employee_id,
+                                                        )
+                                                            ? 'rotate-180'
+                                                            : ''
+                                                    "
+                                                />
                                             </span>
-                                        </p>
-                                    </div>
+                                        </div>
+                                    </button>
 
-                                    <div class="flex shrink-0 flex-col items-end gap-1.5">
-                                    <span
-                                        v-if="employee.is_busy"
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                                    >
-                                        <TriangleAlert class="h-3.5 w-3.5" />
-                                        Conflict
-                                    </span>
-
-                                    <span
-                                        v-else-if="hasRoleMismatch(employee)"
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
-                                    >
-                                        <CircleHelp class="h-3.5 w-3.5" />
-                                        {{ requiredRoleLabel }} only
-                                    </span>
-
-                                    <span
-                                        v-else-if="
-                                            isAssignmentTypeMismatch(employee)
-                                        "
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-300"
-                                    >
-                                        <CircleHelp class="h-3.5 w-3.5" />
-                                        {{ assignmentTypeLabel(employee) }}
-                                    </span>
-
-                                    <span
-                                        v-else-if="
-                                            !employee.is_assigned &&
-                                            !isActiveServiceAdl &&
-                                            !isAssistant(employee, activeService)
-                                        "
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500 dark:bg-white/10 dark:text-gray-400"
-                                    >
-                                        <CircleHelp class="h-3.5 w-3.5" />
-                                        Not specialized
-                                    </span>
-
-                                    <span
-                                        v-else
-                                        class="flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                                    >
-                                        <Check class="h-3.5 w-3.5" />
-                                        Available
-                                    </span>
-
-                                    <span
+                                    <div
                                         v-if="
                                             employee.last_schedule &&
-                                            isAvailable(employee)
+                                            isAvailable(employee) &&
+                                            expandedLast.has(
+                                                employee.employee_id,
+                                            )
                                         "
-                                        role="button"
-                                        tabindex="0"
-                                        class="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-300"
-                                        :title="
-                                            expandedLast.has(employee.employee_id)
-                                                ? 'Hide last schedule'
-                                                : 'Show last schedule'
-                                        "
-                                        :aria-expanded="expandedLast.has(employee.employee_id)"
-                                        @click.stop="toggleLast(employee.employee_id)"
-                                        @keydown.enter.stop.prevent="toggleLast(employee.employee_id)"
-                                        @keydown.space.stop.prevent="toggleLast(employee.employee_id)"
+                                        class="px-3 pb-3 pl-[68px]"
                                     >
-                                        <ChevronDown
-                                            class="h-4 w-4 transition-transform"
-                                            :class="
-                                                expandedLast.has(employee.employee_id)
-                                                    ? 'rotate-180'
-                                                    : ''
-                                            "
+                                        <LastScheduleNote
+                                            class="!mt-0"
+                                            :schedule="employee.last_schedule"
                                         />
-                                    </span>
                                     </div>
-                                </button>
 
-                                <div
-                                    v-if="
-                                        employee.last_schedule &&
-                                        isAvailable(employee) &&
-                                        expandedLast.has(employee.employee_id)
-                                    "
-                                    class="px-3 pb-3 pl-[68px]"
-                                >
-                                    <LastScheduleNote
-                                        class="!mt-0"
-                                        :schedule="employee.last_schedule"
-                                    />
-                                </div>
+                                    <p
+                                        v-if="
+                                            timedOutHere(employee.employee_id)
+                                        "
+                                        class="mx-3 mb-3 flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-gray-300"
+                                    >
+                                        <LogOut class="h-3.5 w-3.5 shrink-0" />
+                                        Done on
+                                        <span class="font-mono">{{
+                                            schedule?.schedule_code
+                                        }}</span>
+                                        · timed out at
+                                        {{
+                                            formatTime(
+                                                timedOutHere(
+                                                    employee.employee_id,
+                                                )!,
+                                            )
+                                        }}
+                                    </p>
 
-                                <p
-                                    v-if="timedOutHere(employee.employee_id)"
-                                    class="mx-3 mb-3 flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-medium text-slate-600 dark:bg-white/10 dark:text-gray-300"
-                                >
-                                    <LogOut class="h-3.5 w-3.5 shrink-0" />
-                                    Done on
-                                    <span class="font-mono">{{ schedule?.schedule_code }}</span>
-                                    · timed out at
-                                    {{ formatTime(timedOutHere(employee.employee_id)!) }}
-                                </p>
-
-                                <div
-                                    v-if="
-                                        expandedConflicts.has(
-                                            employee.employee_id,
-                                        ) && employee.conflict_schedules?.length
-                                    "
-                                    class="space-y-2.5 border-t border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/[0.03]"
-                                >
                                     <div
-                                        v-for="(
-                                            conflict, idx
-                                        ) in employee.conflict_schedules"
-                                        :key="idx"
-                                        class="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2.5 text-xs dark:border-amber-500/20 dark:bg-amber-500/[0.06]"
+                                        v-if="
+                                            expandedConflicts.has(
+                                                employee.employee_id,
+                                            ) &&
+                                            employee.conflict_schedules?.length
+                                        "
+                                        class="space-y-2.5 border-t border-slate-100 bg-slate-50/60 p-3 dark:border-white/10 dark:bg-white/[0.03]"
                                     >
                                         <div
-                                            class="flex items-center justify-between gap-2"
+                                            v-for="(
+                                                conflict, idx
+                                            ) in employee.conflict_schedules"
+                                            :key="idx"
+                                            class="rounded-xl border border-amber-200/70 bg-amber-50/60 px-3 py-2.5 text-xs dark:border-amber-500/20 dark:bg-amber-500/[0.06]"
                                         >
-                                            <span
-                                                class="font-semibold text-slate-800 dark:text-white"
-                                            >
-                                                {{ conflict.schedule_code }}
-                                            </span>
-                                            <span
-                                                class="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                                                :class="
-                                                    conflict.category ===
-                                                    'medical'
-                                                        ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
-                                                        : 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
-                                                "
-                                            >
-                                                {{
-                                                    conflict.category ===
-                                                    "medical"
-                                                        ? "Medical"
-                                                        : "ADL"
-                                                }}
-                                            </span>
-                                        </div>
-
-                                        <div
-                                            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500 dark:text-gray-400"
-                                        >
-                                            <span
-                                                class="flex items-center gap-1"
-                                            >
-                                                <CalendarDays
-                                                    class="h-3.5 w-3.5 shrink-0"
-                                                />
-                                                {{
-                                                    formatDate(
-                                                        conflict.scheduled_at,
-                                                    )
-                                                }}
-                                                ·
-                                                {{
-                                                    formatTime(
-                                                        conflict.scheduled_at,
-                                                    )
-                                                }}
-                                                <template
-                                                    v-if="
-                                                        conflict.duration_minutes
-                                                    "
-                                                >
-                                                    ({{
-                                                        formatDuration(
-                                                            conflict.duration_minutes /
-                                                                60,
-                                                        )
-                                                    }})
-                                                </template>
-                                            </span>
-
-                                            <span
-                                                class="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600 ring-1 ring-slate-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
-                                            >
-                                                {{ conflict.status }}
-                                            </span>
-
-                                            <span
-                                                v-if="conflict.checked_in_at"
-                                                class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+                                            <div
+                                                class="flex items-center justify-between gap-2"
                                             >
                                                 <span
-                                                    class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                                />
-                                                Checked in since
-                                                {{
-                                                    formatTime(
-                                                        conflict.checked_in_at,
-                                                    )
-                                                }}
-                                            </span>
-                                        </div>
+                                                    class="font-semibold text-slate-800 dark:text-white"
+                                                >
+                                                    {{ conflict.schedule_code }}
+                                                </span>
+                                                <span
+                                                    class="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                                                    :class="
+                                                        conflict.category ===
+                                                        'medical'
+                                                            ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300'
+                                                            : 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
+                                                    "
+                                                >
+                                                    {{
+                                                        conflict.category ===
+                                                        "medical"
+                                                            ? "Medical"
+                                                            : "ADL"
+                                                    }}
+                                                </span>
+                                            </div>
 
-                                        <p
-                                            v-if="conflict.estimated_end"
-                                            class="mt-2 flex items-center gap-1.5 border-t border-amber-200/60 pt-2 font-medium text-amber-700 dark:border-amber-500/15 dark:text-amber-300"
-                                        >
-                                            <Clock
-                                                class="h-3.5 w-3.5 shrink-0"
-                                            />
-                                            <template
-                                                v-if="isOverdue(conflict.estimated_end)"
+                                            <div
+                                                class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-500 dark:text-gray-400"
                                             >
-                                                Past its estimated end ({{
-                                                    formatTime(
-                                                        conflict.estimated_end,
-                                                    )
-                                                }}) but still {{ conflict.status }}. Complete it to free this staff.
-                                            </template>
-                                            <template v-else>
-                                                Est. free
-                                                {{
-                                                    formatDate(
-                                                        conflict.estimated_end,
-                                                    )
-                                                }}
-                                                at
-                                                {{
-                                                    formatTime(
-                                                        conflict.estimated_end,
-                                                    )
-                                                }}
-                                            </template>
-                                        </p>
+                                                <span
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <CalendarDays
+                                                        class="h-3.5 w-3.5 shrink-0"
+                                                    />
+                                                    {{
+                                                        formatDate(
+                                                            conflict.scheduled_at,
+                                                        )
+                                                    }}
+                                                    ·
+                                                    {{
+                                                        formatTime(
+                                                            conflict.scheduled_at,
+                                                        )
+                                                    }}
+                                                    <template
+                                                        v-if="
+                                                            conflict.duration_minutes
+                                                        "
+                                                    >
+                                                        ({{
+                                                            formatDuration(
+                                                                conflict.duration_minutes /
+                                                                    60,
+                                                            )
+                                                        }})
+                                                    </template>
+                                                </span>
+
+                                                <span
+                                                    class="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600 ring-1 ring-slate-200 dark:bg-white/10 dark:text-gray-300 dark:ring-white/10"
+                                                >
+                                                    {{ conflict.status }}
+                                                </span>
+
+                                                <span
+                                                    v-if="
+                                                        conflict.checked_in_at
+                                                    "
+                                                    class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20"
+                                                >
+                                                    <span
+                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                                                    />
+                                                    Checked in since
+                                                    {{
+                                                        formatTime(
+                                                            conflict.checked_in_at,
+                                                        )
+                                                    }}
+                                                </span>
+                                            </div>
+
+                                            <p
+                                                v-if="conflict.estimated_end"
+                                                class="mt-2 flex items-center gap-1.5 border-t border-amber-200/60 pt-2 font-medium text-amber-700 dark:border-amber-500/15 dark:text-amber-300"
+                                            >
+                                                <Clock
+                                                    class="h-3.5 w-3.5 shrink-0"
+                                                />
+                                                <template
+                                                    v-if="
+                                                        isOverdue(
+                                                            conflict.estimated_end,
+                                                        )
+                                                    "
+                                                >
+                                                    Past its estimated end ({{
+                                                        formatTime(
+                                                            conflict.estimated_end,
+                                                        )
+                                                    }}) but still
+                                                    {{ conflict.status }}.
+                                                    Complete it to free this
+                                                    staff.
+                                                </template>
+                                                <template v-else>
+                                                    Est. free
+                                                    {{
+                                                        formatDate(
+                                                            conflict.estimated_end,
+                                                        )
+                                                    }}
+                                                    at
+                                                    {{
+                                                        formatTime(
+                                                            conflict.estimated_end,
+                                                        )
+                                                    }}
+                                                </template>
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
                                 </div>
                             </template>
                         </div>
@@ -997,7 +1169,9 @@
                             type="button"
                             class="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="
-                                isSaving || missingNurseLines.length > 0
+                                isSaving ||
+                                missingNurseLines.length > 0 ||
+                                hasShiftCollision
                             "
                             @click="confirm"
                         >
@@ -1033,7 +1207,13 @@ import { computed, ref, watch } from "vue";
 import type { Employee } from "~/types/employee";
 import type { ScheduleItem, ScheduleServiceItem } from "~/types/schedule";
 import { fullName, initials } from "~/utils/user";
-import { formatDate, formatTime, formatDuration } from "~/utils/time";
+import {
+    formatDate,
+    formatTime,
+    formatDuration,
+    format24To12,
+} from "~/utils/time";
+import { shiftsOverlap } from "~/utils/shiftTime";
 import { useToast } from "~/composables/useToast";
 import {
     X,
@@ -1059,6 +1239,8 @@ interface AssignmentEntry {
     employee_id: number;
     note: string;
     can_scan: boolean;
+    start_time: string;
+    end_time: string;
 }
 
 interface AssignmentRow {
@@ -1066,6 +1248,76 @@ interface AssignmentRow {
     schedule_services_id: number;
     note: string | null;
     can_scan: boolean;
+    start_time?: string | null;
+    end_time?: string | null;
+}
+
+const SHIFT_PRESET_HOURS: Record<string, { start: string; end: string }> = {
+    "AM Shift": { start: "00:00", end: "12:00" },
+    "PM Shift": { start: "12:00", end: "23:59" },
+};
+
+function isAdlService(serviceId: number) {
+    return serviceTypeFor(serviceId) === "ADL";
+}
+
+function hasShift(entry: AssignmentEntry) {
+    return !!entry.start_time && !!entry.end_time;
+}
+
+function shiftOverlapsFor(serviceId: number, entry: AssignmentEntry) {
+    if (!isAdlService(serviceId) || !hasShift(entry)) return [];
+
+    return selectionFor(serviceId).filter(
+        (other) =>
+            other.employee_id !== entry.employee_id &&
+            hasShift(other) &&
+            shiftsOverlap(entry, other),
+    );
+}
+
+const hasShiftCollision = computed(() =>
+    Object.entries(assignments.value).some(([serviceId, entries]) =>
+        entries.some(
+            (entry) => shiftOverlapsFor(Number(serviceId), entry).length > 0,
+        ),
+    ),
+);
+
+function formatShift(entry: AssignmentEntry) {
+    return `${format24To12(entry.start_time)} – ${format24To12(entry.end_time)}`;
+}
+
+function applyPreset(
+    entry: AssignmentEntry,
+    preset: string,
+    serviceId: number,
+) {
+    const hours = isAdlService(serviceId)
+        ? SHIFT_PRESET_HOURS[preset]
+        : undefined;
+
+    if (entry.note === preset) {
+        entry.note = "";
+
+        if (
+            hours &&
+            entry.start_time === hours.start &&
+            entry.end_time === hours.end
+        ) {
+            entry.start_time = "";
+            entry.end_time = "";
+        }
+
+        return;
+    }
+
+    entry.note = preset;
+
+    if (hours) {
+        entry.start_time = hours.start;
+        entry.end_time = hours.end;
+    }
 }
 
 const props = defineProps<{
@@ -1226,7 +1478,8 @@ const isActiveServiceMedical = computed(
 );
 
 function assignmentRank(employee: Employee): number {
-    const wanted = props.schedule?.category === "Facility" ? "facility" : "online";
+    const wanted =
+        props.schedule?.category === "Facility" ? "facility" : "online";
 
     if (employee.assignment_type === wanted) return 0;
     if (employee.assignment_type === "both") return 1;
@@ -1235,7 +1488,9 @@ function assignmentRank(employee: Employee): number {
 }
 
 const sortedEmployees = computed(() =>
-    [...(props.employees ?? [])].sort((a, b) => assignmentRank(a) - assignmentRank(b)),
+    [...(props.employees ?? [])].sort(
+        (a, b) => assignmentRank(a) - assignmentRank(b),
+    ),
 );
 
 const filteredEmployees = computed(() => {
@@ -1523,7 +1778,9 @@ function timedOutHere(employeeId: string | number | null | undefined) {
 
     const rows = (props.schedule?.services ?? [])
         .flatMap((service) => service.assignees ?? [])
-        .filter((assignee) => Number(assignee.employee_id) === Number(employeeId))
+        .filter(
+            (assignee) => Number(assignee.employee_id) === Number(employeeId),
+        )
         .flatMap((assignee) => assignee.online ?? [])
         .filter((row) => row.in_timestamp);
 
@@ -1559,12 +1816,16 @@ function toggleEmployee(serviceId: number, employeeId: number) {
                               employee_id: Number(employeeId),
                               note: "",
                               can_scan: true,
+                              start_time: "",
+                              end_time: "",
                           },
                           serviceId,
                       )
                           ? "Assistant"
                           : "",
                       can_scan: true,
+                      start_time: "",
+                      end_time: "",
                   },
               ]
             : current.filter((_, i) => i !== index);
@@ -1643,6 +1904,8 @@ function resetAssignmentsFromSchedule(schedule?: ScheduleItem | null) {
                 employee_id: Number(assignee.employee_id),
                 note: assignee.note ?? "",
                 can_scan: assignee.can_scan ?? true,
+                start_time: (assignee.start_time ?? "").slice(0, 5),
+                end_time: (assignee.end_time ?? "").slice(0, 5),
             }));
     });
 }
@@ -1655,6 +1918,35 @@ watch(
 
 function confirm() {
     if (!props.schedule || props.isSaving) return;
+
+    for (const [serviceId, entries] of Object.entries(assignments.value)) {
+        if (!isAdlService(Number(serviceId))) continue;
+
+        for (const entry of entries) {
+            const name = nameFor(entry.employee_id);
+
+            if (!hasShift(entry)) {
+                toastError(`Pick a shift start and end time for ${name}.`);
+                return;
+            }
+
+            if (entry.start_time === entry.end_time) {
+                toastError(
+                    `The end time for ${name} must be different from the start time.`,
+                );
+                return;
+            }
+
+            const overlap = shiftOverlapsFor(Number(serviceId), entry)[0];
+
+            if (overlap) {
+                toastError(
+                    `${name}'s shift collides with ${nameFor(overlap.employee_id)}'s shift. Only one caregiver can be on a shift.`,
+                );
+                return;
+            }
+        }
+    }
 
     const formatted = Object.entries(assignments.value).flatMap(
         ([serviceId, entries]): AssignmentRow[] =>
@@ -1674,6 +1966,12 @@ function confirm() {
                           ? "Assistant"
                           : entry.note.trim() || null,
                       can_scan: true,
+                      ...(isAdlService(Number(serviceId))
+                          ? {
+                                start_time: entry.start_time || null,
+                                end_time: entry.end_time || null,
+                            }
+                          : {}),
                   })),
     );
 
