@@ -135,13 +135,34 @@ const leaveBadge = computed(() => {
     return `On leave${until} · ${formatLeaveType(leave.type)}`;
 });
 
-async function handleLeaveClick() {
-    if (!isOnLeave.value) {
-        markLeaveOpen.value = true;
+const returnLeaveOpen = ref(false);
+
+const returnLeaveDescription = computed(() => {
+    const leave = currentLeave.value;
+
+    if (!leave) return "";
+
+    const since = formatDate(`${leave.starts_on}T00:00:00`);
+    const until = leave.ends_on
+        ? `, planned back on ${formatDate(`${leave.ends_on}T00:00:00`)}`
+        : "";
+
+    return `${formatLeaveType(leave.type)} leave since ${since}${until}.`;
+});
+
+function handleLeaveClick() {
+    if (isOnLeave.value) {
+        returnLeaveOpen.value = true;
         return;
     }
 
-    await updateLeave(null);
+    markLeaveOpen.value = true;
+}
+
+async function confirmReturn() {
+    if (await updateLeave(null)) {
+        returnLeaveOpen.value = false;
+    }
 }
 
 async function confirmLeave(details: LeaveDetails) {
@@ -1281,6 +1302,17 @@ init();
             :loading="saving"
             @close="markLeaveOpen = false"
             @confirm="confirmLeave"
+        />
+
+        <ConfirmDialog
+            :open="returnLeaveOpen"
+            :title="`Return ${employeeName} from leave?`"
+            message="They'll be active again and can be assigned work."
+            :description="returnLeaveDescription"
+            confirm-label="Yes, return from leave"
+            :loading="saving"
+            @confirm="confirmReturn"
+            @cancel="returnLeaveOpen = false"
         />
 
         <DeactivateEmployeeModal
