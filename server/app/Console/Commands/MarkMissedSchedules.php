@@ -10,7 +10,7 @@ class MarkMissedSchedules extends Command
 {
     protected $signature = 'schedules:mark-missed';
 
-    protected $description = 'Mark schedules as Missed if their scheduled_at date has passed and they were never completed or cancelled';
+    protected $description = 'Mark schedules as Missed once their start time is more than the late grace period past and nobody started them';
 
 
     protected array $excludedStatuses = [
@@ -22,8 +22,8 @@ class MarkMissedSchedules extends Command
 
     public function handle(): int
     {
-        $now = Carbon::now();
-        $count = Schedule::where('scheduled_at', '<', $now)
+        $cutoff = Carbon::now()->subMinutes(Schedule::LATE_GRACE_MINUTES);
+        $count = Schedule::where('scheduled_at', '<', $cutoff)
             ->whereNotIn('status', $this->excludedStatuses)
             ->update(['status' => 'missed']);
         $this->info("Marked {$count} schedule(s) as Missed.");

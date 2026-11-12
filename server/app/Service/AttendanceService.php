@@ -724,9 +724,7 @@ class AttendanceService
             $this->guardVisitOpen($adlSchedule);
         }
 
-        if (strtolower((string) $adlSchedule?->status) !== Schedule::STATUS_ONGOING) {
-            $this->guardWithinShift($assigned, 'time in');
-        }
+        $this->guardWithinShift($assigned, 'time in');
 
         Cache::forget($cacheKey);
 
@@ -991,9 +989,11 @@ class AttendanceService
         $startsAt = Carbon::parse($schedule->scheduled_at);
         $opensAt = $startsAt->copy()->subMinutes(self::EARLY_CLOCK_IN_MINUTES);
 
-        if (strtolower((string) $schedule->status) === Schedule::STATUS_PENDING && now()->greaterThan($startsAt)) {
+        $graceEndsAt = $startsAt->copy()->addMinutes(Schedule::LATE_GRACE_MINUTES);
+
+        if (strtolower((string) $schedule->status) === Schedule::STATUS_PENDING && now()->greaterThan($graceEndsAt)) {
             throw new Exception(
-                "This visit started at {$startsAt->format('g:i A')} and nobody timed in, so it's missed. Ask the branch to reschedule it.",
+                "This visit started at {$startsAt->format('g:i A')} and nobody timed in by {$graceEndsAt->format('g:i A')}, so it's missed. Ask the branch to reschedule it.",
                 422
             );
         }

@@ -23,7 +23,8 @@ class Schedule extends Model
     public const STATUS_CANCELLED = 'cancelled'; // cancelled
     public const STATUS_MISSED = 'missed'; // no show up
 
-    // When only one schedule is shown, the one that matters most comes first.
+    public const LATE_GRACE_MINUTES = 15;
+
     public const STATUS_PRIORITY = [
         self::STATUS_ONGOING,
         self::STATUS_PENDING,
