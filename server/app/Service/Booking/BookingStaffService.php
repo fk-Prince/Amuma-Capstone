@@ -33,6 +33,7 @@ class BookingStaffService
             $roles,
             $serviceId,
             $this->patientFor($user, $branch, $payload['patient_id'] ?? null),
+            trim((string) ($payload['search'] ?? '')) ?: null,
             self::PER_PAGE,
             $page
         );

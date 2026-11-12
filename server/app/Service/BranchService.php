@@ -62,6 +62,8 @@ class BranchService
                     ->map(fn($item) => Arr::only($item, ['label', 'url', 'date']))
                     ->values(),
             ])
+            ->sort(fn($a, $b) => count($b['achievements']) <=> count($a['achievements'])
+                ?: strcasecmp($a['name'], $b['name']))
             ->values();
 
         return response()->json(['data' => $staff]);

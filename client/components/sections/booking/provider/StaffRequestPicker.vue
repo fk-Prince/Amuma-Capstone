@@ -29,6 +29,31 @@
             </p>
         </div>
 
+        <div class="relative">
+            <Search
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-gray-500"
+            />
+
+            <input
+                v-model="search"
+                type="text"
+                maxlength="100"
+                :placeholder="`Search ${roleLabel} name`"
+                :aria-label="`Search ${roleLabel} name`"
+                class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-700 transition placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:placeholder:text-gray-500"
+            />
+
+            <button
+                v-if="search"
+                type="button"
+                aria-label="Clear search"
+                class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-gray-500 dark:hover:bg-white/10"
+                @click="search = ''"
+            >
+                <X class="h-4 w-4" />
+            </button>
+        </div>
+
         <div
             class="rounded-xl border border-slate-200 dark:border-white/10"
         >
@@ -66,7 +91,9 @@
             >
                 {{
                     loadError ||
-                    `No ${rolePlural} are available for this service yet. The branch will choose for you.`
+                    (activeSearch
+                        ? `No ${rolePlural} match "${activeSearch}".`
+                        : `No ${rolePlural} are available for this service yet. The branch will choose for you.`)
                 }}
             </p>
 
@@ -205,8 +232,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { Info, Loader2 } from "lucide-vue-next";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { Info, Loader2, Search, X } from "lucide-vue-next";
 import AchievementPeek from "~/components/ui/AchievementPeek.vue";
 import { bookingService } from "~/api/booking/BookingService";
 import { initials } from "~/utils/user";
@@ -237,8 +264,11 @@ const loading = ref(false);
 const loadError = ref<string | null>(null);
 const role = ref<string>(props.type === "ADL" ? "caregiver" : "staff");
 const names = ref<Record<string, string>>({});
+const search = ref("");
+const activeSearch = ref("");
 
 let requestId = 0;
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
 
 const singleRole = computed(() =>
     role.value === "nurse" || role.value === "caregiver" ? role.value : null,
@@ -337,6 +367,7 @@ async function fetchPage(next: number) {
             type: props.type,
             service_id: props.type === "Medical" ? props.serviceId : undefined,
             patient_id: props.patientId ?? undefined,
+            search: activeSearch.value || undefined,
             page: next,
         });
 
@@ -394,9 +425,29 @@ function reset() {
 
 watch(
     () => [props.branchUuid, props.type, props.serviceId, props.patientId],
-    reset,
+    () => {
+        clearTimeout(searchTimer);
+        search.value = "";
+        activeSearch.value = "";
+        reset();
+    },
     { immediate: true },
 );
+
+watch(search, (value) => {
+    clearTimeout(searchTimer);
+
+    searchTimer = setTimeout(() => {
+        const term = value.trim();
+
+        if (term === activeSearch.value) return;
+
+        activeSearch.value = term;
+        reset();
+    }, 300);
+});
+
+onBeforeUnmount(() => clearTimeout(searchTimer));
 
 watch(
     () => props.stayIn,

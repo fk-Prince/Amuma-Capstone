@@ -14,11 +14,17 @@ class BookingStaffRequestRepository
 {
     private const HOMECARE_ASSIGNMENTS = ['online', 'homecare', 'both', 'homecare + inhouse facility'];
 
-    public function options(int $branchId, array $roles, ?int $serviceId, ?int $patientId, int $perPage, int $page)
+    public function options(int $branchId, array $roles, ?int $serviceId, ?int $patientId, ?string $search, int $perPage, int $page)
     {
+        $term = $search ? '%' . $search . '%' : null;
+
         $query = $this->homecareStaff($branchId, $roles)
             ->select('employee_branches.*')
             ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)
+            ->when($term, fn($q) => $q->whereHas('employees', fn($employee) => $employee
+                ->where('first_name', 'ilike', $term)
+                ->orWhere('last_name', 'ilike', $term)
+                ->orWhereRaw("concat_ws(' ', first_name, last_name) ilike ?", [$term])))
             ->with([
                 'employees',
                 'employees.users:user_id,uuid',
@@ -46,6 +52,11 @@ class BookingStaffRequestRepository
 
         return $query
             ->orderByRaw('case when employee_branches.status = ? then 0 else 1 end', [EmployeeBranch::STATUS_ACTIVE])
+            ->orderByRaw(
+                "(select case when jsonb_typeof(e.achievements::jsonb) = 'array'
+                        then jsonb_array_length(e.achievements::jsonb) else 0 end
+                  from employees e where e.employee_id = employee_branches.employee_id) desc nulls last"
+            )
             ->orderBy(
                 Employee::select('first_name')
                     ->whereColumn('employees.employee_id', 'employee_branches.employee_id')

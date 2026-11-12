@@ -65,6 +65,7 @@ class BookingController extends Controller
                 'type' => ['required', 'in:ADL,Medical'],
                 'service_id' => ['nullable', 'integer'],
                 'patient_id' => ['nullable', 'integer'],
+                'search' => ['nullable', 'string', 'max:100'],
                 'page' => ['nullable', 'integer', 'min:1'],
             ]);
 
