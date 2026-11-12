@@ -1088,8 +1088,8 @@
                                                         continue.
                                                     </p>
 
-                                                    <input
-                                                        :value="
+                                                    <div
+                                                        v-if="
                                                             noteFor(
                                                                 service.schedule_services_id,
                                                                 Number(
@@ -1097,77 +1097,25 @@
                                                                 ),
                                                             )
                                                         "
-                                                        type="text"
-                                                        maxlength="255"
-                                                        :readonly="
-                                                            isNoteLocked(
-                                                                service.schedule_services_id,
-                                                                Number(
-                                                                    employee.employee_id,
-                                                                ),
-                                                            )
-                                                        "
-                                                        placeholder="Note for this assignment"
-                                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
-                                                        @input="
-                                                            setNote(
-                                                                service.schedule_services_id,
-                                                                Number(
-                                                                    employee.employee_id,
-                                                                ),
-                                                                (
-                                                                    $event.target as HTMLInputElement
-                                                                ).value,
-                                                            )
-                                                        "
-                                                    />
-
-                                                    <div
-                                                        v-if="
-                                                            !isNoteLocked(
-                                                                service.schedule_services_id,
-                                                                Number(
-                                                                    employee.employee_id,
-                                                                ),
-                                                            )
-                                                        "
-                                                        class="mt-2 flex flex-wrap items-center gap-1.5"
+                                                        class="flex flex-col gap-1"
                                                     >
                                                         <span
-                                                            class="text-[11px] text-slate-400 dark:text-gray-500"
+                                                            class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
                                                         >
-                                                            Suggestions:
+                                                            Note
                                                         </span>
-
-                                                        <button
-                                                            v-for="preset in presetsFor(
-                                                                service,
-                                                            )"
-                                                            :key="preset"
-                                                            type="button"
-                                                            class="rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition dark:border-white/10"
-                                                            :class="
+                                                        <span
+                                                            class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
+                                                        >
+                                                            {{
                                                                 noteFor(
                                                                     service.schedule_services_id,
                                                                     Number(
                                                                         employee.employee_id,
                                                                     ),
-                                                                ) === preset
-                                                                    ? 'border-primary bg-primary text-white'
-                                                                    : 'border-slate-200 text-slate-500 hover:border-primary/40 hover:text-primary dark:border-white/10 dark:text-gray-400'
-                                                            "
-                                                            @click="
-                                                                togglePreset(
-                                                                    service.schedule_services_id,
-                                                                    Number(
-                                                                        employee.employee_id,
-                                                                    ),
-                                                                    preset,
                                                                 )
-                                                            "
-                                                        >
-                                                            {{ preset }}
-                                                        </button>
+                                                            }}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1742,8 +1690,6 @@ interface AssignmentEntry {
 
 const assignments = ref<Record<number, AssignmentEntry[]>>({});
 
-const NOTE_PRESETS_ADL = ["AM Shift", "PM Shift"];
-
 function bookingWindowFor(service: ScheduleServiceItem) {
     if (service.type !== "ADL") return { start: "", end: "" };
 
@@ -1751,17 +1697,6 @@ function bookingWindowFor(service: ScheduleServiceItem) {
         props.schedule?.scheduled_at,
         service.duration_minutes,
     );
-}
-const NOTE_PRESETS_OTHER = [
-    "Primary",
-    "Assistant",
-    "Supervisor",
-    "Observer",
-    "Stand-by",
-];
-
-function presetsFor(service: ScheduleServiceItem) {
-    return service.type === "ADL" ? NOTE_PRESETS_ADL : NOTE_PRESETS_OTHER;
 }
 
 const errors = ref<Record<string, string>>({});
@@ -1992,24 +1927,6 @@ function noteFor(serviceId: number, employeeId: number) {
     );
 }
 
-function setNote(serviceId: number, employeeId: number, note: string) {
-    assignments.value = {
-        ...assignments.value,
-        [serviceId]: entriesFor(serviceId).map((entry) =>
-            Number(entry.employee_id) === Number(employeeId)
-                ? { ...entry, note }
-                : entry,
-        ),
-    };
-}
-
-function togglePreset(serviceId: number, employeeId: number, preset: string) {
-    setNote(
-        serviceId,
-        employeeId,
-        noteFor(serviceId, employeeId) === preset ? "" : preset,
-    );
-}
 
 const availableTimeSlots = computed(() =>
     generateAvailableAmPmTimes(form.value.date, 30),

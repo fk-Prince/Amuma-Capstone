@@ -114,7 +114,7 @@ class ScheduleService
             ['schedule_id', '=', $payload['schedule_id']]
         ]);
 
-        $payload['assignments'] = $this->currentAssignments($schedule, $payload['assignments'] ?? []);
+        $payload['assignments'] = $this->currentAssignments($schedule);
 
         $newStatus = strtolower($payload['status'] ?? '');
 
@@ -181,27 +181,19 @@ class ScheduleService
     }
 
 
-    private function currentAssignments(Schedule $schedule, array $requested): array
+    private function currentAssignments(Schedule $schedule): array
     {
-        $requested = collect($requested)->keyBy(
-            fn($row) => ($row['schedule_services_id'] ?? '') . ':' . ($row['employee_id'] ?? '')
-        );
-
         return $schedule->scheduleServices
             ->flatMap(fn($scheduleService) => $scheduleService->assigned()
                 ->where('is_active', true)
                 ->get()
-                ->map(function ($assigned) use ($scheduleService, $requested) {
-                    $row = $requested->get("{$scheduleService->schedule_services_id}:{$assigned->employee_id}", []);
-
-                    return [
-                        'schedule_services_id' => $scheduleService->schedule_services_id,
-                        'employee_id' => (int) $assigned->employee_id,
-                        'note' => array_key_exists('note', $row) ? $row['note'] : $assigned->note,
-                        'start_time' => $assigned->start_time,
-                        'end_time' => $assigned->end_time,
-                    ];
-                }))
+                ->map(fn($assigned) => [
+                    'schedule_services_id' => $scheduleService->schedule_services_id,
+                    'employee_id' => (int) $assigned->employee_id,
+                    'note' => $assigned->note,
+                    'start_time' => $assigned->start_time,
+                    'end_time' => $assigned->end_time,
+                ]))
             ->values()
             ->all();
     }
