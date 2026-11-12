@@ -12,6 +12,7 @@
                     <ServiceSearch
                         v-model="searchData"
                         v-model:activeTab="activeTab"
+                        :allowed-tabs="allowedTabs"
                         @addService="addServiceClicked"
                     />
                 </div>
@@ -63,8 +64,9 @@
     </div>
 </template>
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 
 import { serviceService } from "~/api/service/ServiceService";
 import { createServiceForm, type Service } from "~/types/service";
@@ -94,6 +96,34 @@ const uuid = route.params.uuid as string;
 const searchData = ref("");
 const activeTab = ref("All Services");
 
+const { planCode } = useBranchPlan();
+
+const allowedTabs = computed(() => {
+    switch (planCode.value) {
+        case "A":
+            return ["Homecare Services"];
+        case "B":
+            return ["Facility Services"];
+        default:
+            return ["All Services", "Homecare Services", "Facility Services"];
+    }
+});
+
+watch(
+    allowedTabs,
+    (tabs) => {
+        if (!tabs.includes(activeTab.value)) {
+            activeTab.value = tabs[0]!;
+        }
+    },
+    { immediate: true },
+);
+
+const TAB_TYPES: Record<string, string[]> = {
+    "Homecare Services": ["online", "both"],
+    "Facility Services": ["facility", "both"],
+};
+
 const loading = ref(true);
 const submitLoading = ref(false);
 
@@ -117,8 +147,10 @@ const editingServiceId = ref<number | null>(null);
 const filteredServices = computed(() => {
     let list = services.value;
 
-    if (activeTab.value !== "All Services") {
-        list = list.filter((s) => s.type === "both");
+    const types = TAB_TYPES[activeTab.value];
+
+    if (types) {
+        list = list.filter((s) => types.includes(String(s.type)));
     }
 
     if (searchData.value.trim()) {

@@ -235,6 +235,7 @@ const bloodPressureDisplay = computed(() => {
                                         class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Blood Pressure
+                                        <span class="text-red-500">*</span>
                                     </label>
 
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -287,6 +288,7 @@ const bloodPressureDisplay = computed(() => {
                                         type="number"
                                         min="0"
                                         label="Heart Rate"
+                                        required
                                         placeholder="e.g. 72"
                                         :error="errors.heartRate"
                                         @update:modelValue="
@@ -299,6 +301,7 @@ const bloodPressureDisplay = computed(() => {
                                         type="number"
                                         min="0"
                                         label="Respiratory Rate"
+                                        required
                                         placeholder="e.g. 16"
                                         :error="errors.respiratoryRate"
                                         @update:modelValue="
@@ -312,6 +315,7 @@ const bloodPressureDisplay = computed(() => {
                                         min="0"
                                         step="0.1"
                                         label="Temperature (°C)"
+                                        required
                                         placeholder="e.g. 36.6"
                                         :error="errors.temperature"
                                         @update:modelValue="
@@ -329,6 +333,7 @@ const bloodPressureDisplay = computed(() => {
                                         min="0"
                                         max="100"
                                         label="O2 Saturation (%)"
+                                        required
                                         placeholder="e.g. 98"
                                         :error="errors.oxygenSaturation"
                                         @update:modelValue="
@@ -341,6 +346,7 @@ const bloodPressureDisplay = computed(() => {
                                         type="number"
                                         min="0"
                                         label="Blood Glucose (mg/dL)"
+                                        required
                                         placeholder="e.g. 95"
                                         :error="errors.bloodGlucose"
                                         @update:modelValue="
@@ -354,6 +360,7 @@ const bloodPressureDisplay = computed(() => {
                                         class="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-gray-400"
                                     >
                                         Pain Level (0-10)
+                                        <span class="text-red-500">*</span>
                                     </label>
 
                                     <div class="flex flex-wrap gap-2">
@@ -364,7 +371,8 @@ const bloodPressureDisplay = computed(() => {
                                             @click="
                                                 form.painLevel = String(
                                                     level - 1,
-                                                )
+                                                );
+                                                clearError('painLevel');
                                             "
                                             class="h-9 w-9 rounded-lg border text-sm font-medium dark:border-white/10"
                                             :class="
@@ -377,6 +385,13 @@ const bloodPressureDisplay = computed(() => {
                                             {{ level - 1 }}
                                         </button>
                                     </div>
+
+                                    <p
+                                        v-if="errors.painLevel"
+                                        class="mt-1.5 text-xs text-red-500 dark:text-red-400"
+                                    >
+                                        {{ errors.painLevel }}
+                                    </p>
                                 </div>
 
                                 <div
@@ -385,6 +400,7 @@ const bloodPressureDisplay = computed(() => {
                                     <DatePickerField
                                         v-model="form.recordedDate"
                                         label="Date"
+                                        required
                                         placeholder="Select date"
                                         :default-to-today="false"
                                         :error="errors.recordedDate"
@@ -397,6 +413,7 @@ const bloodPressureDisplay = computed(() => {
                                         v-model="form.recordedTime"
                                         mode="time"
                                         label="Time"
+                                        required
                                         :error="errors.recordedTime"
                                         @update:modelValue="
                                             clearError('recordedTime')

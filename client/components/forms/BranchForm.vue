@@ -21,7 +21,6 @@
                             v-model="branch.name"
                             label="Branch Name"
                             required
-                            :disabled="lockVerification"
                             @update:modelValue="clearError('branch_name')"
                             :error="errors?.branch_name"
                             data-field="branch_name"

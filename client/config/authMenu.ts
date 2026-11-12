@@ -71,6 +71,7 @@ export const authMenuList: MenuItems[] = [
         icon: ClipboardList,
         to: "/app/branches/[uuid]/admissions",
         modules: ["Admissions"],
+        plan: ["B", "C"],
         group: "Operations",
     },
     {
@@ -78,6 +79,7 @@ export const authMenuList: MenuItems[] = [
         icon: BedDouble,
         to: "/app/branches/[uuid]/rooms-beds",
         modules: ["Rooms & Beds"],
+        plan: ["B", "C"],
         group: "Operations",
     },
     {

@@ -27,10 +27,28 @@ export const useBranchPlan = () => {
     const hasFacilityPlan = computed(() => hasPlan("B"));
     const hasHomecarePlan = computed(() => hasPlan("A"));
 
+    const isLocationLocked = (value: string) => {
+        if (!planCode.value) return false;
+        if (value === "online") return !hasHomecarePlan.value;
+        if (value === "facility") return !hasFacilityPlan.value;
+        return false;
+    };
+
+    const withPlanLocks = <T extends { value: string }>(items: T[]) =>
+        items.map((item) => ({
+            ...item,
+            disabled: isLocationLocked(item.value),
+            hint: isLocationLocked(item.value)
+                ? "Not in this branch's plan"
+                : undefined,
+        }));
+
     return {
         planCode,
         hasPlan,
         hasFacilityPlan,
         hasHomecarePlan,
+        isLocationLocked,
+        withPlanLocks,
     };
 };

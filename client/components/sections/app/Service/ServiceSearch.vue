@@ -10,6 +10,7 @@ const { canCreate } = usePermissions();
 const props = defineProps<{
     modelValue: string;
     activeTab: string;
+    allowedTabs?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -18,7 +19,7 @@ const emit = defineEmits<{
     addService: [];
 }>();
 
-const tabs = [
+const ALL_TABS = [
     {
         label: "All Services",
         shortLabel: "All",
@@ -36,10 +37,16 @@ const tabs = [
     },
 ];
 
+const tabs = computed(() =>
+    props.allowedTabs?.length
+        ? ALL_TABS.filter((tab) => props.allowedTabs!.includes(tab.label))
+        : ALL_TABS,
+);
+
 const activeIndex = computed(() =>
     Math.max(
         0,
-        tabs.findIndex((t) => t.label === props.activeTab),
+        tabs.value.findIndex((t) => t.label === props.activeTab),
     ),
 );
 
@@ -79,12 +86,16 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
             class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
         >
             <div
-                class="relative inline-grid w-full grid-cols-3 rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto dark:border-white/10 dark:bg-secondary"
+                v-if="tabs.length > 1"
+                class="relative inline-grid w-full rounded-xl border border-slate-200 bg-white p-1 shadow-sm lg:w-auto dark:border-white/10 dark:bg-secondary"
+                :style="{
+                    gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
+                }"
             >
                 <div
                     class="absolute inset-y-1 left-1 rounded-lg bg-primary transition-transform duration-300 ease-out"
                     :style="{
-                        width: 'calc((100% - 0.45rem) / 3)',
+                        width: `calc((100% - 0.45rem) / ${tabs.length})`,
                         transform: `translateX(${sliderOffset})`,
                     }"
                 />
@@ -108,7 +119,7 @@ const sliderOffset = computed(() => `${activeIndex.value * 100}%`);
                 </button>
             </div>
 
-            <div class="flex flex-wrap items-center gap-4">
+            <div class="flex flex-wrap items-center gap-4 lg:ml-auto">
                 <div
                     class="hidden items-center gap-5 text-xs text-slate-500 lg:flex dark:text-gray-400"
                 >

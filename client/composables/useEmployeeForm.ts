@@ -385,8 +385,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         return Object.keys(fieldErrors).length === 0;
     }
 
+    const hasAchievements = computed(() =>
+        ["nurse", "caregiver"].includes(roleSlug(employee.value.role_name)),
+    );
+
     function achievementErrors() {
         const fieldErrors: Record<string, string> = {};
+
+        if (!hasAchievements.value) return fieldErrors;
 
         employee.value.achievements.forEach((item, index) => {
             const hasTitle = !!item.label?.trim();
@@ -646,6 +652,7 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         hasAchievementErrors,
         saveEmployee,
         isOnLeave,
+        hasAchievements,
         currentLeave,
         updateLeave,
         changeStatus,

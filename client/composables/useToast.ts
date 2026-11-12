@@ -71,5 +71,14 @@ export function useToast() {
         show({ type: "message", title, description, duration: 7000, onClick });
     }
 
-    return { show, success, error, warning, info, message };
+    function notice(
+        title: string,
+        description: string | undefined,
+        onClose: () => void,
+        duration = 3000,
+    ) {
+        show({ type: "info", title, description, duration, onClose });
+    }
+
+    return { show, success, error, warning, info, message, notice };
 }

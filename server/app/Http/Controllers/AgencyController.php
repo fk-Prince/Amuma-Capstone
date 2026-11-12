@@ -31,8 +31,9 @@ class AgencyController extends Controller
 
     public function update(AgencyUpdateRequest $request, string $uuid)
     {
-        $branch = BranchGuard::resolveBranch($request->branch_uuid, active: true);
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
         AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::ManageSubscription, PermissionAction::Update);
+        AuthGuard::requireOpenSubscription($branch->branch_id);
         BranchGuard::mergeRequest($request, $branch);
         $request->merge(['agency_id' => $branch->agency_id]);
         return $this->agencyService->update($request->all());

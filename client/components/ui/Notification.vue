@@ -223,7 +223,7 @@ import { notifcationFormatDate } from "~/utils/notification-time";
 import { useToast } from "~/composables/useToast";
 import { remScale } from "~/utils/rem";
 import { useSupportCenter } from "~/composables/useSupportCenter";
-const { info } = useToast();
+const { info, notice } = useToast();
 const route = useRoute();
 const router = useRouter();
 const { openSupport } = useSupportCenter();
@@ -396,10 +396,31 @@ const loadNotifications = async (branchUuid?: string) => {
     }
 };
 
-const announce = (notification: Notification) => {
+let reloadScheduled = false;
+
+const announce = (notification: Notification, branchUuid?: string) => {
     notifications.value = [notification, ...notifications.value].slice(0, 15);
 
-    info("New Notification", notification.message);
+    const rejectsThisBranch =
+        notification.message_type === "Subscription" &&
+        notification.message.includes("was not approved") &&
+        !!branchUuid &&
+        branchUuid === currentBranchUuid();
+
+    if (!rejectsThisBranch) {
+        info("New Notification", notification.message);
+        return;
+    }
+
+    notice(
+        "Branch not approved",
+        notification.message,
+        () => {
+            if (reloadScheduled) return;
+            reloadScheduled = true;
+            window.location.reload();
+        },
+    );
 };
 
 const bindChannel = (branchUuid?: string) => {
@@ -415,16 +436,19 @@ const bindChannel = (branchUuid?: string) => {
     handler = (e: any) => {
         if (branchUuid && e.branch_uuid !== branchUuid) return;
 
-        announce({
-            id: Date.now(),
-            uuid: generateId(),
-            message: e.message,
-            message_type: e.message_type,
-            reference_id: e.reference_id,
-            created_at: new Date().toISOString(),
-            unread: true,
-            branch: e.branch ?? null,
-        });
+        announce(
+            {
+                id: Date.now(),
+                uuid: generateId(),
+                message: e.message,
+                message_type: e.message_type,
+                reference_id: e.reference_id,
+                created_at: new Date().toISOString(),
+                unread: true,
+                branch: e.branch ?? null,
+            },
+            e.branch_uuid,
+        );
     };
 
     channel = $echo

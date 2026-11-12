@@ -14,7 +14,6 @@
                         label="Agency Name"
                         required
                         placeholder="Enter agency name"
-                        :disabled="lockVerification"
                         :error="errors?.agency_name"
                         @update:modelValue="clearError('agency_name')"
                         data-field="agency_name"
@@ -715,7 +714,7 @@
 <script setup lang="ts">
 import { Building2, Camera, Check, LoaderCircle, MapPin, ScanFace, ShieldCheck } from "lucide-vue-next";
 import FormSectionHeader from "../ui/FormSectionHeader.vue";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
@@ -728,6 +727,7 @@ import {
     compareFaces,
     faceScanMessage,
     scanFace,
+    warmUpFaceModels,
     type FaceMatchResult,
     type FaceScanResult,
 } from "~/utils/faceMatch";
@@ -1105,6 +1105,18 @@ watch(
 );
 
 if (props.agency.id_selfie && !props.agency.face_scan) runFaceScan();
+
+onMounted(() => {
+    if (props.lockVerification) return;
+
+    const warm = () => void warmUpFaceModels();
+
+    if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(warm, { timeout: 3000 });
+    } else {
+        setTimeout(warm, 1500);
+    }
+});
 
 const faceMatch = ref<FaceMatchResult | null>(null);
 const faceMatching = ref(false);

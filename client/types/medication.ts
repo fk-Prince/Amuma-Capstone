@@ -105,112 +105,86 @@ export interface MarkDosePayload {
     status: "taken" | "removed";
 }
 
-export const vitalSchema = z
-    .object({
-        bloodPressureSystolic: z
+const measurement = (
+    required: string,
+    min: number,
+    max: number,
+    range: string,
+) =>
+    z.preprocess(
+        (value) => (value === null || value === undefined ? "" : String(value)),
+        z
             .string()
             .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 40 && Number(v) <= 260), {
-                message: "Systolic must be between 40 and 260",
+            .min(1, required)
+            .refine((v) => Number(v) >= min && Number(v) <= max, {
+                message: range,
             }),
-
-        bloodPressureDiastolic: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 20 && Number(v) <= 200), {
-                message: "Diastolic must be between 20 and 200",
-            }),
-
-        heartRate: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 20 && Number(v) <= 250), {
-                message: "Heart rate must be between 20 and 250 bpm",
-            }),
-
-        respiratoryRate: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 4 && Number(v) <= 60), {
-                message: "Respiratory rate must be between 4 and 60",
-            }),
-
-        temperature: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 30 && Number(v) <= 43), {
-                message: "Temperature must be between 30°C and 43°C",
-            }),
-
-        oxygenSaturation: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 50 && Number(v) <= 100), {
-                message: "O2 saturation must be between 50% and 100%",
-            }),
-
-        // weight: z
-        //     .string()
-        //     .trim()
-        //     .optional()
-        //     .refine((v) => !v || Number(v) > 0, {
-        //         message: "Weight must be a positive number",
-        //     }),
-
-        bloodGlucose: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 20 && Number(v) <= 800), {
-                message: "Blood glucose must be between 20 and 800 mg/dL",
-            }),
-
-        painLevel: z
-            .string()
-            .trim()
-            .optional()
-            .refine((v) => !v || (Number(v) >= 0 && Number(v) <= 10), {
-                message: "Pain level must be between 0 and 10",
-            }),
-
-        recordedDate: z.string().min(1, "Date is required"),
-
-        recordedTime: z.string().min(1, "Time is required"),
-
-        notes: z.string().trim().optional(),
-    })
-    .refine(
-        (data) =>
-            // Pain level alone doesn't count as a recorded vital sign — at
-            // least one actual measurement is required.
-            [
-                data.bloodPressureSystolic,
-                data.bloodPressureDiastolic,
-                data.heartRate,
-                data.respiratoryRate,
-                data.temperature,
-                data.oxygenSaturation,
-                data.bloodGlucose,
-            ].some((v) => v && v.length > 0),
-        {
-            message: "Record at least one vital sign",
-        },
-    )
-    .refine(
-        (data) =>
-            (!data.bloodPressureSystolic && !data.bloodPressureDiastolic) ||
-            (data.bloodPressureSystolic && data.bloodPressureDiastolic),
-        {
-            message: "Enter both systolic and diastolic values",
-            path: ["bloodPressureDiastolic"],
-        },
     );
+
+export const vitalSchema = z.object({
+    bloodPressureSystolic: measurement(
+        "Systolic is required",
+        40,
+        260,
+        "Systolic must be between 40 and 260",
+    ),
+
+    bloodPressureDiastolic: measurement(
+        "Diastolic is required",
+        20,
+        200,
+        "Diastolic must be between 20 and 200",
+    ),
+
+    heartRate: measurement(
+        "Heart rate is required",
+        20,
+        250,
+        "Heart rate must be between 20 and 250 bpm",
+    ),
+
+    respiratoryRate: measurement(
+        "Respiratory rate is required",
+        4,
+        60,
+        "Respiratory rate must be between 4 and 60",
+    ),
+
+    temperature: measurement(
+        "Temperature is required",
+        30,
+        43,
+        "Temperature must be between 30°C and 43°C",
+    ),
+
+    oxygenSaturation: measurement(
+        "O2 saturation is required",
+        50,
+        100,
+        "O2 saturation must be between 50% and 100%",
+    ),
+
+    bloodGlucose: measurement(
+        "Blood glucose is required",
+        20,
+        800,
+        "Blood glucose must be between 20 and 800 mg/dL",
+    ),
+
+    painLevel: measurement(
+        "Choose a pain level",
+        0,
+        10,
+        "Pain level must be between 0 and 10",
+    ),
+
+    recordedDate: z.string().min(1, "Date is required"),
+
+    recordedTime: z.string().min(1, "Time is required"),
+
+    notes: z.string().trim().optional(),
+});
 
 export type VitalFormData = z.infer<typeof vitalSchema>;
 export interface Vital extends VitalFormData {

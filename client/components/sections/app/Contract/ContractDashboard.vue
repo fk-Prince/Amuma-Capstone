@@ -163,12 +163,14 @@ const props = defineProps<{
     facilityLocked?: boolean;
 }>();
 
+const FACILITY_ACTIONS: ActionType[] = ["create-facility", "diagnosis-cases"];
+
 const isLocked = (action: ActionType) =>
     (action === "create-homecare" && !!props.homecareLocked) ||
-    (action === "create-facility" && !!props.facilityLocked);
+    (FACILITY_ACTIONS.includes(action) && !!props.facilityLocked);
 
 const lockedTitle = (action: ActionType) =>
-    action === "create-facility"
+    FACILITY_ACTIONS.includes(action)
         ? "Locked — this branch has no In-house Facility plan."
         : "Locked — this branch has no Homecare Services plan.";
 

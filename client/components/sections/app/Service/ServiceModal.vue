@@ -10,6 +10,7 @@ import { createServiceSchema } from "~/types/service";
 import { useSchemaValidation } from "~/composables/useSchemaValidation";
 import ToggleSwitch from "~/components/ui/ToggleSwitch.vue";
 import { timeConverter } from "~/utils/time";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 
 const route = useRoute();
 
@@ -27,6 +28,26 @@ const props = defineProps<{
     action?: "create" | "update";
     errors?: Record<string, string>;
 }>();
+
+const { withPlanLocks, isLocationLocked } = useBranchPlan();
+
+const serviceTypeItems = computed(() =>
+    withPlanLocks([
+        { label: "Homecare", value: "online" },
+        { label: "In-house Facility", value: "facility" },
+        { label: "Homecare and Inhouse", value: "both" },
+    ]),
+);
+
+watch(
+    () => props.form.type,
+    (type) => {
+        if (props.action !== "update" && type && isLocationLocked(String(type))) {
+            props.form.type = "both";
+        }
+    },
+    { immediate: true },
+);
 
 const durationType = ref<"time" | "minutes">(
     (props.form as any).durationType ??
@@ -439,20 +460,7 @@ watch(
                                     placeholder="Select service type"
                                     :error="errors?.type"
                                     @update:modelValue="clearError('type')"
-                                    :items="[
-                                        {
-                                            label: 'Homecare',
-                                            value: 'online',
-                                        },
-                                        {
-                                            label: 'In-house Facility',
-                                            value: 'facility',
-                                        },
-                                        {
-                                            label: 'Homecare and Inhouse',
-                                            value: 'both',
-                                        },
-                                    ]"
+                                    :items="serviceTypeItems"
                                 />
 
                                 <div>

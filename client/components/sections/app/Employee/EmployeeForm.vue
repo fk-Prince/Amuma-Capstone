@@ -13,6 +13,7 @@ import {
 } from "~/types/employee";
 import { formatDate } from "~/utils/time";
 import { employeeService } from "~/api/employee/EmployeeService";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 import MarkLeaveModal from "~/components/sections/app/Employee/MarkLeaveModal.vue";
 import LeaveHistoryModal from "~/components/sections/app/Employee/LeaveHistoryModal.vue";
 import DeactivateEmployeeModal from "~/components/sections/app/Employee/DeactivateEmployeeModal.vue";
@@ -88,6 +89,7 @@ const {
     hasAchievementErrors,
     saveEmployee,
     isOnLeave,
+    hasAchievements,
     currentLeave,
     updateLeave,
     changeStatus,
@@ -267,9 +269,13 @@ const isNurse = computed(
     () => String(employee.value.role_name ?? "").toLowerCase() === "nurse",
 );
 
+const { withPlanLocks } = useBranchPlan();
+
 const assignmentItems = computed(() =>
-    employeeAssignmentTypes.value.filter(
-        (type) => type.value !== "both" || !isCaregiver.value,
+    withPlanLocks(
+        employeeAssignmentTypes.value.filter(
+            (type) => type.value !== "both" || !isCaregiver.value,
+        ),
     ),
 );
 
@@ -278,9 +284,13 @@ watch(
     ([items, caregiver, current]) => {
         if (isViewMode.value) return;
 
-        const first = items[0];
+        const first = items.find((item) => !item.disabled);
+        const selected = items.find((item) => item.value === current);
+        const notAllowed =
+            (caregiver && current === "both") ||
+            (!hasExistingEmployee.value && !!selected?.disabled);
 
-        if (caregiver && current === "both" && first) {
+        if (notAllowed && first) {
             employee.value.assignment_type = first.value;
         }
     },
@@ -291,14 +301,22 @@ const activeTab = ref("information");
 const fileInput = ref<HTMLInputElement | null>(null);
 const todayStr = new Date().toISOString().split("T")[0];
 
-const tabs = [
-    { label: "Employee Information", value: "information" },
-    { label: "Certificates & Achievements", value: "achievements" },
-    { label: "Permissions", value: "permissions" },
-];
+const tabs = computed(() =>
+    [
+        { label: "Employee Information", value: "information" },
+        { label: "Certificates & Achievements", value: "achievements" },
+        { label: "Permissions", value: "permissions" },
+    ].filter((tab) => tab.value !== "achievements" || hasAchievements.value),
+);
+
+watch(hasAchievements, (shown) => {
+    if (!shown && activeTab.value === "achievements") {
+        activeTab.value = "information";
+    }
+});
 
 const activeTabIndex = computed(() =>
-    tabs.findIndex((tab) => tab.value === activeTab.value),
+    tabs.value.findIndex((tab) => tab.value === activeTab.value),
 );
 
 function openFilePicker() {
@@ -313,7 +331,7 @@ function removePhoto() {
 function goToNext() {
     if (activeTab.value === "information") {
         if (validate()) {
-            activeTab.value = "achievements";
+            activeTab.value = hasAchievements.value ? "achievements" : "permissions";
         }
         return;
     }
@@ -323,7 +341,9 @@ function goToNext() {
 
 function goToPrevious() {
     activeTab.value =
-        activeTab.value === "permissions" ? "achievements" : "information";
+        activeTab.value === "permissions" && hasAchievements.value
+            ? "achievements"
+            : "information";
 }
 
 const confirmingSave = ref(false);
@@ -589,7 +609,7 @@ init();
                         </span>
 
                         <button
-                            v-if="hasExistingEmployee"
+                            v-if="hasExistingEmployee && !isOwnerRole"
                             type="button"
                             class="inline-flex items-center gap-1.5 self-start rounded-lg border border-primary-200 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
                             @click="leaveHistoryOpen = true"
@@ -1007,7 +1027,7 @@ init();
                 </div>
 
                 <EmployeeAchievements
-                    v-else-if="activeTab === 'achievements'"
+                    v-else-if="activeTab === 'achievements' && hasAchievements"
                     key="achievements"
                     :items="employee.achievements"
                     :errors="errors"

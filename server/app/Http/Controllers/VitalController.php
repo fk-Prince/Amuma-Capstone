@@ -6,6 +6,7 @@ use App\Enums\ModuleEnum;
 use App\Enums\PermissionAction;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Requests\Vital\VitalRequest;
 use App\Service\VitalService;
 use Illuminate\Http\Request;
 
@@ -21,13 +22,13 @@ class VitalController extends Controller
         return $this->vitalService->listVitals($request->all());
     }
 
-    public function store(Request $request)
+    public function store(VitalRequest $request)
     {
         $this->requireMedications($request, PermissionAction::Create);
         return $this->vitalService->createVital($request->user(), $request->all());
     }
 
-    public function update(Request $request, string $id)
+    public function update(VitalRequest $request, string $id)
     {
         $this->requireMedications($request, PermissionAction::Update);
         return $this->vitalService->updateVital($request->user(), $request->all(), $id);

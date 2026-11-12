@@ -109,6 +109,7 @@ import { useTrackSetupVisits } from "~/composables/useSetupGuide";
 import { useAuthReady, useAuthUser } from "~/composables/useAuthUser";
 
 import { authMenuList } from "~/config/authMenu";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 import { PermissionAction } from "~/utils/permissions";
 
 const route = useRoute();
@@ -128,6 +129,7 @@ const access = useRouteAccess();
 const mounted = ref(false);
 
 const branchStore = useBranchStore();
+const { planCode, hasPlan } = useBranchPlan();
 const { canSeeExecutiveOverview } = useAgencyBranches();
 
 // The setup guide ticks off steps once their page has been opened.
@@ -196,29 +198,20 @@ const menus = computed(() => {
             }));
     }
 
-    // const branch = branchStore.activeBranch;
-    //   const branchPlans =
-    //         branch?.plan?.map((p) => p.plan_code) ?? [];
     return authMenuList
         .filter((item) => {
             if (item.agencyOverview) return canSeeExecutiveOverview.value;
+
+            if (
+                item.plan?.length &&
+                planCode.value &&
+                !item.plan.some((code) => hasPlan(code as "A" | "B" | "C"))
+            ) {
+                return false;
+            }
+
             if (!item.modules) return true;
             return item.modules.some((m) => modules.includes(m));
-
-            // if (item.modules) {
-            //     const hasModule = item.modules.some((m) => modules.includes(m));
-
-            //     if (!hasModule) return false;
-            // }
-
-            // if (item.plan?.length) {
-            //     const hasPlan = item.plan.some((plan) =>
-            //         branchPlans.includes(plan)
-            //     );
-
-            //     if (!hasPlan) return false;
-            // }
-            // return true;
         })
         .map((item) => ({
             label: item.label,

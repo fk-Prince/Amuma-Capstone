@@ -287,6 +287,7 @@ function handleDashboardAction(action: string) {
             break;
 
         case "diagnosis-cases":
+            if (facilityLocked.value) return;
             showDiagnosisModal.value = true;
             break;
     }

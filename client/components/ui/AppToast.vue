@@ -11,6 +11,7 @@ export interface Toast {
     duration?: number;
     // When set, the whole toast is clickable and runs this (used by "message").
     onClick?: () => void;
+    onClose?: () => void;
 }
 
 const toasts = ref<Toast[]>([]);
@@ -87,7 +88,11 @@ function add(toast: Omit<Toast, "id">) {
 }
 
 function remove(id: number) {
+    const closing = toasts.value.find((t) => t.id === id);
+
     toasts.value = toasts.value.filter((t) => t.id !== id);
+
+    closing?.onClose?.();
 }
 
 function activate(toast: Toast) {
