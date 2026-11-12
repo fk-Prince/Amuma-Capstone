@@ -25,6 +25,14 @@ class DiagnosisCaseRepository
             ->first();
     }
 
+    public function titleTaken(int $branchId, string $title, ?int $exceptId = null): bool
+    {
+        return DiagnosisCase::where('branch_id', $branchId)
+            ->whereRaw('LOWER(title) = ?', [mb_strtolower($title)])
+            ->when($exceptId, fn($query) => $query->where('diagnosis_case_id', '!=', $exceptId))
+            ->exists();
+    }
+
     public function create(array $payload): DiagnosisCase
     {
         return DiagnosisCase::create($payload);

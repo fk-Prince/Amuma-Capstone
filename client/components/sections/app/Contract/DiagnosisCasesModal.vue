@@ -278,7 +278,17 @@ function validate() {
 
     const price = Number(form.price);
 
-    if (!form.title.trim()) errors.title = "Enter a case name.";
+    const title = form.title.trim().replace(/\s+/g, " ");
+    const duplicate = cases.value.some(
+        (item) =>
+            item.uuid !== editingUuid.value &&
+            item.title.trim().toLowerCase() === title.toLowerCase(),
+    );
+
+    if (!title) errors.title = "Enter a case name.";
+    else if (duplicate) {
+        errors.title = `This branch already has a diagnosis case named ${title}.`;
+    }
     if (form.price === "" || Number.isNaN(price) || price <= 0) {
         errors.price = "Enter a price greater than zero.";
     }

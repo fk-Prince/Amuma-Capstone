@@ -6,6 +6,7 @@ use App\Models\DiagnosisCase;
 use App\Repository\DiagnosisCaseRepository;
 use App\Repository\PatientRepository;
 use Exception;
+use Illuminate\Validation\ValidationException;
 
 class DiagnosisCaseService
 {
@@ -63,9 +64,12 @@ class DiagnosisCaseService
 
     public function store(array $payload)
     {
+        $title = $this->cleanTitle($payload['title']);
+        $this->ensureUniqueTitle((int) $payload['branch_id'], $title);
+
         $case = $this->diagnosisCaseRepository->create([
             'branch_id' => $payload['branch_id'],
-            'title' => trim($payload['title']),
+            'title' => $title,
             'description' => filled($payload['description'] ?? null) ? trim($payload['description']) : null,
             'price' => $payload['price'],
         ]);
@@ -84,8 +88,11 @@ class DiagnosisCaseService
             throw new Exception('Diagnosis case not found.', 404);
         }
 
+        $title = $this->cleanTitle($payload['title']);
+        $this->ensureUniqueTitle((int) $payload['branch_id'], $title, $case->diagnosis_case_id);
+
         $case = $this->diagnosisCaseRepository->update($case, [
-            'title' => trim($payload['title']),
+            'title' => $title,
             'description' => filled($payload['description'] ?? null) ? trim($payload['description']) : null,
             'price' => $payload['price'],
         ]);
@@ -94,6 +101,20 @@ class DiagnosisCaseService
             'message' => 'Diagnosis case updated.',
             'data' => $this->format($case),
         ]);
+    }
+
+    private function cleanTitle(string $title): string
+    {
+        return preg_replace('/\s+/', ' ', trim($title));
+    }
+
+    private function ensureUniqueTitle(int $branchId, string $title, ?int $exceptId = null): void
+    {
+        if ($this->diagnosisCaseRepository->titleTaken($branchId, $title, $exceptId)) {
+            throw ValidationException::withMessages([
+                'title' => "This branch already has a diagnosis case named {$title}.",
+            ]);
+        }
     }
 
     private function format(DiagnosisCase $case): array
