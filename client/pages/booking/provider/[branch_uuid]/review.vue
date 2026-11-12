@@ -457,10 +457,30 @@ if (booking_data.homecare?.type === "ADL") {
     );
 }
 
+async function branchStillOpen() {
+    try {
+        await fetchBranch(uuid);
+    } catch {
+        return true;
+    }
+
+    if (branch.value?.is_available !== false) return true;
+
+    toast.warning(
+        "Service Unavailable",
+        "This branch isn't accepting bookings right now.",
+    );
+    await navigateTo(`/booking/provider/${uuid}`);
+
+    return false;
+}
+
 async function handleCardPay() {
     if (processingPayment.value) return;
     processingPayment.value = true;
     try {
+        if (!(await branchStillOpen())) return;
+
         await cardPayment({
             card,
             amount: bookingAmount.value,
@@ -501,6 +521,8 @@ async function handleGCashPay() {
     processingPayment.value = true;
 
     try {
+        if (!(await branchStillOpen())) return;
+
         await gcashPayment({
             closeModal,
             createPayment: () =>
@@ -536,6 +558,8 @@ async function handleSubmit() {
     submitting.value = true;
 
     try {
+        if (!(await branchStillOpen())) return;
+
         const res = await bookingService.create({
             branch_uuid: uuid,
             category: bookingStore.category,

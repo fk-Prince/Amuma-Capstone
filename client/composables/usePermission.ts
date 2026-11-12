@@ -63,6 +63,12 @@ export const usePermissions = () => {
     const canReview = (module_name: string) =>
         can(module_name, PermissionAction.Review);
 
+    const canRejectBookings = computed(
+        () =>
+            !branchStore.activeBranch?.subscription_locked &&
+            actionsFor(Modules.Bookings).includes(PermissionAction.Review),
+    );
+
     const canExport = (module_name: string) =>
         can(module_name, PermissionAction.Export);
 
@@ -113,6 +119,7 @@ export const usePermissions = () => {
         canUpdate,
         canAssign,
         canReview,
+        canRejectBookings,
         canExport,
         canForceDischarge,
         role,

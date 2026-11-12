@@ -26,6 +26,19 @@ class AuthGuard
 
     public static function requireModule(?User $user,  string|bool $branchId = false, ModuleEnum|array $module, PermissionAction $action)
     {
+        $user = self::requirePermission($user, $branchId, $module, $action);
+
+        self::requireLiveSubscription(
+            $branchId,
+            collect($module)->map(fn(ModuleEnum $module) => $module->value)->values(),
+            $action
+        );
+
+        return $user;
+    }
+
+    public static function requirePermission(?User $user, string|bool $branchId, ModuleEnum|array $module, PermissionAction $action): User
+    {
         $user = self::requireUser($user);
 
         $user->loadMissing('employee.permissions.modules');
@@ -57,8 +70,6 @@ class AuthGuard
         if (!$hasPermission) {
             throw new Exception('Insufficient permissions', 403);
         }
-
-        self::requireLiveSubscription($branchId, $moduleNames, $action);
 
         return $user;
     }

@@ -32,7 +32,11 @@ class BookingController extends Controller
     {
         $branch = BranchGuard::resolveBranch($request->branch_uuid);
 
-        if ($branch->isDeactivated()) {
+        $hasPlan = $this->bookingHelper->isHomecare($request->all())
+            ? $branch->hasHomecareSubscription()
+            : $branch->hasFacilitySubscription();
+
+        if (!$hasPlan || $branch->isDeactivated()) {
             throw new \Exception("This provider isn't taking new bookings right now.", 422);
         }
 
@@ -72,7 +76,8 @@ class BookingController extends Controller
             $data = $request->validate($rules->rules(), $rules->messages());
             return $this->bookingService->createStaffHomecareBooking($request->user(), $request->all(), $data);
         } else if ($request->action === 'reject') {
-            AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
+            AuthGuard::requirePermission($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
+            AuthGuard::requireOpenSubscription($branch->branch_id, true);
             $request->merge([
                 'user' => $request->user(),
             ]);

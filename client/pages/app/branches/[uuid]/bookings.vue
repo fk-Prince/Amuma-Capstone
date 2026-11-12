@@ -234,9 +234,9 @@
                                             "
                                             type="button"
                                             variant="danger"
-                                            :disabled="!canReviewBookings"
+                                            :disabled="!canRejectBookings"
                                             :tooltip="
-                                                canReviewBookings
+                                                canRejectBookings
                                                     ? ''
                                                     : reviewBlockedReason
                                             "
@@ -595,7 +595,7 @@
                                         extra-class="w-full"
                                         :tooltip="
                                             !canReviewBookings
-                                                ? reviewBlockedReason
+                                                ? approveBlockedReason
                                                 : !isApproving &&
                                                     !canApproveBooking
                                                   ? 'Please select an accommodation before approving this admission.'
@@ -627,11 +627,11 @@
                                         variant="danger"
                                         :loading="isRejecting"
                                         :disabled="
-                                            isReviewing || !canReviewBookings
+                                            isReviewing || !canRejectBookings
                                         "
                                         extra-class="w-full"
                                         :tooltip="
-                                            !canReviewBookings
+                                            !canRejectBookings
                                                 ? reviewBlockedReason
                                                 : ['paid', 'partial'].includes(
                                                         selectedBooking.payment
@@ -878,12 +878,18 @@ const isSubmitting = ref(false);
 // Only for a branch on a Homecare Services or Hybrid plan, and for staff who
 // can create bookings.
 const { hasHomecarePlan } = useBranchPlan();
-const { canCreate, canReview } = usePermissions();
+const { canCreate, canReview, canRejectBookings } = usePermissions();
 
 const canReviewBookings = computed(() => canReview(Modules.Bookings));
 
 const reviewBlockedReason =
     "You need Accept/Reject permission on bookings to do this.";
+
+const approveBlockedReason = computed(() =>
+    canRejectBookings.value
+        ? "This branch's subscription has ended, so bookings can only be rejected."
+        : reviewBlockedReason,
+);
 
 const showHomecareBooking = computed(
     () => hasHomecarePlan.value && canCreate(Modules.Bookings),
