@@ -308,7 +308,7 @@
             </ActionButton>
         </div>
 
-        <div v-if="isRejected" class="mt-auto flex items-center gap-2 pt-4">
+        <div v-if="showResubmit" class="mt-auto flex items-center gap-2 pt-4">
             <ActionButton
                 variant="primary"
                 class="flex-1"
@@ -369,6 +369,9 @@ const props = withDefaults(
 );
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
+const showResubmit = computed(
+    () => isRejected.value && props.branch.subscription_status !== "rejected",
+);
 const reviewsOpen = ref(false);
 
 const activation = computed(() => props.branch.activation ?? null);

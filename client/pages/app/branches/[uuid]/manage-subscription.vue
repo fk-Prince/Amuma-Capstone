@@ -48,7 +48,10 @@
                             variant="primary"
                             extra-class="!rounded-xl !px-5 !py-2.5"
                             :disabled="
-                                addDisabled || !canAddBranch || testingAtMax
+                                addDisabled ||
+                                !canAddBranch ||
+                                testingAtMax ||
+                                subscriptionRejected
                             "
                             :tooltip="addBranchTooltip"
                             @click="openAddBranch"
@@ -148,8 +151,12 @@
                         <ActionButton
                             v-if="agency && !isSandbox"
                             extra-class="!rounded-xl !px-5 !py-2.5"
-                            :disabled="!canResubmit"
-                            tooltip="You need permission to update Manage Subscription to edit the agency information."
+                            :disabled="!canResubmit || subscriptionRejected"
+                            :tooltip="
+                                subscriptionRejected
+                                    ? 'Your subscription was rejected. Use Resubmit Subscription to update the agency information.'
+                                    : 'You need permission to update Manage Subscription to edit the agency information.'
+                            "
                             @click="showAgencyEdit = true"
                         >
                             <Pencil class="h-4 w-4" />
@@ -639,6 +646,12 @@ function onResubmitBranch(branch: Branch) {
 
 const currentBranch = computed(() => branchStore.activeBranch);
 const currentRejected = computed(() => isBranchRejected(currentBranch.value));
+const subscriptionRejected = computed(
+    () =>
+        currentBranch.value?.resubmit_subscription_status === "rejected" ||
+        currentBranch.value?.agency?.status === "rejected" ||
+        branches.value.some((b) => b.subscription_status === "rejected"),
+);
 const showReapply = ref(false);
 
 function resubmitSubscription() {
@@ -1092,6 +1105,10 @@ const testingAtMax = computed(
 const addBranchTooltip = computed(() => {
     if (!canAddBranch.value) {
         return "You need permission to create in Manage Subscription to add a branch.";
+    }
+
+    if (subscriptionRejected.value) {
+        return "Your subscription was rejected. Resubmit it before adding a branch.";
     }
 
     return testingAtMax.value

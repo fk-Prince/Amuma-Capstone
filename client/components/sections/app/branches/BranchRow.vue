@@ -74,7 +74,7 @@
             </ActionButton>
 
             <ActionButton
-                v-if="isRejected"
+                v-if="showResubmit"
                 variant="primary"
                 extra-class="!px-3 !py-1.5 !text-xs"
                 :disabled="!canResubmit"
@@ -144,6 +144,9 @@ const emit = defineEmits<{
 }>();
 
 const isRejected = computed(() => props.branch.review_status === "rejected");
+const showResubmit = computed(
+    () => isRejected.value && props.branch.subscription_status !== "rejected",
+);
 const activation = computed(() => props.branch.activation ?? null);
 const { deactivated, reactivationAmount, action, note } =
     useBranchActivation(activation);
