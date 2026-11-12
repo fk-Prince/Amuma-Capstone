@@ -176,7 +176,7 @@
                                         "
                                         :src="getBranchImage(agency.image)"
                                         :alt="agency.name"
-                                        class="h-full w-full object-contain"
+                                        class="h-full w-full rounded-xl object-cover"
                                         @error="
                                             brokenImages.add(
                                                 `agency-${agency.agency_id}`,
@@ -264,7 +264,7 @@
                                                 )
                                             "
                                             :alt="currentAgency.name"
-                                            class="h-full w-full object-contain"
+                                            class="h-full w-full rounded-xl object-cover"
                                             @error="
                                                 brokenImages.add(
                                                     `agency-${currentAgency.agency_id}`,
@@ -429,7 +429,7 @@
                                                     getBranchImage(branch.image)
                                                 "
                                                 :alt="branch.name"
-                                                class="h-full w-full object-contain"
+                                                class="h-full w-full rounded-xl object-cover"
                                                 @error="
                                                     brokenImages.add(
                                                         branch.uuid ?? '',

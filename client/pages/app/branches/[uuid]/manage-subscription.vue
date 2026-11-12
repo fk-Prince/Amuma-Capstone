@@ -95,7 +95,7 @@
                             v-if="agency?.image"
                             :src="agency.image"
                             :alt="agency.name"
-                            class="h-16 w-16 shrink-0 object-contain"
+                            class="h-16 w-16 shrink-0 rounded-2xl object-cover"
                         />
                         <!-- </div> -->
 

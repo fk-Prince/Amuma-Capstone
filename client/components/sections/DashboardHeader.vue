@@ -35,7 +35,7 @@
                         "
                         :src="getBranchImage(headerImage)"
                         :alt="headerTitle"
-                        class="h-full w-full object-contain"
+                        class="h-full w-full rounded-xl object-cover"
                         @error="brokenImages.add(headerImageKey)"
                     />
                     <Building2

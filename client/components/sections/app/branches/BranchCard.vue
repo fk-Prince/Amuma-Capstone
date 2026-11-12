@@ -13,7 +13,7 @@
             <img
                 :src="branch.image"
                 :alt="branch.name"
-                class="h-14 w-14 rounded-xl object-contain shrink-0"
+                class="h-14 w-14 rounded-xl object-cover shrink-0"
             />
 
             <div class="min-w-0 flex-1">
