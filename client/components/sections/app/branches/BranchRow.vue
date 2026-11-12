@@ -55,10 +55,10 @@
                 variant="outline"
                 extra-class="!px-3 !py-1.5 !text-xs"
                 :disabled="!canManage"
-                tooltip="You need permission to update Manage Subscription to change a branch's plan."
+                tooltip="You need permission to update Manage Subscription to upgrade a branch's plan."
                 @click="emit('change-plan', branch)"
             >
-                Change plan
+                Upgrade plan
             </ActionButton>
 
             <ActionButton

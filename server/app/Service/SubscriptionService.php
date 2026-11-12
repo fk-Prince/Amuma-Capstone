@@ -1608,13 +1608,17 @@ class SubscriptionService
             }
 
             if (!$link->canChangePlan()) {
-                throw new Exception(__('Only a branch on a Hybrid subscription can switch plans. The main branch always follows the subscription plan.'), 422);
+                throw new Exception(__('This branch can\'t change its plan. Only an included branch on a Hybrid subscription can upgrade, and the main branch always follows the subscription plan.'), 422);
             }
 
             $plan = $subscription->planOfCode($payload['plan_code']);
 
             if (!$plan || !Plan::covers($subscription->effectivePlan()?->plan_code, $plan->plan_code)) {
                 throw new Exception(__('That plan isn\'t covered by your subscription.'), 422);
+            }
+
+            if ($plan->plan_code !== Plan::CODE_HYBRID) {
+                throw new Exception(__('An included branch can only be upgraded to Hybrid. It can\'t be downgraded or switched to another plan.'), 422);
             }
 
             $link->update(['plan_id' => $subscription->linkPlanId($plan)]);

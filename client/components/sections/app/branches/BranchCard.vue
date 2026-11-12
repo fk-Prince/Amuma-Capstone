@@ -260,10 +260,10 @@
                 class="flex-1"
                 extra-class="w-full !px-3 !text-xs"
                 :disabled="!canManage"
-                tooltip="You need permission to update Manage Subscription to change a branch's plan."
+                tooltip="You need permission to update Manage Subscription to upgrade a branch's plan."
                 @click="emit('change-plan', branch)"
             >
-                Change plan
+                Upgrade plan
             </ActionButton>
             <ActionButton
                 v-if="canUpgrade"

@@ -106,7 +106,8 @@ class BranchSubscription extends Pivot
         return $this->type === self::TYPE_INCLUDED
             && $this->status !== self::STATUS_REJECTED
             && !$this->isMain()
-            && $this->subscription?->effectivePlan()?->plan_code === Plan::CODE_HYBRID;
+            && $this->subscription?->effectivePlan()?->plan_code === Plan::CODE_HYBRID
+            && $this->effectivePlan()?->plan_code !== Plan::CODE_HYBRID;
     }
 
     public function upgradeOptions(): array

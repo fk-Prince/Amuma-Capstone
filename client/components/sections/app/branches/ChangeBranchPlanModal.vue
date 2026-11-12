@@ -8,7 +8,7 @@
                 class="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-secondary dark:ring-white/10"
                 role="dialog"
                 aria-modal="true"
-                :aria-label="`Change ${branchName}'s plan`"
+                :aria-label="`Upgrade ${branchName}'s plan`"
             >
                 <div
                     class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 px-6 py-5 dark:border-white/10"
@@ -24,7 +24,7 @@
                             <h2
                                 class="text-lg font-semibold leading-tight text-gray-900 dark:text-white"
                             >
-                                Change {{ branchName }}'s plan
+                                Upgrade {{ branchName }}'s plan
                             </h2>
                             <p
                                 class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
@@ -58,9 +58,9 @@
                         <Info class="mt-0.5 h-4 w-4 shrink-0" />
                         <span>
                             {{ branchName }} uses an included slot on your Hybrid
-                            subscription, so switching is free and takes effect
-                            right away. Pages for modules the new plan doesn't
-                            include become locked.
+                            subscription, so upgrading to Hybrid is free and
+                            takes effect right away. Once upgraded, it can't be
+                            switched back.
                         </span>
                     </div>
 
@@ -91,7 +91,7 @@
                         @click="save"
                     >
                         <LoaderCircle v-if="saving" class="h-4 w-4 animate-spin" />
-                        {{ saving ? "Saving..." : "Save plan" }}
+                        {{ saving ? "Upgrading..." : "Upgrade to Hybrid" }}
                     </button>
                 </div>
             </div>
@@ -124,6 +124,8 @@ const emit = defineEmits<{
     changed: [result: any];
 }>();
 
+const HYBRID = "C";
+
 const plans = ref<any[]>([...(props.plans ?? [])]);
 const loading = ref(!plans.value.length);
 const saving = ref(false);
@@ -135,7 +137,13 @@ const options = computed<BranchPlanOption[]>(() =>
         plan_code: plan.plan_code,
         name: plan.name,
         description: plan.description,
-        reason: plan.plan_code === props.currentCode ? "Current plan" : "",
+        reason:
+            plan.plan_code === props.currentCode
+                ? "Current plan"
+                : plan.plan_code !== HYBRID
+                  ? "Included branches can only upgrade"
+                  : "",
+        disabled: plan.plan_code !== HYBRID && plan.plan_code !== props.currentCode,
         label: "Included slot",
         amount: "No charge",
     })),
