@@ -58,8 +58,16 @@ class Branch extends Model
     private static function constrainPlanAccess($subscriptions, array $planCodes): void
     {
         $subscriptions
-            ->where('branch_subscription.status', BranchSubscription::STATUS_APPROVED)
-            ->where('subscriptions.status', Subscription::STATUS_ACTIVE)
+            ->where(function ($q) {
+                $q->where(function ($approved) {
+                    $approved->where('branch_subscription.status', BranchSubscription::STATUS_APPROVED)
+                        ->where('subscriptions.status', Subscription::STATUS_ACTIVE);
+                })->orWhere(function ($trialInReview) {
+                    $trialInReview->where('branch_subscription.status', BranchSubscription::STATUS_PENDING)
+                        ->where('subscriptions.mode', Subscription::MODE_TEST)
+                        ->whereIn('subscriptions.status', [Subscription::STATUS_PENDING, Subscription::STATUS_ACTIVE]);
+                });
+            })
             ->whereDate('subscriptions.end_date', '>=', now())
             ->where(function ($q) use ($planCodes) {
                 $q->where(function ($follows) use ($planCodes) {

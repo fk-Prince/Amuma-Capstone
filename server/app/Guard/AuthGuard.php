@@ -49,19 +49,11 @@ class AuthGuard
             throw new Exception('Insufficient permissions', 403);
         }
 
-
-        // if ($branchId !== false && self::ownsAgencyFor($employee, $branchId)) {
-        //     return $user;
-        // }
-
         $moduleNames = collect($module)
             ->map(fn(ModuleEnum $module) => $module->value)
             ->values();
 
         $hasPermission = $employee->permissions->contains(function ($permission) use ($moduleNames, $action, $branchId) {
-            // return $permission->modules?->module_name === $module->value
-            //     && ($permission->{$action->value} ?? false)
-            //     && ($branchId === false || $permission->branch_id == $branchId);
             return $moduleNames->contains($permission->modules?->module_name)
                 && ($permission->{$action->value} ?? false)
                 && ($branchId === false || $permission->branch_id == $branchId);
