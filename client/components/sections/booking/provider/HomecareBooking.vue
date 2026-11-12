@@ -1284,7 +1284,6 @@ watch(
 const durationPresets = [
     { label: "1 Day", hours: 24 },
     { label: "1 Week", hours: 24 * 7 },
-    { label: "1 Month", hours: 24 * 30 },
 ];
 
 const addDurationPreset = (hours: number) => {
