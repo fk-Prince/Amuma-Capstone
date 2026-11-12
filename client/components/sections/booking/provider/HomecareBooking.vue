@@ -789,6 +789,22 @@
                 </div>
             </div>
 
+            <StaffRequestPicker
+                v-if="
+                    !loading &&
+                    branchUuid &&
+                    (model.type === 'ADL' || selectedService)
+                "
+                :model-value="model.requested_staff ?? []"
+                :branch-uuid="branchUuid"
+                :type="model.type"
+                :service-id="selectedService?.service_id ?? null"
+                :patient-id="patientId ?? null"
+                :patient-name="patientName ?? null"
+                :stay-in="isMonthly && (model.stay_in ?? true)"
+                @update:model-value="update('requested_staff', $event)"
+            />
+
             <div>
                 <div
                     class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
@@ -904,6 +920,7 @@ import BaseInput from "~/components/ui/BaseInput.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import LocationSelector from "~/components/ui/LocationSelector.vue";
 import ServiceModal from "~/components/sections/booking/provider/ServiceModal.vue";
+import StaffRequestPicker from "~/components/sections/booking/provider/StaffRequestPicker.vue";
 import ActivityChipsInput from "~/components/ui/ActivityChipsInput.vue";
 import {
     ADL_DEFAULT_ACTIVITIES,
@@ -930,6 +947,9 @@ const props = defineProps<{
     settings?: BranchSettings;
     showDownpayment?: boolean;
     allowMonthly?: boolean;
+    branchUuid?: string | null;
+    patientId?: number | null;
+    patientName?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -1013,6 +1033,15 @@ const selectedService = computed(() => {
 
     return services.length ? services[0] : null;
 });
+
+watch(
+    () => [props.model.type, selectedService.value?.service_id],
+    () => {
+        if (props.model.requested_staff?.length) {
+            update("requested_staff", []);
+        }
+    },
+);
 
 const selectedServicesTotal = computed(() => {
     return selectedService.value ? Number(selectedService.value.price) : 0;

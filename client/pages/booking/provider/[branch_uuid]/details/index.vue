@@ -248,6 +248,7 @@
                             <HomecareBooking
                                 v-if="category === 'homecare'"
                                 :model="homecareData"
+                                :branch-uuid="uuid"
                                 :services="serviceData"
                                 :loading="loading"
                                 :errors="homecareErrors"

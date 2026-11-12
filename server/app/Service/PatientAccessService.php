@@ -128,6 +128,7 @@ class PatientAccessService
             'branch_id'         => $patient->branch->branch_id,
             'branch_uuid'       => $patient->branch->uuid,
             'booking_data'      => $bookingData,
+            'requested_staff'   => $payload['requested_staff'] ?? [],
             'payment_method'    => $payload['payment_method'] ?? null,
             'token_id'          => $payload['token_id'] ?? null,
             'authentication_id' => $payload['authentication_id'] ?? null,

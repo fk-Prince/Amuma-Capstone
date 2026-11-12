@@ -14,6 +14,7 @@ export const homecareData = reactive<HomecareBooking>({
     time_span: "",
     services: [],
     note: "",
+    requested_staff: [],
 });
 
 const bookedServiceSchema = z.object({

@@ -72,6 +72,24 @@ class BookingResource extends JsonResource
             'assessment' => $data['assessment'] ?? null,
             'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
+            'requested_staff' => $this->whenLoaded('staffRequests', fn() => $this->staffRequests
+                ->map(fn($request) => [
+                    'uuid' => $request->employee?->users?->uuid,
+                    'full_name' => $request->employee?->full_name ?? '',
+                    'role' => $request->employee?->relationLoaded('employeeBranch')
+                        ? $request->employee->employeeBranch->firstWhere('branch_id', $this->branch_id)?->role_name
+                        : null,
+                    'avatar' => $request->employee?->avatar,
+                    'achievement_titles' => collect($request->employee?->achievements ?? [])
+                        ->pluck('label')
+                        ->filter()
+                        ->values(),
+                ])
+                ->values()),
+            'schedule_code' => $this->when(
+                $this->relationLoaded('invoices'),
+                fn() => $this->resource->scheduleCode()
+            ),
             'is_processed' => $this->isProcessed(),
             'client' => $this->user,
             'payment' => $data['payment'] ?? null,

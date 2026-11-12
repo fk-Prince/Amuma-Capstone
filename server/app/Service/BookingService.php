@@ -14,6 +14,7 @@ use App\Repository\BookingRepository;
 use App\Repository\PaymentRepository;
 use App\Http\Resources\BookingReceiptResource;
 use App\Service\Booking\BookingHelper;
+use App\Service\Booking\BookingStaffService;
 use App\Service\External\XenditService;
 use App\Service\Payment\GCashPayment;
 use Carbon\Carbon;
@@ -31,7 +32,8 @@ class BookingService
         private BookingHelper $bookingHelper,
         private BookingFactory $bookingFactory,
         private TransactionService $transactions,
-        private PaymentRepository $paymentRepository
+        private PaymentRepository $paymentRepository,
+        private BookingStaffService $bookingStaff
     ) {}
 
     public function bookingAction(array $payload)
@@ -186,6 +188,14 @@ class BookingService
                 $payload['booking_data']['homecare']['activities'] = $this->bookingHelper
                     ->hourlyAdlActivities($payload['branch_id']);
             }
+
+            $payload['requested_employee_ids'] = $this->bookingStaff->resolve(
+                (int) $payload['branch_id'],
+                $payload['booking_data']['homecare'] ?? [],
+                $payload['booking_data']['homecare']['requested_staff'] ?? $payload['requested_staff'] ?? []
+            );
+
+            unset($payload['booking_data']['homecare']['requested_staff'], $payload['requested_staff']);
         }
 
         $this->bookingHelper->assertNoEmoji($payload['booking_data'] ?? []);
@@ -254,6 +264,8 @@ class BookingService
                 if (!$booking) {
                     throw new Exception('Failed to create booking.', 500);
                 }
+
+                $this->bookingStaff->attach($booking, $payload['requested_employee_ids'] ?? []);
 
                 $this->recordDownpayment($user, $booking, $bookingData['payment']);
 
@@ -458,15 +470,27 @@ class BookingService
             'diagnoses' => $this->bookingHelper->resolveDiagnoses($payload['diagnoses'] ?? []),
         ];
 
-        $booking = $this->bookingRepository->create([
-            'user_id'      => $owner?->user_id ?? $staff->user_id,
-            'branch_id'    => $branch->branch_id,
-            'category'     => Booking::CATEGORY_ONLINE,
-            'booking_data' => $bookingData,
-            'status'       => Booking::STATUS_PENDING,
-            'valid_until'  => Carbon::parse($data['date'] . ' ' . $data['prefered_time']),
-            'booking_type' => Booking::BOOKINGTYPE_ONLINE,
-        ]);
+        $requestedEmployeeIds = $this->bookingStaff->resolve(
+            $branch->branch_id,
+            $bookingData['homecare'],
+            $data['requested_staff'] ?? []
+        );
+
+        $booking = DB::transaction(function () use ($owner, $staff, $branch, $bookingData, $data, $requestedEmployeeIds) {
+            $booking = $this->bookingRepository->create([
+                'user_id'      => $owner?->user_id ?? $staff->user_id,
+                'branch_id'    => $branch->branch_id,
+                'category'     => Booking::CATEGORY_ONLINE,
+                'booking_data' => $bookingData,
+                'status'       => Booking::STATUS_PENDING,
+                'valid_until'  => Carbon::parse($data['date'] . ' ' . $data['prefered_time']),
+                'booking_type' => Booking::BOOKINGTYPE_ONLINE,
+            ]);
+
+            $this->bookingStaff->attach($booking, $requestedEmployeeIds);
+
+            return $booking;
+        });
 
         return response()->json([
             'message' => 'Homecare booking created. It is waiting for review.',
@@ -484,6 +508,12 @@ class BookingService
         if (!$booking) {
             throw new Exception('Booking does not exist.', 404);
         }
+
+        $booking->load([
+            'staffRequests.employee.users:user_id,uuid',
+            'staffRequests.employee.employeeBranch',
+            'invoices.invoiceServices.scheduleService.schedule',
+        ]);
 
         return new BookingResource($booking);
     }

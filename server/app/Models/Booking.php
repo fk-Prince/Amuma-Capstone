@@ -85,6 +85,48 @@ class Booking extends Model
         return $this->hasMany(PatientBooking::class, 'booking_id', 'booking_id');
     }
 
+    public function staffRequests()
+    {
+        return $this->hasMany(BookingStaffRequest::class, 'booking_id', 'booking_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasManyThrough(
+            Invoice::class,
+            PatientBooking::class,
+            'booking_id',
+            'invoice_id',
+            'booking_id',
+            'invoice_id'
+        );
+    }
+
+    public function scheduleCode(): ?string
+    {
+        if (!$this->relationLoaded('invoices')) {
+            return null;
+        }
+
+        foreach ($this->invoices as $invoice) {
+            if (!$invoice->relationLoaded('invoiceServices')) {
+                continue;
+            }
+
+            foreach ($invoice->invoiceServices as $invoiceService) {
+                $code = $invoiceService->relationLoaded('scheduleService')
+                    ? $invoiceService->scheduleService?->schedule?->schedule_code
+                    : null;
+
+                if ($code) {
+                    return $code;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public function user()
     {
         return $this->hasOne(User::class, 'user_id', 'user_id');

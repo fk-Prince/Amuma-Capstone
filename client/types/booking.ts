@@ -29,6 +29,27 @@ export interface HomecareBooking {
     stay_in?: boolean;
     monthly_rate?: string | number;
     activities?: string[];
+    requested_staff?: string[];
+}
+
+export interface BookingStaffOption {
+    uuid: string;
+    full_name: string;
+    role: string;
+    assignment: string;
+    avatar: string | null;
+    achievement_titles: string[];
+    is_eligible: boolean;
+    reason: "not_specialized" | "on_leave" | null;
+    cared_before: boolean;
+}
+
+export interface RequestedStaff {
+    uuid: string | null;
+    full_name: string;
+    role: string | null;
+    avatar: string | null;
+    achievement_titles: string[];
 }
 
 export interface BookedService {
@@ -64,6 +85,8 @@ export interface BookingRetrieve {
         balance_amount?: number,
     };
     reserved: Reserved | null;
+    requested_staff?: RequestedStaff[];
+    schedule_code?: string | null;
     is_processed?: boolean;
     valid_until?: string;
     created_at: string;

@@ -8,6 +8,7 @@ use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
 use App\Http\Requests\Booking\StaffHomecareBookingRequest;
 use App\Service\Booking\BookingHelper;
+use App\Service\Booking\BookingStaffService;
 use App\Service\BookingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,8 @@ class BookingController extends Controller
 
     public function __construct(
         private BookingService $bookingService,
-        private BookingHelper $bookingHelper
+        private BookingHelper $bookingHelper,
+        private BookingStaffService $bookingStaff
     ) {}
 
     public function index(Request $request)
@@ -58,6 +60,15 @@ class BookingController extends Controller
 
         if ($request->action === 'total') {
             return $this->bookingHelper->getTotal($request->all());
+        } else if ($request->action === 'staff_options') {
+            $request->validate([
+                'type' => ['required', 'in:ADL,Medical'],
+                'service_id' => ['nullable', 'integer'],
+                'patient_id' => ['nullable', 'integer'],
+                'page' => ['nullable', 'integer', 'min:1'],
+            ]);
+
+            return $this->bookingStaff->options($request->user(), $branch, $request->all());
         } else if ($request->action === 'approve') {
             AuthGuard::requireModule($request->user(), $branch->branch_id, ModuleEnum::Bookings, PermissionAction::Review);
             $request->merge([

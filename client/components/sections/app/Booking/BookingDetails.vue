@@ -65,6 +65,16 @@
 
                                 View Patient Profile
                             </button>
+
+                            <button
+                                v-if="canViewSchedule"
+                                type="button"
+                                class="shrink-0 inline-flex items-center gap-2 px-3 py-1.5 mt-0.5 rounded-lg border border-primary bg-primary/5 text-primary text-xs font-semibold hover:bg-primary/10 transition dark:text-primary-300"
+                                @click="viewSchedule"
+                            >
+                                <CalendarDays class="h-4 w-4" />
+                                View Schedule
+                            </button>
                         </div>
 
                         <p
@@ -278,6 +288,12 @@
                                 :value="durationLabel"
                             />
 
+                            <Field
+                                v-if="booking.schedule_code"
+                                label="Schedule"
+                                :value="booking.schedule_code"
+                            />
+
                             <template v-if="booking.homecare?.type === 'ADL'">
                                 <Field label="Billing" :value="billingLabel" />
 
@@ -459,6 +475,79 @@
                     </section>
                 </section>
 
+                <section v-if="requestedStaff.length">
+                    <h3
+                        class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
+                    >
+                        <Users class="h-3.5 w-3.5" :stroke-width="2" />
+                        {{ requestedStaffTitle }}
+                    </h3>
+
+                    <div
+                        class="rounded-lg border border-[#E4EFED] bg-[#F7FBFA] dark:border-white/10 dark:bg-white/5"
+                    >
+                        <div
+                            class="flex items-center justify-between gap-3 border-b border-[#E4EFED] px-5 py-2.5 dark:border-white/10"
+                        >
+                            <p
+                                class="text-[10px] uppercase tracking-[0.15em] text-[#4F6F6C] font-mono dark:text-gray-400"
+                            >
+                                Chosen when booking
+                            </p>
+
+                            <p
+                                class="text-[10px] uppercase tracking-[0.15em] text-[#4F6F6C] font-mono dark:text-gray-400"
+                            >
+                                {{ requestedStaff.length }}
+                                {{ requestedStaff.length === 1 ? "person" : "people" }}
+                            </p>
+                        </div>
+
+                        <div
+                            class="divide-y divide-[#E4EFED] dark:divide-white/10"
+                        >
+                            <div
+                                v-for="staff in requestedStaff"
+                                :key="staff.uuid ?? staff.full_name"
+                                class="flex items-center gap-3 px-5 py-3.5"
+                            >
+                                <AchievementPeek
+                                    :titles="staff.achievement_titles ?? []"
+                                >
+                                    <span
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#EAF4F2] text-xs font-semibold text-[#0E7C7B] dark:bg-accent-500/15 dark:text-accent-300"
+                                    >
+                                        <img
+                                            v-if="staff.avatar"
+                                            :src="staff.avatar"
+                                            :alt="staff.full_name"
+                                            class="h-full w-full object-cover"
+                                        />
+                                        <template v-else>
+                                            {{ initials(staff.full_name) }}
+                                        </template>
+                                    </span>
+                                </AchievementPeek>
+
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate text-sm font-semibold text-[#16302E] dark:text-white"
+                                    >
+                                        {{ staff.full_name }}
+                                    </p>
+
+                                    <p
+                                        v-if="staff.role"
+                                        class="mt-0.5 truncate text-xs capitalize text-[#4F6F6C] dark:text-gray-400"
+                                    >
+                                        {{ staff.role }} · Homecare
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- <section
                     v-if="booking.homecare?.type?.toLowerCase() === 'adl'"
                     class="flex flex-col"
@@ -557,7 +646,9 @@ import { fullName } from "~/utils/user";
 import LocationMapModal from "~/components/ui/LocationMapModal.vue";
 import { stringToDateTime, formatDate, formatDuration } from "~/utils/time";
 import { formatCurrency } from "~/utils/currency";
-import { Stethoscope } from "lucide-vue-next";
+import { CalendarDays, Stethoscope, Users } from "lucide-vue-next";
+import AchievementPeek from "~/components/ui/AchievementPeek.vue";
+import { initials } from "~/utils/user";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
 import { Field } from "~/utils/fields";
@@ -622,6 +713,44 @@ const viewPatientInfo = () => {
 
     router.push({
         path: `/app/branches/${route.params.uuid}/patients/${patientUuid.value}`,
+    });
+};
+
+const requestedStaff = computed(() => props.booking?.requested_staff ?? []);
+
+const requestedStaffTitle = computed(() => {
+    const roles = new Set(
+        requestedStaff.value.map((staff) => (staff.role ?? "").toLowerCase()),
+    );
+    const plural = requestedStaff.value.length > 1;
+
+    if (roles.size === 1 && roles.has("nurse")) {
+        return plural ? "Requested Nurses" : "Requested Nurse";
+    }
+
+    if (roles.size === 1 && roles.has("caregiver")) {
+        return plural ? "Requested Caregivers" : "Requested Caregiver";
+    }
+
+    return "Requested Staff";
+});
+
+const canViewSchedule = computed(
+    () =>
+        category.value === "homecare" &&
+        ["approved", "accepted"].includes(status.value) &&
+        !!props.booking?.schedule_code &&
+        hasModule(Modules.Schedules),
+);
+
+const viewSchedule = () => {
+    const code = props.booking?.schedule_code;
+
+    if (!code) return;
+
+    router.push({
+        path: `/app/branches/${route.params.uuid}/schedules`,
+        query: { search: code },
     });
 };
 

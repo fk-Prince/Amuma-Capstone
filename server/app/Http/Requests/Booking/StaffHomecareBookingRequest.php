@@ -53,6 +53,8 @@ class StaffHomecareBookingRequest extends FormRequest
             'rate' => ['nullable', 'numeric', 'min:0'],
             'diagnoses' => ['nullable', 'array'],
             'assessment' => ['nullable', 'array'],
+            'requested_staff' => ['nullable', 'array'],
+            'requested_staff.*' => ['required', 'string', 'uuid', 'distinct'],
         ];
     }
 

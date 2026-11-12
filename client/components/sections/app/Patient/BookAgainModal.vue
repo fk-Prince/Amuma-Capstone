@@ -79,6 +79,9 @@
                         :homecare="branch?.homecare"
                         :settings="branch?.settings"
                         :errors="errors"
+                        :branch-uuid="branchUuid"
+                        :patient-id="patientId"
+                        :patient-name="patientFirstName"
                         show-downpayment
                         @update:model="(value) => Object.assign(model, value)"
                         @update:errors="(value) => (errors = value)"
@@ -284,10 +287,15 @@ function emptyModel(): HomecareBookingModel {
         longitude: null,
         services: [],
         note: "",
+        requested_staff: [],
     };
 }
 
 const model = reactive<HomecareBookingModel>(emptyModel());
+
+const patientFirstName = computed(
+    () => props.patientName?.trim().split(/\s+/)[0] || null,
+);
 
 const step = ref<"details" | "payment">("details");
 
@@ -407,6 +415,7 @@ function bookingPayload() {
         longitude: model.longitude,
         services: model.services,
         note: model.note?.trim() || null,
+        requested_staff: model.requested_staff ?? [],
         rate:
             model.type === "ADL"
                 ? Number(branch.value?.homecare?.adl_hourly_rate ?? 0)

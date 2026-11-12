@@ -63,6 +63,7 @@
                             :homecare="branch?.homecare"
                             :settings="branch?.settings"
                             :errors="errors"
+                            :branch-uuid="branchUuid"
                             allow-monthly
                             @update:model="(value) => Object.assign(model, value)"
                             @update:errors="(value) => (errors = value)"
@@ -221,6 +222,7 @@ function emptyModel(): HomecareBookingModel {
         services: [],
         note: "",
         billing: "hourly",
+        requested_staff: [],
     };
 }
 
@@ -582,6 +584,7 @@ async function submit() {
             longitude: model.longitude,
             services: model.services,
             note: model.note?.trim() || null,
+            requested_staff: model.requested_staff ?? [],
             billing: model.type === "ADL" ? (model.billing ?? "hourly") : undefined,
             months:
                 model.type === "ADL" && model.billing === "monthly"
