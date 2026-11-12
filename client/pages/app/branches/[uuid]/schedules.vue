@@ -1,5 +1,7 @@
 <template>
-    <div class="dashboard-fit min-h-screen-header bg-light font-sans dark:bg-surface">
+    <div
+        class="dashboard-fit min-h-screen-header bg-light font-sans dark:bg-surface"
+    >
         <div
             class="dashboard-fit-fill grid grid-cols-1 grid-rows-[minmax(0,1fr)] gap-4 w-full lg:h-[calc(100dvh-var(--header-h)-3rem)]"
             :class="showOverview && isDesktop ? 'lg:grid-cols-[1fr_400px]' : ''"
@@ -40,7 +42,10 @@
                     />
 
                     <EmployeeCalendar
-                        v-else-if="scheduleType === 'employees' && listOrCalendar === 'calendar'"
+                        v-else-if="
+                            scheduleType === 'employees' &&
+                            listOrCalendar === 'calendar'
+                        "
                         :employees="employeeBoard"
                         :loading="pending"
                         :date="route.query.date_from as string"
@@ -64,7 +69,10 @@
                         "
                     />
 
-                    <div v-else-if="pending && !calendarMode" class="p-4 space-y-3">
+                    <div
+                        v-else-if="pending && !calendarMode"
+                        class="p-4 space-y-3"
+                    >
                         <div
                             v-for="n in 6"
                             :key="n"
@@ -93,7 +101,9 @@
                     </div>
 
                     <div
-                        v-else-if="!filteredScheduleData.length && !calendarMode"
+                        v-else-if="
+                            !filteredScheduleData.length && !calendarMode
+                        "
                         class="flex flex-col items-center justify-center gap-3 px-6 py-24 text-center"
                     >
                         <div
@@ -372,17 +382,17 @@ function toTypeArray(value: unknown): string[] {
     return [];
 }
 
-const scheduleType = computed<
-    "medical" | "homecare" | "shifts" | "employees"
->(() => {
-    const types = toTypeArray(route.query.type);
+const scheduleType = computed<"medical" | "homecare" | "shifts" | "employees">(
+    () => {
+        const types = toTypeArray(route.query.type);
 
-    if (types.includes("shifts")) return "shifts";
+        if (types.includes("shifts")) return "shifts";
 
-    if (types.includes("employees")) return "employees";
+        if (types.includes("employees")) return "employees";
 
-    return types.includes("adl") ? "homecare" : "medical";
-});
+        return types.includes("adl") ? "homecare" : "medical";
+    },
+);
 
 const shiftBoard = ref<ShiftBoard | null>(null);
 const employeeBoard = ref<EmployeeScheduleRow[]>([]);
@@ -402,8 +412,10 @@ const listOrCalendar = computed(() =>
 
 const calendarMode = computed(
     () =>
-        (scheduleType.value === "medical" && medicalView.value === "calendar") ||
-        (scheduleType.value === "homecare" && listOrCalendar.value === "calendar"),
+        (scheduleType.value === "medical" &&
+            medicalView.value === "calendar") ||
+        (scheduleType.value === "homecare" &&
+            listOrCalendar.value === "calendar"),
 );
 
 // Month arrows on the calendar move the date filter to that month.
@@ -417,7 +429,10 @@ const showDateBar = computed(
     () =>
         !calendarMode.value &&
         scheduleType.value !== "shifts" &&
-        !(scheduleType.value === "employees" && listOrCalendar.value === "calendar"),
+        !(
+            scheduleType.value === "employees" &&
+            listOrCalendar.value === "calendar"
+        ),
 );
 
 function onDateRange(range: { from: string; to: string }) {
@@ -723,7 +738,8 @@ watch(
     () => {
         const { view, search, ...rest } = route.query;
         return JSON.stringify(
-            scheduleType.value === "shifts" || scheduleType.value === "employees"
+            scheduleType.value === "shifts" ||
+                scheduleType.value === "employees"
                 ? rest
                 : { ...rest, search, calendar: calendarMode.value },
         );
