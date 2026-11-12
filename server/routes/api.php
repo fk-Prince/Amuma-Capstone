@@ -247,6 +247,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->whereUuid(['uuid', 'assessment_uuid']);
 
     Route::patch('/employees/{uuid}/status', [EmployeeController::class, 'updateStatus']);
+    Route::get('/employees/{uuid}/leaves', [EmployeeController::class, 'leaves'])->whereUuid('uuid');
 
     Route::apiResources([
         'employees' => EmployeeController::class,

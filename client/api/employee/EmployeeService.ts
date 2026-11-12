@@ -32,8 +32,21 @@ class EmployeeService extends BaseService {
         return await this.request(`${this.resource}/${uuid}`, 'PUT', payload);
     }
 
-    async updateStatus(uuid: string, payload: { status: string; branch_uuid: string }): Promise<any> {
+    async updateStatus(
+        uuid: string,
+        payload: {
+            status: string;
+            branch_uuid: string;
+            type?: string;
+            reason?: string;
+            ends_on?: string | null;
+        },
+    ): Promise<any> {
         return await this.request(`${this.resource}/${uuid}/status`, 'PATCH', payload);
+    }
+
+    async leaves(uuid: string, params: { branch_uuid: string }): Promise<any> {
+        return await this.request(`${this.resource}/${uuid}/leaves`, 'GET', params);
     }
 
     async delete(uuid: string): Promise<any> {

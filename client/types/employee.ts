@@ -34,6 +34,7 @@ export interface Employee {
     assignment_type: string;
     formatted_assignment_type: string;
     status: string;
+    leave?: EmployeeCurrentLeave | null;
     permissions: Permissions[];
     hired_date?: string;
     assigned: EmployeeService[];
@@ -96,6 +97,42 @@ export interface EmployeePayload {
 }
 
 export type EmployeeStatus = "active" | "inactive" | "on_leave";
+
+export type LeaveType = "sick" | "vacation" | "emergency" | "personal" | "other";
+
+export const leaveTypes: { label: string; value: LeaveType }[] = [
+    { label: "Sick", value: "sick" },
+    { label: "Vacation", value: "vacation" },
+    { label: "Emergency", value: "emergency" },
+    { label: "Personal", value: "personal" },
+    { label: "Other", value: "other" },
+];
+
+export const formatLeaveType = (type?: string | null) =>
+    leaveTypes.find((item) => item.value === type)?.label ?? "Leave";
+
+export interface EmployeeCurrentLeave {
+    type: LeaveType;
+    starts_on: string;
+    ends_on: string | null;
+}
+
+export interface EmployeeLeave {
+    uuid: string;
+    type: LeaveType;
+    reason: string;
+    starts_on: string;
+    ends_on: string | null;
+    returned_at: string | null;
+    recorded_by: string | null;
+    returned_by: string | null;
+}
+
+export interface LeaveDetails {
+    type: LeaveType;
+    reason: string;
+    ends_on: string | null;
+}
 
 // On leave is a flavour of active — the employee still has access, they are
 // just away, so the form's switch reads it as on.

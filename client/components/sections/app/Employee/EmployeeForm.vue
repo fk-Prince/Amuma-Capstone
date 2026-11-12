@@ -7,8 +7,13 @@ import {
     employeeAssignmentTypes,
     employeePositions,
     employeeSchema,
+    formatLeaveType,
     type Employee,
+    type LeaveDetails,
 } from "~/types/employee";
+import { formatDate } from "~/utils/time";
+import MarkLeaveModal from "~/components/sections/app/Employee/MarkLeaveModal.vue";
+import LeaveHistoryModal from "~/components/sections/app/Employee/LeaveHistoryModal.vue";
 import Combobox from "~/components/ui/Combobox.vue";
 import { useEmployeeForm } from "~/composables/useEmployeeForm";
 import { useAuthUser } from "~/composables/useAuthUser";
@@ -30,6 +35,7 @@ import {
     Briefcase,
     ShieldCheck,
     Search,
+    History,
 } from "lucide-vue-next";
 
 const props = defineProps<{
@@ -80,7 +86,9 @@ const {
     hasAchievementErrors,
     saveEmployee,
     isOnLeave,
-    toggleLeave,
+    currentLeave,
+    updateLeave,
+    hasExistingEmployee,
     employeeSlip,
     dismissSlip,
     isActive,
@@ -102,6 +110,42 @@ const {
 const { canUpdate } = usePermissions();
 const authUser = useAuthUser();
 const branchStore = useBranchStore();
+const route = useRoute();
+const branchUuid = route.params.uuid as string;
+
+const markLeaveOpen = ref(false);
+const leaveHistoryOpen = ref(false);
+
+const employeeName = computed(() =>
+    `${employee.value.first_name ?? ""} ${employee.value.last_name ?? ""}`.trim(),
+);
+
+const leaveBadge = computed(() => {
+    const leave = currentLeave.value;
+
+    if (!leave) return "On leave";
+
+    const until = leave.ends_on
+        ? ` until ${formatDate(`${leave.ends_on}T00:00:00`)}`
+        : "";
+
+    return `On leave${until} · ${formatLeaveType(leave.type)}`;
+});
+
+async function handleLeaveClick() {
+    if (!isOnLeave.value) {
+        markLeaveOpen.value = true;
+        return;
+    }
+
+    await updateLeave(null);
+}
+
+async function confirmLeave(details: LeaveDetails) {
+    if (await updateLeave(details)) {
+        markLeaveOpen.value = false;
+    }
+}
 
 
 const hasAssignment = computed(() =>
@@ -378,7 +422,7 @@ init();
                             v-if="canManageLeave"
                             type="button"
                             :disabled="saving"
-                            @click="toggleLeave"
+                            @click="handleLeaveClick"
                             class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
                             :class="
                                 isOnLeave
@@ -446,6 +490,23 @@ init();
                             class="hidden"
                             @change="onFileSelected"
                         />
+
+                        <span
+                            v-if="isOnLeave"
+                            class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-center text-xs font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+                        >
+                            {{ leaveBadge }}
+                        </span>
+
+                        <button
+                            v-if="hasExistingEmployee"
+                            type="button"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                            @click="leaveHistoryOpen = true"
+                        >
+                            <History class="h-3.5 w-3.5" />
+                            View leave history
+                        </button>
 
                         <button
                             v-if="
@@ -1153,6 +1214,22 @@ init();
         />
 
         <EmployeeSlipModal :slip="employeeSlip" @close="dismissSlip" />
+
+        <MarkLeaveModal
+            :open="markLeaveOpen"
+            :name="employeeName"
+            :loading="saving"
+            @close="markLeaveOpen = false"
+            @confirm="confirmLeave"
+        />
+
+        <LeaveHistoryModal
+            :open="leaveHistoryOpen"
+            :employee-uuid="props.employee?.uuid"
+            :branch-uuid="branchUuid"
+            :name="employeeName"
+            @close="leaveHistoryOpen = false"
+        />
     </div>
 </template>
 

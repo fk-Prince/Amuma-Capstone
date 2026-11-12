@@ -3,11 +3,13 @@ import { useRoute } from "vue-router";
 import {
     createEmployee,
     type Employee,
+    type EmployeeCurrentLeave,
     employeePositions,
     employeeSchema,
     type EmployeePayload,
     type EmployeeStatus,
     isActiveStatus,
+    type LeaveDetails,
 } from "~/types/employee";
 import { moduleService } from "~/api/module/ModuleService";
 import { type Module } from "~/types/module";
@@ -230,12 +232,14 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         if (!current) return;
 
         const status = (current.status as EmployeeStatus) || "active";
+        const { leave, ...details } = current;
 
         loadedStatus.value = status;
+        currentLeave.value = leave ?? null;
 
         employee.value = {
             ...createEmployee(),
-            ...current,
+            ...details,
             status,
             auto_assign_services: false,
             phone_number: current.phone_number ?? "",
@@ -468,29 +472,26 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
 
     const isOnLeave = computed(() => employee.value.status === "on_leave");
 
-    async function toggleLeave() {
-        const next: EmployeeStatus = isOnLeave.value ? "active" : "on_leave";
+    const currentLeave = ref<EmployeeCurrentLeave | null>(null);
 
-        if (!isViewMode.value) {
-            employee.value.status = next;
-            return true;
-        }
-
+    async function updateLeave(details: LeaveDetails | null) {
+        const next: EmployeeStatus = details ? "on_leave" : "active";
         const current = options.employee();
 
         if (!current?.uuid || saving.value) return false;
 
         const previous = employee.value.status;
 
-        employee.value.status = next;
         saving.value = true;
 
         try {
             const res: any = await employeeService.updateStatus(current.uuid, {
                 status: next,
                 branch_uuid: uuid,
+                ...(details ?? {}),
             });
 
+            employee.value.status = next;
             loadedStatus.value = next;
 
             if (user.value?.uuid === current.uuid) {
@@ -502,6 +503,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
             const saved = (res?.employee?.data ??
                 res?.employee ??
                 null) as Employee | null;
+
+            currentLeave.value = saved?.leave ?? null;
 
             options.onStatusChanged?.(saved ?? undefined);
 
@@ -637,7 +640,8 @@ export function useEmployeeForm(options: UseEmployeeFormOptions) {
         hasAchievementErrors,
         saveEmployee,
         isOnLeave,
-        toggleLeave,
+        currentLeave,
+        updateLeave,
         employeeSlip,
         dismissSlip,
         isActive,

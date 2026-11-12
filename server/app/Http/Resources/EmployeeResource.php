@@ -31,6 +31,13 @@ class EmployeeResource extends JsonResource
             'assignment_type' => $employeeBranch?->assignment_type,
             'phone_number' => $this->employee?->phone_number,
             'status' => $employeeBranch?->status,
+            'leave' => $employeeBranch?->status === 'on_leave' && $employeeBranch->relationLoaded('currentLeave') && $employeeBranch->currentLeave
+                ? [
+                    'type' => $employeeBranch->currentLeave->type,
+                    'starts_on' => $employeeBranch->currentLeave->starts_on?->toDateString(),
+                    'ends_on' => $employeeBranch->currentLeave->ends_on?->toDateString(),
+                ]
+                : null,
             'hired_date' => $this->employee->created_at,
             'permissions' => $this->employee?->permissions
                 ->map(fn($permission) => [

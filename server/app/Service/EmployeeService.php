@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Enums\RoleEnum;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Resources\EmployeeLeaveResource;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
 use App\Models\AuditLog;
@@ -16,6 +17,7 @@ use App\Models\EmployeePermission;
 use App\Models\Module;
 use App\Models\User;
 use App\Repository\BranchRepository;
+use App\Repository\EmployeeLeaveRepository;
 use App\Repository\EmployeeRepository;
 use App\Repository\LocationRepository;
 use App\Repository\ServiceRepository;
@@ -35,19 +37,22 @@ class EmployeeService
     private LocationRepository $locationRepository;
     private AuditService $auditService;
     private ServiceRepository $serviceRepository;
+    private EmployeeLeaveRepository $employeeLeaveRepository;
 
     public function __construct(
         EmployeeRepository $employeeRepository,
         UserRepository $userRepository,
         LocationRepository $locationRepository,
         AuditService $auditService,
-        ServiceRepository $serviceRepository
+        ServiceRepository $serviceRepository,
+        EmployeeLeaveRepository $employeeLeaveRepository
     ) {
         $this->auditService = $auditService;
         $this->employeeRepository = $employeeRepository;
         $this->userRepository = $userRepository;
         $this->locationRepository = $locationRepository;
         $this->serviceRepository = $serviceRepository;
+        $this->employeeLeaveRepository = $employeeLeaveRepository;
     }
 
     private function autoAssignServices(array $payload, ?EmployeeBranch $employeeBranch): void
@@ -144,7 +149,21 @@ class EmployeeService
             throw new Exception('Inactive employees cannot be put on leave.', 422);
         }
 
-        $employeeBranch->update(['status' => $payload['status']]);
+        $goingOnLeave = $payload['status'] === EmployeeBranch::STATUS_ONLEAVE;
+
+        if ($goingOnLeave && $employeeBranch->status === EmployeeBranch::STATUS_ONLEAVE) {
+            throw new Exception('This employee is already on leave.', 422);
+        }
+
+        DB::transaction(function () use ($employeeBranch, $payload, $user, $goingOnLeave) {
+            $this->employeeLeaveRepository->closeOpen($employeeBranch, $user->user_id);
+
+            if ($goingOnLeave) {
+                $this->employeeLeaveRepository->start($employeeBranch, $payload, $user->user_id);
+            }
+
+            $employeeBranch->update(['status' => $payload['status']]);
+        });
 
         return response()->json([
             'message' => $payload['status'] === EmployeeBranch::STATUS_ONLEAVE
@@ -152,6 +171,46 @@ class EmployeeService
                 : 'Employee is back from leave.',
             'employee' => $this->employeeRow($target, $branch->branch_id),
         ], 200);
+    }
+
+    public function getLeaveHistory(array $payload, string $uuid, User $user)
+    {
+        $branch = BranchGuard::resolveBranch($payload['branch_uuid']);
+        AuthGuard::requireModule($user, $branch->branch_id, ModuleEnum::EmployeeManagement, PermissionAction::Read);
+
+        $target = $this->userRepository->findByField('uuid', $uuid);
+
+        $employeeBranch = $target?->employee
+            ?->employeeBranch()
+            ->where('branch_id', $branch->branch_id)
+            ->first();
+
+        if (!$employeeBranch) {
+            throw new Exception('Employee not found.', 404);
+        }
+
+        return EmployeeLeaveResource::collection(
+            $this->employeeLeaveRepository->history($employeeBranch)
+        );
+    }
+
+    public function endDueLeaves(): int
+    {
+        $leaves = $this->employeeLeaveRepository->due(now()->startOfDay());
+
+        $leaves->each(fn($leave) => DB::transaction(function () use ($leave) {
+            $this->employeeLeaveRepository->closeOpen(
+                $leave->employeeBranch,
+                null,
+                $leave->ends_on->copy()->startOfDay()
+            );
+
+            if ($leave->employeeBranch->status === EmployeeBranch::STATUS_ONLEAVE) {
+                $leave->employeeBranch->update(['status' => EmployeeBranch::STATUS_ACTIVE]);
+            }
+        }));
+
+        return $leaves->count();
     }
 
     private function assignmentTypeFor(string $role, ?string $assignment): ?string
@@ -169,6 +228,7 @@ class EmployeeService
             $user->fresh([
                 'employee.locations',
                 'employee.employeeBranch' => fn($q) => $q->where('branch_id', $branchId),
+                'employee.employeeBranch.currentLeave',
                 'employee.permissions' => fn($q) => $q->where('branch_id', $branchId),
                 'employee.permissions.modules',
             ])
@@ -475,10 +535,20 @@ class EmployeeService
                 ->where('branch_id', $branch->branch_id)
                 ->first();
 
+            $nextStatus = $payload['status'] ?? $employeeBranch?->status;
+
+            if ($employeeBranch && $nextStatus === EmployeeBranch::STATUS_ONLEAVE && $employeeBranch->status !== EmployeeBranch::STATUS_ONLEAVE) {
+                $nextStatus = $employeeBranch->status;
+            }
+
+            if ($employeeBranch?->status === EmployeeBranch::STATUS_ONLEAVE && $nextStatus !== EmployeeBranch::STATUS_ONLEAVE) {
+                $this->employeeLeaveRepository->closeOpen($employeeBranch, $actor->user_id);
+            }
+
             $employeeBranch?->update([
                 'role_name' => RoleEnum::slug($payload['role_name']),
                 'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
-                'status' => $payload['status'] ?? $employeeBranch->status,
+                'status' => $nextStatus,
             ]);
 
             $this->autoAssignServices($payload, $employeeBranch);

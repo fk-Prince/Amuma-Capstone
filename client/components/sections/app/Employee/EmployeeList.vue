@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { formatRole } from "~/utils/user";
 import { type Employee, formatAssignmentType } from "~/types/employee";
+import { formatDate } from "~/utils/time";
 import { Pencil, Calendar, NotebookPen } from "lucide-vue-next";
 import EmployeeNotesModal from "~/components/sections/app/Employee/EmployeeNotesModal.vue";
 import { Modules } from "~/types/module";
@@ -164,6 +165,17 @@ const formatStatus = (status: string | null | undefined) => {
                 >
                     {{ formatStatus(row.status) }}
                 </span>
+
+                <p
+                    v-if="row.status === 'on_leave'"
+                    class="mt-1.5 text-xs tabular-nums text-slate-400 dark:text-gray-500"
+                >
+                    {{
+                        row.raw.leave?.ends_on
+                            ? `Back on ${formatDate(`${row.raw.leave.ends_on}T00:00:00`)}`
+                            : "No return date yet"
+                    }}
+                </p>
             </template>
 
             <template #cell-actions="{ row }">

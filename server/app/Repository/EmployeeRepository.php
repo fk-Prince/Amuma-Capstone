@@ -79,6 +79,7 @@ class EmployeeRepository
                 'employee.employeeBranch' => function ($q) use ($branchId) {
                     $q->where('branch_id', $branchId);
                 },
+                'employee.employeeBranch.currentLeave',
                 'employee.permissions' => function ($q) use ($branchId) {
                     $q->where('branch_id', $branchId);
                 },

@@ -13,3 +13,4 @@ Schedule::command('sandbox:sync-locks')->everyTenMinutes();
 Schedule::command('subscriptions:remind-renewals')->dailyAt('08:00');
 Schedule::command('admissions:remind-discharge')->dailyAt('08:30');
 Schedule::command('diagnosis-cases:bill-recurring')->dailyAt('06:00');
+Schedule::command('employees:end-leave')->dailyAt('00:10');

@@ -94,8 +94,6 @@ export async function resolveNotificationTarget(
     }
 
     // Staff: the branch the notification came from.
-    if (type === "Subscription") return "/app/branches/manage";
-
     const branch = notif.branch?.uuid || fallbackBranchUuid;
     if (!branch) return null;
 
@@ -116,6 +114,7 @@ export async function resolveNotificationTarget(
             return `${base}/inquiries`;
         case "Billing":
             return `${base}/invoices`;
+        case "Subscription":
         case "Subscription Renewal":
             return `${base}/manage-subscription`;
         default:

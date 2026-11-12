@@ -125,7 +125,7 @@
                     <!-- Price -->
                     <div>
                         <BaseInput
-                            :model-value="form.price"
+                            :model-value="form.price ?? undefined"
                             @update:model-value="update('price', $event)"
                             :label="isMonthly ? 'Monthly Base Price' : 'Hourly Rate'"
                             mode="number"

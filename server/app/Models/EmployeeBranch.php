@@ -36,6 +36,18 @@ class EmployeeBranch extends Model
         return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
     }
 
+    public function leaves()
+    {
+        return $this->hasMany(EmployeeLeave::class, 'employee_branch_id', 'employee_branch_id');
+    }
+
+    public function currentLeave()
+    {
+        return $this->hasOne(EmployeeLeave::class, 'employee_branch_id', 'employee_branch_id')
+            ->whereNull('returned_at')
+            ->orderByDesc('employee_leave_id');
+    }
+
     public function employeeServices()
     {
         return $this->hasMany(EmployeeService::class, 'employee_branch_id', 'employee_branch_id');

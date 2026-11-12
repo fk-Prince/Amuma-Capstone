@@ -40,6 +40,13 @@ class EmployeeController extends Controller
         return $this->employeeService->updateStatus($request->validated(), $uuid, $request->user());
     }
 
+    public function leaves(Request $request, string $uuid)
+    {
+        $request->validate(['branch_uuid' => ['required', 'string', 'exists:branches,uuid']]);
+
+        return $this->employeeService->getLeaveHistory($request->only('branch_uuid'), $uuid, $request->user());
+    }
+
     public function index(Request $request)
     {
         $type = $request->input('type', 'regular');
