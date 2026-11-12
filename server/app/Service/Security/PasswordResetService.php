@@ -27,7 +27,7 @@ class PasswordResetService
 
     public function sendLink(array $payload)
     {
-        $user = $this->userRepository->findByField('email', $payload['email']);
+        $user = $this->userRepository->findByEmail($payload['email']);
 
         if ($user && !$this->broker()->getRepository()->recentlyCreatedToken($user)) {
             $token = $this->broker()->createToken($user);

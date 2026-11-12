@@ -27,7 +27,7 @@ class OtpService
 
     public function send(array $payload)
     {
-        if ($this->userRepository->findByField('email', $payload['email'])) {
+        if ($this->userRepository->findByEmail($payload['email'])) {
             throw ValidationException::withMessages([
                 'email' => __('An account with this email already exists.'),
             ]);

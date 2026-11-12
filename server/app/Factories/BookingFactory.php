@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\User;
+use App\Repository\UserRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PaymentRepository;
 use App\Service\PatientAdmissionService;
@@ -221,7 +222,7 @@ class BookingFactory
             $invoice,
             $payload + ['branch_id' => $invoice->branch_id],
             $patient->patient_id,
-            User::where('email', $payload['guardian']['email'] ?? null)->first()?->client
+            app(UserRepository::class)->findByEmail($payload['guardian']['email'] ?? null)?->client
         );
 
         return [

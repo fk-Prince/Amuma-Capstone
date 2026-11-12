@@ -9,6 +9,7 @@ use App\Guard\GuardianEmailGuard;
 use App\Models\Booking;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Repository\UserRepository;
 use App\Repository\BookingRepository;
 use App\Repository\PaymentRepository;
 use App\Http\Resources\BookingReceiptResource;
@@ -404,7 +405,7 @@ class BookingService
 
         GuardianEmailGuard::assertAllowed($data['guardian']['email']);
 
-        $owner = User::where('email', $data['guardian']['email'])->first();
+        $owner = app(UserRepository::class)->findByEmail($data['guardian']['email']);
 
         $total = round((float) ($data['price'] ?? 0), 2);
         $rate = $data['rate'] ?? null;
@@ -673,7 +674,7 @@ class BookingService
             }
 
             $guardian = $data['guardian'] ?? [];
-            $client = User::where('email', $guardian['email'] ?? null)->first()?->client;
+            $client = app(UserRepository::class)->findByEmail($guardian['email'] ?? null)?->client;
             $payor = trim(($guardian['first_name'] ?? '') . ' ' . ($guardian['last_name'] ?? ''));
 
             $transaction = $this->transactions->forPayment(

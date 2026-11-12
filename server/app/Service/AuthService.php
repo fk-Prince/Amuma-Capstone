@@ -33,7 +33,7 @@ class AuthService
 
         $user = filled($payload['employee_code'] ?? null)
             ? $this->userRepository->findByEmployeeCode($payload['employee_code'])
-            : $this->userRepository->findByField('email', $payload['email']);
+            : $this->userRepository->findByEmail($payload['email']);
 
         if (!$user) {
             $this->auditService->log(
@@ -117,7 +117,7 @@ class AuthService
 
     public function signup(array $payload)
     {
-        $exists = $this->userRepository->findByField('email', $payload['email']);
+        $exists = $this->userRepository->findByEmail($payload['email']);
 
         if ($exists) {
             throw new Exception(__('An account with this email already exists.'), 409);
@@ -182,7 +182,7 @@ class AuthService
             ->first();
 
         if (!$user) {
-            $user = $this->userRepository->findByField('email', $googleUser->getEmail());
+            $user = $this->userRepository->findByEmail($googleUser->getEmail());
         }
 
         if (!$user) {

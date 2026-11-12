@@ -87,6 +87,17 @@ class UserRepository
         }
     }
 
+    public function findByEmail(?string $email): ?User
+    {
+        $email = Str::lower(trim((string) $email));
+
+        if ($email === '') {
+            return null;
+        }
+
+        return User::whereRaw('LOWER(TRIM(email)) = ?', [$email])->first();
+    }
+
     public function findByField(string $column, string $value)
     {
         return User::where($column, $value)->first();
