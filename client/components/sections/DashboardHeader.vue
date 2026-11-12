@@ -21,7 +21,12 @@
                 @click="branchStore.openModal"
             >
                 <div
-                    class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10 sm:h-16 sm:w-16 lg:h-20 lg:w-20"
+                    class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden sm:h-16 sm:w-16 lg:h-20 lg:w-20"
+                    :class="
+                        headerImage && !brokenImages.has(headerImageKey)
+                            ? ''
+                            : 'rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-white/10 dark:ring-white/10'
+                    "
                 >
                     <img
                         v-if="
@@ -30,7 +35,7 @@
                         "
                         :src="getBranchImage(headerImage)"
                         :alt="headerTitle"
-                        class="h-full w-full object-cover"
+                        class="h-full w-full object-contain"
                         @error="brokenImages.add(headerImageKey)"
                     />
                     <Building2

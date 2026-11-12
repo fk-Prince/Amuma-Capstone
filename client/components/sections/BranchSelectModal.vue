@@ -157,7 +157,15 @@
                                 "
                             >
                                 <div
-                                    class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20"
+                                    class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden"
+                                    :class="
+                                        agency.image &&
+                                        !brokenImages.has(
+                                            `agency-${agency.agency_id}`,
+                                        )
+                                            ? ''
+                                            : 'rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                    "
                                 >
                                     <img
                                         v-if="
@@ -168,7 +176,7 @@
                                         "
                                         :src="getBranchImage(agency.image)"
                                         :alt="agency.name"
-                                        class="h-full w-full object-cover"
+                                        class="h-full w-full object-contain"
                                         @error="
                                             brokenImages.add(
                                                 `agency-${agency.agency_id}`,
@@ -233,7 +241,15 @@
                             >
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-primary-100 dark:bg-secondary dark:ring-primary-500/20"
+                                        class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden"
+                                        :class="
+                                            currentAgency.image &&
+                                            !brokenImages.has(
+                                                `agency-${currentAgency.agency_id}`,
+                                            )
+                                                ? ''
+                                                : 'rounded-xl bg-white ring-1 ring-primary-100 dark:bg-secondary dark:ring-primary-500/20'
+                                        "
                                     >
                                         <img
                                             v-if="
@@ -248,7 +264,7 @@
                                                 )
                                             "
                                             :alt="currentAgency.name"
-                                            class="h-full w-full object-cover"
+                                            class="h-full w-full object-contain"
                                             @error="
                                                 brokenImages.add(
                                                     `agency-${currentAgency.agency_id}`,
@@ -392,7 +408,15 @@
                                         class="flex w-full min-w-0 items-start gap-2.5 sm:gap-3"
                                     >
                                         <div
-                                            class="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-primary-50 ring-2 ring-primary-100 transition-transform duration-200 group-hover:scale-[1.03] sm:h-14 sm:w-14 dark:bg-primary-500/10 dark:ring-primary-500/20"
+                                            class="relative h-10 w-10 shrink-0 overflow-hidden transition-transform duration-200 group-hover:scale-[1.03] sm:h-14 sm:w-14"
+                                            :class="
+                                                branch.image &&
+                                                !brokenImages.has(
+                                                    branch.uuid ?? '',
+                                                )
+                                                    ? ''
+                                                    : 'rounded-xl bg-primary-50 ring-2 ring-primary-100 dark:bg-primary-500/10 dark:ring-primary-500/20'
+                                            "
                                         >
                                             <img
                                                 v-if="
@@ -405,7 +429,7 @@
                                                     getBranchImage(branch.image)
                                                 "
                                                 :alt="branch.name"
-                                                class="h-full w-full object-cover"
+                                                class="h-full w-full object-contain"
                                                 @error="
                                                     brokenImages.add(
                                                         branch.uuid ?? '',
