@@ -91,12 +91,16 @@
                     </div>
 
                     <h2
-                        class="mt-3 text-lg font-bold leading-tight text-secondary dark:text-white"
+                        class="font-bold leading-tight text-secondary dark:text-white"
+                        :class="compact ? 'mt-2 text-base' : 'mt-3 text-lg'"
                     >
                         {{ STEPS[currentStep - 1] }}
                     </h2>
 
-                    <p class="mt-0.5 text-sm text-muted dark:text-gray-400">
+                    <p
+                        v-if="!compact"
+                        class="mt-0.5 text-sm text-muted dark:text-gray-400"
+                    >
                         {{ STEP_SUBTITLES[currentStep - 1] }}
                     </p>
                 </nav>
@@ -316,6 +320,8 @@ import {
     LoaderCircle,
 } from "lucide-vue-next";
 import { ref, computed, onMounted, nextTick, watch } from "vue";
+
+defineProps<{ compact?: boolean }>();
 import { useSubscriptionCheckout } from "~/stores/subscription";
 import { planService } from "@/api/plan/PlanService";
 import { agencySchema } from "~/schema/agency-schema";

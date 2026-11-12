@@ -1,5 +1,23 @@
 <script setup lang="ts">
+import { onMounted, ref, watch } from "vue";
+import { ChevronDown, ChevronUp } from "lucide-vue-next";
 import Subscription from "~/components/sections/subscription/Subscription.vue";
+
+const COMPACT_KEY = "amuma_subscription_compact";
+
+const compact = ref(false);
+
+onMounted(() => {
+    try {
+        compact.value = localStorage.getItem(COMPACT_KEY) === "1";
+    } catch {}
+});
+
+watch(compact, (value) => {
+    try {
+        localStorage.setItem(COMPACT_KEY, value ? "1" : "0");
+    } catch {}
+});
 
 definePageMeta({
     middleware: ["auth-client", "prevent-staff-subscription"],
@@ -24,13 +42,32 @@ useHead({ title: "Subscription Details" });
                             Subscription setup
                         </span> -->
 
-                        <h1
-                            class="text-2xl md:text-3xl font-extrabold text-secondary dark:text-white"
-                        >
-                            Subscription details
-                        </h1>
+                        <div class="flex items-center justify-between gap-3">
+                            <h1
+                                class="font-extrabold text-secondary dark:text-white md:text-3xl"
+                                :class="compact ? 'text-lg lg:text-2xl' : 'text-2xl'"
+                            >
+                                Subscription details
+                            </h1>
 
-                        <p class="mt-1.5 text-sm text-muted dark:text-gray-400">
+                            <button
+                                type="button"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-primary transition hover:bg-primary-50 lg:hidden dark:hover:bg-primary-500/10"
+                                :aria-expanded="!compact"
+                                @click="compact = !compact"
+                            >
+                                {{ compact ? "Show details" : "Hide details" }}
+                                <component
+                                    :is="compact ? ChevronDown : ChevronUp"
+                                    class="h-3.5 w-3.5"
+                                />
+                            </button>
+                        </div>
+
+                        <p
+                            class="mt-1.5 text-sm text-muted dark:text-gray-400"
+                            :class="compact ? 'hidden lg:block' : ''"
+                        >
                             Complete your subscription by reviewing your plan,
                             agency and branch information, and payment
                             details.
@@ -38,7 +75,7 @@ useHead({ title: "Subscription Details" });
                     </div>
 
                     <div class="min-h-0 w-full flex-1">
-                        <Subscription />
+                        <Subscription :compact="compact" />
                     </div>
                 </div>
             </div>
