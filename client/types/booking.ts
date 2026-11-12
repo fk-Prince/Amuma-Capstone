@@ -36,11 +36,10 @@ export interface BookingStaffOption {
     uuid: string;
     full_name: string;
     role: string;
-    assignment: string;
     avatar: string | null;
     achievement_titles: string[];
     is_eligible: boolean;
-    reason: "not_specialized" | "on_leave" | null;
+    reason: "not_specialized" | null;
     cared_before: boolean;
 }
 

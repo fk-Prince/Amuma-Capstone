@@ -58,11 +58,10 @@
             class="rounded-xl border border-slate-200 dark:border-white/10"
         >
             <div
-                class="grid grid-cols-[48px_minmax(0,1fr)_120px] items-center rounded-t-xl border-b border-slate-200 bg-slate-50 py-2.5 pr-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                class="grid grid-cols-[48px_minmax(0,1fr)] items-center rounded-t-xl border-b border-slate-200 bg-slate-50 py-2.5 pr-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
             >
                 <span />
                 <span>{{ columnTitle }}</span>
-                <span>Status</span>
             </div>
 
             <template v-if="loading && !options.length">
@@ -100,7 +99,7 @@
             <label
                 v-for="option in visibleOptions"
                 :key="option.uuid"
-                class="grid min-h-[64px] grid-cols-[48px_minmax(0,1fr)_120px] items-center border-b border-slate-200 pr-4 transition dark:border-white/10"
+                class="grid min-h-[64px] grid-cols-[48px_minmax(0,1fr)] items-center border-b border-slate-200 pr-4 transition dark:border-white/10"
                 :class="rowClass(option)"
             >
                 <span class="flex justify-center">
@@ -112,7 +111,7 @@
                         :aria-label="
                             option.is_eligible
                                 ? `Choose ${option.full_name}`
-                                : `${option.full_name}, ${reasonLabel(option)}`
+                                : `${option.full_name}, not specialized for this service`
                         "
                         @change="toggle(option)"
                     />
@@ -148,7 +147,10 @@
                         <span
                             class="block truncate text-xs capitalize text-slate-500 dark:text-gray-400"
                         >
-                            {{ option.role }} · {{ option.assignment }}
+                            {{ option.role }}
+                            <template v-if="!option.is_eligible">
+                                · Not specialized
+                            </template>
                         </span>
                         <span
                             v-if="option.cared_before && patientName"
@@ -156,19 +158,6 @@
                         >
                             Cared for {{ patientName }} before
                         </span>
-                    </span>
-                </span>
-
-                <span>
-                    <span
-                        class="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                        :class="
-                            option.is_eligible
-                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                                : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-gray-300'
-                        "
-                    >
-                        {{ option.is_eligible ? "Available" : reasonLabel(option) }}
                     </span>
                 </span>
             </label>
@@ -210,8 +199,8 @@
             v-if="hasIneligible"
             class="text-xs text-slate-500 dark:text-gray-400"
         >
-            Greyed-out {{ rolePlural }} aren't assigned to this service or
-            are on leave, so they can't be chosen.
+            Greyed-out {{ rolePlural }} aren't assigned to this service, so
+            they can't be chosen.
         </p>
 
         <p v-if="stayIn" class="text-xs text-slate-500 dark:text-gray-400">
@@ -330,10 +319,6 @@ function toggle(option: BookingStaffOption) {
         "update:modelValue",
         props.stayIn ? [option.uuid] : [...props.modelValue, option.uuid],
     );
-}
-
-function reasonLabel(option: BookingStaffOption) {
-    return option.reason === "on_leave" ? "On leave" : "Not specialized";
 }
 
 function rowClass(option: BookingStaffOption) {

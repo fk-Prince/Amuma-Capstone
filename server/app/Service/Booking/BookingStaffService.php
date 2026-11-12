@@ -153,28 +153,19 @@ class BookingStaffService
     private function present(EmployeeBranch $row, ?int $serviceId): array
     {
         $employee = $row->employees;
-        $active = $row->status === EmployeeBranch::STATUS_ACTIVE;
         $specialized = $serviceId ? (bool) $row->is_specialized : true;
 
         return [
             'uuid' => $employee?->users?->uuid,
             'full_name' => $employee?->full_name ?? '',
             'role' => $row->role_name,
-            'assignment' => match (strtolower((string) $row->assignment_type)) {
-                'both', 'homecare + inhouse facility' => 'Homecare & Inhouse Facility',
-                default => 'Homecare',
-            },
             'avatar' => $employee?->avatar,
             'achievement_titles' => collect($employee?->achievements ?? [])
                 ->pluck('label')
                 ->filter()
                 ->values(),
-            'is_eligible' => $active && $specialized,
-            'reason' => match (true) {
-                !$specialized => 'not_specialized',
-                !$active => 'on_leave',
-                default => null,
-            },
+            'is_eligible' => $specialized,
+            'reason' => $specialized ? null : 'not_specialized',
             'cared_before' => (bool) ($row->cared_before ?? false),
         ];
     }
