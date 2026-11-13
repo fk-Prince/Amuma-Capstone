@@ -455,7 +455,7 @@
                     <span
                         class="text-xs font-medium text-slate-500 dark:text-gray-400"
                     >
-                        Estimated service total
+                        Total
                     </span>
 
                     <span class="text-sm font-bold text-primary">
@@ -753,7 +753,7 @@
                         <span
                             class="text-sm font-semibold text-slate-700 dark:text-gray-300"
                         >
-                            Estimated Total
+                            Total
                         </span>
 
                         <span class="text-base font-bold text-primary">
