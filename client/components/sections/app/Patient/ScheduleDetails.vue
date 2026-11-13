@@ -947,6 +947,9 @@
                                                     </span>
 
                                                     <span
+                                                        class="flex shrink-0 flex-col items-end gap-1"
+                                                    >
+                                                    <span
                                                         v-if="employee.is_busy"
                                                         class="shrink-0 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                                                     >
@@ -995,6 +998,32 @@
                                                     >
                                                         Available
                                                     </span>
+
+                                                    <span
+                                                        v-if="
+                                                            isAssigned(
+                                                                service.schedule_services_id,
+                                                                employee.employee_id,
+                                                            ) &&
+                                                            entrySummary(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                            )
+                                                        "
+                                                        class="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
+                                                    >
+                                                        {{
+                                                            entrySummary(
+                                                                service.schedule_services_id,
+                                                                Number(
+                                                                    employee.employee_id,
+                                                                ),
+                                                            )
+                                                        }}
+                                                    </span>
+                                                    </span>
                                                 </div>
 
                                                 <div
@@ -1002,66 +1031,20 @@
                                                         isAssigned(
                                                             service.schedule_services_id,
                                                             employee.employee_id,
+                                                        ) &&
+                                                        service.type ===
+                                                            'ADL' &&
+                                                        longDutyHours(
+                                                            service.schedule_services_id,
+                                                            Number(
+                                                                employee.employee_id,
+                                                            ),
                                                         )
                                                     "
-                                                    class="border-t border-primary/15 px-3 py-3"
+                                                    class="px-3 pb-3"
                                                 >
-                                                    <div
-                                                        v-if="
-                                                            service.type ===
-                                                            'ADL'
-                                                        "
-                                                        class="mb-3 grid grid-cols-2 gap-3"
-                                                    >
-                                                        <div
-                                                            v-for="field in [
-                                                                'start_time',
-                                                                'end_time',
-                                                            ] as const"
-                                                            :key="field"
-                                                            class="flex flex-col gap-1"
-                                                        >
-                                                            <span
-                                                                class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
-                                                            >
-                                                                {{
-                                                                    field ===
-                                                                    "start_time"
-                                                                        ? "Start time"
-                                                                        : "End time"
-                                                                }}
-                                                            </span>
-                                                            <span
-                                                                class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
-                                                            >
-                                                                {{
-                                                                    format24To12(
-                                                                        entryFor(
-                                                                            service.schedule_services_id,
-                                                                            Number(
-                                                                                employee.employee_id,
-                                                                            ),
-                                                                        )?.[
-                                                                            field
-                                                                        ],
-                                                                    ) || "—"
-                                                                }}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
                                                     <p
-                                                        v-if="
-                                                            service.type ===
-                                                                'ADL' &&
-                                                            longDutyHours(
-                                                                service.schedule_services_id,
-                                                                Number(
-                                                                    employee.employee_id,
-                                                                ),
-                                                            )
-                                                        "
-                                                        class="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                                                        class="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
                                                     >
                                                         <TriangleAlert
                                                             class="mt-0.5 h-3.5 w-3.5 shrink-0"
@@ -1087,36 +1070,6 @@
                                                         hours. You can still
                                                         continue.
                                                     </p>
-
-                                                    <div
-                                                        v-if="
-                                                            noteFor(
-                                                                service.schedule_services_id,
-                                                                Number(
-                                                                    employee.employee_id,
-                                                                ),
-                                                            )
-                                                        "
-                                                        class="flex flex-col gap-1"
-                                                    >
-                                                        <span
-                                                            class="text-[11px] font-medium text-slate-500 dark:text-gray-400"
-                                                        >
-                                                            Note
-                                                        </span>
-                                                        <span
-                                                            class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300"
-                                                        >
-                                                            {{
-                                                                noteFor(
-                                                                    service.schedule_services_id,
-                                                                    Number(
-                                                                        employee.employee_id,
-                                                                    ),
-                                                                )
-                                                            }}
-                                                        </span>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1254,10 +1207,18 @@
                                                 </div>
 
                                                 <span
-                                                    v-if="employee.note"
+                                                    v-if="
+                                                        assignmentSummary(
+                                                            employee,
+                                                        )
+                                                    "
                                                     class="ml-3 shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary"
                                                 >
-                                                    {{ employee.note }}
+                                                    {{
+                                                        assignmentSummary(
+                                                            employee,
+                                                        )
+                                                    }}
                                                 </span>
                                             </div>
 
@@ -1439,7 +1400,7 @@ import {
     formatDuration,
     formatDate,
     bookingTimeWindow,
-    format24To12,
+    assignmentSummary,
 } from "~/utils/time";
 
 function formatServiceDuration(minutes?: number | null): string {
@@ -1915,6 +1876,14 @@ function isNoteLocked(serviceId: number, employeeId: number) {
     const employee = employeeById(employeeId);
 
     return Boolean(service && employee && isAssistant(service, employee));
+}
+
+function entrySummary(serviceId: number, employeeId: number) {
+    const entry = entryFor(serviceId, employeeId);
+
+    return entry
+        ? assignmentSummary({ ...entry, note: noteFor(serviceId, employeeId) })
+        : "";
 }
 
 function noteFor(serviceId: number, employeeId: number) {

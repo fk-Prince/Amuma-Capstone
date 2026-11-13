@@ -38,8 +38,8 @@
                             class="truncate text-xs capitalize text-slate-400 dark:text-gray-500"
                         >
                             {{ assignee.employee_role ?? "Staff" }}
-                            <template v-if="assignee.note">
-                                · {{ assignee.note }}
+                            <template v-if="assignmentSummary(assignee)">
+                                · {{ assignmentSummary(assignee) }}
                             </template>
                         </p>
                     </div>
@@ -57,6 +57,7 @@
 
 <script setup lang="ts">
 import { initials } from "~/utils/user";
+import { assignmentSummary } from "~/utils/time";
 import type { PreviousAssignee } from "~/types/schedule";
 
 defineProps<{
