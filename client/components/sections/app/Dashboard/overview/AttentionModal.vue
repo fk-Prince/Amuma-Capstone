@@ -60,7 +60,14 @@
                     </div>
 
                     <div class="min-h-0 space-y-3 overflow-y-auto px-5 pb-5">
-                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        <div
+                            class="grid grid-cols-1 gap-2"
+                            :class="
+                                groups.length === 3
+                                    ? 'sm:grid-cols-3'
+                                    : 'sm:grid-cols-2'
+                            "
+                        >
                             <button
                                 v-for="group in groups"
                                 :key="group.key"
@@ -220,6 +227,7 @@ import {
     X,
 } from "lucide-vue-next";
 import type { RouteLocationRaw } from "vue-router";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 import { usePermissions } from "~/composables/usePermission";
 import type { AttentionData, AttentionGroup } from "~/types/attention";
 import { Modules } from "~/types/module";
@@ -265,6 +273,7 @@ const ASSIGN_LABELS = {
 } as const;
 
 const { hasModule, canAssign } = usePermissions();
+const { hasFacilityPlan } = useBranchPlan();
 
 const base = computed(() => `/app/branches/${props.branchUuid}`);
 
@@ -450,7 +459,9 @@ const groups = computed(() => {
             rows: scheduleRows.value,
             note: summarize(scheduleRows.value.map((r) => r.day!.label)),
         },
-    ].map((group) => ({ ...group, count: group.rows.length }));
+    ]
+        .filter((group) => group.key !== "discharges" || hasFacilityPlan.value)
+        .map((group) => ({ ...group, count: group.rows.length }));
 });
 
 const active = ref<AttentionGroup | null>(null);

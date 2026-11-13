@@ -56,6 +56,7 @@ import { computed, onMounted, ref } from "vue";
 import { TriangleAlert } from "lucide-vue-next";
 import AttentionModal from "~/components/sections/app/Dashboard/overview/AttentionModal.vue";
 import { branchService } from "~/api/branch/BranchService";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 import type { AttentionData } from "~/types/attention";
 
 const props = defineProps<{ branchUuid: string }>();
@@ -63,9 +64,15 @@ const props = defineProps<{ branchUuid: string }>();
 const open = ref(false);
 const data = ref<AttentionData>({ discharges: [], services: [], schedules: [] });
 
+const { hasFacilityPlan } = useBranchPlan();
+
+const dischargeCount = computed(() =>
+    hasFacilityPlan.value ? data.value.discharges.length : 0,
+);
+
 const total = computed(
     () =>
-        data.value.discharges.length +
+        dischargeCount.value +
         data.value.services.length +
         data.value.schedules.length,
 );
@@ -73,7 +80,7 @@ const total = computed(
 const chips = computed(() =>
     [
         {
-            count: data.value.discharges.length,
+            count: dischargeCount.value,
             label: "discharging soon",
             countClass: "text-primary-600 dark:text-primary-300",
         },

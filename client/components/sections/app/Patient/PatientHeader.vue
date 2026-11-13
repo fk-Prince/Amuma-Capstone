@@ -8,8 +8,6 @@ import {
     MoveLeft,
     Pencil,
     Printer,
-    Send,
-    Share2,
     UserRound,
 } from "lucide-vue-next";
 
@@ -60,8 +58,6 @@ const facts = computed(() => [
 ]);
 
 const actions = [
-    { label: "Share", icon: Share2, permission: "export" },
-    { label: "Send", icon: Send, permission: "export" },
     {
         label: "Export",
         icon: Printer,
