@@ -10,6 +10,7 @@ use App\Http\Requests\Branch\BranchRequest;
 use App\Service\BranchService;
 use App\Service\BranchSetupService;
 use App\Service\BranchTermsService;
+use App\Service\DashboardAttentionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -21,6 +22,7 @@ class BranchController extends Controller
         private BranchService $branchService,
         private BranchSetupService $branchSetupService,
         private BranchTermsService $branchTermsService,
+        private DashboardAttentionService $dashboardAttentionService,
     ) {}
 
     public function setup(Request $request, string $uuid)
@@ -101,5 +103,12 @@ class BranchController extends Controller
         $payload = $request->all();
         $payload['viewer_user_id'] = $request->user()?->user_id;
         return $this->branchService->dashboard($payload);
+    }
+
+    public function attention(Request $request)
+    {
+        $branch = BranchGuard::resolveBranch($request->branch_uuid);
+        BranchGuard::mergeRequest($request, $branch);
+        return $this->dashboardAttentionService->attention($request->all());
     }
 }

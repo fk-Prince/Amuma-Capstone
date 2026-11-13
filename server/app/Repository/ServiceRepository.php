@@ -79,6 +79,21 @@ class ServiceRepository
             ->get();
     }
 
+    public function withoutStaff(int $branchId)
+    {
+        return Service::query()
+            ->select(['service_id', 'service_uuid', 'category_id', 'service_name', 'performed_by', 'type'])
+            ->with('categories:category_id,category_name')
+            ->where('branch_id', $branchId)
+            ->where('is_available', true)
+            ->whereDoesntHave('employeeAssignments', fn($query) => $query
+                ->where('is_active', true)
+                ->whereHas('employeeBranch', fn($branch) => $branch
+                    ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)))
+            ->orderBy('service_name')
+            ->get();
+    }
+
     public function assignIfNew(int $employeeBranchId, int $serviceId)
     {
         return EmployeeService::firstOrCreate(

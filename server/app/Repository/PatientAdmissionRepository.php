@@ -26,6 +26,23 @@ class PatientAdmissionRepository
             ->get();
     }
 
+    public function dischargingBy(int $branchId, Carbon $until)
+    {
+        return PatientAdmission::query()
+            ->select(['patient_admission_id', 'patient_id', 'bed_id', 'discharged_at'])
+            ->with([
+                'patient:patient_id,uuid,first_name,last_name,suffix',
+                'bed:bed_id,bed_no,room_id',
+                'bed.room:room_id,room_no',
+            ])
+            ->where('status', PatientAdmission::STATUS_ADMITTED)
+            ->whereNotNull('discharged_at')
+            ->where('discharged_at', '<=', $until)
+            ->whereHas('patient', fn($query) => $query->where('branch_id', $branchId))
+            ->orderBy('discharged_at')
+            ->get();
+    }
+
     public function getContracts(string $branchId)
     {
         return BranchContract::where('branch_id', $branchId)

@@ -180,6 +180,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contracts/overview', [BranchContractController::class, 'overview']);
     Route::get('/rooms/overview', [RoomController::class, 'overview']);
     Route::get('/branches/dashboard', [BranchController::class, 'dashboard']);
+    Route::get('/branches/attention', [BranchController::class, 'attention']);
 
     // SUBSCRIPTION
     Route::get('/subscriptions', [SubscriptionController::class, 'index']);

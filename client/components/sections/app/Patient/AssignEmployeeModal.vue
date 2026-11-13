@@ -1893,7 +1893,16 @@ function resetAssignmentsFromSchedule(schedule?: ScheduleItem | null) {
         return;
     }
 
-    activeService.value = schedule.services?.[0]?.schedule_services_id ?? null;
+    const services = schedule.services ?? [];
+    const firstUnstaffed = services.find(
+        (service) =>
+            !(service.assignees ?? []).some(
+                (assignee) => assignee.is_active !== false,
+            ),
+    );
+
+    activeService.value =
+        (firstUnstaffed ?? services[0])?.schedule_services_id ?? null;
 
     schedule.services?.forEach((service) => {
         assignments.value[service.schedule_services_id] = (

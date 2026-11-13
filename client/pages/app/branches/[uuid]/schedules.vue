@@ -333,7 +333,7 @@ import { Modules } from "~/types/module";
 import { usePermissions } from "~/composables/usePermission";
 import { X } from "lucide-vue-next";
 
-const { canUpdate } = usePermissions();
+const { canUpdate, canAssign } = usePermissions();
 
 const DESKTOP_WIDTH = 1024;
 
@@ -636,7 +636,7 @@ async function loadSchedules(opts: { append?: boolean } = {}) {
         page.value = 1;
     }
 
-    const { assignment, view, ...restQuery } = route.query;
+    const { assignment, view, assign, ...restQuery } = route.query;
 
     if (scheduleType.value === "shifts") {
         shiftBoard.value = null;
@@ -734,9 +734,26 @@ async function loadRestForCalendar() {
     }
 }
 
+function openRequestedAssign() {
+    const code = route.query.assign;
+
+    if (typeof code !== "string") return;
+
+    const { assign, ...query } = route.query;
+    router.replace({ query });
+
+    if (!canAssign(Modules.Schedules)) return;
+
+    const schedule = (scheduleData.value ?? []).find(
+        (item: ScheduleItem) => item.schedule_code === code,
+    );
+
+    if (schedule) handleAssign(schedule);
+}
+
 watch(
     () => {
-        const { view, search, ...rest } = route.query;
+        const { view, search, assign, ...rest } = route.query;
         return JSON.stringify(
             scheduleType.value === "shifts" ||
                 scheduleType.value === "employees"
@@ -746,6 +763,7 @@ watch(
     },
     async () => {
         await loadSchedules({ append: false });
+        openRequestedAssign();
         await loadRestForCalendar();
     },
     { immediate: true },

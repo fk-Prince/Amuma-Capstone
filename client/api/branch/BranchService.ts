@@ -51,6 +51,10 @@ class BranchService extends BaseService {
         return await this.request(this.resource + '/dashboard', 'GET', params);
     }
 
+    async attention(params: object = {}): Promise<any> {
+        return await this.request(this.resource + '/attention', 'GET', params);
+    }
+
     async setup(uuid: string): Promise<any> {
         return await this.request(`${this.resource}/${uuid}/setup`, 'GET');
     }

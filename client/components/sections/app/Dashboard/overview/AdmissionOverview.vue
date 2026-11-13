@@ -30,6 +30,8 @@
         </div>
 
         <template v-else>
+            <AttentionCard :branch-uuid="branchUuid" />
+
             <section
                 class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
             >
@@ -171,8 +173,6 @@
                     </div>
                 </div>
             </section>
-
-            <UnassignedTodayCard :branch-uuid="branchUuid" />
 
             <DutyRosterCard v-if="showRoster" :branch-uuid="branchUuid" />
 
@@ -334,7 +334,7 @@ import {
 } from "lucide-vue-next";
 
 import DutyRosterCard from "~/components/sections/app/Dashboard/overview/DutyRosterCard.vue";
-import UnassignedTodayCard from "~/components/sections/app/Dashboard/overview/UnassignedTodayCard.vue";
+import AttentionCard from "~/components/sections/app/Dashboard/overview/AttentionCard.vue";
 import OverviewDonutCard from "~/components/sections/app/Dashboard/overview/OverviewDonutCard.vue";
 import OverviewStatCard from "~/components/sections/app/Dashboard/overview/OverviewStatCard.vue";
 import StatusBadge from "~/components/ui/StatusBadge.vue";

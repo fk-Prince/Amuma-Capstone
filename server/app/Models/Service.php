@@ -61,6 +61,11 @@ class Service extends Model
 
 
 
+    public function employeeAssignments()
+    {
+        return $this->hasMany(EmployeeService::class, 'service_id', 'service_id');
+    }
+
     public function staff()
     {
         return $this->belongsToMany(User::class,   'staff_services',  'service_id', 'user_id')->withPivot('is_active');

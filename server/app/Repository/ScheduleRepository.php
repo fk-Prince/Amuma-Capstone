@@ -179,14 +179,14 @@ class ScheduleRepository
             ->first();
     }
 
-    public function unassignedToday(int $branchId)
+    public function unassignedUntil(int $branchId, Carbon $until)
     {
         $today = now()->toDateString();
 
         return Schedule::query()
             ->select(['schedule_id', 'schedule_code', 'patient_id', 'scheduled_at', 'status', 'category'])
             ->with([
-                'patient:patient_id,first_name,middle_name,last_name',
+                'patient:patient_id,first_name,middle_name,last_name,suffix',
                 'scheduleServices' => fn($q) => $q
                     ->select(['schedule_services_id', 'schedule_id', 'service_id', 'type', 'duration'])
                     ->whereDoesntHave('assigned', fn($a) => $a->where('is_active', true)),
@@ -197,7 +197,9 @@ class ScheduleRepository
             ->whereHas('scheduleServices', fn($q) => $q
                 ->whereDoesntHave('assigned', fn($a) => $a->where('is_active', true)))
             ->where(fn($q) => $q
-                ->whereDate('scheduled_at', $today)
+                ->where(fn($upcoming) => $upcoming
+                    ->whereDate('scheduled_at', '>=', $today)
+                    ->where('scheduled_at', '<=', $until))
                 ->orWhere(fn($adl) => $adl
                     ->whereDate('scheduled_at', '<', $today)
                     ->whereHas('scheduleServices', fn($s) => $s

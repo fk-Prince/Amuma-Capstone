@@ -65,8 +65,10 @@
 </template>
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useBranchPlan } from "~/composables/useBranchPlan";
+import { usePermissions } from "~/composables/usePermission";
+import { Modules } from "~/types/module";
 
 import { serviceService } from "~/api/service/ServiceService";
 import { createServiceForm, type Service } from "~/types/service";
@@ -91,7 +93,10 @@ useHead({
 });
 
 const route = useRoute();
+const router = useRouter();
 const uuid = route.params.uuid as string;
+
+const { canAssign } = usePermissions();
 
 const searchData = ref("");
 const activeTab = ref("All Services");
@@ -179,7 +184,27 @@ const fetchService = async () => {
     }
 };
 
-onMounted(fetchService);
+function openRequestedAssign() {
+    const serviceUuid = route.query.assign;
+
+    if (typeof serviceUuid !== "string") return;
+
+    const { assign, ...query } = route.query;
+    router.replace({ query });
+
+    if (!canAssign(Modules.Services)) return;
+
+    const service = services.value.find(
+        (item) => item.service_uuid === serviceUuid,
+    );
+
+    if (service) assignService(service);
+}
+
+onMounted(async () => {
+    await fetchService();
+    openRequestedAssign();
+});
 
 const addServiceClicked = () => {
     editingServiceId.value = null;

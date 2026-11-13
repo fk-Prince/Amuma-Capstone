@@ -49,6 +49,8 @@
             </div>
 
             <div v-else class="space-y-3">
+                <AttentionCard :branch-uuid="uuid" />
+
                 <section
                     class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4"
                 >
@@ -552,8 +554,6 @@
                     </div>
                 </section>
 
-                <UnassignedTodayCard :branch-uuid="uuid" />
-
                 <DutyRosterCard v-if="showRoster" :branch-uuid="uuid" />
 
                 <section
@@ -687,7 +687,7 @@ import {
 import SubscriptionReview from "~/components/sections/app/Dashboard/SubscriptionReview.vue";
 import StatusBadge from "~/components/ui/StatusBadge.vue";
 import DutyRosterCard from "~/components/sections/app/Dashboard/overview/DutyRosterCard.vue";
-import UnassignedTodayCard from "~/components/sections/app/Dashboard/overview/UnassignedTodayCard.vue";
+import AttentionCard from "~/components/sections/app/Dashboard/overview/AttentionCard.vue";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import { usePermissions } from "~/composables/usePermission";
 import { Modules } from "~/types/module";
@@ -998,8 +998,7 @@ const fetchDashboard = async () => {
         if (err?.status === 403) {
             accessDenied.value = true;
             accessDeniedMessage.value =
-                err?.message ??
-                "You don't have access to this branch.";
+                err?.message ?? "You don't have access to this branch.";
         }
     } finally {
         loading.value = false;
@@ -1137,4 +1136,5 @@ watch(
 onBeforeUnmount(() => {
     destroyCharts();
 });
-</script>a
+</script>
+a
