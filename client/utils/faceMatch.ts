@@ -33,9 +33,10 @@ function loadDetector(): Promise<FaceApi> {
 
 function loadFaceApi(): Promise<FaceApi> {
     recognizer ??= (async () => {
-        const faceapi = await loadDetector();
+        const faceapi = await import("@vladmandic/face-api");
 
         await Promise.all([
+            loadDetector(),
             faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
             faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);

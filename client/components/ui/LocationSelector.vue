@@ -647,7 +647,6 @@ onMounted(async () => {
     }).setView(defaultView(), props.initialLat && props.initialLng ? 16 : 13);
 
     L.control.zoom({ position: "topright" }).addTo(map);
-    L.control.scale({ position: "bottomright", imperial: false }).addTo(map);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,

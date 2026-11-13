@@ -33,6 +33,11 @@ export default defineNuxtConfig({
       xsrfCookie: ''
     }
   },
+  routeRules: {
+    '/models/**': {
+      headers: { 'cache-control': 'public, max-age=31536000, immutable' },
+    },
+  },
   nitro: {
     devProxy: {
       '/api': {

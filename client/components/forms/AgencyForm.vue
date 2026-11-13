@@ -160,7 +160,12 @@
                 v-else
                 class="-mt-2 space-y-5"
             >
-                <div class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
+                <div
+                    class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
+                    @pointerdown.capture="prepareFaceCheck"
+                    @focusin="prepareFaceCheck"
+                    @dragenter="prepareFaceCheck"
+                >
                     <div
                         class="flex flex-col gap-2"
                         data-field="agency_id_front agency_id_back"
@@ -713,7 +718,7 @@
 <script setup lang="ts">
 import { Building2, Camera, Check, LoaderCircle, MapPin, ScanFace, ShieldCheck } from "lucide-vue-next";
 import FormSectionHeader from "../ui/FormSectionHeader.vue";
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
 import LabelInput from "../ui/BaseInput.vue";
 import DocumentLink from "../ui/DocumentLink.vue";
@@ -1105,17 +1110,10 @@ watch(
 
 if (props.agency.id_selfie && !props.agency.face_scan) runFaceScan();
 
-onMounted(() => {
+function prepareFaceCheck() {
     if (props.lockVerification) return;
-
-    const warm = () => void warmUpFaceModels();
-
-    if ("requestIdleCallback" in window) {
-        window.requestIdleCallback(warm, { timeout: 3000 });
-    } else {
-        setTimeout(warm, 1500);
-    }
-});
+    void warmUpFaceModels();
+}
 
 const faceMatch = ref<FaceMatchResult | null>(null);
 const faceMatching = ref(false);
