@@ -10,11 +10,14 @@
             <Info class="h-4 w-4" />
         </button>
 
+        <Teleport to="body">
         <div
             v-if="open"
+            ref="panel"
             role="dialog"
             :aria-label="heading"
-            class="absolute left-1/2 top-full z-30 mt-2 w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-3 text-left font-normal shadow-xl dark:border-white/10 dark:bg-secondary sm:left-0 sm:translate-x-0"
+            :style="panelStyle"
+            class="fixed z-[80] overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-3 text-left font-normal shadow-xl dark:border-white/10 dark:bg-secondary"
             @click.stop
         >
             <div class="overflow-hidden rounded-lg bg-slate-100 dark:bg-white/5">
@@ -79,19 +82,73 @@
                 </li>
             </ul>
         </div>
+        </Teleport>
     </span>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { Focus, Hand, IdCard, Info, Scan, ScanFace, Sun } from "lucide-vue-next";
 
 const props = withDefaults(defineProps<{ variant?: "selfie" | "id" }>(), {
     variant: "selfie",
 });
 
+const PANEL_WIDTH = 288;
+const GAP = 8;
+const EDGE = 8;
+
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
+const panel = ref<HTMLElement | null>(null);
+const panelStyle = ref<Record<string, string>>({ visibility: "hidden" });
+
+function place() {
+    const trigger = root.value?.getBoundingClientRect();
+    const el = panel.value;
+    if (!trigger || !el) return;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const width = Math.min(PANEL_WIDTH, viewportWidth - EDGE * 2);
+    const left = Math.min(
+        Math.max(EDGE, trigger.left),
+        viewportWidth - width - EDGE,
+    );
+
+    const spaceBelow = viewportHeight - trigger.bottom - GAP - EDGE;
+    const spaceAbove = trigger.top - GAP - EDGE;
+    const below = el.scrollHeight <= spaceBelow || spaceBelow >= spaceAbove;
+
+    panelStyle.value = {
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${Math.max(120, below ? spaceBelow : spaceAbove)}px`,
+        ...(below
+            ? { top: `${trigger.bottom + GAP}px` }
+            : { bottom: `${viewportHeight - trigger.top + GAP}px` }),
+    };
+}
+
+function onKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") open.value = false;
+}
+
+watch(open, async (isOpen) => {
+    if (!isOpen) {
+        window.removeEventListener("scroll", place, true);
+        window.removeEventListener("resize", place);
+        document.removeEventListener("keydown", onKeydown);
+        panelStyle.value = { visibility: "hidden" };
+        return;
+    }
+
+    await nextTick();
+    place();
+    window.addEventListener("scroll", place, { capture: true, passive: true });
+    window.addEventListener("resize", place);
+    document.addEventListener("keydown", onKeydown);
+});
 
 const heading = computed(() =>
     props.variant === "selfie" ? "How to hold your ID" : "How to take your ID photo",
@@ -114,11 +171,22 @@ const tips = computed(() =>
 );
 
 function onOutside(event: MouseEvent) {
-    if (open.value && root.value && !root.value.contains(event.target as Node)) {
+    const target = event.target as Node;
+
+    if (
+        open.value &&
+        !root.value?.contains(target) &&
+        !panel.value?.contains(target)
+    ) {
         open.value = false;
     }
 }
 
 onMounted(() => document.addEventListener("click", onOutside));
-onBeforeUnmount(() => document.removeEventListener("click", onOutside));
+onBeforeUnmount(() => {
+    document.removeEventListener("click", onOutside);
+    window.removeEventListener("scroll", place, true);
+    window.removeEventListener("resize", place);
+    document.removeEventListener("keydown", onKeydown);
+});
 </script>
