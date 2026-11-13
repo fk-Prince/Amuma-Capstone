@@ -107,7 +107,6 @@ async function save() {
                         ? schedule.address
                         : undefined
                 "
-                manual-fallback
                 @location-selected="picked = $event"
                 @location-cleared="picked = null"
             />

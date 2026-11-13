@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import L_module from "leaflet";
-import BaseInput from "~/components/ui/BaseInput.vue";
+import {
+    LocateFixed,
+    Map as MapIcon,
+    MapPin,
+    Route as RouteIcon,
+    Search,
+    X,
+} from "lucide-vue-next";
 
 interface Location {
-    lat: number | null;
-    lng: number | null;
+    lat: number;
+    lng: number;
     label: string;
     street: string;
     city: string;
@@ -13,281 +20,403 @@ interface Location {
     country: string;
 }
 
-const props = withDefaults(
-    defineProps<{
-        initialLat?: number;
-        initialLng?: number;
-        initialStreet?: string;
-        initialCity?: string;
-        initialProvince?: string;
-        initialCountry?: string;
-        mode?: "map" | "type";
-        manualFallback?: boolean;
-    }>(),
-    {
-        mode: "map",
-        manualFallback: false,
-    },
-);
+interface Suggestion {
+    name: string;
+    detail: string;
+    type: string;
+    lat: number;
+    lng: number;
+}
+
+type Source = "search" | "map" | "drag" | "keyboard" | "gps";
+
+const props = defineProps<{
+    initialLat?: number;
+    initialLng?: number;
+    initialStreet?: string;
+    initialCity?: string;
+    initialProvince?: string;
+    initialCountry?: string;
+}>();
 
 const emit = defineEmits<{
     (e: "location-selected", payload: Location): void;
     (e: "location-cleared"): void;
 }>();
 
-const selectedLocation = ref<Location | null>(null);
-const mapContainerEl = ref<HTMLElement | null>(null);
-const activeMode = ref<"map" | "type">(props.mode);
-
-const typedAddress = ref("");
-const isLocating = ref(false);
-const typeError = ref("");
-
-const manual = ref(false);
-const manualAddress = ref("");
-const manualError = ref("");
-
-function fallBackToManual(text: string): boolean {
-    if (!props.manualFallback) return false;
-
-    manual.value = true;
-    manualAddress.value = text;
-    manualError.value =
-        "We couldn't find that location. Type the full address instead.";
-    selectedLocation.value = null;
-    marker?.remove();
-    marker = null;
-    emit("location-cleared");
-
-    return true;
-}
-
-async function useMap() {
-    manual.value = false;
-    manualError.value = "";
-    activeMode.value = "map";
-
-    await nextTick();
-    map?.invalidateSize();
-}
-
-function applyManualAddress(showError: boolean) {
-    const text = manualAddress.value.trim();
-    const parts = text
-        .split(",")
-        .map((part) => part.trim())
-        .filter(Boolean);
-
-    const country =
-        parts.length > 3 && /^(ph|philippines)$/i.test(parts[parts.length - 1]!)
-            ? parts.pop()!
-            : "Philippines";
-    const province = parts.length >= 3 ? parts.pop()! : "";
-    const city = parts.length >= 2 ? parts.pop()! : "";
-    const street = parts.join(", ");
-
-    if (!street || !city || !province) {
-        manualError.value = showError
-            ? "Separate the street, city and province with commas, e.g. 123 Rizal St, Davao City, Davao del Sur."
-            : "";
-
-        if (selectedLocation.value) {
-            selectedLocation.value = null;
-            emit("location-cleared");
-        }
-
-        return;
-    }
-
-    manualError.value = "";
-
-    selectedLocation.value = {
-        lat: null,
-        lng: null,
-        label: text,
-        street,
-        city,
-        province,
-        country,
-    };
-
-    confirmLocation();
-}
-
-function onManualInput(value: string | number) {
-    manualAddress.value = String(value);
-    applyManualAddress(false);
-}
-
-watch(
-    () => props.mode,
-    (next) => {
-        activeMode.value = next;
-    },
-);
-
-watch(activeMode, (next) => {
-    typeError.value = "";
-    manual.value = false;
-
-    if (next === "type") {
-        typedAddress.value = selectedLocation.value?.label ?? "";
-
-        return;
-    }
-
-    nextTick(() => {
-        map?.invalidateSize();
-
-        if (!selectedLocation.value) {
-            map?.setView(defaultView(), 13);
-        }
-    });
-});
-
-function switchMode(next: "map" | "type") {
-    activeMode.value = next;
-}
-
-async function applyTypedAddress() {
-    const query = typedAddress.value.trim();
-
-    if (!query) {
-        typeError.value = "Enter an address.";
-        return;
-    }
-
-    if (selectedLocation.value && query === selectedLocation.value.label) {
-        confirmLocation();
-        return;
-    }
-
-    isLocating.value = true;
-    typeError.value = "";
-
-    try {
-        const config = useRuntimeConfig();
-
-        const res = await fetch(
-            `${config.public.backendApi}/api/geocode?q=${encodeURIComponent(query)}`,
-            { headers: { Accept: "application/json" } },
-        );
-
-        const data = res.ok ? await res.json() : null;
-        const lat = Number(data?.lat);
-        const lng = Number(data?.lng);
-
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-            if (fallBackToManual(query)) return;
-
-            typeError.value =
-                "We couldn't find that address. Try adding the city, or pick it on the map.";
-            return;
-        }
-
-        map?.setView([lat, lng], 16);
-        placeMarker(lat, lng);
-
-        const found = await reverseGeocode(lat, lng);
-
-        if (!found && fallBackToManual(query)) {
-            return;
-        }
-
-        keepTypedAddress(query);
-        confirmLocation();
-    } catch (error) {
-        console.error("[geocode] Failed:", error);
-
-        if (fallBackToManual(query)) return;
-
-        typeError.value = "We couldn't look up that address right now.";
-    } finally {
-        isLocating.value = false;
-    }
-}
-
-function keepTypedAddress(text: string) {
-    if (!selectedLocation.value) return;
-
-    const parts = text
-        .split(",")
-        .map((part) => part.trim())
-        .filter(Boolean);
-
-    if (
-        parts.length > 1 &&
-        /^(ph|philippines)$/i.test(parts[parts.length - 1]!)
-    ) {
-        parts.pop();
-    }
-
-    if (parts.length < 2) return;
-
-    const province = parts.length >= 3 ? parts.pop()! : "";
-    const city = parts.pop()!;
-    const street = parts.join(", ");
-    const found = selectedLocation.value;
-    const nextProvince = province || found.province;
-    const country = found.country || "Philippines";
-
-    selectedLocation.value = {
-        ...found,
-        street,
-        city,
-        province: nextProvince,
-        country,
-        label: [street, city, nextProvince, country].filter(Boolean).join(", "),
-    };
-}
-
+const MIN_QUERY = 3;
+const DEBOUNCE_MS = 350;
+const NUDGE_PX = 3;
 const DEFAULT_CENTER: [number, number] = [7.0736, 125.611];
-
-function defaultView(): [number, number] {
-    return props.initialLat && props.initialLng
-        ? [props.initialLat, props.initialLng]
-        : DEFAULT_CENTER;
-}
-
-let map: L_module.Map | null = null;
-let marker: L_module.Marker | null = null;
-let userMarker: L_module.CircleMarker | null = null;
-let mapClickHandler: ((e: any) => void) | null = null;
-
-const handleLocation = async (lat: number, lng: number): Promise<void> => {
-    selectedLocation.value = {
-        lat,
-        lng,
-        label: "Loading...",
-        street: "",
-        city: "",
-        province: "",
-        country: "",
-    };
-
-    const found = await reverseGeocode(lat, lng);
-
-    if (!found && fallBackToManual("")) {
-        return;
-    }
-
-    confirmLocation();
+const AREA_TYPES = ["locality", "district", "city", "county", "state"];
+const ZOOM_BY_TYPE: Record<string, number> = {
+    house: 18,
+    street: 17,
+    locality: 16,
+    district: 15,
+    city: 13,
+    county: 12,
+    state: 10,
+};
+const SOURCE_LABEL: Record<Source, string> = {
+    search: "via search",
+    map: "via map click",
+    drag: "via pin drag",
+    keyboard: "via arrow keys",
+    gps: "via my location",
 };
 
-watch(
-    () => [props.initialLat, props.initialLng] as const,
-    async ([lat, lng]) => {
-        if (!map || lat == null || lng == null) return;
-        if (selectedLocation.value) return;
-        map.setView([lat, lng], 15);
-        placeMarker(lat, lng);
-        await reverseGeocode(lat, lng);
+const config = useRuntimeConfig();
+
+const mapContainerEl = ref<HTMLElement | null>(null);
+const inputEl = ref<HTMLInputElement | null>(null);
+
+const query = ref("");
+const suggestions = ref<Suggestion[]>([]);
+const dropdownOpen = ref(false);
+const activeIndex = ref(0);
+const searching = ref(false);
+const searchFailed = ref(false);
+const inputFocused = ref(false);
+const picked = ref(false);
+const lastPickType = ref<string | null>(null);
+
+const hasPin = ref(false);
+const selectedLocation = ref<Location | null>(null);
+const source = ref<Source | null>(null);
+const resolving = ref(false);
+const dragging = ref(false);
+const noAddress = ref(false);
+const lookupFailed = ref(false);
+const locateError = ref("");
+
+let L: any = null;
+let map: L_module.Map | null = null;
+let marker: L_module.Marker | null = null;
+let mapClickHandler: ((e: any) => void) | null = null;
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+let nudgeTimer: ReturnType<typeof setTimeout> | undefined;
+let searchAbort: AbortController | null = null;
+let searchSeq = 0;
+let geoSeq = 0;
+
+const help = computed<{ tone: "muted" | "warn" | "info"; text: string }>(
+    () => {
+        const q = query.value.trim();
+
+        if (locateError.value) return { tone: "warn", text: locateError.value };
+
+        if (
+            !hasPin.value &&
+            q &&
+            !picked.value &&
+            !dropdownOpen.value &&
+            !searching.value
+        ) {
+            return {
+                tone: "warn",
+                text: "Pick a suggestion to drop the pin. Typed text alone has no coordinates.",
+            };
+        }
+
+        if (
+            hasPin.value &&
+            inputFocused.value &&
+            selectedLocation.value &&
+            q &&
+            q !== selectedLocation.value.label &&
+            !picked.value
+        ) {
+            return {
+                tone: "info",
+                text: "The pin stays where it is until you pick a suggestion.",
+            };
+        }
+
+        if (hasPin.value && inputFocused.value && !q) {
+            return {
+                tone: "info",
+                text: "Clearing the text keeps the pin. Pick a new suggestion to move it.",
+            };
+        }
+
+        if (source.value === "search" && !resolving.value) {
+            if (AREA_TYPES.includes(lastPickType.value ?? "")) {
+                return {
+                    tone: "info",
+                    text: "This is the middle of the area. Drag the pin onto the exact spot.",
+                };
+            }
+
+            if (lastPickType.value === "street") {
+                return {
+                    tone: "info",
+                    text: "This is a point on the street. Drag the pin to the building's entrance.",
+                };
+            }
+        }
+
+        return {
+            tone: "muted",
+            text: "Search for a street, landmark or area, or click the map. Drag the pin to fine-tune.",
+        };
     },
 );
 
-const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
+const helpClass = computed(
+    () =>
+        ({
+            muted: "text-slate-500 dark:text-gray-400",
+            warn: "text-amber-600 dark:text-amber-300",
+            info: "text-primary",
+        })[help.value.tone],
+);
+
+function iconFor(type: string) {
+    if (type === "street") return RouteIcon;
+    if (AREA_TYPES.includes(type)) return MapIcon;
+    return MapPin;
+}
+
+function kindLabel(type: string) {
+    if (type === "house") return "Address";
+    if (type === "street") return "Street";
+    if (type === "locality" || type === "district") return "Area";
+    if (type === "city" || type === "county") return "City";
+    if (type === "state") return "Province";
+    return "Place";
+}
+
+function highlightParts(name: string) {
+    const tokens = query.value
+        .trim()
+        .split(/[\s,]+/)
+        .filter((token) => token.length > 1)
+        .map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+
+    if (!tokens.length) return [{ text: name, match: false }];
+
+    const pattern = new RegExp(`(${tokens.join("|")})`, "gi");
+
+    return name
+        .split(pattern)
+        .filter(Boolean)
+        .map((text) => ({
+            text,
+            match: tokens.some((token) =>
+                new RegExp(`^${token}$`, "i").test(text),
+            ),
+        }));
+}
+
+function cancelSearch() {
+    clearTimeout(searchTimer);
+    searchAbort?.abort();
+    searchAbort = null;
+    searchSeq++;
+    searching.value = false;
+}
+
+function onSearchInput(event: Event) {
+    query.value = (event.target as HTMLInputElement).value;
+    picked.value = false;
+    searchFailed.value = false;
+    locateError.value = "";
+    cancelSearch();
+
+    const q = query.value.trim();
+
+    if (q.length < MIN_QUERY) {
+        suggestions.value = [];
+        dropdownOpen.value = false;
+        return;
+    }
+
+    const seq = searchSeq;
+    searching.value = true;
+    searchTimer = setTimeout(() => fetchSuggestions(q, seq), DEBOUNCE_MS);
+}
+
+async function fetchSuggestions(q: string, seq: number) {
+    const controller = new AbortController();
+    searchAbort = controller;
+
+    const params = new URLSearchParams({ q });
+    const center = map?.getCenter();
+
+    if (center) {
+        params.set("lat", center.lat.toFixed(4));
+        params.set("lng", center.lng.toFixed(4));
+    }
+
     try {
-        const config = useRuntimeConfig();
+        const res = await fetch(
+            `${config.public.backendApi}/api/geocode/suggest?${params}`,
+            {
+                headers: { Accept: "application/json" },
+                signal: controller.signal,
+            },
+        );
+        const body = res.ok ? await res.json() : null;
+
+        if (seq !== searchSeq) return;
+
+        searchFailed.value = !body?.success;
+        suggestions.value = body?.success ? (body.data ?? []) : [];
+        activeIndex.value = 0;
+        dropdownOpen.value = inputFocused.value;
+    } catch (error: any) {
+        if (error?.name === "AbortError" || seq !== searchSeq) return;
+
+        console.error("[suggest] Failed:", error);
+        searchFailed.value = true;
+        suggestions.value = [];
+        dropdownOpen.value = inputFocused.value;
+    } finally {
+        if (seq === searchSeq) searching.value = false;
+    }
+}
+
+function onSearchFocus() {
+    inputFocused.value = true;
+
+    if (
+        !picked.value &&
+        query.value.trim().length >= MIN_QUERY &&
+        query.value !== selectedLocation.value?.label &&
+        (suggestions.value.length || searchFailed.value)
+    ) {
+        dropdownOpen.value = true;
+    }
+}
+
+function onSearchBlur() {
+    inputFocused.value = false;
+    dropdownOpen.value = false;
+    cancelSearch();
+
+    if (
+        selectedLocation.value &&
+        !resolving.value &&
+        query.value !== selectedLocation.value.label
+    ) {
+        query.value = selectedLocation.value.label;
+    }
+}
+
+function onSearchKeydown(event: KeyboardEvent) {
+    const count = suggestions.value.length;
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (!dropdownOpen.value || !count) return;
+
+        event.preventDefault();
+        const step = event.key === "ArrowDown" ? 1 : count - 1;
+        activeIndex.value = (activeIndex.value + step) % count;
+        return;
+    }
+
+    if (event.key === "Enter") {
+        event.preventDefault();
+        const choice = suggestions.value[activeIndex.value];
+
+        if (dropdownOpen.value && choice) pickSuggestion(choice);
+        return;
+    }
+
+    if (event.key === "Escape") {
+        dropdownOpen.value = false;
+    }
+}
+
+function clearSearch() {
+    cancelSearch();
+    query.value = "";
+    suggestions.value = [];
+    dropdownOpen.value = false;
+    picked.value = false;
+    inputEl.value?.focus();
+}
+
+function pickSuggestion(suggestion: Suggestion) {
+    cancelSearch();
+    dropdownOpen.value = false;
+    picked.value = true;
+    lastPickType.value = suggestion.type;
+    query.value = suggestion.name;
+
+    map?.setView(
+        [suggestion.lat, suggestion.lng],
+        ZOOM_BY_TYPE[suggestion.type] ?? 18,
+    );
+    movePin(suggestion.lat, suggestion.lng, "search");
+}
+
+function dropSelection() {
+    if (!selectedLocation.value) return;
+
+    selectedLocation.value = null;
+    emit("location-cleared");
+}
+
+function movePin(lat: number, lng: number, from: Source) {
+    source.value = from;
+    locateError.value = "";
+
+    if (from !== "search") lastPickType.value = null;
+
+    placeMarker(lat, lng);
+    resolveAddress(lat, lng, from);
+}
+
+async function resolveAddress(
+    lat: number,
+    lng: number,
+    from: Source | null,
+    silent = false,
+) {
+    const seq = ++geoSeq;
+
+    resolving.value = true;
+    noAddress.value = false;
+    lookupFailed.value = false;
+
+    if (!silent) dropSelection();
+
+    const address = await reverseGeocode(lat, lng);
+
+    if (seq !== geoSeq) return;
+
+    resolving.value = false;
+
+    const keepTyping = inputFocused.value && from !== "search";
+
+    if (!address) {
+        lookupFailed.value = true;
+        return;
+    }
+
+    if (!address.city && !address.province) {
+        noAddress.value = true;
+        if (!keepTyping) query.value = "";
+        return;
+    }
+
+    selectedLocation.value = address;
+    if (!keepTyping) query.value = address.label;
+    if (!silent) emit("location-selected", { ...address });
+}
+
+function retryLookup() {
+    const pos = marker?.getLatLng();
+    if (pos) resolveAddress(pos.lat, pos.lng, source.value);
+}
+
+async function reverseGeocode(
+    lat: number,
+    lng: number,
+): Promise<Location | null> {
+    try {
         const res = await fetch(
             `${config.public.backendApi}/api/reverse-geocode?lat=${lat}&lon=${lng}`,
             {
@@ -303,10 +432,7 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
         }
 
         const response = await res.json();
-
-        const data = response?.data ?? {};
-        const addr = data.address ?? {};
-        const displayName: string = data.display_name ?? "";
+        const addr = response?.data?.address ?? {};
 
         const road = [
             addr.house_number,
@@ -345,21 +471,13 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
         ].find((part) => part && part !== city);
 
         const street = [locality, road].filter(Boolean).join(", ");
-
         const province = addr.state ?? addr.province ?? addr.region ?? "";
         const country = addr.country ?? "";
 
-        const labelParts = [street, city, province, country].filter(Boolean);
-
-        const hasEnoughParts = !!(city || street);
-        const label = hasEnoughParts
-            ? labelParts.join(", ")
-            : displayName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
-        selectedLocation.value = {
+        return {
             lat,
             lng,
-            label,
+            label: [street, city, province, country].filter(Boolean).join(", "),
             street,
             city,
             province,
@@ -367,105 +485,122 @@ const reverseGeocode = async (lat: number, lng: number): Promise<boolean> => {
         };
     } catch (error) {
         console.error("[reverseGeocode] Failed:", error);
-
-        selectedLocation.value = {
-            lat,
-            lng,
-            label: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-            street: "",
-            city: "",
-            province: "",
-            country: "",
-        };
-
-        return false;
+        return null;
     }
+}
 
-    return true;
-};
+function startMove() {
+    geoSeq++;
+    dragging.value = true;
+    resolving.value = false;
+    noAddress.value = false;
+    lookupFailed.value = false;
+    dropdownOpen.value = false;
+    dropSelection();
+}
 
-const confirmLocation = (): void => {
-    if (!selectedLocation.value) return;
-    emit("location-selected", { ...selectedLocation.value });
-};
+function onMarkerKeydown(event: KeyboardEvent) {
+    const offsets: Record<string, [number, number]> = {
+        ArrowUp: [0, -NUDGE_PX],
+        ArrowDown: [0, NUDGE_PX],
+        ArrowLeft: [-NUDGE_PX, 0],
+        ArrowRight: [NUDGE_PX, 0],
+    };
+    const offset = offsets[event.key];
 
-const placeMarker = (lat: number, lng: number): void => {
-    const L = (window as any).L;
+    if (!offset || !map || !marker) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const point = map
+        .latLngToContainerPoint(marker.getLatLng())
+        .add(L.point(offset[0], offset[1]));
+    const next = map.containerPointToLatLng(point);
+
+    if (!nudgeTimer) startMove();
+
+    marker.setLatLng(next);
+    clearTimeout(nudgeTimer);
+    nudgeTimer = setTimeout(() => {
+        nudgeTimer = undefined;
+        dragging.value = false;
+        movePin(next.lat, next.lng, "keyboard");
+    }, 400);
+}
+
+function placeMarker(lat: number, lng: number) {
+    if (!map) return;
+
+    hasPin.value = true;
 
     if (marker) {
         marker.setLatLng([lat, lng]);
-    } else {
-        marker = L.marker([lat, lng], {
-            draggable: true,
-        }).addTo(map!);
-
-        marker?.on("dragend", async (e: any) => {
-            const pos = e.target.getLatLng();
-            await handleLocation(pos.lat, pos.lng);
-        });
-    }
-};
-
-const currentPosition = (): Promise<GeolocationPosition> =>
-    new Promise((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-        }),
-    );
-
-const useMyLocation = async (): Promise<void> => {
-    if (!navigator.geolocation) {
-        alert("Geolocation is not supported.");
         return;
     }
 
-    try {
-        const {
-            coords: { latitude, longitude },
-        } = await currentPosition();
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-        map?.setView([latitude, longitude], 16);
+    marker!.on("dragstart", startMove);
+    marker!.on("dragend", (e: any) => {
+        const pos = e.target.getLatLng();
+        dragging.value = false;
+        movePin(pos.lat, pos.lng, "drag");
+    });
+    marker!.getElement()?.addEventListener("keydown", onMarkerKeydown);
+}
 
-        placeMarker(latitude, longitude);
-        await handleLocation(latitude, longitude);
+function useMyLocation() {
+    locateError.value = "";
 
-        const L = (window as any).L;
-
-        if (userMarker) userMarker.remove();
-
-        userMarker = L.circleMarker([latitude, longitude], {
-            radius: 8,
-            fillColor: "#3b82f6",
-            color: "#fff",
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.9,
-        })
-            .addTo(map!)
-            .bindPopup("<b>You are here</b>")
-            .openPopup();
-    } catch (error: any) {
-        console.warn("Location unavailable:", error?.message ?? error);
+    if (!navigator.geolocation) {
+        locateError.value =
+            "This browser can't share your location. Search or click the map instead.";
+        return;
     }
-};
+
+    navigator.geolocation.getCurrentPosition(
+        ({ coords: { latitude, longitude } }) => {
+            map?.setView([latitude, longitude], 17);
+            movePin(latitude, longitude, "gps");
+        },
+        (error) => {
+            console.warn("Location unavailable:", error?.message ?? error);
+            locateError.value =
+                "We couldn't get your location. Search or click the map instead.";
+        },
+        { enableHighAccuracy: true },
+    );
+}
+
+function defaultView(): [number, number] {
+    return props.initialLat && props.initialLng
+        ? [props.initialLat, props.initialLng]
+        : DEFAULT_CENTER;
+}
 
 const clearSelection = (): void => {
-    if (marker) {
-        marker.remove();
-        marker = null;
-    }
+    geoSeq++;
+    cancelSearch();
+    clearTimeout(nudgeTimer);
+    nudgeTimer = undefined;
 
-    if (userMarker) {
-        userMarker.remove();
-        userMarker = null;
-    }
+    marker?.remove();
+    marker = null;
 
+    hasPin.value = false;
     selectedLocation.value = null;
-    typedAddress.value = "";
-    typeError.value = "";
-    manual.value = false;
-    manualAddress.value = "";
-    manualError.value = "";
+    source.value = null;
+    resolving.value = false;
+    dragging.value = false;
+    noAddress.value = false;
+    lookupFailed.value = false;
+    locateError.value = "";
+    lastPickType.value = null;
+    picked.value = false;
+    query.value = "";
+    suggestions.value = [];
+    dropdownOpen.value = false;
 
     nextTick(() => {
         map?.invalidateSize();
@@ -477,9 +612,19 @@ const clearSelection = (): void => {
 
 defineExpose({ clearSelection });
 
+watch(
+    () => [props.initialLat, props.initialLng] as const,
+    ([lat, lng]) => {
+        if (!map || lat == null || lng == null || hasPin.value) return;
+
+        map.setView([lat, lng], 16);
+        placeMarker(lat, lng);
+        resolveAddress(lat, lng, null, true);
+    },
+);
+
 onMounted(async () => {
-    const L = (L_module as any).default ?? L_module;
-    (window as any).L = L;
+    L = (L_module as any).default ?? L_module;
 
     await import("leaflet/dist/leaflet.css");
     await nextTick();
@@ -496,10 +641,13 @@ onMounted(async () => {
             "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
     });
 
-    map = L.map(mapContainerEl.value, { attributionControl: false }).setView(
-        defaultView(),
-        13,
-    );
+    map = L.map(mapContainerEl.value, {
+        attributionControl: false,
+        zoomControl: false,
+    }).setView(defaultView(), props.initialLat && props.initialLng ? 16 : 13);
+
+    L.control.zoom({ position: "topright" }).addTo(map);
+    L.control.scale({ position: "bottomright", imperial: false }).addTo(map);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
@@ -509,235 +657,301 @@ onMounted(async () => {
     requestAnimationFrame(() => map?.invalidateSize());
     setTimeout(() => map?.invalidateSize(), 300);
 
-    if (
-        props.manualFallback &&
-        !(props.initialLat && props.initialLng) &&
-        props.initialStreet
-    ) {
-        manual.value = true;
-        manualAddress.value =
-            props.initialCity && props.initialStreet.includes(props.initialCity)
-                ? props.initialStreet
-                : [
-                      props.initialStreet,
-                      props.initialCity,
-                      props.initialProvince,
-                  ]
-                      .filter(Boolean)
-                      .join(", ");
-    }
+    const initialParts = [
+        props.initialStreet,
+        props.initialCity,
+        props.initialProvince,
+        props.initialCountry,
+    ].filter(Boolean) as string[];
 
     if (props.initialLat && props.initialLng) {
         placeMarker(props.initialLat, props.initialLng);
 
-        if (
-            props.initialStreet ||
-            props.initialCity ||
-            props.initialProvince ||
-            props.initialCountry
-        ) {
-            const labelParts = [
-                props.initialStreet,
-                props.initialCity,
-                props.initialProvince,
-                props.initialCountry,
-            ].filter(Boolean);
-
+        if (props.initialCity || props.initialProvince) {
             selectedLocation.value = {
                 lat: props.initialLat,
                 lng: props.initialLng,
-                label: labelParts.join(", "),
+                label: initialParts.join(", "),
                 street: props.initialStreet ?? "",
                 city: props.initialCity ?? "",
                 province: props.initialProvince ?? "",
                 country: props.initialCountry ?? "",
             };
+            query.value = selectedLocation.value.label;
         } else {
-            await reverseGeocode(props.initialLat, props.initialLng);
+            resolveAddress(props.initialLat, props.initialLng, null, true);
         }
+    } else if (initialParts.length) {
+        query.value =
+            props.initialCity &&
+            props.initialStreet?.includes(props.initialCity)
+                ? props.initialStreet
+                : initialParts.join(", ");
     }
 
-    mapClickHandler = async (e: any) => {
-        placeMarker(e.latlng.lat, e.latlng.lng);
-        await handleLocation(e.latlng.lat, e.latlng.lng);
+    mapClickHandler = (e: any) => {
+        dropdownOpen.value = false;
+        movePin(e.latlng.lat, e.latlng.lng, "map");
     };
 
     map?.on("click", mapClickHandler);
 });
 
 onUnmounted(() => {
+    cancelSearch();
+    clearTimeout(nudgeTimer);
+
     if (map && mapClickHandler) {
         map.off("click", mapClickHandler);
         mapClickHandler = null;
     }
 
-    if (map) {
-        map.remove();
-        map = null;
-    }
+    marker?.getElement()?.removeEventListener("keydown", onMarkerKeydown);
 
+    map?.remove();
+    map = null;
     marker = null;
-    userMarker = null;
 });
 </script>
+
 <template>
-    <div class="flex flex-col gap-2 w-full z-20">
-        <BaseInput
-            v-if="manual"
-            :model-value="manualAddress"
-            label="Location"
-            required
-            @update:model-value="onManualInput"
-            placeholder="House/unit no., street, barangay, city, province"
-            :error="manualError"
-            @focusout="applyManualAddress(true)"
-            @keydown.enter.prevent="applyManualAddress(true)"
-        />
-
-        <button
-            v-if="manual"
-            type="button"
-            class="self-start text-xs font-medium text-primary hover:underline"
-            @click="useMap"
-        >
-            Pick on the map instead
-        </button>
-
-        <div
-            v-show="!manual"
-            class="flex items-start gap-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm shadow-sm min-h-[48px]"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0 mt-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 0v8m0 0C8 14 5 11.314 5 9a7 7 0 1114 0c0 2.314-3 5-7 10z"
-                />
-            </svg>
-
-            <span
-                class="text-gray-600 dark:text-gray-300 flex-1 whitespace-normal break-words mt-1"
-            >
-                {{
-                    selectedLocation?.label ||
-                    (activeMode === "map"
-                        ? "Click the map to select a location"
-                        : "Type the address below")
-                }}
-            </span>
-
+    <div class="flex w-full flex-col gap-2">
+        <div class="relative z-30">
             <div
-                class="inline-flex shrink-0 rounded-lg border border-gray-200 p-0.5 dark:border-white/10"
+                class="flex h-11 items-center gap-2.5 rounded-lg border-[1.5px] border-slate-200 bg-white px-3 transition focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 dark:border-white/10 dark:bg-secondary"
             >
-                <button
-                    type="button"
-                    @click="switchMode('map')"
-                    :class="[
-                        'rounded px-2.5 py-1 text-xs font-medium transition-colors',
-                        activeMode === 'map'
-                            ? 'bg-primary text-white'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
-                    ]"
-                >
-                    Map
-                </button>
+                <Search
+                    class="h-4 w-4 shrink-0 text-slate-400 dark:text-gray-500"
+                />
+
+                <input
+                    ref="inputEl"
+                    :value="query"
+                    type="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    :aria-expanded="dropdownOpen"
+                    placeholder="Search a street, landmark or area"
+                    class="min-w-0 flex-1 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-gray-500"
+                    @input="onSearchInput"
+                    @focus="onSearchFocus"
+                    @blur="onSearchBlur"
+                    @keydown="onSearchKeydown"
+                />
+
+                <span
+                    v-if="searching"
+                    class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-primary dark:border-white/10 dark:border-t-primary"
+                />
 
                 <button
+                    v-else-if="query"
                     type="button"
-                    @click="switchMode('type')"
-                    :class="[
-                        'rounded px-2.5 py-1 text-xs font-medium transition-colors',
-                        activeMode === 'type'
-                            ? 'bg-primary text-white'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200',
-                    ]"
+                    aria-label="Clear search text"
+                    class="shrink-0 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200"
+                    @mousedown.prevent
+                    @click="clearSearch"
                 >
-                    Type
+                    <X class="h-3.5 w-3.5" />
                 </button>
             </div>
 
-            <button
-                v-if="selectedLocation"
-                type="button"
-                @click="clearSelection"
-                class="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors shrink-0"
-                title="Clear"
+            <div
+                v-if="dropdownOpen"
+                role="listbox"
+                class="absolute inset-x-0 top-full mt-1.5 max-h-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-white/10 dark:bg-secondary"
+                @mousedown.prevent
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4 mt-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <p
+                    v-if="searchFailed"
+                    class="px-3 py-2.5 text-sm text-slate-500 dark:text-gray-400"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                    />
-                </svg>
-            </button>
+                    We couldn't load suggestions. Try again, or click the map.
+                </p>
+
+                <p
+                    v-else-if="!suggestions.length"
+                    class="px-3 py-2.5 text-sm text-slate-500 dark:text-gray-400"
+                >
+                    No matches for “{{ query.trim() }}”. Try a landmark or
+                    street name, or click the map.
+                </p>
+
+                <template v-else>
+                <button
+                    v-for="(suggestion, index) in suggestions"
+                    :key="`${suggestion.name}-${suggestion.lat}-${suggestion.lng}`"
+                    type="button"
+                    role="option"
+                    :aria-selected="index === activeIndex"
+                    class="flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition"
+                    :class="
+                        index === activeIndex
+                            ? 'bg-primary-50 dark:bg-primary-500/10'
+                            : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                    "
+                    @mouseenter="activeIndex = index"
+                    @click="pickSuggestion(suggestion)"
+                >
+                    <span
+                        class="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400"
+                    >
+                        <component
+                            :is="iconFor(suggestion.type)"
+                            class="h-3.5 w-3.5"
+                        />
+                    </span>
+
+                    <span class="min-w-0 flex-1">
+                        <span
+                            class="block text-sm font-medium text-slate-800 dark:text-white"
+                        >
+                            <template
+                                v-for="(part, partIndex) in highlightParts(
+                                    suggestion.name,
+                                )"
+                                :key="partIndex"
+                            >
+                                <mark
+                                    v-if="part.match"
+                                    class="bg-transparent font-bold text-primary"
+                                    >{{ part.text }}</mark
+                                >
+                                <template v-else>{{ part.text }}</template>
+                            </template>
+                        </span>
+                        <span
+                            v-if="suggestion.detail"
+                            class="block truncate text-xs text-slate-500 dark:text-gray-400"
+                        >
+                            {{ suggestion.detail }}
+                        </span>
+                    </span>
+
+                    <span
+                        class="shrink-0 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-gray-500"
+                    >
+                        {{ kindLabel(suggestion.type) }}
+                    </span>
+                </button>
+                </template>
+            </div>
         </div>
 
-        <div
-            v-show="!manual && activeMode === 'type'"
-            class="flex flex-col gap-2 sm:flex-row"
-        >
-            <BaseInput
-                v-model="typedAddress"
-                class="flex-1"
-                placeholder='Type this address and click "Use this address" to generate the location'
-                :error="typeError"
-                @keydown.enter.prevent="applyTypedAddress"
+        <p class="text-xs" :class="helpClass">{{ help.text }}</p>
+
+        <div class="relative">
+            <div
+                ref="mapContainerEl"
+                class="relative z-0 isolate h-[400px] w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm dark:border-white/10"
             />
 
             <button
                 type="button"
-                :disabled="isLocating"
-                class="h-fit rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-                @click="applyTypedAddress"
+                class="absolute left-2.5 top-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
+                @click="useMyLocation"
             >
-                {{ isLocating ? "Locating..." : "Use this address" }}
+                <LocateFixed class="h-4 w-4 text-primary" />
+                My location
             </button>
         </div>
 
         <div
-            v-show="!manual && (activeMode === 'map' || selectedLocation)"
-            ref="mapContainerEl"
-            class="relative z-0 isolate w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm"
-        />
-
-        <div v-show="!manual && activeMode === 'map'" class="flex gap-2">
-            <button
-                type="button"
-                @click="useMyLocation"
-                class="flex items-center gap-2 px-5 py-2 text-sm bg-white dark:bg-secondary dark:text-white border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors shadow-sm"
+            class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 dark:border-white/10 dark:bg-white/5"
+        >
+            <span
+                class="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+                :class="
+                    !hasPin
+                        ? 'border border-slate-200 bg-white text-slate-400 dark:border-white/10 dark:bg-secondary dark:text-gray-500'
+                        : noAddress || lookupFailed
+                          ? 'bg-red-50 text-red-500 dark:bg-red-500/10 dark:text-red-400'
+                          : 'bg-primary-50 text-primary dark:bg-primary-500/10'
+                "
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-4 h-4 text-blue-500 dark:text-blue-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 0v4m0 12v4M2 12h4m12 0h4"
-                    />
-                </svg>
+                <MapPin class="h-4 w-4" />
+            </span>
 
-                My Location
-            </button>
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                <template v-if="!hasPin">
+                    <span
+                        class="text-sm font-medium text-slate-800 dark:text-white"
+                    >
+                        No pin yet
+                    </span>
+                    <span class="text-xs text-slate-500 dark:text-gray-400">
+                        The address appears here once you pick a suggestion
+                        or click the map.
+                    </span>
+                </template>
+
+                <template v-else>
+                    <span
+                        class="break-words text-sm font-medium text-slate-800 dark:text-white"
+                    >
+                        <template v-if="dragging">Moving pin…</template>
+                        <span
+                            v-else-if="resolving"
+                            class="inline-flex items-center gap-2"
+                        >
+                            <span
+                                class="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-primary dark:border-white/10 dark:border-t-primary"
+                            />
+                            Looking up address…
+                        </span>
+                        <template v-else-if="noAddress">
+                            No address at this spot
+                        </template>
+                        <template v-else-if="lookupFailed">
+                            We couldn't look up this address
+                        </template>
+                        <template v-else>
+                            {{ selectedLocation?.label }}
+                        </template>
+                    </span>
+
+                    <span
+                        class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs"
+                    >
+                        <span
+                            v-if="source && selectedLocation && !resolving && !dragging"
+                            class="rounded-full border border-slate-200 bg-white px-2 py-0.5 font-medium text-slate-500 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
+                        >
+                            {{ SOURCE_LABEL[source] }}
+                        </span>
+                        <button
+                            v-if="lookupFailed"
+                            type="button"
+                            class="font-medium text-primary hover:underline"
+                            @click="retryLookup"
+                        >
+                            Try again
+                        </button>
+                        <button
+                            type="button"
+                            class="font-medium text-primary hover:underline"
+                            @click="clearSelection"
+                        >
+                            Remove pin
+                        </button>
+                    </span>
+
+                    <span
+                        v-if="dragging"
+                        class="text-xs text-slate-500 dark:text-gray-400"
+                    >
+                        Let go to look up the address.
+                    </span>
+                    <span
+                        v-else-if="noAddress"
+                        class="text-xs text-red-500 dark:text-red-400"
+                    >
+                        Move the pin onto land or closer to a street.
+                    </span>
+                </template>
+            </div>
         </div>
     </div>
 </template>

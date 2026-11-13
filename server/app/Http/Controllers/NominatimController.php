@@ -7,6 +7,7 @@ use App\Service\Geo\GeoNamesService;
 use App\Service\Geo\IpGeolocationService;
 use App\Service\Geo\NominatimService;
 use App\Service\Geo\OverpassService;
+use App\Service\Geo\PhotonService;
 use Illuminate\Http\Request;
 
 class NominatimController extends Controller
@@ -17,7 +18,37 @@ class NominatimController extends Controller
         private NominatimService $nominatimService,
         private OverpassService $overpassService,
         private IpGeolocationService $ipGeolocationService,
+        private PhotonService $photonService,
     ) {}
+
+    public function suggest(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => 'required|string|min:3|max:200',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+        ]);
+
+        try {
+            $data = $this->photonService->suggest(
+                $validated['q'],
+                isset($validated['lat']) ? (float) $validated['lat'] : null,
+                isset($validated['lng']) ? (float) $validated['lng'] : null,
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => ExternalServiceException::THIRD_PARTY_ERROR,
+            ], 502);
+        }
+    }
 
     public function ipLocate(Request $request)
     {

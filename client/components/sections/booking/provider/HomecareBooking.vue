@@ -842,7 +842,6 @@
                             :initial-lng="model.longitude ?? undefined"
                             :initial-street="model.address || undefined"
                             ref="locationSelectorRef"
-                            manual-fallback
                             @location-selected="handleLocationSelected"
                             @location-cleared="handleLocationCleared"
                         />

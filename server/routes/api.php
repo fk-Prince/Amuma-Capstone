@@ -289,6 +289,7 @@ Route::get('/plans', [PlanController::class, 'index']);
 // LOCATIONS
 Route::get('/ip-locate', [NominatimController::class, 'ipLocate']);
 Route::get('/geocode', [NominatimController::class, 'geocode']);
+Route::get('/geocode/suggest', [NominatimController::class, 'suggest']);
 Route::get('/reverse-geocode', [NominatimController::class, 'reverse']);
 Route::get('/nereast-street', [NominatimController::class, 'nearest']);
 Route::get('/locations/search', [NominatimController::class, 'searchLocation']);

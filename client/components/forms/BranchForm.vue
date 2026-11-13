@@ -407,7 +407,6 @@
                     :initial-city="branch.location?.city || undefined"
                     :initial-province="branch.location?.province || undefined"
                     :initial-country="branch.location?.country || undefined"
-                    manual-fallback
                     @location-selected="handleLocation"
                     @location-cleared="clearLocation"
                     ref="locationSelectorRef"

@@ -681,7 +681,6 @@
                     :initial-city="agency.location?.city || undefined"
                     :initial-province="agency.location?.province || undefined"
                     :initial-country="agency.location?.country || undefined"
-                    manual-fallback
                     @location-selected="handleLocation"
                     @location-cleared="clearLocation"
                     ref="locationSelectorRef"
