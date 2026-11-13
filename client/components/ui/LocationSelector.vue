@@ -58,13 +58,6 @@ const ZOOM_BY_TYPE: Record<string, number> = {
     county: 12,
     state: 10,
 };
-const SOURCE_LABEL: Record<Source, string> = {
-    search: "via search",
-    map: "via map click",
-    drag: "via pin drag",
-    keyboard: "via arrow keys",
-    gps: "via my location",
-};
 
 const config = useRuntimeConfig();
 
@@ -914,12 +907,6 @@ onUnmounted(() => {
                     <span
                         class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs"
                     >
-                        <span
-                            v-if="source && selectedLocation && !resolving && !dragging"
-                            class="rounded-full border border-slate-200 bg-white px-2 py-0.5 font-medium text-slate-500 dark:border-white/10 dark:bg-secondary dark:text-gray-400"
-                        >
-                            {{ SOURCE_LABEL[source] }}
-                        </span>
                         <button
                             v-if="lookupFailed"
                             type="button"
