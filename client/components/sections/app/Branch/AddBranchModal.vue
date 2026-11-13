@@ -303,8 +303,9 @@
                                     >
                                         Additional branch on your
                                         {{ additionalOption?.plan_name }}
-                                        subscription. Its plan can't be
-                                        changed after you buy it.
+                                        subscription. You can upgrade it
+                                        later by paying the difference, but
+                                        you can't downgrade it.
                                     </p>
                                 </div>
 
