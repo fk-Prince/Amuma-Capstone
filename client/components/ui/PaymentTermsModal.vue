@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { X } from "lucide-vue-next";
 import BaseButton from "./BaseButton.vue";
 import PaymentTermsBody from "./PaymentTermsBody.vue";
 import type { PaymentTerms } from "~/utils/paymentTerms";
+import { useScrolledToEnd } from "~/composables/useScrolledToEnd";
 
 const props = withDefaults(
     defineProps<{
@@ -17,6 +18,14 @@ const emit = defineEmits<{
     close: [];
     accept: [];
 }>();
+
+const bodyEl = ref<HTMLElement | null>(null);
+const { reachedEnd, check } = useScrolledToEnd(bodyEl);
+
+watch(
+    () => props.terms,
+    () => nextTick(check),
+);
 
 function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") emit("close");
@@ -75,13 +84,23 @@ onBeforeUnmount(() => {
                     </button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+                <div
+                    ref="bodyEl"
+                    class="min-h-0 flex-1 overflow-y-auto px-6 py-5"
+                >
                     <PaymentTermsBody :terms="terms" />
                 </div>
 
                 <div
-                    class="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10"
+                    class="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10"
                 >
+                    <p
+                        v-if="showAccept && !reachedEnd"
+                        class="mr-auto text-xs text-slate-500 dark:text-gray-400"
+                    >
+                        Scroll to the end to agree.
+                    </p>
+
                     <BaseButton
                         v-if="showAccept"
                         variant="secondary"
@@ -94,6 +113,7 @@ onBeforeUnmount(() => {
                     <BaseButton
                         variant="primary"
                         size="md"
+                        :disabled="showAccept && !reachedEnd"
                         @click="showAccept ? emit('accept') : emit('close')"
                     >
                         {{ showAccept ? "I Agree" : "Close" }}

@@ -46,6 +46,16 @@ function acceptTerms() {
     showTerms.value = false;
 }
 
+function onTermsCheckbox(event: Event) {
+    if (agreedToTerms.value) {
+        agreedToTerms.value = false;
+        return;
+    }
+
+    event.preventDefault();
+    showTerms.value = true;
+}
+
 watch(agreedToTerms, () => {
     errors.value.terms = "";
 });
@@ -483,9 +493,10 @@ async function resendOtp() {
             <div class="mt-1">
                 <label class="flex cursor-pointer items-start gap-2">
                     <input
-                        v-model="agreedToTerms"
+                        :checked="agreedToTerms"
                         type="checkbox"
                         class="peer sr-only"
+                        @click="onTermsCheckbox"
                     />
 
                     <span

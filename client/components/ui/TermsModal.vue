@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { X } from "lucide-vue-next";
 import BaseButton from "./BaseButton.vue";
+import { useScrolledToEnd } from "~/composables/useScrolledToEnd";
 
 const emit = defineEmits<{
     close: [];
@@ -16,6 +17,9 @@ withDefaults(
 );
 
 const LAST_UPDATED = "October 13, 2026";
+
+const bodyEl = ref<HTMLElement | null>(null);
+const { reachedEnd } = useScrolledToEnd(bodyEl);
 
 function onKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") emit("close");
@@ -74,6 +78,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div
+                    ref="bodyEl"
                     class="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5 text-sm leading-6 text-slate-600 dark:text-gray-300"
                 >
                     <section>
@@ -292,8 +297,15 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div
-                    class="flex shrink-0 justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10"
+                    class="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-slate-100 px-6 py-4 dark:border-white/10"
                 >
+                    <p
+                        v-if="showAccept && !reachedEnd"
+                        class="mr-auto text-xs text-slate-500 dark:text-gray-400"
+                    >
+                        Scroll to the end to agree.
+                    </p>
+
                     <BaseButton
                         v-if="showAccept"
                         variant="secondary"
@@ -306,6 +318,7 @@ onBeforeUnmount(() => {
                     <BaseButton
                         variant="primary"
                         size="md"
+                        :disabled="showAccept && !reachedEnd"
                         @click="showAccept ? emit('accept') : emit('close')"
                     >
                         {{ showAccept ? "I Agree" : "Close" }}

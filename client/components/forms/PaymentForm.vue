@@ -154,6 +154,21 @@ watch(terms, () => {
     agreedToTerms.value = false;
 });
 
+function onTermsCheckbox(event: Event) {
+    if (agreedToTerms.value) {
+        agreedToTerms.value = false;
+        return;
+    }
+
+    event.preventDefault();
+    showTermsModal.value = true;
+}
+
+function acceptTerms() {
+    agreedToTerms.value = true;
+    showTermsModal.value = false;
+}
+
 const isCard = computed(() => checkout.payment_method === "CREDIT-CARD");
 const isGCash = computed(() => checkout.payment_method === "GCASH");
 const isCash = computed(() => checkout.payment_method === "CASH");
@@ -678,8 +693,9 @@ watch(isCash, (active) => {
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
-                        v-model="agreedToTerms"
+                        :checked="agreedToTerms"
                         class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                        @click="onTermsCheckbox"
                     />
 
                     <span class="text-xs text-slate-500 dark:text-gray-400">
@@ -807,8 +823,9 @@ watch(isCash, (active) => {
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
-                        v-model="agreedToTerms"
+                        :checked="agreedToTerms"
                         class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                        @click="onTermsCheckbox"
                     />
 
                     <span class="text-xs text-slate-500 dark:text-gray-400">
@@ -984,8 +1001,9 @@ watch(isCash, (active) => {
                 <div v-if="terms" class="flex items-start gap-2">
                     <input
                         type="checkbox"
-                        v-model="agreedToTerms"
+                        :checked="agreedToTerms"
                         class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                        @click="onTermsCheckbox"
                     />
 
                     <span class="text-xs text-slate-500 dark:text-gray-400">
@@ -1023,7 +1041,9 @@ watch(isCash, (active) => {
         <PaymentTermsModal
             v-if="showTermsModal && terms"
             :terms="terms"
+            show-accept
             @close="showTermsModal = false"
+            @accept="acceptTerms"
         />
     </div>
 </template>

@@ -200,8 +200,9 @@
             >
                 <label class="flex min-w-0 items-start gap-2">
                     <input
-                        v-model="agreedToTerms"
+                        :checked="agreedToTerms"
                         type="checkbox"
+                        @click="onTermsCheckbox"
                         class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
                     />
                     <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -395,6 +396,16 @@ const termsType = computed(() =>
 );
 
 const agreedToTerms = ref(false);
+
+function onTermsCheckbox(event: Event) {
+    if (agreedToTerms.value) {
+        agreedToTerms.value = false;
+        return;
+    }
+
+    event.preventDefault();
+    showTerms.value = true;
+}
 const showTerms = ref(false);
 const { terms: branchTerms } = useBranchTerms(uuid);
 const preTerms = computed(() =>
