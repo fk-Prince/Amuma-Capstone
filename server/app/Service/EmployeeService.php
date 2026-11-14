@@ -7,6 +7,7 @@ use App\Enums\PermissionAction;
 use App\Enums\RoleEnum;
 use App\Guard\AuthGuard;
 use App\Guard\BranchGuard;
+use App\Http\Resources\BranchLetterheadResource;
 use App\Http\Resources\EmployeeLeaveResource;
 use App\Http\Resources\EmployeeResource;
 use App\Http\Resources\EmployeeScheduleResource;
@@ -477,9 +478,7 @@ class EmployeeService
                 'role_name' => $payload['role_name'],
                 'assignment_type' => $this->assignmentTypeFor($payload['role_name'], $payload['assignment_type'] ?? null),
             ],
-            'branch' => [
-                'name' => $branch->name,
-            ],
+            'branch' => BranchLetterheadResource::for($branch),
             'access' => [
                 'email' => $user->email,
                 'default_password' => $password,

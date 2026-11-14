@@ -68,6 +68,7 @@
                     <BalanceStatementSheet
                         :branch="statementBranch"
                         :patient-name="summary?.patient?.full_name ?? 'Patient'"
+                        :patient-code="summary?.patient?.patient_code"
                         :lines="statementLines"
                         :total="statementTotal"
                         :issued-by="issuedBy"
@@ -1926,6 +1927,8 @@ import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
 import { transactionsSheet } from "~/utils/patientReportExcel";
 import { patientService } from "~/api/patient/PatientService";
 import BalanceStatementSheet from "~/components/sections/app/Billing/BalanceStatementSheet.vue";
+import { printBranchFrom } from "~/utils/print";
+import type { PrintBranch } from "~/types/print";
 import { useBranchStore } from "~/stores/branch";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { stringToDateTime } from "~/utils/time";
@@ -1986,17 +1989,11 @@ const branchStore = useBranchStore();
 const authUser = useAuthUser();
 const statementIssuedOn = ref("");
 
-const statementBranch = computed(() => {
-    const branch = branchStore.activeBranch;
-
-    return {
-        name: branch?.name ?? "",
-        image: typeof branch?.image === "string" ? branch.image : null,
-        address:
-            branch?.location?.address ?? branch?.location?.full_address ?? null,
-        contact: branch?.contact_number ?? null,
-    };
-});
+const statementBranch = computed<PrintBranch>(
+    () =>
+        statementReport.value?.branch ??
+        printBranchFrom(branchStore.activeBranch),
+);
 
 const statementLines = computed(() =>
     payableInvoices.value.map((invoice) => ({
@@ -2132,7 +2129,6 @@ async function printStatement() {
 
         statementIssuedOn.value = stringToDateTime(new Date());
         document.body.classList.add("printing-statement");
-        document.head.appendChild(statementPageStyle);
 
         await nextTick();
         await new Promise((resolve) =>
@@ -2141,17 +2137,10 @@ async function printStatement() {
 
         window.print();
     } finally {
-        statementPageStyle.remove();
         document.body.classList.remove("printing-statement");
         preparingStatement.value = false;
     }
 }
-
-const statementPageStyle = import.meta.client
-    ? Object.assign(document.createElement("style"), {
-          textContent: "@page { size: A4 portrait; margin: 12mm; }",
-      })
-    : (null as unknown as HTMLStyleElement);
 
 const uuid = computed(() => route.params.uuid as string);
 const patientUuid = computed(() => route.params.p_uuid as string);

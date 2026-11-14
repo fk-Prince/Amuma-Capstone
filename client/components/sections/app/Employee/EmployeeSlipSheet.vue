@@ -1,187 +1,107 @@
 <template>
-    <div
-        class="space-y-5 text-secondary"
-        :class="print ? 'bg-white p-8 text-black' : ''"
+    <PrintDocument
+        :branch="slip.branch"
+        title="Employee Slip"
+        :icon="IdCard"
+        doc-type="Staff Record"
+        :reference="slip.employee.employee_code ? `Ref. ${slip.employee.employee_code}` : null"
+        :lines="lines"
+        :footer-label="`${slip.employee.full_name || 'Employee'} · Employee Slip`"
+        :generated-at="generatedAt"
     >
-        <div
-            class="flex items-start justify-between gap-4 border-b border-gray-200 pb-4"
-        >
-            <div>
-                <p
-                    class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
-                >
-                    {{ slip.branch.name || "Amuma Care" }}
-                </p>
+        <h2 class="print-doc-subhead">
+            <KeyRound class="print-doc-icon" />
+            System access
+        </h2>
 
-                <h1
-                    class="mt-1 text-lg font-semibold"
-                    :class="print ? '' : 'dark:text-white'"
-                >
-                    Employee Slip
-                </h1>
-            </div>
-
-            <div class="text-right">
-                <p
-                    class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
-                >
-                    ID
-                </p>
-
-                <p
-                    class="text-sm font-semibold"
-                    :class="print ? '' : 'dark:text-white'"
-                >
-                    {{ slip.employee.employee_code }}
-                </p>
-            </div>
-        </div>
-
-        <section v-for="group in groups" :key="group.title" class="space-y-2">
-            <p
-                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
-            >
-                {{ group.title }}
-            </p>
-
-            <dl class="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-                <div
-                    v-for="row in group.rows"
-                    :key="row.label"
-                    class="flex items-baseline justify-between gap-3 border-b border-dashed border-gray-200 py-1"
-                >
-                    <dt class="text-[11px] text-muted dark:text-gray-400">
-                        {{ row.label }}
-                    </dt>
-
-                    <dd
-                        class="text-right text-[12px] font-medium"
-                        :class="print ? '' : 'dark:text-gray-100'"
-                    >
-                        {{ row.value }}
-                    </dd>
-                </div>
-            </dl>
-        </section>
-
-        <section
-            class="rounded-xl border border-gray-300 p-4"
-            :class="print ? '' : 'bg-slate-50 dark:bg-white/5'"
-        >
-            <p
-                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
-            >
-                System access
-            </p>
-
-            <div
-                class="mt-2 space-y-1 text-[11px] leading-5"
-                :class="
-                    print ? 'text-black' : 'text-gray-600 dark:text-gray-300'
-                "
-            >
-                <p>
-                    {{ slip.employee.full_name || "This employee" }} may sign in
-                    to Amuma with the credentials below.
-                </p>
-
-                <p>
-                    Email account/username:
-                    <span class="font-mono font-semibold">
-                        {{ slip.access.email }}
-                    </span>
-                </p>
-
+        <table class="print-doc-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="print-doc-key">Email / username</td>
+                    <td>
+                        <span class="print-doc-mono">{{ slip.access.email }}</span>
+                    </td>
+                </tr>
                 <template v-if="slip.access.default_password">
-                    <p>
-                        The password is
-                        <span class="font-semibold">lastnameYYYY</span>, where
-                        lastname is the employee's last name in lowercase and
-                        YYYY is their year of birth.
-                    </p>
-
-                    <p class="italic">
-                        e.g. for {{ exampleLastName }} born in
-                        {{ exampleYear }}, the password is
-                        <span class="font-mono font-semibold not-italic">
-                            {{ slip.access.default_password }}
-                        </span>
-                    </p>
-
-                    <p>
-                        Please change the password after the first sign in and
-                        keep this slip private.
-                    </p>
+                    <tr>
+                        <td class="print-doc-key">Default password</td>
+                        <td>
+                            lastnameYYYY: the employee's last name in lowercase,
+                            then their year of birth.
+                            <span class="print-doc-subtle">
+                                e.g. {{ exampleLastName }} born in
+                                {{ exampleYear }} →
+                                <span class="print-doc-mono">{{
+                                    slip.access.default_password
+                                }}</span>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="print-doc-key">First sign in</td>
+                        <td>Change the password right after the first sign in.</td>
+                    </tr>
                 </template>
-            </div>
-        </section>
+            </tbody>
+        </table>
 
-        <p
-            class="border-t border-gray-200 pt-3 text-[10px] text-muted dark:text-gray-500"
-        >
-            Issued {{ issuedAt }}
+        <p class="print-doc-note">
+            {{ slip.employee.full_name || "This employee" }} may sign in to
+            Amuma with the credentials above. Keep this slip private.
         </p>
-    </div>
+    </PrintDocument>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { formatDate, stringToDateTime } from "~/utils/time";
+import { IdCard, KeyRound } from "lucide-vue-next";
+import PrintDocument from "~/components/print/PrintDocument.vue";
+import { stringToDateTime } from "~/utils/time";
 import { formatPhone } from "~/utils/phone";
+import { calculateAge, formatRole } from "~/utils/user";
 import { formatAssignmentType } from "~/types/employee";
 import type { EmployeeSlip } from "~/types/employee-slip";
-import { formatRole } from "~/utils/user";
+import type { PrintLine } from "~/types/print";
 
 const props = defineProps<{
     slip: EmployeeSlip;
-    print?: boolean;
 }>();
 
-const issuedAt = computed(() => stringToDateTime(new Date()));
+const generatedAt = stringToDateTime(new Date());
 
-const groups = computed(() => {
-    const { employee, access } = props.slip;
+const lines = computed<PrintLine[]>(() => {
+    const { employee, access, branch } = props.slip;
 
     return [
+        { label: "Name", value: employee.full_name, strong: true },
+        { label: "Employee ID", value: employee.employee_code },
         {
-            title: "Employee",
-            rows: [
-                { label: "Name", value: employee.full_name },
-                {
-                    label: "Date of birth",
-                    value: formatDate(employee.birth_date),
-                },
-                { label: "Contact", value: formatPhone(employee.phone_number) },
-            ].filter((row) => !!row.value),
+            label: "Date of birth",
+            value: employee.birth_date ? calculateAge(employee.birth_date) : null,
+        },
+        { label: "Contact", value: formatPhone(employee.phone_number) },
+        {
+            label: "Position",
+            value: employee.role_name ? formatRole(employee.role_name) : null,
         },
         {
-            title: "Assignment",
-            rows: [
-                {
-                    label: "Position",
-                    value: employee.role_name
-                        ? formatRole(employee.role_name)
-                        : "",
-                },
-                ...(employee.assignment_type
-                    ? [
-                          {
-                              label: "Assignment",
-                              value: formatAssignmentType(
-                                  employee.assignment_type,
-                              ),
-                          },
-                      ]
-                    : []),
-                {
-                    label: "Modules granted",
-                    value: access.module_count
-                        ? String(access.module_count)
-                        : null,
-                },
-            ].filter((row) => !!row.value),
+            label: "Assignment",
+            value: employee.assignment_type
+                ? formatAssignmentType(employee.assignment_type)
+                : null,
         },
-    ].filter((group) => group.rows.length);
+        {
+            label: "Modules granted",
+            value: access.module_count ? String(access.module_count) : null,
+        },
+        { label: "Branch", value: branch.name },
+    ];
 });
 
 const exampleYear = computed(

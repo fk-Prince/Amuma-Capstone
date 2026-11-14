@@ -813,6 +813,7 @@ import { useAuthUser } from "~/composables/useAuthUser";
 import { useToast } from "~/composables/useToast";
 import { useBranchStore } from "~/stores/branch";
 import type { ChargeSlip } from "~/types/charge-slip";
+import { printBranchFrom } from "~/utils/print";
 import type { DiagnosisCase } from "~/types/additional-charge";
 import { formatCurrency } from "~/utils/currency";
 import { formatDate, getLocalDateStr } from "~/utils/time";
@@ -862,6 +863,7 @@ const route = useRoute();
 const props = defineProps<{
     patientUuid: string;
     patientName?: string | null;
+    patientCode?: string | null;
     admissionId?: number;
     admittedAt?: string | null;
 }>();
@@ -1207,16 +1209,16 @@ function openSlip(rows: PatientDiagnosis[]) {
     const user = authUser.value;
 
     slip.value = {
+        kind: "diagnosis",
         title: "Diagnosis Case Slip",
         section: "Diagnosis cases",
-        branch_name: branchStore.activeBranch?.name ?? null,
+        branch: printBranchFrom(branchStore.activeBranch),
         patient_name: props.patientName ?? null,
+        patient_code: props.patientCode ?? null,
         prepared_by: user
             ? [user.first_name, user.last_name].filter(Boolean).join(" ")
             : null,
         invoice_code: null,
-        wide: true,
-        diagnosis_table: true,
         hide_cashier_note: true,
         total_label: "Total",
         total: billed.reduce(

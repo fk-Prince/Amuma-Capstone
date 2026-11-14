@@ -1,3 +1,5 @@
+import type { PrintBranch } from "~/types/print";
+
 export interface AdmissionSlipPatient {
     patient_uuid: string | null;
     patient_code?: string | null;
@@ -24,6 +26,13 @@ export interface AdmissionSlipInvoice {
     total_amount: number;
 }
 
+export interface AdmissionSlipDiagnosisCase {
+    diagnosis: string | null;
+    diagnosis_case: string | null;
+    billed: string | null;
+    amount: number;
+}
+
 export interface AdmissionSlipPortal {
     name: string | null;
     email: string | null;
@@ -31,14 +40,12 @@ export interface AdmissionSlipPortal {
     default_password: string | null;
 }
 
-export interface AdmissionSlipBranch {
-    name: string | null;
-}
-
 export interface AdmissionSlip {
-    branch: AdmissionSlipBranch;
+    branch: PrintBranch;
     patient: AdmissionSlipPatient;
     admission: AdmissionSlipAdmission;
     invoice: AdmissionSlipInvoice;
+    diagnosis_cases?: AdmissionSlipDiagnosisCase[];
+    diagnosis_invoice?: AdmissionSlipInvoice | null;
     portal: AdmissionSlipPortal;
 }

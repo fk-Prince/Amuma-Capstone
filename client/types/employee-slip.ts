@@ -1,3 +1,5 @@
+import type { PrintBranch } from "~/types/print";
+
 export interface EmployeeSlipEmployee {
     employee_id: number;
     employee_code: string | null;
@@ -9,10 +11,6 @@ export interface EmployeeSlipEmployee {
     assignment_type: string | null;
 }
 
-export interface EmployeeSlipBranch {
-    name: string | null;
-}
-
 export interface EmployeeSlipAccess {
     email: string | null;
     default_password: string | null;
@@ -21,6 +19,6 @@ export interface EmployeeSlipAccess {
 
 export interface EmployeeSlip {
     employee: EmployeeSlipEmployee;
-    branch: EmployeeSlipBranch;
+    branch: PrintBranch;
     access: EmployeeSlipAccess;
 }

@@ -6,7 +6,7 @@
             @click.self="emit('close')"
         >
             <div
-                class="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
+                class="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
             >
                 <div
                     class="flex items-start justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-white/10"
@@ -34,8 +34,14 @@
                     </button>
                 </div>
 
-                <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-                    <AdmissionSlipSheet :slip="slip" />
+                <div
+                    class="min-h-0 flex-1 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-6 dark:bg-black/20"
+                >
+                    <div
+                        class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-black/10 sm:p-8"
+                    >
+                        <AdmissionSlipSheet :slip="slip" />
+                    </div>
                 </div>
 
                 <div
@@ -65,7 +71,7 @@
     <!-- Lives outside the dialog so the print stylesheet can keep this alone. -->
     <Teleport to="body">
         <div v-if="slip" class="print-slip-sheet hidden print:block">
-            <AdmissionSlipSheet :slip="slip" print />
+            <AdmissionSlipSheet :slip="slip" />
         </div>
     </Teleport>
 </template>

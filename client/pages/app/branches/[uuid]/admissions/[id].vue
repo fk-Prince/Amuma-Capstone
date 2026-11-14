@@ -812,6 +812,7 @@
                     <AdmissionDiagnosisPanel
                         :patient-uuid="id"
                         :patient-name="patient?.full_name"
+                        :patient-code="patient?.patient_code"
                         :admission-id="(currentAdmission ?? latestAdmission)?.patient_admission_id"
                         :admitted-at="(currentAdmission ?? latestAdmission)?.admitted_at"
                         @close="diagnosisView = false"
@@ -1110,6 +1111,7 @@
             :open="chargeModalOpen"
             :patient-uuid="id"
             :patient-name="patient?.full_name"
+            :patient-code="patient?.patient_code"
             :branch-uuid="uuid"
             :current-admission-id="
                 isAdmitted
@@ -1163,6 +1165,7 @@ import ChargeSlipModal from "~/components/sections/app/Admission/ChargeSlipModal
 import { Printer } from "lucide-vue-next";
 import { useAuthUser } from "~/composables/useAuthUser";
 import type { ChargeSlip } from "~/types/charge-slip";
+import { printBranchFrom } from "~/utils/print";
 import PlanLockNotice from "~/components/ui/PlanLockNotice.vue";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 import { useBranchStore } from "~/stores/branch";
@@ -1250,12 +1253,12 @@ function openBalanceSlip() {
     const user = authUser.value;
 
     balanceSlip.value = {
+        kind: "balance",
         title: "Balance Slip",
         section: "Patient balances",
         column_labels: ["Description", "Balance"],
         total_label: "Total balance",
-        wide: true,
-        branch_name: branchStore.activeBranch?.name ?? null,
+        branch: printBranchFrom(branchStore.activeBranch),
         patient_name: patient.value?.full_name ?? null,
         patient_code: patient.value?.patient_code ?? null,
         prepared_by: user

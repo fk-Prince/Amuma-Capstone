@@ -6,8 +6,7 @@
             @click.self="emit('close')"
         >
             <div
-                class="flex max-h-[88vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
-                :class="slip.wide ? 'max-w-[210mm]' : 'max-w-xl'"
+                class="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 dark:bg-secondary"
             >
                 <div
                     class="flex items-start justify-between gap-3 border-b border-primary-100 px-6 py-4 dark:border-white/10"
@@ -37,10 +36,13 @@
                 </div>
 
                 <div
-                    class="min-h-0 flex-1 overflow-y-auto px-6 py-5"
-                    :class="slip.wide ? 'min-h-[70vh] sm:px-12 sm:py-8' : ''"
+                    class="min-h-0 flex-1 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-6 dark:bg-black/20"
                 >
-                    <ChargeSlipSheet :slip="slip" />
+                    <div
+                        class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-black/10 sm:p-8"
+                    >
+                        <ChargeSlipSheet :slip="slip" />
+                    </div>
                 </div>
 
                 <div
@@ -69,7 +71,7 @@
 
     <Teleport to="body">
         <div v-if="slip" class="print-slip-sheet hidden print:block">
-            <ChargeSlipSheet :slip="slip" print />
+            <ChargeSlipSheet :slip="slip" />
         </div>
     </Teleport>
 </template>

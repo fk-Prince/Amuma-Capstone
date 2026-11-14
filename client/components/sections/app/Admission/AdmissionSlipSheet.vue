@@ -1,201 +1,252 @@
 <template>
-    <div
-        class="space-y-5 text-secondary"
-        :class="print ? 'bg-white p-8 text-black' : ''"
+    <PrintDocument
+        :branch="slip.branch"
+        title="Admission Slip"
+        :icon="BedDouble"
+        doc-type="Admission Record"
+        :reference="slip.patient.patient_code ? `Ref. ${slip.patient.patient_code}` : null"
+        :lines="lines"
+        :footer-label="`${slip.patient.full_name || 'Patient'} · Admission Slip`"
+        :generated-at="generatedAt"
     >
-        <div
-            class="flex items-start justify-between gap-4 border-b border-gray-200 pb-4"
-        >
-            <div>
-                <p
-                    class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
-                >
-                    {{ slip.branch?.name || "Amuma Care" }}
-                </p>
+        <h2 class="print-doc-subhead">
+            <BedDouble class="print-doc-icon" />
+            Admission
+        </h2>
 
-                <h1
-                    class="mt-1 text-lg font-semibold"
-                    :class="print ? '' : 'dark:text-white'"
-                >
-                    Admission Slip
-                </h1>
-            </div>
+        <table class="print-doc-table">
+            <thead>
+                <tr>
+                    <th>Admitted</th>
+                    <th>Covered until</th>
+                    <th>Accommodation</th>
+                    <th>Room / Bed</th>
+                    <th>Billing cycle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="print-doc-strong">
+                        {{ formatDate(slip.admission.admitted_at) }}
+                    </td>
+                    <td>{{ formatDate(slip.admission.discharged_at) }}</td>
+                    <td>{{ accommodation }}</td>
+                    <td>{{ roomAndBed }}</td>
+                    <td>{{ printLabel(slip.admission.billing_cycle) || "—" }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-            <div v-if="slip.patient.patient_code" class="text-right">
-                <p
-                    class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted dark:text-gray-400"
-                >
-                    Patient Code
-                </p>
+        <template v-if="diagnosisCases.length">
+            <h2 class="print-doc-subhead">
+                <Stethoscope class="print-doc-icon" />
+                Diagnosis cases
+            </h2>
 
-                <p
-                    class="text-sm font-semibold"
-                    :class="print ? '' : 'dark:text-white'"
-                >
-                    {{ slip.patient.patient_code }}
-                </p>
-            </div>
-        </div>
+            <table class="print-doc-table">
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>Diagnosis case</th>
+                        <th>Billed</th>
+                        <th class="print-doc-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(row, index) in diagnosisCases" :key="index">
+                        <td class="print-doc-strong">{{ row.diagnosis || "—" }}</td>
+                        <td>{{ row.diagnosis_case || "—" }}</td>
+                        <td>{{ printLabel(row.billed) || "Once" }}</td>
+                        <td class="print-doc-right">{{ money(row.amount) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </template>
 
-        <section v-for="group in groups" :key="group.title" class="space-y-2">
-            <p
-                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
-            >
-                {{ group.title }}
-            </p>
+        <h2 class="print-doc-subhead">
+            <Receipt class="print-doc-icon" />
+            Billing
+        </h2>
 
-            <dl class="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
-                <div
-                    v-for="row in group.rows"
-                    :key="row.label"
-                    class="flex items-baseline justify-between gap-3 border-b border-dashed border-gray-200 py-1"
-                >
-                    <dt class="text-[11px] text-muted dark:text-gray-400">
-                        {{ row.label }}
-                    </dt>
+        <table class="print-doc-table">
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>For</th>
+                    <th class="print-doc-right">Amount due</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="row in invoices" :key="row.code">
+                    <td class="print-doc-strong">{{ row.code }}</td>
+                    <td>{{ row.label }}</td>
+                    <td class="print-doc-right">{{ money(row.amount) }}</td>
+                </tr>
+                <tr v-if="invoices.length > 1" class="print-doc-total">
+                    <td colspan="2">Total due</td>
+                    <td class="print-doc-right">{{ money(totalDue) }}</td>
+                </tr>
+            </tbody>
+        </table>
 
-                    <dd
-                        class="text-right text-[12px] font-medium"
-                        :class="print ? '' : 'dark:text-gray-100'"
-                    >
-                        {{ row.value }}
-                    </dd>
-                </div>
-            </dl>
-        </section>
+        <h2 class="print-doc-subhead">
+            <Users class="print-doc-icon" />
+            Family portal access
+        </h2>
 
-        <section
-            class="rounded-xl border border-gray-300 p-4"
-            :class="print ? '' : 'bg-slate-50 dark:bg-white/5'"
-        >
-            <p
-                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted dark:text-gray-400"
-            >
-                Family portal access
-            </p>
-
-            <div
-                class="mt-2 space-y-1 text-[11px] leading-5"
-                :class="
-                    print ? 'text-black' : 'text-gray-600 dark:text-gray-300'
-                "
-            >
-                <p>
-                    {{ slip.portal.name || "The guardian" }} may access the
-                    family portal to follow this admission. The account
-                    credentials are:
-                </p>
-
-                <p>
-                    Email account/username:
-                    <span class="font-mono font-semibold">
-                        {{ slip.portal.email }}
-                    </span>
-                </p>
-
+        <table class="print-doc-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-if="slip.portal.name">
+                    <td class="print-doc-key">Account holder</td>
+                    <td>{{ slip.portal.name }}</td>
+                </tr>
+                <tr>
+                    <td class="print-doc-key">Email / username</td>
+                    <td>
+                        <span class="print-doc-mono">{{ slip.portal.email }}</span>
+                    </td>
+                </tr>
                 <template v-if="slip.portal.default_password">
-                    <p>
-                        The password is
-                        <span class="font-semibold">lastnameYYYY</span>, where
-                        lastname is the account holder's last name in lowercase
-                        and YYYY is the year the account was created.
-                    </p>
-
-                    <p class="italic">
-                        e.g. for {{ exampleLastName }} created in
-                        {{ exampleYear }}, the password is
-                        <span class="font-mono font-semibold not-italic">
-                            {{ slip.portal.default_password }}
-                        </span>
-                    </p>
-
-                    <p>
-                        Please change the password after the first sign in and
-                        keep this slip private.
-                    </p>
+                    <tr>
+                        <td class="print-doc-key">Default password</td>
+                        <td>
+                            lastnameYYYY: the account holder's last name in
+                            lowercase, then the year the account was created.
+                            <span class="print-doc-subtle">
+                                e.g. {{ exampleLastName }} created in
+                                {{ exampleYear }} →
+                                <span class="print-doc-mono">{{
+                                    slip.portal.default_password
+                                }}</span>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="print-doc-key">First sign in</td>
+                        <td>Change the password right after the first sign in.</td>
+                    </tr>
                 </template>
+                <template v-else>
+                    <tr>
+                        <td class="print-doc-key">Account</td>
+                        <td>
+                            Linked to an existing Amuma account. This admission
+                            was added to it.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="print-doc-key">Password</td>
+                        <td>
+                            Unchanged. Sign in with the password already used
+                            for this email.
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
 
-                <p v-else>
-                    This email already has an Amuma account, so it keeps its
-                    existing password. This admission was added to it.
-                </p>
-            </div>
-        </section>
-
-        <p
-            class="border-t border-gray-200 pt-3 text-[10px] text-muted dark:text-gray-500"
-        >
-            Issued {{ issuedAt }}
+        <p class="print-doc-note">
+            {{ slip.portal.name || "The guardian" }} may use the family portal
+            to follow this admission. Keep this slip private.
         </p>
-    </div>
+    </PrintDocument>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { BedDouble, Receipt, Stethoscope, Users } from "lucide-vue-next";
+import PrintDocument from "~/components/print/PrintDocument.vue";
 import { formatAmount } from "~/utils/currency";
 import { formatPhone } from "~/utils/phone";
+import { printLabel } from "~/utils/print";
 import { formatDate, stringToDateTime } from "~/utils/time";
+import { calculateAge } from "~/utils/user";
 import type { AdmissionSlip } from "~/types/admission-slip";
+import type { PrintLine } from "~/types/print";
 
 const props = defineProps<{
     slip: AdmissionSlip;
-    print?: boolean;
 }>();
 
-const issuedAt = computed(() => stringToDateTime(new Date()));
+const generatedAt = stringToDateTime(new Date());
 
-const groups = computed(() => {
-    const { patient, admission, invoice } = props.slip;
+const lines = computed<PrintLine[]>(() => {
+    const { patient } = props.slip;
 
-    const roomAndBed = [
-        admission.floor ? `${admission.floor} Floor` : null,
-        admission.room,
-        admission.bed,
-    ]
-        .filter(Boolean)
-        .join(" · ");
+    return [
+        { label: "Patient ID", value: patient.patient_code },
+        { label: "Gender", value: printLabel(patient.gender) },
+        { label: "Name", value: patient.full_name, strong: true },
+        { label: "Contact", value: formatPhone(patient.phone_number) },
+        {
+            label: "Date of birth",
+            value: patient.date_of_birth ? calculateAge(patient.date_of_birth) : null,
+        },
+    ];
+});
+
+const accommodation = computed(() => {
+    const type = props.slip.admission.accommodation_type;
+
+    if (!type) return "—";
+
+    return type.toUpperCase() === "VIP" ? "VIP" : printLabel(type);
+});
+
+const roomAndBed = computed(() => {
+    const { room, bed, floor } = props.slip.admission;
+
+    return (
+        [
+            room ? `Room ${room}` : null,
+            bed ? `Bed ${bed}` : null,
+            floor ? `${floor} floor` : null,
+        ]
+            .filter(Boolean)
+            .join(" · ") || "—"
+    );
+});
+
+const diagnosisCases = computed(() => props.slip.diagnosis_cases ?? []);
+
+const invoices = computed(() => {
+    const { invoice, diagnosis_invoice, admission } = props.slip;
+    const plan = [accommodation.value, printLabel(admission.billing_cycle)]
+        .filter((part) => part && part !== "—")
+        .join(", ");
 
     return [
         {
-            title: "Patient",
-            rows: [
-                { label: "Name", value: patient.full_name },
-                {
-                    label: "Date of birth",
-                    value: formatDate(patient.date_of_birth),
-                },
-                { label: "Gender", value: patient.gender },
-                { label: "Contact", value: formatPhone(patient.phone_number) },
-            ].filter((row) => !!row.value),
+            code: invoice.invoice_code ?? "—",
+            label: plan ? `Accommodation · ${plan}` : "Accommodation",
+            amount: Number(invoice.total_amount ?? 0),
         },
-        {
-            title: "Admission",
-            rows: [
-                { label: "Admitted", value: formatDate(admission.admitted_at) },
-                {
-                    label: "Covered until",
-                    value: formatDate(admission.discharged_at),
-                },
-                { label: "Accommodation", value: admission.accommodation_type },
-                { label: "Room & Bed", value: roomAndBed },
-                { label: "Billing cycle", value: admission.billing_cycle },
-            ].filter((row) => !!row.value),
-        },
-        {
-            title: "Billing",
-            rows: [
-                { label: "Invoice", value: invoice.invoice_code },
-                {
-                    label: "Amount due",
-                    value: `₱${formatAmount(invoice.total_amount, { treatMissingAsZero: true })}`,
-                },
-            ].filter((row) => !!row.value),
-        },
-    ].filter((group) => group.rows.length);
+        ...(diagnosis_invoice
+            ? [
+                  {
+                      code: diagnosis_invoice.invoice_code ?? "—",
+                      label: "Diagnosis cases",
+                      amount: Number(diagnosis_invoice.total_amount ?? 0),
+                  },
+              ]
+            : []),
+    ];
 });
 
-// Split back out of the password itself so the worked example on the slip
-// always matches what was actually set.
+const totalDue = computed(() =>
+    invoices.value.reduce((sum, row) => sum + row.amount, 0),
+);
+
+function money(value: unknown) {
+    return `₱${formatAmount(Number(value ?? 0), { treatMissingAsZero: true })}`;
+}
+
 const exampleYear = computed(
     () => props.slip.portal.default_password?.match(/\d{4}$/)?.[0] ?? "",
 );

@@ -35,15 +35,7 @@ class PatientReportResource extends JsonResource
                 'avatar' => $patient->avatar,
                 'branch_name' => $patient->branch?->name,
             ],
-            'branch' => [
-                'name' => $patient->branch?->name,
-                'image' => $patient->branch?->image,
-                'address' => $patient->branch?->location?->full_address,
-                'contact_number' => $patient->branch?->contact_number,
-                'email' => $patient->branch?->email,
-                'tin' => data_get($patient->branch?->settings, 'tin'),
-                'agency_name' => $patient->branch?->agencies?->name,
-            ],
+            'branch' => BranchLetterheadResource::for($patient->branch),
             'generated_at' => now()->toIso8601String(),
             'sections' => array_keys($sections),
         ];

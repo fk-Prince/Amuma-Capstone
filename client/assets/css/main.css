@@ -249,6 +249,16 @@ html.dark ::-webkit-scrollbar-thumb:hover {
     html:has(body.printing-statement) {
         height: auto !important;
     }
+
+    .print-slip-sheet,
+    .print-statement-sheet {
+        page: amuma-a4;
+    }
+
+    @page amuma-a4 {
+        size: A4 portrait;
+        margin: 12mm;
+    }
 }
 
 /* The AMUMA wordmark: a soft light sweeps across the letters. */

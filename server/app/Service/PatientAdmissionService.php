@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Http\Resources\BookingResource;
+use App\Http\Resources\BranchLetterheadResource;
 use App\Guard\GuardianEmailGuard;
 use App\Models\AdmissionChargeDiagnosis;
 use App\Models\AdmissionDiagnosis;
@@ -1583,14 +1584,16 @@ class PatientAdmissionService
                 'price'               => $payload['payment']['total_amount'],
             ]);
 
-            $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
+            $diagnosisInvoice = $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
                 'message' => 'Walk-in admission created successfully.',
                 'data' => $this->admissionSlip(
                     $admission,
                     $invoice,
-                    $data['credentials'] ?? []
+                    $data['credentials'] ?? [],
+                    $fees,
+                    $diagnosisInvoice
                 ),
             ];
         });
@@ -1634,18 +1637,21 @@ class PatientAdmissionService
         ];
     }
 
-    private function admissionSlip(object $admission, object $invoice, array $credentials): array
-    {
-        $admission->load('patient.branch', 'bed.room', 'currentPeriod.branchContract');
+    private function admissionSlip(
+        object $admission,
+        object $invoice,
+        array $credentials,
+        Collection $fees,
+        ?Invoice $diagnosisInvoice
+    ): array {
+        $admission->load('patient.branch.location', 'patient.branch.agencies', 'bed.room', 'currentPeriod.branchContract');
 
         $patient = $admission->patient;
         $bed = $admission->bed;
         $contract = $admission->currentPeriod?->branchContract;
 
         return [
-            'branch' => [
-                'name' => $patient?->branch?->name,
-            ],
+            'branch' => BranchLetterheadResource::for($patient?->branch),
 
             'patient' => [
                 'patient_uuid' => $patient?->uuid,
@@ -1672,6 +1678,21 @@ class PatientAdmissionService
                 'invoice_code' => $invoice->invoice_code,
                 'total_amount' => (float) $invoice->total_amount,
             ],
+
+            'diagnosis_cases' => $fees
+                ->map(fn(array $fee) => [
+                    'diagnosis' => $fee['diagnosis']->diagnosis,
+                    'diagnosis_case' => $fee['case']?->title,
+                    'billed' => $fee['billed'] ?? null,
+                    'amount' => round((float) $fee['amount'], 2),
+                ])
+                ->values()
+                ->all(),
+
+            'diagnosis_invoice' => $diagnosisInvoice ? [
+                'invoice_code' => $diagnosisInvoice->invoice_code,
+                'total_amount' => (float) $diagnosisInvoice->total_amount,
+            ] : null,
 
             'portal' => $credentials,
         ];

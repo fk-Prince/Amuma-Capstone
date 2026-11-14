@@ -200,6 +200,7 @@ import ChargeSlipModal from "~/components/sections/app/Admission/ChargeSlipModal
 import { useAuthUser } from "~/composables/useAuthUser";
 import { useBranchStore } from "~/stores/branch";
 import type { ChargeSlip } from "~/types/charge-slip";
+import { printBranchFrom } from "~/utils/print";
 import { additionalChargeService } from "~/api/additional-charge/AdditionalChargeService";
 import { useToast } from "~/composables/useToast";
 import { formatCurrency } from "~/utils/currency";
@@ -216,6 +217,7 @@ const props = withDefaults(
         branchUuid: string;
         patientUuid: string;
         patientName?: string | null;
+        patientCode?: string | null;
         currentAdmissionId?: number | null;
         addable?: boolean;
         canAdd?: boolean;
@@ -223,6 +225,7 @@ const props = withDefaults(
     }>(),
     {
         patientName: null,
+        patientCode: null,
         currentAdmissionId: null,
         addable: true,
         canAdd: false,
@@ -249,8 +252,10 @@ function openSlip(invoiceCode: string | null, source: AdditionalCharge[]) {
     const user = authUser.value;
 
     slip.value = {
-        branch_name: branchStore.activeBranch?.name ?? null,
+        kind: "charge",
+        branch: printBranchFrom(branchStore.activeBranch),
         patient_name: props.patientName ?? null,
+        patient_code: props.patientCode ?? null,
         prepared_by: user
             ? [user.first_name, user.last_name].filter(Boolean).join(" ")
             : null,

@@ -992,12 +992,13 @@ function formatDateTime(value?: string) {
 }
 
 @media print {
-    @page {
+    @page patient-report {
         size: A4 portrait;
         margin: 0;
     }
 
     .patient-print-report {
+        page: patient-report;
         display: block;
         font-family: ui-sans-serif, system-ui, sans-serif;
         color: #000000;
