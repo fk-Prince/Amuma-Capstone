@@ -8,6 +8,18 @@ export interface PrintBranch {
     agency_name?: string | null;
 }
 
+export interface StatementInvoice {
+    invoice_code: string;
+    created_at: string | null;
+    description: string;
+    status: string;
+    original_total: number;    total: number;
+    paid: number;
+    refunded: number;
+    written_off: number;
+    balance: number;
+}
+
 export interface PrintLine {
     label: string;
     value?: string | null;

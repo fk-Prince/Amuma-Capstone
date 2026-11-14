@@ -65,15 +65,18 @@
                     v-if="canPrintStatement"
                     class="print-statement-sheet hidden print:block"
                 >
-                    <BalanceStatementSheet
+                    <AccountStatementSheet
                         :branch="statementBranch"
                         :patient-name="summary?.patient?.full_name ?? 'Patient'"
                         :patient-code="summary?.patient?.patient_code"
-                        :lines="statementLines"
-                        :total="statementTotal"
+                        :invoices="statementInvoices"
                         :issued-by="issuedBy"
                         :issued-on="statementIssuedOn"
-                        :transactions="statementReport?.transactions ?? []"
+                        :transactions="
+                            statementReport
+                                ? (statementReport.transactions ?? [])
+                                : undefined
+                        "
                     />
                 </div>
             </Teleport>
@@ -1926,9 +1929,9 @@ import { FileSpreadsheet, Loader2, Printer, Receipt, Undo2 } from "lucide-vue-ne
 import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
 import { transactionsSheet } from "~/utils/patientReportExcel";
 import { patientService } from "~/api/patient/PatientService";
-import BalanceStatementSheet from "~/components/sections/app/Billing/BalanceStatementSheet.vue";
-import { printBranchFrom } from "~/utils/print";
-import type { PrintBranch } from "~/types/print";
+import AccountStatementSheet from "~/components/sections/app/Billing/AccountStatementSheet.vue";
+import { printBranchFrom, printLabel } from "~/utils/print";
+import type { PrintBranch, StatementInvoice } from "~/types/print";
 import { useBranchStore } from "~/stores/branch";
 import { useAuthUser } from "~/composables/useAuthUser";
 import { stringToDateTime } from "~/utils/time";
@@ -1995,15 +1998,24 @@ const statementBranch = computed<PrintBranch>(
         printBranchFrom(branchStore.activeBranch),
 );
 
-const statementLines = computed(() =>
-    payableInvoices.value.map((invoice) => ({
-        description: invoice.description?.trim() || "Charges",
-        amount: Number(invoice.balance_due ?? 0),
-    })),
-);
-
-const statementTotal = computed(() =>
-    statementLines.value.reduce((sum, line) => sum + line.amount, 0),
+const statementInvoices = computed<StatementInvoice[]>(() =>
+    [...(summary.value?.invoices ?? [])]
+        .sort(
+            (a, b) =>
+                new Date(a.created_at ?? 0).getTime() -
+                new Date(b.created_at ?? 0).getTime(),
+        )
+        .map((invoice) => ({
+            invoice_code: invoice.invoice_code,
+            created_at: invoice.created_at,
+            description: invoice.description?.trim() || "Charges",
+            status: invoice.status,
+            original_total: Number(invoice.original_total ?? invoice.total ?? 0),            total: Number(invoice.total ?? 0),
+            paid: Number(invoice.amount_paid ?? 0),
+            refunded: Number(invoice.refunded_amount ?? 0),
+            written_off: Number(invoice.written_off_amount ?? 0),
+            balance: Number(invoice.balance_due ?? 0),
+        })),
 );
 
 const issuedBy = computed(() => {
@@ -2014,9 +2026,7 @@ const issuedBy = computed(() => {
 });
 
 const canPrintStatement = computed(
-    () =>
-        canExport(Modules.BillingAndInvoices) &&
-        Number(summary.value?.total_balance ?? 0) > 0,
+    () => !!summary.value && canExport(Modules.BillingAndInvoices),
 );
 
 const preparingStatement = ref(false);
@@ -2037,16 +2047,6 @@ async function loadStatementTransactions() {
     }
 }
 
-onMounted(() => {
-    watch(
-        canPrintStatement,
-        (allowed) => {
-            if (allowed) loadSection("invoices");
-        },
-        { immediate: true },
-    );
-});
-
 async function ensureInvoicesLoaded() {
     await loadSection("invoices");
 
@@ -2064,12 +2064,12 @@ async function exportStatement() {
     try {
         await ensureInvoicesLoaded();
 
-        if (!statementLines.value.length) {
-            error("There are no balances to export for this patient.");
-            return;
-        }
-
         const patientName = summary.value?.patient?.full_name ?? "Patient";
+        const rows = statementInvoices.value;
+        const sum = (
+            key: "original_total" | "total" | "paid" | "refunded" | "written_off" | "balance",
+        ) =>
+            rows.reduce((total, row) => total + row[key], 0);
 
         await loadStatementTransactions();
 
@@ -2082,16 +2082,49 @@ async function exportStatement() {
                         [statementBranch.value.name],
                         ["Statement of Account"],
                         ["Patient", patientName],
+                        ["Patient ID", summary.value?.patient?.patient_code ?? ""],
                         ["Issued on", stringToDateTime(new Date())],
                         ["Issued by", issuedBy.value],
                         [],
-                        ["Description", "Balance due"],
-                        ...statementLines.value.map((line) => [
-                            line.description,
-                            moneyCell(line.amount),
-                        ]),
+                        [
+                            "Invoice",
+                            "Date",
+                            "Description",
+                            "Status",
+                            "Original total",
+                            "Total",
+                            "Paid",
+                            "Refunded",
+                            "Written off",
+                            "Balance",
+                        ],
+                        ...(rows.length
+                            ? rows.map((row) => [
+                                  row.invoice_code,
+                                  formatDate(row.created_at),
+                                  row.description,
+                                  printLabel(row.status),
+                                  moneyCell(row.original_total),
+                                  moneyCell(row.total),
+                                  moneyCell(row.paid),
+                                  moneyCell(row.refunded),
+                                  moneyCell(row.written_off),
+                                  moneyCell(row.balance),
+                              ])
+                            : [["No invoices on record"]]),
                         [],
-                        ["Total", moneyCell(statementTotal.value)],
+                        [
+                            "Total",
+                            "",
+                            "",
+                            "",
+                            moneyCell(sum("original_total")),
+                            moneyCell(sum("total")),
+                            moneyCell(sum("paid")),
+                            moneyCell(sum("refunded")),
+                            moneyCell(sum("written_off")),
+                            moneyCell(sum("balance")),
+                        ],
                     ],
                 },
                 ...(statementReport.value
@@ -2119,12 +2152,6 @@ async function printStatement() {
 
     try {
         await ensureInvoicesLoaded();
-
-        if (!statementLines.value.length) {
-            error("There are no balances to print for this patient.");
-            return;
-        }
-
         await loadStatementTransactions();
 
         statementIssuedOn.value = stringToDateTime(new Date());
