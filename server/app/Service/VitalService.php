@@ -3,8 +3,8 @@
 namespace App\Service;
 
 use App\Models\User;
-use App\Models\Vital;
 use App\Repository\PatientRepository;
+use App\Repository\VitalRepository;
 use App\Utils\MedicationPresenter;
 use Exception;
 
@@ -12,9 +12,9 @@ class VitalService
 {
     public function __construct(
         private PatientRepository $patientRepository,
+        private VitalRepository $vitalRepository,
         private NotificationService $notificationService,
     ) {}
-
 
     public function listVitals(array $payload)
     {
@@ -27,11 +27,10 @@ class VitalService
             throw new Exception('Patient not found');
         }
 
-        $vitals = Vital::where('patient_id', $patient->patient_id)
-            ->with('recordedBy')
-            ->orderByDesc('recorded_date')
-            ->orderByDesc('recorded_time')
-            ->paginate((int) ($payload['per_page'] ?? 10));
+        $vitals = $this->vitalRepository->paginateForPatient(
+            $patient->patient_id,
+            (int) ($payload['per_page'] ?? 10),
+        );
 
         return response()->json([
             'data' => collect($vitals->items())
@@ -59,7 +58,7 @@ class VitalService
 
         $data = $payload['payload'] ?? [];
 
-        $vital = Vital::create([
+        $vital = $this->vitalRepository->create([
             'patient_id' => $patient->patient_id,
             'blood_pressure_systolic' => $data['bloodPressureSystolic'] ?? null,
             'blood_pressure_diastolic' => $data['bloodPressureDiastolic'] ?? null,
@@ -90,10 +89,11 @@ class VitalService
 
     public function updateVital(User $user, array $payload, string $id)
     {
-        $vital = Vital::whereHas(
-            'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
-        )->find($id);
+        $vital = $this->vitalRepository->findForPatient(
+            $id,
+            $payload['patient_uuid'],
+            $payload['branch_id'],
+        );
 
         if (!$vital) {
             throw new Exception('Vital record not found');
@@ -101,7 +101,7 @@ class VitalService
 
         $data = $payload['payload'] ?? [];
 
-        $vital->update([
+        $vital = $this->vitalRepository->update($vital, [
             'blood_pressure_systolic' => $data['bloodPressureSystolic'] ?? $vital->blood_pressure_systolic,
             'blood_pressure_diastolic' => $data['bloodPressureDiastolic'] ?? $vital->blood_pressure_diastolic,
             'heart_rate' => $data['heartRate'] ?? $vital->heart_rate,
@@ -117,7 +117,7 @@ class VitalService
 
         return response()->json([
             'message' => 'Successfully updated Vital Signs.',
-            'data' => MedicationPresenter::vital($vital->fresh()),
+            'data' => MedicationPresenter::vital($vital),
         ], 200);
     }
 }

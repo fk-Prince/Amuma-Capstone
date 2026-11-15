@@ -397,6 +397,7 @@ class BookingService
             ], 200);
         });
     }
+
     //USED
     public function createStaffHomecareBooking(User $staff, array $payload, array $data)
     {

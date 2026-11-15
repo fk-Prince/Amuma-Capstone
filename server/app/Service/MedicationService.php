@@ -2,9 +2,9 @@
 
 namespace App\Service;
 
-use App\Models\Medication;
 use App\Models\MedicationSchedule;
 use App\Models\User;
+use App\Repository\MedicationRepository;
 use App\Repository\PatientRepository;
 use App\Utils\MedicationPresenter;
 use Carbon\Carbon;
@@ -14,6 +14,7 @@ class MedicationService
 {
     public function __construct(
         private PatientRepository $patientRepository,
+        private MedicationRepository $medicationRepository,
         private NotificationService $notificationService,
     ) {}
 
@@ -28,10 +29,10 @@ class MedicationService
             throw new Exception('Patient not found');
         }
 
-        $medications = Medication::where('patient_id', $patient->patient_id)
-            ->with(['schedules', 'recordedBy'])
-            ->orderByDesc('recorded_at')
-            ->paginate((int) ($payload['per_page'] ?? 10));
+        $medications = $this->medicationRepository->paginateForPatient(
+            $patient->patient_id,
+            (int) ($payload['per_page'] ?? 10),
+        );
 
         return response()->json([
             'data' => collect($medications->items())
@@ -59,7 +60,7 @@ class MedicationService
 
         $data = $payload['payload'] ?? [];
 
-        $medication = Medication::create([
+        $medication = $this->medicationRepository->create([
             'patient_id' => $patient->patient_id,
             'name' => $data['name'],
             'strength' => $data['strength'],
@@ -92,10 +93,11 @@ class MedicationService
 
     public function updateMedication(User $user, array $payload, string $id)
     {
-        $medication = Medication::whereHas(
-            'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
-        )->find($id);
+        $medication = $this->medicationRepository->findForPatient(
+            $id,
+            $payload['patient_uuid'],
+            $payload['branch_id'],
+        );
 
         if (!$medication) {
             throw new Exception('Medication record not found');
@@ -103,7 +105,7 @@ class MedicationService
 
         $data = $payload['payload'] ?? [];
 
-        $medication->update(array_filter([
+        $medication = $this->medicationRepository->update($medication, array_filter([
             'name' => $data['name'] ?? null,
             'strength' => $data['strength'] ?? null,
             'dosage_amount' => $data['dosageAmount'] ?? null,
@@ -120,7 +122,7 @@ class MedicationService
 
         return response()->json([
             'message' => 'Successfully updated Medication.',
-            'data' => MedicationPresenter::medication($medication->fresh()),
+            'data' => MedicationPresenter::medication($medication),
         ], 200);
     }
 
@@ -128,19 +130,18 @@ class MedicationService
     {
         $schedule = $payload['medSchedule'];
 
-        $medication = Medication::whereHas(
-            'patient',
-            fn($query) => $query->where('uuid', $payload['patient_uuid'])->where('branch_id', $payload['branch_id'])
-        )->find($schedule['medication_id']);
+        $medication = $this->medicationRepository->findForPatient(
+            $schedule['medication_id'],
+            $payload['patient_uuid'],
+            $payload['branch_id'],
+        );
 
         if (!$medication) {
             throw new Exception('Medication record not found');
         }
 
         if ($schedule['status'] === 'removed') {
-            $removed = $medication->schedules()
-                ->where('medication_schedule_id', $schedule['schedule_id'] ?? null)
-                ->first();
+            $removed = $this->medicationRepository->findSchedule($medication, $schedule['schedule_id'] ?? null);
 
             $removed?->delete();
 
@@ -155,18 +156,14 @@ class MedicationService
             throw new Exception('This dose is not due yet.', 422);
         }
 
-        $existing = $medication->schedules()
-            ->whereDate('date', $schedule['date'])
-            ->where('time', $schedule['time'])
-            ->first();
-
-        $dose = $existing ?? $medication->schedules()->create([
-            'date' => $schedule['date'],
-            'time' => $schedule['time'],
-            'status' => MedicationSchedule::STATUS_TAKEN,
-            'marked_by' => $user->user_id,
-            'recorded_at' => now(),
-        ]);
+        $dose = $this->medicationRepository->findScheduleAt($medication, $schedule['date'], $schedule['time'])
+            ?? $this->medicationRepository->createSchedule($medication, [
+                'date' => $schedule['date'],
+                'time' => $schedule['time'],
+                'status' => MedicationSchedule::STATUS_TAKEN,
+                'marked_by' => $user->user_id,
+                'recorded_at' => now(),
+            ]);
 
         return response()->json([
             'message' => 'Successfully updated dosage schedule.',
