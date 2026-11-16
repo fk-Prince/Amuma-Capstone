@@ -21,7 +21,7 @@
 
                     <p class="text-sm text-muted dark:text-gray-400">
                         Manage your branch information, images,
-                        operation settings and terms.
+                        operation settings, terms and online payments.
                     </p>
                 </div>
             </div>
@@ -29,7 +29,7 @@
             <!-- Save for the open section (images save one by one, so none there).
                  Both stay off until something in the form changes. -->
             <div
-                v-if="activeTab !== 'images'"
+                v-if="!['images', 'payments'].includes(activeTab)"
                 class="flex flex-wrap items-center gap-2 self-start sm:self-auto"
             >
                 <span
@@ -84,6 +84,13 @@
                     {{ tab.label }}
 
                     <span
+                        v-if="tab.soon"
+                        class="rounded-full bg-slate-200 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:bg-white/10 dark:text-gray-400"
+                    >
+                        Soon
+                    </span>
+
+                    <span
                         v-if="activeTab === tab.value"
                         class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary"
                     />
@@ -132,6 +139,8 @@
                         v-else-if="activeTab === 'terms'"
                         :uuid="String(route.params.uuid)"
                     />
+
+                    <BranchPaymentsTab v-else-if="activeTab === 'payments'" />
                 </Transition>
             </div>
         </div>
@@ -147,6 +156,7 @@ import {
     Check,
     LoaderCircle,
     FileText,
+    Lock,
 } from "lucide-vue-next";
 
 import { useBranchStore } from "~/stores/branch";
@@ -156,6 +166,7 @@ import BranchGeneralTab from "~/components/sections/app/settings/BranchInfoTab.v
 import BranchImagesTab from "~/components/sections/app/settings/BranchImagesTab.vue";
 import BranchOperationTab from "~/components/sections/app/settings/BranchOperationTab.vue";
 import BranchTermsTab from "~/components/sections/app/settings/BranchTermsTab.vue";
+import BranchPaymentsTab from "~/components/sections/app/settings/BranchPaymentsTab.vue";
 
 definePageMeta({
     layout: "dashboard",
@@ -168,7 +179,7 @@ useHead({
 
 const branchStore = useBranchStore();
 
-const tabs = [
+const tabs: { label: string; value: string; icon: any; soon?: boolean }[] = [
     {
         label: "Branch Information",
         value: "branch",
@@ -188,6 +199,12 @@ const tabs = [
         label: "Terms",
         value: "terms",
         icon: FileText,
+    },
+    {
+        label: "Online Payments",
+        value: "payments",
+        icon: Lock,
+        soon: true,
     },
 ];
 
