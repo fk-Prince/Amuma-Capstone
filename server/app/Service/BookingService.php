@@ -26,6 +26,12 @@ use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
+    private const DETAIL_RELATIONS = [
+        'staffRequests.employee.users:user_id,uuid',
+        'staffRequests.employee.employeeBranch',
+        'invoices.invoiceServices.scheduleService.schedule',
+    ];
+
     public function __construct(
         private BookingRepository $bookingRepository,
         private NotificationService $notificationService,
@@ -105,7 +111,7 @@ class BookingService
 
             return response()->json([
                 'message' => "Booking {$booking['reference_id']} has been approved successfully.",
-                'data'  => new BookingResource($booking->fresh())
+                'data'  => new BookingResource($booking->fresh()->load(self::DETAIL_RELATIONS))
             ], 200);
         });
     }
@@ -510,11 +516,7 @@ class BookingService
             throw new Exception('Booking does not exist.', 404);
         }
 
-        $booking->load([
-            'staffRequests.employee.users:user_id,uuid',
-            'staffRequests.employee.employeeBranch',
-            'invoices.invoiceServices.scheduleService.schedule',
-        ]);
+        $booking->load(self::DETAIL_RELATIONS);
 
         return new BookingResource($booking);
     }

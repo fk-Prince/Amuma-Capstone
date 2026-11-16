@@ -48,6 +48,7 @@ class EmployeeScheduleResource extends JsonResource
             'is_busy' => $this->is_busy,
             'conflict_count' => $this->conflict_count,
             'is_assigned' => $this->is_assigned,
+            'is_requested' => (bool) $this->is_requested,
             'conflict_schedules' => $this->whenLoaded('employeeBranch', function () {
                 return $this->employeeBranch
                     ->flatMap(fn($branch) => $branch->scheduleAssignments ?? collect())

@@ -42,6 +42,7 @@ export interface Employee {
 
     is_busy?: boolean;
     is_assigned?: boolean;
+    is_requested?: boolean;
     conflict_count?: number;
     conflict_schedules?: {
         schedule_code: string;

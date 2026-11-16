@@ -750,7 +750,12 @@ const viewSchedule = () => {
 
     router.push({
         path: `/app/branches/${route.params.uuid}/schedules`,
-        query: { search: code },
+        query: {
+            search: code,
+            ...(props.booking?.homecare?.type?.toLowerCase() === "adl"
+                ? { type: "adl" }
+                : {}),
+        },
     });
 };
 

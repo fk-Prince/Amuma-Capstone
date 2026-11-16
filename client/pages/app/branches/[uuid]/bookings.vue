@@ -1138,6 +1138,7 @@ function syncBookingStatus(
         reviewed_by?: string | null;
         reviewed_at?: string | null;
         patient?: any;
+        schedule_code?: string | null;
     },
 ) {
     const previous = String(booking.status ?? "").toLowerCase();
@@ -1261,6 +1262,9 @@ const confirmBooking = async (booking: any) => {
             reviewed_by: res.data?.reviewed_by,
             reviewed_at: res.data?.reviewed_at,
             ...(res.data?.patient ? { patient: res.data.patient } : {}),
+            ...(res.data?.schedule_code
+                ? { schedule_code: res.data.schedule_code }
+                : {}),
         });
     } catch (err: any) {
         error(err?.message ?? "Failed to approve booking.");

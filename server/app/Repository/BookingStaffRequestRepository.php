@@ -76,6 +76,19 @@ class BookingStaffRequestRepository
             ->values();
     }
 
+    public function employeeIdsForSchedule(int $scheduleId): Collection
+    {
+        return BookingStaffRequest::query()
+            ->whereHas(
+                'booking.patientBookings.invoice.invoiceServices.scheduleService',
+                fn($q) => $q->where('schedule_id', $scheduleId)
+            )
+            ->pluck('employee_id')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
+    }
+
     public function hasPatientAccess(int $clientId, int $patientId): bool
     {
         return PatientAccess::where('client_id', $clientId)

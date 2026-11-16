@@ -743,6 +743,15 @@
                                                     {{ employeeName(employee) }}
                                                 </p>
 
+                                                <span
+                                                    v-if="employee.is_requested"
+                                                    class="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                                                    title="Requested by the family when booking"
+                                                >
+                                                    <Star class="h-3 w-3" />
+                                                    Requested
+                                                </span>
+
                                                 <Check
                                                     v-if="
                                                         isSelected(
@@ -1233,6 +1242,7 @@ import {
     ChevronDown,
     LogIn,
     LogOut,
+    Star,
 } from "lucide-vue-next";
 
 interface AssignmentEntry {
@@ -1489,7 +1499,9 @@ function assignmentRank(employee: Employee): number {
 
 const sortedEmployees = computed(() =>
     [...(props.employees ?? [])].sort(
-        (a, b) => assignmentRank(a) - assignmentRank(b),
+        (a, b) =>
+            Number(!!b.is_requested) - Number(!!a.is_requested) ||
+            assignmentRank(a) - assignmentRank(b),
     ),
 );
 
@@ -1518,6 +1530,7 @@ const filteredEmployees = computed(() => {
         if (
             availableOnly.value &&
             !isSelected(employee.employee_id) &&
+            !employee.is_requested &&
             isPickDisabled(employee)
         ) {
             return false;

@@ -17,6 +17,7 @@ use App\Models\EmployeeBranch;
 use App\Models\EmployeePermission;
 use App\Models\Module;
 use App\Models\User;
+use App\Repository\BookingStaffRequestRepository;
 use App\Repository\BranchRepository;
 use App\Repository\EmployeeLeaveRepository;
 use App\Repository\EmployeeRepository;
@@ -51,7 +52,8 @@ class EmployeeService
         ServiceRepository $serviceRepository,
         EmployeeLeaveRepository $employeeLeaveRepository,
         EmployeeWorkloadRepository $employeeWorkloadRepository,
-        NotificationService $notificationService
+        NotificationService $notificationService,
+        private BookingStaffRequestRepository $bookingStaffRequestRepository
     ) {
         $this->auditService = $auditService;
         $this->employeeRepository = $employeeRepository;
@@ -740,6 +742,12 @@ class EmployeeService
                 $payload['date'] ?? null,
                 $payload['preferred_time'] ?? null
             );
+
+            $requestedIds = $this->bookingStaffRequestRepository
+                ->employeeIdsForSchedule((int) $payload['schedule_id']);
+
+            $result->each(fn($employee) => $employee->is_requested = $requestedIds->contains((int) $employee->employee_id));
+
             return EmployeeScheduleResource::collection($result);
         } else if ($type === 'service') {
             return $this->employeeRepository->getEmployeeServices($branchId, $payload);

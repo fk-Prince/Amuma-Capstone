@@ -534,6 +534,15 @@
                                                     }}
                                                 </p>
 
+                                                <span
+                                                    v-if="employee.is_requested"
+                                                    class="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                                                    title="Requested by the family when booking"
+                                                >
+                                                    <Star class="h-3 w-3" />
+                                                    Requested
+                                                </span>
+
                                                 <Check
                                                     v-if="
                                                         isSelected(
@@ -882,7 +891,14 @@ import {
     bookingTimeWindow,
     format24To12,
 } from "~/utils/time";
-import { Check, ChevronDown, Home, LogIn, TriangleAlert } from "lucide-vue-next";
+import {
+    Check,
+    ChevronDown,
+    Home,
+    LogIn,
+    Star,
+    TriangleAlert,
+} from "lucide-vue-next";
 import { employeeService } from "~/api/employee/EmployeeService";
 import { useToast } from "~/composables/useToast";
 import type { AuditRow } from "~/types/schedule";
@@ -1086,12 +1102,17 @@ function assignmentRank(employee: Employee): number {
 
 const filteredEmployees = computed(() => {
     const caregivers = [...employeeData.value]
-        .sort((a, b) => assignmentRank(a) - assignmentRank(b))
+        .sort(
+            (a, b) =>
+                Number(!!b.is_requested) - Number(!!a.is_requested) ||
+                assignmentRank(a) - assignmentRank(b),
+        )
         .filter(
         (employee) =>
             isCaregiver(employee) &&
             (!availableOnly.value ||
                 isSelected(employee.employee_id) ||
+                employee.is_requested ||
                 (!employee.is_busy && !isAssignmentTypeMismatch(employee))) &&
             (!previousOnly.value ||
                 previousIds.value.has(Number(employee.employee_id))),
