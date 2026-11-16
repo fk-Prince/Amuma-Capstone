@@ -869,6 +869,19 @@
                                                                 }}
                                                             </span>
 
+                                                            <span
+                                                                v-if="
+                                                                    employee.is_requested
+                                                                "
+                                                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                                                                title="Requested by the family when booking"
+                                                            >
+                                                                <Star
+                                                                    class="h-3 w-3"
+                                                                />
+                                                                Requested
+                                                            </span>
+
                                                             <Check
                                                                 v-if="
                                                                     isAssigned(
@@ -1141,13 +1154,33 @@
                                                     </AchievementPeek>
 
                                                     <div class="min-w-0">
-                                                        <p
-                                                            class="truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                                        <div
+                                                            class="flex min-w-0 items-center gap-1.5"
                                                         >
-                                                            {{
-                                                                employee.full_name
-                                                            }}
-                                                        </p>
+                                                            <p
+                                                                class="truncate text-sm font-semibold text-slate-800 dark:text-white"
+                                                            >
+                                                                {{
+                                                                    employee.full_name
+                                                                }}
+                                                            </p>
+
+                                                            <span
+                                                                v-if="
+                                                                    employeeById(
+                                                                        employee.employee_id,
+                                                                    )
+                                                                        ?.is_requested
+                                                                "
+                                                                class="inline-flex shrink-0 items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                                                                title="Requested by the family when booking"
+                                                            >
+                                                                <Star
+                                                                    class="h-3 w-3"
+                                                                />
+                                                                Requested
+                                                            </span>
+                                                        </div>
 
                                                         <p
                                                             class="truncate text-xs capitalize text-slate-500 dark:text-gray-400"
@@ -1443,6 +1476,7 @@ import {
     TriangleAlert,
     Users,
     Ban,
+    Star,
 } from "lucide-vue-next";
 import { useSchedule } from "~/composables/useSchedule";
 import { useToast } from "~/composables/useToast";

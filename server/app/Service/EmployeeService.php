@@ -746,7 +746,9 @@ class EmployeeService
             $requestedIds = $this->bookingStaffRequestRepository
                 ->employeeIdsForSchedule((int) $payload['schedule_id']);
 
-            $result->each(fn($employee) => $employee->is_requested = $requestedIds->contains((int) $employee->employee_id));
+            $result->each(function ($employee) use ($requestedIds) {
+                $employee->is_requested = $requestedIds->contains((int) $employee->employee_id);
+            });
 
             return EmployeeScheduleResource::collection($result);
         } else if ($type === 'service') {
