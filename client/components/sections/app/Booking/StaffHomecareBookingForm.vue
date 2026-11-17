@@ -456,6 +456,7 @@ async function loadOptions() {
 
         const serviceRes: any = await serviceService.getBranchService(
             props.branchUuid,
+            { bookable: 1 },
         );
 
         services.value = serviceRes?.services ?? serviceRes?.data?.services ?? [];

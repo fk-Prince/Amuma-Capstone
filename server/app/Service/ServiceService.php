@@ -146,7 +146,7 @@ class ServiceService
         return response()->json([
             'branch_uuid' => $branch->uuid,
             'branch_name' => $branch->name,
-            'services' => $branch->services->map(function ($service) {
+            'services' => $this->bookableOnly($branch->services, $branch->branch_id, $payload)->values()->map(function ($service) {
                 return [
                     'service_id' => $service->service_id,
                     'service_uuid' => $service->service_uuid,
@@ -164,6 +164,17 @@ class ServiceService
                 ];
             }),
         ]);
+    }
+
+    private function bookableOnly($services, int $branchId, array $payload)
+    {
+        if (!filter_var($payload['bookable'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            return $services;
+        }
+
+        $staffed = $this->serviceRepository->staffedServiceIds($branchId);
+
+        return $services->filter(fn($service) => $staffed->contains($service->service_id));
     }
 
     public function retrieveService(array $payload)
@@ -185,6 +196,8 @@ class ServiceService
                 return $serviceType === $type || $serviceType === 'both';
             });
         }
+
+        $services = $this->bookableOnly($services, $branch->branch_id, $payload);
 
         return response()->json([
             'branch_uuid' => $branch->uuid,

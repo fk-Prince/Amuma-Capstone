@@ -86,12 +86,25 @@ class ServiceRepository
             ->with('categories:category_id,category_name')
             ->where('branch_id', $branchId)
             ->where('is_available', true)
-            ->whereDoesntHave('employeeAssignments', fn($query) => $query
-                ->where('is_active', true)
-                ->whereHas('employeeBranch', fn($branch) => $branch
-                    ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE)))
+            ->whereDoesntHave('employeeAssignments', $this->activeStaff())
             ->orderBy('service_name')
             ->get();
+    }
+
+    public function staffedServiceIds(int $branchId)
+    {
+        return Service::query()
+            ->where('branch_id', $branchId)
+            ->whereHas('employeeAssignments', $this->activeStaff())
+            ->pluck('service_id');
+    }
+
+    private function activeStaff(): \Closure
+    {
+        return fn($query) => $query
+            ->where('is_active', true)
+            ->whereHas('employeeBranch', fn($branch) => $branch
+                ->where('status', '!=', EmployeeBranch::STATUS_INACTIVE));
     }
 
     public function assignIfNew(int $employeeBranchId, int $serviceId)

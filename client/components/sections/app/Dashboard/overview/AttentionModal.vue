@@ -43,7 +43,7 @@
                                 <p
                                     class="text-xs text-muted dark:text-gray-400"
                                 >
-                                    Discharges, unstaffed services and
+                                    Discharges, unbookable services and
                                     unassigned schedules
                                 </p>
                             </div>
@@ -107,7 +107,11 @@
                                 <span
                                     class="text-[11px] text-muted dark:text-gray-400"
                                 >
-                                    {{ group.count ? group.note : "All clear" }}
+                                    {{
+                                        group.count
+                                            ? group.note
+                                            : (group.clear ?? "All clear")
+                                    }}
                                 </span>
                             </button>
                         </div>
@@ -427,8 +431,9 @@ const groups = computed(() => {
         },
         {
             key: "services" as AttentionGroup,
-            title: "Services without staff",
-            subtitle: "Available services with no nurse or caregiver assigned",
+            title: "Unbookable services",
+            subtitle:
+                "These services can't be booked until a nurse or caregiver is assigned",
             icon: Stethoscope,
             iconClass:
                 "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
@@ -437,6 +442,7 @@ const groups = computed(() => {
             buttonClass:
                 "border-amber-600/20 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300",
             rows: serviceRows.value,
+            clear: "Every service can be booked",
             note: [
                 nurse ? roleNote(nurse, "nurse") : null,
                 caregiver ? roleNote(caregiver, "caregiver") : null,

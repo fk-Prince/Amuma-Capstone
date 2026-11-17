@@ -656,6 +656,7 @@ async function load() {
         const res: any = await serviceService.list({
             branch_uuid: props.branchUuid,
             type: "facility",
+            bookable: 1,
         });
 
         services.value = res.services ?? res.data ?? [];

@@ -326,7 +326,9 @@ async function loadBranchOptions(uuid: string) {
     try {
         await fetchBranch(uuid);
 
-        const res: any = await serviceService.getBranchService(uuid);
+        const res: any = await serviceService.getBranchService(uuid, {
+            bookable: 1,
+        });
         services.value = res?.services ?? res?.data?.services ?? [];
     } catch (err: any) {
         loadError.value =

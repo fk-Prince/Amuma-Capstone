@@ -86,7 +86,7 @@ const chips = computed(() =>
         },
         {
             count: data.value.services.length,
-            label: "services without staff",
+            label: "unbookable services",
             countClass: "text-amber-600 dark:text-amber-300",
         },
         {

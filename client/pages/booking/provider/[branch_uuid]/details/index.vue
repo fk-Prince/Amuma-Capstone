@@ -559,7 +559,9 @@ onMounted(async () => {
 });
 
 const loadServices = async () => {
-    const res: any = await serviceService.getBranchService(uuid.value);
+    const res: any = await serviceService.getBranchService(uuid.value, {
+        bookable: 1,
+    });
     serviceData.value = res?.services ?? res?.data?.services ?? [];
 };
 

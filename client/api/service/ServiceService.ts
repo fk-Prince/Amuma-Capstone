@@ -25,8 +25,8 @@ class ServiceService extends BaseService {
         return await this.request(this.resource + '/assign-employee', 'POST', payload);
     }
 
-    async getBranchService(uuid: string) {
-        return await this.request(`${this.getBackendApi}/api/branches/${uuid}/services`, 'GET');
+    async getBranchService(uuid: string, params: object = {}) {
+        return await this.request(`${this.getBackendApi}/api/branches/${uuid}/services`, 'GET', params);
     }
 
     async create(payload: Service): Promise<any> {
