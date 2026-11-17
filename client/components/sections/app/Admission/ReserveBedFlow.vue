@@ -10,7 +10,7 @@
             :errors="errors"
             :requireAdmissionDate="true"
             @update:model="reserved = $event"
-            @close="close"
+            @close="onDetailClose"
             @confirm="openConfirm"
         />
     </Teleport>
@@ -35,7 +35,9 @@
                 class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300"
             />
             <div class="min-w-0">
-                <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
+                <p
+                    class="text-sm font-medium text-amber-800 dark:text-amber-300"
+                >
                     This patient has {{ upcomingHomecare.length }} upcoming
                     homecare
                     {{
@@ -102,7 +104,9 @@ const confirmMessage = computed(() => {
 
 const confirmDescription = computed(() => {
     const price = pending.value?.price;
-    const invoice = price ? `A pending invoice of ${formatCurrency(Number(price))} is created now. ` : "";
+    const invoice = price
+        ? `A pending invoice of ${formatCurrency(Number(price))} is created now. `
+        : "";
     return `${invoice}The patient is admitted only when you press Admit on the admission page.`;
 });
 
@@ -133,6 +137,11 @@ async function start() {
 function close() {
     reset();
     emit("close");
+}
+
+function onDetailClose() {
+    if (confirmOpen.value) return;
+    close();
 }
 
 async function fetchRoomContracts() {
@@ -192,7 +201,10 @@ async function submit() {
             room_id: pending.value.room?.room_id,
             admitted_at: pending.value.admitted_at,
         });
-        success(res?.message ?? "Bed reserved. Press Admit when the patient arrives.");
+        success(
+            res?.message ??
+                "Bed reserved. Press Admit when the patient arrives.",
+        );
         emit("reserved", res.data);
         close();
     } catch (err: any) {

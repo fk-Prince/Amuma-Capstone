@@ -202,7 +202,7 @@
                                     @click="reserveBedOpen = true"
                                 >
                                     <BedSingle class="h-4 w-4" />
-                                    Reserve bed
+                                    New Admission
                                 </ActionButton>
                             </div>
                         </section>

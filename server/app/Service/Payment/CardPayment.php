@@ -170,7 +170,6 @@ class CardPayment implements IPaymentMethod
                     'status' => $response->status(),
                     'body' => $response->json(),
                 ]);
-
                 return response()->json([
                     'success' => false,
                     'message' => ExternalServiceException::PAYMENT_FAILED,
