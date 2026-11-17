@@ -190,9 +190,20 @@
 
                             <div
                                 v-else
-                                class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
+                                class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-400 dark:border-white/10 dark:text-gray-500"
                             >
                                 No active admission on record.
+
+                                <ActionButton
+                                    v-if="hasFacilityPlan"
+                                    variant="primary"
+                                    :disabled="!canCreateAdmission"
+                                    tooltip="You don't have permission to create admissions."
+                                    @click="reserveBedOpen = true"
+                                >
+                                    <BedSingle class="h-4 w-4" />
+                                    Reserve bed
+                                </ActionButton>
                             </div>
                         </section>
 
@@ -373,17 +384,29 @@
             readonly
             @close="caregiverModalOpen = false"
         />
+        <ReserveBedFlow
+            v-if="patient?.uuid"
+            :open="reserveBedOpen"
+            :patient-uuid="patient.uuid"
+            :branch-uuid="String(route.params.uuid)"
+            @close="reserveBedOpen = false"
+            @reserved="emit('reserved', $event)"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ChevronRight, UserRound } from "lucide-vue-next";
+import { BedSingle, ChevronRight, UserRound } from "lucide-vue-next";
 import type { PatientRetrieve, Admission } from "~/types/patient";
 
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import CaregiverShiftModal from "~/components/sections/app/Admission/CaregiverShiftModal.vue";
+import ReserveBedFlow from "~/components/sections/app/Admission/ReserveBedFlow.vue";
+import ActionButton from "~/components/ui/ActionButton.vue";
+import { useBranchPlan } from "~/composables/useBranchPlan";
+import { Modules } from "~/types/module";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 
 definePageMeta({
@@ -406,12 +429,17 @@ const props = withDefaults(
     },
 );
 
+const emit = defineEmits<{ reserved: [patient: PatientRetrieve] }>();
+
 const router = useRouter();
 const route = useRoute();
 
-const { hasModule } = usePermissions();
+const { hasModule, canCreate } = usePermissions();
+const { hasFacilityPlan } = useBranchPlan();
 
 const canViewAdmissions = computed(() => hasModule("Admissions"));
+const canCreateAdmission = computed(() => canCreate(Modules.Admissions));
+const reserveBedOpen = ref(false);
 
 function viewAdmission() {
     const patientUuid = patient.value?.uuid ?? route.params.p_uuid;

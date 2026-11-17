@@ -3,6 +3,7 @@
 namespace App\Utils;
 
 use App\Http\Resources\CaregiverShiftResource;
+use App\Models\AdmissionDiagnosis;
 use App\Models\AdmissionPeriod;
 use App\Models\Booking;
 use App\Models\Invoice;
@@ -11,6 +12,7 @@ use App\Models\Schedule;
 use App\Models\ScheduleService;
 use App\Models\Transaction;
 use App\Service\Booking\BookingHelper;
+use App\Service\DiagnosisFeeService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -235,9 +237,7 @@ class PortalHelper
             ->resolve();
     }
 
-    // The portal timeline only ever shows the current admission, so this is a
-    // trimmed version of PatientResource::formatAdmission() without the
-    // dashboard-only discharge calculation.
+
     private function admissionTimeline(object $patient): array
     {
         $admission = $patient->currentAdmission;
@@ -374,14 +374,37 @@ class PortalHelper
 
     private function diagnoses(object $patient)
     {
-        return collect($patient->diagnoses ?? [])
+        $diagnoses = collect($patient->diagnoses ?? []);
+        $admission = $diagnoses->isNotEmpty() ? $patient->currentAdmission : null;
+        $charges = $admission
+            ? app(DiagnosisFeeService::class)->admissionCharges($admission->patient_admission_id)
+            : collect();
+
+        return $diagnoses
             ->map(fn($diagnosis) => [
                 'diagnosis' => $diagnosis->diagnosis,
                 'diagnosis_date' => $diagnosis->diagnosis_date?->toDateString(),
                 'diagnosis_notes' => $diagnosis->diagnosis_notes,
                 'diagnosis_file' => $diagnosis->diagnosis_file,
+                'charge' => self::diagnosisCharge($charges->get($diagnosis->patient_diagnosis_id)),
             ])
             ->values();
+    }
+
+    private function diagnosisCharge(?array $charge): ?array
+    {
+        if (!$charge || $charge['needs_charge']) {
+            return null;
+        }
+
+        $monthly = $charge['billed'] === AdmissionDiagnosis::BILLED_MONTHLY && $charge['is_active'];
+
+        return [
+            'case_title' => $charge['case_title'],
+            'amount' => $charge['billed_amount'],
+            'monthly' => $monthly,
+            'next_bill_date' => $monthly ? $charge['next_bill_date'] : null,
+        ];
     }
 
     private function invoicePayments(object $invoice)
@@ -512,7 +535,6 @@ class PortalHelper
                     $refunds[$refundKey]['invoice_codes'][] = $code;
                 }
             }
-
         }
 
         return collect($payments)

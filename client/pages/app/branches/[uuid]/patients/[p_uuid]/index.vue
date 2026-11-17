@@ -915,6 +915,7 @@ onMounted(async () => {
                         <PatientAdmission
                             v-if="activeTab === 'Admission' && patientData"
                             :patient="patientData"
+                            @reserved="patientData = $event"
                         />
                         <p
                             v-if="activeTab === 'Schedule' && !canViewSchedules"

@@ -23,6 +23,7 @@ use App\Repository\AdmissionChargeDiagnosisRepository;
 use App\Repository\BookingRepository;
 use App\Repository\InvoiceRepository;
 use App\Repository\PatientAdmissionRepository;
+use App\Repository\ScheduleRepository;
 use App\Utils\AccommodationHelper;
 use App\Utils\AdmissionHelper;
 use App\Utils\DischargeCalculator;
@@ -52,6 +53,7 @@ class PatientAdmissionService
         private DiagnosisFeeService $diagnosisFees,
         private AdmissionChargeDiagnosisRepository $diagnosisChargeRepository,
         private AdditionalChargeRepository $additionalChargeRepository,
+        private ScheduleRepository $scheduleRepository,
     ) {}
 
     public function registerPatientBed(array $payload)
@@ -107,6 +109,7 @@ class PatientAdmissionService
         return match ($payload['action']) {
             'admit' => $this->admitAdmission($payload),
             'new_admission' => $this->newAdmission($payload),
+            'upcoming_homecare' => $this->upcomingHomecare($payload),
             'extend' => $this->extendAdmission($payload),
             'change_room' => $this->changeRoom($payload),
             'diagnosis_cases' => $this->setDiagnosisCases($payload),
@@ -223,10 +226,32 @@ class PatientAdmissionService
             $this->diagnosisFees->bill($admission, $period, $fees, $payload['branch_id']);
 
             return [
-                'message' => 'Walk-in admission created successfully.',
+                'message' => 'Bed reserved. Press Admit when the patient arrives.',
                 'data'    => $this->patientService->showPatient($payload['p_uuid']),
             ];
         });
+    }
+
+    public function upcomingHomecare(array $payload)
+    {
+        $patient = Patient::query()
+            ->where('uuid', $payload['p_uuid'] ?? null)
+            ->where('branch_id', $payload['branch_id'])
+            ->first();
+
+        if (!$patient) {
+            throw new Exception('Patient not found.', 404);
+        }
+
+        return [
+            'data' => $this->scheduleRepository
+                ->upcomingHomecareForPatient($patient->patient_id)
+                ->map(fn($schedule) => [
+                    'schedule_code' => $schedule->schedule_code,
+                    'scheduled_at'  => $schedule->scheduled_at,
+                ])
+                ->values(),
+        ];
     }
 
     /*

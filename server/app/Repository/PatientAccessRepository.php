@@ -363,6 +363,8 @@ class PatientAccessRepository
             $relations['diagnoses'] = fn($query) =>
             $query->orderByDesc('diagnosis_date')
                 ->orderByDesc('patient_diagnosis_id');
+
+            $relations[] = 'currentAdmission';
         }
 
         if ($this->wants($sections, 'medication')) {

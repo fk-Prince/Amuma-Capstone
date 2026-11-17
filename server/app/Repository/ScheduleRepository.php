@@ -154,6 +154,18 @@ class ScheduleRepository
         return Schedule::where($conditions)->first();
     }
 
+    public function upcomingHomecareForPatient(int $patientId)
+    {
+        return Schedule::query()
+            ->select(['schedule_id', 'schedule_code', 'scheduled_at'])
+            ->where('patient_id', $patientId)
+            ->where('category', Schedule::CATEGORYHOMECARE)
+            ->whereIn('status', [Schedule::STATUS_PENDING, Schedule::STATUS_ONGOING])
+            ->where('scheduled_at', '>=', now()->startOfDay())
+            ->orderBy('scheduled_at')
+            ->get();
+    }
+
     private function filterByStatus(mixed $query, array $payload): void
     {
         if (!empty($payload['status'])) {

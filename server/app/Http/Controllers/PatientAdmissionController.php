@@ -35,7 +35,7 @@ class PatientAdmissionController extends Controller
         $branch = BranchGuard::resolveBranch($request->branch_uuid, true);
         [$module, $action] = match (true) {
             in_array($request->action, ['extend', 'branch_contract'], true) && $request->boolean('require_payment') => [ModuleEnum::BillingAndInvoices, PermissionAction::Create],
-            $request->action === 'new_admission' => [ModuleEnum::Admissions, PermissionAction::Create],
+            in_array($request->action, ['new_admission', 'upcoming_homecare'], true) => [ModuleEnum::Admissions, PermissionAction::Create],
             $request->action === 'discharge' && $request->boolean('force') => [ModuleEnum::Admissions, PermissionAction::ForceDischarge],
             default => [ModuleEnum::Admissions, PermissionAction::Update],
         };

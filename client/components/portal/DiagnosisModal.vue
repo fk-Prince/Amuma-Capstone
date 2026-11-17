@@ -75,6 +75,45 @@
                                 {{ item.diagnosis_notes }}
                             </p>
 
+                            <div
+                                v-if="item.charge"
+                                class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg bg-primary-50/60 px-3 py-2.5 dark:bg-primary-500/10"
+                            >
+                                <div class="min-w-0">
+                                    <p
+                                        class="text-[11px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
+                                    >
+                                        Currently charged
+                                    </p>
+                                    <p
+                                        v-if="item.charge.case_title"
+                                        class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ item.charge.case_title }}
+                                    </p>
+                                </div>
+
+                                <div class="text-right">
+                                    <p
+                                        class="text-sm font-semibold text-gray-800 dark:text-white"
+                                    >
+                                        {{ formatCurrency(item.charge.amount) }}
+                                        <span
+                                            v-if="item.charge.monthly"
+                                            class="text-xs font-normal text-gray-400 dark:text-gray-500"
+                                        >
+                                            / month
+                                        </span>
+                                    </p>
+                                    <p
+                                        v-if="item.charge.next_bill_date"
+                                        class="text-[11px] text-gray-400 dark:text-gray-500"
+                                    >
+                                        Next bill {{ formatDate(item.charge.next_bill_date) }}
+                                    </p>
+                                </div>
+                            </div>
+
                             <a
                                 v-if="item.diagnosis_file"
                                 :href="item.diagnosis_file"
@@ -110,6 +149,7 @@
 <script setup lang="ts">
 import { X, ExternalLink, FileText, FileImage } from "lucide-vue-next";
 import { formatDate } from "~/utils/time";
+import { formatCurrency } from "~/utils/currency";
 import type { PortalDiagnosis } from "~/types/patient";
 
 withDefaults(

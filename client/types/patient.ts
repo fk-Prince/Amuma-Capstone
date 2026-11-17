@@ -95,11 +95,19 @@ export const LIFE_SYSTEM_SCALE: { value: LifeSystemScore; label: string }[] = [
     { value: 0, label: "Dependent" },
 ];
 
+export interface PortalDiagnosisCharge {
+    case_title: string | null;
+    amount: number;
+    monthly: boolean;
+    next_bill_date: string | null;
+}
+
 export interface PortalDiagnosis {
     diagnosis: string | null;
     diagnosis_date: string | null;
     diagnosis_notes: string | null;
     diagnosis_file: string | null;
+    charge: PortalDiagnosisCharge | null;
 }
 
 export interface PortalAssessment {

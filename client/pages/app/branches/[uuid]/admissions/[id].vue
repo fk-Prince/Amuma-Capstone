@@ -955,21 +955,13 @@
             </div>
         </Teleport>
 
-        <Teleport to="body">
-            <AdmissionDetail
-                v-if="newAdmissionModalOpen"
-                variant="new"
-                :patient-uuid="id"
-                :loading="loadingContract"
-                :roomContract="roomContract"
-                :model="reserved"
-                :errors="reservedErrors"
-                :requireAdmissionDate="true"
-                @update:model="reserved = $event"
-                @close="closeNewAdmissionModal"
-                @confirm="handleNewAdmissionConfirm"
-            />
-        </Teleport>
+        <ReserveBedFlow
+            :open="newAdmissionModalOpen"
+            :patient-uuid="id"
+            :branch-uuid="uuid"
+            @close="newAdmissionModalOpen = false"
+            @reserved="patient = $event"
+        />
 
         <AdmissionDischarge
             :open="dischargeDialogOpen"
@@ -992,18 +984,6 @@
             :booking-deposit="patient?.latest_admission?.booking_deposit ?? null"
             @confirm="confirmCancelAdmission"
             @cancel="cancelAdmissionDialogOpen = false"
-        />
-
-        <ConfirmDialog
-            :open="newAdmissionDialogOpen"
-            title="Confirm New Admission"
-            message="Are you sure you want to admit this patient?"
-            description="This will create a new admission record for this patient."
-            confirm-label="Admit"
-            variant="default"
-            :loading="actionLoading"
-            @confirm="confirmNewAdmission"
-            @cancel="cancelNewAdmissionConfirm"
         />
 
         <ConfirmDialog
@@ -1139,7 +1119,7 @@ import type {
     Admission,
     InvoiceAccommodation,
 } from "~/types/patient";
-import type { RoomContract, Reserved } from "~/types/contract";
+import type { RoomContract } from "~/types/contract";
 import { patientService } from "~/api/patient/PatientService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { admissionService } from "~/api/admission/AdmissionService";
@@ -1155,7 +1135,7 @@ import TransferHistoryModal from "~/components/sections/app/Admission/TransferHi
 import CaregiverShiftModal from "~/components/sections/app/Admission/CaregiverShiftModal.vue";
 import AdmissionTimeline from "~/components/sections/app/Admission/AdmissionTimeline.vue";
 import ActionButton from "~/components/ui/ActionButton.vue";
-import AdmissionDetail from "~/components/sections/app/Admission/AdmissionDetail.vue";
+import ReserveBedFlow from "~/components/sections/app/Admission/ReserveBedFlow.vue";
 import AdmissionDischarge from "~/components/sections/app/Admission/AdmissionDischarge.vue";
 import AdmissionCancel from "~/components/sections/app/Admission/AdmissionCancel.vue";
 import AddServiceModal from "~/components/sections/app/Admission/AddServiceModal.vue";
@@ -1477,12 +1457,6 @@ const transferHistoryModalOpen = ref(false);
 const timelineAdmission = ref<Admission | null>(null);
 
 const newAdmissionModalOpen = ref(false);
-const newAdmissionDialogOpen = ref(false);
-const loadingContract = ref(false);
-const roomContract = ref<RoomContract[]>([]);
-const reserved = ref<Reserved | null>(null);
-const reservedErrors = ref<Record<string, string>>({});
-const pendingAdmission = ref<Reserved | null>(null);
 
 function openChangeRoomModal() {
     changeRoomModalOpen.value = true;
@@ -1549,33 +1523,8 @@ function proceedToExtendModal() {
     openExtendModal();
 }
 
-async function openNewAdmissionModal() {
-    reserved.value = null;
-    reservedErrors.value = {};
+function openNewAdmissionModal() {
     newAdmissionModalOpen.value = true;
-    await fetchRoomContracts();
-}
-
-function closeNewAdmissionModal() {
-    newAdmissionModalOpen.value = false;
-    reserved.value = null;
-    reservedErrors.value = {};
-}
-
-async function fetchRoomContracts() {
-    loadingContract.value = true;
-    try {
-        const res = await admissionService.action({
-            branch_uuid: route.params.uuid,
-            action: "branch_contract",
-        });
-        roomContract.value = res.data?.data ?? res.data ?? res ?? [];
-    } catch (err) {
-        console.error("Failed loading contracts", err);
-        roomContract.value = [];
-    } finally {
-        loadingContract.value = false;
-    }
 }
 
 async function runAction(
@@ -1711,51 +1660,6 @@ async function handleChangeRoomSelect(payload: {
     changeRoomModalOpen.value = false;
 }
 
-function handleNewAdmissionConfirm(payload: Reserved) {
-    pendingAdmission.value = payload;
-    newAdmissionModalOpen.value = false;
-    newAdmissionDialogOpen.value = true;
-}
-
-function cancelNewAdmissionConfirm() {
-    newAdmissionDialogOpen.value = false;
-    pendingAdmission.value = null;
-}
-
-async function confirmNewAdmission() {
-    if (!pendingAdmission.value) return;
-
-    actionLoading.value = true;
-    reservedErrors.value = {};
-
-    try {
-        const payload = {
-            contract_id: pendingAdmission.value.contract_id,
-            bed_id: pendingAdmission.value.bed?.bed_id,
-            room_id: pendingAdmission.value.room?.room_id,
-            admitted_at: pendingAdmission.value.admitted_at,
-        };
-        const res = await admissionService.action({
-            branch_uuid: uuid.value,
-            p_uuid: id.value,
-            action: "new_admission",
-            ...payload,
-        });
-        patient.value = res.data;
-        success(res?.message ?? "Walk-in admission created successfully.");
-        newAdmissionDialogOpen.value = false;
-        pendingAdmission.value = null;
-        reserved.value = null;
-    } catch (err: any) {
-        reservedErrors.value = err?.data?.errors ?? {};
-        error(err?.data?.message ?? "Something went wrong. Please try again.");
-        newAdmissionDialogOpen.value = false;
-        newAdmissionModalOpen.value = true;
-    } finally {
-        newAdmissionDialogOpen.value = false;
-        actionLoading.value = false;
-    }
-}
 
 // Progress tracks the billing period actually in effect, not the whole stay.
 // A prepaid extension pushes admission.end_date years out, and folding that
