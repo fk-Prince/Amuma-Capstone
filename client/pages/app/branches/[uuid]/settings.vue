@@ -70,12 +70,15 @@
                     v-for="tab in tabs"
                     :key="tab.value"
                     type="button"
-                    @click="activeTab = tab.value"
+                    :disabled="tab.soon"
+                    @click="!tab.soon && (activeTab = tab.value)"
                     class="relative inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-3 text-sm font-semibold transition sm:px-4"
                     :class="
-                        activeTab === tab.value
-                            ? 'text-primary dark:text-primary-300'
-                            : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
+                        tab.soon
+                            ? 'cursor-not-allowed text-slate-400 opacity-60 dark:text-gray-500'
+                            : activeTab === tab.value
+                              ? 'text-primary dark:text-primary-300'
+                              : 'text-slate-500 hover:text-slate-800 dark:text-gray-400 dark:hover:text-gray-200'
                     "
                     :aria-current="activeTab === tab.value ? 'page' : undefined"
                 >
@@ -211,7 +214,7 @@ const tabs: { label: string; value: string; icon: any; soon?: boolean }[] = [
 const route = useRoute();
 
 const tabFromQuery = () =>
-    tabs.some((tab) => tab.value === route.query.tab)
+    tabs.some((tab) => tab.value === route.query.tab && !tab.soon)
         ? String(route.query.tab)
         : "branch";
 
