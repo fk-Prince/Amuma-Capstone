@@ -491,6 +491,13 @@
                         >
                             {{ faceScanMessage(faceScan) }}
                         </p>
+
+                        <p
+                            v-if="!faceMatching && faceMatch?.status === 'match'"
+                            class="text-xs text-slate-500 dark:text-gray-400"
+                        >
+                            Higher percentage, higher chance of approval
+                        </p>
                     </div>
                 </div>
 

@@ -13,7 +13,7 @@
                     >
                         <div>
                             <h2 class="text-lg font-semibold text-secondary dark:text-white">
-                                Facility Plans
+                                Care Plans
                             </h2>
 
                             <p class="text-sm text-muted mt-0.5 dark:text-gray-400">
