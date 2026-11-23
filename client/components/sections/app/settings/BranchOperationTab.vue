@@ -10,6 +10,7 @@
             </p>
         </div>
 
+        <template v-if="hasFacilityPlan">
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
             <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                 Facility
@@ -173,7 +174,9 @@
                 </p>
             </div> -->
         </div>
+        </template>
 
+        <template v-if="hasHomecarePlan">
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
             <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
                 Homecare
@@ -219,6 +222,7 @@
                 </p>
             </div>
         </div>
+        </template>
 
         <div class="border-b border-slate-200 pb-2 dark:border-white/10">
             <h3 class="text-sm font-semibold text-slate-800 dark:text-white">
@@ -226,7 +230,7 @@
             </h3>
 
             <p class="text-xs text-slate-400 mt-0.5 dark:text-gray-500">
-                Applies to the whole branch, both facility and homecare.
+                Applies to the whole branch.
             </p>
         </div>
 
@@ -370,8 +374,10 @@ import { branchSettingService } from "~/api/branch-setting/BranchSettingService"
 import { useRoute } from "vue-router";
 import { useToast } from "~/composables/useToast";
 import { formSnapshot } from "~/utils/formSnapshot";
+import { useBranchPlan } from "~/composables/useBranchPlan";
 
 const { success, error } = useToast();
+const { hasFacilityPlan, hasHomecarePlan } = useBranchPlan();
 const route = useRoute();
 const branchStore = useBranchStore();
 const activeBranch = computed(() => branchStore.activeBranch);

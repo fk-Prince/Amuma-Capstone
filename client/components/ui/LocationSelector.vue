@@ -842,7 +842,7 @@ onUnmounted(() => {
 
             <button
                 type="button"
-                class="absolute left-2.5 top-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:bg-white/5"
+                class="absolute left-2.5 top-2.5 z-10 inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-gray-200 dark:hover:border-white/20 dark:hover:bg-secondary dark:hover:text-white dark:hover:brightness-125"
                 @click="useMyLocation"
             >
                 <LocateFixed class="h-4 w-4 text-primary" />
