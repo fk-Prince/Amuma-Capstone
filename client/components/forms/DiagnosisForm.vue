@@ -239,6 +239,7 @@
 
                 <BaseInput
                     label="Diagnosis Notes"
+                    label-hint="Optional"
                     :model-value="activeDiagnosis.diagnosis_notes"
                     @update:model-value="
                         update(activeIndex, 'diagnosis_notes', $event)
