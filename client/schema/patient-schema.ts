@@ -127,7 +127,8 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
                     MAX_NOTES_LENGTH,
                     `Notes must be ${MAX_NOTES_LENGTH} characters or fewer`,
                 )
-                .refine(noEmoji, EMOJI_MESSAGE),
+                .refine(noEmoji, EMOJI_MESSAGE)
+                .nullish(),
             diagnosis_file: diagnosisFileSchema,
             diagnosis_file_name: z.string().optional(),
         })
@@ -135,7 +136,7 @@ const buildDiagnosisSchema = (diagnosisDateSchema: z.ZodTypeAny) =>
             const anyFieldFilled =
                 data.diagnosis.length > 0 ||
                 !!data.diagnosis_date ||
-                data.diagnosis_notes.trim().length > 0 ||
+                (data.diagnosis_notes ?? "").trim().length > 0 ||
                 !!data.diagnosis_file;
 
             if (!anyFieldFilled) return;
