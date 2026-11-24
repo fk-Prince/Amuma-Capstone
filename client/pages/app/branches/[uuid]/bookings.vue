@@ -1397,10 +1397,9 @@ async function resolveSelectedBooking(referenceId: string | null) {
     if (found) {
         selectedBooking.value = found;
         isLoadingSelected.value = false;
-        return;
+    } else {
+        isLoadingSelected.value = true;
     }
-
-    isLoadingSelected.value = true;
 
     try {
         const res = await bookingService.show(referenceId, {
@@ -1408,10 +1407,12 @@ async function resolveSelectedBooking(referenceId: string | null) {
             branch_uuid: branch_uuid.value,
         });
 
+        if (String(selectedReferenceId.value) !== String(referenceId)) return;
+
         selectedBooking.value = res?.data ?? res ?? null;
     } catch (err) {
         console.error("Failed to load booking by reference_id", err);
-        selectedBooking.value = null;
+        if (!found) selectedBooking.value = null;
     } finally {
         isLoadingSelected.value = false;
     }
