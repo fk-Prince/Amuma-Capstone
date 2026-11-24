@@ -1,6 +1,6 @@
-export const FACE_MATCH_PASS = 50;
+import type { FaceWorkerRequest } from "~/workers/faceMatch.worker";
 
-const MODEL_URL = "/models/face";
+export const FACE_MATCH_PASS = 50;
 
 export type FaceMatchResult =
     | { status: "match"; score: number }
@@ -13,152 +13,115 @@ export type FaceScanResult =
     | { status: "no_id" }
     | { status: "error" };
 
-type FaceApi = typeof import("@vladmandic/face-api");
-
-let detector: Promise<FaceApi> | null = null;
-let recognizer: Promise<FaceApi> | null = null;
-
-function loadDetector(): Promise<FaceApi> {
-    detector ??= (async () => {
-        const faceapi = await import("@vladmandic/face-api");
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        return faceapi;
-    })().catch((err) => {
-        detector = null;
-        throw err;
-    });
-
-    return detector;
-}
-
-function loadFaceApi(): Promise<FaceApi> {
-    recognizer ??= (async () => {
-        const faceapi = await import("@vladmandic/face-api");
-
-        await Promise.all([
-            loadDetector(),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        ]);
-
-        return faceapi;
-    })().catch((err) => {
-        recognizer = null;
-        throw err;
-    });
-
-    return recognizer;
-}
-
-const MAX_SIDE = 960;
-
 type Source = File | string;
 
-const fileCanvases = new WeakMap<File, Promise<HTMLCanvasElement>>();
-const urlCanvases = new Map<string, Promise<HTMLCanvasElement>>();
-const fileFaces = new WeakMap<File, Promise<any>>();
-const urlFaces = new Map<string, Promise<any>>();
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-const nextFrame = () =>
-    new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
+let worker: Worker | null = null;
+let nextId = 0;
+const pending = new Map<number, { resolve: (value: any) => void; reject: (err: Error) => void }>();
 
-async function decode(source: Source): Promise<HTMLCanvasElement> {
-    const url = typeof source === "string" ? source : URL.createObjectURL(source);
-    const image = new Image();
+function failAll(message: string) {
+    for (const { reject } of pending.values()) reject(new Error(message));
+    pending.clear();
+}
 
-    image.crossOrigin = "anonymous";
-    image.src = url;
+function getWorker(): Worker {
+    if (worker) return worker;
 
-    try {
-        await image.decode();
-    } finally {
-        if (typeof source !== "string") URL.revokeObjectURL(url);
+    worker = new Worker(new URL("../workers/faceMatch.worker.ts", import.meta.url), {
+        type: "module",
+    });
+
+    worker.onmessage = (event) => {
+        const { id, ok, result, error } = event.data;
+        const call = pending.get(id);
+        if (!call) return;
+
+        pending.delete(id);
+        if (ok) call.resolve(result);
+        else call.reject(new Error(error));
+    };
+
+    worker.onerror = (event) => {
+        event.preventDefault();
+        worker?.terminate();
+        worker = null;
+        failAll(event.message || "Face check worker failed");
+    };
+
+    return worker;
+}
+
+const FACE_CHECK_TIMEOUT_MS = 15_000;
+
+class FaceCheckTimeout extends Error {}
+
+function call<T>(request: DistributiveOmit<FaceWorkerRequest, "id">, timeoutMs?: number): Promise<T> {
+    if (import.meta.server || typeof Worker === "undefined") {
+        return Promise.reject(new Error("Face checks need a browser"));
     }
 
-    const scale = Math.min(1, MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
-    const canvas = document.createElement("canvas");
+    const id = ++nextId;
 
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-    canvas.getContext("2d")!.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return new Promise<T>((resolve, reject) => {
+        const timer = timeoutMs
+            ? setTimeout(() => {
+                  pending.delete(id);
+                  reject(new FaceCheckTimeout());
+              }, timeoutMs)
+            : undefined;
 
-    return canvas;
+        pending.set(id, {
+            resolve: (value) => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            reject: (err) => {
+                clearTimeout(timer);
+                reject(err);
+            },
+        });
+        getWorker().postMessage({ ...request, id });
+    });
 }
 
-function cached<T>(source: Source, files: WeakMap<File, Promise<T>>, urls: Map<string, Promise<T>>, make: () => Promise<T>): Promise<T> {
-    const existing = typeof source === "string" ? urls.get(source) : files.get(source);
+const fileKeys = new WeakMap<File, string>();
+let nextFileKey = 0;
 
-    if (existing) return existing;
+function describe(source: Source) {
+    if (typeof source === "string") {
+        const url = new URL(source, window.location.href).href;
+        return { key: url, source: url };
+    }
 
-    const created = make().catch((err) => {
-        if (typeof source === "string") urls.delete(source);
-        else files.delete(source);
-        throw err;
-    });
+    let key = fileKeys.get(source);
+    if (!key) {
+        key = `file:${++nextFileKey}`;
+        fileKeys.set(source, key);
+    }
 
-    if (typeof source === "string") urls.set(source, created);
-    else files.set(source, created);
-
-    return created;
-}
-
-const toCanvas = (source: Source) => cached(source, fileCanvases, urlCanvases, () => decode(source));
-
-function largestFace(faceapi: FaceApi, source: Source) {
-    return cached(source, fileFaces, urlFaces, async () => {
-        const canvas = await toCanvas(source);
-        await nextFrame();
-
-        const faces = await faceapi
-            .detectAllFaces(canvas, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
-            .withFaceLandmarks()
-            .withFaceDescriptors();
-
-        if (!faces.length) return null;
-
-        return faces.reduce((best, face) =>
-            face.detection.box.area > best.detection.box.area ? face : best,
-        );
-    });
+    return { key, source };
 }
 
 let warming: Promise<void> | null = null;
 
 export function warmUpFaceModels(): Promise<void> {
-    warming ??= (async () => {
-        const faceapi = await loadFaceApi();
-        const blank = document.createElement("canvas");
-
-        blank.width = 64;
-        blank.height = 64;
-
-        await faceapi
-            .detectAllFaces(blank, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
-            .withFaceLandmarks()
-            .withFaceDescriptors();
-    })().catch(() => {
+    warming ??= call<void>({ type: "warm" }).catch(() => {
         warming = null;
     });
 
     return warming;
 }
 
-export async function scanFace(source: File | string | HTMLVideoElement): Promise<FaceScanResult> {
+export async function scanFace(source: Source): Promise<FaceScanResult | null> {
     try {
-        const faceapi = await loadDetector();
-        const image = source instanceof HTMLVideoElement ? source : await toCanvas(source);
-        await nextFrame();
-        const faces = (
-            await faceapi.detectAllFaces(image, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
-        ).sort((a, b) => b.box.area - a.box.area);
-
-        const [face, idPhoto] = faces;
-
-        if (!face || face.score < 0.5) return { status: "no_face" };
-        if (!idPhoto || idPhoto.box.area > face.box.area * 0.5) return { status: "no_id" };
-
-        return { status: "face" };
+        return await call<FaceScanResult>(
+            { type: "scan", ...describe(source) },
+            FACE_CHECK_TIMEOUT_MS,
+        );
     } catch (err) {
+        if (err instanceof FaceCheckTimeout) return null;
         console.error("Face scan failed", err);
         return { status: "error" };
     }
@@ -173,24 +136,18 @@ export function faceScanMessage(result?: FaceScanResult | null): string {
     return "We couldn't find a face in the photo. Retake it with your face and ID both visible.";
 }
 
-export async function compareFaces(
-    idFront: File | string,
-    selfie: File | string,
-): Promise<FaceMatchResult> {
+export async function compareFaces(idFront: Source, selfie: Source): Promise<FaceMatchResult | null> {
     try {
-        const faceapi = await loadFaceApi();
-
-        const idFace = await largestFace(faceapi, idFront);
-        if (!idFace) return { status: "no_face", which: "id" };
-
-        const selfieFace = await largestFace(faceapi, selfie);
-        if (!selfieFace) return { status: "no_face", which: "selfie" };
-
-        const distance = faceapi.euclideanDistance(idFace.descriptor, selfieFace.descriptor);
-        const score = Math.round(Math.max(0, Math.min(100, (1 - distance / 1.2) * 100)));
-
-        return { status: "match", score };
+        return await call<FaceMatchResult>(
+            {
+                type: "compare",
+                idFront: describe(idFront),
+                selfie: describe(selfie),
+            },
+            FACE_CHECK_TIMEOUT_MS,
+        );
     } catch (err) {
+        if (err instanceof FaceCheckTimeout) return null;
         console.error("Face match failed", err);
         return { status: "error" };
     }

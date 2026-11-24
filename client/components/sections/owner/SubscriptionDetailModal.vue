@@ -149,7 +149,7 @@
                             </div>
 
                             <span
-                                v-if="agency.id_front && agency.id_selfie"
+                                v-if="agency.id_front && agency.id_selfie && faceBadge"
                                 class="mt-2 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-semibold"
                                 :class="faceBadge.class"
                             >
@@ -717,6 +717,8 @@ watch(
 
 const faceBadge = computed(() => {
     const result = faceResult.value;
+
+    if (!faceChecking.value && !result) return null;
 
     if (faceChecking.value || !result) {
         return {

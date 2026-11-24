@@ -1107,7 +1107,7 @@ async function runFaceScan() {
     faceChecking.value = false;
     emit("update:agency", { ...agency.value, face_scan: result });
 
-    if (result.status === "face") clearError("agency_id_selfie");
+    if (result?.status === "face") clearError("agency_id_selfie");
 }
 
 watch(
