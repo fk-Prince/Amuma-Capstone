@@ -475,7 +475,7 @@
                     </section>
                 </section>
 
-                <section v-if="requestedStaff.length">
+                <section v-if="showRequestedStaff">
                     <h3
                         class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] mb-4 dark:text-accent-300"
                     >
@@ -483,7 +483,15 @@
                         {{ requestedStaffTitle }}
                     </h3>
 
+                    <p
+                        v-if="!requestedStaff.length"
+                        class="rounded-lg border border-dashed border-[#E4EFED] px-5 py-3.5 text-sm text-[#6B8A87] dark:border-white/10 dark:text-gray-400"
+                    >
+                        {{ noRequestedStaffText }}
+                    </p>
+
                     <div
+                        v-else
                         class="rounded-lg border border-[#E4EFED] bg-[#F7FBFA] dark:border-white/10 dark:bg-white/5"
                     >
                         <div
@@ -718,7 +726,23 @@ const viewPatientInfo = () => {
 
 const requestedStaff = computed(() => props.booking?.requested_staff ?? []);
 
+const showRequestedStaff = computed(
+    () => !!props.booking?.homecare && Array.isArray(props.booking?.requested_staff),
+);
+
+const isAdl = computed(
+    () => (props.booking?.homecare?.type ?? "").toLowerCase() === "adl",
+);
+
+const noRequestedStaffText = computed(() =>
+    isAdl.value ? "No caregiver requested" : "No staff requested",
+);
+
 const requestedStaffTitle = computed(() => {
+    if (!requestedStaff.value.length) {
+        return isAdl.value ? "Requested Caregiver" : "Requested Staff";
+    }
+
     const roles = new Set(
         requestedStaff.value.map((staff) => (staff.role ?? "").toLowerCase()),
     );
