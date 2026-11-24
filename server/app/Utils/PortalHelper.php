@@ -78,7 +78,7 @@ class PortalHelper
             'assessment' => $data['assessment'] ?? null,
             'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
-
+            'requested_staff' => $booking->relationLoaded('staffRequests') ? $booking->requestedStaff() : [],
 
             'payment' => !empty($payment['payment_status']) ? $payment : null,
             'receipt_code' => $receiptCode,

@@ -90,6 +90,25 @@ class Booking extends Model
         return $this->hasMany(BookingStaffRequest::class, 'booking_id', 'booking_id');
     }
 
+    public function requestedStaff(): array
+    {
+        return $this->staffRequests
+            ->map(fn($request) => [
+                'uuid' => $request->employee?->users?->uuid,
+                'full_name' => $request->employee?->full_name ?? '',
+                'role' => $request->employee?->relationLoaded('employeeBranch')
+                    ? $request->employee->employeeBranch->firstWhere('branch_id', $this->branch_id)?->role_name
+                    : null,
+                'avatar' => $request->employee?->avatar,
+                'achievement_titles' => collect($request->employee?->achievements ?? [])
+                    ->pluck('label')
+                    ->filter()
+                    ->values(),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function invoices()
     {
         return $this->hasManyThrough(

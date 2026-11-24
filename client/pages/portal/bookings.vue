@@ -26,6 +26,7 @@ import { patientAccessService } from "../../api/patient-access/PatientAccessServ
 import BookingAcknowledgement from "~/components/booking/BookingAcknowledgement.vue";
 import PaymentReceipt from "~/components/billing/PaymentReceipt.vue";
 import PayBookingModal from "~/components/sections/portal/PayBookingModal.vue";
+import RequestedStaffCard from "~/components/sections/portal/RequestedStaffCard.vue";
 import { paymentService } from "~/api/payment/PaymentService";
 import type { PaymentReceipt as PaymentReceiptData } from "~/types/receipt";
 import { formatCurrency } from "~/utils/currency";
@@ -222,8 +223,7 @@ function isCompleteAdmission(booking: PortalBooking) {
 
 function hasDownpayment(booking: PortalBooking) {
     return (
-        !isFacility(booking) &&
-        (booking.payment as any)?.booking_amount != null
+        !isFacility(booking) && (booking.payment as any)?.booking_amount != null
     );
 }
 
@@ -485,7 +485,9 @@ onBeforeUnmount(() => {
                         Total bookings
                     </p>
 
-                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <div
+                        class="flex flex-wrap items-baseline gap-x-3 gap-y-0.5"
+                    >
                         <span
                             v-if="meta"
                             class="text-2xl font-bold leading-tight text-gray-900 dark:text-white"
@@ -503,7 +505,10 @@ onBeforeUnmount(() => {
                         >
                             Showing
                             {{ (meta.current_page - 1) * meta.per_page + 1 }}–{{
-                                Math.min(meta.current_page * meta.per_page, meta.total)
+                                Math.min(
+                                    meta.current_page * meta.per_page,
+                                    meta.total,
+                                )
                             }}
                         </span>
                     </div>
@@ -995,13 +1000,20 @@ onBeforeUnmount(() => {
                                             </h3>
 
                                             <p
-                                                v-if="booking.reviewed_by || booking.reviewed_at"
+                                                v-if="
+                                                    booking.reviewed_by ||
+                                                    booking.reviewed_at
+                                                "
                                                 class="text-xs text-rose-800/80 dark:text-rose-300/70"
                                             >
-                                                <template v-if="booking.reviewed_by">
+                                                <template
+                                                    v-if="booking.reviewed_by"
+                                                >
                                                     By {{ booking.reviewed_by }}
                                                 </template>
-                                                <template v-if="booking.reviewed_at">
+                                                <template
+                                                    v-if="booking.reviewed_at"
+                                                >
                                                     ·
                                                     {{
                                                         stringToDateTime(
@@ -1038,8 +1050,9 @@ onBeforeUnmount(() => {
                                                     formatMoney(
                                                         (booking.payment as any)
                                                             ?.booking_amount ??
-                                                            (booking.payment as any)
-                                                                ?.total_amount,
+                                                            (
+                                                                booking.payment as any
+                                                            )?.total_amount,
                                                     )
                                                 }}</span>
                                                 has been refunded to the card or
@@ -1125,7 +1138,9 @@ onBeforeUnmount(() => {
                                     </dl>
 
                                     <div
-                                        v-if="booking.homecare?.activities?.length"
+                                        v-if="
+                                            booking.homecare?.activities?.length
+                                        "
                                         class="mt-4"
                                     >
                                         <p
@@ -1134,9 +1149,12 @@ onBeforeUnmount(() => {
                                             Activities Included
                                         </p>
 
-                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                        <div
+                                            class="mt-2 flex flex-wrap gap-1.5"
+                                        >
                                             <span
-                                                v-for="activity in booking.homecare.activities"
+                                                v-for="activity in booking
+                                                    .homecare.activities"
                                                 :key="activity"
                                                 class="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/15 dark:text-primary-300"
                                             >
@@ -1175,7 +1193,9 @@ onBeforeUnmount(() => {
                                             <dt
                                                 class="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                             >
-                                                <Navigation class="h-3.5 w-3.5" />
+                                                <Navigation
+                                                    class="h-3.5 w-3.5"
+                                                />
                                                 Location Instructions
                                             </dt>
                                             <dd
@@ -1186,6 +1206,16 @@ onBeforeUnmount(() => {
                                         </div>
                                     </dl>
                                 </div>
+
+                                <RequestedStaffCard
+                                    v-if="
+                                        !isFacility(booking) &&
+                                        booking.homecare &&
+                                        booking.requested_staff
+                                    "
+                                    :staff="booking.requested_staff"
+                                    :type="booking.homecare?.type"
+                                />
 
                                 <div
                                     class="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 dark:border-white/10 dark:bg-secondary"
@@ -1438,11 +1468,7 @@ onBeforeUnmount(() => {
                                     <p
                                         class="text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500"
                                     >
-                                        {{
-                                            booking.status === "rejected"
-                                                ? "Rejected by"
-                                                : "Approved by"
-                                        }}
+                                        Approved by
                                     </p>
 
                                     <p
@@ -1496,7 +1522,12 @@ onBeforeUnmount(() => {
             :amount-due="Number(payingBooking.amount_due ?? 0)"
             :percent="payingBooking.percent_due ?? null"
             :branch-uuid="payingBooking.branch_uuid"
-            :booking-type="bookingTermsType(payingBooking.category, (payingBooking as any).facility?.type)"
+            :booking-type="
+                bookingTermsType(
+                    payingBooking.category,
+                    (payingBooking as any).facility?.type,
+                )
+            "
             @close="onPayClosed"
             @paid="onBookingPaid"
         />
