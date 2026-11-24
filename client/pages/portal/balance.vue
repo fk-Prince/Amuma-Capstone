@@ -1044,13 +1044,13 @@ const isPaying = ref(false);
 const activeReceipt = ref<PaymentReceiptData | null>(null);
 
 const card = ref<CardDetails>({
-    number: "4000000000001000",
-    expMonth: "04",
-    expYear: "29",
-    cvc: "123",
-    firstName: "prince",
-    lastName: "sestoso",
-    email: "prince.sestoso@gmail.com",
+    number: "",
+    expMonth: "",
+    expYear: "",
+    cvc: "",
+    firstName: "",
+    lastName: "",
+    email: "",
 });
 
 const useCredit = ref(false);
