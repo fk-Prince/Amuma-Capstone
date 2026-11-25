@@ -888,6 +888,45 @@
                         </div>
 
                         <div class="mt-6">
+                            <div class="mb-5 space-y-3">
+                                <label
+                                    class="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-gray-300"
+                                >
+                                    <input
+                                        v-model="patientDeceased"
+                                        type="checkbox"
+                                        :disabled="loading"
+                                        class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary dark:border-white/20 dark:bg-secondary"
+                                    />
+                                    Patient deceased
+                                </label>
+
+                                <div v-if="patientDeceased">
+                                    <label
+                                        for="deceased-at"
+                                        class="mb-2 block text-sm font-semibold text-slate-700 dark:text-gray-400"
+                                    >
+                                        Date and time of death
+                                        <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        id="deceased-at"
+                                        v-model="deceasedAt"
+                                        type="datetime-local"
+                                        :max="maxDeceasedAt"
+                                        :disabled="loading"
+                                        :required="patientDeceased"
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-50 dark:border-white/10 dark:bg-secondary dark:text-white dark:disabled:bg-white/5"
+                                    />
+                                    <p
+                                        v-if="patientDeceased && !validDeceasedAt"
+                                        class="mt-1 text-xs text-rose-600 dark:text-rose-300"
+                                    >
+                                        Enter a date and time that is not in the future.
+                                    </p>
+                                </div>
+                            </div>
+
                             <label
                                 for="discharge-note"
                                 class="block text-sm font-semibold text-slate-700 mb-2 dark:text-gray-400"
@@ -1242,12 +1281,32 @@ const emit = defineEmits<{
             note: string;
             force: boolean;
             keep: number | null;
+            isDeceased: boolean;
+            deceasedAt: string | null;
         },
     ];
     cancel: [];
 }>();
 
 const dischargeNote = ref("");
+const patientDeceased = ref(false);
+const deceasedAt = ref("");
+
+function toLocalDateTimeInput(value: Date): string {
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+
+    return local.toISOString().slice(0, 16);
+}
+
+const maxDeceasedAt = ref(toLocalDateTimeInput(new Date()));
+const validDeceasedAt = computed(() => {
+    if (!patientDeceased.value) return true;
+    if (!deceasedAt.value) return false;
+
+    const value = new Date(deceasedAt.value);
+
+    return !Number.isNaN(value.getTime()) && value.getTime() <= Date.now();
+});
 
 const currentInvoice = computed(() => {
     return props.admission?.current_invoice ?? null;
@@ -1429,11 +1488,19 @@ watch(
 const hasReason = computed(() => dischargeNote.value.trim().length > 0);
 
 const canDischargeNow = computed(
-    () => hasReason.value && !owesBalance.value && props.canDischarge,
+    () =>
+        hasReason.value &&
+        validDeceasedAt.value &&
+        !owesBalance.value &&
+        props.canDischarge,
 );
 
 const canForceNow = computed(
-    () => hasReason.value && mayForce.value && !keepError.value,
+    () =>
+        hasReason.value &&
+        validDeceasedAt.value &&
+        mayForce.value &&
+        !keepError.value,
 );
 
 const forcing = ref(false);
@@ -1571,6 +1638,11 @@ function proceedWithDischarge() {
 
         force: forcing.value,
 
+        isDeceased: patientDeceased.value,
+        deceasedAt: patientDeceased.value
+            ? new Date(deceasedAt.value).toISOString()
+            : null,
+
         keep:
             forcing.value && owesBalance.value && giveBack.value > 0
                 ? keepValue.value
@@ -1584,6 +1656,8 @@ function handleClose() {
     }
 
     dischargeNote.value = "";
+    patientDeceased.value = false;
+    deceasedAt.value = "";
     confirming.value = false;
 
     emit("cancel");
@@ -1594,7 +1668,14 @@ watch(
     (open) => {
         if (open) {
             dischargeNote.value = "";
+            patientDeceased.value = false;
+            deceasedAt.value = "";
+            maxDeceasedAt.value = toLocalDateTimeInput(new Date());
         }
     },
 );
+
+watch(patientDeceased, (checked) => {
+    if (!checked) deceasedAt.value = "";
+});
 </script>

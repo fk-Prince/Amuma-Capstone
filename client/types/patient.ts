@@ -189,6 +189,7 @@ export interface Admission {
     status: string;
     admitted_at: string;
     end_date?: string | null;
+    deceased_at?: string | null;
     note?: string | null;
     bed?: Bed;
     room?: Room;

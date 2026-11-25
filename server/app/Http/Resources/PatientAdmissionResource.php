@@ -39,6 +39,7 @@ class PatientAdmissionResource extends JsonResource
             'status'                => $this->status,
             'admitted_at'           => $this->admitted_at,
             'end_date'              => $this->end_date,
+            'deceased_at'           => $this->deceased_at,
 
             'bed' => [
                 'bed_id' => $this->bed?->bed_id,

@@ -25,11 +25,13 @@ class PatientAdmission extends Model
         'note',
         'admitted_at',
         'discharged_at',
+        'deceased_at',
     ];
 
     protected $casts = [
         'admitted_at' => 'datetime',
         'discharged_at' => 'datetime',
+        'deceased_at' => 'datetime',
     ];
 
 

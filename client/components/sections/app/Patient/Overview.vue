@@ -13,7 +13,7 @@ import {
     MapPin,
 } from "lucide-vue-next";
 import type { PatientRetrieve } from "~/types/patient";
-import { formatDate } from "~/utils/time";
+import { formatDate, stringToDateTime } from "~/utils/time";
 import PatientAvatar from "~/components/ui/PatientAvatar.vue";
 
 defineProps<{
@@ -94,6 +94,18 @@ function statusClasses(status?: string) {
                                 {{ admissionLabel(patient.latest_admission?.status) }}
                             </span>
                         </div>
+
+                        <p
+                            v-if="patient.latest_admission?.deceased_at"
+                            class="mt-2 text-sm font-medium text-slate-500 dark:text-gray-400"
+                        >
+                            Deceased
+                            {{
+                                stringToDateTime(
+                                    patient.latest_admission.deceased_at,
+                                )
+                            }}
+                        </p>
                     </div>
                 </div>
 

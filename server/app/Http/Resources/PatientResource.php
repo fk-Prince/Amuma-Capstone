@@ -271,6 +271,7 @@ class PatientResource extends JsonResource
             'status' => $admission->status,
             'admitted_at' => $admission->admitted_at,
             'end_date' => $admission->end_date,
+            'deceased_at' => $admission->deceased_at,
             'note' => $admission->note,
 
             'bed' => [

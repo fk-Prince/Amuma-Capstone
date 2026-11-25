@@ -759,6 +759,7 @@ const admissionColumns: DataTableColumn[] = [
     { key: "room_bed", label: "Room & Bed" },
     { key: "status", label: "Status" },
     { key: "admission_date", label: "Admission Date", sortable: true },
+    { key: "deceased_at", label: "Deceased At" },
     { key: "actions", label: "Action", align: "right" },
 ];
 
@@ -912,6 +913,9 @@ async function fetchAdmissions() {
 
                     admission_date: admission?.admitted_at
                         ? formatDate(admission.admitted_at)
+                        : "—",
+                    deceased_at: admission?.deceased_at
+                        ? stringToDateTime(admission.deceased_at)
                         : "—",
                 };
             },

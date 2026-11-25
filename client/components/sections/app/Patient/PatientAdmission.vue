@@ -145,6 +145,10 @@
                                                         )
                                                     }}
                                                 </span>
+                                                <span v-if="latestAdmission.deceased_at">
+                                                    · Deceased
+                                                    {{ stringToDateTime(latestAdmission.deceased_at) }}
+                                                </span>
                                             </span>
                                         </p>
                                     </div>
@@ -334,6 +338,10 @@
                                                         )
                                                     }}
                                                 </span>
+                                                <span v-if="admission.deceased_at">
+                                                    · Deceased
+                                                    {{ stringToDateTime(admission.deceased_at) }}
+                                                </span>
                                             </p>
                                         </div>
 
@@ -408,6 +416,7 @@ import ActionButton from "~/components/ui/ActionButton.vue";
 import { useBranchPlan } from "~/composables/useBranchPlan";
 import { Modules } from "~/types/module";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
+import { stringToDateTime } from "~/utils/time";
 
 definePageMeta({
     layout: "dashboard",

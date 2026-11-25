@@ -535,6 +535,9 @@
                                                         )
                                                     }}
                                                 </span>
+                                                <span v-if="latestAdmission.deceased_at">
+                                                    · Deceased {{ stringToDateTime(latestAdmission.deceased_at) }}
+                                                </span>
                                             </span>
                                         </p>
 
@@ -751,6 +754,9 @@
                                                         )
                                                     }}
                                                 </span>
+                                                <span v-if="admission.deceased_at">
+                                                    · Deceased {{ stringToDateTime(admission.deceased_at) }}
+                                                </span>
                                             </p>
                                         </div>
 
@@ -880,6 +886,9 @@
                                                 timelineAdmission.end_date,
                                             )
                                         }}
+                                    </span>
+                                    <span v-if="timelineAdmission.deceased_at">
+                                        · Deceased {{ stringToDateTime(timelineAdmission.deceased_at) }}
                                     </span>
                                 </p>
                             </div>
@@ -1124,7 +1133,7 @@ import { patientService } from "~/api/patient/PatientService";
 import { formatCurrency as formatCurrencyUtil } from "~/utils/currency";
 import { admissionService } from "~/api/admission/AdmissionService";
 import { useToast } from "~/composables/useToast";
-import { toLocalDateString } from "~/utils/time";
+import { stringToDateTime, toLocalDateString } from "~/utils/time";
 import ConfirmDialog from "~/components/ui/ConfirmDialog.vue";
 import DatePickerField from "~/components/ui/DatePickerField.vue";
 import BillingCycleModal from "~/components/sections/app/Patient/BillingCycleModal.vue";
@@ -1472,12 +1481,16 @@ function confirmDischarge(payload: {
     note: string;
     force: boolean;
     keep: number | null;
+    isDeceased: boolean;
+    deceasedAt: string | null;
 }) {
     runAction("discharge", {
         refund: payload.refund,
         current_refund_amount: payload.currentRefundAmount,
         note: payload.note,
         force: payload.force,
+        is_deceased: payload.isDeceased,
+        deceased_at: payload.deceasedAt,
         ...(payload.keep !== null ? { force_keep: payload.keep } : {}),
     });
 }

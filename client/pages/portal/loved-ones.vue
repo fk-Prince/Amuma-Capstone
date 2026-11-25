@@ -304,6 +304,13 @@
                                     Discharged {{ lo.dischargeDate }}
                                 </p>
 
+                                <p
+                                    v-if="lo.deceasedDate"
+                                    class="text-sm text-gray-500 font-medium mt-1 dark:text-gray-400"
+                                >
+                                    Deceased {{ lo.deceasedDate }}
+                                </p>
+
                                 <div
                                     class="flex items-center gap-2 flex-wrap mt-3"
                                 >
@@ -985,6 +992,7 @@ import {
 import { patientAccessService } from "../../api/patient-access/PatientAccessService";
 import type { Medication } from "~/types/medication";
 import type { Vital } from "~/types/medication";
+import { stringToDateTime } from "~/utils/time";
 
 useHead({ title: "My Loved Ones" });
 
@@ -1053,6 +1061,7 @@ interface LovedOne {
     admissionStatus: string;
     hasAdmission: boolean;
     dischargeDate: string;
+    deceasedDate: string | null;
     assignedCaregiver: string;
     conditions: string[];
     allergies: string[];
@@ -1102,6 +1111,7 @@ function fallbackLovedOne(): LovedOne {
         admissionStatus: "N/A",
         hasAdmission: false,
         dischargeDate: "N/A",
+        deceasedDate: null,
         assignedCaregiver: "N/A",
         conditions: [],
         allergies: [],
@@ -1436,6 +1446,9 @@ function mapPatientRecord(item: any): LovedOne {
         dischargeDate: admission.end_date
             ? formatDate(admission.end_date)
             : "N/A",
+        deceasedDate: admission.deceased_at
+            ? stringToDateTime(admission.deceased_at)
+            : null,
         assignedCaregiver: "N/A",
         conditions: Array.isArray(patient.conditions) ? patient.conditions : [],
         allergies: Array.isArray(patient.allergies) ? patient.allergies : [],

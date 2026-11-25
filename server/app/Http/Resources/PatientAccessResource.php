@@ -119,6 +119,14 @@ class PatientAccessResource extends JsonResource
             );
         }
 
+        if ($this->resource->latestAdmission?->deceased_at) {
+            return $this->formatAdmissionContext(
+                $this->resource->latestAdmission,
+                'admission_fallback',
+                $this->resource->latestAdmission->status
+            );
+        }
+
         $homecare = PortalHelper::currentHomecareSchedules($this->resource);
 
         if ($homecare->isNotEmpty()) {
@@ -154,6 +162,7 @@ class PatientAccessResource extends JsonResource
                 'status' => $admission->status,
                 'admitted_at' => $admission->admitted_at?->format('Y-m-d H:i:s'),
                 'end_date' => $admission->end_date?->format('Y-m-d H:i:s'),
+                'deceased_at' => $admission->deceased_at?->format('Y-m-d H:i:s'),
             ],
             'bed' => [
                 'bed_no' => $admission->bed?->bed_no,

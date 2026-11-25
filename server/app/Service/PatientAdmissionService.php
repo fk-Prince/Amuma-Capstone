@@ -10,6 +10,7 @@ use App\Models\AdmissionDiagnosis;
 use App\Models\AdditionalCharge;
 use App\Models\AdmissionPeriod;
 use App\Models\Bed;
+use App\Models\Branch;
 use App\Models\Booking;
 use App\Models\Invoice;
 use App\Models\InvoiceAdjustment;
@@ -388,7 +389,37 @@ class PatientAdmissionService
             ]);
         }
 
-        return DB::transaction(function () use ($admission, $payload, $note) {
+        $isDeceased = filter_var($payload['is_deceased'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $deceasedAt = null;
+
+        if ($isDeceased) {
+            $deceasedAtInput = trim((string) ($payload['deceased_at'] ?? ''));
+
+            if ($deceasedAtInput === '') {
+                throw ValidationException::withMessages([
+                    'deceased_at' => 'Enter the date and time of death.',
+                ]);
+            }
+
+            $branch = Branch::find($payload['branch_id'] ?? null);
+            $timezone = $branch?->settings['time_zone'] ?? config('app.timezone');
+
+            try {
+                $deceasedAt = Carbon::parse($deceasedAtInput, $timezone);
+            } catch (Throwable) {
+                throw ValidationException::withMessages([
+                    'deceased_at' => 'Enter a valid date and time of death.',
+                ]);
+            }
+
+            if ($deceasedAt->isFuture()) {
+                throw ValidationException::withMessages([
+                    'deceased_at' => 'The date and time of death cannot be in the future.',
+                ]);
+            }
+        }
+
+        return DB::transaction(function () use ($admission, $payload, $note, $deceasedAt) {
             $currentPeriod = $admission->currentPeriod()
                 ->with('branchContract', 'invoiceAdmissionLines')
                 ->first();
@@ -415,6 +446,7 @@ class PatientAdmissionService
 
             $admission->update([
                 'discharged_at' => $dischargedAt,
+                'deceased_at' => $deceasedAt,
                 'status' => PatientAdmission::STATUS_DISCHARGED,
                 'note' => $note,
             ]);
