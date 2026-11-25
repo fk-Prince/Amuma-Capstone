@@ -491,7 +491,7 @@
                     </p>
 
                     <div
-                        v-if="staffAvailability && !requestedStaff.length"
+                        v-if="status === 'pending' && staffAvailability && !requestedStaff.length"
                         class="mt-3 rounded-lg border border-[#E4EFED] bg-[#F7FBFA] px-5 py-3 text-sm font-medium text-[#16302E] dark:border-white/10 dark:bg-white/5 dark:text-white"
                     >
                         {{ staffAvailability.other_count }} qualified
@@ -584,7 +584,10 @@
                                 {{ staff.full_name }} —
                                 {{ staff.uuid && staffAvailability.requested_uuids?.includes(staff.uuid) ? "Available" : "Unavailable" }}
                             </p>
-                            <p class="font-medium text-[#16302E] dark:text-white">
+                            <p
+                                v-if="status === 'pending'"
+                                class="font-medium text-[#16302E] dark:text-white"
+                            >
                                 {{ staffAvailability.other_count }} other qualified
                                 {{ staffAvailability.label }}
                                 {{ staffAvailability.other_count === 1 ? "is" : "are" }}

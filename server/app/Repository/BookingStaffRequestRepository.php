@@ -6,6 +6,8 @@ use App\Models\BookingStaffRequest;
 use App\Models\Employee;
 use App\Models\EmployeeBranch;
 use App\Models\PatientAccess;
+use App\Models\Schedule;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -76,11 +78,41 @@ class BookingStaffRequestRepository
             ->values();
     }
 
-    public function availableForService(int $branchId, array $roles, ?int $serviceId): Collection
+    public function availableForService(
+        int $branchId,
+        array $roles,
+        ?int $serviceId,
+        ?Carbon $targetStart = null,
+        ?Carbon $targetEnd = null
+    ): Collection
     {
         return $this->homecareStaff($branchId, $roles)
             ->where('status', EmployeeBranch::STATUS_ACTIVE)
             ->when($serviceId, fn($q) => $q->qualifiedFor([$serviceId]))
+            ->when($targetStart && $targetEnd, function ($query) use ($targetStart, $targetEnd) {
+                $overlapWindowSql = ScheduleRepository::overlapWindowSql();
+
+                $query->whereDoesntHave('scheduleAssignments', function ($assignment) use (
+                    $targetStart,
+                    $targetEnd,
+                    $overlapWindowSql
+                ) {
+                    $assignment->where('schedule_assigned.is_active', true)
+                        ->tap(fn($q) => ScheduleRepository::stillOnDuty($q))
+                        ->whereHas('scheduleService.schedule', function ($schedule) use (
+                            $targetStart,
+                            $targetEnd,
+                            $overlapWindowSql
+                        ) {
+                            $schedule->whereIn('schedules.status', [
+                                Schedule::STATUS_ONGOING,
+                                Schedule::STATUS_PENDING,
+                            ])
+                                ->where('schedules.scheduled_at', '<=', $targetEnd)
+                                ->whereRaw($overlapWindowSql, [$targetStart]);
+                        });
+                });
+            })
             ->with('employees.users:user_id,uuid')
             ->get();
     }

@@ -44,6 +44,26 @@ class ScheduleRepository
         return "({$estimatedEnd} >= ? OR {$estimatedEnd} < '{$now}')";
     }
 
+    public static function overlapWindowSql(): string
+    {
+        $durationMinutes = "
+            CASE
+                WHEN ss.service_id IS NOT NULL THEN EXTRACT(EPOCH FROM sv.maximum_duration) / 60
+                WHEN ss.duration IS NOT NULL THEN ss.duration * 60
+                ELSE 60
+            END
+        ";
+
+        $estimatedEnd = "(
+            SELECT MAX(schedules.scheduled_at + ({$durationMinutes}) * INTERVAL '1 minute')
+            FROM schedule_services ss
+            LEFT JOIN services sv ON sv.service_id = ss.service_id
+            WHERE ss.schedule_id = schedules.schedule_id
+        )";
+
+        return "({$estimatedEnd} >= ?)";
+    }
+
 
     public static function stillOnDuty(mixed $query): void
     {

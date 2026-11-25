@@ -9,6 +9,8 @@ use App\Models\Patient;
 use App\Models\Service;
 use App\Models\User;
 use App\Repository\BookingStaffRequestRepository;
+use App\Repository\ScheduleRepository;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
 
@@ -103,8 +105,13 @@ class BookingStaffService
     public function availabilitySummary(int $branchId, array $homecare, array $requestedStaff): array
     {
         $type = $homecare['type'] ?? null;
+        $serviceIds = collect($homecare['services'] ?? [])
+            ->pluck('service_id')
+            ->filter()
+            ->map(fn($id) => (int) $id)
+            ->values();
         $serviceId = $type === Booking::TYPE_MEDICAL
-            ? ($homecare['services'][0]['service_id'] ?? null)
+            ? $serviceIds->first()
             : null;
 
         if ($type === Booking::TYPE_MEDICAL && !$serviceId) {
@@ -117,7 +124,23 @@ class BookingStaffService
 
         [$roles, $serviceId] = $this->rolesFor($branchId, $type, $serviceId);
 
-        $staff = $this->requests->availableForService($branchId, $roles, $serviceId);
+        $timezone = ScheduleRepository::branchTimezone((string) $branchId);
+        $startValue = trim((string) ($homecare['date'] ?? '') . ' ' . (string) ($homecare['prefered_time'] ?? ''));
+        $targetStart = $startValue !== ''
+            ? Carbon::parse($startValue, $timezone)
+            : null;
+        $targetDurationMinutes = $type === Booking::TYPE_MEDICAL
+            ? $this->medicalDurationMinutes($serviceIds->all())
+            : max(1.0, (float) ($homecare['time_span'] ?? 1)) * 60;
+        $targetEnd = $targetStart?->copy()->addMinutes($targetDurationMinutes);
+
+        $staff = $this->requests->availableForService(
+            $branchId,
+            $roles,
+            $serviceId,
+            $targetStart,
+            $targetEnd,
+        );
         $availableUuids = $staff
             ->map(fn($row) => $row->employees?->users?->uuid)
             ->filter()
@@ -140,6 +163,29 @@ class BookingStaffService
             'other_count' => $otherCount,
             'label' => $label,
         ];
+    }
+
+    private function medicalDurationMinutes(array $serviceIds): float
+    {
+        if (!$serviceIds) {
+            return 60;
+        }
+
+        $services = Service::query()
+            ->whereIn('service_id', $serviceIds)
+            ->pluck('maximum_duration', 'service_id');
+
+        return collect($serviceIds)->sum(function ($serviceId) use ($services) {
+            $duration = $services->get($serviceId);
+
+            if (!$duration) {
+                return 60;
+            }
+
+            [$hours, $minutes, $seconds] = array_pad(explode(':', $duration), 3, 0);
+
+            return ((int) $hours * 60) + (int) $minutes + ((int) $seconds / 60);
+        });
     }
 
     private function rolesFor(int $branchId, ?string $type, mixed $serviceId): array
