@@ -76,6 +76,15 @@ class BookingStaffRequestRepository
             ->values();
     }
 
+    public function availableForService(int $branchId, array $roles, ?int $serviceId): Collection
+    {
+        return $this->homecareStaff($branchId, $roles)
+            ->where('status', EmployeeBranch::STATUS_ACTIVE)
+            ->when($serviceId, fn($q) => $q->qualifiedFor([$serviceId]))
+            ->with('employees.users:user_id,uuid')
+            ->get();
+    }
+
     public function employeeIdsForSchedule(int $scheduleId): Collection
     {
         return BookingStaffRequest::query()

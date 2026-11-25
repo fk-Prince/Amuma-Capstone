@@ -85,6 +85,11 @@ export interface BookingRetrieve {
     };
     reserved: Reserved | null;
     requested_staff?: RequestedStaff[];
+    staff_availability?: {
+        requested_uuids: string[];
+        other_count: number;
+        label: string;
+    };
     schedule_code?: string | null;
     is_processed?: boolean;
     valid_until?: string;

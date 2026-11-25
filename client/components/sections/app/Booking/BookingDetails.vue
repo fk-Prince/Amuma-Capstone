@@ -491,7 +491,17 @@
                     </p>
 
                     <div
-                        v-else
+                        v-if="staffAvailability && !requestedStaff.length"
+                        class="mt-3 rounded-lg border border-[#E4EFED] bg-[#F7FBFA] px-5 py-3 text-sm font-medium text-[#16302E] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                    >
+                        {{ staffAvailability.other_count }} qualified
+                        {{ staffAvailability.label }}
+                        {{ staffAvailability.other_count === 1 ? "is" : "are" }}
+                        available for this service
+                    </div>
+
+                    <div
+                        v-if="requestedStaff.length"
                         class="rounded-lg border border-[#E4EFED] bg-[#F7FBFA] dark:border-white/10 dark:bg-white/5"
                     >
                         <div
@@ -507,7 +517,11 @@
                                 class="text-[10px] uppercase tracking-[0.15em] text-[#4F6F6C] font-mono dark:text-gray-400"
                             >
                                 {{ requestedStaff.length }}
-                                {{ requestedStaff.length === 1 ? "person" : "people" }}
+                                {{
+                                    requestedStaff.length === 1
+                                        ? "person"
+                                        : "people"
+                                }}
                             </p>
                         </div>
 
@@ -552,6 +566,30 @@
                                     </p>
                                 </div>
                             </div>
+                        </div>
+
+                        <div
+                            v-if="staffAvailability"
+                            class="space-y-2 border-t border-[#E4EFED] px-5 py-3 text-sm dark:border-white/10"
+                        >
+                            <p
+                                v-for="staff in requestedStaff"
+                                :key="`availability-${staff.uuid ?? staff.full_name}`"
+                                class="flex items-center gap-2 text-[#4F6F6C] dark:text-gray-300"
+                            >
+                                <span
+                                    class="h-2 w-2 shrink-0 rounded-full"
+                                    :class="staff.uuid && staffAvailability.requested_uuids?.includes(staff.uuid) ? 'bg-emerald-500' : 'bg-rose-500'"
+                                />
+                                {{ staff.full_name }} —
+                                {{ staff.uuid && staffAvailability.requested_uuids?.includes(staff.uuid) ? "Available" : "Unavailable" }}
+                            </p>
+                            <p class="font-medium text-[#16302E] dark:text-white">
+                                {{ staffAvailability.other_count }} other qualified
+                                {{ staffAvailability.label }}
+                                {{ staffAvailability.other_count === 1 ? "is" : "are" }}
+                                available for this service
+                            </p>
                         </div>
                     </div>
                 </section>
@@ -725,9 +763,14 @@ const viewPatientInfo = () => {
 };
 
 const requestedStaff = computed(() => props.booking?.requested_staff ?? []);
+const staffAvailability = computed(
+    () => props.booking?.staff_availability ?? null,
+);
 
 const showRequestedStaff = computed(
-    () => !!props.booking?.homecare && Array.isArray(props.booking?.requested_staff),
+    () =>
+        !!props.booking?.homecare &&
+        Array.isArray(props.booking?.requested_staff),
 );
 
 const isAdl = computed(

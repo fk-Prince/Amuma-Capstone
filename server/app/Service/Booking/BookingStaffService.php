@@ -100,6 +100,48 @@ class BookingStaffService
         $this->requests->attach($booking->booking_id, $employeeIds);
     }
 
+    public function availabilitySummary(int $branchId, array $homecare, array $requestedStaff): array
+    {
+        $type = $homecare['type'] ?? null;
+        $serviceId = $type === Booking::TYPE_MEDICAL
+            ? ($homecare['services'][0]['service_id'] ?? null)
+            : null;
+
+        if ($type === Booking::TYPE_MEDICAL && !$serviceId) {
+            return [
+                'requested_uuids' => [],
+                'other_count' => 0,
+                'label' => 'qualified staff',
+            ];
+        }
+
+        [$roles, $serviceId] = $this->rolesFor($branchId, $type, $serviceId);
+
+        $staff = $this->requests->availableForService($branchId, $roles, $serviceId);
+        $availableUuids = $staff
+            ->map(fn($row) => $row->employees?->users?->uuid)
+            ->filter()
+            ->values();
+        $requestedUuids = collect($requestedStaff)
+            ->pluck('uuid')
+            ->filter(fn($uuid) => $uuid && $availableUuids->contains($uuid))
+            ->unique()
+            ->values();
+        $otherCount = max(0, $availableUuids->unique()->count() - $requestedUuids->count());
+
+        $label = match ($roles) {
+            [Service::STAFF_ROLE_CAREGIVER] => 'caregivers',
+            [Service::STAFF_ROLE_NURSE] => 'nurses',
+            default => 'caregivers or nurses',
+        };
+
+        return [
+            'requested_uuids' => $requestedUuids->all(),
+            'other_count' => $otherCount,
+            'label' => $label,
+        ];
+    }
+
     private function rolesFor(int $branchId, ?string $type, mixed $serviceId): array
     {
         if ($type === Booking::TYPE_ADL) {

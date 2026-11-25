@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Patient;
+use App\Service\Booking\BookingStaffService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -73,6 +74,14 @@ class BookingResource extends JsonResource
             'diagnoses' => $data['diagnoses'] ?? [],
             'reserved' => $data['reserved'] ?? null,
             'requested_staff' => $this->whenLoaded('staffRequests', fn() => $this->resource->requestedStaff()),
+            'staff_availability' => $this->when(
+                $this->relationLoaded('staffRequests') && !empty($data['homecare']),
+                fn() => app(BookingStaffService::class)->availabilitySummary(
+                    (int) $this->branch_id,
+                    $data['homecare'],
+                    $this->resource->requestedStaff()
+                )
+            ),
             'schedule_code' => $this->when(
                 $this->relationLoaded('invoices'),
                 fn() => $this->resource->scheduleCode()
