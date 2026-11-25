@@ -501,7 +501,7 @@
                         {{ staffAvailability.other_count }} qualified
                         {{ staffAvailability.label }}
                         {{ staffAvailability.other_count === 1 ? "is" : "are" }}
-                        available for this service date
+                        available for this service
                     </div>
 
                     <div
@@ -614,7 +614,7 @@
                                         ? "is"
                                         : "are"
                                 }}
-                                available for this service
+                                available for this service date
                             </p>
                         </div>
                     </div>
