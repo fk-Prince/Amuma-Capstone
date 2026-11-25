@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class BookingStaffRequestRepository
 {
-    private const HOMECARE_ASSIGNMENTS = ['online', 'homecare', 'both', 'homecare + inhouse facility'];
+    private const HOMECARE_ASSIGNMENTS = ['online', 'both'];
 
     public function options(int $branchId, array $roles, ?int $serviceId, ?int $patientId, ?string $search, int $perPage, int $page)
     {
