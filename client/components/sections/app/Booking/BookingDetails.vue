@@ -573,7 +573,7 @@
                         </div>
 
                         <div
-                            v-if="staffAvailability"
+                            v-if="status === 'pending' && staffAvailability"
                             class="space-y-2 border-t border-[#E4EFED] px-5 py-3 text-sm dark:border-white/10"
                         >
                             <p
@@ -602,10 +602,7 @@
                                         : "Unavailable"
                                 }}
                             </p>
-                            <p
-                                v-if="status === 'pending'"
-                                class="font-medium text-[#16302E] dark:text-white"
-                            >
+                            <p class="font-medium text-[#16302E] dark:text-white">
                                 {{ staffAvailability.other_count }} other
                                 qualified
                                 {{ staffAvailability.label }}
