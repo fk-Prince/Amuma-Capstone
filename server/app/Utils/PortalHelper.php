@@ -26,6 +26,42 @@ class PortalHelper
             : $booking->booking_data;
         $data ??= [];
 
+        $patient = $booking->patientsBooking->first();
+        $patient?->loadMissing('assessments', 'diagnoses');
+
+        $storedAssessments = $patient?->assessments
+            ->sortByDesc('patient_assessment_id')
+            ->map(fn($assessment) => [
+                'uuid' => $assessment->uuid,
+                'condition' => $assessment->condition,
+                'mental_state' => $assessment->mental_state,
+                'affect' => $assessment->affect,
+                'behavior' => $assessment->behavior,
+                'communication' => $assessment->communication,
+                'speech' => $assessment->speech,
+                'life_system_profile' => $assessment->life_system_profile,
+            ])
+            ->values()
+            ->all() ?? [];
+
+        $storedDiagnoses = $patient?->diagnoses
+            ->sortByDesc('patient_diagnosis_id')
+            ->map(fn($diagnosis) => [
+                'uuid' => $diagnosis->uuid,
+                'diagnosis' => $diagnosis->diagnosis,
+                'diagnosis_date' => $diagnosis->diagnosis_date?->format('Y-m-d'),
+                'diagnosis_notes' => $diagnosis->diagnosis_notes,
+                'diagnosis_file' => $diagnosis->diagnosis_file,
+                'diagnosis_file_name' => $diagnosis->diagnosis_file
+                    ? basename(parse_url($diagnosis->diagnosis_file, PHP_URL_PATH) ?: $diagnosis->diagnosis_file)
+                    : null,
+            ])
+            ->values()
+            ->all() ?? [];
+
+        $assessmentData = !empty($data['assessment']) ? $data['assessment'] : $storedAssessments;
+        $diagnosisData = !empty($data['diagnoses']) ? $data['diagnoses'] : $storedDiagnoses;
+
         $payment = $data['payment'] ?? null;
         $due = app(BookingHelper::class)->portalPaymentDue($booking);
 
@@ -75,8 +111,8 @@ class PortalHelper
                 'address' => $data['guardian']['address'] ?? null,
             ],
 
-            'assessment' => $data['assessment'] ?? null,
-            'diagnoses' => $data['diagnoses'] ?? [],
+            'assessment' => $assessmentData,
+            'diagnoses' => $diagnosisData,
             'reserved' => $data['reserved'] ?? null,
             'requested_staff' => $booking->relationLoaded('staffRequests') ? $booking->requestedStaff() : [],
 

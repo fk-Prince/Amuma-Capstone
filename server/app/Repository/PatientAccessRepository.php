@@ -186,6 +186,8 @@ class PatientAccessRepository
             ->with([
                 'branch',
                 'reviewer',
+                'patientsBooking.assessments',
+                'patientsBooking.diagnoses',
                 'staffRequests.employee.users:user_id,uuid',
                 'staffRequests.employee.employeeBranch',
             ])

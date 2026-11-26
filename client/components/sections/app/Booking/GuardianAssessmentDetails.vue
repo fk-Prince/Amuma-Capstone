@@ -113,7 +113,7 @@
             </div>
         </section>
 
-        <section v-if="hasAssessment">
+        <section>
             <h3
                 class="mb-4 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#0E7C7B] dark:text-accent-300"
             >
@@ -133,6 +133,13 @@
                 </svg>
                 Assessment
             </h3>
+
+            <p
+                v-if="!hasAssessment"
+                class="text-sm text-slate-500 dark:text-gray-400"
+            >
+                No assessment details provided.
+            </p>
 
             <div
                 v-if="assessments.length > 1"

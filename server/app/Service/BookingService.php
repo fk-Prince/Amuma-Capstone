@@ -29,6 +29,8 @@ class BookingService
     private const DETAIL_RELATIONS = [
         'staffRequests.employee.users:user_id,uuid',
         'staffRequests.employee.employeeBranch',
+        'patientsBooking.assessments',
+        'patientsBooking.diagnoses',
         'invoices.invoiceServices.scheduleService.schedule',
     ];
 
@@ -87,6 +89,8 @@ class BookingService
                 'homecare' =>  $payload['homecare'],
                 'reserved' =>  $payload['reserved'],
                 'payment'  =>  $payload['payment'],
+                'assessment' => $booking->booking_data['assessment'] ?? $payload['assessment'] ?? [],
+                'diagnoses' => $booking->booking_data['diagnoses'] ?? $payload['diagnoses'] ?? [],
             ];
 
 
