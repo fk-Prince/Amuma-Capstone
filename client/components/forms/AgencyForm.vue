@@ -84,7 +84,9 @@
 
                             <p class="text-sm font-medium">Upload Logo</p>
 
-                            <span class="text-xs"> PNG, JPG, JPEG up to 5MB </span>
+                            <span class="text-xs">
+                                PNG, JPG, JPEG up to 5MB
+                            </span>
                         </div>
 
                         <div
@@ -156,10 +158,7 @@
                 </p>
             </div>
 
-            <div
-                v-else
-                class="-mt-2 space-y-5"
-            >
+            <div v-else class="-mt-2 space-y-5">
                 <div
                     class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
                     @pointerdown.capture="prepareFaceCheck"
@@ -278,7 +277,9 @@
                                     Upload ID {{ idSideLabel }}
                                 </p>
 
-                                <span class="text-xs"> PNG, JPG up to 5MB </span>
+                                <span class="text-xs">
+                                    PNG, JPG up to 5MB
+                                </span>
                             </div>
 
                             <div
@@ -332,7 +333,8 @@
                                 @click="showIdList = !showIdList"
                                 class="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-600"
                             >
-                                {{ showIdList ? "Hide" : "Show" }} applicable IDs
+                                {{ showIdList ? "Hide" : "Show" }} applicable
+                                IDs
 
                                 <svg
                                     class="w-3 h-3 transition-transform"
@@ -361,12 +363,19 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-2" data-field="agency_id_selfie">
-                        <div class="flex h-9 items-center justify-between gap-2">
+                    <div
+                        class="flex flex-col gap-2"
+                        data-field="agency_id_selfie"
+                    >
+                        <div
+                            class="flex h-9 items-center justify-between gap-2"
+                        >
                             <label
                                 class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
                             >
-                                <ScanFace class="h-4 w-4 text-slate-400 dark:text-gray-500" />
+                                <ScanFace
+                                    class="h-4 w-4 text-slate-400 dark:text-gray-500"
+                                />
                                 Photo holding your ID
                                 <span class="text-red-500">*</span>
                                 <PhotoGuide variant="selfie" />
@@ -409,7 +418,9 @@
                             </div>
 
                             <span
-                                v-if="selfiePreview && (faceChecking || faceScan)"
+                                v-if="
+                                    selfiePreview && (faceChecking || faceScan)
+                                "
                                 class="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold shadow-sm"
                                 :class="
                                     faceChecking
@@ -421,8 +432,14 @@
                                             : 'bg-rose-500 text-white'
                                 "
                             >
-                                <LoaderCircle v-if="faceChecking" class="h-3.5 w-3.5 animate-spin" />
-                                <Check v-else-if="faceScan?.status === 'face'" class="h-3.5 w-3.5" />
+                                <LoaderCircle
+                                    v-if="faceChecking"
+                                    class="h-3.5 w-3.5 animate-spin"
+                                />
+                                <Check
+                                    v-else-if="faceScan?.status === 'face'"
+                                    class="h-3.5 w-3.5"
+                                />
                                 {{
                                     faceChecking
                                         ? "Checking the photo…"
@@ -432,17 +449,31 @@
                                             ? "ID not found"
                                             : faceScan?.status === "error"
                                               ? "Couldn't check"
-                                              : "No face found"
+                                              : ""
+                                    //    : "No face found"
                                 }}
                             </span>
 
                             <span
-                                v-if="selfiePreview && (faceMatching || matchChip)"
+                                v-if="
+                                    selfiePreview && (faceMatching || matchChip)
+                                "
                                 class="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold shadow-sm"
-                                :class="faceMatching ? 'bg-white/90 text-slate-600 dark:bg-secondary/90 dark:text-gray-300' : matchChip?.class"
+                                :class="
+                                    faceMatching
+                                        ? 'bg-white/90 text-slate-600 dark:bg-secondary/90 dark:text-gray-300'
+                                        : matchChip?.class
+                                "
                             >
-                                <LoaderCircle v-if="faceMatching" class="h-3.5 w-3.5 animate-spin" />
-                                {{ faceMatching ? "Matching with ID…" : matchChip?.label }}
+                                <LoaderCircle
+                                    v-if="faceMatching"
+                                    class="h-3.5 w-3.5 animate-spin"
+                                />
+                                {{
+                                    faceMatching
+                                        ? "Matching with ID…"
+                                        : matchChip?.label
+                                }}
                             </span>
 
                             <div
@@ -473,7 +504,11 @@
                         <CameraCaptureModal
                             :open="cameraMode !== null"
                             :mode="cameraMode ?? 'selfie'"
-                            :file-name="cameraMode === 'id' ? idSide.replace('_', '-') : 'id-selfie'"
+                            :file-name="
+                                cameraMode === 'id'
+                                    ? idSide.replace('_', '-')
+                                    : 'id-selfie'
+                            "
                             @capture="onCameraCapture"
                             @close="cameraMode = null"
                         />
@@ -493,7 +528,9 @@
                         </p>
 
                         <p
-                            v-if="!faceMatching && faceMatch?.status === 'match'"
+                            v-if="
+                                !faceMatching && faceMatch?.status === 'match'
+                            "
                             class="text-xs text-slate-500 dark:text-gray-400"
                         >
                             Higher percentage, higher chance of approval
@@ -501,10 +538,7 @@
                     </div>
                 </div>
 
-                <div
-                    class="flex flex-col gap-2"
-                    data-field="agency_document"
-                >
+                <div class="flex flex-col gap-2" data-field="agency_document">
                     <div class="flex h-9 items-center justify-between gap-2">
                         <label
                             class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-gray-300"
@@ -723,7 +757,15 @@
 </template>
 
 <script setup lang="ts">
-import { Building2, Camera, Check, LoaderCircle, MapPin, ScanFace, ShieldCheck } from "lucide-vue-next";
+import {
+    Building2,
+    Camera,
+    Check,
+    LoaderCircle,
+    MapPin,
+    ScanFace,
+    ShieldCheck,
+} from "lucide-vue-next";
 import FormSectionHeader from "../ui/FormSectionHeader.vue";
 import { ref, computed, watch } from "vue";
 import LocationSelector from "../ui/LocationSelector.vue";
@@ -768,7 +810,9 @@ const fileUrls = computed(() => ({
     id_back:
         typeof props.agency.id_back === "string" ? props.agency.id_back : "",
     id_selfie:
-        typeof props.agency.id_selfie === "string" ? props.agency.id_selfie : "",
+        typeof props.agency.id_selfie === "string"
+            ? props.agency.id_selfie
+            : "",
     document:
         typeof props.agency.document === "string" ? props.agency.document : "",
 }));
@@ -1054,12 +1098,18 @@ const removeFile = (field: FileField) => {
 };
 
 const selfieInput = ref<HTMLInputElement | null>(null);
-const selfiePreview = ref<string | null>(initialPreview(props.agency.id_selfie));
+const selfiePreview = ref<string | null>(
+    initialPreview(props.agency.id_selfie),
+);
 const faceChecking = ref(false);
-const faceScan = computed<FaceScanResult | null>(() => props.agency.face_scan ?? null);
+const faceScan = computed<FaceScanResult | null>(
+    () => props.agency.face_scan ?? null,
+);
 let faceRun = 0;
 
-const idSideLabel = computed(() => (idSide.value === "id_front" ? "Front" : "Back"));
+const idSideLabel = computed(() =>
+    idSide.value === "id_front" ? "Front" : "Back",
+);
 
 const cameraMode = ref<"id" | "selfie" | null>(null);
 
@@ -1079,7 +1129,11 @@ const handleSelfie = (event: Event) => {
 };
 
 const setSelfie = (file: File) => {
-    emit("update:agency", { ...agency.value, id_selfie: file, face_scan: null });
+    emit("update:agency", {
+        ...agency.value,
+        id_selfie: file,
+        face_scan: null,
+    });
     selfiePreview.value = URL.createObjectURL(file);
     clearError("agency_id_selfie");
 };
@@ -1087,7 +1141,11 @@ const setSelfie = (file: File) => {
 const removeSelfie = () => {
     faceRun++;
     faceChecking.value = false;
-    emit("update:agency", { ...agency.value, id_selfie: null, face_scan: null });
+    emit("update:agency", {
+        ...agency.value,
+        id_selfie: null,
+        face_scan: null,
+    });
     selfiePreview.value = null;
 };
 
@@ -1136,11 +1194,17 @@ const matchChip = computed(() => {
     if (match?.status === "match") {
         return {
             label: `${match.score}% match`,
-            class: match.score >= FACE_MATCH_PASS ? "bg-emerald-500 text-white" : "bg-rose-500 text-white",
+            class:
+                match.score >= FACE_MATCH_PASS
+                    ? "bg-emerald-500 text-white"
+                    : "bg-rose-500 text-white",
         };
     }
     if (match?.status === "no_face" && match.which === "id") {
-        return { label: "No face on ID front", class: "bg-amber-500 text-white" };
+        return {
+            label: "No face on ID front",
+            class: "bg-amber-500 text-white",
+        };
     }
     return null;
 });
@@ -1150,7 +1214,13 @@ async function runFaceMatch() {
     const run = ++matchRun;
     faceMatch.value = null;
 
-    if (props.lockVerification || faceScan.value?.status !== "face" || !id_selfie || !id_front || !isImage(id_front)) {
+    if (
+        props.lockVerification ||
+        faceScan.value?.status !== "face" ||
+        !id_selfie ||
+        !id_front ||
+        !isImage(id_front)
+    ) {
         faceMatching.value = false;
         return;
     }
@@ -1164,7 +1234,11 @@ async function runFaceMatch() {
 }
 
 watch(
-    () => [props.agency.id_front, props.agency.id_selfie, faceScan.value?.status],
+    () => [
+        props.agency.id_front,
+        props.agency.id_selfie,
+        faceScan.value?.status,
+    ],
     () => runFaceMatch(),
     { immediate: true },
 );

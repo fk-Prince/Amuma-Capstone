@@ -55,7 +55,7 @@ function getWorker(): Worker {
 
 const FACE_CHECK_TIMEOUT_MS = 15_000;
 
-class FaceCheckTimeout extends Error {}
+class FaceCheckTimeout extends Error { }
 
 function call<T>(request: DistributiveOmit<FaceWorkerRequest, "id">, timeoutMs?: number): Promise<T> {
     if (import.meta.server || typeof Worker === "undefined") {
@@ -67,9 +67,9 @@ function call<T>(request: DistributiveOmit<FaceWorkerRequest, "id">, timeoutMs?:
     return new Promise<T>((resolve, reject) => {
         const timer = timeoutMs
             ? setTimeout(() => {
-                  pending.delete(id);
-                  reject(new FaceCheckTimeout());
-              }, timeoutMs)
+                pending.delete(id);
+                reject(new FaceCheckTimeout());
+            }, timeoutMs)
             : undefined;
 
         pending.set(id, {
@@ -133,7 +133,7 @@ export function faceScanMessage(result?: FaceScanResult | null): string {
     if (result.status === "no_id") {
         return "We can't see the ID in the photo. Hold the ID next to your face with its photo facing the camera.";
     }
-    return "We couldn't find a face in the photo. Retake it with your face and ID both visible.";
+    return "";
 }
 
 export async function compareFaces(idFront: Source, selfie: Source): Promise<FaceMatchResult | null> {
