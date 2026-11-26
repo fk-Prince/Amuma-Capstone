@@ -144,7 +144,11 @@ const panelStyle = computed(() =>
 
 const { terms: branchTerms } = useBranchTerms(() => props.termsBranch);
 const terms = computed(() =>
-    buildPaymentTerms(props.termsContext, branchTerms.value, props.termsBookingType),
+    buildPaymentTerms(
+        props.termsContext,
+        branchTerms.value,
+        props.termsBookingType,
+    ),
 );
 const agreedToTerms = ref(false);
 const showTermsModal = ref(false);
@@ -373,9 +377,7 @@ watch(isCash, (active) => {
                 v-if="compact && title"
                 class="shrink-0 border-b border-slate-100 px-5 py-3 dark:border-white/10"
             >
-                <h2
-                    class="text-sm font-bold text-slate-900 dark:text-white"
-                >
+                <h2 class="text-sm font-bold text-slate-900 dark:text-white">
                     {{ title }}
                 </h2>
 
@@ -573,7 +575,11 @@ watch(isCash, (active) => {
 
                 <div
                     :class="
-                        fill ? 'space-y-2.5' : compact ? 'space-y-3' : 'space-y-4'
+                        fill
+                            ? 'space-y-2.5'
+                            : compact
+                              ? 'space-y-3'
+                              : 'space-y-4'
                     "
                 >
                     <LabelInput
@@ -619,7 +625,7 @@ watch(isCash, (active) => {
 
                         <LabelInput
                             label="YYYY"
-                            placeholder="2029"
+                            placeholder="29"
                             :input-class="`text-center ${fieldClass}`"
                             :text-max="4"
                             :error="errors.expYear"
@@ -674,62 +680,64 @@ watch(isCash, (active) => {
                 <slot name="card-options" />
 
                 <div :class="footerClass">
-                <div
-                    v-if="amountLabel && !fill"
-                    class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-white/5"
-                    :class="compact ? 'py-2' : 'py-3'"
-                >
-                    <span
-                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
+                    <div
+                        v-if="amountLabel && !fill"
+                        class="flex items-center justify-between rounded-xl bg-slate-50 px-4 dark:bg-white/5"
+                        :class="compact ? 'py-2' : 'py-3'"
                     >
-                        {{ amountLabel }}
-                    </span>
-
-                    <span class="text-lg font-bold tabular-nums text-primary">
-                        {{ currency }}{{ formatMoney(totalAmount) }}
-                    </span>
-                </div>
-
-                <div v-if="terms" class="flex items-start gap-2">
-                    <input
-                        type="checkbox"
-                        :checked="agreedToTerms"
-                        class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
-                        @click="onTermsCheckbox"
-                    />
-
-                    <span class="text-xs text-slate-500 dark:text-gray-400">
-                        I have read and agree to the
-                        <button
-                            type="button"
-                            class="font-semibold text-primary hover:underline"
-                            @click.stop.prevent="showTermsModal = true"
+                        <span
+                            class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400"
                         >
-                            Terms and Conditions
-                        </button>
-                        for this payment.
-                    </span>
-                </div>
+                            {{ amountLabel }}
+                        </span>
 
-                <button
-                    type="submit"
-                    :disabled="processing || termsBlocked"
-                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
-                    :class="compact ? 'py-2.5' : 'py-3.5'"
-                >
-                    <LoaderCircle
-                        v-if="processing"
-                        class="h-4 w-4 animate-spin"
-                    />
+                        <span
+                            class="text-lg font-bold tabular-nums text-primary"
+                        >
+                            {{ currency }}{{ formatMoney(totalAmount) }}
+                        </span>
+                    </div>
 
-                    {{ processing ? processingLabel : submitLabel }}
-                    <span
-                        v-if="fill && amountLabel && !processing"
-                        class="tabular-nums"
+                    <div v-if="terms" class="flex items-start gap-2">
+                        <input
+                            type="checkbox"
+                            :checked="agreedToTerms"
+                            class="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded border-slate-300 text-primary outline-none focus:outline-none focus:ring-0 dark:border-white/20 dark:bg-secondary"
+                            @click="onTermsCheckbox"
+                        />
+
+                        <span class="text-xs text-slate-500 dark:text-gray-400">
+                            I have read and agree to the
+                            <button
+                                type="button"
+                                class="font-semibold text-primary hover:underline"
+                                @click.stop.prevent="showTermsModal = true"
+                            >
+                                Terms and Conditions
+                            </button>
+                            for this payment.
+                        </span>
+                    </div>
+
+                    <button
+                        type="submit"
+                        :disabled="processing || termsBlocked"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="compact ? 'py-2.5' : 'py-3.5'"
                     >
-                        · {{ currency }}{{ formatMoney(totalAmount) }}
-                    </span>
-                </button>
+                        <LoaderCircle
+                            v-if="processing"
+                            class="h-4 w-4 animate-spin"
+                        />
+
+                        {{ processing ? processingLabel : submitLabel }}
+                        <span
+                            v-if="fill && amountLabel && !processing"
+                            class="tabular-nums"
+                        >
+                            · {{ currency }}{{ formatMoney(totalAmount) }}
+                        </span>
+                    </button>
                 </div>
 
                 <div
@@ -742,11 +750,7 @@ watch(isCash, (active) => {
             </form>
 
             <!-- GCash -->
-            <div
-                v-else-if="isGCash"
-                :class="bodyClass"
-                :style="panelStyle"
-            >
+            <div v-else-if="isGCash" :class="bodyClass" :style="panelStyle">
                 <div
                     v-if="compact"
                     class="flex items-center gap-3 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5 dark:border-blue-500/20 dark:bg-blue-500/10"
@@ -866,11 +870,7 @@ watch(isCash, (active) => {
             </div>
 
             <!-- Cash -->
-            <div
-                v-else-if="isCash"
-                :class="bodyClass"
-                :style="panelStyle"
-            >
+            <div v-else-if="isCash" :class="bodyClass" :style="panelStyle">
                 <div
                     v-if="compact"
                     class="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-500/10"
