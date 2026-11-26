@@ -429,7 +429,7 @@
                                           ? 'bg-emerald-500 text-white'
                                           : faceScan?.status === 'no_id'
                                             ? 'bg-amber-500 text-white'
-                                            : 'bg-rose-500 text-white'
+                                            : ''
                                 "
                             >
                                 <LoaderCircle
