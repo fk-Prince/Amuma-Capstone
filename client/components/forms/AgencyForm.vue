@@ -450,8 +450,8 @@
                                             : faceScan?.status === "error"
                                               ? "Couldn't check"
                                               : ""
-                                    //    : "No face found"
                                 }}
+                                // : "No face found"
                             </span>
 
                             <span
