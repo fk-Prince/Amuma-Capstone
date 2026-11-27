@@ -302,6 +302,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<
     cashier: {
         [Modules.BillingAndInvoices]:
             MODULE_ACTIONS[Modules.BillingAndInvoices],
+        [Modules.Reports]: [PermissionAction.Read],
     },
     nurse: {
         [Modules.Patients]: MODULE_ACTIONS[Modules.Patients].filter(

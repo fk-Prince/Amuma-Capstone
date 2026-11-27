@@ -1,4 +1,4 @@
-export type ReportPeriodMode = "month" | "quarter" | "range";
+export type ReportPeriodMode = "month" | "quarter" | "range" | "all";
 
 export type SalesStatus =
     | ""

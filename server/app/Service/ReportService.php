@@ -70,9 +70,11 @@ class ReportService
 
     private function filters(array $payload): array
     {
+        $allTime = ($payload['period'] ?? null) === 'all';
+
         return [
-            'from'   => Carbon::parse($payload['date_from'])->startOfDay(),
-            'to'     => Carbon::parse($payload['date_to'])->endOfDay(),
+            'from'   => $allTime ? null : Carbon::parse($payload['date_from'])->startOfDay(),
+            'to'     => $allTime ? null : Carbon::parse($payload['date_to'])->endOfDay(),
             'status' => $payload['status'] ?? null,
             'search' => $payload['search'] ?? null,
         ];

@@ -135,14 +135,16 @@ import { reportService } from "~/api/report/ReportService";
 import { usePermissions } from "~/composables/usePermission";
 import { useToast } from "~/composables/useToast";
 import { Modules } from "~/types/module";
-import type {
-    ReportPeriodMode,
-    SalesStatus,
-    SalesRow,
-    SalesSummary,
+import {
+    SALES_STATUS_LABEL,
+    type ReportPeriodMode,
+    type SalesStatus,
+    type SalesRow,
+    type SalesSummary,
 } from "~/types/report";
 import { formatCurrency } from "~/utils/currency";
-import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
+import { fileSafe } from "~/utils/excel";
+import { downloadFinancialExcel } from "~/utils/financialExcel";
 import { formatDate, formatDuration, toLocalDateString } from "~/utils/time";
 import { useBranchStore } from "~/stores/branch";
 
@@ -177,6 +179,10 @@ const currentPage = ref(1);
 const totalItems = ref(0);
 
 const range = computed(() => {
+    if (mode.value === "all") {
+        return { from: null, to: null };
+    }
+
     if (mode.value === "range") {
         return { from: dateFrom.value, to: dateTo.value || dateFrom.value };
     }
@@ -195,6 +201,10 @@ const range = computed(() => {
 });
 
 const periodLabel = computed(() => {
+    if (mode.value === "all") {
+        return "All time";
+    }
+
     const year = anchor.value.getFullYear();
 
     if (mode.value === "quarter") {
@@ -214,11 +224,14 @@ const periodLabel = computed(() => {
 const money = (value?: number | null) =>
     formatCurrency(value, { treatMissingAsZero: true });
 
-const periodParams = () => ({
-    branch_uuid: uuid,
-    date_from: range.value.from,
-    date_to: range.value.to,
-});
+const periodParams = () =>
+    mode.value === "all"
+        ? { branch_uuid: uuid, period: "all" }
+        : {
+              branch_uuid: uuid,
+              date_from: range.value.from,
+              date_to: range.value.to,
+          };
 
 const filterParams = () => ({
     ...periodParams(),
@@ -227,7 +240,7 @@ const filterParams = () => ({
 });
 
 async function fetchRows() {
-    if (!range.value.from) return;
+    if (mode.value !== "all" && !range.value.from) return;
 
     loading.value = true;
 
@@ -249,7 +262,7 @@ async function fetchRows() {
 }
 
 async function fetchSummary() {
-    if (!range.value.from) return;
+    if (mode.value !== "all" && !range.value.from) return;
 
     try {
         const res: any = await reportService.salesSummary(periodParams());
@@ -305,40 +318,32 @@ async function exportExcel() {
     try {
         const res: any = await reportService.salesExport(filterParams());
         const data: SalesRow[] = res.data ?? [];
-        const total = moneyCell(
-            data.reduce((sum, row) => sum + Number(row.gross_amount ?? 0), 0),
-        );
-        const branchName = branchStore.activeBranch?.name ?? "Branch";
+        const branch = branchStore.activeBranch;
+        const branchName = branch?.name ?? "Branch";
 
-        await downloadExcel(fileSafe(`Sales_${branchName}_${periodLabel.value}`), [
-            {
-                name: "Sales",
-                rows: [
-                    [`${branchName} – Sales Report`],
-                    [`Period: ${periodLabel.value}`],
-                    [],
-                    [
-                        "Date",
-                        "Invoice No.",
-                        "Patient",
-                        "Description",
-                        "Amount",
-                        "Status",
-                    ],
-                    ...data.map((row) => [
-                        formatDate(row.created_at),
-                        row.invoice_code,
-                        row.patient_name ?? "",
-                        [row.description, adlDurationLabel(row)]
-                            .filter(Boolean)
-                            .join(" · "),
-                        moneyCell(row.gross_amount),
-                        row.status.replace(/_/g, " "),
-                    ]),
-                    ["Total", "", "", "", total, ""],
-                ],
-            },
-        ]);
+        await downloadFinancialExcel({
+            fileName: fileSafe(`Financial_${branchName}_${periodLabel.value}`),
+            branchName,
+            branchImage: branch?.image,
+            period: periodLabel.value,
+            statusFilter: SALES_STATUS_LABEL[status.value] ?? "All statuses",
+            searchFilter: search.value.trim() || "All invoices",
+            summary: summary.value,
+            rows: data.map((row) => ({
+                date: formatDate(row.created_at),
+                invoice: row.invoice_code,
+                patient: row.patient_name ?? "",
+                description: [row.description, adlDurationLabel(row)]
+                    .filter(Boolean)
+                    .join(" · "),
+                amount: Number(row.gross_amount ?? 0),
+                status: SALES_STATUS_LABEL[row.status] ?? row.status,
+            })),
+            total: data.reduce(
+                (sum, row) => sum + Number(row.gross_amount ?? 0),
+                0,
+            ),
+        });
     } catch (err: any) {
         error(err?.data?.message || err?.message || "Unable to export the report.");
     } finally {

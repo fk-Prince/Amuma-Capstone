@@ -32,6 +32,7 @@ const modeOptions: { label: string; value: ReportPeriodMode }[] = [
     { label: "Month", value: "month" },
     { label: "Quarter", value: "quarter" },
     { label: "Date range", value: "range" },
+    { label: "All time", value: "all" },
 ];
 
 const anchorLabel = computed(() => {
@@ -80,7 +81,7 @@ function shift(direction: number) {
         </div>
 
         <div
-            v-if="mode !== 'range'"
+            v-if="mode === 'month' || mode === 'quarter'"
             class="flex w-fit items-center rounded-xl border border-slate-200 bg-slate-50 px-1 py-1 dark:border-white/10 dark:bg-white/5"
         >
             <button
@@ -108,7 +109,7 @@ function shift(direction: number) {
             </button>
         </div>
 
-        <div v-else class="flex items-center gap-2">
+        <div v-else-if="mode === 'range'" class="flex items-center gap-2">
             <DatePickerField
                 :model-value="dateFrom"
                 class-name="w-full min-w-0 sm:w-[150px]"

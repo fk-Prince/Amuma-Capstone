@@ -814,20 +814,20 @@ class PatientService
         return $patient->vitals
             ->sortByDesc(fn($vital) => ($vital->recorded_date?->toDateString() ?? '') . ' ' . $vital->recorded_time)
             ->map(fn($vital) => [
-            'recorded_date' => $vital->recorded_date?->format('Y-m-d'),
-            'recorded_time' => $vital->recorded_time,
-            'blood_pressure' => $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
-                ? "{$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic}"
-                : null,
-            'heart_rate' => $vital->heart_rate,
-            'respiratory_rate' => $vital->respiratory_rate,
-            'temperature' => $vital->temperature,
-            'oxygen_saturation' => $vital->oxygen_saturation,
-            'blood_glucose' => $vital->blood_glucose,
-            'pain_level' => $vital->pain_level,
-            'notes' => $vital->notes,
-            'recorded_by' => $vital->recordedBy?->full_name,
-        ])->values()->all();
+                'recorded_date' => $vital->recorded_date?->format('Y-m-d'),
+                'recorded_time' => $vital->recorded_time,
+                'blood_pressure' => $vital->blood_pressure_systolic && $vital->blood_pressure_diastolic
+                    ? "{$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic}"
+                    : null,
+                'heart_rate' => $vital->heart_rate,
+                'respiratory_rate' => $vital->respiratory_rate,
+                'temperature' => $vital->temperature,
+                'oxygen_saturation' => $vital->oxygen_saturation,
+                'blood_glucose' => $vital->blood_glucose,
+                'pain_level' => $vital->pain_level,
+                'notes' => $vital->notes,
+                'recorded_by' => $vital->recordedBy?->full_name,
+            ])->values()->all();
     }
 
     private function reportActivities(mixed $patient)

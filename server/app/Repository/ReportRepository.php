@@ -34,24 +34,24 @@ class ReportRepository
             ->get();
     }
 
-    public function salesForPeriod(int $branchId, Carbon $from, Carbon $to)
+    public function salesForPeriod(int $branchId, ?Carbon $from, ?Carbon $to)
     {
         return Invoice::query()
             ->with('invoiceAdjustments', 'allocations.refundAllocations')
             ->where('branch_id', $branchId)
             ->where('status', '!=', Invoice::STATUS_VOID)
-            ->whereBetween('created_at', [$from, $to])
+            ->when($from && $to, fn($query) => $query->whereBetween('created_at', [$from, $to]))
             ->get(['invoice_id', 'status', 'total_amount', 'created_at']);
     }
 
-    public function refundsIssuedBetween(int $branchId, Carbon $from, Carbon $to): float
+    public function refundsIssuedBetween(int $branchId, ?Carbon $from, ?Carbon $to): float
     {
         return round(
             (float) Transaction::query()
                 ->where('branch_id', $branchId)
                 ->where('type', Transaction::TYPE_WITHDRAW)
                 ->where('status', Transaction::STATUS_COMPLETED)
-                ->whereBetween('created_at', [$from, $to])
+                ->when($from && $to, fn($query) => $query->whereBetween('created_at', [$from, $to]))
                 ->sum('amount'),
             2,
         );
@@ -61,7 +61,10 @@ class ReportRepository
     {
         return Invoice::query()
             ->where('branch_id', $branchId)
-            ->whereBetween('created_at', [$filters['from'], $filters['to']])
+            ->when(
+                $filters['from'] && $filters['to'],
+                fn($query) => $query->whereBetween('created_at', [$filters['from'], $filters['to']])
+            )
             ->when(
                 in_array($filters['status'] ?? null, self::SALES_STATUSES, true),
                 fn($query) => $query->where('status', $filters['status'])

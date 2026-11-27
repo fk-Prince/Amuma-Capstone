@@ -28,8 +28,9 @@ class ReportController extends Controller
     {
         return $request->validate([
             'branch_uuid' => ['required', 'string'],
-            'date_from' => ['required', 'date'],
-            'date_to' => ['required', 'date', 'after_or_equal:date_from'],
+            'period' => ['nullable', 'in:all'],
+            'date_from' => ['required_unless:period,all', 'nullable', 'date'],
+            'date_to' => ['required_unless:period,all', 'nullable', 'date', 'after_or_equal:date_from'],
         ] + ($withFilters ? [
             'status' => ['nullable', 'string', 'in:paid,partially_paid,unpaid,written_off,void'],
             'search' => ['nullable', 'string', 'max:255'],
