@@ -328,6 +328,7 @@ async function exportExcel() {
             period: periodLabel.value,
             statusFilter: SALES_STATUS_LABEL[status.value] ?? "All statuses",
             searchFilter: search.value.trim() || "All invoices",
+            summary: summary.value,
             rows: data.map((row) => ({
                 date: formatDate(row.created_at),
                 invoice: row.invoice_code,
