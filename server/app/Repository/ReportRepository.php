@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Invoice;
+use App\Models\Transaction;
 use Carbon\Carbon;
 
 class ReportRepository
@@ -11,6 +12,8 @@ class ReportRepository
         Invoice::STATUS_PAID,
         Invoice::STATUS_PARTIAL,
         Invoice::STATUS_PENDING,
+        Invoice::STATUS_WRITTEN_OFF,
+        Invoice::STATUS_VOID,
     ];
 
     public function paginateSales(int $branchId, array $filters, int $perPage)
@@ -41,11 +44,23 @@ class ReportRepository
             ->get(['invoice_id', 'status', 'total_amount', 'created_at']);
     }
 
+    public function refundsIssuedBetween(int $branchId, Carbon $from, Carbon $to): float
+    {
+        return round(
+            (float) Transaction::query()
+                ->where('branch_id', $branchId)
+                ->where('type', Transaction::TYPE_WITHDRAW)
+                ->where('status', Transaction::STATUS_COMPLETED)
+                ->whereBetween('created_at', [$from, $to])
+                ->sum('amount'),
+            2,
+        );
+    }
+
     private function salesQuery(int $branchId, array $filters)
     {
         return Invoice::query()
             ->where('branch_id', $branchId)
-            ->where('status', '!=', Invoice::STATUS_VOID)
             ->whereBetween('created_at', [$filters['from'], $filters['to']])
             ->when(
                 in_array($filters['status'] ?? null, self::SALES_STATUSES, true),

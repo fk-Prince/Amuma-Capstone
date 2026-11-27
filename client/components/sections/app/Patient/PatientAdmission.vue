@@ -201,8 +201,12 @@
                                 <ActionButton
                                     v-if="hasFacilityPlan"
                                     variant="primary"
-                                    :disabled="!canCreateAdmission"
-                                    tooltip="You don't have permission to create admissions."
+                                    :disabled="!canCreateAdmission || isDeceased"
+                                    :tooltip="
+                                        isDeceased
+                                            ? 'A new admission cannot be created because this patient is deceased.'
+                                            : 'You don\'t have permission to create admissions.'
+                                    "
                                     @click="reserveBedOpen = true"
                                 >
                                     <BedSingle class="h-4 w-4" />
@@ -463,6 +467,12 @@ const loading = computed(() => props.loading);
 
 const latestAdmission = computed<Admission | undefined>(
     () => patient.value?.latest_admission,
+);
+
+const isDeceased = computed(
+    () =>
+        !!latestAdmission.value?.deceased_at ||
+        !!patient.value?.admissions?.some((admission) => admission.deceased_at),
 );
 
 const caregiverModalOpen = ref(false);

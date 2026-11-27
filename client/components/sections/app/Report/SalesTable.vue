@@ -8,7 +8,7 @@ import {
     type SalesRow,
 } from "~/types/report";
 import { formatCurrency } from "~/utils/currency";
-import { formatDate } from "~/utils/time";
+import { formatDate, formatDuration } from "~/utils/time";
 
 const props = withDefaults(
     defineProps<{
@@ -67,10 +67,22 @@ const tableRows = computed(() =>
         invoice_code: row.invoice_code,
         patient: row.patient_name ?? "—",
         description: row.description || "—",
+        adlDuration: adlDurationLabel(row),
         gross: money(row.gross_amount),
         status: row.status,
     })),
 );
+function adlDurationLabel(row: SalesRow): string | null {
+    const months = Number(row.adl_months_billed ?? 0);
+
+    if (months > 0) {
+        return `Duration: ${months} month${months === 1 ? "" : "s"} (monthly rate)`;
+    }
+
+    const duration = Number(row.adl_duration ?? 0);
+
+    return duration > 0 ? `Duration: ${formatDuration(duration)}` : null;
+}
 </script>
 
 <template>
@@ -102,12 +114,20 @@ const tableRows = computed(() =>
         </template>
 
         <template #cell-description="{ row }">
-            <p
-                class="max-w-xs truncate text-slate-600 dark:text-gray-300"
-                :title="row.description"
-            >
-                {{ row.description }}
-            </p>
+            <div class="max-w-xs">
+                <p
+                    class="truncate text-slate-600 dark:text-gray-300"
+                    :title="row.description"
+                >
+                    {{ row.description }}
+                </p>
+                <p
+                    v-if="row.adlDuration"
+                    class="mt-0.5 text-xs text-slate-400 dark:text-gray-500"
+                >
+                    {{ row.adlDuration }}
+                </p>
+            </div>
         </template>
 
         <template #cell-gross="{ row }">

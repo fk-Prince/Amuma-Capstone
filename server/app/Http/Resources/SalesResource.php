@@ -14,6 +14,8 @@ class SalesResource extends JsonResource
             'created_at'   => $this->created_at?->toIso8601String(),
             'patient_name' => $this->patientName(),
             'description'  => $this->paymentDescription(),
+            'adl_duration' => $this->adlDuration(),
+            'adl_months_billed' => $this->adlMonthsBilled(),
             'gross_amount' => $this->sales_amount,
             'status'       => $this->status,
         ];

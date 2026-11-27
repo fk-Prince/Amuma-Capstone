@@ -31,7 +31,7 @@ class ReportController extends Controller
             'date_from' => ['required', 'date'],
             'date_to' => ['required', 'date', 'after_or_equal:date_from'],
         ] + ($withFilters ? [
-            'status' => ['nullable', 'string', 'in:paid,partially_paid,unpaid'],
+            'status' => ['nullable', 'string', 'in:paid,partially_paid,unpaid,written_off,void'],
             'search' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],

@@ -139,7 +139,7 @@
                 <div v-show="open" class="grid overflow-hidden">
                     <div class="min-h-0">
                         <div
-                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3"
+                            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
                         >
                             <div
                                 v-for="metric in metrics"
@@ -500,6 +500,19 @@ const metrics = computed(() => [
         icon: Receipt,
         iconBg: "bg-orange-50 dark:bg-orange-500/10",
         iconColor: "text-orange-500",
+    },
+    {
+        key: "refunded",
+        label: "Refunded",
+        display: formatCurrency(props.overview?.refunds_issued?.value ?? 0),
+        secondary: props.overview?.refunds_issued?.secondary ?? "",
+        secondaryColor:
+            period.value === "all"
+                ? "text-slate-400 dark:text-gray-500"
+                : trendColor(props.overview?.refunds_issued?.trend),
+        icon: Receipt,
+        iconBg: "bg-red-50 dark:bg-red-500/10",
+        iconColor: "text-red-500 dark:text-red-300",
     },
 ]);
 

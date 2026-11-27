@@ -42,6 +42,11 @@ class ReportService
             'bad_debt'         => round((float) $invoices
                 ->where('status', Invoice::STATUS_WRITTEN_OFF)
                 ->sum(fn(Invoice $invoice) => max(0, $invoice->adjusted_total - $invoice->net_paid_amount)), 2),
+            'total_refunded'   => $this->reportRepository->refundsIssuedBetween(
+                $branch->branch_id,
+                $filters['from'],
+                $filters['to'],
+            ),
             'invoice_count'    => $invoices->count(),
         ];
     }

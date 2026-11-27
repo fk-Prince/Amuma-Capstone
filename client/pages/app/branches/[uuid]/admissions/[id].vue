@@ -277,18 +277,21 @@
                         <ActionButton
                             variant="primary"
                             :disabled="
+                                isDeceased ||
                                 isWaiting ||
                                 isAdmitted ||
                                 facilityLocked ||
                                 !canCreateAdmission
                             "
                             :tooltip="
-                                blockedTip(
-                                    isAdmitted
-                                        ? 'This patient is already admitted. Discharge them before starting a new admission.'
-                                        : 'This patient already has an admission waiting to be admitted.',
-                                    canCreateAdmission,
-                                )
+                                isDeceased
+                                    ? 'A new admission cannot be created because this patient is deceased.'
+                                    : blockedTip(
+                                          isAdmitted
+                                              ? 'This patient is already admitted. Discharge them before starting a new admission.'
+                                              : 'This patient already has an admission waiting to be admitted.',
+                                          canCreateAdmission,
+                                      )
                             "
                             @click="openNewAdmissionModal"
                         >
@@ -1209,6 +1212,12 @@ const patient = ref<PatientRetrieve | null>(null);
 
 const latestAdmission = computed<Admission | undefined>(
     () => patient.value?.latest_admission,
+);
+
+const isDeceased = computed(
+    () =>
+        !!latestAdmission.value?.deceased_at ||
+        !!patient.value?.admissions?.some((admission) => admission.deceased_at),
 );
 
 // Carried on the admission's discharge calculation, which is the one place the

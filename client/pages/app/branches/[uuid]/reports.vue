@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen-header flex flex-col gap-3 bg-[#EEF3FB] dark:bg-surface">
-        <section class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <section class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
             <OverviewStatCard
                 label="Gross Sales"
                 :value="money(summary?.gross_sales)"
@@ -13,6 +13,13 @@
                 :value="money(summary?.accounts_receivable)"
                 :icon="TrendingUp"
                 tone="amber"
+                :note="periodLabel"
+            />
+            <OverviewStatCard
+                label="Refunded"
+                :value="money(summary?.total_refunded)"
+                :icon="RotateCcw"
+                tone="rose"
                 :note="periodLabel"
             />
             <OverviewStatCard
@@ -116,6 +123,7 @@ import {
     FileText,
     Receipt,
     RefreshCw,
+    RotateCcw,
     TrendingUp,
 } from "lucide-vue-next";
 import OverviewStatCard from "~/components/sections/app/Dashboard/overview/OverviewStatCard.vue";
@@ -135,7 +143,7 @@ import type {
 } from "~/types/report";
 import { formatCurrency } from "~/utils/currency";
 import { downloadExcel, fileSafe, moneyCell } from "~/utils/excel";
-import { formatDate, toLocalDateString } from "~/utils/time";
+import { formatDate, formatDuration, toLocalDateString } from "~/utils/time";
 import { useBranchStore } from "~/stores/branch";
 
 definePageMeta({
@@ -262,6 +270,18 @@ function onPageChange(page: number) {
     fetchRows();
 }
 
+function adlDurationLabel(row: SalesRow): string | null {
+    const months = Number(row.adl_months_billed ?? 0);
+
+    if (months > 0) {
+        return `Duration: ${months} month${months === 1 ? "" : "s"} (monthly rate)`;
+    }
+
+    const duration = Number(row.adl_duration ?? 0);
+
+    return duration > 0 ? `Duration: ${formatDuration(duration)}` : null;
+}
+
 function reloadFromFirstPage() {
     currentPage.value = 1;
     fetchRows();
@@ -309,7 +329,9 @@ async function exportExcel() {
                         formatDate(row.created_at),
                         row.invoice_code,
                         row.patient_name ?? "",
-                        row.description ?? "",
+                        [row.description, adlDurationLabel(row)]
+                            .filter(Boolean)
+                            .join(" · "),
                         moneyCell(row.gross_amount),
                         row.status.replace(/_/g, " "),
                     ]),

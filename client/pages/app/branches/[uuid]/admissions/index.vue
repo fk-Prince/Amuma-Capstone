@@ -116,6 +116,10 @@
                         </span>
                     </template>
 
+                    <template #cell-deceased_at="{ value }">
+                        {{ value ? stringToDateTime(value) : "—" }}
+                    </template>
+
                     <template #cell-actions="{ row }">
                         <div class="flex justify-end">
                             <button
@@ -759,7 +763,7 @@ const admissionColumns: DataTableColumn[] = [
     { key: "room_bed", label: "Room & Bed" },
     { key: "status", label: "Status" },
     { key: "admission_date", label: "Admission Date", sortable: true },
-    { key: "deceased_at", label: "Deceased At" },
+    { key: "deceased_at", label: "Deceased At", sortable: true },
     { key: "actions", label: "Action", align: "right" },
 ];
 
@@ -915,8 +919,8 @@ async function fetchAdmissions() {
                         ? formatDate(admission.admitted_at)
                         : "—",
                     deceased_at: admission?.deceased_at
-                        ? stringToDateTime(admission.deceased_at)
-                        : "—",
+                        ? admission.deceased_at
+                        : null,
                 };
             },
         );
